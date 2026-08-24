@@ -26,3 +26,8 @@ frontend/.vite/
 ~$*
 
 # NOTE: .scratch/ is intentionally NOT ignored — tickets are part of the deliverable.
+
+# Local AI/agent workflow files
+AGENTS.md
+docs/agents/
+.scratch/BAN-GIAO.md
