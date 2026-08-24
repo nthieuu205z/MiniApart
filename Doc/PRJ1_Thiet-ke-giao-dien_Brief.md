@@ -72,6 +72,27 @@ Màn hình của chú Tuấn phải là màn hình **đơn giản nhất cả h�
 
 **7. Không bao giờ có nút Xoá cho dữ liệu tiền.** Tài khoản, bản ghi thanh toán, hoá đơn đã phát hành — tất cả **chỉ khoá hoặc huỷ có lý do**, không xoá. Giao diện phải phản ánh điều đó: chỗ mà người ta quen thấy nút thùng rác thì ở đây là **Khoá** hoặc **Huỷ (kèm lý do)**.
 
+### Hai kích thước màn hình — cả hai đều phải có
+
+"Điện thoại trước" ở ràng buộc 1 là **thứ tự thiết kế**, không phải phạm vi. Sản phẩm là **web mở bằng trình duyệt**, nên cùng một địa chỉ sẽ được mở trên cả điện thoại lẫn máy tính và không có cách nào ngăn được. Nếu chỉ có bản điện thoại, khi anh Minh mở trên laptop sẽ thấy một cột hẹp lọt thỏm giữa màn hình rộng — trông như phần mềm bị lỗi.
+
+Hai điểm gãy, không cần nhiều hơn:
+
+| | Bề rộng | Bố cục | Việc làm ở đây |
+|---|---|---|---|
+| 📱 Điện thoại | < 768px | một cột · thanh điều hướng ở **đáy** · mỗi bản ghi là một thẻ · vùng bấm ≥ 44px | ghi chỉ số, thu tiền tại chỗ, màn hình thợ, toàn bộ phần người thuê |
+| 🖥 Máy tính | ≥ 1024px | menu dọc **bên trái** luôn hiện · bảng nhiều cột thật · xem nhiều thứ cùng lúc | khai báo dịch vụ và bảng giá, chốt kỳ, tạo hoá đơn hàng loạt, công nợ, báo cáo |
+
+Khoảng 768–1024px (máy tính bảng) **dùng lại bản máy tính**, chỉ thu menu trái thành dải biểu tượng. Không thiết kế riêng cho khoảng này.
+
+**Bản máy tính không phải bản điện thoại kéo giãn ra.** Ba khác biệt bắt buộc:
+
+1. **Bảng phải là bảng thật.** Trên điện thoại, một hoá đơn là một thẻ. Trên máy tính, 30 hoá đơn là 30 hàng — có tiêu đề cột bấm để sắp xếp, có ô chọn nhiều dòng, số tiền thẳng cột bên phải. Danh sách thẻ xếp dọc trên màn hình 1440px là lãng phí và khó so sánh.
+2. **Điều hướng đổi chỗ, không chỉ đổi cỡ.** Điện thoại: thanh đáy 4–5 mục (ngón cái với tới). Máy tính: menu dọc bên trái, hiện đủ các mục theo vai trò ở mục 5, không giấu sau nút ba gạch.
+3. **Việc hàng loạt chỉ có ở bản máy tính.** Tạo dãy phòng 201–208, chốt kỳ cả toà, tạo hoá đơn hàng loạt, xuất báo cáo — chị Lan làm những việc này lúc ngồi bàn, không làm giữa hành lang.
+
+Chiều ngược lại cũng đúng: **màn hình ghi chỉ số (#18) không cần thiết kế riêng cho máy tính** — bản máy tính của nó chỉ là bản điện thoại đặt giữa và giới hạn bề rộng khoảng 480px. Không ai đứng trước công tơ với cái laptop.
+
 ---
 
 ## 4. Đã có sẵn gì — thiết kế nên kế thừa, đừng vứt
@@ -107,7 +128,9 @@ Năm vai trò thấy năm menu khác nhau. Đây là bản đồ điều hướn
 
 53 màn hình, chia ba mức ưu tiên. **Mức 1 cần trước** vì phần code đang làm tới đó; mức 3 còn xa và nhiều khả năng sẽ đổi.
 
-Ký hiệu: 📱 dùng chủ yếu trên điện thoại · 🖨 phải in được · ★ màn hình quyết định thành bại
+Ký hiệu: 📱 dùng chủ yếu trên điện thoại · 🖥 dùng chủ yếu trên máy tính · 🖨 phải in được · ★ màn hình quyết định thành bại
+
+Màn hình **không có ký hiệu 📱 hay 🖥 vẫn cần cả hai bản** — ký hiệu chỉ nói cái nào thiết kế trước và tối ưu cho cái nào.
 
 ### Mức 1 — cần thiết kế ngay
 
@@ -116,25 +139,25 @@ Ký hiệu: 📱 dùng chủ yếu trên điện thoại · 🖨 phải in đư�
 | 1 | Đăng nhập | tất cả | đã có, cần chuẩn hoá |
 | 2 | Quên mật khẩu (mã OTP 5 phút) | tất cả | |
 | 3 | Trang chủ — 5 biến thể theo vai trò | tất cả | 📱 |
-| 4 | Quản lý tài khoản | QTHT | không có nút xoá |
+| 4 | Quản lý tài khoản | QTHT | 🖥 không có nút xoá |
 | 5 | Danh sách toà nhà | Chủ, QL | |
 | 6 | Khai báo / sửa toà nhà | Chủ | |
-| 7 | Danh sách phòng + tạo hàng loạt | QL | tạo dãy 201–208 một lần |
+| 7 | Danh sách phòng + tạo hàng loạt | QL | 🖥 tạo dãy 201–208 một lần |
 | 8 | **Sơ đồ phòng theo tầng** ★ | Chủ, QL | màu **và** nhãn chữ |
-| 9 | Khai báo dịch vụ (4 cách tính) | QL | |
-| 10 | Bảng giá theo ngày hiệu lực | QL | hiện cả lịch sử giá |
-| 11 | Biểu giá điện bậc thang | QL | 5 bậc, nhập theo tỷ lệ |
+| 9 | Khai báo dịch vụ (4 cách tính) | QL | 🖥|
+| 10 | Bảng giá theo ngày hiệu lực | QL | 🖥 hiện cả lịch sử giá |
+| 11 | Biểu giá điện bậc thang | QL | 🖥 5 bậc, nhập theo tỷ lệ |
 | 12 | Danh sách người thuê | QL | số giấy tờ che bớt |
 | 13 | Hồ sơ người thuê + ảnh giấy tờ | QL | ảnh qua liên kết 15 phút |
 | 14 | Danh sách hợp đồng | QL | |
-| 15 | Ký hợp đồng | QL | nhiều bước, dễ bỏ dở |
+| 15 | Ký hợp đồng | QL | 🖥 nhiều bước, dễ bỏ dở |
 | 16 | Chi tiết hợp đồng + người ở cùng | QL | |
 | 17 | Danh sách kỳ thanh toán | QL | |
 | 18 | **Ghi chỉ số công tơ** ★★★ | QL | 📱 quan trọng nhất |
 | 19 | Khai báo thay công tơ | QL | 📱 4 ô chỉ số |
-| 20 | Chốt kỳ + danh sách phòng còn thiếu | QL | |
-| 21 | Tạo hoá đơn hàng loạt + báo cáo bỏ qua | QL | |
-| 22 | Danh sách hoá đơn | QL, Chủ | |
+| 20 | Chốt kỳ + danh sách phòng còn thiếu | QL | 🖥 |
+| 21 | Tạo hoá đơn hàng loạt + báo cáo bỏ qua | QL | 🖥 |
+| 22 | Danh sách hoá đơn | QL, Chủ | 🖥|
 | 23 | **Chi tiết hoá đơn** ★★★ | tất cả | 🖨 quyết định lòng tin |
 
 ### Mức 2 — cần sau khi xong phần tính tiền
@@ -147,35 +170,35 @@ Ký hiệu: 📱 dùng chủ yếu trên điện thoại · 🖨 phải in đư�
 | 27 | Bút toán đối ứng (sửa sai không xoá) | QL | |
 | 28 | Biên lai | QL | 🖨 |
 | 29 | Mã QR chuyển khoản | tất cả | 📱 |
-| 30 | Công nợ, sắp theo số ngày quá hạn | Chủ, QL | |
-| 31 | Thanh lý hợp đồng + quyết toán cọc | QL | |
+| 30 | Công nợ, sắp theo số ngày quá hạn | Chủ, QL | 🖥 |
+| 31 | Thanh lý hợp đồng + quyết toán cọc | QL | 🖥|
 | 32 | **Trang chủ người thuê** ★★ | Người thuê | 📱 hiện ngay hoá đơn mới nhất |
 | 33 | Hoá đơn bản người thuê | Người thuê | 📱🖨 |
 | 34 | Lịch sử 12 kỳ | Người thuê | 📱 |
 | 35 | Biểu đồ tiêu thụ điện nước 12 kỳ | Người thuê | 📱 |
 | 36 | Thông tin hợp đồng + cảnh báo sắp hết hạn | Người thuê | 📱 |
 | 37 | Báo hỏng (tối đa 5 ảnh) | Người thuê | 📱 |
-| 38 | Danh sách yêu cầu sửa chữa | QL | |
-| 39 | Chi tiết + phân công thợ | QL | |
+| 38 | Danh sách yêu cầu sửa chữa | QL | 🖥|
+| 39 | Chi tiết + phân công thợ | QL | 🖥|
 | 40 | **Việc của tôi** ★ | Thợ | 📱 đơn giản nhất hệ thống |
 | 41 | **Bảng tổng quan** ★★ | Chủ | 📱 ba câu hỏi của anh Minh |
-| 42 | Bảng nhắc việc (5 nhóm) | QL | |
+| 42 | Bảng nhắc việc (5 nhóm) | QL | 🖥|
 
 ### Mức 3 — còn xa, thiết kế sau
 
 | # | Màn hình | Ai dùng |
 |---|---|---|
-| 43 | Soạn thông báo theo toà / tầng / phòng | QL |
+| 43 | Soạn thông báo theo toà / tầng / phòng | QL 🖥 |
 | 44 | Hộp thông báo | tất cả |
-| 45 | Báo cáo công nợ (xuất Excel) | Chủ |
-| 46 | Báo cáo tiêu thụ điện nước | Chủ |
-| 47 | Báo cáo chi phí bảo trì | Chủ |
-| 48 | Lịch sử sửa chữa theo phòng | QL |
-| 49 | Hồ sơ PCCC | Chủ |
-| 50 | Thiết bị PCCC + hạn kiểm định | Chủ |
+| 45 | Báo cáo công nợ (xuất Excel) | Chủ 🖥 |
+| 46 | Báo cáo tiêu thụ điện nước | Chủ 🖥 |
+| 47 | Báo cáo chi phí bảo trì | Chủ 🖥 |
+| 48 | Lịch sử sửa chữa theo phòng | QL 🖥 |
+| 49 | Hồ sơ PCCC | Chủ 🖥 |
+| 50 | Thiết bị PCCC + hạn kiểm định | Chủ 🖥 |
 | 51 | Danh mục tự kiểm tra an toàn | QL |
-| 52 | Nhật ký thao tác | QTHT, Chủ |
-| 53 | Chỉ số công tơ tổng + cảnh báo thất thoát | Chủ |
+| 52 | Nhật ký thao tác | QTHT, Chủ 🖥 |
+| 53 | Chỉ số công tơ tổng + cảnh báo thất thoát | Chủ 🖥 |
 
 ---
 
@@ -242,6 +265,8 @@ Anh Minh mở app trên điện thoại giữa lúc đi đường. Phải trả 
 3. **Có gì bất thường không?** — phòng trống, sự cố đang mở, chênh lệch công tơ
 
 Gộp **cả ba toà** vào một màn hình, có bộ lọc theo toà và theo khoảng thời gian.
+
+Bản máy tính của màn hình này **không phải bản điện thoại giãn ra**: điện thoại xếp ba con số thành ba thẻ chồng dọc, máy tính đặt chúng thành một hàng ngang rồi **dùng chỗ trống bên dưới cho bảng chi tiết theo toà** — thứ mà điện thoại không đủ chỗ để hiện.
 
 Đừng thiết kế thành một rừng biểu đồ. Anh Minh cần **con số to** trước, biểu đồ sau.
 
@@ -311,7 +336,11 @@ Theo thứ tự ưu tiên:
 3. **23 màn hình mức 1** ở mục 6
 4. Mức 2 và mức 3 khi phần code chạm tới
 
-Mỗi màn hình cần **bản điện thoại** trước, **bản máy tính** sau — trừ các màn hình báo cáo thì ngược lại.
+**Mỗi màn hình cần đủ hai bản: 📱 điện thoại và 🖥 máy tính.** Thứ tự làm thì theo ký hiệu ở mục 6 — màn hình đánh 📱 vẽ bản điện thoại trước rồi suy ra bản máy tính, màn hình đánh 🖥 thì ngược lại. Quy tắc dựng hai bản nằm ở mục 3, phần *Hai kích thước màn hình*.
+
+Ngoại lệ duy nhất là **màn hình ghi chỉ số (#18)**: bản máy tính của nó chỉ là bản điện thoại giới hạn bề rộng, không cần vẽ riêng.
+
+Kèm theo, cần **hệ thống thiết kế nói rõ hai bố cục điều hướng** — thanh đáy cho điện thoại và menu trái cho máy tính — vì đây là thứ bên code dựng một lần rồi mọi màn hình dùng chung.
 
 ---
 
