@@ -1,6 +1,6 @@
 # Bàn giao cho session code
 
-Đọc tệp này trước, rồi đọc `../AGENTS_old.md`. Sau đó lấy ticket và làm.
+Đọc tệp này trước, rồi đọc `../AGENTS.md`. Sau đó lấy ticket và làm.
 
 > **Reset ngày 2026-08-25:** toàn bộ mã nguồn (`backend/`, `frontend/`, `docker-compose.yml`) đã bị xoá để bắt đầu lại sạch. Ba ticket 01–03 của Slice 0 quay về `ready-for-agent` — xem ghi chú đầu mỗi ticket. Kế hoạch, ADR, và các bài học ở mục `## Comments` của từng ticket **vẫn giữ nguyên giá trị**, không phải làm lại từ số 0 về tư duy, chỉ làm lại về mã.
 
