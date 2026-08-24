@@ -106,6 +106,9 @@ Làm xong thì đổi `Status:` thành `done`, tích các ô, và **viết vào 
 | 1 — Danh mục | 6 | 0 |
 | 2 — Người thuê, hợp đồng | 8 | 0 |
 | 3 — Ghi chỉ số | 8 | 0 |
+| 4 — Tính hoá đơn ★ | 8 | 0 |
+
+**Slice 4 có một luật riêng, đọc `spec.md` của nó trước khi động vào.** Ticket 02 là bộ kiểm thử viết trước khi có dòng cài đặt nào, và nó **cố ý không demo được gì**. Đảo thứ tự 02 và 03 là mất phần lớn giá trị của cả slice — kế hoạch triển khai nói rõ điều này và giải thích vì sao.
 
 **Làm tiếp:** `slice-00 · 05` (năm vai trò năm menu). Nó nằm trên đường găng — xong nó mới mở khoá được ticket 06 và 07 của Slice 0.
 
