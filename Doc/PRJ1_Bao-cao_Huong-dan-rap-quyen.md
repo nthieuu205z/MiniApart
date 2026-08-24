@@ -55,7 +55,7 @@ Kiểm tra toàn vẹn sau khi chuyển: 37 user story, 93 FR, 36 NFR, 23 BR, 4 
 
 > **Kết quả:** `PRJ1_Bao-cao_Chuong-3_Phan-tich-thiet-ke.md` — 627 dòng, 11 mục, **21 hình đánh số liên tục Hình 3.1 → Hình 3.21**, **8 bảng đánh số liên tục Bảng 3.1 → Bảng 3.8**. Toàn bộ đường dẫn ảnh đã kiểm chứng là tồn tại.
 >
-> Ảnh của các sơ đồ phiên bản 1 đã được **giải nén từ `PRJ1_So-do-nguon.zip` ra thư mục `Doc/diagrams/`** để liên kết ảnh trong Markdown hiển thị được. Trước đó chỉ có tệp nén, nên mọi liên kết `diagrams/*.png` trong tài liệu phân tích đều gãy.
+> Ảnh của các sơ đồ phiên bản 1 đã được **giải nén từ `PRJ1_So-do-nguon.zip` ra thư mục `Doc/diagrams/`** để liên kết ảnh trong Markdown hiển thị được. Trước đó chỉ có tệp nén, nên mọi liên kết `diagrams/*.png` trong tài liệu phân tích đều gãy. Tệp nén nguồn (đã giải nén xong, chỉ giữ để đối chiếu) chuyển sang `Doc/_luu-tru-khong-dung/PRJ1_So-do-nguon.zip`.
 
 Bảng dưới đây giữ lại làm bản ghi kế hoạch ban đầu. Đây là chương thay đổi nhiều nhất, vì mục 6 của tài liệu phân tích chỉ phủ được nửa đầu.
 
