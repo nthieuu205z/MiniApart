@@ -1,0 +1,101 @@
+:root {
+  --muc: #1a1a1a;
+  --nhat: #6b7280;
+  --vien: #e5e7eb;
+  --nen: #ffffff;
+  --khoe: #047857;
+  --hong: #b91c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --muc: #f3f4f6;
+    --nhat: #9ca3af;
+    --vien: #374151;
+    --nen: #111827;
+    --khoe: #34d399;
+    --hong: #f87171;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--nen);
+  color: var(--muc);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.khung {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.phu-de {
+  margin: 0.25rem 0 0;
+  color: var(--nhat);
+}
+
+.the {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--vien);
+  border-radius: 0.75rem;
+}
+
+.the h2 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--nhat);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.khoe {
+  margin: 0;
+  color: var(--khoe);
+  font-weight: 600;
+}
+
+.hong {
+  margin: 0;
+  color: var(--hong);
+  font-weight: 600;
+}
+
+.cho,
+.chi-tiet {
+  margin: 0.5rem 0 0;
+  color: var(--nhat);
+  font-size: 0.9rem;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1.5rem;
+  margin: 1.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+dt {
+  color: var(--nhat);
+}
+
+dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+footer {
+  margin-top: 2rem;
+  color: var(--nhat);
+  font-size: 0.8rem;
+}
