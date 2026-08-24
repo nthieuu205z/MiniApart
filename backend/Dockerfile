@@ -1,5 +1,5 @@
 # Build stage: the Gradle wrapper pins the Gradle version, so the image needs only a JDK.
-FROM eclipse-temurin:26-jdk-alpine AS build
+FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /build
 
 # Copy the wrapper and build scripts first. Dependency resolution then stays cached
@@ -14,7 +14,7 @@ COPY src ./src
 RUN ./gradlew --no-daemon bootJar -x test
 
 # Runtime stage: a JRE is enough, and a smaller attack surface is the point.
-FROM eclipse-temurin:26-jre-alpine AS runtime
+FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
 
 # Never run as root: NFR-SEC, and a habit worth having before the VPS in Slice 11.

@@ -1,36 +1,36 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import DangNhap from './DangNhap'
+import TrangChu from './TrangChu'
+import { api, token, type ThongTinNguoiDung } from './api'
 
-/** Shape returned by GET /api/health. */
-type TinhTrang = {
-  trangThai: string
-  phienBanCoSoDuLieu: string
-  soMigrationDaChay: number
-  thoiDiem: string
-}
-
-type KetQua =
-  | { loai: 'dang-tai' }
-  | { loai: 'thanh-cong'; duLieu: TinhTrang }
-  | { loai: 'that-bai'; loi: string }
+type TrangThai =
+  | { loai: 'dang-kiem-tra' }
+  | { loai: 'chua-dang-nhap' }
+  | { loai: 'da-dang-nhap'; nguoiDung: ThongTinNguoiDung }
 
 export default function App() {
-  const [ketQua, setKetQua] = useState<KetQua>({ loai: 'dang-tai' })
+  const [trangThai, setTrangThai] = useState<TrangThai>({ loai: 'dang-kiem-tra' })
 
+  // Tải lại trang thì hỏi lại máy chủ xem token còn dùng được không. Không tự suy
+  // ra từ việc localStorage có token: token có thể đã hết hạn hoặc đã bị thu hồi,
+  // và chỉ máy chủ mới biết điều đó (ADR-0001).
   useEffect(() => {
-    let huy = false
+    if (!token.doc()) {
+      setTrangThai({ loai: 'chua-dang-nhap' })
+      return
+    }
 
-    fetch('/api/health')
-      .then((phanHoi) => {
-        if (!phanHoi.ok) throw new Error(`Máy chủ trả về ${phanHoi.status}`)
-        return phanHoi.json() as Promise<TinhTrang>
+    let huy = false
+    api
+      .toiLaAi()
+      .then((nguoiDung) => {
+        if (!huy) setTrangThai({ loai: 'da-dang-nhap', nguoiDung })
       })
-      .then((duLieu) => {
-        if (!huy) setKetQua({ loai: 'thanh-cong', duLieu })
-      })
-      .catch((loi: unknown) => {
+      .catch(() => {
         if (!huy) {
-          setKetQua({ loai: 'that-bai', loi: loi instanceof Error ? loi.message : String(loi) })
+          token.xoa()
+          setTrangThai({ loai: 'chua-dang-nhap' })
         }
       })
 
@@ -39,42 +39,29 @@ export default function App() {
     }
   }, [])
 
+  if (trangThai.loai === 'dang-kiem-tra') {
+    return (
+      <main className="khung">
+        <p className="cho">Đang kiểm tra phiên đăng nhập…</p>
+      </main>
+    )
+  }
+
+  if (trangThai.loai === 'chua-dang-nhap') {
+    return (
+      <DangNhap
+        onDangNhapXong={(nguoiDung) => setTrangThai({ loai: 'da-dang-nhap', nguoiDung })}
+      />
+    )
+  }
+
   return (
-    <main className="khung">
-      <header>
-        <h1>MiniApart</h1>
-        <p className="phu-de">Hệ thống Quản lý và Vận hành Chung cư mini</p>
-      </header>
-
-      <section className="the">
-        <h2>Kết nối ba tầng</h2>
-        {ketQua.loai === 'dang-tai' && <p className="cho">Đang hỏi máy chủ…</p>}
-
-        {ketQua.loai === 'that-bai' && (
-          <>
-            <p className="hong">Không gọi được máy chủ</p>
-            <p className="chi-tiet">{ketQua.loi}</p>
-          </>
-        )}
-
-        {ketQua.loai === 'thanh-cong' && (
-          <>
-            <p className="khoe">Giao diện → Máy chủ → Cơ sở dữ liệu</p>
-            <dl>
-              <dt>Trạng thái</dt>
-              <dd>{ketQua.duLieu.trangThai}</dd>
-              <dt>Cơ sở dữ liệu</dt>
-              <dd>{ketQua.duLieu.phienBanCoSoDuLieu}</dd>
-              <dt>Migration đã chạy</dt>
-              <dd>{ketQua.duLieu.soMigrationDaChay}</dd>
-            </dl>
-          </>
-        )}
-      </section>
-
-      <footer>
-        <p>Vertical Slice 0 — Nền móng · PRJ1-CCM</p>
-      </footer>
-    </main>
+    <TrangChu
+      nguoiDung={trangThai.nguoiDung}
+      onDangXuat={() => {
+        token.xoa()
+        setTrangThai({ loai: 'chua-dang-nhap' })
+      }}
+    />
   )
 }

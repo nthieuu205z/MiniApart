@@ -14,7 +14,24 @@ Cần **Docker** đang chạy. Ba lệnh:
 docker compose up -d --build
 ```
 
-Rồi mở <http://localhost:5173>. Trang phải hiện dòng **Giao diện → Máy chủ → Cơ sở dữ liệu** màu xanh — nghĩa là cả ba tầng đã nối được với nhau.
+Rồi mở <http://localhost:5173> và đăng nhập.
+
+### Tài khoản mẫu
+
+Mật khẩu của **tất cả** tài khoản dưới đây: `MatKhau@123`
+
+| Số điện thoại | Vai trò | Phạm vi |
+|---|---|---|
+| `0900000001` | Quản trị hệ thống | Toàn hệ thống |
+| `0900000002` | Chủ sở hữu | Cả hai toà |
+| `0900000003` | Quản lý toà nhà | Chỉ toà A |
+| `0900000004` | Quản lý toà nhà | Chỉ toà B |
+| `0900000005` | Thợ sửa chữa | Toà A |
+| `0900000006` | Người thuê | Toà A |
+
+Toàn bộ là **dữ liệu bịa** — không có tên, số điện thoại, hay địa chỉ của người thật. Đây là biện pháp giảm rủi ro R-13 trong kế hoạch triển khai.
+
+Hai quản lý ở hai toà khác nhau là cố ý: ticket 06 cần đúng cấu hình đó để thử phép tấn công "đăng nhập bằng quản lý toà A rồi gọi thẳng dữ liệu toà B".
 
 Xem log khi có gì đó không lên:
 

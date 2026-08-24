@@ -2,7 +2,7 @@
 
 Hệ thống Quản lý và Vận hành Chung cư mini. Đồ án môn Project 1.
 
-**Stack:** Spring Boot + PostgreSQL + React · Docker Compose · Flyway · JUnit 5 + jqwik + Testcontainers + ArchUnit
+**Stack:** Java 21 LTS + Spring Boot 4.1 + PostgreSQL 17 + React 19 · Docker Compose · Flyway · JUnit 5 + jqwik + Testcontainers + ArchUnit
 
 ## Nguồn sự thật
 
@@ -21,7 +21,7 @@ Tài liệu viết bằng tiếng Việt. **Không sửa file trong `Doc/` khi �
 
 Mục 4 của kế hoạch triển khai. Vi phạm là gãy build, không phải là góp ý.
 
-1. Tiền dùng `BigDecimal` (Java) và `NUMERIC(15,2)` (Postgres). **Cấm `double`, `float`** — ArchUnit kiểm.
+1. Tiền dùng `BigDecimal` (Java) và `NUMERIC(15,2)` (Postgres). **Cấm `double`, `float`, `Double`, `Float`** — ArchUnit kiểm.
 2. Mọi thay đổi lược đồ đi qua migration Flyway đánh số tăng dần. **Không sửa file đã chạy.**
 3. Mặc định từ chối truy cập. Mọi endpoint có test gọi bằng vai trò sai và khẳng định 403.
 4. Mọi endpoint có mã FR trong Javadoc. Mọi test có mã FR trong tên.
@@ -34,11 +34,25 @@ Gói `com.prj1.ccm.billing.calc` cài đặt BR-01 → BR-19 và **không đư�
 
 Hệ quả: test cho gói này chạy trong mili giây, không dựng context. Viết test **trước** phần cài đặt — đây là điều kiện bắt buộc của Vertical Slice 4, không phải khuyến nghị.
 
-## Ngôn ngữ
+## Không nâng Java quá 21 nếu chưa kiểm tra ArchUnit
 
-- Mã nguồn, tên biến, tên test, commit message: **tiếng Anh**
-- Ticket, tài liệu, chuỗi hiển thị cho người dùng: **tiếng Việt**
-- Tên bảng và cột trong cơ sở dữ liệu: **tiếng Việt không dấu, viết hoa** (`NGUOI_DUNG`, `HOA_DON`) — khớp với ERD ở Chương 3
+ASM mà ArchUnit đóng gói chỉ đọc được tệp lớp tới một phiên bản Java nhất định. Gặp tệp lớp mới hơn nó **bỏ qua trong im lặng**, và mọi luật kiến trúc báo xanh trong khi không soi vào lớp nào. Dự án đã dính đúng lỗi này với Java 26.
+
+`ArchitectureRulesTest.rulesActuallySeeTheProductionCode()` là chốt chặn: nó gãy build nếu ArchUnit nhập được 0 lớp. Đừng xoá hay nới lỏng phép kiểm đó.
+
+## Ngôn ngữ trong mã nguồn
+
+Chia theo **thứ có mặt trong báo cáo hay không**, không chia theo sở thích.
+
+| Loại | Ngôn ngữ | Vì sao |
+|---|---|---|
+| Lớp miền, thuộc tính, enum — thứ xuất hiện trong sơ đồ lớp Chương 3 và ERD | **Tiếng Việt** không dấu: `NguoiDung`, `ToaNha`, `VaiTro`, `nguongThatThoat` | Sơ đồ lớp ở Chương 3 dùng đúng những tên này. Đặt tên khác là biến sơ đồ trong báo cáo thành sai |
+| Bảng và cột cơ sở dữ liệu | **Tiếng Việt** không dấu, viết hoa: `NGUOI_DUNG`, `phien_ban_token` | Khớp ERD |
+| Hạ tầng kỹ thuật không có trong báo cáo: cấu hình, bộ lọc, tiện ích | Tiếng Anh: `SecurityConfig`, `JwtService` | Không nằm trong sơ đồ nào, và là từ vựng chuẩn của khung ứng dụng |
+| Chú thích trong mã, commit message | Tiếng Anh | Ngắn, và khớp thuật ngữ của thư viện |
+| Ticket, tài liệu, chuỗi hiển thị cho người dùng | Tiếng Việt | |
+
+**Quy tắc quyết định:** trước khi đặt tên một lớp, tìm nó trong `Doc/diagrams-v2/10-class-domain.mmd` và `07-erd-v2.mmd`. Có ở đó thì **chép đúng tên**, đừng dịch.
 
 ## Agent skills
 

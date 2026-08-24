@@ -99,3 +99,77 @@ footer {
   color: var(--nhat);
   font-size: 0.8rem;
 }
+
+.khung-hep {
+  max-width: 26rem;
+}
+
+.dau-trang {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+form.the {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--nhat);
+}
+
+input {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--vien);
+  border-radius: 0.5rem;
+  background: var(--nen);
+  color: var(--muc);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+input:focus-visible {
+  outline: 2px solid var(--khoe);
+  outline-offset: 1px;
+}
+
+button {
+  margin-top: 1.25rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: var(--muc);
+  color: var(--nen);
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+button.phu {
+  margin-top: 0;
+  padding: 0.45rem 0.8rem;
+  border-color: var(--vien);
+  background: transparent;
+  color: var(--muc);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Giữ chỗ sẵn cho dòng lỗi để nội dung không nhảy khi lỗi xuất hiện. */
+.loi {
+  min-height: 1.2rem;
+  margin: 0.9rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
