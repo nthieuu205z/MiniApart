@@ -56,6 +56,10 @@ Chia theo **thứ có mặt trong báo cáo hay không**, không chia theo sở 
 
 ## Agent skills
 
+### Bắt đầu ở đâu
+
+Session code mới: đọc **`.scratch/BAN-GIAO.md`** trước tiên. Nó có môi trường cần gì, các bẫy kỹ thuật đã gặp, và cách lấy ticket tiếp theo.
+
 ### Issue tracker
 
 Ticket là file markdown trong `.scratch/`, được commit vào repo. Xem `docs/agents/issue-tracker.md`.
