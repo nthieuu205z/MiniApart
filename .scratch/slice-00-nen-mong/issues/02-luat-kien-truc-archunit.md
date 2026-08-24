@@ -8,7 +8,9 @@ Hai luật:
 
 **Blocked by:** 01
 
-**Status:** done
+**Status:** ready-for-agent
+> **Mã nguồn đã bị xoá ngày 2026-08-25 để bắt đầu lại sạch.** Ticket này quay về `ready-for-agent`. Các bài học ở mục `## Comments` bên dưới vẫn đúng — đọc trước khi làm lại để khỏi vấp lại cùng chỗ.
+
 
 - [x] ArchUnit chạy như một phần của bộ kiểm thử thường, không phải bước riêng ai đó phải nhớ gọi
 - [x] Gói `com.prj1.ccm.billing.calc` tồn tại, dù còn rỗng, để luật có chỗ mà soi

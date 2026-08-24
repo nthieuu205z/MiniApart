@@ -1,6 +1,8 @@
 # Bàn giao cho session code
 
-Đọc tệp này trước, rồi đọc `AGENTS.md`. Sau đó lấy ticket và làm.
+Đọc tệp này trước, rồi đọc `../AGENTS_old.md`. Sau đó lấy ticket và làm.
+
+> **Reset ngày 2026-08-25:** toàn bộ mã nguồn (`backend/`, `frontend/`, `docker-compose.yml`) đã bị xoá để bắt đầu lại sạch. Ba ticket 01–03 của Slice 0 quay về `ready-for-agent` — xem ghi chú đầu mỗi ticket. Kế hoạch, ADR, và các bài học ở mục `## Comments` của từng ticket **vẫn giữ nguyên giá trị**, không phải làm lại từ số 0 về tư duy, chỉ làm lại về mã.
 
 ---
 
@@ -102,7 +104,7 @@ Làm xong thì đổi `Status:` thành `done`, tích các ô, và **viết vào 
 
 | Slice | Ticket | Xong |
 |---|---|---|
-| 0 — Nền móng | 8 | **3** (01, 02, 03) |
+| 0 — Nền móng | 8 | **0** (reset 2026-08-25, xem ghi chú đầu file) |
 | 1 — Danh mục | 6 | 0 |
 | 2 — Người thuê, hợp đồng | 8 | 0 |
 | 3 — Ghi chỉ số | 8 | 0 |
@@ -110,7 +112,7 @@ Làm xong thì đổi `Status:` thành `done`, tích các ô, và **viết vào 
 
 **Slice 4 có một luật riêng, đọc `spec.md` của nó trước khi động vào.** Ticket 02 là bộ kiểm thử viết trước khi có dòng cài đặt nào, và nó **cố ý không demo được gì**. Đảo thứ tự 02 và 03 là mất phần lớn giá trị của cả slice — kế hoạch triển khai nói rõ điều này và giải thích vì sao.
 
-**Làm tiếp:** `slice-00 · 05` (năm vai trò năm menu). Nó nằm trên đường găng — xong nó mới mở khoá được ticket 06 và 07 của Slice 0.
+**Làm tiếp:** `slice-00 · 01` (bộ khung ba container). Mã nguồn đã bị xoá nên quay lại từ đầu, nhưng đọc mục `## Comments` của ticket 01, 02, 03 trước — ba cái bẫy môi trường (Spring Initializr, gói kiểm thử Boot 4, Testcontainers/Colima) và quyết định phiên đăng nhập (ADR-0001) đều đã tìm ra, không cần dò lại.
 
 `slice-00 · 08` (GitHub Actions) **hoãn** tới khi có repo GitHub thật, vì tiêu chí hoàn thành đòi phải thấy CI đỏ khi đẩy mã sai.
 

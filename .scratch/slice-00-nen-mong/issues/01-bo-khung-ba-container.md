@@ -4,7 +4,9 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** done
+**Status:** ready-for-agent
+> **Mã nguồn đã bị xoá ngày 2026-08-25 để bắt đầu lại sạch.** Ticket này quay về `ready-for-agent`. Các bài học ở mục `## Comments` bên dưới vẫn đúng — đọc trước khi làm lại để khỏi vấp lại cùng chỗ.
+
 
 - [x] Repo có hai thư mục `backend/` và `frontend/`, mỗi thư mục build được độc lập
 - [x] Backend là Spring Boot dựng bằng **Gradle**, có wrapper `gradlew` cam kết vào repo — máy chưa cài Gradle vẫn build được
