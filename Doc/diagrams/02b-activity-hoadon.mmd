@@ -1,0 +1,15 @@
+flowchart TD
+  S((Đã ghi đủ<br/>chỉ số)) --> A7["Quản lý bấm 'Tạo hoá đơn kỳ'"]
+  A7 --> A8["Hệ thống tính cho từng phòng:<br/>tiền phòng (chia ngày nếu cần)<br/>+ điện + nước + phí cố định + gửi xe<br/>+ phát sinh − giảm trừ − số dư khả dụng"]
+  A8 --> A9["Tạo hoá đơn trạng thái Nháp,<br/>hiển thị bảng tổng hợp"]
+  A9 --> A10["Quản lý rà soát từng hoá đơn"]
+  A10 --> D4{"Cần điều chỉnh?"}
+  D4 -- Có --> A11["Thêm khoản phát sinh hoặc<br/>giảm trừ kèm lý do"]
+  A11 --> A10
+  D4 -- Không --> A12["Bấm 'Phát hành hàng loạt'"]
+  A12 --> A13["Sinh mã hoá đơn, khoá không cho sửa,<br/>hiển thị trên cổng người thuê"]
+  A13 --> A14["Gửi thông báo tới người thuê"]
+  A14 --> D5{"Gửi được<br/>cho tất cả?"}
+  D5 -- Không --> A15["Liệt kê phòng chưa gửi được<br/>để quản lý gửi thủ công"]
+  A15 --> E((Kết thúc))
+  D5 -- Có --> E

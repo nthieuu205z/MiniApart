@@ -1,0 +1,13 @@
+flowchart TD
+  S((Đã chốt số<br/>và kiểm kê)) --> A7["Tính hoá đơn kỳ cuối:<br/>tiền phòng theo ngày ở thực tế<br/>+ dịch vụ theo chỉ số + phí cố định"]
+  A7 --> A8["Quyết toán:<br/>Tiền cọc − Công nợ − Khấu trừ"]
+  A8 --> D3{"Kết quả ≥ 0?"}
+  D3 -- "Có" --> A9["Chi trả phần cọc còn lại,<br/>ghi nhận phiếu chi"]
+  D3 -- "Không" --> A10["Tạo khoản phải thu bổ sung,<br/>chưa cho đóng hợp đồng"]
+  A10 --> D4{"Đã thanh toán?"}
+  D4 -- Chưa --> A10
+  D4 -- Rồi --> A11["Thanh lý hợp đồng"]
+  A9 --> A11
+  A11 --> A12["Phòng chuyển về Trống<br/>hoặc Đang sửa chữa"]
+  A12 --> A13["Cổng người thuê chuyển<br/>chế độ chỉ đọc 90 ngày"]
+  A13 --> E((Kết thúc))

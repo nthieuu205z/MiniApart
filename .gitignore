@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# IDE
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+
+# Java / Gradle
+backend/build/
+backend/.gradle/
+backend/bin/
+*.class
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Local env — never commit secrets
+.env
+.env.local
+*.local.yml
+
+# Word lock files
+~$*
+
+# NOTE: .scratch/ is intentionally NOT ignored — tickets are part of the deliverable.

@@ -1,0 +1,75 @@
+%% Sơ đồ tuần tự — UC-09 Ghi chỉ số điện nước
+%% Yêu cầu: FR-MTR-01 đến FR-MTR-10. Quy tắc: BR-09, BR-10
+%% Bối cảnh dùng thật: trên điện thoại, giữa hành lang, sóng yếu.
+sequenceDiagram
+  autonumber
+  actor QL as Quan ly toa nha
+  participant UI as Man hinh dien thoai
+  participant API as ChiSoController
+  participant SV as ChiSoService
+  participant ANH as AnhService
+  participant DISK as Volume anh
+  participant DB as PostgreSQL
+
+  QL->>UI: Mo man hinh ghi chi so
+  UI->>API: GET /api/ky/{kyId}/chi-so?toaNha={id}
+  API->>DB: Lay danh sach phong kem chi so ky truoc
+  DB-->>API: danh sach
+  API-->>UI: Phong sap theo tang, kem chi so cu
+  UI-->>QL: Hien danh sach, o nhap so to, ban phim so
+
+  loop Voi tung phong
+    QL->>UI: Nhap chi so moi
+    UI->>UI: Tinh va hien ngay muc tieu thu (FR-MTR-02)
+    Note over UI,QL: Hien ngay de nguoi ghi tu phat hien go nham
+
+    QL->>UI: Chup anh cong to
+    UI->>API: POST /api/chi-so (kem anh)
+    API->>SV: ghiChiSo(phongId, dichVuId, chiSoMoi, anh)
+
+    alt Chi so moi < chi so ky truoc
+      alt Co khai thay cong to
+        SV->>SV: Doc chiSoCuoiCongToCu va chiSoDauCongToMoi
+        SV->>SV: Muc tieu thu = doan cong to cu + doan cong to moi (BR-09)
+        Note over SV: CR-004 - can du bon chi so
+      else Khong khai thay cong to
+        SV-->>API: Loi FR-MTR-03
+        API-->>UI: Tu choi luu, bao "Chi so moi nho hon ky truoc"
+      end
+    else Chi so hop le
+      SV->>SV: Muc tieu thu = chi so cuoi - chi so dau
+    end
+
+    SV->>DB: Lay trung binh ba ky gan nhat cua cung phong
+    DB-->>SV: trung binh
+    alt Vuot 150% trung binh
+      SV-->>UI: Canh bao tieu thu bat thuong (FR-MTR-04)
+      UI-->>QL: Hien canh bao, hoi xac nhan
+      QL->>UI: Xac nhan van luu
+    end
+
+    SV->>ANH: luuAnh(anh)
+    ANH->>DISK: Ghi tep theo khoa luu tru
+    DISK-->>ANH: khoaLuuTru
+    ANH-->>SV: khoaLuuTru
+    Note over ANH,DISK: Luu khoa dinh danh, khong luu duong dan cong khai (CR-013)
+
+    SV->>DB: Ghi CHI_SO_DICH_VU
+    SV->>DB: Ghi ANH_DINH_KEM
+    SV-->>API: OK
+    API-->>UI: Da luu
+    UI->>UI: Tu nhay sang phong ke tiep
+  end
+
+  QL->>UI: Bam "Chot ky"
+  UI->>API: POST /api/ky/{kyId}/chot
+  API->>SV: chotKy(kyId)
+  SV->>DB: Tim phong chua ghi chi so
+  DB-->>SV: danh sach thieu
+  alt Con phong chua ghi
+    SV-->>UI: Tu choi chot, liet ke phong thieu (FR-MTR-08)
+  else Da ghi du
+    SV->>DB: Doi trang thai ky thanh DA_CHOT
+    Note over SV,DB: Tu day chi so bi khoa, tru vai tro Chu so huu (FR-MTR-10)
+    SV-->>UI: Da chot ky
+  end

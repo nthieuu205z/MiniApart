@@ -1,0 +1,23 @@
+stateDiagram-v2
+  direction LR
+  [*] --> Moi : Người thuê gửi yêu cầu
+  Moi : Mới tiếp nhận
+  Moi --> DaTiepNhan : Quản lý xác nhận
+  DaTiepNhan : Đã tiếp nhận
+  DaTiepNhan --> DaPhanCong : Phân công thợ
+  DaPhanCong : Đã phân công
+  DaPhanCong --> DangXuLy : Thợ nhận việc
+  DangXuLy : Đang xử lý
+  DangXuLy --> ChoXacNhan : Báo hoàn thành + chi phí
+  ChoXacNhan : Chờ xác nhận
+  ChoXacNhan --> DaDong : Người thuê xác nhận
+  ChoXacNhan --> DaDong : Tự đóng sau 72 giờ
+  ChoXacNhan --> DangXuLy : Người thuê báo chưa đạt
+  DaDong : Đã đóng
+  Moi --> DaHuy : Huỷ (có lý do)
+  DaTiepNhan --> DaHuy : Huỷ (có lý do)
+  DaPhanCong --> DaHuy : Huỷ (có lý do)
+  DangXuLy --> DaHuy : Huỷ (có lý do)
+  DaHuy : Đã huỷ
+  DaDong --> [*]
+  DaHuy --> [*]

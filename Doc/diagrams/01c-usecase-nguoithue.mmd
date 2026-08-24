@@ -1,0 +1,23 @@
+flowchart LR
+  classDef uc fill:#eef5ff,stroke:#4a6fa5;
+  NT(["👤 Người thuê"])
+  OC(["👤 Người ở cùng"])
+  subgraph HT["HỆ THỐNG MINIAPART — Cổng người thuê"]
+    direction TB
+    U19(["UC-19 Xem hoá đơn của tôi"]):::uc
+    U20(["UC-20 Xem chỉ số và ảnh công tơ"]):::uc
+    U21(["UC-21 Xem hợp đồng của tôi"]):::uc
+    U14(["UC-14 Gửi yêu cầu sửa chữa"]):::uc
+    U26(["UC-26 Xác nhận kết quả sửa chữa"]):::uc
+    U27(["UC-27 Xem thông báo toà nhà"]):::uc
+    U28(["UC-28 Gửi yêu cầu gia hạn / trả phòng"]):::uc
+  end
+  NT --- U19
+  NT --- U20
+  NT --- U21
+  NT --- U14
+  NT --- U26
+  NT --- U27
+  NT --- U28
+  OC --- U27
+  OC --- U14

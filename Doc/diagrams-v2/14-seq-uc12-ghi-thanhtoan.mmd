@@ -1,0 +1,73 @@
+%% Sơ đồ tuần tự — UC-12 Ghi nhận thanh toán
+%% Yêu cầu: FR-INV-11 đến FR-INV-14, FR-INV-16. Quy tắc: BR-08, BR-12, BR-13, BR-18
+sequenceDiagram
+  autonumber
+  actor QL as Quan ly toa nha
+  participant UI as Man hinh React
+  participant API as ThanhToanController
+  participant SV as ThanhToanService
+  participant DB as PostgreSQL
+  participant NTF as ThongBaoService
+
+  QL->>UI: Mo hoa don can ghi nhan
+  UI->>API: GET /api/hoa-don/{id}
+  API->>DB: Doc hoa don va cac ban ghi thanh toan
+  DB-->>API: du lieu
+  API-->>UI: Phai thu, da thu, con lai
+  UI-->>QL: Hien so lieu
+
+  QL->>UI: Nhap so tien, hinh thuc, ngay thu
+  UI->>API: POST /api/hoa-don/{id}/thanh-toan
+  API->>SV: ghiNhan(hoaDonId, soTien, hinhThuc, ngayThu)
+
+  alt So tien <= 0 (E1)
+    SV-->>API: Loi
+    API-->>UI: Bao loi, khong luu
+  else Hop le
+    alt Hoa don da thanh toan du (E2)
+      SV-->>UI: Canh bao "Hoa don da thanh toan du"
+      UI-->>QL: Hoi xac nhan - phan thu them se thanh so du
+      QL->>UI: Xac nhan
+    end
+
+    SV->>DB: Ghi THANH_TOAN loai THU
+    Note over SV,DB: Khong bao gio sua ban ghi cu (BR-18)
+
+    SV->>DB: Tinh lai da thu = tong dai so cac but toan
+    Note over SV,DB: Tong dai so, vi but toan doi ung mang so am (CR-010)
+    DB-->>SV: daThu
+
+    SV->>SV: Cap nhat trang thai theo BR-08
+    alt daThu < tongTien
+      SV->>SV: Trang thai THU_MOT_PHAN
+      alt Qua han thanh toan
+        SV->>SV: Trang thai QUA_HAN (BR-12)
+      end
+    else daThu == tongTien
+      SV->>SV: Trang thai DA_TT
+    else daThu > tongTien
+      SV->>SV: Trang thai DA_TT
+      SV->>DB: Ghi SO_DU_KHA_DUNG phan thua (BR-13)
+      Note over SV,DB: CR-006 - so du truy duoc ve hoa don sinh ra no
+    end
+
+    SV->>DB: Cap nhat HOA_DON
+    SV->>DB: Sinh bien lai co ma
+    SV->>DB: Ghi NHAT_KY_THAO_TAC
+    SV->>NTF: Thong bao cho nguoi thue
+    NTF->>DB: Ghi thong bao, huy cac nhac con lai (FR-NTF-05)
+
+    SV-->>API: Ket qua
+    API-->>UI: Trang thai moi, so du neu co
+    UI-->>QL: Hien bien lai
+  end
+
+  Note over QL,DB: Truong hop can sua ban ghi da luu (E3)
+  QL->>UI: Yeu cau sua hoac xoa ban ghi thanh toan
+  UI-->>QL: Tu choi. Huong dan lap but toan doi ung co ly do
+  QL->>UI: Lap but toan doi ung, nhap ly do
+  UI->>API: POST /api/thanh-toan/{id}/doi-ung
+  API->>SV: lapButToanDoiUng(id, lyDo)
+  SV->>DB: Ghi THANH_TOAN loai DOI_UNG, so tien am, tro ve ban ghi goc
+  Note over SV,DB: Ban ghi goc giu nguyen. Lich su day du, kiem toan duoc (NFR-CMP-01)
+  SV->>DB: Tinh lai da thu va trang thai

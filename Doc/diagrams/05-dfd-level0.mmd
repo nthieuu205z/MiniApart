@@ -1,0 +1,24 @@
+flowchart LR
+  CHU["Chủ sở hữu"]
+  QL["Quản lý toà nhà"]
+  THO["Thợ sửa chữa"]
+  NT["Người thuê"]
+  NH["Ngân hàng<br/>(file sao kê)"]
+  TB["Dịch vụ gửi<br/>thông báo"]
+
+  HT(("0<br/>HỆ THỐNG<br/>QUẢN LÝ CHUNG CƯ MINI"))
+
+  CHU -->|"Khai báo toà nhà, dịch vụ, biểu giá,<br/>tài khoản người dùng"| HT
+  HT -->|"Báo cáo doanh thu, công nợ,<br/>tỷ lệ lấp đầy, nhật ký"| CHU
+
+  QL -->|"Hồ sơ người thuê, hợp đồng,<br/>chỉ số công tơ, ghi nhận thu tiền"| HT
+  HT -->|"Danh sách phòng, hoá đơn kỳ,<br/>bảng nhắc việc, công nợ"| QL
+
+  NT -->|"Yêu cầu sửa chữa, xác nhận,<br/>yêu cầu gia hạn / trả phòng"| HT
+  HT -->|"Hoá đơn, chỉ số và ảnh công tơ,<br/>thông báo, mã QR chuyển khoản"| NT
+
+  THO -->|"Nhận việc, báo hoàn thành,<br/>chi phí sửa chữa"| HT
+  HT -->|"Danh sách việc được giao,<br/>thông tin phòng và sự cố"| THO
+
+  NH -->|"File sao kê giao dịch"| HT
+  HT -->|"Nội dung thông báo,<br/>người nhận"| TB
