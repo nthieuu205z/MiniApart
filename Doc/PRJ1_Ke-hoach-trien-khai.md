@@ -191,7 +191,7 @@ Ký hiệu: **[M]** Must have · **[S]** Should have · **[C]** Could have, ngo�
 
 **Đóng:** FR-INV-01 [M], FR-INV-02 [M], FR-INV-03 [M], FR-INV-04 [M], FR-INV-05 [S], FR-INV-06 [M], FR-INV-07 [M]
 **Áp dụng CR:** CR-002 phần (b) — kết tinh nhân khẩu khi chốt kỳ; CR-008 (khoản phát sinh chờ); CR-011 (bỏ thuế GTGT)
-**Quy tắc nghiệp vụ:** BR-01 → BR-09, BR-15, BR-16
+**Quy tắc nghiệp vụ:** BR-01 → BR-09, BR-15
 
 **Thứ tự bắt buộc trong vertical slice này:**
 

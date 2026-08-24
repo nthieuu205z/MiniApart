@@ -26,7 +26,7 @@ FR-INV-01 [M], FR-INV-02 [M], FR-INV-03 [M], FR-INV-04 [M], FR-INV-05 [S], FR-IN
 
 **Quy tắc nghiệp vụ:** BR-01 → BR-09, BR-15
 
-> ⚠️ **Một điểm cần người phụ trách xác nhận.** Kế hoạch triển khai ghi phạm vi quy tắc của slice này là *"BR-01 → BR-09, BR-15, **BR-16**"*. Nhưng BR-16 là **vòng đời yêu cầu sửa chữa**, thuộc Vertical Slice 7, không liên quan tới tính hoá đơn. Nhiều khả năng đây là lỗi gõ trong kế hoạch. Các ticket dưới đây làm theo **BR-01 → BR-09 và BR-15**; nếu xác nhận là lỗi gõ thì sửa lại kế hoạch, đừng sửa ticket.
+> **Đã xác nhận 24/08/2026.** Kế hoạch triển khai trước đây ghi thừa BR-16 ở dòng này. BR-16 là vòng đời yêu cầu sửa chữa, thuộc Vertical Slice 7. Người phụ trách xác nhận là lỗi gõ và kế hoạch đã sửa.
 
 ## Thứ tự bắt buộc — đảo là hỏng
 
