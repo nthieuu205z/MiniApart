@@ -312,3 +312,459 @@ Theo thứ tự ưu tiên:
 4. Mức 2 và mức 3 khi phần code chạm tới
 
 Mỗi màn hình cần **bản điện thoại** trước, **bản máy tính** sau — trừ các màn hình báo cáo thì ngược lại.
+
+---
+
+# Phụ lục A — Hợp đồng API
+
+Phần này để **mã giao diện cắm vào là chạy**, không phải dịch lại tên trường. Mọi tên dưới đây đã chốt: một số đã có trong mã đang chạy, số còn lại lấy thẳng từ sơ đồ thực thể ở Chương 3 của báo cáo.
+
+## A.1. Quy ước chung
+
+**Đường dẫn.** Mọi lời gọi đi tới `/api/...` — **đường dẫn tương đối**, không bao giờ ghi cứng tên máy chủ. Lúc phát triển Vite chuyển tiếp, lúc chạy thật Nginx chuyển tiếp.
+
+**Xác thực.** Gửi kèm `Authorization: Bearer <token>`. Token lấy từ `POST /api/auth/login`, sống 30 phút.
+
+**Tên trường.** camelCase, **tiếng Việt không dấu**: `hoTen`, `soDienThoai`, `tongTien`. Không dịch sang tiếng Anh — tên này khớp với sơ đồ lớp ở Chương 3 báo cáo, đổi đi là báo cáo sai.
+
+**Ngày tháng.** Chuẩn ISO 8601.
+- Ngày: `"2026-08-28"`
+- Thời điểm: `"2026-08-24T07:36:02Z"`
+
+### ⚠️ Số tiền là CHUỖI, không phải số
+
+```json
+{ "tongTien": "1888000.00", "daThu": "500000.00" }
+```
+
+**Đây không phải nhầm lẫn, và cũng không phải chuyện làm cho phức tạp.**
+
+Kiểu `number` của JavaScript là dấu phẩy động nhị phân. `0.1 + 0.2` cho `0.30000000000000004`. Áp vào bài toán này, cộng vài dòng tiền có thể ra `1887999.9999999998`. Sai số đó **không làm chương trình báo lỗi** và **không nhìn thấy bằng mắt trên hoá đơn** — chỉ lộ ra khi đối chiếu tổng cuối kỳ.
+
+Chương 4 của báo cáo đã loại phương án viết backend bằng JavaScript đúng vì lý do này. Sẽ vô nghĩa nếu backend giữ kỷ luật `BigDecimal` rồi lại để số tiền đi qua `number` ở giao diện.
+
+**Quy tắc cho giao diện:**
+
+- Số tiền nhận về là chuỗi, **chỉ để hiển thị**
+- **Không cộng, trừ, nhân, chia số tiền ở giao diện.** Cần tổng thì máy chủ đã trả sẵn
+- Người dùng nhập tiền thì gửi lên **cũng dưới dạng chuỗi**
+- Định dạng hiển thị: dấu chấm ngăn nghìn, `1.888.000 đ`
+
+Ngược lại, **số lượng thì là số thật**: `soLuong`, `chiSoDau`, `mucTieuThu`, `soNguoi`, `soTang` — chúng là số nguyên hoặc số đo, không phải tiền.
+
+### Mã trạng thái HTTP
+
+| Mã | Nghĩa | Giao diện làm gì |
+|---|---|---|
+| `200` | Thành công | |
+| `201` | Đã tạo mới | |
+| `400` | Dữ liệu không hợp lệ | hiện lỗi ngay tại ô nhập sai |
+| `401` | Chưa đăng nhập, hoặc token hết hạn / bị thu hồi | xoá token, về màn đăng nhập |
+| `403` | Đã đăng nhập nhưng không đủ quyền | hiện trang "không có quyền" |
+| `404` | Không tìm thấy | |
+| `409` | Xung đột | trùng mã, hợp đồng chồng ngày, tạo hoá đơn lần hai |
+
+### Hình dạng lỗi
+
+```json
+{ "thongBao": "Số điện thoại hoặc mật khẩu không đúng" }
+```
+
+Lỗi kiểm tra dữ liệu có thêm phần chỉ rõ ô nào sai:
+
+```json
+{
+  "thongBao": "Dữ liệu không hợp lệ",
+  "loiTruong": { "ngayChotSo": "Chỉ nhận giá trị từ 1 đến 28" }
+}
+```
+
+`thongBao` **luôn là câu tiếng Việt đọc được cho người dùng cuối**, không phải mã lỗi kỹ thuật. Giao diện hiện thẳng nó ra được.
+
+### Danh sách có phân trang
+
+```json
+{ "noiDung": [ ... ], "tongSo": 78, "trang": 0, "kichThuoc": 20 }
+```
+
+## A.2. Cặp mã và nhãn
+
+Mọi trường kiểu liệt kê trả về **hai giá trị**: mã để mã nguồn dùng, nhãn để hiển thị. Giao diện **luôn hiện nhãn**, không tự dịch mã.
+
+```json
+{ "vaiTro": "QUAN_LY", "tenVaiTro": "Quản lý toà nhà" }
+{ "trangThai": "DA_THU_MOT_PHAN", "tenTrangThai": "Đã thu một phần" }
+```
+
+Quy ước đặt tên: mã ở trường `x`, nhãn ở trường `tenX`.
+
+### Toàn bộ tập giá trị
+
+| Nhóm | Mã | Nhãn |
+|---|---|---|
+| **Vai trò** | `QTHT` · `CHU` · `QUAN_LY` · `THO` · `NGUOI_THUE` | Quản trị hệ thống · Chủ sở hữu · Quản lý toà nhà · Thợ sửa chữa · Người thuê |
+| **Trạng thái tài khoản** | `HOAT_DONG` · `BI_KHOA` | Hoạt động · Bị khoá |
+| **Trạng thái phòng** | `TRONG` · `DA_COC` · `DANG_THUE` · `DANG_SUA` · `NGUNG` | Trống · Đã đặt cọc · Đang thuê · Đang sửa · Ngừng khai thác |
+| **Trạng thái hợp đồng** | `CHO_KY` · `DA_COC` · `HIEU_LUC` · `DA_THANH_LY` | Chờ ký · Đã cọc · Hiệu lực · Đã thanh lý |
+| **Trạng thái hoá đơn** | `NHAP` · `DA_PHAT_HANH` · `DA_THU_MOT_PHAN` · `DA_THANH_TOAN` · `QUA_HAN` · `DA_HUY` | Nháp · Đã phát hành · Đã thu một phần · Đã thanh toán · Quá hạn · Đã huỷ |
+| **Trạng thái yêu cầu sửa chữa** | `MOI_TIEP_NHAN` · `DA_TIEP_NHAN` · `DA_PHAN_CONG` · `DANG_XU_LY` · `CHO_XAC_NHAN` · `DA_DONG` · `DA_HUY` | Mới tiếp nhận · Đã tiếp nhận · Đã phân công · Đang xử lý · Chờ xác nhận · Đã đóng · Đã huỷ |
+| **Mức độ sự cố** | `THUONG` · `GAP` · `KHAN_CAP` | Thường · Gấp · Khẩn cấp |
+| **Cách tính dịch vụ** | `THEO_CHI_SO` · `CO_DINH` · `THEO_DAU_NGUOI` · `THEO_SO_LUONG` | Theo chỉ số · Cố định theo phòng · Theo đầu người · Theo số lượng |
+| **Lý do bỏ qua khi tạo hoá đơn** | `THIEU_CHI_SO` · `THIEU_BANG_GIA` · `KHONG_XAC_DINH_SO_NGUOI` | Chưa ghi chỉ số · Chưa có bảng giá cho kỳ · Không xác định được số người ở |
+
+**Chú ý:** `DA_COC` xuất hiện ở cả trạng thái phòng lẫn trạng thái hợp đồng, và đó là cố ý — chúng nói về cùng một tình trạng nhìn từ hai phía.
+
+## A.3. Các endpoint
+
+### Xác thực — **đã chạy thật**
+
+```
+POST /api/auth/login
+```
+```json
+// gửi lên
+{ "soDienThoai": "0900000003", "matKhau": "MatKhau@123" }
+
+// nhận về
+{
+  "token": "eyJhbGciOi...",
+  "thoiHanGiay": 1800,
+  "nguoiDung": {
+    "id": 3,
+    "hoTen": "Quản lý Toà A",
+    "soDienThoai": "0900000003",
+    "vaiTro": "QUAN_LY",
+    "tenVaiTro": "Quản lý toà nhà"
+  }
+}
+```
+
+```
+GET /api/auth/me      → ThongTinNguoiDung (như phần nguoiDung ở trên)
+```
+
+> Sai mật khẩu và không có tài khoản trả về **cùng một thông báo** `401`. Đây là cố ý: thông báo khác nhau sẽ cho phép dò xem số nào có tài khoản, mà với một khu trọ thì đó là dò ra ai đang ở đây. Giao diện đừng cố phân biệt hai trường hợp.
+
+### Toà nhà
+
+```
+GET    /api/toa-nha          → danh sách toà người đang đăng nhập được xem
+POST   /api/toa-nha
+GET    /api/toa-nha/{id}
+PUT    /api/toa-nha/{id}
+```
+```json
+{
+  "id": 1,
+  "maToa": "TN-A",
+  "ten": "Toà A — Ngõ Hoà Bình",
+  "diaChi": "Số 12 ngõ 34 đường Hoà Bình, Phường Mẫu, Hà Nội",
+  "soTang": 5,
+  "ngayChotSo": 1,
+  "soNgayHanTt": 7,
+  "tkNganHang": "0123456789 — Ngân hàng Mẫu",
+  "nguongThatThoat": "10.00"
+}
+```
+
+### Phòng
+
+```
+GET    /api/toa-nha/{toaNhaId}/phong          → danh sách
+POST   /api/toa-nha/{toaNhaId}/phong          → tạo một phòng
+POST   /api/toa-nha/{toaNhaId}/phong/hang-loat → tạo một dãy phòng
+GET    /api/toa-nha/{toaNhaId}/so-do          → sơ đồ theo tầng
+```
+```json
+{
+  "id": 12,
+  "toaNhaId": 1,
+  "soPhong": "305",
+  "tang": 3,
+  "dienTich": 22.5,
+  "sucChua": 4,
+  "giaThueMacDinh": "3500000.00",
+  "trangThai": "DANG_THUE",
+  "tenTrangThai": "Đang thuê"
+}
+```
+
+Sơ đồ trả về đã nhóm sẵn theo tầng, giao diện không phải tự gom:
+
+```json
+{
+  "tang": [
+    { "soTang": 3, "phong": [ ... ] },
+    { "soTang": 2, "phong": [ ... ] }
+  ],
+  "tongKet": { "trong": 4, "dangThue": 15, "dangSua": 1, "daCoc": 0, "ngung": 0 }
+}
+```
+
+### Dịch vụ và bảng giá
+
+```
+GET    /api/toa-nha/{toaNhaId}/dich-vu
+POST   /api/toa-nha/{toaNhaId}/dich-vu
+GET    /api/dich-vu/{id}/bang-gia            → toàn bộ lịch sử giá
+POST   /api/dich-vu/{id}/bang-gia            → thêm một mức giá mới
+GET    /api/dich-vu/{id}/bac-thang           → các bộ bậc thang theo ngày hiệu lực
+POST   /api/dich-vu/{id}/bac-thang
+```
+```json
+// dịch vụ
+{
+  "id": 5, "toaNhaId": 1, "ten": "Điện",
+  "cachTinh": "THEO_CHI_SO", "tenCachTinh": "Theo chỉ số",
+  "donViTinh": "kWh", "laDien": true, "dangSuDung": true
+}
+
+// một mức giá cố định
+{ "id": 9, "dichVuId": 5, "donGia": "3500.00", "ngayHieuLuc": "2026-01-01", "dangApDung": true }
+
+// một bậc trong biểu giá bậc thang
+{
+  "id": 21, "dichVuId": 5, "bac": 1,
+  "tuSoLuong": 0, "denSoLuong": 100,
+  "tyLe": "90.00", "donGia": "1984.00",
+  "ngayHieuLuc": "2025-05-10"
+}
+```
+
+`denSoLuong` của bậc cuối là `null` — nghĩa là **không có giới hạn trên**. Giao diện hiển thị `"từ 701 trở lên"`.
+
+### Người thuê và hợp đồng
+
+```
+GET    /api/nguoi-thue?tim=...
+POST   /api/nguoi-thue
+GET    /api/nguoi-thue/{id}
+POST   /api/nguoi-thue/{id}/anh          → tải ảnh giấy tờ lên
+GET    /api/anh/{id}/lien-ket            → xin liên kết xem ảnh, hạn 15 phút
+
+GET    /api/hop-dong?toaNhaId=&trangThai=
+POST   /api/hop-dong
+GET    /api/hop-dong/{id}
+POST   /api/hop-dong/{id}/gia-han
+POST   /api/hop-dong/{id}/thanh-ly
+GET    /api/hop-dong/{id}/nguoi-o-cung
+POST   /api/hop-dong/{id}/nguoi-o-cung
+```
+```json
+// người thuê — soGiayTo đã che bớt
+{
+  "id": 7, "hoTen": "Nguyễn Văn Mẫu", "ngaySinh": "2005-03-14",
+  "soDienThoai": "0900000006", "soGiayTo": "••••••1234",
+  "queQuan": "Tỉnh Mẫu"
+}
+
+// hợp đồng
+{
+  "id": 3, "phongId": 12, "soPhong": "305", "nguoiThueId": 7,
+  "hoTenNguoiThue": "Nguyễn Văn Mẫu",
+  "ngayBatDau": "2026-08-17", "ngayKetThuc": "2027-08-16",
+  "giaThue": "3500000.00", "tienCoc": "3500000.00",
+  "soNgayBaoTruoc": 30,
+  "trangThai": "HIEU_LUC", "tenTrangThai": "Hiệu lực",
+  "sapHetHan": false, "soNgayConLai": 357
+}
+
+// liên kết xem ảnh
+{ "duongDan": "https://.../anh/abc?chuKy=...", "hetHanLuc": "2026-08-24T08:05:00Z" }
+```
+
+> `sapHetHan` là **giá trị tính ra tại thời điểm gọi**, không phải một trạng thái lưu sẵn — xem CR-012. Giao diện hiện nó thành **nhãn phụ** bên cạnh trạng thái, không thay thế trạng thái.
+
+> `soGiayTo` mặc định che bớt. Muốn xem đủ thì gọi `GET /api/nguoi-thue/{id}/so-giay-to`, và lần gọi đó **được ghi nhật ký**.
+
+### Kỳ thanh toán và ghi chỉ số
+
+```
+GET    /api/toa-nha/{toaNhaId}/ky
+POST   /api/toa-nha/{toaNhaId}/ky                → mở kỳ mới
+GET    /api/ky/{kyId}/chi-so                     → danh sách phòng cần ghi
+PUT    /api/ky/{kyId}/chi-so/{phongId}/{dichVuId} → ghi một phòng
+GET    /api/ky/{kyId}/thieu-chi-so               → phòng còn thiếu
+POST   /api/ky/{kyId}/chot
+```
+```json
+// một dòng trong màn hình ghi chỉ số
+{
+  "phongId": 12, "soPhong": "305", "tang": 3,
+  "dichVuId": 5, "tenDichVu": "Điện", "donViTinh": "kWh",
+  "chiSoDau": 1240,
+  "chiSoCuoi": 1298,
+  "mucTieuThu": 58,
+  "daGhi": true,
+  "coAnh": true,
+  "canhBao": {
+    "loai": "TIEU_THU_BAT_THUONG",
+    "thongBao": "Cao gấp 1,8 lần trung bình 3 kỳ gần nhất",
+    "trungBinhBaKy": 32
+  }
+}
+```
+
+`canhBao` là `null` khi bình thường. Có giá trị thì giao diện hiện cảnh báo **nhưng vẫn cho lưu** sau khi người dùng xác nhận — đây là cảnh báo, không phải chặn.
+
+Khi khai thay công tơ, gửi lên thêm ba trường:
+
+```json
+{
+  "chiSoCuoi": 45,
+  "coThayCongTo": true,
+  "chiSoCuoiCongToCu": 1290,
+  "chiSoDauCongToMoi": 0
+}
+```
+
+### Hoá đơn
+
+```
+POST   /api/ky/{kyId}/hoa-don/tao-hang-loat
+GET    /api/hoa-don?toaNhaId=&kyId=&trangThai=
+GET    /api/hoa-don/{id}
+PUT    /api/hoa-don/{id}                → chỉ khi đang là NHAP
+POST   /api/hoa-don/{id}/phat-hanh
+POST   /api/hoa-don/{id}/huy            → bắt buộc có lyDo
+POST   /api/hoa-don/{id}/thanh-toan
+```
+
+Kết quả tạo hàng loạt — chú ý phần bỏ qua, giao diện phải hiện rõ:
+
+```json
+{
+  "soHoaDonDaTao": 18,
+  "boQua": [
+    { "phongId": 14, "soPhong": "307", "lyDo": "THIEU_CHI_SO",
+      "tenLyDo": "Chưa ghi chỉ số", "chiTiet": "Thiếu chỉ số điện" }
+  ]
+}
+```
+
+Chi tiết một hoá đơn:
+
+```json
+{
+  "id": 44,
+  "maHoaDon": "TN-A-305-202608",
+  "hopDongId": 3, "soPhong": "305", "hoTenNguoiThue": "Nguyễn Văn Mẫu",
+  "kyId": 8, "tuNgay": "2026-07-28", "denNgay": "2026-08-28", "soNgayCuaKy": 31,
+  "soNguoiO": 2, "soHoQuyDoi": 1,
+  "trangThai": "DA_PHAT_HANH", "tenTrangThai": "Đã phát hành",
+  "hanThanhToan": "2026-09-04",
+  "chiTiet": [
+    { "tenKhoan": "Tiền phòng", "dienGiai": "3.500.000 ÷ 31 × 12 ngày",
+      "soLuong": 12, "donViTinh": "ngày", "donGia": "112903.23", "thanhTien": "1354839.00" },
+    { "tenKhoan": "Tiền điện", "dienGiai": "1.240 → 1.298 = 58 kWh × 3.500 đ",
+      "soLuong": 58, "donViTinh": "kWh", "donGia": "3500.00", "thanhTien": "203000.00" },
+    { "tenKhoan": "Làm tròn", "dienGiai": "đến 1.000 đ",
+      "soLuong": null, "donViTinh": null, "donGia": null, "thanhTien": "161.00" }
+  ],
+  "cong": "1887839.00",
+  "tongTien": "1888000.00",
+  "daThu": "0.00",
+  "conNo": "1888000.00"
+}
+```
+
+**Ba điều giao diện phải xử lý đúng ở đây:**
+
+1. `thanhTien` của dòng làm tròn **có thể âm** — `"-200.00"`. Không được giấu đi, và không được tô như lỗi.
+2. `soLuong`, `donViTinh`, `donGia` có thể là `null` với các dòng không có đơn giá (làm tròn, khoản giảm trừ). Giao diện để trống ô đó, không hiện `null`.
+3. `dienGiai` là **thứ khiến người thuê tin được con số**. Luôn hiện, đừng cắt bớt cho gọn.
+
+Với hoá đơn tính bậc thang, mỗi bậc là một dòng trong `chiTiet`:
+
+```json
+{ "tenKhoan": "Tiền điện — Bậc 1", "dienGiai": "0–200 kWh (định mức 100 × 2 hộ)",
+  "soLuong": 200, "donViTinh": "kWh", "donGia": "1984.00", "thanhTien": "396800.00" }
+```
+
+### Thanh toán
+
+```json
+// gửi lên
+{ "soTien": "500000", "hinhThuc": "CHUYEN_KHOAN", "ghiChu": "..." }
+
+// nhận về
+{ "id": 91, "maBienLai": "BL-202608-0091", "soTien": "500000.00",
+  "thoiDiem": "2026-08-30T09:12:00Z", "nguoiGhi": "Quản lý Toà A",
+  "hoaDonSauKhiThu": { "daThu": "500000.00", "conNo": "1388000.00",
+                       "trangThai": "DA_THU_MOT_PHAN", "tenTrangThai": "Đã thu một phần" } }
+```
+
+> **Không có endpoint xoá thanh toán.** Sửa sai bằng cách lập bút toán đối ứng: `POST /api/thanh-toan/{id}/doi-ung` kèm `lyDo` bắt buộc. Giao diện đừng thiết kế nút thùng rác ở đây.
+
+### Cổng người thuê
+
+```
+GET    /api/cong/hoa-don-moi-nhat
+GET    /api/cong/hoa-don?soKy=12
+GET    /api/cong/hoa-don/{id}
+GET    /api/cong/tieu-thu?soKy=12       → dữ liệu vẽ biểu đồ
+GET    /api/cong/hop-dong
+```
+
+Hình dạng hoá đơn giống hệt phần trên. Máy chủ **tự giới hạn theo người đang đăng nhập** — không truyền `phongId` lên, và có truyền cũng bị bỏ qua.
+
+### Sửa chữa
+
+```
+GET    /api/yeu-cau-sua-chua?toaNhaId=&trangThai=
+POST   /api/yeu-cau-sua-chua              → người thuê tạo, tối đa 5 ảnh
+GET    /api/yeu-cau-sua-chua/{id}
+POST   /api/yeu-cau-sua-chua/{id}/phan-cong
+POST   /api/yeu-cau-sua-chua/{id}/hoan-thanh
+GET    /api/tho/viec-cua-toi              → màn hình của thợ
+```
+```json
+{
+  "id": 17, "maYeuCau": "SC-202608-0017",
+  "toaNha": "Toà A", "soPhong": "305", "tang": 3,
+  "hangMuc": "Điện nước", "moTa": "Vòi nước nhà tắm rỉ liên tục",
+  "mucDo": "THUONG", "tenMucDo": "Thường",
+  "trangThai": "DA_PHAN_CONG", "tenTrangThai": "Đã phân công",
+  "soDienThoaiLienHe": "0900000006",
+  "anh": [ { "id": 55 }, { "id": 56 } ],
+  "chiPhi": null, "benChiuChiPhi": null,
+  "taoLuc": "2026-08-22T14:03:00Z"
+}
+```
+
+`anh` chỉ có `id`. Muốn hiện thì gọi `GET /api/anh/{id}/lien-ket` cho từng ảnh — **không có đường dẫn sẵn**, xem quy ước 6 ở mục 3.
+
+### Tổng quan và báo cáo
+
+```
+GET    /api/tong-quan?toaNhaId=&tuNgay=&denNgay=
+GET    /api/bao-cao/cong-no?toaNhaId=
+GET    /api/nhac-viec
+```
+```json
+{
+  "doanhThuPhatHanh": "142500000.00",
+  "daThu": "118200000.00",
+  "conNo": "24300000.00",
+  "tyLeLapDay": 0.87,
+  "soPhongTrong": 4,
+  "soSuCoDangMo": 3,
+  "congNo": [
+    { "soPhong": "307", "hoTenNguoiThue": "…", "soTien": "1888000.00", "soNgayQuaHan": 23 }
+  ]
+}
+```
+
+`congNo` **đã sắp theo `soNgayQuaHan` giảm dần** — nợ lâu nhất lên đầu. Giao diện không cần sắp lại.
+
+`tyLeLapDay` là số thật trong khoảng 0–1, **không phải tiền**. Hiển thị thành `87%`.
+
+## A.4. Bốn điều dễ làm sai
+
+**1. Đừng tính toán số tiền ở giao diện.** Kể cả phép cộng đơn giản. Cần tổng thì máy chủ trả sẵn `cong`, `tongTien`, `daThu`, `conNo`. Nếu thiếu con số nào thì báo để bổ sung endpoint, đừng tự cộng.
+
+**2. Đừng tự dịch mã trạng thái.** Máy chủ trả kèm `tenTrangThai` rồi. Tự dịch thì hai chỗ lệch nhau, và tiếng Việt trong mã giao diện sẽ khác tiếng Việt trong báo cáo.
+
+**3. Đừng lưu đường dẫn ảnh.** Liên kết hết hạn sau 15 phút. Mỗi lần mở ảnh là một lần xin liên kết mới. Giao diện cần trạng thái *đang lấy liên kết* và *liên kết đã hết hạn, bấm để lấy lại*.
+
+**4. Gặp `401` thì xoá token và về màn đăng nhập ngay.** `401` không chỉ nghĩa là hết hạn — nó cũng xảy ra khi tài khoản bị khoá hoặc bị thu hồi quyền, và lúc đó token đã chết hẳn. Đừng thử gọi lại.
