@@ -47,7 +47,7 @@ class HealthEndpointIntegrationTest {
     }
 
     @Test
-    void flywayRunsTheBaselineMigrationBeforeTheApplicationStarts() {
+    void NFR_REL_03_flywayRunsTheBaselineMigrationBeforeTheApplicationStarts() {
         Integer appliedMigrations = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM flyway_schema_history WHERE version = '1'",
                 Integer.class
