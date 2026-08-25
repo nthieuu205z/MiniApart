@@ -39,7 +39,7 @@ class HealthEndpointIntegrationTest {
     }
 
     @Test
-    void healthEndpointReportsDatabaseIsUpAfterQueryingIt() throws Exception {
+    void NFR_REL_03_healthEndpointReportsDatabaseIsUpAfterQueryingIt() throws Exception {
         mockMvc.perform(get("/api/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"))

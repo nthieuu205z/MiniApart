@@ -4,6 +4,7 @@ services:
     environment:
       POSTGRES_DB: miniapart
       POSTGRES_USER: miniapart
+      # Local-only fallback; deployment must provide POSTGRES_PASSWORD.
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-miniapart-dev}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -23,8 +24,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "8080:8080"
 
   frontend:
     build:

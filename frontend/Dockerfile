@@ -16,4 +16,4 @@ COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
-    CMD wget --quiet --output-document=- http://127.0.0.1/ > /dev/null || exit 1
+    CMD wget --quiet --output-document=- http://127.0.0.1/api/health > /dev/null || exit 1

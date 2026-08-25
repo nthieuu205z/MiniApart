@@ -28,21 +28,27 @@ docker compose down
 
 Ticket hiện tại mới dựng đường nối frontend → backend → PostgreSQL. Đăng nhập và dữ liệu nghiệp vụ sẽ được triển khai ở các ticket tiếp theo.
 
+Compose dùng mật khẩu `miniapart-dev` mặc định chỉ để chạy local. Khi triển khai ở môi trường thật, luôn đặt `POSTGRES_PASSWORD` bằng secret riêng trước khi chạy Compose.
+
 ## Chạy riêng từng phần khi phát triển
 
-Backend cần một PostgreSQL đang chạy. Cách nhanh nhất là để Compose lo phần đó:
+Flow đầy đủ bằng Compose ở trên là flow được khuyến nghị. Cổng PostgreSQL không publish ra máy host, nên **không** chạy `docker compose up -d postgres` rồi khởi động backend trên host.
+
+Nếu muốn chạy backend trên host, cần một PostgreSQL riêng đang nghe ở `localhost:5432`, sau đó đặt cấu hình kết nối:
 
 ```bash
-docker compose up -d postgres
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/miniapart
+export SPRING_DATASOURCE_USERNAME=miniapart
+export SPRING_DATASOURCE_PASSWORD=<mat-khau-local>
 ```
 
-Rồi ở một cửa sổ khác:
+Rồi khởi động backend:
 
 ```bash
 cd backend && ./gradlew bootRun
 ```
 
-Và frontend ở cửa sổ thứ ba:
+Nếu backend đang chạy ở `localhost:8080`, khởi động frontend ở cửa sổ khác:
 
 ```bash
 cd frontend && npm ci && VITE_BACKEND_URL=http://localhost:8080 npm run dev
