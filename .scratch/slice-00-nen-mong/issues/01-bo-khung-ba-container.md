@@ -4,8 +4,8 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
-> **Mã nguồn đã bị xoá ngày 2026-08-25 để bắt đầu lại sạch.** Ticket này quay về `ready-for-agent`. Các bài học ở mục `## Comments` bên dưới vẫn đúng — đọc trước khi làm lại để khỏi vấp lại cùng chỗ.
+**Status:** done
+> **Ghi chú lịch sử:** mã nguồn đã bị xoá ngày 2026-08-25 để bắt đầu lại sạch; ticket khi đó quay về `ready-for-agent`. Các bài học ở mục `## Comments` bên dưới vẫn được giữ lại.
 
 
 - [x] Repo có hai thư mục `backend/` và `frontend/`, mỗi thư mục build được độc lập
@@ -32,3 +32,12 @@ Ghi lại vì cả ba đều là chuyện thật, và mục 4.7 của Chương 4
 Cách xử lý **không** phải là bảo mỗi người tự đặt biến môi trường — làm vậy là máy người này chạy máy người kia hỏng. Thay vào đó `build.gradle` tự hỏi `docker` xem engine đang nằm ở đâu và nói phiên bản API nào, rồi truyền lại cho Testcontainers. Người dùng Docker Desktop hay Colima đều không phải cấu hình gì. Biến `DOCKER_HOST` nếu ai đó đã đặt sẵn thì vẫn được tôn trọng.
 
 Khoá cấu hình đúng là `api.version` chứ không phải `DOCKER_API_VERSION` như nhiều bài viết nói — tìm ra bằng cách đọc chuỗi hằng trong tệp lớp `DefaultDockerClientConfig` của thư viện.
+
+### Kết quả thực thi — 2026-08-26
+
+- Dựng backend Spring Boot 4.1.1 bằng Gradle 9.7.1, Java 21, có wrapper; thêm health probe `GET /api/health` dùng truy vấn `SELECT 1` thật và trả 503 khi database lỗi.
+- Bật Flyway với migration `V1__baseline.sql`; kiểm thử xác nhận migration được áp dụng trước khi ứng dụng khởi động.
+- Dựng frontend React 19.2 + Vite 8.2; giao diện smoke gọi API tương đối `/api/health`. Nginx proxy `/api/` vào backend.
+- `docker compose build` và `docker compose up -d` chạy thành công. PostgreSQL và backend chỉ nằm trong mạng Docker; frontend publish cổng 5173. Cả ba container đều `healthy`, frontend proxy trả `{"status":"UP","database":"UP"}`.
+- Verification: backend 3/3 test pass trên PostgreSQL Testcontainer, frontend 1/1 test pass, TypeScript/Vite build pass, `npm audit` không còn lỗ hổng.
+- Các commit triển khai: `a555633`, `9fcb617`, `1a8e3fc` trên branch `codex/slice-00-ticket-01`.
