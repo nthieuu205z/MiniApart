@@ -8,44 +8,25 @@ Spring Boot · PostgreSQL · React · Docker Compose
 
 ## Chạy toàn bộ hệ thống
 
-Cần **Docker** đang chạy. Ba lệnh:
+Cần **Docker** đang chạy. Từ gốc repo, chạy đúng ba bước:
 
 ```bash
 docker compose up -d --build
 ```
 
-Rồi mở <http://localhost:5173> và đăng nhập.
-
-### Tài khoản mẫu
-
-Mật khẩu của **tất cả** tài khoản dưới đây: `MatKhau@123`
-
-| Số điện thoại | Vai trò | Phạm vi |
-|---|---|---|
-| `0900000001` | Quản trị hệ thống | Toàn hệ thống |
-| `0900000002` | Chủ sở hữu | Cả hai toà |
-| `0900000003` | Quản lý toà nhà | Chỉ toà A |
-| `0900000004` | Quản lý toà nhà | Chỉ toà B |
-| `0900000005` | Thợ sửa chữa | Toà A |
-| `0900000006` | Người thuê | Toà A |
-
-Toàn bộ là **dữ liệu bịa** — không có tên, số điện thoại, hay địa chỉ của người thật. Đây là biện pháp giảm rủi ro R-13 trong kế hoạch triển khai.
-
-Hai quản lý ở hai toà khác nhau là cố ý: ticket 06 cần đúng cấu hình đó để thử phép tấn công "đăng nhập bằng quản lý toà A rồi gọi thẳng dữ liệu toà B".
-
-Xem log khi có gì đó không lên:
+Mở <http://localhost:5173> để xem smoke screen MiniApart.
 
 ```bash
-docker compose logs -f
+docker compose ps
 ```
 
-Dừng lại, giữ nguyên dữ liệu:
+Khi làm xong, dừng các container nhưng giữ dữ liệu:
 
 ```bash
 docker compose down
 ```
 
-Thêm `-v` vào lệnh trên là **xoá luôn cơ sở dữ liệu**. Chỉ dùng khi muốn làm lại từ đầu.
+Ticket hiện tại mới dựng đường nối frontend → backend → PostgreSQL. Đăng nhập và dữ liệu nghiệp vụ sẽ được triển khai ở các ticket tiếp theo.
 
 ## Chạy riêng từng phần khi phát triển
 
@@ -64,18 +45,26 @@ cd backend && ./gradlew bootRun
 Và frontend ở cửa sổ thứ ba:
 
 ```bash
-cd frontend && npm install && npm run dev
+cd frontend && npm ci && VITE_BACKEND_URL=http://localhost:8080 npm run dev
 ```
 
-Frontend luôn gọi backend qua đường dẫn tương đối `/api`. Lúc phát triển thì Vite chuyển tiếp, lúc triển khai thật thì Nginx chuyển tiếp — **không chỗ nào trong mã ghi cứng địa chỉ máy chủ**.
+Frontend luôn gọi backend qua đường dẫn tương đối `/api`. Lúc phát triển, Vite nhận địa chỉ proxy từ `VITE_BACKEND_URL`; lúc triển khai bằng Compose, Nginx chuyển tiếp — **không chỗ nào trong mã giao diện ghi cứng địa chỉ máy chủ**.
 
 ## Chạy kiểm thử
+
+Backend:
 
 ```bash
 cd backend && ./gradlew test
 ```
 
-Kiểm thử tích hợp dựng một PostgreSQL thật bằng Testcontainers, nên **Docker phải đang chạy**. Máy dùng Colima hay Rancher Desktop thì không cần đặt biến môi trường gì — `build.gradle` tự hỏi `docker` xem engine đang ở đâu.
+Frontend:
+
+```bash
+cd frontend && npm ci && npm test
+```
+
+Kiểm thử tích hợp backend dựng một PostgreSQL thật bằng Testcontainers, nên **Docker phải đang chạy**. Máy dùng Colima hay Rancher Desktop thì không cần đặt biến môi trường gì — `build.gradle` tự hỏi `docker` xem engine đang ở đâu.
 
 ## Cấu trúc
 
