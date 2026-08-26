@@ -35,7 +35,8 @@ select {
 }
 
 .hero,
-.status-card {
+.status-card,
+.auth-card {
   width: min(100%, 42rem);
   margin-inline: auto;
 }
@@ -80,12 +81,18 @@ h2 {
   line-height: 1.6;
 }
 
-.status-card {
+.status-card,
+.auth-card {
   padding: clamp(1.35rem, 5vw, 2rem);
   border: 1px solid #d5e6e1;
   border-radius: 1.25rem;
   background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 1.5rem 3.5rem rgba(17, 75, 67, 0.1);
+}
+
+.auth-card {
+  display: grid;
+  gap: 1.2rem;
 }
 
 .status-card__heading {
@@ -153,6 +160,91 @@ dd {
   color: #a33737;
 }
 
+.login-form,
+.welcome-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+  color: #0f4f4a;
+  font-weight: 650;
+}
+
+.field input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid #c5dbd5;
+  border-radius: 0.9rem;
+  background: #f9fcfb;
+  color: #14322f;
+}
+
+.field input:focus {
+  outline: 2px solid rgba(15, 118, 110, 0.25);
+  border-color: #0f766e;
+}
+
+.primary-button,
+.ghost-button {
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.primary-button {
+  padding: 0.95rem 1.2rem;
+  background: linear-gradient(135deg, #0f766e, #155e75);
+  color: #fff;
+  font-weight: 800;
+}
+
+.ghost-button {
+  padding: 0.7rem 1rem;
+  background: #e4f3ef;
+  color: #0f4f4a;
+  font-weight: 700;
+}
+
+.primary-button:hover,
+.ghost-button:hover {
+  transform: translateY(-1px);
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.welcome-title {
+  margin-bottom: 0;
+  color: #0f4f4a;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.welcome-copy {
+  margin-bottom: 0;
+}
+
+.identity-list {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+}
+
+.identity-list div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid #e7f0ed;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color: #e1f0ec;
@@ -176,13 +268,30 @@ dd {
     color: #a9c5be;
   }
 
-  .status-card {
+  .status-card,
+  .auth-card {
     border-color: #28544d;
     background: rgba(17, 52, 48, 0.9);
     box-shadow: 0 1.5rem 3.5rem rgba(0, 0, 0, 0.2);
   }
 
-  .status-list div {
+  .status-list div,
+  .identity-list div {
     border-top-color: #28544d;
+  }
+
+  .field {
+    color: #d8f4ed;
+  }
+
+  .field input {
+    border-color: #28544d;
+    background: rgba(9, 33, 31, 0.9);
+    color: #e1f0ec;
+  }
+
+  .ghost-button {
+    background: #173b37;
+    color: #d8f4ed;
   }
 }
