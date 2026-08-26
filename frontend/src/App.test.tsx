@@ -4,7 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
-import { clearStoredToken, storeToken } from './authSession'
+import { clearStoredToken } from './authSession'
 import type { ThongTinNguoiDung } from './api'
 
 declare global {
@@ -97,7 +97,7 @@ describe('App role navigation', () => {
   it.each(MENU_BY_ROLE)(
     'FR-AUT-04 shows the exact menu for server role $nguoiDung.vaiTro',
     async ({ nguoiDung, menuLabels }) => {
-      mountedApp = await mountAuthenticatedApp(nguoiDung)
+      mountedApp = await mountAppAndLogin(nguoiDung)
 
       await vi.waitFor(() => {
         expect(readMenuLabels(mountedApp!.container)).toEqual(menuLabels)
@@ -110,7 +110,7 @@ describe('App role navigation', () => {
 
   it('FR-AUT-04 shows a friendly no-permission state for a typed route outside the role menu', async () => {
     const chuSoHuu = MENU_BY_ROLE[1]
-    mountedApp = await mountAuthenticatedApp(chuSoHuu.nguoiDung, '/tai-khoan')
+    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/tai-khoan')
 
     await vi.waitFor(() => {
       expect(mountedApp!.container.textContent).toContain('Không có quyền')
@@ -121,9 +121,8 @@ describe('App role navigation', () => {
   })
 })
 
-async function mountAuthenticatedApp(nguoiDung: ThongTinNguoiDung, path = '/') {
-  storeToken('header.payload.signature')
-  window.history.replaceState({}, '', path)
+async function mountAppAndLogin(nguoiDung: ThongTinNguoiDung, path = '/') {
+  window.history.replaceState({}, '', '/')
   vi.stubGlobal('fetch', buildFetchMock(nguoiDung))
 
   const container = document.createElement('div')
@@ -134,7 +133,32 @@ async function mountAuthenticatedApp(nguoiDung: ThongTinNguoiDung, path = '/') {
     root.render(<App />)
   })
 
+  const form = await vi.waitFor(() => {
+    const loginForm = container.querySelector('form')
+    expect(loginForm).not.toBeNull()
+    return loginForm as HTMLFormElement
+  })
+  const phoneInput = form.querySelector('input[autocomplete="username"]') as HTMLInputElement
+  const passwordInput = form.querySelector('input[type="password"]') as HTMLInputElement
+
+  await act(async () => {
+    setInputValue(phoneInput, '0900000099')
+    setInputValue(passwordInput, 'runtime-ticket-05')
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+  })
+
+  if (path !== '/') {
+    window.history.replaceState({}, '', path)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }
+
   return { container, root }
+}
+
+function setInputValue(input: HTMLInputElement, value: string) {
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+  valueSetter?.call(input, value)
+  input.dispatchEvent(new Event('input', { bubbles: true }))
 }
 
 function buildFetchMock(nguoiDung: ThongTinNguoiDung) {
@@ -148,11 +172,18 @@ function buildFetchMock(nguoiDung: ThongTinNguoiDung) {
       })
     }
 
-    if (url === '/api/auth/me') {
-      return new Response(JSON.stringify(nguoiDung), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
+    if (url === '/api/auth/login') {
+      return new Response(
+        JSON.stringify({
+          token: 'header.payload.signature',
+          thoiHanGiay: 1800,
+          nguoiDung,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
     }
 
     throw new Error(`Unexpected fetch: ${url}`)
