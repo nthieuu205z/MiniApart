@@ -29,11 +29,12 @@ public class JwtTokenService {
 
     public JwtTokenService(
             ObjectMapper objectMapper,
+            Clock clock,
             @Value("${app.auth.jwt-secret}") String jwtSecret,
             @Value("${app.auth.token-ttl-seconds:1800}") long tokenTtlSeconds
     ) {
         this.objectMapper = objectMapper;
-        this.clock = Clock.systemUTC();
+        this.clock = clock;
         this.signingKey = jwtSecret.getBytes(StandardCharsets.UTF_8);
         this.tokenTtlSeconds = tokenTtlSeconds;
     }

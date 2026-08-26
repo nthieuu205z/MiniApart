@@ -4,7 +4,7 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Đếm số lần sai theo cửa sổ trượt 15 phút, không phải đếm dồn từ đầu đời tài khoản
 - [ ] Đăng nhập thành công thì bộ đếm về không

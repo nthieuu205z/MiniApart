@@ -1,6 +1,7 @@
 package com.prj1.ccm.auth;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -46,6 +48,23 @@ class AuthenticationIntegrationTest {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
+    }
+
+    @BeforeEach
+    void resetAuthState() {
+        jdbcTemplate.update("DELETE FROM LAN_DANG_NHAP_SAI WHERE nguoi_dung_id = ?", 3L);
+        jdbcTemplate.update(
+                """
+                        UPDATE NGUOI_DUNG
+                        SET phien_ban_token = 0,
+                            so_lan_sai = 0,
+                            lan_sai_dau_tien = NULL,
+                            khoa_den = NULL,
+                            trang_thai = 'HOAT_DONG'
+                        WHERE id = ?
+                        """,
+                3L
+        );
     }
 
     @Test
@@ -128,6 +147,45 @@ class AuthenticationIntegrationTest {
                 .getContentAsString();
 
         assertThat(unknownPhoneBody).isEqualTo(wrongPasswordBody);
+    }
+
+    @Test
+    void FR_AUT_02_loginRejectsTheSixthAttemptEvenWhenThePasswordBecomesCorrectAfterFiveWrongAttempts()
+            throws Exception {
+        String runtimePassword = prepareRuntimePasswordForManager();
+        String wrongPassword = runtimePassword + "-wrong";
+
+        for (int lanSai = 0; lanSai < 5; lanSai++) {
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginPayload("0900000003", wrongPassword)))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.thongBao").value("Số điện thoại hoặc mật khẩu không đúng"));
+        }
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginPayload("0900000003", runtimePassword)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.thongBao", startsWith("Đăng nhập tạm thời bị khoá. Vui lòng thử lại sau ")));
+    }
+
+    @Test
+    void FR_AUT_02_lockingAnAccountRevokesPreviouslyIssuedTokensImmediately() throws Exception {
+        String runtimePassword = prepareRuntimePasswordForManager();
+        String wrongPassword = runtimePassword + "-wrong";
+        String token = loginAndExtractToken(runtimePassword);
+
+        for (int lanSai = 0; lanSai < 5; lanSai++) {
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginPayload("0900000003", wrongPassword)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

@@ -13,4 +13,10 @@ public class AuthExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ThongBaoLoi(exception.getMessage()));
     }
+
+    @ExceptionHandler(DangNhapTamKhoaException.class)
+    public ResponseEntity<ThongBaoLoi> handleDangNhapTamKhoa(DangNhapTamKhoaException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ThongBaoLoi(exception.getMessage()));
+    }
 }

@@ -19,6 +19,7 @@ public class AuthController {
 
     /**
      * FR-AUT-01 lets users sign in with a phone number and password.
+     * FR-AUT-02 temporarily locks sign-in for fifteen minutes after five wrong passwords in the sliding window.
      *
      * @param request the submitted phone number and password
      * @return a JWT access token plus the signed-in user's profile
