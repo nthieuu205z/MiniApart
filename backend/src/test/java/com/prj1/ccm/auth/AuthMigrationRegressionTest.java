@@ -27,9 +27,6 @@ class AuthMigrationRegressionTest {
 
     @Test
     void FR_AUT_02_existingNguoiDungLockRemainsActiveAfterTrackerMigrationBackfill() {
-        MutableClock clock = new MutableClock(Instant.parse("2026-08-27T08:00:00Z"), ZoneId.of("Asia/Ho_Chi_Minh"));
-        Instant lanSaiDauTien = clock.instant().minus(Duration.ofMinutes(5));
-        Instant khoaDen = clock.instant().plus(Duration.ofMinutes(10));
         String runtimePassword = "runtime-" + UUID.randomUUID();
 
         Flyway migrateToV3 = Flyway.configure()
@@ -48,16 +45,25 @@ class AuthMigrationRegressionTest {
                         UPDATE NGUOI_DUNG
                         SET mat_khau_hash = ?,
                             so_lan_sai = ?,
-                            lan_sai_dau_tien = ?,
-                            khoa_den = ?
+                            lan_sai_dau_tien = CURRENT_TIMESTAMP - INTERVAL '5 minutes',
+                            khoa_den = CURRENT_TIMESTAMP + INTERVAL '10 minutes'
                         WHERE id = ?
                         """,
                 passwordHasher.hash(runtimePassword),
                 5,
-                Timestamp.from(lanSaiDauTien),
-                Timestamp.from(khoaDen),
                 3L
         );
+        Timestamp legacyLanSaiDauTien = jdbcTemplate.queryForObject(
+                "SELECT lan_sai_dau_tien FROM NGUOI_DUNG WHERE id = ?",
+                Timestamp.class,
+                3L
+        );
+        Timestamp legacyKhoaDen = jdbcTemplate.queryForObject(
+                "SELECT khoa_den FROM NGUOI_DUNG WHERE id = ?",
+                Timestamp.class,
+                3L
+        );
+        MutableClock clock = new MutableClock(legacyKhoaDen.toInstant().minus(Duration.ofMinutes(1)), ZoneId.of("Asia/Ho_Chi_Minh"));
 
         Flyway migrateLatest = Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
@@ -72,7 +78,19 @@ class AuthMigrationRegressionTest {
         );
 
         assertThat(trackerKhoaDen).isNotNull();
-        assertThat(trackerKhoaDen.toInstant()).isEqualTo(khoaDen);
+        assertThat(trackerKhoaDen.toInstant()).isEqualTo(legacyKhoaDen.toInstant());
+        Timestamp trackerLanSaiDauTien = jdbcTemplate.queryForObject(
+                "SELECT lan_sai_dau_tien FROM THEO_DOI_DANG_NHAP WHERE so_dien_thoai_key = ?",
+                Timestamp.class,
+                "0900000003"
+        );
+        Integer trackerSoLanSai = jdbcTemplate.queryForObject(
+                "SELECT so_lan_sai FROM THEO_DOI_DANG_NHAP WHERE so_dien_thoai_key = ?",
+                Integer.class,
+                "0900000003"
+        );
+        assertThat(trackerLanSaiDauTien).isEqualTo(legacyLanSaiDauTien);
+        assertThat(trackerSoLanSai).isEqualTo(5);
 
         XacThucService xacThucService = new XacThucService(
                 new NguoiDungRepository(jdbcTemplate),

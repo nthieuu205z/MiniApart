@@ -480,3 +480,102 @@ Output:
 - The fix is forward-only and leaves V3/V4 untouched.
 - The new regression test covers both backfilled DB state and runtime login rejection with a mutable clock.
 - No unresolved concerns remain after the focused and full verification runs.
+
+## Fix Round 3 — Stabilize Migration Regression Timing
+
+### Reviewer Finding Verified
+
+The scoped re-review was correct: `AuthMigrationRegressionTest` still hard-coded an application clock at `2026-08-27T08:00:00Z` while `V5__backfill_tracker_lock_from_nguoi_dung.sql` compares `khoa_den` against PostgreSQL `CURRENT_TIMESTAMP`. That made the regression test calendar-dependent instead of anchoring itself to the actual database server time used by the migration.
+
+### Fix Summary
+
+- Removed the hard-coded calendar instant from `AuthMigrationRegressionTest`.
+- The legacy locked state is now created relative to PostgreSQL server time:
+  - `lan_sai_dau_tien = CURRENT_TIMESTAMP - INTERVAL '5 minutes'`
+  - `khoa_den = CURRENT_TIMESTAMP + INTERVAL '10 minutes'`
+- The test then reads the persisted legacy timestamps back from `NGUOI_DUNG`.
+- The application `Clock` is constructed from the real stored `khoa_den`, specifically one minute before that timestamp, so login is proven while the lock is still active.
+- The regression assertion remains strict:
+  - tracker `khoa_den` equals legacy `khoa_den`
+  - tracker `lan_sai_dau_tien` equals legacy `lan_sai_dau_tien`
+  - tracker `so_lan_sai` remains `5`
+  - login still throws `DangNhapTamKhoaException`
+
+`V5__backfill_tracker_lock_from_nguoi_dung.sql` did not need further logic changes for this round; the instability was in the test fixture, not the migration behavior.
+
+### Verification For Fix Round 3
+
+#### Focused migration/auth suite
+
+Command:
+
+```bash
+env JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew test --tests com.prj1.ccm.auth.AuthMigrationRegressionTest --tests com.prj1.ccm.auth.AuthenticationIntegrationTest --tests com.prj1.ccm.auth.XacThucServiceTest
+```
+
+Output:
+
+```text
+> Task :test
+
+BUILD SUCCESSFUL in 13s
+4 actionable tasks: 2 executed, 2 up-to-date
+```
+
+#### Backend
+
+Command:
+
+```bash
+env JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew test
+```
+
+Output:
+
+```text
+> Task :test
+
+BUILD SUCCESSFUL in 15s
+4 actionable tasks: 1 executed, 3 up-to-date
+```
+
+#### Frontend tests
+
+Command:
+
+```bash
+npm test
+```
+
+Output:
+
+```text
+Test Files  2 passed (2)
+Tests       5 passed (5)
+Duration    229ms
+```
+
+#### Frontend build
+
+Command:
+
+```bash
+npm run build
+```
+
+Output:
+
+```text
+✓ built in 215ms
+```
+
+### Files Changed In Fix Round 3
+
+- `.superpowers/sdd/spec/task-4-report.md`
+- `backend/src/test/java/com/prj1/ccm/auth/AuthMigrationRegressionTest.java`
+
+### Self-Review After Fix Round 3
+
+- The migration regression test is now tied to PostgreSQL server time instead of a brittle fixed calendar date.
+- The assertion is still strong: it proves exact tracker backfill and runtime rejection while the lock is active.
+- No sleep or weakened assertion was introduced.
