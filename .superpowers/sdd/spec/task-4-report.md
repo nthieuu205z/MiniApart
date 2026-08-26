@@ -341,3 +341,142 @@ Output:
 - Exact sliding-window behavior remains backed by persisted timestamps, not approximated counters.
 - Existing token revocation for real accounts remains intact, and locked users are also rejected by `AuthInterceptor`.
 - No unresolved concerns remain after the fresh focused and full verification runs.
+
+## Fix Round 2 — Preserve Existing Locks Across Tracker Backfill
+
+### Reviewer Finding Verified
+
+The scoped re-review was correct: `V4__phone_key_login_tracking.sql` populated `THEO_DOI_DANG_NHAP` without carrying forward `NGUOI_DUNG.khoa_den`, and `XacThucService` now reads temporary lock state from `TheoDoiDangNhap` first. A user already locked before the tracker migration could therefore lose that lock after V4/V5 migration history replay unless tracker state was backfilled from `NGUOI_DUNG`.
+
+### Fix Summary
+
+- Added forward-only migration `V5__backfill_tracker_lock_from_nguoi_dung.sql`.
+- Backfilled `THEO_DOI_DANG_NHAP` from every `NGUOI_DUNG` phone key, carrying over:
+  - `so_lan_sai`
+  - `lan_sai_dau_tien`
+  - `khoa_den` only when it is still in the future at migration time
+- Merged backfilled values with any tracker rows already created by V4, preserving the larger failure count and earliest failure timestamp.
+- Added a focused migration regression test that migrates to V3, seeds a future `NGUOI_DUNG.khoa_den`, migrates to latest, and proves login still throws `DangNhapTamKhoaException` without sleeping.
+
+### TDD Evidence For The Fix Round
+
+#### RED — expose the lock-loss regression
+
+Command:
+
+```bash
+env JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew test --tests com.prj1.ccm.auth.AuthMigrationRegressionTest
+```
+
+Observed failure:
+
+```text
+AuthMigrationRegressionTest > FR_AUT_02_existingNguoiDungLockRemainsActiveAfterTrackerMigrationBackfill() FAILED
+    org.springframework.dao.EmptyResultDataAccessException at AuthMigrationRegressionTest.java:68
+
+1 test completed, 1 failed
+```
+
+Failure detail:
+
+- after migrating from V3 to latest, no tracker row existed with the locked phone key state required for the login guard
+
+Note:
+
+- the regression test uses a mutable clock and a future `khoa_den`; after the first red run I moved the fixed clock one day ahead so the migration's `CURRENT_TIMESTAMP` comparison exercised an actually active lock instead of a timestamp that had already expired during test execution
+
+#### GREEN — focused migration regression after V5
+
+Command:
+
+```bash
+env JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew test --tests com.prj1.ccm.auth.AuthMigrationRegressionTest
+```
+
+Output:
+
+```text
+> Task :test
+
+BUILD SUCCESSFUL in 5s
+4 actionable tasks: 2 executed, 2 up-to-date
+```
+
+#### GREEN — focused auth suite with the new migration regression included
+
+Command:
+
+```bash
+env JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew test --tests com.prj1.ccm.auth.AuthenticationIntegrationTest --tests com.prj1.ccm.auth.XacThucServiceTest --tests com.prj1.ccm.auth.AuthMigrationRegressionTest
+```
+
+Output:
+
+```text
+> Task :test
+
+BUILD SUCCESSFUL in 12s
+4 actionable tasks: 1 executed, 3 up-to-date
+```
+
+### Fresh Verification After Fix Round 2
+
+#### Backend
+
+Command:
+
+```bash
+env JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew test
+```
+
+Output:
+
+```text
+> Task :test
+
+BUILD SUCCESSFUL in 13s
+4 actionable tasks: 1 executed, 3 up-to-date
+```
+
+#### Frontend tests
+
+Command:
+
+```bash
+npm test
+```
+
+Output:
+
+```text
+Test Files  2 passed (2)
+Tests       5 passed (5)
+Duration    172ms
+```
+
+#### Frontend build
+
+Command:
+
+```bash
+npm run build
+```
+
+Output:
+
+```text
+✓ built in 92ms
+```
+
+### Files Changed In Fix Round 2
+
+- `.superpowers/sdd/spec/task-4-report.md`
+- `backend/src/main/resources/db/migration/V5__backfill_tracker_lock_from_nguoi_dung.sql`
+- `backend/src/test/java/com/prj1/ccm/auth/AuthMigrationRegressionTest.java`
+
+### Self-Review After Fix Round 2
+
+- Existing account locks now survive the V3 -> V4/V5 migration path instead of being dropped at tracker creation time.
+- The fix is forward-only and leaves V3/V4 untouched.
+- The new regression test covers both backfilled DB state and runtime login rejection with a mutable clock.
+- No unresolved concerns remain after the focused and full verification runs.
