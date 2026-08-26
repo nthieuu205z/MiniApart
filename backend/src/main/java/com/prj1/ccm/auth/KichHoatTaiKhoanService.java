@@ -11,7 +11,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.List;
 
 @Service
 public class KichHoatTaiKhoanService {
@@ -20,33 +19,29 @@ public class KichHoatTaiKhoanService {
     private final NguoiDungRepository nguoiDungRepository;
     private final PasswordHasher passwordHasher;
     private final Clock clock;
-    private final List<KichHoatTaiKhoanDelivery> deliveries;
+    private final KichHoatTaiKhoanDelivery delivery;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public KichHoatTaiKhoanService(
             NguoiDungRepository nguoiDungRepository,
             PasswordHasher passwordHasher,
             Clock clock,
-            List<KichHoatTaiKhoanDelivery> deliveries
+            KichHoatTaiKhoanDelivery delivery
     ) {
         this.nguoiDungRepository = nguoiDungRepository;
         this.passwordHasher = passwordHasher;
         this.clock = clock;
-        this.deliveries = deliveries;
+        this.delivery = delivery;
     }
 
     public void taoMaKichHoat(NguoiDung nguoiDung) {
-        if (deliveries.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Kênh kích hoạt tài khoản chưa sẵn sàng");
-        }
-
         String maKichHoat = maKichHoatNgauNhien();
         nguoiDungRepository.luuMaKichHoat(
                 nguoiDung.id(),
                 passwordHasher.hash(maKichHoat),
                 clock.instant().plus(THOI_GIAN_HIEU_LUC)
         );
-        deliveries.forEach(delivery -> delivery.guiMaKichHoat(nguoiDung.soDienThoai(), maKichHoat));
+        delivery.guiMaKichHoat(nguoiDung.soDienThoai(), maKichHoat);
     }
 
     @Transactional

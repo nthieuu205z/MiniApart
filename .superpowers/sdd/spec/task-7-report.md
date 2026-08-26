@@ -145,3 +145,64 @@ BUILD SUCCESSFUL in 19s
 - The activation endpoint is publicly callable but proves possession of the high-entropy, expiring, one-use secret before changing a password.
 - No `@DeleteMapping` was added. The existing deny-by-default mutation checks remain intact.
 - The reported N+1 list lookup was not changed in this fix round.
+
+---
+
+## Fix round 2 — production activation delivery wiring
+
+### Finding addressed
+
+`KichHoatTaiKhoanService` no longer injects an optional list or returns 503 when tests do not contribute an adapter. `SpringEventKichHoatTaiKhoanDelivery` is now a production `@Component` and the service injects that required port directly. It publishes a typed `KichHoatTaiKhoanEvent` synchronously with the phone number and raw activation secret; the event is the deliberate handoff seam for a deployment's SMS/email listener.
+
+The default adapter neither logs, returns, nor persists the raw secret. The database continues to retain only the PBKDF2 hash. The normal application context can create accounts and invoke the activation mechanism without a test-only `KichHoatTaiKhoanDelivery` bean. The integration test observes the production event through a test-only listener, not a delivery adapter.
+
+### Operational contract
+
+- Deployments must register an application listener for `KichHoatTaiKhoanEvent` that delivers the secret to the phone owner through their approved out-of-band SMS/email provider.
+- The listener must treat `maKichHoat` as a secret: do not log, persist, or return it to the creator.
+- The default event adapter is intentionally transport-neutral; the owning deployment selects and configures the real provider. Without a real listener, Spring still publishes the event but no external recipient receives it, so production rollout requires that listener before user onboarding is operational.
+
+### RED — normal-context regression
+
+```text
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
+GRADLE_USER_HOME=/private/tmp/prj1-task7-gradle \
+./gradlew test --offline --rerun-tasks --console=plain \
+  --tests com.prj1.ccm.nguoidung.NguoiDungQuanLyIntegrationTest
+
+11 tests completed, 3 failed
+- account-creation tests expected 201 but received the production 503 caused by an empty delivery list
+BUILD FAILED in 8s
+```
+
+The RED test removed the test-only delivery bean, exposing the same application-context path used at runtime.
+
+### GREEN — focused Ticket 07 suite
+
+```text
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
+GRADLE_USER_HOME=/private/tmp/prj1-task7-gradle \
+./gradlew test --offline --rerun-tasks --console=plain \
+  --tests com.prj1.ccm.nguoidung.NguoiDungQuanLyIntegrationTest
+
+BUILD SUCCESSFUL in 8s
+4 actionable tasks: 4 executed
+```
+
+### GREEN — full backend suite
+
+```text
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
+GRADLE_USER_HOME=/private/tmp/prj1-task7-gradle \
+./gradlew test --offline --rerun-tasks --console=plain
+
+BUILD SUCCESSFUL in 19s
+4 actionable tasks: 4 executed
+```
+
+### Fix-round self-review
+
+- Confirmed `SpringEventKichHoatTaiKhoanDelivery` is component-scanned in normal application startup.
+- Confirmed no test configuration implements or registers `KichHoatTaiKhoanDelivery`.
+- Confirmed the event payload is in-memory only; no raw activation secret is logged, returned, or added to a migration.
+- Confirmed FR-AUT-06 endpoint Javadocs and FR_AUT_06 test names remain intact, and no delete endpoint or migration edit was introduced.

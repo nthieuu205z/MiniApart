@@ -1,11 +1,12 @@
 package com.prj1.ccm.nguoidung;
 
-import com.prj1.ccm.auth.KichHoatTaiKhoanDelivery;
+import com.prj1.ccm.auth.KichHoatTaiKhoanEvent;
 import com.prj1.ccm.auth.PasswordHasher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -51,7 +52,7 @@ class NguoiDungQuanLyIntegrationTest {
     private PasswordHasher passwordHasher;
 
     @Autowired
-    private CapturingKichHoatTaiKhoanDelivery kichHoatTaiKhoanDelivery;
+    private CapturingKichHoatTaiKhoanListener kichHoatTaiKhoanListener;
 
     @DynamicPropertySource
     static void configureDataSource(DynamicPropertyRegistry registry) {
@@ -67,7 +68,7 @@ class NguoiDungQuanLyIntegrationTest {
         jdbcTemplate.update("DELETE FROM KICH_HOAT_TAI_KHOAN");
         jdbcTemplate.update("DELETE FROM PHAN_QUYEN_TOA");
         jdbcTemplate.update("DELETE FROM NGUOI_DUNG");
-        kichHoatTaiKhoanDelivery.xoaTatCa();
+        kichHoatTaiKhoanListener.xoaTatCa();
         seedNguoiDung();
         jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (3, 1)");
     }
@@ -348,7 +349,7 @@ class NguoiDungQuanLyIntegrationTest {
                                 """.formatted(soDienThoai)))
                 .andExpect(status().isCreated());
 
-        String maKichHoat = kichHoatTaiKhoanDelivery.layMaKichHoat(soDienThoai);
+        String maKichHoat = kichHoatTaiKhoanListener.layMaKichHoat(soDienThoai);
         assertThat(maKichHoat).isNotBlank();
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT ma_bi_mat_hash FROM KICH_HOAT_TAI_KHOAN k JOIN NGUOI_DUNG n ON n.id = k.nguoi_dung_id WHERE n.so_dien_thoai = ?",
@@ -400,7 +401,7 @@ class NguoiDungQuanLyIntegrationTest {
                                 }
                                 """.formatted(soDienThoai)))
                 .andExpect(status().isCreated());
-        String maKichHoat = kichHoatTaiKhoanDelivery.layMaKichHoat(soDienThoai);
+        String maKichHoat = kichHoatTaiKhoanListener.layMaKichHoat(soDienThoai);
         jdbcTemplate.update(
                 "UPDATE KICH_HOAT_TAI_KHOAN SET het_han = CURRENT_TIMESTAMP - INTERVAL '1 second' WHERE nguoi_dung_id = (SELECT id FROM NGUOI_DUNG WHERE so_dien_thoai = ?)",
                 soDienThoai
@@ -421,17 +422,17 @@ class NguoiDungQuanLyIntegrationTest {
     @TestConfiguration(proxyBeanMethods = false)
     static class KichHoatTaiKhoanTestConfiguration {
         @Bean
-        CapturingKichHoatTaiKhoanDelivery kichHoatTaiKhoanDelivery() {
-            return new CapturingKichHoatTaiKhoanDelivery();
+        CapturingKichHoatTaiKhoanListener kichHoatTaiKhoanListener() {
+            return new CapturingKichHoatTaiKhoanListener();
         }
     }
 
-    static final class CapturingKichHoatTaiKhoanDelivery implements KichHoatTaiKhoanDelivery {
+    static final class CapturingKichHoatTaiKhoanListener implements ApplicationListener<KichHoatTaiKhoanEvent> {
         private final Map<String, String> maKichHoatTheoSoDienThoai = new ConcurrentHashMap<>();
 
         @Override
-        public void guiMaKichHoat(String soDienThoai, String maKichHoat) {
-            maKichHoatTheoSoDienThoai.put(soDienThoai, maKichHoat);
+        public void onApplicationEvent(KichHoatTaiKhoanEvent event) {
+            maKichHoatTheoSoDienThoai.put(event.soDienThoai(), event.maKichHoat());
         }
 
         String layMaKichHoat(String soDienThoai) {
