@@ -82,9 +82,14 @@ class ToaNhaAuthorizationIntegrationTest {
     void FR_AUT_05_TC_002_02_managerDetailReturns403ForForeignAssignedBuildingId() throws Exception {
         String token = loginAndExtractToken(3L, "0900000003");
 
-        mockMvc.perform(get("/api/toa-nha/2")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
+        ToaNhaScopeAuthorizationTestHelper.assertChiTietEndpointScope(
+                mockMvc,
+                token,
+                1L,
+                2L,
+                9999L,
+                toaNhaId -> get("/api/toa-nha/" + toaNhaId)
+        );
     }
 
     @Test
@@ -99,15 +104,6 @@ class ToaNhaAuthorizationIntegrationTest {
                 .andExpect(jsonPath("$.ngayChotSo").value(25))
                 .andExpect(jsonPath("$.soNgayHanTt").value(7))
                 .andExpect(jsonPath("$.nguongThatThoat").value("150000.00"));
-    }
-
-    @Test
-    void FR_AUT_05_detailReturns404ForUnknownBuildingIdInsideVisibleSpaceRules() throws Exception {
-        String token = loginAndExtractToken(1L, "0900000001");
-
-        mockMvc.perform(get("/api/toa-nha/9999")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isNotFound());
     }
 
     @Test
