@@ -6,11 +6,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class ArchitectureRulesBiteTest {
+class ArchitectureRulesViolationTest {
     private static final String FIXTURE_PACKAGE = "com.prj1.ccm.architecture.fixture.billing.calc";
 
     @Test
-    void floatingPointRuleMustRejectItsIntentionalViolation() {
+    void frInv02FloatingPointRuleMustRejectIntentionalViolation() {
         assertThatThrownBy(() -> ArchitectureRules.noFloatingPointFieldsInBilling().check(importFixtures()))
                 .isInstanceOf(AssertionError.class)
                 .hasMessageContaining("HoaDonDungDouble.tongTien")
@@ -18,7 +18,7 @@ class ArchitectureRulesBiteTest {
     }
 
     @Test
-    void frameworkRuleMustRejectItsIntentionalViolation() {
+    void frInv02FrameworkRuleMustRejectIntentionalViolation() {
         assertThatThrownBy(() -> ArchitectureRules.billingCalculationMustBeFrameworkFree().check(importFixtures()))
                 .isInstanceOf(AssertionError.class)
                 .hasMessageContaining("TinhTienGoiSpring")

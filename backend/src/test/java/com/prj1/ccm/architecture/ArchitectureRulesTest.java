@@ -11,19 +11,19 @@ class ArchitectureRulesTest {
     private static final String PRODUCTION_PACKAGE = "com.prj1.ccm";
 
     @Test
-    void rulesActuallySeeTheProductionCode() {
+    void frInv02RulesActuallySeeTheProductionCode() {
         JavaClasses productionClasses = importProductionClasses();
 
         assertThat(productionClasses.size()).isGreaterThan(0);
     }
 
     @Test
-    void productionCodeMustRejectFloatingPointFieldsInBilling() {
+    void frInv02ProductionCodeMustRejectFloatingPointFieldsInBilling() {
         ArchitectureRules.noFloatingPointFieldsInBilling().check(importProductionClasses());
     }
 
     @Test
-    void productionCodeMustKeepBillingCalculationFreeOfFrameworkDependencies() {
+    void frInv02ProductionCodeMustKeepBillingCalculationFrameworkFree() {
         ArchitectureRules.billingCalculationMustBeFrameworkFree().check(importProductionClasses());
     }
 
