@@ -6,11 +6,11 @@
 
 **Blocked by:** 05, 06
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Tạo tài khoản, gán vai trò, gán danh sách toà nhà — làm được trọn trên giao diện
-- [ ] Khoá tài khoản; người bị khoá đăng nhập thì bị từ chối
-- [ ] **Không có endpoint xoá.** Nếu có, phải từ chối khi tài khoản đã phát sinh dữ liệu, và có test chứng minh
-- [ ] Chỉ quản trị hệ thống làm được việc này; bốn vai trò kia gọi vào nhận 403
-- [ ] Người tạo tài khoản không tự đặt được mật khẩu hộ người khác theo cách mình biết mật khẩu đó
-- [ ] Tên test mang mã `FR-AUT-06`
+- [x] Tạo tài khoản, gán vai trò, gán danh sách toà nhà — làm được trọn trên giao diện
+- [x] Khoá tài khoản; người bị khoá đăng nhập thì bị từ chối
+- [x] **Không có endpoint xoá.** Nếu có, phải từ chối khi tài khoản đã phát sinh dữ liệu, và có test chứng minh
+- [x] Chỉ quản trị hệ thống làm được việc này; bốn vai trò kia gọi vào nhận 403
+- [x] Người tạo tài khoản không tự đặt được mật khẩu hộ người khác theo cách mình biết mật khẩu đó
+- [x] Tên test mang mã `FR-AUT-06`
