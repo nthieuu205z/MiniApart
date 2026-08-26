@@ -19,7 +19,8 @@ describe('fetchHealth', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/health')
   })
 
-  it('posts phone and password to the login endpoint', async () => {
+  it('FR-AUT-01 posts phone and password to the login endpoint', async () => {
+    const runtimePassword = createRuntimePassword()
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -41,7 +42,7 @@ describe('fetchHealth', () => {
     )
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(login({ soDienThoai: '0900000003', matKhau: 'MatKhau@123' })).resolves.toEqual({
+    await expect(login({ soDienThoai: '0900000003', matKhau: runtimePassword })).resolves.toEqual({
       token: 'header.payload.signature',
       thoiHanGiay: 1800,
       nguoiDung: {
@@ -55,11 +56,11 @@ describe('fetchHealth', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ soDienThoai: '0900000003', matKhau: 'MatKhau@123' }),
+      body: JSON.stringify({ soDienThoai: '0900000003', matKhau: runtimePassword }),
     })
   })
 
-  it('requests the current user with the bearer token and surfaces 401 responses', async () => {
+  it('FR-AUT-01 requests the current user with the bearer token and surfaces 401 responses', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -103,3 +104,7 @@ describe('fetchHealth', () => {
     })
   })
 })
+
+function createRuntimePassword() {
+  return `runtime-${Math.random().toString(36).slice(2)}-${Date.now()}`
+}

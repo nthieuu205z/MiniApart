@@ -14,6 +14,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -35,6 +37,9 @@ class AuthenticationIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private PasswordHasher passwordHasher;
 
     @DynamicPropertySource
     static void configureDataSource(DynamicPropertyRegistry registry) {
@@ -83,11 +88,11 @@ class AuthenticationIntegrationTest {
 
     @Test
     void FR_AUT_01_loginReturnsJwtAndCurrentUserForValidPhoneAndPassword() throws Exception {
+        String runtimePassword = prepareRuntimePasswordForManager();
+
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"soDienThoai":"0900000003","matKhau":"MatKhau@123"}
-                                """))
+                        .content(loginPayload("0900000003", runtimePassword)))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", org.hamcrest.Matchers.startsWith(MediaType.APPLICATION_JSON_VALUE)))
                 .andExpect(jsonPath("$.token").isString())
@@ -101,11 +106,12 @@ class AuthenticationIntegrationTest {
 
     @Test
     void FR_AUT_01_loginRejectsUnknownPhoneAndWrongPasswordWithTheExactSameMessage() throws Exception {
+        String runtimePassword = prepareRuntimePasswordForManager();
+        String wrongPassword = runtimePassword + "-wrong";
+
         String wrongPasswordBody = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"soDienThoai":"0900000003","matKhau":"SaiMatKhau@123"}
-                                """))
+                        .content(loginPayload("0900000003", wrongPassword)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.thongBao").value("Số điện thoại hoặc mật khẩu không đúng"))
                 .andReturn()
@@ -114,9 +120,7 @@ class AuthenticationIntegrationTest {
 
         String unknownPhoneBody = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"soDienThoai":"0900999999","matKhau":"SaiMatKhau@123"}
-                                """))
+                        .content(loginPayload("0900999999", wrongPassword)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.thongBao").value("Số điện thoại hoặc mật khẩu không đúng"))
                 .andReturn()
@@ -128,7 +132,7 @@ class AuthenticationIntegrationTest {
 
     @Test
     void FR_AUT_01_meReturnsTheCurrentUserWhenTheTokenIsValid() throws Exception {
-        String token = loginAndExtractToken();
+        String token = loginAndExtractToken(prepareRuntimePasswordForManager());
 
         mockMvc.perform(get("/api/auth/me")
                         .header("Authorization", "Bearer " + token))
@@ -142,7 +146,7 @@ class AuthenticationIntegrationTest {
 
     @Test
     void FR_AUT_01_meReturns401WhenTheTokenVersionHasBeenRevoked() throws Exception {
-        String token = loginAndExtractToken();
+        String token = loginAndExtractToken(prepareRuntimePasswordForManager());
 
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET phien_ban_token = phien_ban_token + 1 WHERE id = ?", 3L);
 
@@ -157,12 +161,10 @@ class AuthenticationIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    private String loginAndExtractToken() throws Exception {
+    private String loginAndExtractToken(String runtimePassword) throws Exception {
         String responseBody = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"soDienThoai":"0900000003","matKhau":"MatKhau@123"}
-                                """))
+                        .content(loginPayload("0900000003", runtimePassword)))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -171,5 +173,21 @@ class AuthenticationIntegrationTest {
         int tokenValueStart = responseBody.indexOf("\"token\":\"") + 9;
         int tokenValueEnd = responseBody.indexOf('"', tokenValueStart);
         return responseBody.substring(tokenValueStart, tokenValueEnd);
+    }
+
+    private String prepareRuntimePasswordForManager() {
+        String runtimePassword = "runtime-" + UUID.randomUUID();
+        jdbcTemplate.update(
+                "UPDATE NGUOI_DUNG SET mat_khau_hash = ? WHERE id = ?",
+                passwordHasher.hash(runtimePassword),
+                3L
+        );
+        return runtimePassword;
+    }
+
+    private String loginPayload(String soDienThoai, String matKhau) {
+        return """
+                {"soDienThoai":"%s","matKhau":"%s"}
+                """.formatted(soDienThoai, matKhau);
     }
 }

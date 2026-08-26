@@ -158,7 +158,7 @@ function App() {
                 type="password"
                 value={form.matKhau}
                 onChange={(event) => setForm((current) => ({ ...current, matKhau: event.target.value }))}
-                placeholder="MatKhau@123"
+                placeholder="Nhập mật khẩu"
                 autoComplete="current-password"
                 required
               />
@@ -169,7 +169,7 @@ function App() {
                 {authError}
               </p>
             ) : (
-              <p className="status-message">Đăng nhập bằng số điện thoại và mật khẩu của tài khoản mẫu.</p>
+              <p className="status-message">Nhập số điện thoại và mật khẩu để tiếp tục.</p>
             )}
 
             <button type="submit" className="primary-button" disabled={dangDangNhap}>

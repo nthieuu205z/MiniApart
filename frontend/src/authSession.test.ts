@@ -6,13 +6,13 @@ describe('authSession', () => {
     clearStoredToken()
   })
 
-  it('stores and reloads the signed-in token across page refreshes', () => {
+  it('FR-AUT-01 stores and reloads the signed-in token across page refreshes', () => {
     storeToken('header.payload.signature')
 
     expect(readStoredToken()).toBe('header.payload.signature')
   })
 
-  it('clears the stored token on logout', () => {
+  it('FR-AUT-01 clears the stored token on logout', () => {
     storeToken('header.payload.signature')
 
     clearStoredToken()
