@@ -1,22 +1,28 @@
 package com.prj1.ccm.nguoidung;
 
+import com.prj1.ccm.auth.KichHoatTaiKhoanDelivery;
 import com.prj1.ccm.auth.PasswordHasher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -29,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@Import(NguoiDungQuanLyIntegrationTest.KichHoatTaiKhoanTestConfiguration.class)
 class NguoiDungQuanLyIntegrationTest {
 
     @Container
@@ -43,6 +50,9 @@ class NguoiDungQuanLyIntegrationTest {
     @Autowired
     private PasswordHasher passwordHasher;
 
+    @Autowired
+    private CapturingKichHoatTaiKhoanDelivery kichHoatTaiKhoanDelivery;
+
     @DynamicPropertySource
     static void configureDataSource(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
@@ -54,8 +64,10 @@ class NguoiDungQuanLyIntegrationTest {
     void resetDatabaseState() {
         jdbcTemplate.update("DELETE FROM LAN_DANG_NHAP_SAI");
         jdbcTemplate.update("DELETE FROM THEO_DOI_DANG_NHAP");
+        jdbcTemplate.update("DELETE FROM KICH_HOAT_TAI_KHOAN");
         jdbcTemplate.update("DELETE FROM PHAN_QUYEN_TOA");
         jdbcTemplate.update("DELETE FROM NGUOI_DUNG");
+        kichHoatTaiKhoanDelivery.xoaTatCa();
         seedNguoiDung();
         jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (3, 1)");
     }
@@ -84,7 +96,9 @@ class NguoiDungQuanLyIntegrationTest {
                 .andExpect(jsonPath("$.trangThai").value("HOAT_DONG"))
                 .andExpect(jsonPath("$.toaNhaIds[0]").value(1))
                 .andExpect(jsonPath("$.toaNhaIds[1]").value(2))
-                .andExpect(jsonPath("$.matKhau").doesNotExist());
+                .andExpect(jsonPath("$.matKhau").doesNotExist())
+                .andExpect(jsonPath("$.matKhauHash").doesNotExist())
+                .andExpect(jsonPath("$.maKichHoat").doesNotExist());
 
         Long nguoiDungId = jdbcTemplate.queryForObject(
                 "SELECT id FROM NGUOI_DUNG WHERE so_dien_thoai = ?",
@@ -117,6 +131,24 @@ class NguoiDungQuanLyIntegrationTest {
                                 }
                                 """.formatted(uniquePhone())))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void FR_AUT_06_taoTaiKhoanTrungSoDienThoaiBiTuChoi() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+
+        mockMvc.perform(post("/api/nguoi-dung")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Tài khoản trùng",
+                                  "soDienThoai": "0900000003",
+                                  "vaiTro": "THO",
+                                  "toaNhaIds": [1]
+                                }
+                                """))
+                .andExpect(status().isConflict());
     }
 
     @Test
@@ -186,6 +218,80 @@ class NguoiDungQuanLyIntegrationTest {
     }
 
     @Test
+    void FR_AUT_06_capNhatTaiKhoanTrungSoDienThoaiBiTuChoi() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+
+        mockMvc.perform(put("/api/nguoi-dung/3")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Quản lý Toà A",
+                                  "soDienThoai": "0900000002",
+                                  "vaiTro": "QUAN_LY",
+                                  "toaNhaIds": [1]
+                                }
+                                """))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void FR_AUT_06_capNhatSoDienThoaiGopTheoDoiDangNhapDichMaKhongXungDot() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+        String soDienThoaiMoi = uniquePhone();
+        jdbcTemplate.update(
+                "INSERT INTO THEO_DOI_DANG_NHAP(so_dien_thoai_key, so_lan_sai, lan_sai_dau_tien, khoa_den) VALUES (?, ?, CURRENT_TIMESTAMP - INTERVAL '2 minutes', NULL)",
+                "0900000003", 2
+        );
+        jdbcTemplate.update(
+                "INSERT INTO THEO_DOI_DANG_NHAP(so_dien_thoai_key, so_lan_sai, lan_sai_dau_tien, khoa_den) VALUES (?, ?, CURRENT_TIMESTAMP - INTERVAL '1 minute', CURRENT_TIMESTAMP + INTERVAL '5 minutes')",
+                soDienThoaiMoi, 3
+        );
+        jdbcTemplate.update(
+                "INSERT INTO LAN_DANG_NHAP_SAI(so_dien_thoai_key, nguoi_dung_id, thoi_diem) VALUES (?, ?, CURRENT_TIMESTAMP - INTERVAL '2 minutes')",
+                "0900000003", 3L
+        );
+        jdbcTemplate.update(
+                "INSERT INTO LAN_DANG_NHAP_SAI(so_dien_thoai_key, nguoi_dung_id, thoi_diem) VALUES (?, NULL, CURRENT_TIMESTAMP - INTERVAL '1 minute')",
+                soDienThoaiMoi
+        );
+
+        mockMvc.perform(put("/api/nguoi-dung/3")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Quản lý Toà A",
+                                  "soDienThoai": "%s",
+                                  "vaiTro": "QUAN_LY",
+                                  "toaNhaIds": [1]
+                                }
+                                """.formatted(soDienThoaiMoi)))
+                .andExpect(status().isOk());
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT so_lan_sai FROM THEO_DOI_DANG_NHAP WHERE so_dien_thoai_key = ?",
+                Integer.class,
+                soDienThoaiMoi
+        )).isEqualTo(5);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM THEO_DOI_DANG_NHAP WHERE so_dien_thoai_key = ?",
+                Integer.class,
+                "0900000003"
+        )).isZero();
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM LAN_DANG_NHAP_SAI WHERE so_dien_thoai_key = ?",
+                Integer.class,
+                soDienThoaiMoi
+        )).isEqualTo(2);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT khoa_den IS NOT NULL FROM THEO_DOI_DANG_NHAP WHERE so_dien_thoai_key = ?",
+                Boolean.class,
+                soDienThoaiMoi
+        )).isTrue();
+    }
+
+    @Test
     void FR_AUT_06_khoaTaiKhoanLamMatHieuLucTokenHienTaiNgayLapTuc() throws Exception {
         String adminToken = tokenCuaNguoiDung(1L, "0900000001");
         String matKhau = "runtime-" + UUID.randomUUID();
@@ -216,6 +322,125 @@ class NguoiDungQuanLyIntegrationTest {
         mockMvc.perform(get("/api/auth/me")
                         .header("Authorization", "Bearer " + tokenNguoiDung))
                 .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginPayload("0900000003", matKhau)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void FR_AUT_06_kichHoatTaiKhoanChoNguoiDungTuChonMatKhau() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+        String soDienThoai = uniquePhone();
+        String matKhauNguoiDungTuChon = "MatKhauDoNguoiDungTuChon-" + UUID.randomUUID();
+
+        mockMvc.perform(post("/api/nguoi-dung")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Người dùng cần kích hoạt",
+                                  "soDienThoai": "%s",
+                                  "vaiTro": "THO",
+                                  "toaNhaIds": [1]
+                                }
+                                """.formatted(soDienThoai)))
+                .andExpect(status().isCreated());
+
+        String maKichHoat = kichHoatTaiKhoanDelivery.layMaKichHoat(soDienThoai);
+        assertThat(maKichHoat).isNotBlank();
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT ma_bi_mat_hash FROM KICH_HOAT_TAI_KHOAN k JOIN NGUOI_DUNG n ON n.id = k.nguoi_dung_id WHERE n.so_dien_thoai = ?",
+                String.class,
+                soDienThoai
+        )).startsWith("pbkdf2$").isNotEqualTo(maKichHoat);
+
+        mockMvc.perform(post("/api/auth/kich-hoat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "soDienThoai": "%s",
+                                  "maKichHoat": "%s",
+                                  "matKhau": "%s"
+                                }
+                                """.formatted(soDienThoai, maKichHoat, matKhauNguoiDungTuChon)))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginPayload(soDienThoai, matKhauNguoiDungTuChon)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/kich-hoat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "soDienThoai": "%s",
+                                  "maKichHoat": "%s",
+                                  "matKhau": "MatKhauKhongDuocDungLai"
+                                }
+                                """.formatted(soDienThoai, maKichHoat)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void FR_AUT_06_maKichHoatHetHanKhongChoDatMatKhau() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+        String soDienThoai = uniquePhone();
+        mockMvc.perform(post("/api/nguoi-dung")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Người dùng có mã hết hạn",
+                                  "soDienThoai": "%s",
+                                  "vaiTro": "THO",
+                                  "toaNhaIds": [1]
+                                }
+                                """.formatted(soDienThoai)))
+                .andExpect(status().isCreated());
+        String maKichHoat = kichHoatTaiKhoanDelivery.layMaKichHoat(soDienThoai);
+        jdbcTemplate.update(
+                "UPDATE KICH_HOAT_TAI_KHOAN SET het_han = CURRENT_TIMESTAMP - INTERVAL '1 second' WHERE nguoi_dung_id = (SELECT id FROM NGUOI_DUNG WHERE so_dien_thoai = ?)",
+                soDienThoai
+        );
+
+        mockMvc.perform(post("/api/auth/kich-hoat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "soDienThoai": "%s",
+                                  "maKichHoat": "%s",
+                                  "matKhau": "MatKhauKhongDuocDat"
+                                }
+                                """.formatted(soDienThoai, maKichHoat)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class KichHoatTaiKhoanTestConfiguration {
+        @Bean
+        CapturingKichHoatTaiKhoanDelivery kichHoatTaiKhoanDelivery() {
+            return new CapturingKichHoatTaiKhoanDelivery();
+        }
+    }
+
+    static final class CapturingKichHoatTaiKhoanDelivery implements KichHoatTaiKhoanDelivery {
+        private final Map<String, String> maKichHoatTheoSoDienThoai = new ConcurrentHashMap<>();
+
+        @Override
+        public void guiMaKichHoat(String soDienThoai, String maKichHoat) {
+            maKichHoatTheoSoDienThoai.put(soDienThoai, maKichHoat);
+        }
+
+        String layMaKichHoat(String soDienThoai) {
+            return maKichHoatTheoSoDienThoai.get(soDienThoai);
+        }
+
+        void xoaTatCa() {
+            maKichHoatTheoSoDienThoai.clear();
+        }
     }
 
     @Test

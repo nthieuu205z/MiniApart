@@ -1,5 +1,6 @@
 package com.prj1.ccm.nguoidung;
 
+import com.prj1.ccm.auth.KichHoatTaiKhoanService;
 import com.prj1.ccm.auth.PasswordHasher;
 import com.prj1.ccm.auth.NguoiDungRepository;
 import com.prj1.ccm.toanha.ToaNhaRepository;
@@ -8,8 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -18,16 +17,18 @@ public class QuanLyNguoiDungService {
     private final NguoiDungRepository nguoiDungRepository;
     private final ToaNhaRepository toaNhaRepository;
     private final PasswordHasher passwordHasher;
-    private final SecureRandom secureRandom = new SecureRandom();
+    private final KichHoatTaiKhoanService kichHoatTaiKhoanService;
 
     public QuanLyNguoiDungService(
             NguoiDungRepository nguoiDungRepository,
             ToaNhaRepository toaNhaRepository,
-            PasswordHasher passwordHasher
+            PasswordHasher passwordHasher,
+            KichHoatTaiKhoanService kichHoatTaiKhoanService
     ) {
         this.nguoiDungRepository = nguoiDungRepository;
         this.toaNhaRepository = toaNhaRepository;
         this.passwordHasher = passwordHasher;
+        this.kichHoatTaiKhoanService = kichHoatTaiKhoanService;
     }
 
     @Transactional(readOnly = true)
@@ -57,14 +58,16 @@ public class QuanLyNguoiDungService {
                 null,
                 yeuCau.hoTen(),
                 yeuCau.soDienThoai(),
-                passwordHasher.hash(matKhauNgauNhien()),
+                passwordHasher.hash(maNgauNhienDeVoHieuHoaMatKhauBanDau()),
                 yeuCau.vaiTro(),
                 TrangThaiNguoiDung.HOAT_DONG,
                 0
         );
         Long nguoiDungId = nguoiDungRepository.insert(moi);
         nguoiDungRepository.capNhatQuyenToa(nguoiDungId, toaNhaIds);
-        return toThongTinQuanLyNguoiDung(layNguoiDung(nguoiDungId));
+        NguoiDung nguoiDungMoi = layNguoiDung(nguoiDungId);
+        kichHoatTaiKhoanService.taoMaKichHoat(nguoiDungMoi);
+        return toThongTinQuanLyNguoiDung(nguoiDungMoi);
     }
 
     @Transactional
@@ -140,9 +143,7 @@ public class QuanLyNguoiDungService {
         );
     }
 
-    private String matKhauNgauNhien() {
-        byte[] bytes = new byte[24];
-        secureRandom.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    private String maNgauNhienDeVoHieuHoaMatKhauBanDau() {
+        return java.util.UUID.randomUUID().toString();
     }
 }

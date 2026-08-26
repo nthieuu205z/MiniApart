@@ -84,3 +84,64 @@ The suite ran on OpenJDK 21.0.12.1. It emitted only pre-existing deprecated-API 
 1. The approved brief prohibits an administrator from choosing or receiving another user's password. The implementation creates an unexposed random password, but this slice contains no invitation/OTP delivery path; onboarding must rely on the separate password-reset capability when it is implemented.
 2. The project-wide US-03 wording names `CHU` as an actor, while the supplied Ticket 07 brief explicitly authorizes only `QTHT`. This implementation follows the supplied brief and treats the broader wording as a future product/spec reconciliation item.
 3. A genuine RED result is unavailable for this session because the assigned worktree contained pre-existing uncommitted implementation and tests. The fresh GREEN verification is complete, but the missing-feature RED requirement cannot truthfully be claimed.
+
+---
+
+## Fix round 1 — activation, tracker merge, and coverage gaps
+
+### Findings addressed
+
+1. Creation now generates a 256-bit URL-safe one-time activation secret, stores only its PBKDF2 hash in `KICH_HOAT_TAI_KHOAN`, and delivers the raw secret only through `KichHoatTaiKhoanDelivery`. `POST /api/auth/kich-hoat` accepts the account holder's phone, secret, and chosen password; it enforces a 30-minute expiry, consumes the database row on success, resets failed-login tracking, and advances the token version.
+2. The system has no built-in SMS/email provider in this slice. Account creation requires at least one configured `KichHoatTaiKhoanDelivery`; otherwise it returns 503 and the surrounding transaction rolls back. This deliberately prevents the old failure mode of successfully creating an account that cannot be activated. Production must bind the port to the chosen out-of-band transport; the integration test uses an in-memory capturing adapter only at the delivery boundary.
+3. Phone renaming now locks both source and destination tracker records in the existing transaction, moves the failed-login history, conservatively merges counter/earliest-failure/latest-lock values, upserts the destination row, then removes the source row. It no longer attempts a primary-key rewrite that can collide with a tracker created for a previously unknown destination phone.
+4. Added the requested create/update duplicate-phone 409 checks and fresh login denial after a permanent lock.
+
+### RED — focused Ticket 07 integration suite
+
+```text
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
+GRADLE_USER_HOME=/private/tmp/prj1-task7-gradle \
+./gradlew test --offline --rerun-tasks --console=plain \
+  --tests com.prj1.ccm.nguoidung.NguoiDungQuanLyIntegrationTest
+
+10 tests completed, 2 failed
+- FR_AUT_06_capNhatSoDienThoaiGopTheoDoiDangNhapDichMaKhongXungDot:
+  DuplicateKeyException from THEO_DOI_DANG_NHAP primary-key rewrite
+- FR_AUT_06_kichHoatTaiKhoanChoNguoiDungTuChonMatKhau:
+  assertion failure because /api/auth/kich-hoat did not exist
+BUILD FAILED in 7s
+```
+
+### GREEN — focused Ticket 07 integration suite
+
+```text
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
+GRADLE_USER_HOME=/private/tmp/prj1-task7-gradle \
+./gradlew test --offline --rerun-tasks --console=plain \
+  --tests com.prj1.ccm.nguoidung.NguoiDungQuanLyIntegrationTest
+
+BUILD SUCCESSFUL in 8s
+4 actionable tasks: 4 executed
+```
+
+The 11 FR_AUT_06 integration tests now cover hashed-only delivery-backed activation, password choice, one-use and expiry rejection, tracker merge, duplicate create/update conflicts, old-token invalidation and fresh-login denial after lock, authorization, and no delete endpoint.
+
+### GREEN — full backend suite
+
+```text
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
+GRADLE_USER_HOME=/private/tmp/prj1-task7-gradle \
+./gradlew test --offline --rerun-tasks --console=plain
+
+BUILD SUCCESSFUL in 19s
+4 actionable tasks: 4 executed
+```
+
+### Fix-round self-review
+
+- `V6__account_activation.sql` is new; no existing migration was edited.
+- The activation controller Javadoc carries `FR-AUT-06`; all Ticket 07 test methods retain `FR_AUT_06` names.
+- The activation secret is never returned by management or activation endpoints and is never stored raw; the test-only delivery fake is the only capturing implementation.
+- The activation endpoint is publicly callable but proves possession of the high-entropy, expiring, one-use secret before changing a password.
+- No `@DeleteMapping` was added. The existing deny-by-default mutation checks remain intact.
+- The reported N+1 list lookup was not changed in this fix round.

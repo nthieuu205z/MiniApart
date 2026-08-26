@@ -10,6 +10,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -148,15 +149,30 @@ public class NguoiDungRepository {
     }
 
     public void capNhatSoDienThoaiDangNhap(String soDienThoaiCu, String soDienThoaiMoi) {
-        jdbcTemplate.update(
+        if (soDienThoaiCu.equals(soDienThoaiMoi)) {
+            return;
+        }
+
+        Map<String, TheoDoiDangNhap> theoDoiTheoSoDienThoai = jdbcTemplate.query(
                 """
-                        UPDATE THEO_DOI_DANG_NHAP
-                        SET so_dien_thoai_key = ?
-                        WHERE so_dien_thoai_key = ?
+                        SELECT so_dien_thoai_key, so_lan_sai, lan_sai_dau_tien, khoa_den
+                        FROM THEO_DOI_DANG_NHAP
+                        WHERE so_dien_thoai_key IN (?, ?)
+                        ORDER BY so_dien_thoai_key
+                        FOR UPDATE
                         """,
-                soDienThoaiMoi,
-                soDienThoaiCu
-        );
+                (resultSet, rowNum) -> new TheoDoiDangNhap(
+                        resultSet.getString("so_dien_thoai_key"),
+                        resultSet.getInt("so_lan_sai"),
+                        toInstant(resultSet.getTimestamp("lan_sai_dau_tien")),
+                        toInstant(resultSet.getTimestamp("khoa_den"))
+                ),
+                soDienThoaiCu,
+                soDienThoaiMoi
+        ).stream().collect(java.util.stream.Collectors.toMap(TheoDoiDangNhap::soDienThoaiKey, theoDoi -> theoDoi));
+
+        TheoDoiDangNhap theoDoiCu = theoDoiTheoSoDienThoai.get(soDienThoaiCu);
+        TheoDoiDangNhap theoDoiMoi = theoDoiTheoSoDienThoai.get(soDienThoaiMoi);
         jdbcTemplate.update(
                 """
                         UPDATE LAN_DANG_NHAP_SAI
@@ -166,6 +182,96 @@ public class NguoiDungRepository {
                 soDienThoaiMoi,
                 soDienThoaiCu
         );
+
+        int soLanSaiTuLichSu = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM LAN_DANG_NHAP_SAI WHERE so_dien_thoai_key = ?",
+                Integer.class,
+                soDienThoaiMoi
+        );
+        Instant lanSaiDauTienTuLichSu = toInstant(jdbcTemplate.queryForObject(
+                "SELECT MIN(thoi_diem) FROM LAN_DANG_NHAP_SAI WHERE so_dien_thoai_key = ?",
+                Timestamp.class,
+                soDienThoaiMoi
+        ));
+        int soLanSaiGop = Math.max(
+                soLanSaiTuLichSu,
+                (theoDoiCu == null ? 0 : theoDoiCu.soLanSai()) + (theoDoiMoi == null ? 0 : theoDoiMoi.soLanSai())
+        );
+        Instant lanSaiDauTien = somNhat(
+                lanSaiDauTienTuLichSu,
+                theoDoiCu == null ? null : theoDoiCu.lanSaiDauTien(),
+                theoDoiMoi == null ? null : theoDoiMoi.lanSaiDauTien()
+        );
+        Instant khoaDen = muonNhat(
+                theoDoiCu == null ? null : theoDoiCu.khoaDen(),
+                theoDoiMoi == null ? null : theoDoiMoi.khoaDen()
+        );
+        if (theoDoiCu != null || theoDoiMoi != null || soLanSaiTuLichSu > 0) {
+            jdbcTemplate.update(
+                    """
+                            INSERT INTO THEO_DOI_DANG_NHAP(so_dien_thoai_key, so_lan_sai, lan_sai_dau_tien, khoa_den)
+                            VALUES (?, ?, ?, ?)
+                            ON CONFLICT (so_dien_thoai_key) DO UPDATE
+                            SET so_lan_sai = EXCLUDED.so_lan_sai,
+                                lan_sai_dau_tien = EXCLUDED.lan_sai_dau_tien,
+                                khoa_den = EXCLUDED.khoa_den
+                            """,
+                    soDienThoaiMoi,
+                    soLanSaiGop,
+                    toTimestamp(lanSaiDauTien),
+                    toTimestamp(khoaDen)
+            );
+        }
+        jdbcTemplate.update("DELETE FROM THEO_DOI_DANG_NHAP WHERE so_dien_thoai_key = ?", soDienThoaiCu);
+    }
+
+    public void luuMaKichHoat(Long nguoiDungId, String maBiMatHash, Instant hetHan) {
+        jdbcTemplate.update(
+                """
+                        INSERT INTO KICH_HOAT_TAI_KHOAN(nguoi_dung_id, ma_bi_mat_hash, het_han)
+                        VALUES (?, ?, ?)
+                        ON CONFLICT (nguoi_dung_id) DO UPDATE
+                        SET ma_bi_mat_hash = EXCLUDED.ma_bi_mat_hash,
+                            het_han = EXCLUDED.het_han
+                        """,
+                nguoiDungId,
+                maBiMatHash,
+                Timestamp.from(hetHan)
+        );
+    }
+
+    public Optional<KichHoatTaiKhoan> findKichHoatTaiKhoanChoKichHoat(Long nguoiDungId) {
+        return jdbcTemplate.query(
+                        """
+                                SELECT ma_bi_mat_hash, het_han
+                                FROM KICH_HOAT_TAI_KHOAN
+                                WHERE nguoi_dung_id = ?
+                                FOR UPDATE
+                                """,
+                        (resultSet, rowNum) -> new KichHoatTaiKhoan(
+                                resultSet.getString("ma_bi_mat_hash"),
+                                toInstant(resultSet.getTimestamp("het_han"))
+                        ),
+                        nguoiDungId
+                )
+                .stream()
+                .findFirst();
+    }
+
+    public void capNhatMatKhauSauKichHoat(Long nguoiDungId, String matKhauHash) {
+        jdbcTemplate.update(
+                """
+                        UPDATE NGUOI_DUNG
+                        SET mat_khau_hash = ?, phien_ban_token = phien_ban_token + 1
+                        WHERE id = ?
+                        """,
+                matKhauHash,
+                nguoiDungId
+        );
+    }
+
+    public void xoaMaKichHoat(Long nguoiDungId) {
+        jdbcTemplate.update("DELETE FROM KICH_HOAT_TAI_KHOAN WHERE nguoi_dung_id = ?", nguoiDungId);
     }
 
     public void capNhatQuyenToa(Long nguoiDungId, List<Long> toaNhaIds) {
@@ -389,5 +495,25 @@ public class NguoiDungRepository {
 
     private Timestamp toTimestamp(Instant instant) {
         return instant == null ? null : Timestamp.from(instant);
+    }
+
+    private Instant somNhat(Instant... instants) {
+        Instant ketQua = null;
+        for (Instant instant : instants) {
+            if (instant != null && (ketQua == null || instant.isBefore(ketQua))) {
+                ketQua = instant;
+            }
+        }
+        return ketQua;
+    }
+
+    private Instant muonNhat(Instant... instants) {
+        Instant ketQua = null;
+        for (Instant instant : instants) {
+            if (instant != null && (ketQua == null || instant.isAfter(ketQua))) {
+                ketQua = instant;
+            }
+        }
+        return ketQua;
     }
 }
