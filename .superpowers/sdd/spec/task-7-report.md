@@ -206,3 +206,80 @@ BUILD SUCCESSFUL in 19s
 - Confirmed no test configuration implements or registers `KichHoatTaiKhoanDelivery`.
 - Confirmed the event payload is in-memory only; no raw activation secret is logged, returned, or added to a migration.
 - Confirmed FR-AUT-06 endpoint Javadocs and FR_AUT_06 test names remain intact, and no delete endpoint or migration edit was introduced.
+
+---
+
+## Fix round 3 — fail closed without a real activation transport
+
+### Root cause and resolution
+
+The round-2 `SpringEventKichHoatTaiKhoanDelivery` reported success immediately after publishing an in-memory Spring event. Spring permits publication with zero listeners, so `POST /api/nguoi-dung` could commit a new account and activation hash although no holder received the secret.
+
+The event-only adapter and event type are removed. `KichHoatTaiKhoanDeliveryConfiguration` now supplies one of two production paths:
+
+1. When `app.activation.delivery.http.url` is configured, it creates an HTTP delivery adapter. The adapter POSTs `soDienThoai` and the in-memory activation secret to that configured delivery gateway, optionally adds `Authorization: Bearer <app.activation.delivery.http.bearer-token>`, and succeeds only on a 2xx response. The URL and token are deployment configuration; neither is hardcoded.
+2. When no delivery implementation/HTTP URL is configured, a fallback delivery throws HTTP 503, `Kênh kích hoạt tài khoản chưa được cấu hình`. `QuanLyNguoiDungService.tao` is transactional, so this rolls back the account, building permissions, and hashed activation record rather than creating an unusable account.
+
+Network, serialization, timeout, and non-2xx HTTP failures also produce 503. No path logs, returns, or persists the raw activation secret. The existing lifecycle integration suite now explicitly installs a `@Primary` test-only capturing `KichHoatTaiKhoanDelivery`; this captures the secret at the delivery boundary without making the production fallback appear successful.
+
+### Operational contract
+
+Before enabling account creation in a deployed environment, configure `app.activation.delivery.http.url` to a real SMS/email gateway endpoint. Its service must deliver the received secret only to the supplied phone owner and return 2xx only after accepting the delivery for processing. Supply the optional bearer token using the deployment secret store. With no configured gateway, account creation intentionally returns 503 and is observable as a configuration gap, not a successful onboarding flow.
+
+### RED — no-transport normal-context regression
+
+```text
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
+GRADLE_USER_HOME=/private/tmp/prj1-task7-gradle \
+./gradlew test --offline --rerun-tasks --console=plain \
+  --tests com.prj1.ccm.nguoidung.KichHoatTaiKhoanKhongCoKenhIntegrationTest
+
+KichHoatTaiKhoanKhongCoKenhIntegrationTest >
+FR_AUT_06_taoTaiKhoanKhongCoKenhKichHoatThatBaiVaHoanTacGiaoDich() FAILED
+java.lang.AssertionError at KichHoatTaiKhoanKhongCoKenhIntegrationTest.java:82
+
+1 test completed, 1 failed
+BUILD FAILED in 6s
+```
+
+The expected failure was an asserted 503 while the event-only production delivery returned 201. This demonstrates the missing real transport gate rather than a test/setup defect.
+
+### GREEN — focused activation coverage
+
+```text
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
+GRADLE_USER_HOME=/private/tmp/prj1-task7-gradle \
+./gradlew test --offline --rerun-tasks --console=plain \
+  --tests com.prj1.ccm.nguoidung.KichHoatTaiKhoanKhongCoKenhIntegrationTest \
+  --tests com.prj1.ccm.nguoidung.NguoiDungQuanLyIntegrationTest
+
+BUILD SUCCESSFUL in 10s
+4 actionable tasks: 4 executed
+```
+
+The new `FR_AUT_06_taoTaiKhoanKhongCoKenhKichHoatThatBaiVaHoanTacGiaoDich` integration test starts the ordinary application context with no delivery test bean, proves 503, and proves no matching `NGUOI_DUNG` record remains. The 11 existing FR_AUT_06 tests retain activation, one-use/expiry, duplicate-phone, lock/login, authorization, and no-delete coverage.
+
+### GREEN — full backend suite
+
+```text
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
+GRADLE_USER_HOME=/private/tmp/prj1-task7-gradle \
+./gradlew test --offline --rerun-tasks --console=plain
+
+BUILD SUCCESSFUL in 20s
+4 actionable tasks: 4 executed
+```
+
+Fresh JDK 21 results: 42 tests, 0 failures, 0 errors. The output has only existing deprecated-API compiler notes and the JVM class-data-sharing warning.
+
+### Fix-round self-review
+
+- The runtime no longer treats a listener-neutral event publisher as delivery success; no real transport produces 503 plus transaction rollback.
+- The configured HTTP adapter is the only production success path and rejects transport/network/non-2xx failures without exposing the secret.
+- The raw secret exists only during generation and the outbound HTTP request/test delivery capture; it is never logged, returned, or added to persistence.
+- Endpoint Javadocs continue to carry `FR-AUT-06`; all Ticket 07 test methods, including the new regression, carry `FR_AUT_06`.
+- `rg` confirms no `@DeleteMapping`; existing deny-by-default mutation tests remain. No `Doc/`, AI artifact other than this required report, or Flyway migration changed; `git diff --check` is clean.
+
+### Concerns
+
+The deployment owner must configure and monitor the delivery gateway before onboarding accounts. The adapter treats a 2xx gateway acknowledgement as successful handoff; the gateway itself is responsible for SMS/email provider retries and delivery observability. A future outbox-based delivery workflow could further separate external delivery from the database transaction, but that is outside this review fix and is not silently substituted for the fail-closed contract.
