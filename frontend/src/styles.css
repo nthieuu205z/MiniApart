@@ -161,7 +161,8 @@ dd {
 }
 
 .login-form,
-.welcome-panel {
+.welcome-panel,
+.dashboard-panel {
   display: grid;
   gap: 1rem;
 }
@@ -243,6 +244,59 @@ dd {
   gap: 1rem;
   padding-top: 0.8rem;
   border-top: 1px solid #e7f0ed;
+}
+
+.role-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.role-menu__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid #c5dbd5;
+  border-radius: 999px;
+  background: #f9fcfb;
+  color: #0f4f4a;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.role-menu__link:hover {
+  transform: translateY(-1px);
+}
+
+.role-menu__link--active {
+  border-color: #0f766e;
+  background: rgba(15, 118, 110, 0.12);
+  color: #0f766e;
+}
+
+.route-panel {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.1rem 1.15rem;
+  border: 1px solid #d5e6e1;
+  border-radius: 1rem;
+  background: #f9fcfb;
+}
+
+.route-panel--khong-co-quyen {
+  border-color: #f1c1c1;
+  background: #fff7f7;
+}
+
+.route-panel__title {
+  margin: 0;
+  color: #0f4f4a;
+  font-size: 1.1rem;
 }
 
 @media (prefers-color-scheme: dark) {

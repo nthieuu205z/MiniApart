@@ -9,6 +9,7 @@ import {
   type ThongTinNguoiDung,
 } from './api'
 import { clearStoredToken, readStoredToken, storeToken } from './authSession'
+import { layMenuTheoVaiTro, xacDinhTrangTheoVaiTro } from './roleNavigation'
 import './styles.css'
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
   const [dangTaiPhien, setDangTaiPhien] = useState(true)
   const [dangDangNhap, setDangDangNhap] = useState(false)
   const [nguoiDung, setNguoiDung] = useState<ThongTinNguoiDung | null>(null)
+  const [duongDanHienTai, setDuongDanHienTai] = useState(() => layDuongDanHienTai())
   const [form, setForm] = useState<DangNhapRequest>({
     soDienThoai: '',
     matKhau: '',
@@ -73,6 +75,21 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined
+    }
+
+    function dongBoDuongDan() {
+      setDuongDanHienTai(layDuongDanHienTai())
+    }
+
+    window.addEventListener('popstate', dongBoDuongDan)
+    return () => {
+      window.removeEventListener('popstate', dongBoDuongDan)
+    }
+  }, [])
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setDangDangNhap(true)
@@ -82,6 +99,7 @@ function App() {
       const response = await login(form)
       storeToken(response.token)
       setNguoiDung(response.nguoiDung)
+      dieuHuongToi('/')
       setForm({ soDienThoai: '', matKhau: '' })
     } catch (reason) {
       setAuthError(reason instanceof Error ? reason.message : 'Đăng nhập không thành công.')
@@ -95,7 +113,13 @@ function App() {
     clearStoredToken()
     setNguoiDung(null)
     setAuthError(null)
+    dieuHuongToi('/')
   }
+
+  const menuVaiTro = nguoiDung ? layMenuTheoVaiTro(nguoiDung.vaiTro) : []
+  const trangVaiTro = nguoiDung
+    ? xacDinhTrangTheoVaiTro(nguoiDung.vaiTro, nguoiDung.tenVaiTro, duongDanHienTai)
+    : null
 
   return (
     <main className="page-shell">
@@ -110,8 +134,8 @@ function App() {
       <section className="auth-card" aria-labelledby="auth-title">
         <div className="status-card__heading">
           <div>
-            <p className="eyebrow">FR-AUT-01</p>
-            <h2 id="auth-title">{nguoiDung ? 'Trang chủ' : 'Đăng nhập'}</h2>
+            <p className="eyebrow">{nguoiDung ? 'FR-AUT-04' : 'FR-AUT-01'}</p>
+            <h2 id="auth-title">{nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'}</h2>
           </div>
           {nguoiDung ? (
             <button type="button" className="ghost-button" onClick={handleLogout}>
@@ -125,19 +149,59 @@ function App() {
             Đang khôi phục phiên đăng nhập…
           </p>
         ) : nguoiDung ? (
-          <div className="welcome-panel">
-            <p className="welcome-title">Xin chào, {nguoiDung.hoTen}</p>
-            <p className="welcome-copy">Vai trò hiện tại: {nguoiDung.tenVaiTro}</p>
-            <dl className="identity-list">
-              <div>
-                <dt>Số điện thoại</dt>
-                <dd>{nguoiDung.soDienThoai}</dd>
-              </div>
-              <div>
-                <dt>Mã vai trò</dt>
-                <dd>{nguoiDung.vaiTro}</dd>
-              </div>
-            </dl>
+          <div className="dashboard-panel">
+            <div className="welcome-panel">
+              <p className="welcome-title">Xin chào, {nguoiDung.hoTen}</p>
+              <p className="welcome-copy">Vai trò hiện tại: {nguoiDung.tenVaiTro}</p>
+              <dl className="identity-list">
+                <div>
+                  <dt>Số điện thoại</dt>
+                  <dd>{nguoiDung.soDienThoai}</dd>
+                </div>
+                <div>
+                  <dt>Mã vai trò</dt>
+                  <dd>{nguoiDung.vaiTro}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <nav className="role-menu" aria-label="Điều hướng theo vai trò">
+              {menuVaiTro.map((muc) => {
+                const dangChon = duongDanHienTai === muc.duongDan
+
+                return (
+                  <a
+                    key={muc.duongDan}
+                    href={muc.duongDan}
+                    className={`role-menu__link ${dangChon ? 'role-menu__link--active' : ''}`}
+                    aria-current={dangChon ? 'page' : undefined}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      dieuHuongToi(muc.duongDan)
+                    }}
+                  >
+                    {muc.nhan}
+                  </a>
+                )
+              })}
+            </nav>
+
+            {trangVaiTro ? (
+              <section
+                className={`route-panel route-panel--${trangVaiTro.loai}`}
+                aria-labelledby="current-route-title"
+              >
+                <h3 id="current-route-title" className="route-panel__title">
+                  {trangVaiTro.tieuDe}
+                </h3>
+                <p className="status-message">{trangVaiTro.thongDiep}</p>
+                {trangVaiTro.loai === 'khong-co-quyen' ? (
+                  <button type="button" className="ghost-button" onClick={() => dieuHuongToi('/')}>
+                    Về trang chủ
+                  </button>
+                ) : null}
+              </section>
+            ) : null}
           </div>
         ) : (
           <form className="login-form" onSubmit={handleSubmit}>
@@ -216,3 +280,20 @@ function App() {
 }
 
 export default App
+
+function layDuongDanHienTai() {
+  if (typeof window === 'undefined') {
+    return '/'
+  }
+
+  return window.location.pathname || '/'
+}
+
+function dieuHuongToi(duongDan: string) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.history.pushState({}, '', duongDan)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}

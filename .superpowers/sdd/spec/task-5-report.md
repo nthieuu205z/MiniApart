@@ -85,3 +85,111 @@ Reason: no implementation was possible without product clarification.
 ## Needed to proceed
 
 Provide the approved per-role menu matrix for Task 5: the exact menu items and route targets each of `QTHT`, `CHU`, `QUAN_LY`, `THO`, and `NGUOI_THUE` should see.
+
+---
+
+## Resume after blocker resolution
+
+The blocker was resolved by the approved domain/design document at `Doc/PRJ1_Thiet-ke-giao-dien_Brief.md`.
+
+- Section 5, `Điều hướng theo vai trò`, provides the official menu matrix for all five roles.
+- Section 8, `Ba trạng thái mà thiết kế hay quên`, explicitly calls out the `Không có quyền` state for manually typed routes outside the current role.
+
+That source is part of the approved project domain/design documents referenced by `AGENTS.md`, so implementation resumed without inventing menu contents locally.
+
+## Implemented behavior
+
+- Frontend reads the server-returned role from the authenticated user session and maps it to the approved menu entries.
+- Five roles now render five distinct menus:
+  - `QTHT`: `Tài khoản`, `Toà nhà`, `Nhật ký thao tác`
+  - `CHU`: `Tổng quan`, `Toà nhà`, `Hoá đơn`, `Công nợ`, `Báo cáo`, `Sự cố`, `An toàn`
+  - `QUAN_LY`: `Nhắc việc`, `Ghi chỉ số`, `Hoá đơn`, `Thu tiền`, `Phòng`, `Hợp đồng`, `Sự cố`, `Thông báo`
+  - `THO`: `Việc của tôi`
+  - `NGUOI_THUE`: `Hoá đơn của tôi`, `Lịch sử`, `Hợp đồng`, `Báo hỏng`
+- Manual entry of a path outside the current role menu now shows a friendly `Không có quyền` state instead of crashing.
+- This remains a usability/navigation change only. No server-side authorization logic was added here.
+
+## TDD evidence
+
+### RED
+
+Command:
+
+```bash
+cd frontend
+npm test -- src/App.test.tsx
+```
+
+Observed failure before production changes:
+
+- `6` tests failed.
+- The new role-menu assertions received `[]` because no navigation menu existed yet.
+- The typed-route case did not show `Không có quyền`; it still rendered the old welcome panel.
+
+### GREEN
+
+Command:
+
+```bash
+cd frontend
+npm test -- src/App.test.tsx
+```
+
+Observed result after implementation:
+
+- `1` test file passed.
+- `6` tests passed.
+
+## Changed files
+
+- `frontend/package.json`
+- `frontend/package-lock.json`
+- `frontend/src/App.tsx`
+- `frontend/src/App.test.tsx`
+- `frontend/src/roleNavigation.ts`
+- `frontend/src/styles.css`
+
+## Verification
+
+### Frontend tests
+
+Command:
+
+```bash
+cd frontend
+npm test
+```
+
+Result:
+
+- `3` test files passed.
+- `11` tests passed.
+
+### Frontend production build
+
+Command:
+
+```bash
+cd frontend
+npm run build
+```
+
+Result:
+
+- TypeScript build passed.
+- Vite production build passed.
+
+### Backend regression
+
+No backend files were changed for Task 5, so backend regression tests were not run.
+
+## Self-review
+
+- Kept the role source authoritative: menu selection is driven by `ThongTinNguoiDung.vaiTro` from the server, not by phone number or local inference.
+- Preserved the existing auth/session flow from Task 3 and did not alter the lock behavior from Task 4.
+- Kept the route handling intentionally lightweight: frontend navigation helps users find the right work area, while real permission enforcement remains a server concern for Task 6.
+- Added `jsdom` as a dev dependency so the new tests exercise rendered menu and route behavior rather than only configuration helpers.
+
+## Concerns
+
+- The frontend test run on Node `26.7.0` emits an experimental `localStorage` warning in Vitest/jsdom. It did not affect test outcomes, and the suite still passed cleanly.
