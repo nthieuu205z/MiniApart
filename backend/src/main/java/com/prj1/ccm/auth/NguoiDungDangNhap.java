@@ -1,5 +1,6 @@
 package com.prj1.ccm.auth;
 
+import com.prj1.ccm.nguoidung.NguoiDung;
 import com.prj1.ccm.nguoidung.TrangThaiNguoiDung;
 import com.prj1.ccm.nguoidung.VaiTro;
 
@@ -19,5 +20,21 @@ public record NguoiDungDangNhap(
 ) {
     public boolean hoatDong() {
         return trangThai == TrangThaiNguoiDung.HOAT_DONG;
+    }
+
+    public boolean dangBiKhoa(Instant now) {
+        return khoaDen != null && now.isBefore(khoaDen);
+    }
+
+    public NguoiDung toNguoiDung() {
+        return new NguoiDung(
+                id,
+                hoTen,
+                soDienThoai,
+                matKhauHash,
+                vaiTro,
+                trangThai,
+                phienBanToken
+        );
     }
 }

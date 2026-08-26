@@ -1,6 +1,5 @@
 package com.prj1.ccm.auth;
 
-import com.prj1.ccm.nguoidung.NguoiDung;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -36,69 +35,69 @@ public class XacThucService {
     @Transactional(noRollbackFor = {DangNhapThatBaiException.class, DangNhapTamKhoaException.class})
     public DangNhapResponse dangNhap(DangNhapRequest request) {
         Instant now = clock.instant();
-        NguoiDungDangNhap nguoiDung = nguoiDungRepository.findBySoDienThoaiChoDangNhap(request.soDienThoai()).orElse(null);
+        String soDienThoaiKey = SoDienThoaiKey.tu(request.soDienThoai());
+        nguoiDungRepository.taoTheoDoiDangNhapNeuChuaCo(soDienThoaiKey);
+        TheoDoiDangNhap theoDoiDangNhap = nguoiDungRepository.findTheoDoiDangNhapChoDangNhap(soDienThoaiKey)
+                .orElseThrow(() -> new IllegalStateException("Theo doi dang nhap khong ton tai"));
+        NguoiDungDangNhap nguoiDung = nguoiDungRepository.findBySoDienThoaiChoDangNhap(soDienThoaiKey).orElse(null);
         String hashToCheck = nguoiDung == null ? dummyPasswordHash : nguoiDung.matKhauHash();
         boolean passwordMatches = passwordHasher.matches(request.matKhau(), hashToCheck);
 
-        if (nguoiDung == null) {
-            throw new DangNhapThatBaiException();
-        }
-
-        if (dangBiKhoa(nguoiDung, now)) {
-            throw new DangNhapTamKhoaException(nguoiDung.khoaDen(), clock.getZone());
-        }
-
-        if (!nguoiDung.hoatDong()) {
-            throw new DangNhapThatBaiException();
+        if (dangBiKhoa(theoDoiDangNhap, nguoiDung, soDienThoaiKey, now)) {
+            throw new DangNhapTamKhoaException(theoDoiDangNhap.khoaDen(), clock.getZone());
         }
 
         if (!passwordMatches) {
-            xuLyDangNhapSai(nguoiDung, now);
+            xuLyDangNhapSai(soDienThoaiKey, nguoiDung, now);
             throw new DangNhapThatBaiException();
         }
 
-        nguoiDungRepository.datLaiTrangThaiDangNhap(nguoiDung.id());
+        if (nguoiDung == null || !nguoiDung.hoatDong()) {
+            throw new DangNhapThatBaiException();
+        }
 
-        ThongTinNguoiDung thongTinNguoiDung = ThongTinNguoiDung.tuNguoiDung(toNguoiDung(nguoiDung));
+        nguoiDungRepository.datLaiTrangThaiDangNhap(soDienThoaiKey, nguoiDung.id());
+
+        ThongTinNguoiDung thongTinNguoiDung = ThongTinNguoiDung.tuNguoiDung(nguoiDung.toNguoiDung());
         String token = jwtTokenService.createToken(thongTinNguoiDung, nguoiDung.phienBanToken());
 
         return new DangNhapResponse(token, jwtTokenService.tokenTtlSeconds(), thongTinNguoiDung);
     }
 
-    private boolean dangBiKhoa(NguoiDungDangNhap nguoiDung, Instant now) {
-        if (nguoiDung.khoaDen() == null) {
+    private boolean dangBiKhoa(
+            TheoDoiDangNhap theoDoiDangNhap,
+            NguoiDungDangNhap nguoiDung,
+            String soDienThoaiKey,
+            Instant now
+    ) {
+        if (theoDoiDangNhap.khoaDen() == null) {
             return false;
         }
-        if (!now.isBefore(nguoiDung.khoaDen())) {
-            nguoiDungRepository.datLaiTrangThaiDangNhap(nguoiDung.id());
+        if (!theoDoiDangNhap.dangBiKhoa(now)) {
+            nguoiDungRepository.datLaiTrangThaiDangNhap(soDienThoaiKey, nguoiDung == null ? null : nguoiDung.id());
             return false;
         }
         return true;
     }
 
-    private void xuLyDangNhapSai(NguoiDungDangNhap nguoiDung, Instant now) {
+    private void xuLyDangNhapSai(String soDienThoaiKey, NguoiDungDangNhap nguoiDung, Instant now) {
         Instant batDauCuaSo = now.minus(CUA_SO_SAI);
-        nguoiDungRepository.xoaLanDangNhapSaiTruoc(nguoiDung.id(), batDauCuaSo);
-        nguoiDungRepository.ghiNhanLanDangNhapSai(nguoiDung.id(), now);
+        nguoiDungRepository.xoaLanDangNhapSaiTruoc(soDienThoaiKey, batDauCuaSo);
+        nguoiDungRepository.ghiNhanLanDangNhapSai(soDienThoaiKey, nguoiDung == null ? null : nguoiDung.id(), now);
 
-        int soLanSai = nguoiDungRepository.demLanDangNhapSaiTu(nguoiDung.id(), batDauCuaSo);
-        Instant lanSaiDauTien = nguoiDungRepository.timLanDangNhapSaiSomNhatTu(nguoiDung.id(), batDauCuaSo);
+        int soLanSai = nguoiDungRepository.demLanDangNhapSaiTu(soDienThoaiKey, batDauCuaSo);
+        Instant lanSaiDauTien = nguoiDungRepository.timLanDangNhapSaiSomNhatTu(soDienThoaiKey, batDauCuaSo);
         if (soLanSai >= SO_LAN_SAI_TOI_DA) {
-            nguoiDungRepository.khoaTamDangNhap(nguoiDung.id(), soLanSai, lanSaiDauTien, now.plus(THOI_GIAN_KHOA));
+            Instant khoaDen = now.plus(THOI_GIAN_KHOA);
+            nguoiDungRepository.capNhatTheoDoiDangNhap(soDienThoaiKey, soLanSai, lanSaiDauTien, khoaDen);
+            if (nguoiDung != null) {
+                nguoiDungRepository.khoaTamDangNhap(nguoiDung.id(), soLanSai, lanSaiDauTien, khoaDen);
+            }
             return;
         }
-        nguoiDungRepository.capNhatDangNhapSai(nguoiDung.id(), soLanSai, lanSaiDauTien);
-    }
-
-    private NguoiDung toNguoiDung(NguoiDungDangNhap nguoiDungDangNhap) {
-        return new NguoiDung(
-                nguoiDungDangNhap.id(),
-                nguoiDungDangNhap.hoTen(),
-                nguoiDungDangNhap.soDienThoai(),
-                nguoiDungDangNhap.matKhauHash(),
-                nguoiDungDangNhap.vaiTro(),
-                nguoiDungDangNhap.trangThai(),
-                nguoiDungDangNhap.phienBanToken()
-        );
+        nguoiDungRepository.capNhatTheoDoiDangNhap(soDienThoaiKey, soLanSai, lanSaiDauTien, null);
+        if (nguoiDung != null) {
+            nguoiDungRepository.capNhatDangNhapSai(nguoiDung.id(), soLanSai, lanSaiDauTien);
+        }
     }
 }

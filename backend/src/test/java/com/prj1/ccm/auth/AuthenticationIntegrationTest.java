@@ -52,7 +52,8 @@ class AuthenticationIntegrationTest {
 
     @BeforeEach
     void resetAuthState() {
-        jdbcTemplate.update("DELETE FROM LAN_DANG_NHAP_SAI WHERE nguoi_dung_id = ?", 3L);
+        jdbcTemplate.update("DELETE FROM LAN_DANG_NHAP_SAI");
+        jdbcTemplate.update("DELETE FROM THEO_DOI_DANG_NHAP");
         jdbcTemplate.update(
                 """
                         UPDATE NGUOI_DUNG
@@ -186,6 +187,46 @@ class AuthenticationIntegrationTest {
         mockMvc.perform(get("/api/auth/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void FR_AUT_02_knownAndUnknownPhonesShareTheSameLockedResponseAfterRepeatedFailures() throws Exception {
+        String runtimePassword = prepareRuntimePasswordForManager();
+        String wrongPassword = runtimePassword + "-wrong";
+
+        for (int lanSai = 0; lanSai < 5; lanSai++) {
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginPayload("0900000003", wrongPassword)))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.thongBao").value("Số điện thoại hoặc mật khẩu không đúng"));
+
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginPayload("0900999999", wrongPassword)))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.thongBao").value("Số điện thoại hoặc mật khẩu không đúng"));
+        }
+
+        String knownPhoneBody = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginPayload("0900000003", wrongPassword)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.thongBao", startsWith("Đăng nhập tạm thời bị khoá. Vui lòng thử lại sau ")))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String unknownPhoneBody = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginPayload("0900999999", wrongPassword)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.thongBao", startsWith("Đăng nhập tạm thời bị khoá. Vui lòng thử lại sau ")))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(unknownPhoneBody).isEqualTo(knownPhoneBody);
     }
 
     @Test

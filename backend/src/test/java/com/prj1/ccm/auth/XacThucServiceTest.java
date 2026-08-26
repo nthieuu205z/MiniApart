@@ -9,12 +9,15 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -55,7 +58,7 @@ class XacThucServiceTest {
                         NguoiDungDangNhap::phienBanToken
                 )
                 .containsExactly(0, null, null, 1);
-        assertThat(repository.soLanDangNhapSai()).isZero();
+        assertThat(repository.soLanDangNhapSai("0900000003")).isZero();
     }
 
     @Test
@@ -92,6 +95,36 @@ class XacThucServiceTest {
     }
 
     @Test
+    void FR_AUT_02_unknownPhoneSharesTheSameLockedMessageAsKnownPhoneAfterRepeatedFailures() {
+        MutableClock clock = new MutableClock(Instant.parse("2026-08-26T07:00:00Z"), ZoneId.of("Asia/Ho_Chi_Minh"));
+        PasswordHasher passwordHasher = new PasswordHasher();
+        String runtimePassword = taoMatKhauRuntime();
+        TestNguoiDungRepository repository = new TestNguoiDungRepository(taoNguoiDungDangNhap(passwordHasher, runtimePassword));
+        JwtTokenService jwtTokenService = mock(JwtTokenService.class);
+        XacThucService service = new XacThucService(repository, passwordHasher, jwtTokenService, clock);
+
+        for (int phut = 0; phut < 5; phut++) {
+            clock.dat(Instant.parse("2026-08-26T07:%02d:00Z".formatted(phut)));
+            assertThatThrownBy(() -> service.dangNhap(new DangNhapRequest("0900000003", runtimePassword + "-sai")))
+                    .isInstanceOf(DangNhapThatBaiException.class);
+            assertThatThrownBy(() -> service.dangNhap(new DangNhapRequest("0900999999", runtimePassword + "-sai")))
+                    .isInstanceOf(DangNhapThatBaiException.class);
+        }
+
+        clock.dat(Instant.parse("2026-08-26T07:05:00Z"));
+        String knownPhoneMessage = catchThrowableOfType(
+                () -> service.dangNhap(new DangNhapRequest("0900000003", runtimePassword + "-sai")),
+                DangNhapTamKhoaException.class
+        ).getMessage();
+        String unknownPhoneMessage = catchThrowableOfType(
+                () -> service.dangNhap(new DangNhapRequest("0900999999", runtimePassword + "-sai")),
+                DangNhapTamKhoaException.class
+        ).getMessage();
+
+        assertThat(unknownPhoneMessage).isEqualTo(knownPhoneMessage);
+    }
+
+    @Test
     void FR_AUT_02_successfulLoginResetsTheFailureCounter() {
         MutableClock clock = new MutableClock(Instant.parse("2026-08-26T07:00:00Z"), ZoneId.of("Asia/Ho_Chi_Minh"));
         PasswordHasher passwordHasher = new PasswordHasher();
@@ -113,7 +146,7 @@ class XacThucServiceTest {
 
         assertThat(response.token()).isEqualTo("token-hop-le");
         assertThat(repository.trangThai().soLanSai()).isZero();
-        assertThat(repository.soLanDangNhapSai()).isZero();
+        assertThat(repository.soLanDangNhapSai("0900000003")).isZero();
     }
 
     private NguoiDungDangNhap taoNguoiDungDangNhap(PasswordHasher passwordHasher, String runtimePassword) {
@@ -166,42 +199,67 @@ class XacThucServiceTest {
 
     private static final class TestNguoiDungRepository extends NguoiDungRepository {
         private NguoiDungDangNhap nguoiDungDangNhap;
-        private final List<Instant> cacLanDangNhapSai = new ArrayList<>();
+        private final Map<String, TheoDoiDangNhap> theoDoiTheoSoDienThoai = new HashMap<>();
+        private final Map<String, List<Instant>> cacLanDangNhapSaiTheoSoDienThoai = new HashMap<>();
 
         private TestNguoiDungRepository(NguoiDungDangNhap nguoiDungDangNhap) {
             super(null);
             this.nguoiDungDangNhap = nguoiDungDangNhap;
+            String soDienThoaiKey = SoDienThoaiKey.tu(nguoiDungDangNhap.soDienThoai());
+            theoDoiTheoSoDienThoai.put(soDienThoaiKey, new TheoDoiDangNhap(soDienThoaiKey, 0, null, null));
+            cacLanDangNhapSaiTheoSoDienThoai.put(soDienThoaiKey, new ArrayList<>());
         }
 
         @Override
         public Optional<NguoiDungDangNhap> findBySoDienThoaiChoDangNhap(String soDienThoai) {
-            if (!nguoiDungDangNhap.soDienThoai().equals(soDienThoai)) {
+            if (!SoDienThoaiKey.tu(nguoiDungDangNhap.soDienThoai()).equals(soDienThoai)) {
                 return Optional.empty();
             }
             return Optional.of(nguoiDungDangNhap);
         }
 
         @Override
-        public void xoaLanDangNhapSaiTruoc(Long nguoiDungId, Instant mocThoiGian) {
-            cacLanDangNhapSai.removeIf(instant -> instant.isBefore(mocThoiGian));
+        public void taoTheoDoiDangNhapNeuChuaCo(String soDienThoaiKey) {
+            theoDoiTheoSoDienThoai.putIfAbsent(soDienThoaiKey, new TheoDoiDangNhap(soDienThoaiKey, 0, null, null));
+            cacLanDangNhapSaiTheoSoDienThoai.putIfAbsent(soDienThoaiKey, new ArrayList<>());
         }
 
         @Override
-        public void ghiNhanLanDangNhapSai(Long nguoiDungId, Instant thoiDiem) {
-            cacLanDangNhapSai.add(thoiDiem);
+        public Optional<TheoDoiDangNhap> findTheoDoiDangNhapChoDangNhap(String soDienThoaiKey) {
+            return Optional.ofNullable(theoDoiTheoSoDienThoai.get(soDienThoaiKey));
         }
 
         @Override
-        public int demLanDangNhapSaiTu(Long nguoiDungId, Instant mocThoiGian) {
-            return (int) cacLanDangNhapSai.stream().filter(instant -> !instant.isBefore(mocThoiGian)).count();
+        public void xoaLanDangNhapSaiTruoc(String soDienThoaiKey, Instant mocThoiGian) {
+            cacLanDangNhapSaiTheoSoDienThoai.computeIfAbsent(soDienThoaiKey, ignored -> new ArrayList<>())
+                    .removeIf(instant -> instant.isBefore(mocThoiGian));
         }
 
         @Override
-        public Instant timLanDangNhapSaiSomNhatTu(Long nguoiDungId, Instant mocThoiGian) {
-            return cacLanDangNhapSai.stream()
+        public void ghiNhanLanDangNhapSai(String soDienThoaiKey, Long nguoiDungId, Instant thoiDiem) {
+            cacLanDangNhapSaiTheoSoDienThoai.computeIfAbsent(soDienThoaiKey, ignored -> new ArrayList<>()).add(thoiDiem);
+        }
+
+        @Override
+        public int demLanDangNhapSaiTu(String soDienThoaiKey, Instant mocThoiGian) {
+            return (int) cacLanDangNhapSaiTheoSoDienThoai
+                    .getOrDefault(soDienThoaiKey, List.of())
+                    .stream()
+                    .filter(instant -> !instant.isBefore(mocThoiGian))
+                    .count();
+        }
+
+        @Override
+        public Instant timLanDangNhapSaiSomNhatTu(String soDienThoaiKey, Instant mocThoiGian) {
+            return cacLanDangNhapSaiTheoSoDienThoai.getOrDefault(soDienThoaiKey, List.of()).stream()
                     .filter(instant -> !instant.isBefore(mocThoiGian))
                     .min(Comparator.naturalOrder())
                     .orElse(null);
+        }
+
+        @Override
+        public void capNhatTheoDoiDangNhap(String soDienThoaiKey, int soLanSai, Instant lanSaiDauTien, Instant khoaDen) {
+            theoDoiTheoSoDienThoai.put(soDienThoaiKey, new TheoDoiDangNhap(soDienThoaiKey, soLanSai, lanSaiDauTien, khoaDen));
         }
 
         @Override
@@ -215,9 +273,12 @@ class XacThucServiceTest {
         }
 
         @Override
-        public void datLaiTrangThaiDangNhap(Long nguoiDungId) {
-            cacLanDangNhapSai.clear();
-            nguoiDungDangNhap = capNhat(0, null, null, nguoiDungDangNhap.phienBanToken());
+        public void datLaiTrangThaiDangNhap(String soDienThoaiKey, Long nguoiDungId) {
+            cacLanDangNhapSaiTheoSoDienThoai.put(soDienThoaiKey, new ArrayList<>());
+            theoDoiTheoSoDienThoai.put(soDienThoaiKey, new TheoDoiDangNhap(soDienThoaiKey, 0, null, null));
+            if (nguoiDungId != null && nguoiDungDangNhap.id().equals(nguoiDungId)) {
+                nguoiDungDangNhap = capNhat(0, null, null, nguoiDungDangNhap.phienBanToken());
+            }
         }
 
         private NguoiDungDangNhap capNhat(int soLanSai, Instant lanSaiDauTien, Instant khoaDen, int phienBanToken) {
@@ -239,8 +300,8 @@ class XacThucServiceTest {
             return nguoiDungDangNhap;
         }
 
-        private int soLanDangNhapSai() {
-            return cacLanDangNhapSai.size();
+        private int soLanDangNhapSai(String soDienThoaiKey) {
+            return cacLanDangNhapSaiTheoSoDienThoai.getOrDefault(soDienThoaiKey, List.of()).size();
         }
     }
 }
