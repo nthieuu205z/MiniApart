@@ -221,11 +221,168 @@ class BangGiaDichVuIntegrationTest {
                 .andExpect(status().isMethodNotAllowed());
     }
 
+    @Test
+    void FR_BLD_08_listsTieredPriceHistoryMarksTodayAndLooksUpApplicableTierSetByRequestedDate() throws Exception {
+        Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
+        ganToaChoNguoiDung(2L, 1L);
+        String ownerToken = login(2L, "0900000002");
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bacThangPayload("2204.0655", TEST_TODAY.minusDays(60).toString())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.ngayHieuLuc").value(TEST_TODAY.minusDays(60).toString()))
+                .andExpect(jsonPath("$.dangApDung").value(true))
+                .andExpect(jsonPath("$.cacBac", hasSize(5)))
+                .andExpect(jsonPath("$.cacBac[0].bac").value(1))
+                .andExpect(jsonPath("$.cacBac[0].donGia").value("1984.00"))
+                .andExpect(jsonPath("$.cacBac[4].bac").value(5))
+                .andExpect(jsonPath("$.cacBac[4].denSoLuong").doesNotExist())
+                .andExpect(jsonPath("$.cacBac[4].donGia").value("3967.00"));
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bacThangPayload("2500.0000", TEST_TODAY.plusDays(20).toString())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.ngayHieuLuc").value(TEST_TODAY.plusDays(20).toString()))
+                .andExpect(jsonPath("$.dangApDung").value(false))
+                .andExpect(jsonPath("$.cacBac[0].donGia").value("2250.00"))
+                .andExpect(jsonPath("$.cacBac[4].donGia").value("4500.00"));
+
+        mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].ngayHieuLuc").value(TEST_TODAY.plusDays(20).toString()))
+                .andExpect(jsonPath("$[0].dangApDung").value(false))
+                .andExpect(jsonPath("$[0].cacBac", hasSize(5)))
+                .andExpect(jsonPath("$[1].ngayHieuLuc").value(TEST_TODAY.minusDays(60).toString()))
+                .andExpect(jsonPath("$[1].dangApDung").value(true))
+                .andExpect(jsonPath("$[1].cacBac[2].donGia").value("2998.00"));
+
+        mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .param("ngay", TEST_TODAY.minusDays(61).toString())
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.thongBao", containsString("giá hiệu lực")));
+
+        mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .param("ngay", TEST_TODAY.plusDays(5).toString())
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ngayHieuLuc").value(TEST_TODAY.minusDays(60).toString()))
+                .andExpect(jsonPath("$.cacBac[0].donGia").value("1984.00"))
+                .andExpect(jsonPath("$.cacBac[4].donGia").value("3967.00"));
+
+        mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .param("ngay", TEST_TODAY.plusDays(20).toString())
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ngayHieuLuc").value(TEST_TODAY.plusDays(20).toString()))
+                .andExpect(jsonPath("$.cacBac[0].donGia").value("2250.00"));
+
+        List<Map<String, Object>> lichSuBacThang = jdbcTemplate.queryForList(
+                """
+                        SELECT bac, tu_so_luong, den_so_luong, ty_le, don_gia, ngay_hieu_luc
+                        FROM BANG_GIA_BAC_THANG
+                        WHERE dich_vu_id = ?
+                        ORDER BY ngay_hieu_luc, bac
+                        """,
+                dichVuId
+        );
+        Assertions.assertEquals(10, lichSuBacThang.size());
+        Assertions.assertEquals("90.00", String.valueOf(lichSuBacThang.get(0).get("ty_le")));
+        Assertions.assertEquals("1984.00", String.valueOf(lichSuBacThang.get(0).get("don_gia")));
+        Assertions.assertEquals(TEST_TODAY.minusDays(60).toString(), String.valueOf(lichSuBacThang.get(0).get("ngay_hieu_luc")));
+        Assertions.assertEquals("180.00", String.valueOf(lichSuBacThang.get(4).get("ty_le")));
+        Assertions.assertNull(lichSuBacThang.get(4).get("den_so_luong"));
+        Assertions.assertEquals("2250.00", String.valueOf(lichSuBacThang.get(5).get("don_gia")));
+        Assertions.assertEquals(TEST_TODAY.plusDays(20).toString(), String.valueOf(lichSuBacThang.get(5).get("ngay_hieu_luc")));
+    }
+
+    @Test
+    void FR_BLD_08_rejectsTierSetsWithGapOverlapOrWrongInfiniteLastTier() throws Exception {
+        Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
+        String adminToken = login(1L, "0900000001");
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "giaBanLeBinhQuan": "2204.0655",
+                                  "ngayHieuLuc": "2026-01-01",
+                                  "cacBac": [
+                                    { "bac": 1, "tuSoLuong": "0.00", "denSoLuong": "100.00", "tyLe": "90.00" },
+                                    { "bac": 2, "tuSoLuong": "102.00", "denSoLuong": "200.00", "tyLe": "108.00" },
+                                    { "bac": 3, "tuSoLuong": "201.00", "denSoLuong": "400.00", "tyLe": "136.00" },
+                                    { "bac": 4, "tuSoLuong": "401.00", "denSoLuong": "700.00", "tyLe": "162.00" },
+                                    { "bac": 5, "tuSoLuong": "701.00", "denSoLuong": null, "tyLe": "180.00" }
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.thongBao", containsString("liền nhau")));
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "giaBanLeBinhQuan": "2204.0655",
+                                  "ngayHieuLuc": "2026-01-01",
+                                  "cacBac": [
+                                    { "bac": 1, "tuSoLuong": "0.00", "denSoLuong": "100.00", "tyLe": "90.00" },
+                                    { "bac": 2, "tuSoLuong": "100.00", "denSoLuong": "200.00", "tyLe": "108.00" },
+                                    { "bac": 3, "tuSoLuong": "201.00", "denSoLuong": "400.00", "tyLe": "136.00" },
+                                    { "bac": 4, "tuSoLuong": "401.00", "denSoLuong": "700.00", "tyLe": "162.00" },
+                                    { "bac": 5, "tuSoLuong": "701.00", "denSoLuong": null, "tyLe": "180.00" }
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.thongBao", containsString("liền nhau")));
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "giaBanLeBinhQuan": "2204.0655",
+                                  "ngayHieuLuc": "2026-01-01",
+                                  "cacBac": [
+                                    { "bac": 1, "tuSoLuong": "0.00", "denSoLuong": null, "tyLe": "90.00" },
+                                    { "bac": 2, "tuSoLuong": "101.00", "denSoLuong": "200.00", "tyLe": "108.00" },
+                                    { "bac": 3, "tuSoLuong": "201.00", "denSoLuong": "400.00", "tyLe": "136.00" },
+                                    { "bac": 4, "tuSoLuong": "401.00", "denSoLuong": "700.00", "tyLe": "162.00" },
+                                    { "bac": 5, "tuSoLuong": "701.00", "denSoLuong": null, "tyLe": "180.00" }
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.thongBao", containsString("bậc cuối")));
+    }
+
     private Long themDichVu(Long toaNhaId, String ten) {
         return jdbcTemplate.queryForObject(
                 """
                         INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
                         VALUES (?, ?, 'CO_DINH', 'CO_DINH', 'tháng', FALSE, TRUE)
+                        RETURNING id
+                        """,
+                Long.class,
+                toaNhaId,
+                ten
+        );
+    }
+
+    private Long themDichVuDien(Long toaNhaId, String ten) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
+                        VALUES (?, ?, 'THEO_CHI_SO', 'CO_DINH', 'kWh', TRUE, TRUE)
                         RETURNING id
                         """,
                 Long.class,
@@ -249,6 +406,22 @@ class BangGiaDichVuIntegrationTest {
                   "ngayHieuLuc": "%s"
                 }
                 """.formatted(donGia, ngayHieuLuc);
+    }
+
+    private String bacThangPayload(String giaBanLeBinhQuan, String ngayHieuLuc) {
+        return """
+                {
+                  "giaBanLeBinhQuan": "%s",
+                  "ngayHieuLuc": "%s",
+                  "cacBac": [
+                    { "bac": 1, "tuSoLuong": "0.00", "denSoLuong": "100.00", "tyLe": "90.00" },
+                    { "bac": 2, "tuSoLuong": "101.00", "denSoLuong": "200.00", "tyLe": "108.00" },
+                    { "bac": 3, "tuSoLuong": "201.00", "denSoLuong": "400.00", "tyLe": "136.00" },
+                    { "bac": 4, "tuSoLuong": "401.00", "denSoLuong": "700.00", "tyLe": "162.00" },
+                    { "bac": 5, "tuSoLuong": "701.00", "denSoLuong": null, "tyLe": "180.00" }
+                  ]
+                }
+                """.formatted(giaBanLeBinhQuan, ngayHieuLuc);
     }
 
     private String login(Long nguoiDungId, String soDienThoai) throws Exception {

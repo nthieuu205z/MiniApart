@@ -72,6 +72,53 @@ public class BangGiaController {
                 .body(bangGiaDichVuService.themBangGia(dichVuId, yeuCau, nguoiDungHienTai(request)));
     }
 
+    /**
+     * FR-BLD-08 lists every historical tier set for one visible electricity service and marks the set applicable today.
+     *
+     * @param dichVuId the service identifier
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the complete tier-set history for the requested service
+     */
+    @GetMapping(value = "/{dichVuId}/bac-thang", params = "!ngay")
+    public List<ThongTinBangGiaBacThang> danhSachBangGiaBacThang(@PathVariable Long dichVuId, HttpServletRequest request) {
+        return bangGiaDichVuService.danhSachBangGiaBacThang(dichVuId, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-BLD-08 finds the tier set whose effective date is the latest one not after the requested date.
+     *
+     * @param dichVuId the service identifier
+     * @param ngay the requested lookup date
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the tier set applicable on the requested date
+     */
+    @GetMapping(value = "/{dichVuId}/bac-thang", params = "ngay")
+    public ThongTinBangGiaBacThang layBangGiaBacThangTheoNgay(
+            @PathVariable Long dichVuId,
+            @RequestParam LocalDate ngay,
+            HttpServletRequest request
+    ) {
+        return bangGiaDichVuService.layBangGiaBacThangTheoNgay(dichVuId, ngay, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-BLD-07, FR-BLD-08 appends one new tiered electricity price set without mutating any existing historical set.
+     *
+     * @param dichVuId the service identifier
+     * @param yeuCau the submitted tier set and average retail electricity price
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the newly appended tier set
+     */
+    @PostMapping("/{dichVuId}/bac-thang")
+    public ResponseEntity<ThongTinBangGiaBacThang> themBangGiaBacThang(
+            @PathVariable Long dichVuId,
+            @RequestBody YeuCauBangGiaBacThang yeuCau,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(bangGiaDichVuService.themBangGiaBacThang(dichVuId, yeuCau, nguoiDungHienTai(request)));
+    }
+
     private NguoiDung nguoiDungHienTai(HttpServletRequest request) {
         return (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
     }

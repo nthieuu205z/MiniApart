@@ -67,11 +67,12 @@ public class DichVuRepository {
         jdbcTemplate.update(
                 """
                         UPDATE DICH_VU
-                        SET ten = ?, cach_tinh = ?, don_vi = ?, la_dien = ?
+                        SET ten = ?, cach_tinh = ?, che_do_gia = ?, don_vi = ?, la_dien = ?
                         WHERE id = ? AND toa_nha_id = ?
                         """,
                 dichVu.ten(),
                 dichVu.cachTinh().name(),
+                dichVu.cheDoGia().name(),
                 dichVu.donVi(),
                 dichVu.laDien(),
                 dichVu.id(),

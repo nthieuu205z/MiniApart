@@ -13,6 +13,8 @@ import java.util.List;
 public class DanhMucDichVuService {
     private static final String THONG_BAO_YEU_CAU_KHONG_HOP_LE = "Yêu cầu dịch vụ không hợp lệ.";
     private static final String THONG_BAO_CO_DIEN_KHONG_HOP_LE = "Cờ điện chỉ áp dụng cho dịch vụ tính theo chỉ số.";
+    private static final String THONG_BAO_CHE_DO_GIA_BAC_THANG_KHONG_HOP_LE =
+            "Chế độ giá bậc thang chỉ áp dụng cho dịch vụ điện tính theo chỉ số.";
 
     private final PhanQuyenToaService phanQuyenToaService;
     private final DichVuRepository dichVuRepository;
@@ -33,7 +35,7 @@ public class DanhMucDichVuService {
     @Transactional
     public ThongTinDichVu taoDichVu(Long toaNhaId, YeuCauDichVu yeuCau, NguoiDung nguoiDung) {
         kiemTraQuyenDichVu(nguoiDung, toaNhaId);
-        DichVu dichVu = chuanHoa(null, toaNhaId, yeuCau, true);
+        DichVu dichVu = chuanHoa(null, toaNhaId, yeuCau, CheDoGia.CO_DINH, true);
         Long dichVuId = dichVuRepository.insert(dichVu);
         return ThongTinDichVu.tuDichVu(layDichVuTonTai(toaNhaId, dichVuId));
     }
@@ -42,7 +44,7 @@ public class DanhMucDichVuService {
     public ThongTinDichVu capNhatDichVu(Long toaNhaId, Long dichVuId, YeuCauDichVu yeuCau, NguoiDung nguoiDung) {
         kiemTraQuyenDichVu(nguoiDung, toaNhaId);
         DichVu hienTai = layDichVuTonTai(toaNhaId, dichVuId);
-        DichVu dichVu = chuanHoa(dichVuId, toaNhaId, yeuCau, hienTai.dangSuDung());
+        DichVu dichVu = chuanHoa(dichVuId, toaNhaId, yeuCau, hienTai.cheDoGia(), hienTai.dangSuDung());
         dichVuRepository.update(dichVu);
         return ThongTinDichVu.tuDichVu(layDichVuTonTai(toaNhaId, dichVuId));
     }
@@ -87,7 +89,7 @@ public class DanhMucDichVuService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
-    private DichVu chuanHoa(Long dichVuId, Long toaNhaId, YeuCauDichVu yeuCau, boolean dangSuDung) {
+    private DichVu chuanHoa(Long dichVuId, Long toaNhaId, YeuCauDichVu yeuCau, CheDoGia cheDoGiaMacDinh, boolean dangSuDung) {
         if (yeuCau == null
                 || yeuCau.ten() == null || yeuCau.ten().isBlank()
                 || yeuCau.cachTinh() == null || yeuCau.cachTinh().isBlank()
@@ -107,15 +109,31 @@ public class DanhMucDichVuService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_CO_DIEN_KHONG_HOP_LE);
         }
 
+        CheDoGia cheDoGia = chuanHoaCheDoGia(yeuCau.cheDoGia(), cheDoGiaMacDinh);
+        if (cheDoGia == CheDoGia.BAC_THANG && (!yeuCau.laDien() || cachTinh != CachTinh.THEO_CHI_SO)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_CHE_DO_GIA_BAC_THANG_KHONG_HOP_LE);
+        }
+
         return new DichVu(
                 dichVuId,
                 toaNhaId,
                 yeuCau.ten().trim(),
                 cachTinh,
-                CheDoGia.CO_DINH,
+                cheDoGia,
                 yeuCau.donVi().trim(),
                 yeuCau.laDien(),
                 dangSuDung
         );
+    }
+
+    private CheDoGia chuanHoaCheDoGia(String cheDoGiaRaw, CheDoGia cheDoGiaMacDinh) {
+        if (cheDoGiaRaw == null || cheDoGiaRaw.isBlank()) {
+            return cheDoGiaMacDinh;
+        }
+        try {
+            return CheDoGia.valueOf(cheDoGiaRaw.trim());
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_KHONG_HOP_LE, exception);
+        }
     }
 }

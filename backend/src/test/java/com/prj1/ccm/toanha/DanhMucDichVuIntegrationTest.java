@@ -89,17 +89,20 @@ class DanhMucDichVuIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].ten").value("Internet"))
+                .andExpect(jsonPath("$[0].cheDoGia").value("CO_DINH"))
                 .andExpect(jsonPath("$[1].ten").value("Điện sinh hoạt"))
                 .andExpect(jsonPath("$[1].cachTinh").value("THEO_CHI_SO"))
+                .andExpect(jsonPath("$[1].cheDoGia").value("CO_DINH"))
                 .andExpect(jsonPath("$[1].laDien").value(true));
 
         mockMvc.perform(post("/api/toa-nha/1/dich-vu")
                         .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(dichVuPayload("Phí quản lý", "THEO_NGUOI", "người", false)))
+                        .content(dichVuPayload("Phí quản lý", "THEO_NGUOI", "CO_DINH", "người", false)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.ten").value("Phí quản lý"))
                 .andExpect(jsonPath("$.cachTinh").value("THEO_NGUOI"))
+                .andExpect(jsonPath("$.cheDoGia").value("CO_DINH"))
                 .andExpect(jsonPath("$.donVi").value("người"))
                 .andExpect(jsonPath("$.laDien").value(false))
                 .andExpect(jsonPath("$.dangSuDung").value(true));
@@ -114,10 +117,11 @@ class DanhMucDichVuIntegrationTest {
         mockMvc.perform(put("/api/toa-nha/1/dich-vu/" + internetId)
                         .header("Authorization", "Bearer " + managerToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(dichVuPayload("Internet cáp quang", "CO_DINH", "tháng", false)))
+                        .content(dichVuPayload("Internet cáp quang", "CO_DINH", "CO_DINH", "tháng", false)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(internetId))
                 .andExpect(jsonPath("$.ten").value("Internet cáp quang"))
+                .andExpect(jsonPath("$.cheDoGia").value("CO_DINH"))
                 .andExpect(jsonPath("$.donVi").value("tháng"));
 
         mockMvc.perform(put("/api/toa-nha/1/dich-vu/" + internetId + "/trang-thai")
@@ -155,9 +159,63 @@ class DanhMucDichVuIntegrationTest {
         mockMvc.perform(post("/api/toa-nha/1/dich-vu")
                         .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(dichVuPayload("Internet sai cờ", "CO_DINH", "tháng", true)))
+                        .content(dichVuPayload("Internet sai cờ", "CO_DINH", "CO_DINH", "tháng", true)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.thongBao", containsString("điện")));
+    }
+
+    @Test
+    void FR_BLD_07_switchesElectricServiceBetweenFixedAndTieredPricingWithoutDeletingEitherPriceHistory() throws Exception {
+        Long dichVuDienId = themDichVu(1L, "Điện sinh hoạt", "THEO_CHI_SO", "CO_DINH", "kWh", true, true);
+        ganToaChoNguoiDung(2L, 1L);
+        String ownerToken = login(2L, "0900000002");
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuDienId + "/bang-gia")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "donGia": "3500.00",
+                                  "ngayHieuLuc": "2026-01-01"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuDienId + "/bac-thang")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bacThangPayload("2204.0655", "2026-06-01")))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(put("/api/toa-nha/1/dich-vu/" + dichVuDienId)
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(dichVuPayload("Điện sinh hoạt", "THEO_CHI_SO", "BAC_THANG", "kWh", true)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(dichVuDienId))
+                .andExpect(jsonPath("$.cheDoGia").value("BAC_THANG"));
+
+        Assertions.assertEquals(
+                "BAC_THANG",
+                jdbcTemplate.queryForObject("SELECT che_do_gia FROM DICH_VU WHERE id = ?", String.class, dichVuDienId)
+        );
+        Assertions.assertEquals(1, demBanGhi("SELECT COUNT(*) FROM BANG_GIA WHERE dich_vu_id = ?", dichVuDienId));
+        Assertions.assertEquals(5, demBanGhi("SELECT COUNT(*) FROM BANG_GIA_BAC_THANG WHERE dich_vu_id = ?", dichVuDienId));
+
+        mockMvc.perform(put("/api/toa-nha/1/dich-vu/" + dichVuDienId)
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(dichVuPayload("Điện sinh hoạt", "THEO_CHI_SO", "CO_DINH", "kWh", true)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(dichVuDienId))
+                .andExpect(jsonPath("$.cheDoGia").value("CO_DINH"));
+
+        Assertions.assertEquals(
+                "CO_DINH",
+                jdbcTemplate.queryForObject("SELECT che_do_gia FROM DICH_VU WHERE id = ?", String.class, dichVuDienId)
+        );
+        Assertions.assertEquals(1, demBanGhi("SELECT COUNT(*) FROM BANG_GIA WHERE dich_vu_id = ?", dichVuDienId));
+        Assertions.assertEquals(5, demBanGhi("SELECT COUNT(*) FROM BANG_GIA_BAC_THANG WHERE dich_vu_id = ?", dichVuDienId));
     }
 
     private Long themDichVu(
@@ -194,15 +252,37 @@ class DanhMucDichVuIntegrationTest {
         );
     }
 
-    private String dichVuPayload(String ten, String cachTinh, String donVi, boolean laDien) {
+    private int demBanGhi(String sql, Long dichVuId) {
+        Integer soLuong = jdbcTemplate.queryForObject(sql, Integer.class, dichVuId);
+        return soLuong == null ? 0 : soLuong;
+    }
+
+    private String dichVuPayload(String ten, String cachTinh, String cheDoGia, String donVi, boolean laDien) {
         return """
                 {
                   "ten": "%s",
                   "cachTinh": "%s",
+                  "cheDoGia": "%s",
                   "donVi": "%s",
                   "laDien": %s
                 }
-                """.formatted(ten, cachTinh, donVi, laDien);
+                """.formatted(ten, cachTinh, cheDoGia, donVi, laDien);
+    }
+
+    private String bacThangPayload(String giaBanLeBinhQuan, String ngayHieuLuc) {
+        return """
+                {
+                  "giaBanLeBinhQuan": "%s",
+                  "ngayHieuLuc": "%s",
+                  "cacBac": [
+                    { "bac": 1, "tuSoLuong": "0.00", "denSoLuong": "100.00", "tyLe": "90.00" },
+                    { "bac": 2, "tuSoLuong": "101.00", "denSoLuong": "200.00", "tyLe": "108.00" },
+                    { "bac": 3, "tuSoLuong": "201.00", "denSoLuong": "400.00", "tyLe": "136.00" },
+                    { "bac": 4, "tuSoLuong": "401.00", "denSoLuong": "700.00", "tyLe": "162.00" },
+                    { "bac": 5, "tuSoLuong": "701.00", "denSoLuong": null, "tyLe": "180.00" }
+                  ]
+                }
+                """.formatted(giaBanLeBinhQuan, ngayHieuLuc);
     }
 
     private String login(Long nguoiDungId, String soDienThoai) throws Exception {

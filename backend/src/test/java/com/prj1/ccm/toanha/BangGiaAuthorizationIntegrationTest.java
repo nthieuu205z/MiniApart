@@ -98,6 +98,37 @@ class BangGiaAuthorizationIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void FR_BLD_07_FR_BLD_08_forbiddenRolesReceive403OnEveryTieredPriceEndpoint() throws Exception {
+        Long dichVuId = themDichVu(1L);
+        String workerToken = login(4L, "0900000004");
+        String tenantToken = login(5L, "0900000006");
+
+        assert403OnAllTieredPriceEndpoints(workerToken, dichVuId);
+        assert403OnAllTieredPriceEndpoints(tenantToken, dichVuId);
+    }
+
+    @Test
+    void FR_BLD_07_FR_BLD_08_managerReceives403OutsideAssignedBuildingScopeForTieredPriceEndpoints() throws Exception {
+        Long dichVuNgoaiPhamViId = themDichVu(2L);
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(get("/api/dich-vu/" + dichVuNgoaiPhamViId + "/bac-thang")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/dich-vu/" + dichVuNgoaiPhamViId + "/bac-thang")
+                        .param("ngay", "2026-08-27")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuNgoaiPhamViId + "/bac-thang")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bacThangPayload()))
+                .andExpect(status().isForbidden());
+    }
+
     private void assert403OnAllFixedPriceEndpoints(String token, Long dichVuId) throws Exception {
         mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bang-gia")
                         .header("Authorization", "Bearer " + token))
@@ -112,6 +143,23 @@ class BangGiaAuthorizationIntegrationTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bangGiaPayload()))
+                .andExpect(status().isForbidden());
+    }
+
+    private void assert403OnAllTieredPriceEndpoints(String token, Long dichVuId) throws Exception {
+        mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .param("ngay", "2026-08-27")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bacThangPayload()))
                 .andExpect(status().isForbidden());
     }
 
@@ -132,6 +180,22 @@ class BangGiaAuthorizationIntegrationTest {
                 {
                   "donGia": "100000.00",
                   "ngayHieuLuc": "2026-08-01"
+                }
+                """;
+    }
+
+    private String bacThangPayload() {
+        return """
+                {
+                  "giaBanLeBinhQuan": "2204.0655",
+                  "ngayHieuLuc": "2026-08-01",
+                  "cacBac": [
+                    { "bac": 1, "tuSoLuong": "0.00", "denSoLuong": "100.00", "tyLe": "90.00" },
+                    { "bac": 2, "tuSoLuong": "101.00", "denSoLuong": "200.00", "tyLe": "108.00" },
+                    { "bac": 3, "tuSoLuong": "201.00", "denSoLuong": "400.00", "tyLe": "136.00" },
+                    { "bac": 4, "tuSoLuong": "401.00", "denSoLuong": "700.00", "tyLe": "162.00" },
+                    { "bac": 5, "tuSoLuong": "701.00", "denSoLuong": null, "tyLe": "180.00" }
+                  ]
                 }
                 """;
     }
