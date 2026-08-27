@@ -8,7 +8,7 @@ Hai luật:
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 > **Mã nguồn đã bị xoá ngày 2026-08-25 để bắt đầu lại sạch.** Ticket này quay về `ready-for-agent`. Các bài học ở mục `## Comments` bên dưới vẫn đúng — đọc trước khi làm lại để khỏi vấp lại cùng chỗ.
 
 
@@ -64,3 +64,12 @@ Hai việc đã làm:
 2. **Thêm một phép kiểm chống xanh giả.** `ArchitectureRulesTest` khẳng định số lớp ArchUnit nhập được phải lớn hơn không. Sai tên gói, nâng Java quá tay, hay bất cứ nguyên nhân nào khác làm ArchUnit không đọc được mã — đều gãy build ngay thay vì âm thầm bỏ qua.
 
 Đây là chuyện đáng viết vào mục 4.7 của Chương 4: một hàng rào an toàn hỏng mà vẫn báo an toàn thì nguy hiểm hơn không có hàng rào nào.
+
+### Kết quả triển khai — 2026-08-26
+
+- Thêm ArchUnit `1.4.1` vào bộ kiểm thử Gradle; `./gradlew test` tự chạy hai luật cùng suite thông thường.
+- Tạo `com.prj1.ccm.billing.calc` bằng `package-info.java`. Vì package còn rỗng ở ticket này, hai luật dùng `allowEmptyShould(true)`; bite tests vẫn chứng minh luật không bị vô hiệu hoá.
+- `ArchitectureRulesTest` dùng `DoNotIncludeTests` để chỉ quét production classes và có chốt `rulesActuallySeeTheProductionCode()`.
+- `ArchitectureRulesViolationTest` giữ vĩnh viễn hai fixture cố ý sai: `HoaDonDungDouble.tongTien` và `TinhTienGoiSpring`.
+- Bằng chứng TDD: vòng đầu không biên dịch vì thiếu `ArchitectureRules`; sau stub, 4 test luật đỏ; thay bằng luật thật thì 5 test ArchUnit xanh. Thông báo vi phạm chứa tên field/lớp và lý do dùng `BigDecimal`/tách `billing.calc` khỏi framework.
+- Verification cuối: backend `clean test` **8/8** pass; frontend `npm test` **1/1** pass và build TypeScript/Vite pass; `docker compose config` và `git diff --check` pass.

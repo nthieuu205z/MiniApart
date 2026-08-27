@@ -1,0 +1,2 @@
+-- The empty baseline reserves Flyway version 1 for the domain schema.
+-- Domain tables are introduced by the authentication ticket and later slices.

@@ -1,0 +1,73 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.prj1.ccm'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-flyway'
+    implementation 'org.flywaydb:flyway-core'
+    runtimeOnly 'org.flywaydb:flyway-database-postgresql'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
+    testImplementation 'org.testcontainers:junit-jupiter:1.21.3'
+    testImplementation 'org.testcontainers:postgresql:1.21.3'
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+def commandOutput = { List<String> command ->
+    try {
+        def process = new ProcessBuilder(command)
+                .redirectErrorStream(true)
+                .start()
+        def output = process.inputStream.getText('UTF-8').trim()
+        return process.waitFor() == 0 ? output : ''
+    } catch (Exception ignored) {
+        return ''
+    }
+}
+
+def dockerHost = System.getenv('DOCKER_HOST')
+if (!dockerHost) {
+    dockerHost = commandOutput(['docker', 'context', 'inspect', '--format', '{{.Endpoints.docker.Host}}'])
+}
+def dockerApiVersion = commandOutput(['docker', 'version', '--format', '{{.Server.APIVersion}}'])
+
+tasks.withType(Test).configureEach {
+    if (dockerHost) {
+        environment('DOCKER_HOST', dockerHost)
+        if (dockerHost.startsWith('unix://')) {
+            environment(
+                    'TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE',
+                    System.getenv('TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE') ?: '/var/run/docker.sock'
+            )
+        }
+    }
+    if (dockerApiVersion) {
+        systemProperty('api.version', dockerApiVersion)
+    }
+}

@@ -17,6 +17,9 @@ node_modules/
 frontend/dist/
 frontend/.vite/
 
+# Local git worktrees
+.worktrees/
+
 # Local env — never commit secrets
 .env
 .env.local

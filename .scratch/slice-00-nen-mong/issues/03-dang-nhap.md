@@ -8,7 +8,7 @@ Ticket này cũng dựng **lược đồ nền** mà mọi thứ sau dựa vào:
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 > **Mã nguồn đã bị xoá ngày 2026-08-25 để bắt đầu lại sạch.** Ticket này quay về `ready-for-agent`. Các bài học ở mục `## Comments` bên dưới vẫn đúng — đọc trước khi làm lại để khỏi vấp lại cùng chỗ.
 
 
