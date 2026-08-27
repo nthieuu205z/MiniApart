@@ -373,6 +373,10 @@ dd {
   gap: 1rem;
 }
 
+.room-management .building-list {
+  align-content: start;
+}
+
 .building-card,
 .building-summary,
 .building-form {
@@ -557,13 +561,275 @@ dd {
   gap: 0.7rem;
 }
 
+.room-status-summary__total {
+  color: #0f4f4a;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.room-status-summary__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.room-status-chip {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #d5e6e1;
+  border-radius: 0.9rem;
+  background: #ffffff;
+}
+
+.room-status-chip span {
+  color: #52706b;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.room-status-chip strong {
+  color: #0f4f4a;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.room-status-chip--trong {
+  border-left: 0.45rem solid #1d9b6c;
+}
+
+.room-status-chip--dang_thue {
+  border-left: 0.45rem solid #1f6fb2;
+}
+
+.room-status-chip--dang_sua {
+  border-left: 0.45rem solid #b7791f;
+}
+
+.room-floor-map {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.room-floor-section {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid #d5e6e1;
+  border-radius: 1rem;
+  background: #f9fcfb;
+}
+
+.room-floor-section__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.room-floor-section__header h4 {
+  margin: 0;
+  color: #0f4f4a;
+}
+
+.room-floor-section__header span {
+  color: #52706b;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.room-floor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.2rem, 1fr));
+  gap: 0.55rem;
+}
+
+.room-tile {
+  display: grid;
+  gap: 0.2rem;
+  min-height: 4.35rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid #c5dbd5;
+  border-radius: 0.9rem;
+  background: #ffffff;
+  color: #14322f;
+  text-align: left;
+  cursor: pointer;
+}
+
+.room-tile:hover {
+  transform: translateY(-1px);
+}
+
+.room-tile:focus-visible {
+  outline: 2px solid rgba(15, 118, 110, 0.35);
+  outline-offset: 2px;
+}
+
+.room-tile--active {
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12);
+}
+
+.room-tile__number {
+  font-size: 1.05rem;
+  line-height: 1.1;
+}
+
+.room-tile__status {
+  color: #254742;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.room-tile--trong,
+.room-detail__status--trong {
+  border-left: 0.45rem solid #1d9b6c;
+  background:
+    linear-gradient(135deg, rgba(29, 155, 108, 0.12), rgba(255, 255, 255, 0)),
+    #ffffff;
+}
+
+.room-tile--da_coc,
+.room-detail__status--da_coc {
+  border-left: 0.45rem solid #7c5dce;
+  background:
+    linear-gradient(135deg, rgba(124, 93, 206, 0.12), rgba(255, 255, 255, 0)),
+    #ffffff;
+}
+
+.room-tile--dang_thue,
+.room-detail__status--dang_thue {
+  border-left: 0.45rem solid #1f6fb2;
+  background:
+    linear-gradient(135deg, rgba(31, 111, 178, 0.12), rgba(255, 255, 255, 0)),
+    #ffffff;
+}
+
+.room-tile--dang_sua,
+.room-detail__status--dang_sua {
+  border-left: 0.45rem solid #b7791f;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(183, 121, 31, 0.14),
+      rgba(183, 121, 31, 0.14) 0.35rem,
+      rgba(255, 255, 255, 0) 0.35rem,
+      rgba(255, 255, 255, 0) 0.7rem
+    ),
+    #ffffff;
+}
+
+.room-tile--ngung,
+.room-detail__status--ngung {
+  border-left: 0.45rem solid #6b7280;
+  background:
+    linear-gradient(135deg, rgba(107, 114, 128, 0.14), rgba(255, 255, 255, 0)),
+    #f4f5f7;
+}
+
+.room-detail__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #c5dbd5;
+  border-radius: 999px;
+  color: #0f4f4a;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .status-message--success {
   color: #146c43;
 }
 
 @media (min-width: 56rem) {
+  .room-management {
+    gap: 0.55rem;
+  }
+
+  .room-management .status-message {
+    line-height: 1.45;
+  }
+
+  .room-management .building-form,
+  .room-management .building-summary,
+  .room-management .room-floor-section {
+    padding: 0.85rem;
+  }
+
+  .room-management .building-layout,
+  .room-management .building-list,
+  .room-management .building-detail,
+  .room-management .building-form,
+  .room-management .building-summary,
+  .room-management .room-floor-map {
+    gap: 0.75rem;
+  }
+
+  .room-management .building-form__row,
+  .room-management .building-summary__heading {
+    gap: 0.55rem;
+  }
+
+  .room-management .field {
+    gap: 0.35rem;
+  }
+
+  .room-management .field input,
+  .room-management .field select {
+    padding: 0.72rem 0.85rem;
+  }
+
+  .room-management .room-status-summary__grid {
+    gap: 0.55rem;
+  }
+
+  .room-management .room-status-chip {
+    padding: 0.7rem 0.8rem;
+  }
+
+  .room-management .room-status-chip strong {
+    font-size: 1.3rem;
+  }
+
   .building-layout {
-    grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.45fr) minmax(20rem, 1fr);
+  }
+
+  .room-floor-section {
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .room-floor-section__header {
+    display: grid;
+    gap: 0.2rem;
+    justify-content: start;
+  }
+
+  .room-floor-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .room-tile {
+    min-height: 3.7rem;
+    padding: 0.55rem 0.6rem;
+  }
+
+  .room-tile__number {
+    font-size: 0.98rem;
+  }
+
+  .room-tile__status {
+    font-size: 0.72rem;
+  }
+
+  .room-detail__status {
+    padding: 0.4rem 0.65rem;
   }
 }
 
@@ -670,5 +936,72 @@ dd {
     border-color: #28544d;
     background: rgba(9, 33, 31, 0.9);
     color: #e1f0ec;
+  }
+
+  .room-status-summary__total,
+  .room-status-chip strong,
+  .room-floor-section__header h4,
+  .room-detail__status {
+    color: #d8f4ed;
+  }
+
+  .room-status-chip,
+  .room-floor-section,
+  .room-tile,
+  .room-detail__status {
+    border-color: #28544d;
+  }
+
+  .room-status-chip,
+  .room-floor-section,
+  .room-tile {
+    background: rgba(9, 33, 31, 0.55);
+  }
+
+  .room-tile__status,
+  .room-floor-section__header span,
+  .room-status-chip span {
+    color: #a9c5be;
+  }
+
+  .room-tile--trong,
+  .room-detail__status--trong {
+    background:
+      linear-gradient(135deg, rgba(29, 155, 108, 0.18), rgba(9, 33, 31, 0)),
+      rgba(9, 33, 31, 0.55);
+  }
+
+  .room-tile--da_coc,
+  .room-detail__status--da_coc {
+    background:
+      linear-gradient(135deg, rgba(124, 93, 206, 0.18), rgba(9, 33, 31, 0)),
+      rgba(9, 33, 31, 0.55);
+  }
+
+  .room-tile--dang_thue,
+  .room-detail__status--dang_thue {
+    background:
+      linear-gradient(135deg, rgba(31, 111, 178, 0.18), rgba(9, 33, 31, 0)),
+      rgba(9, 33, 31, 0.55);
+  }
+
+  .room-tile--dang_sua,
+  .room-detail__status--dang_sua {
+    background:
+      repeating-linear-gradient(
+        135deg,
+        rgba(183, 121, 31, 0.2),
+        rgba(183, 121, 31, 0.2) 0.35rem,
+        rgba(9, 33, 31, 0) 0.35rem,
+        rgba(9, 33, 31, 0) 0.7rem
+      ),
+      rgba(9, 33, 31, 0.55);
+  }
+
+  .room-tile--ngung,
+  .room-detail__status--ngung {
+    background:
+      linear-gradient(135deg, rgba(107, 114, 128, 0.2), rgba(9, 33, 31, 0)),
+      rgba(15, 23, 42, 0.55);
   }
 }

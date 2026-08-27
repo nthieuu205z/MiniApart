@@ -479,6 +479,76 @@ describe('App role navigation', () => {
     })
     expect(mountedApp!.container.querySelector('.room-management .building-list')?.textContent).not.toContain('205')
   })
+
+  it('FR-BLD-03 groups rooms by floor, shows compact status totals, and opens room detail from existing room data', async () => {
+    const quanLy = MENU_BY_ROLE[2]
+    const fetchMock = buildFetchMock(quanLy.nguoiDung, {
+      roomsByBuilding: new Map<number, ThongTinPhong[]>([
+        [1, buildFloorMapRooms(1)],
+        [2, []],
+      ]),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    mountedApp = await mountAppAndLogin(quanLy.nguoiDung, '/phong', fetchMock)
+
+    const floorMap = await vi.waitFor(() => {
+      const element = mountedApp!.container.querySelector('[data-testid="room-floor-map"]')
+      expect(element).not.toBeNull()
+      return element as HTMLElement
+    })
+
+    const floorSections = [...floorMap.querySelectorAll('[data-testid="room-floor-section"]')]
+    expect(floorSections).toHaveLength(4)
+    expect(floorSections.map((section) => section.querySelector('h4')?.textContent?.trim())).toEqual([
+      'Tầng 4',
+      'Tầng 3',
+      'Tầng 2',
+      'Tầng 1',
+    ])
+
+    const firstFloorRooms = [...floorSections[0].querySelectorAll('[data-testid="room-tile"]')].map(
+      (tile) => tile.querySelector('.room-tile__number')?.textContent?.trim(),
+    )
+    expect(firstFloorRooms).toEqual(['401', '402', '403', '404', '405'])
+
+    const compactGrid = floorMap.querySelector('[data-testid="room-floor-grid"]')
+    expect(compactGrid?.getAttribute('data-compact-layout')).toBe('true')
+    expect(floorMap.querySelectorAll('[data-testid="room-tile"]')).toHaveLength(20)
+    expect(mountedApp.container.textContent).toContain('20 phòng')
+
+    const summaryCards = [...mountedApp.container.querySelectorAll('.room-status-chip')].map((card) => card.textContent?.replace(/\s+/g, ''))
+    expect(summaryCards).toEqual(['Trống5', 'Đangthuê7', 'Đangsửa4'])
+
+    const tile403 = [...mountedApp.container.querySelectorAll('[data-testid="room-tile"]')].find(
+      (tile) => tile.querySelector('.room-tile__number')?.textContent?.trim() === '403',
+    )
+    expect(tile403).not.toBeUndefined()
+    expect(tile403?.textContent).toContain('Đã đặt cọc')
+    expect(tile403?.className).toContain('room-tile--da_coc')
+
+    const tile204 = [...mountedApp.container.querySelectorAll('[data-testid="room-tile"]')].find(
+      (tile) => tile.querySelector('.room-tile__number')?.textContent?.trim() === '204',
+    )
+    expect(tile204).not.toBeUndefined()
+    expect(tile204?.textContent).toContain('Ngừng')
+    expect(tile204?.className).toContain('room-tile--ngung')
+
+    await act(async () => {
+      ;(tile403 as HTMLButtonElement).click()
+    })
+
+    const roomDetail = await vi.waitFor(() => {
+      const detail = mountedApp!.container.querySelector('[data-testid="room-detail"]')
+      expect(detail).not.toBeNull()
+      expect(detail?.textContent).toContain('403')
+      return detail as HTMLElement
+    })
+
+    expect(roomDetail.textContent).toContain('Đã đặt cọc')
+    expect(roomDetail.textContent).toContain('Gác xép')
+    expect(roomDetail.textContent).toContain('31.50')
+    expect(roomDetail.textContent).toContain('5100000.00')
+  })
 })
 
 async function mountAppAndLogin(nguoiDung: ThongTinNguoiDung, path = '/', fetchMock = buildFetchMock(nguoiDung)) {
@@ -541,7 +611,12 @@ function findButton(container: HTMLDivElement, label: string) {
   return button as HTMLButtonElement
 }
 
-function buildFetchMock(nguoiDung: ThongTinNguoiDung) {
+function buildFetchMock(
+  nguoiDung: ThongTinNguoiDung,
+  options?: {
+    roomsByBuilding?: Map<number, ThongTinPhong[]>
+  },
+) {
   const accounts: ThongTinQuanLyNguoiDung[] = [
     {
       id: 1,
@@ -595,7 +670,7 @@ function buildFetchMock(nguoiDung: ThongTinNguoiDung) {
     { vaiTro: 'THO', tenVaiTro: 'Thợ sửa chữa (máy chủ)' },
     { vaiTro: 'NGUOI_THUE', tenVaiTro: 'Người thuê' },
   ]
-  const roomsByBuilding = new Map<number, ThongTinPhong[]>([
+  const roomsByBuilding = options?.roomsByBuilding ?? new Map<number, ThongTinPhong[]>([
     [1, [
       {
         id: 11,
@@ -836,6 +911,56 @@ function buildFetchMock(nguoiDung: ThongTinNguoiDung) {
 
     throw new Error(`Unexpected fetch: ${url}`)
   })
+}
+
+function buildFloorMapRooms(buildingId: number): ThongTinPhong[] {
+  return [
+    createRoom(buildingId, 101, 1, 'TRONG', 'Trống', '18.00', 2, '2800000.00', 'Studio'),
+    createRoom(buildingId, 102, 1, 'TRONG', 'Trống', '18.50', 2, '2850000.00', 'Studio'),
+    createRoom(buildingId, 103, 1, 'DANG_THUE', 'Đang thuê', '19.00', 2, '3000000.00', 'Studio'),
+    createRoom(buildingId, 104, 1, 'DANG_THUE', 'Đang thuê', '19.50', 3, '3100000.00', 'Studio'),
+    createRoom(buildingId, 105, 1, 'DANG_SUA', 'Đang sửa', '20.00', 3, '3150000.00', 'Studio'),
+    createRoom(buildingId, 201, 2, 'TRONG', 'Trống', '21.00', 3, '3200000.00', 'Studio'),
+    createRoom(buildingId, 202, 2, 'DA_COC', 'Đã đặt cọc', '21.50', 3, '3300000.00', 'Studio'),
+    createRoom(buildingId, 203, 2, 'DANG_THUE', 'Đang thuê', '22.00', 3, '3400000.00', 'Studio'),
+    createRoom(buildingId, 204, 2, 'NGUNG', 'Ngừng', '22.50', 3, '3450000.00', 'Studio'),
+    createRoom(buildingId, 205, 2, 'DANG_SUA', 'Đang sửa', '23.00', 4, '3500000.00', 'Studio'),
+    createRoom(buildingId, 301, 3, 'TRONG', 'Trống', '24.00', 4, '3900000.00', 'Gác xép'),
+    createRoom(buildingId, 302, 3, 'DANG_THUE', 'Đang thuê', '24.50', 4, '4000000.00', 'Gác xép'),
+    createRoom(buildingId, 303, 3, 'DANG_THUE', 'Đang thuê', '25.00', 4, '4100000.00', 'Gác xép'),
+    createRoom(buildingId, 304, 3, 'DA_COC', 'Đã đặt cọc', '25.50', 4, '4200000.00', 'Gác xép'),
+    createRoom(buildingId, 305, 3, 'DANG_SUA', 'Đang sửa', '26.00', 4, '4300000.00', 'Gác xép'),
+    createRoom(buildingId, 401, 4, 'TRONG', 'Trống', '30.00', 5, '4800000.00', 'Duplex'),
+    createRoom(buildingId, 402, 4, 'DANG_THUE', 'Đang thuê', '31.00', 5, '5000000.00', 'Duplex'),
+    createRoom(buildingId, 403, 4, 'DA_COC', 'Đã đặt cọc', '31.50', 5, '5100000.00', 'Gác xép'),
+    createRoom(buildingId, 404, 4, 'DANG_THUE', 'Đang thuê', '32.00', 5, '5200000.00', 'Duplex'),
+    createRoom(buildingId, 405, 4, 'DANG_SUA', 'Đang sửa', '32.50', 5, '5300000.00', 'Duplex'),
+  ]
+}
+
+function createRoom(
+  buildingId: number,
+  roomNumber: number,
+  floor: number,
+  trangThai: ThongTinPhong['trangThai'],
+  tenTrangThai: string,
+  dienTich: string,
+  sucChua: number,
+  giaThueMacDinh: string,
+  loaiPhong: string,
+): ThongTinPhong {
+  return {
+    id: roomNumber,
+    toaNhaId: buildingId,
+    soPhong: String(roomNumber),
+    tang: floor,
+    dienTich,
+    sucChua,
+    giaThueMacDinh,
+    loaiPhong,
+    trangThai,
+    tenTrangThai,
+  }
 }
 
 function buildPreviewRooms(

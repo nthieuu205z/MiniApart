@@ -16,6 +16,20 @@ type Props = {
   token: string
 }
 
+const TRANG_THAI_PHONG_HIEN_THI: Record<string, { nhan: string; lopCss: string }> = {
+  TRONG: { nhan: 'Trống', lopCss: 'room-tile--trong' },
+  DA_COC: { nhan: 'Đã đặt cọc', lopCss: 'room-tile--da_coc' },
+  DANG_THUE: { nhan: 'Đang thuê', lopCss: 'room-tile--dang_thue' },
+  DANG_SUA: { nhan: 'Đang sửa', lopCss: 'room-tile--dang_sua' },
+  NGUNG: { nhan: 'Ngừng', lopCss: 'room-tile--ngung' },
+}
+
+const TONG_QUAN_TRANG_THAI = [
+  { ma: 'TRONG', nhan: 'Trống' },
+  { ma: 'DANG_THUE', nhan: 'Đang thuê' },
+  { ma: 'DANG_SUA', nhan: 'Đang sửa' },
+] as const
+
 type BieuMauPhong = {
   soPhong: string
   tang: string
@@ -45,6 +59,7 @@ export default function DanhMucPhong({ token }: Props) {
   const [dangXuLyHangLoat, setDangXuLyHangLoat] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
   const [thongBao, setThongBao] = useState<string | null>(null)
+  const [phongDangXemId, setPhongDangXemId] = useState<number | null>(null)
   const [bieuMauPhong, setBieuMauPhong] = useState<BieuMauPhong>(BIEU_MAU_PHONG_MAC_DINH)
   const [hienBieuMauHangLoat, setHienBieuMauHangLoat] = useState(false)
   const [bieuMauHangLoat, setBieuMauHangLoat] = useState({
@@ -60,6 +75,8 @@ export default function DanhMucPhong({ token }: Props) {
   const [yeuCauPhongHangLoatDaXemTruoc, setYeuCauPhongHangLoatDaXemTruoc] = useState<YeuCauPhongHangLoat | null>(null)
 
   const toaDangChon = danhSachToa.find((item) => item.id === toaDangChonId) ?? null
+  const nhomPhongTheoTang = taoNhomPhongTheoTang(danhSachPhong)
+  const phongDangXem = danhSachPhong.find((phong) => phong.id === phongDangXemId) ?? null
 
   useEffect(() => {
     let mounted = true
@@ -112,6 +129,17 @@ export default function DanhMucPhong({ token }: Props) {
     }
   }, [token, toaDangChonId, tangLoc])
 
+  useEffect(() => {
+    if (phongDangXemId === null) {
+      return
+    }
+
+    const vanConTrongDanhSach = danhSachPhong.some((phong) => phong.id === phongDangXemId)
+    if (!vanConTrongDanhSach) {
+      setPhongDangXemId(null)
+    }
+  }, [danhSachPhong, phongDangXemId])
+
   async function handleTaoPhong(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!toaDangChonId) return
@@ -126,6 +154,9 @@ export default function DanhMucPhong({ token }: Props) {
       setDanhSachPhong((current) => (
         phongThuocBoLoc(phongMoi, tangLoc) ? [...current, phongMoi].sort(soSanhPhong) : current
       ))
+      if (phongThuocBoLoc(phongMoi, tangLoc) && phongMoi.id !== null) {
+        setPhongDangXemId(phongMoi.id)
+      }
       setBieuMauPhong({ ...BIEU_MAU_PHONG_MAC_DINH, tang: bieuMauPhong.tang })
       setThongBao(`Đã khai báo phòng ${phongMoi.soPhong}.`)
     } catch (reason: unknown) {
@@ -170,6 +201,10 @@ export default function DanhMucPhong({ token }: Props) {
       setDanhSachPhong((current) => (
         [...current, ...ketQua.phong.filter((phong) => phongThuocBoLoc(phong, tangLoc))].sort(soSanhPhong)
       ))
+      const phongMoiTrongBoLoc = ketQua.phong.find((phong) => phongThuocBoLoc(phong, tangLoc) && phong.id !== null)
+      if (phongMoiTrongBoLoc?.id !== null && phongMoiTrongBoLoc !== undefined) {
+        setPhongDangXemId(phongMoiTrongBoLoc.id)
+      }
       setThongBao(`Đã tạo dãy phòng ${payload.soBatDau} - ${payload.soKetThuc}.`)
       setXemTruoc([])
       setYeuCauPhongHangLoatDaXemTruoc(null)
@@ -245,37 +280,109 @@ export default function DanhMucPhong({ token }: Props) {
           ) : danhSachPhong.length === 0 ? (
             <p className="status-message">Chưa có phòng nào trong bộ lọc hiện tại.</p>
           ) : (
-            danhSachPhong.map((phong) => (
-              <article key={phong.id} className="building-card">
-                <div className="building-card__topline">
-                  <strong>{phong.soPhong}</strong>
-                  <span>Tầng {phong.tang}</span>
+            <>
+              <section className="building-summary room-status-summary" aria-labelledby="room-status-summary-title">
+                <div className="building-summary__heading">
+                  <div>
+                    <p className="eyebrow">FR-BLD-03</p>
+                    <h4 id="room-status-summary-title">Tổng quan sơ đồ phòng</h4>
+                  </div>
+                  <span className="room-status-summary__total">{danhSachPhong.length} phòng</span>
                 </div>
-                <p>{phong.loaiPhong}</p>
-                <dl className="building-card__facts">
-                  <div>
-                    <dt>Diện tích</dt>
-                    <dd>{phong.dienTich} m²</dd>
-                  </div>
-                  <div>
-                    <dt>Sức chứa</dt>
-                    <dd>{phong.sucChua} người</dd>
-                  </div>
-                  <div>
-                    <dt>Giá thuê</dt>
-                    <dd>{phong.giaThueMacDinh}</dd>
-                  </div>
-                  <div>
-                    <dt>Trạng thái</dt>
-                    <dd>{phong.tenTrangThai}</dd>
-                  </div>
-                </dl>
-              </article>
-            ))
+                <div className="room-status-summary__grid">
+                  {TONG_QUAN_TRANG_THAI.map((muc) => (
+                    <article key={muc.ma} className={`room-status-chip room-status-chip--${muc.ma.toLowerCase()}`}>
+                      <span>{muc.nhan}</span>
+                      <strong>{demPhongTheoTrangThai(danhSachPhong, muc.ma)}</strong>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              <section className="room-floor-map" data-testid="room-floor-map" aria-label="Sơ đồ phòng theo tầng">
+                {nhomPhongTheoTang.map(({ tang, phong }) => (
+                  <section key={tang} className="room-floor-section" data-testid="room-floor-section" aria-labelledby={`floor-title-${tang}`}>
+                    <div className="room-floor-section__header">
+                      <h4 id={`floor-title-${tang}`}>Tầng {tang}</h4>
+                      <span>{phong.length} phòng</span>
+                    </div>
+                    <div className="room-floor-grid" data-testid="room-floor-grid" data-compact-layout="true">
+                      {phong.map((phongItem) => {
+                        const trangThai = layThongTinTrangThai(phongItem)
+                        const dangChon = phongDangXem?.id === phongItem.id
+
+                        return (
+                          <button
+                            key={phongItem.id ?? `${phongItem.tang}-${phongItem.soPhong}`}
+                            type="button"
+                            className={`room-tile ${trangThai.lopCss} ${dangChon ? 'room-tile--active' : ''}`}
+                            data-testid="room-tile"
+                            aria-pressed={dangChon}
+                            onClick={() => setPhongDangXemId(phongItem.id)}
+                          >
+                            <strong className="room-tile__number">{phongItem.soPhong}</strong>
+                            <span className="room-tile__status">{trangThai.nhan}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </section>
+                ))}
+              </section>
+            </>
           )}
         </div>
 
         <div className="building-detail">
+          <section className="building-summary room-detail" data-testid="room-detail" aria-live="polite">
+            {phongDangXem ? (
+              <>
+                <div className="building-summary__heading">
+                  <div>
+                    <p className="eyebrow">FR-BLD-03</p>
+                    <h4>Chi tiết phòng {phongDangXem.soPhong}</h4>
+                  </div>
+                  <span className={`room-detail__status ${layThongTinTrangThai(phongDangXem).lopCss.replace('room-tile', 'room-detail__status')}`}>
+                    {layThongTinTrangThai(phongDangXem).nhan}
+                  </span>
+                </div>
+                <dl className="building-summary__facts">
+                  <div>
+                    <dt>Tầng</dt>
+                    <dd>{phongDangXem.tang}</dd>
+                  </div>
+                  <div>
+                    <dt>Loại phòng</dt>
+                    <dd>{phongDangXem.loaiPhong}</dd>
+                  </div>
+                  <div>
+                    <dt>Diện tích</dt>
+                    <dd>{phongDangXem.dienTich} m²</dd>
+                  </div>
+                  <div>
+                    <dt>Sức chứa</dt>
+                    <dd>{phongDangXem.sucChua} người</dd>
+                  </div>
+                  <div>
+                    <dt>Giá thuê mặc định</dt>
+                    <dd>{phongDangXem.giaThueMacDinh}</dd>
+                  </div>
+                </dl>
+                <p className="status-message">
+                  Chi tiết lấy trực tiếp từ danh sách phòng hiện có. Lịch sử công tơ, hợp đồng hiện tại và sự cố sẽ bổ sung ở slice sau.
+                </p>
+              </>
+            ) : (
+              <>
+                <div>
+                  <p className="eyebrow">FR-BLD-03</p>
+                  <h4>Chi tiết phòng</h4>
+                </div>
+                <p className="status-message">Chọn một ô phòng trong sơ đồ để xem chi tiết hiện tại của phòng đó.</p>
+              </>
+            )}
+          </section>
+
           <form className="building-form" data-testid="room-form" onSubmit={handleTaoPhong}>
             <div>
               <p className="eyebrow">FR-BLD-02</p>
@@ -456,4 +563,33 @@ function soSanhPhong(a: ThongTinPhong, b: ThongTinPhong) {
 
 function phongThuocBoLoc(phong: ThongTinPhong, tangLoc: string) {
   return tangLoc === '' || phong.tang === Number(tangLoc)
+}
+
+function taoNhomPhongTheoTang(danhSachPhong: ThongTinPhong[]) {
+  const phongTheoTang = new Map<number, ThongTinPhong[]>()
+
+  for (const phong of danhSachPhong) {
+    const danhSach = phongTheoTang.get(phong.tang) ?? []
+    danhSach.push(phong)
+    phongTheoTang.set(phong.tang, danhSach)
+  }
+
+  return [...phongTheoTang.entries()]
+    .sort(([tangA], [tangB]) => tangB - tangA)
+    .map(([tang, phong]) => ({
+      tang,
+      phong: [...phong].sort(soSanhPhong),
+    }))
+}
+
+function layThongTinTrangThai(phong: ThongTinPhong) {
+  const macDinh = TRANG_THAI_PHONG_HIEN_THI[phong.trangThai] ?? { nhan: phong.tenTrangThai, lopCss: 'room-tile--trong' }
+  return {
+    nhan: phong.tenTrangThai || macDinh.nhan,
+    lopCss: macDinh.lopCss,
+  }
+}
+
+function demPhongTheoTrangThai(danhSachPhong: ThongTinPhong[], trangThai: string) {
+  return danhSachPhong.filter((phong) => phong.trangThai === trangThai).length
 }
