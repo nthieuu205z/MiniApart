@@ -57,6 +57,7 @@ export default function DanhMucPhong({ token }: Props) {
     loaiPhong: '',
   })
   const [xemTruoc, setXemTruoc] = useState<ThongTinPhong[]>([])
+  const [yeuCauPhongHangLoatDaXemTruoc, setYeuCauPhongHangLoatDaXemTruoc] = useState<YeuCauPhongHangLoat | null>(null)
 
   const toaDangChon = danhSachToa.find((item) => item.id === toaDangChonId) ?? null
 
@@ -122,7 +123,9 @@ export default function DanhMucPhong({ token }: Props) {
     try {
       const payload = chuyenThanhYeuCauPhong(bieuMauPhong)
       const phongMoi = await taoPhong(token, toaDangChonId, payload)
-      setDanhSachPhong((current) => [...current, phongMoi].sort(soSanhPhong))
+      setDanhSachPhong((current) => (
+        phongThuocBoLoc(phongMoi, tangLoc) ? [...current, phongMoi].sort(soSanhPhong) : current
+      ))
       setBieuMauPhong({ ...BIEU_MAU_PHONG_MAC_DINH, tang: bieuMauPhong.tang })
       setThongBao(`Đã khai báo phòng ${phongMoi.soPhong}.`)
     } catch (reason: unknown) {
@@ -144,8 +147,10 @@ export default function DanhMucPhong({ token }: Props) {
       const payload = chuyenThanhYeuCauPhongHangLoat(bieuMauHangLoat)
       const ketQua = await xemTruocPhongHangLoat(token, toaDangChonId, payload)
       setXemTruoc(ketQua.phong)
+      setYeuCauPhongHangLoatDaXemTruoc(payload)
     } catch (reason: unknown) {
       setXemTruoc([])
+      setYeuCauPhongHangLoatDaXemTruoc(null)
       setLoi(thongBaoLoi(reason, 'Không thể xem trước dãy phòng.'))
     } finally {
       setDangXuLyHangLoat(false)
@@ -153,23 +158,26 @@ export default function DanhMucPhong({ token }: Props) {
   }
 
   async function handleXacNhanHangLoat() {
-    if (!toaDangChonId || xemTruoc.length === 0) return
+    if (!toaDangChonId || xemTruoc.length === 0 || !yeuCauPhongHangLoatDaXemTruoc) return
 
     setDangXuLyHangLoat(true)
     setLoi(null)
     setThongBao(null)
 
     try {
-      const payload = chuyenThanhYeuCauPhongHangLoat(bieuMauHangLoat)
+      const payload = yeuCauPhongHangLoatDaXemTruoc
       const ketQua = await taoPhongHangLoat(token, toaDangChonId, payload)
-      setDanhSachPhong((current) => [...current, ...ketQua.phong].sort(soSanhPhong))
-      setThongBao(`Đã tạo dãy phòng ${bieuMauHangLoat.soBatDau} - ${bieuMauHangLoat.soKetThuc}.`)
+      setDanhSachPhong((current) => (
+        [...current, ...ketQua.phong.filter((phong) => phongThuocBoLoc(phong, tangLoc))].sort(soSanhPhong)
+      ))
+      setThongBao(`Đã tạo dãy phòng ${payload.soBatDau} - ${payload.soKetThuc}.`)
       setXemTruoc([])
-      setBieuMauHangLoat({
-        ...bieuMauHangLoat,
+      setYeuCauPhongHangLoatDaXemTruoc(null)
+      setBieuMauHangLoat((current) => ({
+        ...current,
         soBatDau: '',
         soKetThuc: '',
-      })
+      }))
     } catch (reason: unknown) {
       setLoi(thongBaoLoi(reason, 'Không thể tạo dãy phòng.'))
     } finally {
@@ -205,6 +213,7 @@ export default function DanhMucPhong({ token }: Props) {
             onChange={(event) => {
               setToaDangChonId(Number(event.target.value))
               setXemTruoc([])
+              setYeuCauPhongHangLoatDaXemTruoc(null)
             }}
             disabled={dangTai || danhSachToa.length === 0}
           >
@@ -443,4 +452,8 @@ function soSanhPhong(a: ThongTinPhong, b: ThongTinPhong) {
     return a.tang - b.tang
   }
   return a.soPhong.localeCompare(b.soPhong)
+}
+
+function phongThuocBoLoc(phong: ThongTinPhong, tangLoc: string) {
+  return tangLoc === '' || phong.tang === Number(tangLoc)
 }

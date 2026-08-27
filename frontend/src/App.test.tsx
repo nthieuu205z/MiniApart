@@ -376,6 +376,109 @@ describe('App role navigation', () => {
       expect(mountedApp!.container.textContent).toContain('203')
     })
   })
+
+  it('FR-BLD-02 confirms the exact batch payload that was previewed even after the form changes', async () => {
+    const quanLy = MENU_BY_ROLE[2]
+    const fetchMock = buildFetchMock(quanLy.nguoiDung)
+    vi.stubGlobal('fetch', fetchMock)
+    mountedApp = await mountAppAndLogin(quanLy.nguoiDung, '/phong', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="room-catalog"]')).not.toBeNull()
+    })
+
+    await act(async () => {
+      findButton(mountedApp!.container, 'Xem trước dãy phòng').click()
+    })
+
+    const previewForm = await vi.waitFor(() => {
+      const form = mountedApp!.container.querySelector('[data-testid="room-batch-form"]')
+      expect(form).not.toBeNull()
+      return form as HTMLFormElement
+    })
+
+    const previewPayload = {
+      soBatDau: '401',
+      soKetThuc: '403',
+      tang: 4,
+      dienTich: '21.50',
+      sucChua: 4,
+      giaThueMacDinh: '4500000.00',
+      loaiPhong: 'Penthouse',
+    }
+
+    await act(async () => {
+      setInputValue(previewForm.querySelector('input[name="soBatDau"]') as HTMLInputElement, previewPayload.soBatDau)
+      setInputValue(previewForm.querySelector('input[name="soKetThuc"]') as HTMLInputElement, previewPayload.soKetThuc)
+      setInputValue(previewForm.querySelector('input[name="tang"]') as HTMLInputElement, String(previewPayload.tang))
+      setInputValue(previewForm.querySelector('input[name="dienTich"]') as HTMLInputElement, previewPayload.dienTich)
+      setInputValue(previewForm.querySelector('input[name="sucChua"]') as HTMLInputElement, String(previewPayload.sucChua))
+      setInputValue(previewForm.querySelector('input[name="giaThueMacDinh"]') as HTMLInputElement, previewPayload.giaThueMacDinh)
+      setInputValue(previewForm.querySelector('input[name="loaiPhong"]') as HTMLInputElement, previewPayload.loaiPhong)
+      previewForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    })
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.textContent).toContain('401, 402, 403')
+    })
+
+    await act(async () => {
+      setInputValue(previewForm.querySelector('input[name="soBatDau"]') as HTMLInputElement, '501')
+      setInputValue(previewForm.querySelector('input[name="soKetThuc"]') as HTMLInputElement, '502')
+      setInputValue(previewForm.querySelector('input[name="tang"]') as HTMLInputElement, '5')
+      setInputValue(previewForm.querySelector('input[name="dienTich"]') as HTMLInputElement, '99.99')
+      setInputValue(previewForm.querySelector('input[name="sucChua"]') as HTMLInputElement, '9')
+      setInputValue(previewForm.querySelector('input[name="giaThueMacDinh"]') as HTMLInputElement, '9999999.99')
+      setInputValue(previewForm.querySelector('input[name="loaiPhong"]') as HTMLInputElement, 'Loft')
+      findButton(mountedApp!.container, 'Xác nhận tạo dãy phòng').click()
+    })
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/phong/hang-loat', expect.objectContaining({ method: 'POST' }))
+    })
+
+    const confirmCall = fetchMock.mock.calls.find(([input, init]) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
+      return url === '/api/toa-nha/1/phong/hang-loat' && init?.method === 'POST'
+    })
+    expect(JSON.parse(String(confirmCall?.[1]?.body))).toEqual(previewPayload)
+  })
+
+  it('FR-BLD-02 does not append a newly created room outside the active floor filter', async () => {
+    const quanLy = MENU_BY_ROLE[2]
+    const fetchMock = buildFetchMock(quanLy.nguoiDung)
+    vi.stubGlobal('fetch', fetchMock)
+    mountedApp = await mountAppAndLogin(quanLy.nguoiDung, '/phong', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="room-catalog"]')).not.toBeNull()
+    })
+
+    await act(async () => {
+      setSelectValue(mountedApp!.container.querySelector('select[name="tangLoc"]') as HTMLSelectElement, '3')
+    })
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.textContent).toContain('301')
+      expect(mountedApp!.container.textContent).not.toContain('201')
+    })
+
+    const roomForm = mountedApp!.container.querySelector('[data-testid="room-form"]') as HTMLFormElement
+    await act(async () => {
+      setInputValue(roomForm.querySelector('input[name="soPhong"]') as HTMLInputElement, '205')
+      setInputValue(roomForm.querySelector('input[name="tang"]') as HTMLInputElement, '2')
+      setInputValue(roomForm.querySelector('input[name="dienTich"]') as HTMLInputElement, '20.00')
+      setInputValue(roomForm.querySelector('input[name="sucChua"]') as HTMLInputElement, '3')
+      setInputValue(roomForm.querySelector('input[name="giaThueMacDinh"]') as HTMLInputElement, '3200000.00')
+      setInputValue(roomForm.querySelector('input[name="loaiPhong"]') as HTMLInputElement, 'Studio')
+      roomForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    })
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/phong', expect.objectContaining({ method: 'POST' }))
+    })
+    expect(mountedApp!.container.querySelector('.room-management .building-list')?.textContent).not.toContain('205')
+  })
 })
 
 async function mountAppAndLogin(nguoiDung: ThongTinNguoiDung, path = '/', fetchMock = buildFetchMock(nguoiDung)) {
