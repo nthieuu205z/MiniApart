@@ -35,6 +35,16 @@ public class DichVuRepository {
                 .findFirst();
     }
 
+    public Optional<DichVu> findById(Long id) {
+        return jdbcTemplate.query(
+                        cauLenhDichVuCoBan() + " WHERE id = ?",
+                        (resultSet, rowNum) -> mapDichVu(resultSet),
+                        id
+                )
+                .stream()
+                .findFirst();
+    }
+
     public Long insert(DichVu dichVu) {
         return jdbcTemplate.queryForObject(
                 """

@@ -58,6 +58,20 @@ public class DanhMucDichVuService {
         return ThongTinDichVu.tuDichVu(layDichVuTonTai(toaNhaId, dichVuId));
     }
 
+    DichVu layDichVuNguoiDungDuocQuanLy(Long dichVuId, NguoiDung nguoiDung) {
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
+                && nguoiDung.vaiTro() != VaiTro.CHU
+                && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        DichVu dichVu = dichVuRepository.findById(dichVuId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, dichVu.toaNhaId());
+        return dichVu;
+    }
+
     private void kiemTraQuyenDichVu(NguoiDung nguoiDung, Long toaNhaId) {
         if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
                 && nguoiDung.vaiTro() != VaiTro.CHU
