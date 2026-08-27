@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { clearStoredToken } from './authSession'
-import type { ThongTinNguoiDung, ThongTinQuanLyNguoiDung, ThongTinToaNha } from './api'
+import type { ThongTinNguoiDung, ThongTinPhong, ThongTinQuanLyNguoiDung, ThongTinToaNha } from './api'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined
@@ -283,6 +283,99 @@ describe('App role navigation', () => {
       expect(mountedApp!.container.textContent).toContain('12.35')
     })
   })
+
+  it('FR-BLD-02 lets the manager filter rooms by floor, create a room without client status, preview a batch, and confirm it later', async () => {
+    const quanLy = MENU_BY_ROLE[2]
+    const fetchMock = buildFetchMock(quanLy.nguoiDung)
+    vi.stubGlobal('fetch', fetchMock)
+    mountedApp = await mountAppAndLogin(quanLy.nguoiDung, '/phong', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="room-catalog"]')).not.toBeNull()
+      expect(mountedApp!.container.textContent).toContain('201')
+      expect(mountedApp!.container.textContent).toContain('101')
+    })
+
+    const roomForm = mountedApp.container.querySelector('[data-testid="room-form"]')
+    expect(roomForm).not.toBeNull()
+    expect(roomForm?.textContent).not.toContain('Trạng thái')
+
+    await act(async () => {
+      setSelectValue(mountedApp!.container.querySelector('select[name="tangLoc"]') as HTMLSelectElement, '3')
+    })
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.textContent).toContain('301')
+      expect(mountedApp!.container.textContent).not.toContain('201')
+      expect(mountedApp!.container.textContent).not.toContain('101')
+    })
+
+    await act(async () => {
+      setInputValue(roomForm!.querySelector('input[name="soPhong"]') as HTMLInputElement, '305')
+      setInputValue(roomForm!.querySelector('input[name="tang"]') as HTMLInputElement, '3')
+      setInputValue(roomForm!.querySelector('input[name="dienTich"]') as HTMLInputElement, '22.50')
+      setInputValue(roomForm!.querySelector('input[name="sucChua"]') as HTMLInputElement, '4')
+      setInputValue(roomForm!.querySelector('input[name="giaThueMacDinh"]') as HTMLInputElement, '3500000.00')
+      setInputValue(roomForm!.querySelector('input[name="loaiPhong"]') as HTMLInputElement, 'Studio')
+      roomForm!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    })
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/phong', expect.objectContaining({ method: 'POST' }))
+      expect(mountedApp!.container.textContent).toContain('305')
+    })
+
+    const createCall = fetchMock.mock.calls.find(([input, init]) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
+      return url === '/api/toa-nha/1/phong' && init?.method === 'POST'
+    })
+    expect(JSON.parse(String(createCall?.[1]?.body))).toEqual({
+      soPhong: '305',
+      tang: 3,
+      dienTich: '22.50',
+      sucChua: 4,
+      giaThueMacDinh: '3500000.00',
+      loaiPhong: 'Studio',
+    })
+
+    await act(async () => {
+      setSelectValue(mountedApp!.container.querySelector('select[name="tangLoc"]') as HTMLSelectElement, '')
+      findButton(mountedApp!.container, 'Xem trước dãy phòng').click()
+    })
+
+    const previewForm = await vi.waitFor(() => {
+      const form = mountedApp!.container.querySelector('[data-testid="room-batch-form"]')
+      expect(form).not.toBeNull()
+      return form as HTMLFormElement
+    })
+
+    await act(async () => {
+      setInputValue(previewForm.querySelector('input[name="soBatDau"]') as HTMLInputElement, '201')
+      setInputValue(previewForm.querySelector('input[name="soKetThuc"]') as HTMLInputElement, '203')
+      setInputValue(previewForm.querySelector('input[name="tang"]') as HTMLInputElement, '2')
+      setInputValue(previewForm.querySelector('input[name="dienTich"]') as HTMLInputElement, '20.00')
+      setInputValue(previewForm.querySelector('input[name="sucChua"]') as HTMLInputElement, '3')
+      setInputValue(previewForm.querySelector('input[name="giaThueMacDinh"]') as HTMLInputElement, '3200000.00')
+      setInputValue(previewForm.querySelector('input[name="loaiPhong"]') as HTMLInputElement, 'Studio')
+      previewForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    })
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/phong/hang-loat/xem-truoc', expect.objectContaining({ method: 'POST' }))
+      expect(mountedApp!.container.textContent).toContain('201, 202, 203')
+    })
+    expect(mountedApp.container.textContent).not.toContain('Đã tạo dãy phòng')
+
+    await act(async () => {
+      findButton(mountedApp!.container, 'Xác nhận tạo dãy phòng').click()
+    })
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/phong/hang-loat', expect.objectContaining({ method: 'POST' }))
+      expect(mountedApp!.container.textContent).toContain('Đã tạo dãy phòng 201 - 203.')
+      expect(mountedApp!.container.textContent).toContain('203')
+    })
+  })
 })
 
 async function mountAppAndLogin(nguoiDung: ThongTinNguoiDung, path = '/', fetchMock = buildFetchMock(nguoiDung)) {
@@ -312,8 +405,10 @@ async function mountAppAndLogin(nguoiDung: ThongTinNguoiDung, path = '/', fetchM
   })
 
   if (path !== '/') {
-    window.history.replaceState({}, '', path)
-    window.dispatchEvent(new PopStateEvent('popstate'))
+    await act(async () => {
+      window.history.replaceState({}, '', path)
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
   }
 
   return { container, root }
@@ -397,8 +492,50 @@ function buildFetchMock(nguoiDung: ThongTinNguoiDung) {
     { vaiTro: 'THO', tenVaiTro: 'Thợ sửa chữa (máy chủ)' },
     { vaiTro: 'NGUOI_THUE', tenVaiTro: 'Người thuê' },
   ]
+  const roomsByBuilding = new Map<number, ThongTinPhong[]>([
+    [1, [
+      {
+        id: 11,
+        toaNhaId: 1,
+        soPhong: '101',
+        tang: 1,
+        dienTich: '18.00',
+        sucChua: 2,
+        giaThueMacDinh: '2800000.00',
+        loaiPhong: 'Studio',
+        trangThai: 'TRONG',
+        tenTrangThai: 'Trống',
+      },
+      {
+        id: 12,
+        toaNhaId: 1,
+        soPhong: '201',
+        tang: 2,
+        dienTich: '20.00',
+        sucChua: 3,
+        giaThueMacDinh: '3200000.00',
+        loaiPhong: 'Studio',
+        trangThai: 'TRONG',
+        tenTrangThai: 'Trống',
+      },
+      {
+        id: 13,
+        toaNhaId: 1,
+        soPhong: '301',
+        tang: 3,
+        dienTich: '24.00',
+        sucChua: 4,
+        giaThueMacDinh: '3900000.00',
+        loaiPhong: 'Gác xép',
+        trangThai: 'DANG_THUE',
+        tenTrangThai: 'Đang thuê',
+      },
+    ]],
+    [2, []],
+  ])
   let nextAccountId = 6
   let nextBuildingId = 3
+  let nextRoomId = 20
 
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
@@ -471,6 +608,80 @@ function buildFetchMock(nguoiDung: ThongTinNguoiDung) {
       })
     }
 
+    const roomListMatch = url.match(/^\/api\/toa-nha\/(\d+)\/phong(?:\?tang=(\d+))?$/)
+    if (roomListMatch && method === 'GET') {
+      const buildingId = Number(roomListMatch[1])
+      const tang = roomListMatch[2] ? Number(roomListMatch[2]) : null
+      const rooms = roomsByBuilding.get(buildingId) ?? []
+      const filtered = tang === null ? rooms : rooms.filter((room) => room.tang === tang)
+      return new Response(JSON.stringify(filtered), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const roomCreateMatch = url.match(/^\/api\/toa-nha\/(\d+)\/phong$/)
+    if (roomCreateMatch && method === 'POST') {
+      const buildingId = Number(roomCreateMatch[1])
+      const payload = JSON.parse(String(init?.body)) as Omit<ThongTinPhong, 'id' | 'toaNhaId' | 'trangThai' | 'tenTrangThai'>
+      const created: ThongTinPhong = {
+        ...payload,
+        id: nextRoomId++,
+        toaNhaId: buildingId,
+        trangThai: 'TRONG',
+        tenTrangThai: 'Trống',
+      }
+      const rooms = roomsByBuilding.get(buildingId) ?? []
+      roomsByBuilding.set(buildingId, [...rooms, created])
+      return new Response(JSON.stringify(created), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const roomPreviewMatch = url.match(/^\/api\/toa-nha\/(\d+)\/phong\/hang-loat\/xem-truoc$/)
+    if (roomPreviewMatch && method === 'POST') {
+      const buildingId = Number(roomPreviewMatch[1])
+      const payload = JSON.parse(String(init?.body)) as {
+        soBatDau: string
+        soKetThuc: string
+        tang: number
+        dienTich: string
+        sucChua: number
+        giaThueMacDinh: string
+        loaiPhong: string
+      }
+      const preview = buildPreviewRooms(buildingId, payload)
+      return new Response(JSON.stringify({ phong: preview }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const roomBatchMatch = url.match(/^\/api\/toa-nha\/(\d+)\/phong\/hang-loat$/)
+    if (roomBatchMatch && method === 'POST') {
+      const buildingId = Number(roomBatchMatch[1])
+      const payload = JSON.parse(String(init?.body)) as {
+        soBatDau: string
+        soKetThuc: string
+        tang: number
+        dienTich: string
+        sucChua: number
+        giaThueMacDinh: string
+        loaiPhong: string
+      }
+      const preview = buildPreviewRooms(buildingId, payload).map((room) => ({
+        ...room,
+        id: nextRoomId++,
+      }))
+      const rooms = roomsByBuilding.get(buildingId) ?? []
+      roomsByBuilding.set(buildingId, [...rooms, ...preview])
+      return new Response(JSON.stringify({ phong: preview }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
     if (url === '/api/nguoi-dung' && method === 'POST') {
       const payload = JSON.parse(String(init?.body)) as Omit<ThongTinQuanLyNguoiDung, 'id' | 'tenVaiTro' | 'trangThai' | 'tenTrangThai'>
       const created: ThongTinQuanLyNguoiDung = {
@@ -522,6 +733,41 @@ function buildFetchMock(nguoiDung: ThongTinNguoiDung) {
 
     throw new Error(`Unexpected fetch: ${url}`)
   })
+}
+
+function buildPreviewRooms(
+  buildingId: number,
+  payload: {
+    soBatDau: string
+    soKetThuc: string
+    tang: number
+    dienTich: string
+    sucChua: number
+    giaThueMacDinh: string
+    loaiPhong: string
+  },
+): ThongTinPhong[] {
+  const start = Number(payload.soBatDau)
+  const end = Number(payload.soKetThuc)
+  const width = Math.max(payload.soBatDau.length, payload.soKetThuc.length)
+  const rooms: ThongTinPhong[] = []
+
+  for (let roomNumber = start; roomNumber <= end; roomNumber += 1) {
+    rooms.push({
+      id: 0,
+      toaNhaId: buildingId,
+      soPhong: String(roomNumber).padStart(width, '0'),
+      tang: payload.tang,
+      dienTich: payload.dienTich,
+      sucChua: payload.sucChua,
+      giaThueMacDinh: payload.giaThueMacDinh,
+      loaiPhong: payload.loaiPhong,
+      trangThai: 'TRONG',
+      tenTrangThai: 'Trống',
+    })
+  }
+
+  return rooms
 }
 
 function readMenuLabels(container: HTMLDivElement) {

@@ -20,13 +20,16 @@ import java.util.List;
 public class ToaNhaController {
     private final PhanQuyenToaService phanQuyenToaService;
     private final DanhMucToaNhaService danhMucToaNhaService;
+    private final DanhMucPhongService danhMucPhongService;
 
     public ToaNhaController(
             PhanQuyenToaService phanQuyenToaService,
-            DanhMucToaNhaService danhMucToaNhaService
+            DanhMucToaNhaService danhMucToaNhaService,
+            DanhMucPhongService danhMucPhongService
     ) {
         this.phanQuyenToaService = phanQuyenToaService;
         this.danhMucToaNhaService = danhMucToaNhaService;
+        this.danhMucPhongService = danhMucPhongService;
     }
 
     /**
@@ -91,6 +94,76 @@ public class ToaNhaController {
             HttpServletRequest request
     ) {
         return danhMucToaNhaService.capNhat(toaNhaId, yeuCau, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-BLD-02 lists rooms in one visible building and optionally filters them by floor.
+     *
+     * @param toaNhaId the building identifier
+     * @param tang the optional floor filter
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the room list inside the selected building
+     */
+    @GetMapping("/{toaNhaId}/phong")
+    public List<ThongTinPhong> danhSachPhong(
+            @PathVariable Long toaNhaId,
+            Integer tang,
+            HttpServletRequest request
+    ) {
+        return danhMucPhongService.danhSachPhong(toaNhaId, tang, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-BLD-02 creates a single room inside one visible building with system-owned initial TRONG status.
+     *
+     * @param toaNhaId the building identifier
+     * @param yeuCau the submitted room data without client-owned status
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the newly created room
+     */
+    @PostMapping("/{toaNhaId}/phong")
+    public ResponseEntity<ThongTinPhong> taoPhong(
+            @PathVariable Long toaNhaId,
+            @RequestBody YeuCauPhong yeuCau,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(danhMucPhongService.taoPhong(toaNhaId, yeuCau, nguoiDungHienTai(request)));
+    }
+
+    /**
+     * FR-BLD-02 previews a consecutive room range before any persistence.
+     *
+     * @param toaNhaId the building identifier
+     * @param yeuCau the submitted room-range template
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the non-persistent preview list
+     */
+    @PostMapping("/{toaNhaId}/phong/hang-loat/xem-truoc")
+    public KetQuaPhongHangLoat xemTruocPhongHangLoat(
+            @PathVariable Long toaNhaId,
+            @RequestBody YeuCauPhongHangLoat yeuCau,
+            HttpServletRequest request
+    ) {
+        return danhMucPhongService.xemTruocPhongHangLoat(toaNhaId, yeuCau, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-BLD-02 confirms and creates a previously previewed consecutive room range.
+     *
+     * @param toaNhaId the building identifier
+     * @param yeuCau the submitted room-range template
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the created room list
+     */
+    @PostMapping("/{toaNhaId}/phong/hang-loat")
+    public ResponseEntity<KetQuaPhongHangLoat> taoPhongHangLoat(
+            @PathVariable Long toaNhaId,
+            @RequestBody YeuCauPhongHangLoat yeuCau,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(danhMucPhongService.taoPhongHangLoat(toaNhaId, yeuCau, nguoiDungHienTai(request)));
     }
 
     private NguoiDung nguoiDungHienTai(HttpServletRequest request) {

@@ -10,6 +10,7 @@ import {
 } from './api'
 import { clearStoredToken, readStoredToken, storeToken } from './authSession'
 import DanhMucToaNha from './DanhMucToaNha'
+import DanhMucPhong from './DanhMucPhong'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { layMenuTheoVaiTro, xacDinhTrangTheoVaiTro } from './roleNavigation'
 import './styles.css'
@@ -132,8 +133,22 @@ function App() {
     && duongDanHienTai === '/toa-nha'
     && ['QTHT', 'CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro),
   )
-  const tieuDeTheChinh = hienThiDanhMucToaNha ? 'Toà nhà' : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
-  const maTruyVetTheChinh = hienThiDanhMucToaNha ? 'FR-BLD-01' : nguoiDung ? 'FR-AUT-04' : 'FR-AUT-01'
+  const hienThiDanhMucPhong = Boolean(
+    token
+    && nguoiDung
+    && duongDanHienTai === '/phong'
+    && nguoiDung.vaiTro === 'QUAN_LY',
+  )
+  const tieuDeTheChinh = hienThiDanhMucToaNha
+    ? 'Toà nhà'
+    : hienThiDanhMucPhong
+      ? 'Phòng'
+      : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
+  const maTruyVetTheChinh = hienThiDanhMucToaNha
+    ? 'FR-BLD-01'
+    : hienThiDanhMucPhong
+      ? 'FR-BLD-02'
+      : nguoiDung ? 'FR-AUT-04' : 'FR-AUT-01'
 
   return (
     <main className="page-shell">
@@ -202,6 +217,8 @@ function App() {
 
             {hienThiDanhMucToaNha && token && nguoiDung ? (
               <DanhMucToaNha token={token} vaiTro={nguoiDung.vaiTro} />
+            ) : hienThiDanhMucPhong && token ? (
+              <DanhMucPhong token={token} />
             ) : nguoiDung.vaiTro === 'QTHT' && duongDanHienTai === '/tai-khoan' && token ? (
               <QuanLyTaiKhoan token={token} />
             ) : trangVaiTro ? (
