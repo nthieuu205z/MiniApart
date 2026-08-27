@@ -18,7 +18,7 @@ describe('fetchHealth', () => {
     vi.restoreAllMocks()
   })
 
-  it('requests the health endpoint through the relative API path', async () => {
+  it('FR-INF-01 NFR_REL_03 requests the health endpoint through the relative API path', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ status: 'UP', database: 'UP' }), {
         status: 200,

@@ -39,7 +39,7 @@ class HealthEndpointIntegrationTest {
     }
 
     @Test
-    void NFR_REL_03_healthEndpointReportsDatabaseIsUpAfterQueryingIt() throws Exception {
+    void FR_INF_01_NFR_REL_03_healthEndpointReportsDatabaseIsUpAfterQueryingIt() throws Exception {
         mockMvc.perform(get("/api/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"))
@@ -47,7 +47,7 @@ class HealthEndpointIntegrationTest {
     }
 
     @Test
-    void NFR_REL_03_flywayRunsTheBaselineMigrationBeforeTheApplicationStarts() {
+    void FR_INF_01_NFR_REL_03_flywayRunsTheBaselineMigrationBeforeTheApplicationStarts() {
         Integer appliedMigrations = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM flyway_schema_history WHERE version = '1'",
                 Integer.class

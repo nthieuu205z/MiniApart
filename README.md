@@ -26,7 +26,7 @@ Khi làm xong, dừng các container nhưng giữ dữ liệu:
 docker compose down
 ```
 
-Ticket hiện tại mới dựng đường nối frontend → backend → PostgreSQL. Đăng nhập và dữ liệu nghiệp vụ sẽ được triển khai ở các ticket tiếp theo.
+Slice 0 hiện đã gồm nền móng ba tầng chạy được, đăng nhập và giữ phiên, khoá tạm sau nhiều lần sai, menu theo vai trò, phạm vi toà nhà ở phía máy chủ, và quản lý tài khoản QTHT. Các nghiệp vụ vận hành chung cư mini còn lại sẽ được triển khai ở các slice tiếp theo.
 
 Compose dùng mật khẩu `miniapart-dev` mặc định chỉ để chạy local. Khi triển khai ở môi trường thật, luôn đặt `POSTGRES_PASSWORD` bằng secret riêng trước khi chạy Compose.
 

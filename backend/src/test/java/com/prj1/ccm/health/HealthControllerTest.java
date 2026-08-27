@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 class HealthControllerTest {
 
     @Test
-    void NFR_REL_03_healthEndpointReportsDownWhenDatabaseQueryFails() {
+    void FR_INF_01_NFR_REL_03_healthEndpointReportsDownWhenDatabaseQueryFails() {
         JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
         when(jdbcTemplate.queryForObject("SELECT 1", Integer.class))
                 .thenThrow(new DataAccessResourceFailureException("database unavailable"));

@@ -20,8 +20,8 @@ public class HealthController {
 
     /**
      * Reports application readiness only after a real database query succeeds.
-     * This infrastructure probe supports NFR-REL-03 and is intentionally not a
-     * business endpoint mapped to an FR requirement.
+     * Traceability: FR-INF-01 for the infrastructure probe endpoint and
+     * NFR-REL-03 for the readiness requirement it verifies.
      *
      * @return an operational status for the application and its database
      */
