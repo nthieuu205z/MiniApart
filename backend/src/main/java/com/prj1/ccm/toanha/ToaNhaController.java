@@ -3,8 +3,13 @@ package com.prj1.ccm.toanha;
 import com.prj1.ccm.auth.AuthInterceptor;
 import com.prj1.ccm.nguoidung.NguoiDung;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,9 +19,14 @@ import java.util.List;
 @RequestMapping("/api/toa-nha")
 public class ToaNhaController {
     private final PhanQuyenToaService phanQuyenToaService;
+    private final DanhMucToaNhaService danhMucToaNhaService;
 
-    public ToaNhaController(PhanQuyenToaService phanQuyenToaService) {
+    public ToaNhaController(
+            PhanQuyenToaService phanQuyenToaService,
+            DanhMucToaNhaService danhMucToaNhaService
+    ) {
         this.phanQuyenToaService = phanQuyenToaService;
+        this.danhMucToaNhaService = danhMucToaNhaService;
     }
 
     /**
@@ -47,5 +57,42 @@ public class ToaNhaController {
         return ThongTinToaNha.tuToaNha(
                 phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId)
         );
+    }
+
+    /**
+     * FR-BLD-01 creates a new building for the owner or system administrator catalog flow.
+     *
+     * @param yeuCau the submitted building data
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the newly created building
+     */
+    @PostMapping
+    public ResponseEntity<ThongTinToaNha> taoToaNha(
+            @RequestBody YeuCauToaNha yeuCau,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(danhMucToaNhaService.tao(yeuCau, nguoiDungHienTai(request)));
+    }
+
+    /**
+     * FR-BLD-01 updates a visible building for the owner, manager, or system administrator.
+     *
+     * @param toaNhaId the building identifier
+     * @param yeuCau the submitted building data
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the updated building
+     */
+    @PutMapping("/{toaNhaId}")
+    public ThongTinToaNha capNhatToaNha(
+            @PathVariable Long toaNhaId,
+            @RequestBody YeuCauToaNha yeuCau,
+            HttpServletRequest request
+    ) {
+        return danhMucToaNhaService.capNhat(toaNhaId, yeuCau, nguoiDungHienTai(request));
+    }
+
+    private NguoiDung nguoiDungHienTai(HttpServletRequest request) {
+        return (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
     }
 }
