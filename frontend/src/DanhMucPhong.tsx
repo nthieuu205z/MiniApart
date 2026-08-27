@@ -154,9 +154,6 @@ export default function DanhMucPhong({ token }: Props) {
       setDanhSachPhong((current) => (
         phongThuocBoLoc(phongMoi, tangLoc) ? [...current, phongMoi].sort(soSanhPhong) : current
       ))
-      if (phongThuocBoLoc(phongMoi, tangLoc) && phongMoi.id !== null) {
-        setPhongDangXemId(phongMoi.id)
-      }
       setBieuMauPhong({ ...BIEU_MAU_PHONG_MAC_DINH, tang: bieuMauPhong.tang })
       setThongBao(`Đã khai báo phòng ${phongMoi.soPhong}.`)
     } catch (reason: unknown) {
@@ -201,10 +198,6 @@ export default function DanhMucPhong({ token }: Props) {
       setDanhSachPhong((current) => (
         [...current, ...ketQua.phong.filter((phong) => phongThuocBoLoc(phong, tangLoc))].sort(soSanhPhong)
       ))
-      const phongMoiTrongBoLoc = ketQua.phong.find((phong) => phongThuocBoLoc(phong, tangLoc) && phong.id !== null)
-      if (phongMoiTrongBoLoc?.id !== null && phongMoiTrongBoLoc !== undefined) {
-        setPhongDangXemId(phongMoiTrongBoLoc.id)
-      }
       setThongBao(`Đã tạo dãy phòng ${payload.soBatDau} - ${payload.soKetThuc}.`)
       setXemTruoc([])
       setYeuCauPhongHangLoatDaXemTruoc(null)
@@ -369,7 +362,7 @@ export default function DanhMucPhong({ token }: Props) {
                   </div>
                 </dl>
                 <p className="status-message">
-                  Chi tiết lấy trực tiếp từ danh sách phòng hiện có. Lịch sử công tơ, hợp đồng hiện tại và sự cố sẽ bổ sung ở slice sau.
+                  Chi tiết lấy trực tiếp từ danh sách phòng hiện có.
                 </p>
               </>
             ) : (

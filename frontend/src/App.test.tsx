@@ -324,6 +324,7 @@ describe('App role navigation', () => {
       expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/phong', expect.objectContaining({ method: 'POST' }))
       expect(mountedApp!.container.textContent).toContain('305')
     })
+    expect(mountedApp.container.textContent).not.toContain('Chi tiết phòng 305')
 
     const createCall = fetchMock.mock.calls.find(([input, init]) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
@@ -375,6 +376,7 @@ describe('App role navigation', () => {
       expect(mountedApp!.container.textContent).toContain('Đã tạo dãy phòng 201 - 203.')
       expect(mountedApp!.container.textContent).toContain('203')
     })
+    expect(mountedApp.container.textContent).not.toContain('Chi tiết phòng 201')
   })
 
   it('FR-BLD-02 confirms the exact batch payload that was previewed even after the form changes', async () => {
@@ -519,6 +521,11 @@ describe('App role navigation', () => {
     const summaryCards = [...mountedApp.container.querySelectorAll('.room-status-chip')].map((card) => card.textContent?.replace(/\s+/g, ''))
     expect(summaryCards).toEqual(['Trống5', 'Đangthuê7', 'Đangsửa4'])
 
+    const roomDetailBeforeClick = mountedApp.container.querySelector('[data-testid="room-detail"]')
+    expect(roomDetailBeforeClick?.textContent).toContain('Chọn một ô phòng trong sơ đồ để xem chi tiết hiện tại của phòng đó.')
+    expect(roomDetailBeforeClick?.textContent).not.toContain('Chi tiết phòng 403')
+    expect(roomDetailBeforeClick?.textContent).not.toContain('Lịch sử công tơ')
+
     const tile403 = [...mountedApp.container.querySelectorAll('[data-testid="room-tile"]')].find(
       (tile) => tile.querySelector('.room-tile__number')?.textContent?.trim() === '403',
     )
@@ -548,6 +555,8 @@ describe('App role navigation', () => {
     expect(roomDetail.textContent).toContain('Gác xép')
     expect(roomDetail.textContent).toContain('31.50')
     expect(roomDetail.textContent).toContain('5100000.00')
+    expect(roomDetail.textContent).toContain('Chi tiết lấy trực tiếp từ danh sách phòng hiện có.')
+    expect(roomDetail.textContent).not.toContain('Lịch sử công tơ')
   })
 })
 
