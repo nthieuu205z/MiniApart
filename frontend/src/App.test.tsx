@@ -207,6 +207,82 @@ describe('App role navigation', () => {
     })
     expect(mountedApp.container.textContent).not.toContain('Xoá')
   })
+
+  it('FR-BLD-01 lets the owner create and edit a building while showing the February closing-day rule', async () => {
+    const chuSoHuu = MENU_BY_ROLE[1]
+    const fetchMock = buildFetchMock(chuSoHuu.nguoiDung)
+    vi.stubGlobal('fetch', fetchMock)
+    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/toa-nha', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="building-catalog"]')).not.toBeNull()
+      expect(mountedApp!.container.textContent).toContain('Toà A')
+    })
+
+    expect(mountedApp.container.textContent).toContain('tháng hai')
+
+    await act(async () => {
+      findButton(mountedApp!.container, 'Khai báo toà mới').click()
+    })
+
+    const createForm = await vi.waitFor(() => {
+      const form = mountedApp!.container.querySelector('[data-testid="building-form"]')
+      expect(form).not.toBeNull()
+      return form as HTMLFormElement
+    })
+
+    await act(async () => {
+      setInputValue(createForm.querySelector('input[name="maToa"]') as HTMLInputElement, 'TN-C')
+      setInputValue(createForm.querySelector('input[name="ten"]') as HTMLInputElement, 'Toà C')
+      setTextAreaValue(createForm.querySelector('textarea[name="diaChi"]') as HTMLTextAreaElement, 'Địa chỉ mới')
+      setInputValue(createForm.querySelector('input[name="soTang"]') as HTMLInputElement, '3')
+      setInputValue(createForm.querySelector('input[name="ngayChotSo"]') as HTMLInputElement, '28')
+      setInputValue(createForm.querySelector('input[name="soNgayHanTt"]') as HTMLInputElement, '5')
+      setInputValue(createForm.querySelector('input[name="tkNganHang"]') as HTMLInputElement, '0123456789')
+      setInputValue(createForm.querySelector('input[name="nguongThatThoat"]') as HTMLInputElement, '12.35')
+      createForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    })
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha', expect.objectContaining({ method: 'POST' }))
+      expect(mountedApp!.container.textContent).toContain('Toà C')
+    })
+
+    const createCall = fetchMock.mock.calls.find(([input, init]) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
+      return url === '/api/toa-nha' && init?.method === 'POST'
+    })
+    expect(JSON.parse(String(createCall?.[1]?.body))).toEqual({
+      maToa: 'TN-C',
+      ten: 'Toà C',
+      diaChi: 'Địa chỉ mới',
+      soTang: 3,
+      ngayChotSo: 28,
+      soNgayHanTt: 5,
+      tkNganHang: '0123456789',
+      nguongThatThoat: '12.35',
+    })
+
+    await act(async () => {
+      findButton(mountedApp!.container, 'Sửa Toà C').click()
+    })
+
+    const editForm = await vi.waitFor(() => {
+      const form = mountedApp!.container.querySelector('[data-testid="building-form"]')
+      expect(form).not.toBeNull()
+      return form as HTMLFormElement
+    })
+
+    await act(async () => {
+      setInputValue(editForm.querySelector('input[name="ten"]') as HTMLInputElement, 'Toà C đã sửa')
+      editForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    })
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.textContent).toContain('Toà C đã sửa')
+      expect(mountedApp!.container.textContent).toContain('12.35')
+    })
+  })
 })
 
 async function mountAppAndLogin(nguoiDung: ThongTinNguoiDung, path = '/', fetchMock = buildFetchMock(nguoiDung)) {
@@ -247,6 +323,12 @@ function setInputValue(input: HTMLInputElement, value: string) {
   const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
   valueSetter?.call(input, value)
   input.dispatchEvent(new Event('input', { bubbles: true }))
+}
+
+function setTextAreaValue(textarea: HTMLTextAreaElement, value: string) {
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+  valueSetter?.call(textarea, value)
+  textarea.dispatchEvent(new Event('input', { bubbles: true }))
 }
 
 function setSelectValue(select: HTMLSelectElement, value: string) {
@@ -316,6 +398,7 @@ function buildFetchMock(nguoiDung: ThongTinNguoiDung) {
     { vaiTro: 'NGUOI_THUE', tenVaiTro: 'Người thuê' },
   ]
   let nextAccountId = 6
+  let nextBuildingId = 3
 
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
@@ -357,7 +440,32 @@ function buildFetchMock(nguoiDung: ThongTinNguoiDung) {
     }
 
     if (url === '/api/toa-nha') {
+      if (method === 'POST') {
+        const payload = JSON.parse(String(init?.body)) as Omit<ThongTinToaNha, 'id'>
+        const created: ThongTinToaNha = { ...payload, id: nextBuildingId++ }
+        buildings.push(created)
+        return new Response(JSON.stringify(created), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+
       return new Response(JSON.stringify(buildings), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const buildingIdMatch = url.match(/^\/api\/toa-nha\/(\d+)$/)
+    if (buildingIdMatch && method === 'PUT') {
+      const buildingId = Number(buildingIdMatch[1])
+      const current = buildings.find((building) => building.id === buildingId)
+      if (!current) throw new Error(`Unknown building: ${buildingId}`)
+      const payload = JSON.parse(String(init?.body)) as Omit<ThongTinToaNha, 'id'>
+      const updated = { ...current, ...payload, id: buildingId }
+      const buildingIndex = buildings.findIndex((building) => building.id === buildingId)
+      buildings[buildingIndex] = updated
+      return new Response(JSON.stringify(updated), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
