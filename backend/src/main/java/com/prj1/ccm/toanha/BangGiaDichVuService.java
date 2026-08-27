@@ -24,6 +24,8 @@ public class BangGiaDichVuService {
             "Chỉ bậc cuối cùng mới được bỏ trống đến số lượng và phải có đúng một bậc cuối vô cực.";
     private static final String THONG_BAO_BAC_DAU_TIEN_PHAI_BAT_DAU_TU_0 =
             "Bậc đầu tiên phải bắt đầu từ 0.";
+    private static final String THONG_BAO_BANG_GIA_BAC_THANG_DA_TON_TAI =
+            "Biểu giá bậc thang đã tồn tại cho ngày hiệu lực.";
 
     private final DanhMucDichVuService danhMucDichVuService;
     private final BangGiaRepository bangGiaRepository;
@@ -102,6 +104,9 @@ public class BangGiaDichVuService {
     public ThongTinBangGiaBacThang themBangGiaBacThang(Long dichVuId, YeuCauBangGiaBacThang yeuCau, NguoiDung nguoiDung) {
         DichVu dichVu = layDichVuDienTheoChiSo(dichVuId, nguoiDung);
         List<BangGiaBacThang> cacBac = chuanHoaBangGiaBacThang(dichVu.id(), yeuCau);
+        if (bangGiaRepository.existsBacThangByDichVuIdAndNgayHieuLuc(dichVu.id(), yeuCau.ngayHieuLuc())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_BANG_GIA_BAC_THANG_DA_TON_TAI);
+        }
         bangGiaRepository.insertBacThang(cacBac);
         return taoThongTinBangGiaBacThang(
                 dichVu.id(),
@@ -133,6 +138,10 @@ public class BangGiaDichVuService {
                 || yeuCau.ngayHieuLuc() == null
                 || yeuCau.cacBac() == null
                 || yeuCau.cacBac().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_BANG_GIA_KHONG_HOP_LE);
+        }
+
+        if (yeuCau.cacBac().stream().anyMatch(bac -> bac == null || bac.bac() == null)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_BANG_GIA_KHONG_HOP_LE);
         }
 

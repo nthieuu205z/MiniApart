@@ -70,6 +70,22 @@ public class BangGiaRepository {
         return findApplicableNgayHieuLuc("BANG_GIA_BAC_THANG", dichVuId, ngay);
     }
 
+    public boolean existsBacThangByDichVuIdAndNgayHieuLuc(Long dichVuId, LocalDate ngayHieuLuc) {
+        Boolean tonTai = jdbcTemplate.queryForObject(
+                """
+                        SELECT EXISTS (
+                            SELECT 1
+                            FROM BANG_GIA_BAC_THANG
+                            WHERE dich_vu_id = ? AND ngay_hieu_luc = ?
+                        )
+                        """,
+                Boolean.class,
+                dichVuId,
+                Date.valueOf(ngayHieuLuc)
+        );
+        return Boolean.TRUE.equals(tonTai);
+    }
+
     public List<BangGiaBacThang> findBacThangByDichVuIdAndNgayHieuLuc(Long dichVuId, LocalDate ngayHieuLuc) {
         return jdbcTemplate.query(
                 """

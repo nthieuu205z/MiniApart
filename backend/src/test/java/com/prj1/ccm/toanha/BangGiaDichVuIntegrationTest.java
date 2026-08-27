@@ -365,6 +365,78 @@ class BangGiaDichVuIntegrationTest {
                 .andExpect(jsonPath("$.thongBao", containsString("bậc cuối")));
     }
 
+    @Test
+    void FR_BLD_08_rejectsDuplicateTierSetForSameEffectiveDateWithoutMergingRows() throws Exception {
+        Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
+        String adminToken = login(1L, "0900000001");
+        String ngayHieuLuc = "2026-01-01";
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bacThangPayload("2204.0655", ngayHieuLuc)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bacThangPayload("2500.0000", ngayHieuLuc)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.thongBao", containsString("đã tồn tại")));
+
+        Assertions.assertEquals(
+                5,
+                demBanGhi("SELECT COUNT(*) FROM BANG_GIA_BAC_THANG WHERE dich_vu_id = ?", dichVuId)
+        );
+        mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].cacBac", hasSize(5)))
+                .andExpect(jsonPath("$[0].cacBac[0].donGia").value("1984.00"));
+    }
+
+    @Test
+    void FR_BLD_08_rejectsNullTierEntryAndNullTierNumberWithBadRequest() throws Exception {
+        Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
+        String adminToken = login(1L, "0900000001");
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "giaBanLeBinhQuan": "2204.0655",
+                                  "ngayHieuLuc": "2026-01-01",
+                                  "cacBac": [
+                                    null,
+                                    { "bac": 1, "tuSoLuong": "0.00", "denSoLuong": null, "tyLe": "90.00" }
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "giaBanLeBinhQuan": "2204.0655",
+                                  "ngayHieuLuc": "2026-01-01",
+                                  "cacBac": [
+                                    { "bac": null, "tuSoLuong": "0.00", "denSoLuong": null, "tyLe": "90.00" },
+                                    { "bac": 1, "tuSoLuong": "0.00", "denSoLuong": null, "tyLe": "90.00" }
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        Assertions.assertEquals(
+                0,
+                demBanGhi("SELECT COUNT(*) FROM BANG_GIA_BAC_THANG WHERE dich_vu_id = ?", dichVuId)
+        );
+    }
+
     private Long themDichVu(Long toaNhaId, String ten) {
         return jdbcTemplate.queryForObject(
                 """
@@ -397,6 +469,11 @@ class BangGiaDichVuIntegrationTest {
                 nguoiDungId,
                 toaNhaId
         );
+    }
+
+    private int demBanGhi(String sql, Long dichVuId) {
+        Integer soLuong = jdbcTemplate.queryForObject(sql, Integer.class, dichVuId);
+        return soLuong == null ? 0 : soLuong;
     }
 
     private String bangGiaPayload(String donGia, String ngayHieuLuc) {
