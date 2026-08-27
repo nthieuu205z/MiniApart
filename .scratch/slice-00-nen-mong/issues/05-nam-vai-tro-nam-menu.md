@@ -6,9 +6,11 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Vai trò về từ máy chủ trong phản hồi đăng nhập, frontend không tự suy diễn
-- [ ] Năm vai trò cho ra năm cấu hình menu khác nhau, chụp được năm ảnh màn hình khác nhau để đưa vào Chương 5
-- [ ] Gõ tay một đường dẫn không có trong menu của mình thì frontend không vỡ — hiện trang "không có quyền" tử tế
-- [ ] Tên test mang mã `FR-AUT-04`
+- [x] Vai trò về từ máy chủ trong phản hồi đăng nhập, frontend không tự suy diễn
+- [x] Năm vai trò cho ra năm cấu hình menu khác nhau, chụp được năm ảnh màn hình khác nhau để đưa vào Chương 5
+- [x] Gõ tay một đường dẫn không có trong menu của mình thì frontend không vỡ — hiện trang "không có quyền" tử tế
+- [x] Tên test mang mã `FR-AUT-04`
+
+Evidence: `frontend/evidence/ticket-05/` chứa năm ảnh menu được chụp từ frontend chạy local.

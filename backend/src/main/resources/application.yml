@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: miniapart-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/miniapart}
+    username: ${SPRING_DATASOURCE_USERNAME:miniapart}
+    password: ${SPRING_DATASOURCE_PASSWORD:miniapart}
+  flyway:
+    enabled: true
+
+server:
+  port: ${SERVER_PORT:8080}
+
+app:
+  auth:
+    jwt-secret: ${JWT_SECRET:dev-only-slice-00-signing-secret-not-for-production}
+    token-ttl-seconds: ${JWT_TTL_SECONDS:1800}
