@@ -3,6 +3,7 @@ package com.prj1.ccm.nguoidung;
 import com.prj1.ccm.auth.KichHoatTaiKhoanService;
 import com.prj1.ccm.auth.PasswordHasher;
 import com.prj1.ccm.auth.NguoiDungRepository;
+import com.prj1.ccm.auth.SoDienThoaiKey;
 import com.prj1.ccm.toanha.ToaNhaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.LinkedHashSet;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -45,11 +47,20 @@ public class QuanLyNguoiDungService {
         return toThongTinQuanLyNguoiDung(layNguoiDung(nguoiDungId));
     }
 
+    @Transactional(readOnly = true)
+    public List<ThongTinVaiTro> danhSachVaiTro(NguoiDung nguoiDung) {
+        kiemTraQuanTriHeThong(nguoiDung);
+        return Arrays.stream(VaiTro.values())
+                .map(ThongTinVaiTro::tuVaiTro)
+                .toList();
+    }
+
     @Transactional
     public ThongTinQuanLyNguoiDung tao(YeuCauQuanLyNguoiDung yeuCau, NguoiDung nguoiDung) {
         kiemTraQuanTriHeThong(nguoiDung);
         xacThucYeuCau(yeuCau);
-        if (nguoiDungRepository.findBySoDienThoai(yeuCau.soDienThoai()).isPresent()) {
+        String soDienThoai = SoDienThoaiKey.tu(yeuCau.soDienThoai());
+        if (nguoiDungRepository.findBySoDienThoai(soDienThoai).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Số điện thoại đã được sử dụng");
         }
 
@@ -57,7 +68,7 @@ public class QuanLyNguoiDungService {
         NguoiDung moi = new NguoiDung(
                 null,
                 yeuCau.hoTen(),
-                yeuCau.soDienThoai(),
+                soDienThoai,
                 passwordHasher.hash(maNgauNhienDeVoHieuHoaMatKhauBanDau()),
                 yeuCau.vaiTro(),
                 TrangThaiNguoiDung.HOAT_DONG,
@@ -75,17 +86,21 @@ public class QuanLyNguoiDungService {
         kiemTraQuanTriHeThong(nguoiDung);
         xacThucYeuCau(yeuCau);
         NguoiDung hienTai = layNguoiDung(nguoiDungId);
+        String soDienThoai = SoDienThoaiKey.tu(yeuCau.soDienThoai());
 
-        if (!hienTai.soDienThoai().equals(yeuCau.soDienThoai())
-                && nguoiDungRepository.existsBySoDienThoaiExceptId(yeuCau.soDienThoai(), nguoiDungId)) {
+        if (!hienTai.soDienThoai().equals(soDienThoai)
+                && nguoiDungRepository.existsBySoDienThoaiExceptId(soDienThoai, nguoiDungId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Số điện thoại đã được sử dụng");
         }
 
         List<Long> toaNhaIds = chuanHoaToaNhaIds(yeuCau.toaNhaIds());
-        if (!hienTai.soDienThoai().equals(yeuCau.soDienThoai())) {
-            nguoiDungRepository.capNhatSoDienThoaiDangNhap(hienTai.soDienThoai(), yeuCau.soDienThoai());
+        if (!hienTai.soDienThoai().equals(soDienThoai)) {
+            nguoiDungRepository.capNhatSoDienThoaiDangNhap(
+                    SoDienThoaiKey.tu(hienTai.soDienThoai()),
+                    soDienThoai
+            );
         }
-        nguoiDungRepository.capNhatThongTinNguoiDung(nguoiDungId, yeuCau.hoTen(), yeuCau.soDienThoai(), yeuCau.vaiTro());
+        nguoiDungRepository.capNhatThongTinNguoiDung(nguoiDungId, yeuCau.hoTen(), soDienThoai, yeuCau.vaiTro());
         nguoiDungRepository.capNhatQuyenToa(nguoiDungId, toaNhaIds);
         return toThongTinQuanLyNguoiDung(layNguoiDung(nguoiDungId));
     }

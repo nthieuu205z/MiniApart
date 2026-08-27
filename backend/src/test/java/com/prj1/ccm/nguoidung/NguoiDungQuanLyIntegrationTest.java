@@ -30,6 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -95,6 +96,7 @@ class NguoiDungQuanLyIntegrationTest {
                 .andExpect(jsonPath("$.soDienThoai").value(soDienThoai))
                 .andExpect(jsonPath("$.vaiTro").value("THO"))
                 .andExpect(jsonPath("$.trangThai").value("HOAT_DONG"))
+                .andExpect(jsonPath("$.tenTrangThai").value("Hoạt động"))
                 .andExpect(jsonPath("$.toaNhaIds[0]").value(1))
                 .andExpect(jsonPath("$.toaNhaIds[1]").value(2))
                 .andExpect(jsonPath("$.matKhau").doesNotExist())
@@ -149,7 +151,56 @@ class NguoiDungQuanLyIntegrationTest {
                                   "toaNhaIds": [1]
                                 }
                                 """))
-                .andExpect(status().isConflict());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.thongBao").value("Số điện thoại đã được sử dụng"));
+    }
+
+    @Test
+    void FR_AUT_06_taoTaiKhoanChuanHoaSoDienThoaiDeDangNhapVaKichHoat() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+        String soDienThoaiNhapVao = "090 100 0001";
+        String soDienThoaiChuan = "0901000001";
+        String matKhauNguoiDungTuChon = "MatKhauDoNguoiDungTuChon-" + UUID.randomUUID();
+
+        mockMvc.perform(post("/api/nguoi-dung")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Tài khoản có số điện thoại có khoảng trắng",
+                                  "soDienThoai": "%s",
+                                  "vaiTro": "THO",
+                                  "toaNhaIds": [1]
+                                }
+                                """.formatted(soDienThoaiNhapVao)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.soDienThoai").value(soDienThoaiChuan));
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT so_dien_thoai FROM NGUOI_DUNG WHERE so_dien_thoai = ?",
+                String.class,
+                soDienThoaiChuan
+        )).isEqualTo(soDienThoaiChuan);
+
+        String maKichHoat = kichHoatTaiKhoanDelivery.layMaKichHoat(soDienThoaiChuan);
+        assertThat(maKichHoat).isNotBlank();
+
+        mockMvc.perform(post("/api/auth/kich-hoat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "soDienThoai": "%s",
+                                  "maKichHoat": "%s",
+                                  "matKhau": "%s"
+                                }
+                                """.formatted(soDienThoaiNhapVao, maKichHoat, matKhauNguoiDungTuChon)))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginPayload(soDienThoaiNhapVao, matKhauNguoiDungTuChon)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nguoiDung.soDienThoai").value(soDienThoaiChuan));
     }
 
     @Test
@@ -307,6 +358,7 @@ class NguoiDungQuanLyIntegrationTest {
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.trangThai").value("BI_KHOA"))
+                .andExpect(jsonPath("$.tenTrangThai").value("Bị khoá"))
                 .andExpect(jsonPath("$.matKhau").doesNotExist());
 
         assertThat(jdbcTemplate.queryForObject(
@@ -483,6 +535,63 @@ class NguoiDungQuanLyIntegrationTest {
                     .andExpect(status().isForbidden());
 
             mockMvc.perform(post("/api/nguoi-dung/3/khoa")
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
+    void FR_AUT_06_chiQuanTriHeThongMoiDuocDocDanhSachVaChiTietTaiKhoan() throws Exception {
+        for (String token : List.of(
+                tokenCuaNguoiDung(2L, "0900000002"),
+                tokenCuaNguoiDung(3L, "0900000003"),
+                tokenCuaNguoiDung(4L, "0900000004"),
+                tokenCuaNguoiDung(5L, "0900000006")
+        )) {
+            mockMvc.perform(get("/api/nguoi-dung")
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isForbidden())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.thongBao").value("Bạn không có quyền thực hiện thao tác này"));
+
+            mockMvc.perform(get("/api/nguoi-dung/3")
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isForbidden())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.thongBao").value("Bạn không có quyền thực hiện thao tác này"));
+        }
+    }
+
+    @Test
+    void FR_AUT_06_traVeThongBaoChoTaiKhoanKhongTonTai() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+
+        mockMvc.perform(get("/api/nguoi-dung/999")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.thongBao").value("Không tìm thấy dữ liệu"));
+    }
+
+    @Test
+    void FR_AUT_06_traVeNhanVaiTroTuMayChuChoBieuMauTaiKhoan() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+
+        mockMvc.perform(get("/api/nguoi-dung/vai-tro")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].vaiTro").value("QTHT"))
+                .andExpect(jsonPath("$[0].tenVaiTro").value("Quản trị hệ thống"))
+                .andExpect(jsonPath("$[4].vaiTro").value("NGUOI_THUE"))
+                .andExpect(jsonPath("$[4].tenVaiTro").value("Người thuê"));
+
+        for (String token : List.of(
+                tokenCuaNguoiDung(2L, "0900000002"),
+                tokenCuaNguoiDung(3L, "0900000003"),
+                tokenCuaNguoiDung(4L, "0900000004"),
+                tokenCuaNguoiDung(5L, "0900000006")
+        )) {
+            mockMvc.perform(get("/api/nguoi-dung/vai-tro")
                             .header("Authorization", "Bearer " + token))
                     .andExpect(status().isForbidden());
         }

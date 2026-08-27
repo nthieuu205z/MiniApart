@@ -9,6 +9,7 @@ import {
   type ThongTinNguoiDung,
 } from './api'
 import { clearStoredToken, readStoredToken, storeToken } from './authSession'
+import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { layMenuTheoVaiTro, xacDinhTrangTheoVaiTro } from './roleNavigation'
 import './styles.css'
 
@@ -19,6 +20,7 @@ function App() {
   const [dangTaiPhien, setDangTaiPhien] = useState(true)
   const [dangDangNhap, setDangDangNhap] = useState(false)
   const [nguoiDung, setNguoiDung] = useState<ThongTinNguoiDung | null>(null)
+  const [token, setToken] = useState<string | null>(null)
   const [duongDanHienTai, setDuongDanHienTai] = useState(() => layDuongDanHienTai())
   const [form, setForm] = useState<DangNhapRequest>({
     soDienThoai: '',
@@ -57,6 +59,7 @@ function App() {
     fetchCurrentUser(storedToken)
       .then((currentUser) => {
         if (!mounted) return
+        setToken(storedToken)
         setNguoiDung(currentUser)
       })
       .catch((reason: unknown) => {
@@ -98,6 +101,7 @@ function App() {
     try {
       const response = await login(form)
       storeToken(response.token)
+      setToken(response.token)
       setNguoiDung(response.nguoiDung)
       dieuHuongToi('/')
       setForm({ soDienThoai: '', matKhau: '' })
@@ -111,6 +115,7 @@ function App() {
 
   function handleLogout() {
     clearStoredToken()
+    setToken(null)
     setNguoiDung(null)
     setAuthError(null)
     dieuHuongToi('/')
@@ -186,7 +191,9 @@ function App() {
               })}
             </nav>
 
-            {trangVaiTro ? (
+            {nguoiDung.vaiTro === 'QTHT' && duongDanHienTai === '/tai-khoan' && token ? (
+              <QuanLyTaiKhoan token={token} />
+            ) : trangVaiTro ? (
               <section
                 className={`route-panel route-panel--${trangVaiTro.loai}`}
                 aria-labelledby="current-route-title"

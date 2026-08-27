@@ -174,7 +174,8 @@ dd {
   font-weight: 650;
 }
 
-.field input {
+.field input,
+.field select {
   width: 100%;
   padding: 0.9rem 1rem;
   border: 1px solid #c5dbd5;
@@ -183,7 +184,8 @@ dd {
   color: #14322f;
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   outline: 2px solid rgba(15, 118, 110, 0.25);
   border-color: #0f766e;
 }
@@ -208,6 +210,22 @@ dd {
   background: #e4f3ef;
   color: #0f4f4a;
   font-weight: 700;
+}
+
+.danger-button {
+  padding: 0.7rem 1rem;
+  border: 1px solid #efb4b4;
+  border-radius: 999px;
+  background: #fff7f7;
+  color: #a33737;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.danger-button:disabled,
+.ghost-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .primary-button:hover,
@@ -299,6 +317,143 @@ dd {
   font-size: 1.1rem;
 }
 
+.account-management {
+  display: grid;
+  gap: 1rem;
+}
+
+.account-management__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.account-management__heading h3,
+.account-form h4 {
+  margin: 0;
+  color: #0f4f4a;
+}
+
+.account-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #d5e6e1;
+  border-radius: 1rem;
+}
+
+.account-table {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.account-table caption {
+  padding: 1rem 1rem 0.7rem;
+  color: #0f4f4a;
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.account-table th,
+.account-table td {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid #e7f0ed;
+  vertical-align: top;
+}
+
+.account-table thead th {
+  color: #52706b;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.account-table tbody th {
+  color: #0f4f4a;
+  font-weight: 750;
+}
+
+.account-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.account-status {
+  display: inline-flex;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #146c43;
+  font-size: 0.78rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.account-status--bi_khoa {
+  background: #fce4e4;
+  color: #a33737;
+}
+
+.account-form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem;
+  border: 1px solid #b9d9d1;
+  border-radius: 1rem;
+  background: #f9fcfb;
+}
+
+.building-picker {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.building-picker legend {
+  margin-bottom: 0.2rem;
+  color: #0f4f4a;
+  font-weight: 650;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #52706b;
+}
+
+.checkbox-field input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #0f766e;
+}
+
+.account-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.status-message--success {
+  color: #146c43;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color: #e1f0ec;
@@ -338,7 +493,8 @@ dd {
     color: #d8f4ed;
   }
 
-  .field input {
+  .field input,
+  .field select {
     border-color: #28544d;
     background: rgba(9, 33, 31, 0.9);
     color: #e1f0ec;
@@ -347,5 +503,33 @@ dd {
   .ghost-button {
     background: #173b37;
     color: #d8f4ed;
+  }
+
+  .danger-button {
+    border-color: #704044;
+    background: #3f2427;
+    color: #ffc5c5;
+  }
+
+  .account-management__heading h3,
+  .account-form h4,
+  .account-table caption,
+  .account-table tbody th,
+  .building-picker legend {
+    color: #d8f4ed;
+  }
+
+  .account-table-wrapper,
+  .account-form {
+    border-color: #28544d;
+  }
+
+  .account-table th,
+  .account-table td {
+    border-top-color: #28544d;
+  }
+
+  .account-form {
+    background: rgba(9, 33, 31, 0.55);
   }
 }

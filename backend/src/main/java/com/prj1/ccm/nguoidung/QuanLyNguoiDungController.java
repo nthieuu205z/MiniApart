@@ -42,6 +42,17 @@ public class QuanLyNguoiDungController {
     }
 
     /**
+     * FR-AUT-06 returns the server-owned role codes and display labels for the account form.
+     *
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return all roles that can be assigned to an account
+     */
+    @GetMapping("/vai-tro")
+    public List<ThongTinVaiTro> danhSachVaiTro(HttpServletRequest request) {
+        return quanLyNguoiDungService.danhSachVaiTro(nguoiDungHienTai(request));
+    }
+
+    /**
      * FR-AUT-06 returns a single account for editing on the management screen.
      *
      * @param nguoiDungId the account identifier
