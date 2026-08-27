@@ -211,6 +211,28 @@ class DanhMucToaNhaIntegrationTest {
     }
 
     @Test
+    void FR_BLD_01_managerCannotUpdateBuildingOutsideAssignedScope() throws Exception {
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(put("/api/toa-nha/2")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "maToa": "TN-B",
+                                  "ten": "Toà B bị quản lý ngoài phạm vi sửa",
+                                  "diaChi": "Địa chỉ B",
+                                  "soTang": 5,
+                                  "ngayChotSo": 26,
+                                  "soNgayHanTt": 7,
+                                  "tkNganHang": "9704",
+                                  "nguongThatThoat": "175000.00"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void FR_BLD_01_invalidClosingDayExplainsFebruaryAndDuplicateCodeIsReadable() throws Exception {
         String adminToken = login(1L, "0900000001");
 

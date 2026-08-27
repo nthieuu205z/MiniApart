@@ -30,7 +30,8 @@ public class ToaNhaController {
     }
 
     /**
-     * FR-AUT-05 returns only the buildings visible to the authenticated user.
+     * FR-BLD-01 building catalog listing is filtered to only the buildings visible to the authenticated user.
+     * FR-AUT-05 enforces that the authenticated user only receives buildings within assigned scope.
      *
      * @param request the current HTTP request carrying the authenticated user attribute
      * @return the building list filtered on the server by PHAN_QUYEN_TOA
