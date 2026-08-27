@@ -6,7 +6,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -16,6 +20,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -32,7 +39,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@Import(BangGiaDichVuIntegrationTest.BangGiaClockTestConfiguration.class)
 class BangGiaDichVuIntegrationTest {
+
+    private static final LocalDate TEST_TODAY = LocalDate.of(2040, 8, 15);
+    private static final ZoneId TEST_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:17-alpine");
@@ -84,17 +95,17 @@ class BangGiaDichVuIntegrationTest {
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
                         .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(bangGiaPayload("250000.00", "2026-07-01")))
+                        .content(bangGiaPayload("250000.00", TEST_TODAY.minusDays(45).toString())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.dichVuId").value(dichVuId))
                 .andExpect(jsonPath("$.donGia").value("250000.00"))
-                .andExpect(jsonPath("$.ngayHieuLuc").value("2026-07-01"))
+                .andExpect(jsonPath("$.ngayHieuLuc").value(TEST_TODAY.minusDays(45).toString()))
                 .andExpect(jsonPath("$.dangApDung").value(true));
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
                         .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(bangGiaPayload("300000.00", "2026-08-15")))
+                        .content(bangGiaPayload("300000.00", TEST_TODAY.toString())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.donGia").value("300000.00"))
                 .andExpect(jsonPath("$.dangApDung").value(true));
@@ -102,7 +113,7 @@ class BangGiaDichVuIntegrationTest {
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
                         .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(bangGiaPayload("350000.00", "2026-10-01")))
+                        .content(bangGiaPayload("350000.00", TEST_TODAY.plusDays(47).toString())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.donGia").value("350000.00"))
                 .andExpect(jsonPath("$.dangApDung").value(false));
@@ -112,13 +123,13 @@ class BangGiaDichVuIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[0].donGia").value("350000.00"))
-                .andExpect(jsonPath("$[0].ngayHieuLuc").value("2026-10-01"))
+                .andExpect(jsonPath("$[0].ngayHieuLuc").value(TEST_TODAY.plusDays(47).toString()))
                 .andExpect(jsonPath("$[0].dangApDung").value(false))
                 .andExpect(jsonPath("$[1].donGia").value("300000.00"))
-                .andExpect(jsonPath("$[1].ngayHieuLuc").value("2026-08-15"))
+                .andExpect(jsonPath("$[1].ngayHieuLuc").value(TEST_TODAY.toString()))
                 .andExpect(jsonPath("$[1].dangApDung").value(true))
                 .andExpect(jsonPath("$[2].donGia").value("250000.00"))
-                .andExpect(jsonPath("$[2].ngayHieuLuc").value("2026-07-01"))
+                .andExpect(jsonPath("$[2].ngayHieuLuc").value(TEST_TODAY.minusDays(45).toString()))
                 .andExpect(jsonPath("$[2].dangApDung").value(false));
 
         List<Map<String, Object>> lichSu = jdbcTemplate.queryForList(
@@ -132,11 +143,11 @@ class BangGiaDichVuIntegrationTest {
         );
         Assertions.assertEquals(3, lichSu.size());
         Assertions.assertEquals("250000.00", String.valueOf(lichSu.get(0).get("don_gia")));
-        Assertions.assertEquals("2026-07-01", String.valueOf(lichSu.get(0).get("ngay_hieu_luc")));
+        Assertions.assertEquals(TEST_TODAY.minusDays(45).toString(), String.valueOf(lichSu.get(0).get("ngay_hieu_luc")));
         Assertions.assertEquals("300000.00", String.valueOf(lichSu.get(1).get("don_gia")));
-        Assertions.assertEquals("2026-08-15", String.valueOf(lichSu.get(1).get("ngay_hieu_luc")));
+        Assertions.assertEquals(TEST_TODAY.toString(), String.valueOf(lichSu.get(1).get("ngay_hieu_luc")));
         Assertions.assertEquals("350000.00", String.valueOf(lichSu.get(2).get("don_gia")));
-        Assertions.assertEquals("2026-10-01", String.valueOf(lichSu.get(2).get("ngay_hieu_luc")));
+        Assertions.assertEquals(TEST_TODAY.plusDays(47).toString(), String.valueOf(lichSu.get(2).get("ngay_hieu_luc")));
     }
 
     @Test
@@ -258,5 +269,14 @@ class BangGiaDichVuIntegrationTest {
         int start = body.indexOf("\"token\":\"") + 9;
         int end = body.indexOf('"', start);
         return body.substring(start, end);
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class BangGiaClockTestConfiguration {
+        @Bean
+        @Primary
+        Clock bangGiaTestClock() {
+            return Clock.fixed(TEST_TODAY.atStartOfDay(TEST_ZONE).toInstant(), TEST_ZONE);
+        }
     }
 }
