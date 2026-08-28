@@ -56,6 +56,9 @@ class HopDongServiceTest {
     private BangGiaRepository bangGiaRepository;
 
     @Mock
+    private NguoiOCungRepository nguoiOCungRepository;
+
+    @Mock
     private PhanQuyenToaService phanQuyenToaService;
 
     @Mock
@@ -71,6 +74,7 @@ class HopDongServiceTest {
                 nguoiThueRepository,
                 dichVuRepository,
                 bangGiaRepository,
+                nguoiOCungRepository,
                 phanQuyenToaService,
                 trangThaiPhongService,
                 Clock.fixed(LocalDate.of(2040, 8, 1).atStartOfDay(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant(), ZoneId.of("Asia/Ho_Chi_Minh"))

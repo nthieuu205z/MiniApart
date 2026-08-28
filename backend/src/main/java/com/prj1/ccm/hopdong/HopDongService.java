@@ -38,6 +38,7 @@ public class HopDongService {
     private static final String THONG_BAO_CHUYEN_TRANG_THAI = "Không thể chuyển trạng thái hợp đồng bằng hành động này.";
     private static final String THONG_BAO_CHUA_TOI_NGAY_BAT_DAU = "Chưa tới ngày bắt đầu nên chưa thể kích hoạt hợp đồng.";
     private static final String THONG_BAO_HOP_DONG_CHONG_NGAY = "Phòng %s đang có hợp đồng #%d chiếm chỗ đến hết %s.";
+    private static final String THONG_BAO_GIA_HAN_KHONG_HOP_LE = "Hợp đồng này không thể gia hạn.";
     private static final String SQLSTATE_EXCLUSION_VIOLATION = "23P01";
     private static final String TEN_RANG_BUOC_CHONG_NGAY = "ex_hop_dong_phong_khong_chong_ngay";
 
@@ -46,6 +47,7 @@ public class HopDongService {
     private final NguoiThueRepository nguoiThueRepository;
     private final DichVuRepository dichVuRepository;
     private final BangGiaRepository bangGiaRepository;
+    private final NguoiOCungRepository nguoiOCungRepository;
     private final PhanQuyenToaService phanQuyenToaService;
     private final TrangThaiPhongService trangThaiPhongService;
     private final Clock clock;
@@ -56,6 +58,7 @@ public class HopDongService {
             NguoiThueRepository nguoiThueRepository,
             DichVuRepository dichVuRepository,
             BangGiaRepository bangGiaRepository,
+            NguoiOCungRepository nguoiOCungRepository,
             PhanQuyenToaService phanQuyenToaService,
             TrangThaiPhongService trangThaiPhongService,
             Clock clock
@@ -65,6 +68,7 @@ public class HopDongService {
         this.nguoiThueRepository = nguoiThueRepository;
         this.dichVuRepository = dichVuRepository;
         this.bangGiaRepository = bangGiaRepository;
+        this.nguoiOCungRepository = nguoiOCungRepository;
         this.phanQuyenToaService = phanQuyenToaService;
         this.trangThaiPhongService = trangThaiPhongService;
         this.clock = clock;
@@ -150,6 +154,61 @@ public class HopDongService {
         hopDongRepository.updateTrangThai(hopDongId, TrangThaiHopDong.DA_THANH_LY);
         trangThaiPhongService.dongBoTheoPhongId(hopDongView.hopDong().phongId());
         return chiTiet(hopDongId, nguoiDung);
+    }
+
+    @Transactional
+    public ThongTinGiaHanHopDong giaHan(Long hopDongId, YeuCauGiaHanHopDong yeuCau, NguoiDung nguoiDung) {
+        kiemTraVaiTro(nguoiDung);
+        HopDongRepository.HopDongView hopDongView = layHopDongTrongPhamVi(hopDongId, nguoiDung);
+        HopDong hopDongCu = hopDongView.hopDong();
+        LocalDate homNay = LocalDate.now(clock);
+        if (hopDongCu.trangThai() != TrangThaiHopDong.HIEU_LUC || !hopDongCu.sapHetHan(homNay)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_GIA_HAN_KHONG_HOP_LE);
+        }
+        if (yeuCau == null || yeuCau.ngayKetThuc() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_KHONG_HOP_LE);
+        }
+
+        LocalDate ngayBatDauMoi = hopDongCu.ngayKetThuc().plusDays(1);
+        if (!yeuCau.ngayKetThuc().isAfter(ngayBatDauMoi)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_NGAY_KET_THUC);
+        }
+        BigDecimal giaThueMoi = yeuCau.giaThue() == null
+                ? hopDongCu.giaThue()
+                : chuanHoaSoKhongAm(yeuCau.giaThue());
+        BigDecimal tienCocCanThu = tinhTienCocCanThu(hopDongCu, giaThueMoi);
+        HopDong hopDongMoi = new HopDong(
+                null,
+                hopDongCu.phongId(),
+                hopDongCu.nguoiThueId(),
+                ngayBatDauMoi,
+                yeuCau.ngayKetThuc(),
+                giaThueMoi,
+                hopDongCu.tienCoc(),
+                hopDongCu.soNgayBaoTruoc(),
+                tienCocCanThu.signum() == 0 ? TrangThaiHopDong.DA_COC : TrangThaiHopDong.CHO_KY
+        );
+        Long hopDongMoiId = hopDongRepository.insert(hopDongMoi);
+        hopDongRepository.insertDichVuApDung(hopDongRepository.findDichVuApDungDeGiaHan(hopDongId).stream()
+                .map(item -> new HopDongDichVu(hopDongMoiId, item.dichVuId(), item.donGiaApDung()))
+                .toList());
+        nguoiOCungRepository.findDangODeGiaHan(hopDongId, hopDongCu.ngayKetThuc()).forEach(nguoiOCung ->
+                nguoiOCungRepository.insert(new NguoiOCung(
+                        null,
+                        hopDongMoiId,
+                        nguoiOCung.nguoiThueId(),
+                        null,
+                        nguoiOCung.quanHe(),
+                        ngayBatDauMoi,
+                        nguoiOCung.denNgay()
+                ))
+        );
+        trangThaiPhongService.dongBoTheoPhongId(hopDongCu.phongId());
+        return ThongTinGiaHanHopDong.tao(
+                chiTiet(hopDongMoiId, nguoiDung),
+                tienCocCanThu,
+                giaThueMoi.compareTo(hopDongCu.giaThue()) != 0
+        );
     }
 
     private ThongTinHopDong chuyenTrangThai(
@@ -264,6 +323,15 @@ public class HopDongService {
         } catch (ArithmeticException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_KHONG_HOP_LE, exception);
         }
+    }
+
+    private BigDecimal tinhTienCocCanThu(HopDong hopDongCu, BigDecimal giaThueMoi) {
+        boolean tienCocDaDuocThu = hopDongCu.trangThai() == TrangThaiHopDong.DA_COC
+                || hopDongCu.trangThai() == TrangThaiHopDong.HIEU_LUC;
+        if (!tienCocDaDuocThu) {
+            return hopDongCu.tienCoc();
+        }
+        return giaThueMoi.subtract(hopDongCu.giaThue()).max(BigDecimal.ZERO).setScale(2, RoundingMode.UNNECESSARY);
     }
 
     private void kiemTraVaiTro(NguoiDung nguoiDung) {

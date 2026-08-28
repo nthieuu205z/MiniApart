@@ -37,6 +37,7 @@ public class HopDongController {
             "dichVuApDung"
     );
     private static final Set<String> KHOA_DICH_VU_HOP_LE = Set.of("dichVuId", "donGiaApDung");
+    private static final Set<String> KHOA_GIA_HAN_HOP_LE = Set.of("ngayKetThuc", "giaThue");
 
     private final HopDongService hopDongService;
 
@@ -124,6 +125,25 @@ public class HopDongController {
         return hopDongService.thanhLy(hopDongId, nguoiDungHienTai(request));
     }
 
+    /**
+     * FR-TNT-07 creates a successor contract from a near-expiry contract while retaining its historical terms.
+     * NFR-SEC-03 enforces server-side authorization for the renewal action.
+     *
+     * @param hopDongId the expiring contract identifier
+     * @param yeuCau the new end date and optional changed rent
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the successor contract and the deposit amount still to collect
+     */
+    @PostMapping("/{hopDongId}/gia-han")
+    public ResponseEntity<ThongTinGiaHanHopDong> giaHan(
+            @PathVariable Long hopDongId,
+            @RequestBody JsonNode yeuCau,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(hopDongService.giaHan(hopDongId, chuyenThanhYeuCauGiaHan(yeuCau), nguoiDungHienTai(request)));
+    }
+
     private YeuCauHopDong chuyenThanhYeuCau(JsonNode yeuCau) {
         if (yeuCau == null || !yeuCau.isObject()) {
             throw khongHopLe();
@@ -142,6 +162,21 @@ public class HopDongController {
                 layBigDecimalBatBuoc(yeuCau, "tienCoc"),
                 layIntBatBuoc(yeuCau, "soNgayBaoTruoc"),
                 layDichVuApDungBatBuoc(yeuCau)
+        );
+    }
+
+    private YeuCauGiaHanHopDong chuyenThanhYeuCauGiaHan(JsonNode yeuCau) {
+        if (yeuCau == null || !yeuCau.isObject()) {
+            throw khongHopLe();
+        }
+        for (String propertyName : yeuCau.propertyNames()) {
+            if (!KHOA_GIA_HAN_HOP_LE.contains(propertyName)) {
+                throw khongHopLe();
+            }
+        }
+        return new YeuCauGiaHanHopDong(
+                layNgayBatBuoc(yeuCau, "ngayKetThuc"),
+                layBigDecimalTuyChon(yeuCau, "giaThue")
         );
     }
 

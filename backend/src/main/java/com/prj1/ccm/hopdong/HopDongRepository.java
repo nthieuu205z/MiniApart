@@ -131,6 +131,23 @@ class HopDongRepository {
         );
     }
 
+    public List<HopDongDichVu> findDichVuApDungDeGiaHan(Long hopDongId) {
+        return jdbcTemplate.query(
+                """
+                        SELECT hop_dong_id, dich_vu_id, don_gia_ap_dung
+                        FROM HOP_DONG_DICH_VU
+                        WHERE hop_dong_id = ?
+                        ORDER BY dich_vu_id
+                        """,
+                (resultSet, rowNum) -> new HopDongDichVu(
+                        resultSet.getLong("hop_dong_id"),
+                        resultSet.getLong("dich_vu_id"),
+                        resultSet.getBigDecimal("don_gia_ap_dung")
+                ),
+                hopDongId
+        );
+    }
+
     public void updateTrangThai(Long hopDongId, TrangThaiHopDong trangThai) {
         jdbcTemplate.update(
                 """

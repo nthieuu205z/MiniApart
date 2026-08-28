@@ -48,6 +48,25 @@ class NguoiOCungRepository {
         );
     }
 
+    List<NguoiOCung> findDangODeGiaHan(Long hopDongId, LocalDate ngayKetThucHopDongCu) {
+        return jdbcTemplate.query(
+                """
+                        SELECT noc.id, noc.hop_dong_id, noc.nguoi_thue_id, nt.ho_ten,
+                               noc.quan_he, noc.tu_ngay, noc.den_ngay
+                        FROM NGUOI_O_CUNG noc
+                        JOIN NGUOI_THUE nt ON nt.id = noc.nguoi_thue_id
+                        WHERE noc.hop_dong_id = ?
+                          AND noc.tu_ngay <= ?
+                          AND (noc.den_ngay IS NULL OR noc.den_ngay > ?)
+                        ORDER BY noc.tu_ngay, noc.id
+                        """,
+                (resultSet, rowNum) -> mapNguoiOCung(resultSet),
+                hopDongId,
+                Date.valueOf(ngayKetThucHopDongCu),
+                Date.valueOf(ngayKetThucHopDongCu)
+        );
+    }
+
     int countByPhongIdAndNgay(Long phongId, LocalDate ngay) {
         Integer soNguoi = jdbcTemplate.queryForObject(
                 """
