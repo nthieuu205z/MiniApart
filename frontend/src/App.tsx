@@ -9,6 +9,8 @@ import {
   type ThongTinNguoiDung,
 } from './api'
 import { clearStoredToken, readStoredToken, storeToken } from './authSession'
+import DanhMucToaNha from './DanhMucToaNha'
+import DanhMucPhong from './DanhMucPhong'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { layMenuTheoVaiTro, xacDinhTrangTheoVaiTro } from './roleNavigation'
 import './styles.css'
@@ -125,6 +127,28 @@ function App() {
   const trangVaiTro = nguoiDung
     ? xacDinhTrangTheoVaiTro(nguoiDung.vaiTro, nguoiDung.tenVaiTro, duongDanHienTai)
     : null
+  const hienThiDanhMucToaNha = Boolean(
+    token
+    && nguoiDung
+    && duongDanHienTai === '/toa-nha'
+    && ['QTHT', 'CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro),
+  )
+  const hienThiDanhMucPhong = Boolean(
+    token
+    && nguoiDung
+    && duongDanHienTai === '/phong'
+    && nguoiDung.vaiTro === 'QUAN_LY',
+  )
+  const tieuDeTheChinh = hienThiDanhMucToaNha
+    ? 'Toà nhà'
+    : hienThiDanhMucPhong
+      ? 'Phòng'
+      : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
+  const maTruyVetTheChinh = hienThiDanhMucToaNha
+    ? 'FR-BLD-01'
+    : hienThiDanhMucPhong
+      ? 'FR-BLD-02'
+      : nguoiDung ? 'FR-AUT-04' : 'FR-AUT-01'
 
   return (
     <main className="page-shell">
@@ -139,8 +163,8 @@ function App() {
       <section className="auth-card" aria-labelledby="auth-title">
         <div className="status-card__heading">
           <div>
-            <p className="eyebrow">{nguoiDung ? 'FR-AUT-04' : 'FR-AUT-01'}</p>
-            <h2 id="auth-title">{nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'}</h2>
+            <p className="eyebrow">{maTruyVetTheChinh}</p>
+            <h2 id="auth-title">{tieuDeTheChinh}</h2>
           </div>
           {nguoiDung ? (
             <button type="button" className="ghost-button" onClick={handleLogout}>
@@ -191,7 +215,11 @@ function App() {
               })}
             </nav>
 
-            {nguoiDung.vaiTro === 'QTHT' && duongDanHienTai === '/tai-khoan' && token ? (
+            {hienThiDanhMucToaNha && token && nguoiDung ? (
+              <DanhMucToaNha token={token} vaiTro={nguoiDung.vaiTro} />
+            ) : hienThiDanhMucPhong && token ? (
+              <DanhMucPhong token={token} />
+            ) : nguoiDung.vaiTro === 'QTHT' && duongDanHienTai === '/tai-khoan' && token ? (
               <QuanLyTaiKhoan token={token} />
             ) : trangVaiTro ? (
               <section

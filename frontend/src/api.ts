@@ -34,6 +34,53 @@ export type ThongTinToaNha = {
   nguongThatThoat: string
 }
 
+export type ThongTinPhong = {
+  id: number | null
+  toaNhaId: number
+  soPhong: string
+  tang: number
+  dienTich: string
+  sucChua: number
+  giaThueMacDinh: string
+  loaiPhong: string
+  trangThai: string
+  tenTrangThai: string
+}
+
+export type YeuCauPhong = {
+  soPhong: string
+  tang: number
+  dienTich: string
+  sucChua: number
+  giaThueMacDinh: string
+  loaiPhong: string
+}
+
+export type YeuCauPhongHangLoat = {
+  soBatDau: string
+  soKetThuc: string
+  tang: number
+  dienTich: string
+  sucChua: number
+  giaThueMacDinh: string
+  loaiPhong: string
+}
+
+export type KetQuaPhongHangLoat = {
+  phong: ThongTinPhong[]
+}
+
+export type YeuCauToaNha = {
+  maToa: string
+  ten: string
+  diaChi: string
+  soTang: number
+  ngayChotSo: number
+  soNgayHanTt: number
+  tkNganHang: string
+  nguongThatThoat: string
+}
+
 export type ThongTinVaiTro = {
   vaiTro: string
   tenVaiTro: string
@@ -125,6 +172,101 @@ export async function fetchToaNha(token: string): Promise<ThongTinToaNha[]> {
   }
 
   return response.json() as Promise<ThongTinToaNha[]>
+}
+
+export async function taoToaNha(token: string, payload: YeuCauToaNha): Promise<ThongTinToaNha> {
+  const response = await fetch('/api/toa-nha', {
+    method: 'POST',
+    headers: jsonAuthorizationHeaders(token),
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tạo toà nhà.')
+  }
+
+  return response.json() as Promise<ThongTinToaNha>
+}
+
+export async function capNhatToaNha(
+  token: string,
+  id: number,
+  payload: YeuCauToaNha,
+): Promise<ThongTinToaNha> {
+  const response = await fetch(`/api/toa-nha/${id}`, {
+    method: 'PUT',
+    headers: jsonAuthorizationHeaders(token),
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể cập nhật toà nhà.')
+  }
+
+  return response.json() as Promise<ThongTinToaNha>
+}
+
+export async function fetchPhong(token: string, toaNhaId: number, tang?: number): Promise<ThongTinPhong[]> {
+  const query = tang === undefined ? '' : `?tang=${tang}`
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/phong${query}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải danh sách phòng.')
+  }
+
+  return response.json() as Promise<ThongTinPhong[]>
+}
+
+export async function taoPhong(token: string, toaNhaId: number, payload: YeuCauPhong): Promise<ThongTinPhong> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/phong`, {
+    method: 'POST',
+    headers: jsonAuthorizationHeaders(token),
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tạo phòng.')
+  }
+
+  return response.json() as Promise<ThongTinPhong>
+}
+
+export async function xemTruocPhongHangLoat(
+  token: string,
+  toaNhaId: number,
+  payload: YeuCauPhongHangLoat,
+): Promise<KetQuaPhongHangLoat> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/phong/hang-loat/xem-truoc`, {
+    method: 'POST',
+    headers: jsonAuthorizationHeaders(token),
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể xem trước dãy phòng.')
+  }
+
+  return response.json() as Promise<KetQuaPhongHangLoat>
+}
+
+export async function taoPhongHangLoat(
+  token: string,
+  toaNhaId: number,
+  payload: YeuCauPhongHangLoat,
+): Promise<KetQuaPhongHangLoat> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/phong/hang-loat`, {
+    method: 'POST',
+    headers: jsonAuthorizationHeaders(token),
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tạo dãy phòng.')
+  }
+
+  return response.json() as Promise<KetQuaPhongHangLoat>
 }
 
 export async function fetchVaiTro(token: string): Promise<ThongTinVaiTro[]> {

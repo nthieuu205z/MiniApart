@@ -50,6 +50,92 @@ public class ToaNhaRepository {
                 .findFirst();
     }
 
+    public boolean existsByMaToa(String maToa) {
+        Integer dem = jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM TOA_NHA
+                        WHERE ma_toa = ?
+                        """,
+                Integer.class,
+                maToa
+        );
+        return dem != null && dem > 0;
+    }
+
+    public boolean existsByMaToaExceptId(String maToa, Long toaNhaId) {
+        Integer dem = jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM TOA_NHA
+                        WHERE ma_toa = ?
+                          AND id <> ?
+                        """,
+                Integer.class,
+                maToa,
+                toaNhaId
+        );
+        return dem != null && dem > 0;
+    }
+
+    public Long insert(ToaNha toaNha) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO TOA_NHA (
+                            ma_toa, ten, dia_chi, so_tang, ngay_chot_so, so_ngay_han_tt, tk_ngan_hang, nguong_that_thoat
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        RETURNING id
+                        """,
+                Long.class,
+                toaNha.maToa(),
+                toaNha.ten(),
+                toaNha.diaChi(),
+                toaNha.soTang(),
+                toaNha.ngayChotSo(),
+                toaNha.soNgayHanTt(),
+                toaNha.tkNganHang(),
+                toaNha.nguongThatThoat()
+        );
+    }
+
+    public void update(ToaNha toaNha) {
+        jdbcTemplate.update(
+                """
+                        UPDATE TOA_NHA
+                        SET ma_toa = ?,
+                            ten = ?,
+                            dia_chi = ?,
+                            so_tang = ?,
+                            ngay_chot_so = ?,
+                            so_ngay_han_tt = ?,
+                            tk_ngan_hang = ?,
+                            nguong_that_thoat = ?
+                        WHERE id = ?
+                        """,
+                toaNha.maToa(),
+                toaNha.ten(),
+                toaNha.diaChi(),
+                toaNha.soTang(),
+                toaNha.ngayChotSo(),
+                toaNha.soNgayHanTt(),
+                toaNha.tkNganHang(),
+                toaNha.nguongThatThoat(),
+                toaNha.id()
+        );
+    }
+
+    public void themPhanQuyenToa(Long nguoiDungId, Long toaNhaId) {
+        jdbcTemplate.update(
+                """
+                        INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id)
+                        VALUES (?, ?)
+                        """,
+                nguoiDungId,
+                toaNhaId
+        );
+    }
+
     public boolean existsPhanQuyenToa(Long nguoiDungId, Long toaNhaId) {
         Integer dem = jdbcTemplate.queryForObject(
                 """

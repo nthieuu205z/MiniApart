@@ -12,15 +12,21 @@ Cơ cấu hiện hành là năm bậc, mỗi bậc là một **tỷ lệ phần 
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Bảng `BANG_GIA_BAC_THANG(id, dich_vu_id, bac, tu_so_luong, den_so_luong, ty_le, don_gia, ngay_hieu_luc)` đúng như CR-003
-- [ ] Cả bộ bậc thang có chung một `ngay_hieu_luc`, và lưu được **nhiều bộ** theo thời gian — FR-BLD-08
-- [ ] Nhập giá bán lẻ bình quân thì `don_gia` từng bậc tự tính từ `ty_le`, làm tròn theo quy tắc ghi rõ trên màn hình
-- [ ] Ràng buộc: các bậc phải **liền nhau không hở, không chồng**. Bậc 1 bắt đầu từ 0, bậc sau bắt đầu đúng chỗ bậc trước kết thúc. Kiểm khi lưu, và có test cho cả hở lẫn chồng
-- [ ] Đúng một bậc có `den_so_luong` rỗng, và đó phải là bậc cuối
-- [ ] Tra bộ bậc thang áp dụng cho một kỳ theo **cùng quy tắc ngày hiệu lực** như ticket 05, không viết lại logic riêng
-- [ ] Chuyển một dịch vụ điện giữa hai chế độ giá mà không mất dữ liệu của chế độ kia
-- [ ] Tên test mang mã `FR-BLD-07` và `FR-BLD-08`
+- [x] Bảng `BANG_GIA_BAC_THANG(id, dich_vu_id, bac, tu_so_luong, den_so_luong, ty_le, don_gia, ngay_hieu_luc)` đúng như CR-003
+- [x] Cả bộ bậc thang có chung một `ngay_hieu_luc`, và lưu được **nhiều bộ** theo thời gian — FR-BLD-08
+- [x] Nhập giá bán lẻ bình quân thì `don_gia` từng bậc tự tính từ `ty_le`, làm tròn theo quy tắc ghi rõ trên màn hình
+- [x] Ràng buộc: các bậc phải **liền nhau không hở, không chồng**. Bậc 1 bắt đầu từ 0, bậc sau bắt đầu đúng chỗ bậc trước kết thúc. Kiểm khi lưu, và có test cho cả hở lẫn chồng
+- [x] Đúng một bậc có `den_so_luong` rỗng, và đó phải là bậc cuối
+- [x] Tra bộ bậc thang áp dụng cho một kỳ theo **cùng quy tắc ngày hiệu lực** như ticket 05, không viết lại logic riêng
+- [x] Chuyển một dịch vụ điện giữa hai chế độ giá mà không mất dữ liệu của chế độ kia
+- [x] Tên test mang mã `FR-BLD-07` và `FR-BLD-08`
 
 **Ghi chú.** Ticket này **chỉ lưu và tra được biểu giá**. Việc thực sự tính tiền theo bậc — cộng dồn qua các bậc, nhân định mức với số hộ quy đổi theo BR-02c — là của Slice 4. Đừng cài đặt phép tính ở đây; nó thuộc `billing/calc` và phải viết kiểm thử trước.
+
+## Comments
+
+- Reused the FR-BLD-06 effective-date seam by centralizing `ngay_hieu_luc <= ? ORDER BY ngay_hieu_luc DESC` selection inside `BangGiaRepository`, then applying it to both `BANG_GIA` and `BANG_GIA_BAC_THANG` without introducing a second "latest row" algorithm.
+- Did not add a Flyway migration. V7 already contains `BANG_GIA_BAC_THANG` with the required columns and precisions, so the implementation stays at the service/repository/API layer.
+- Exposed `cheDoGia` through the existing service catalog request/response seam and preserved both fixed-price rows and tier-set rows when switching an electricity service between `CO_DINH` and `BAC_THANG`.

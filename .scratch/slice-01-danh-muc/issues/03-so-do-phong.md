@@ -6,11 +6,18 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Phòng nhóm theo tầng, trong mỗi tầng sắp theo số phòng
-- [ ] Mỗi ô hiện số phòng, trạng thái bằng chữ, và màu nền theo trạng thái
-- [ ] Đọc được khi in đen trắng — thử bằng cách chuyển ảnh chụp sang thang xám và kiểm tra vẫn phân biệt được
-- [ ] Có ô đếm tổng: bao nhiêu phòng trống, đang thuê, đang sửa
-- [ ] Một toà 20 phòng hiện đủ trong một màn hình trên máy tính, không phải cuộn
-- [ ] Tên test mang mã `FR-BLD-03`
+- [x] Phòng nhóm theo tầng, trong mỗi tầng sắp theo số phòng
+- [x] Mỗi ô hiện số phòng, trạng thái bằng chữ, và màu nền theo trạng thái
+- [ ] Đọc được khi in đen trắng — giao diện hiện tại chỉ là test client; sẽ kiểm tra trên frontend cuối theo `Fontend Design`
+- [x] Có ô đếm tổng: bao nhiêu phòng trống, đang thuê, đang sửa
+- [ ] Một toà 20 phòng hiện đủ trong một màn hình trên máy tính, không phải cuộn — giao diện hiện tại chỉ là test client; sẽ chốt khi tích hợp frontend cuối
+- [x] Tên test mang mã `FR-BLD-03`
+
+## Comments
+
+- Implemented the FR-BLD-03 room map on top of the existing room API: rooms are grouped by floor, sorted by room number, and each tile exposes the status label plus status-specific visual treatment.
+- Added compact totals for Trống, Đang thuê, and Đang sửa; clicking a tile opens the current room details already available from `ThongTinPhong`.
+- The user clarified that the repository frontend is a test client only and that the final UI comes from the separate `Fontend Design` folder. The test client was checked at 1280×720 and its narrow two-column layout is intentionally deferred; no CSS redesign is being added to this backend-focused slice.
+- Verification: frontend `23/23` tests and production build pass; the full backend Gradle suite passes with Java 21. Scoped re-review of the click-driven/scope fix found no Critical or Important breakage.

@@ -13,11 +13,17 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Bảng `DICH_VU` gắn với một toà nhà, có `cach_tinh` là tập giá trị đóng, ép bằng `CHECK` ở tầng cơ sở dữ liệu
-- [ ] Tên giá trị `cach_tinh` khớp với sơ đồ lớp Chương 3, không tự đặt tên mới
-- [ ] Dịch vụ tính theo chỉ số có thêm cờ đánh dấu nó là **điện**, vì chỉ điện mới dùng được biểu giá bậc thang (ticket 06)
-- [ ] Đơn vị tính (kWh, m³, tháng, chiếc) khai báo được và hiện lên hoá đơn sau này
-- [ ] Bật/tắt được một dịch vụ mà **không xoá** nó — dịch vụ đã dùng trên hoá đơn cũ thì xoá đi là rách lịch sử, cùng lý do như cấm xoá tài khoản ở FR-AUT-06
-- [ ] Tên test mang mã `FR-BLD-05`
+- [x] Bảng `DICH_VU` gắn với một toà nhà, có `cach_tinh` là tập giá trị đóng, ép bằng `CHECK` ở tầng cơ sở dữ liệu
+- [x] Tên giá trị `cach_tinh` khớp với sơ đồ lớp Chương 3, không tự đặt tên mới
+- [x] Dịch vụ tính theo chỉ số có thêm cờ đánh dấu nó là **điện**, vì chỉ điện mới dùng được biểu giá bậc thang (ticket 06)
+- [x] Đơn vị tính (kWh, m³, tháng, chiếc) khai báo được và hiện lên hoá đơn sau này
+- [x] Bật/tắt được một dịch vụ mà **không xoá** nó — dịch vụ đã dùng trên hoá đơn cũ thì xoá đi là rách lịch sử, cùng lý do như cấm xoá tài khoản ở FR-AUT-06
+- [x] Tên test mang mã `FR-BLD-05`
+
+## Comments
+
+- Implemented the FR-BLD-05 service catalog API with four closed calculation modes, electric-service validation, unit metadata, and non-destructive enable/disable behavior.
+- Reused `PhanQuyenToaService` for building scope and added explicit 403 coverage for forbidden roles and out-of-scope managers.
+- Verification: full backend suite passed with Java 21 and `--rerun-tasks` (64 tests, 0 failures); task review approved with one deferred Minor about test fixture self-containment.
