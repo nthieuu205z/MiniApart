@@ -73,6 +73,17 @@ BUILD SUCCESSFUL in 1m 25s
 
 The run exercised the full backend test suite, including the new Testcontainers integration tests and existing authorization/architecture tests. `git diff --check` was clean before commit.
 
+Final post-commit fresh execution:
+
+```text
+./gradlew clean test
+```
+
+```text
+BUILD SUCCESSFUL in 1m 52s
+5 actionable tasks: 5 executed
+```
+
 ## Changed files
 
 - `backend/src/main/resources/db/migration/V14__temporal_co_occupants.sql`
