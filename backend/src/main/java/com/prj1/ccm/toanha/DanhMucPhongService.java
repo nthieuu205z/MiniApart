@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,9 +81,9 @@ public class DanhMucPhongService {
     }
 
     @Transactional
-    public void tinhLaiTrangThaiPhong(Long toaNhaId, NguoiDung nguoiDung) {
+    public void tinhLaiTrangThaiPhong(Long toaNhaId, LocalDate ngay, NguoiDung nguoiDung) {
         kiemTraQuyenPhong(nguoiDung, toaNhaId);
-        trangThaiPhongService.dongBoTheoToaNhaId(toaNhaId);
+        trangThaiPhongService.dongBoTheoToaNhaId(toaNhaId, ngay);
     }
 
     private void kiemTraQuyenPhong(NguoiDung nguoiDung, Long toaNhaId) {

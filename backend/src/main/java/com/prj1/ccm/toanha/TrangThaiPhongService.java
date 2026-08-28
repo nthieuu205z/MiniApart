@@ -26,15 +26,15 @@ public class TrangThaiPhongService {
     }
 
     @Transactional
-    public void dongBoTheoToaNhaId(Long toaNhaId) {
-        LocalDate homNay = LocalDate.now(clock);
+    public void dongBoTheoToaNhaId(Long toaNhaId, LocalDate tai) {
+        LocalDate ngayTinh = tai != null ? tai : LocalDate.now(clock);
         for (Phong phong : phongRepository.findByToaNhaIdKemHopDong(toaNhaId)) {
-            capNhatTrangThaiDem(phong, homNay);
+            capNhatTrangThaiDem(phong, ngayTinh);
         }
     }
 
-    private void capNhatTrangThaiDem(Phong phong, LocalDate homNay) {
-        TrangThaiPhong trangThaiMoi = phong.tinhLaiTrangThai(homNay);
+    private void capNhatTrangThaiDem(Phong phong, LocalDate tai) {
+        TrangThaiPhong trangThaiMoi = phong.tinhLaiTrangThai(tai);
         if (phong.trangThaiDem() != trangThaiMoi) {
             phongRepository.updateTrangThaiDem(phong.id(), trangThaiMoi);
         }

@@ -146,6 +146,7 @@ class PhongTrangThaiDemIntegrationTest {
         Long phongDaCocQuaNgayBatDau = themPhong(1L, "714", "DA_COC");
         Long phongDangThue = themPhong(1L, "715", "TRONG");
         Long phongDaThanhLy = themPhong(1L, "716", "DA_COC");
+        Long phongDangSuaKhongHopDong = themPhong(1L, "717", "DANG_SUA");
 
         Long nguoiThueChoKy = themNguoiThue("Người thuê chờ ký", "0900003011", "079123456911");
         Long nguoiThueDaCoc = themNguoiThue("Người thuê đã cọc", "0900003012", "079123456912");
@@ -159,16 +160,22 @@ class PhongTrangThaiDemIntegrationTest {
         themHopDong(phongDangThue, nguoiThueDangThue, "2040-07-01", "2041-06-30", "HIEU_LUC");
         themHopDong(phongDaThanhLy, nguoiThueDaThanhLy, "2040-07-01", "2041-06-30", "DA_THANH_LY");
 
+        assertThat(taiPhongTuDuLieuGoc(phongKhongHopDong).tinhLaiTrangThai(HOM_NAY))
+                .isEqualTo(TrangThaiPhong.NGUNG);
+        assertThat(taiPhongTuDuLieuGoc(phongDangSuaKhongHopDong).tinhLaiTrangThai(HOM_NAY))
+                .isEqualTo(TrangThaiPhong.DANG_SUA);
+
         mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
                         .header("Authorization", "Bearer " + managerToken))
                 .andExpect(status().isNoContent());
 
-        assertThat(trangThaiPhong(phongKhongHopDong)).isEqualTo("TRONG");
+        assertThat(trangThaiPhong(phongKhongHopDong)).isEqualTo("NGUNG");
         assertThat(trangThaiPhong(phongChoKy)).isEqualTo("TRONG");
         assertThat(trangThaiPhong(phongDaCoc)).isEqualTo("DA_COC");
         assertThat(trangThaiPhong(phongDaCocQuaNgayBatDau)).isEqualTo("TRONG");
         assertThat(trangThaiPhong(phongDangThue)).isEqualTo("DANG_THUE");
         assertThat(trangThaiPhong(phongDaThanhLy)).isEqualTo("TRONG");
+        assertThat(trangThaiPhong(phongDangSuaKhongHopDong)).isEqualTo("DANG_SUA");
 
         for (Long phongId : List.of(
                 phongKhongHopDong,
@@ -176,7 +183,8 @@ class PhongTrangThaiDemIntegrationTest {
                 phongDaCoc,
                 phongDaCocQuaNgayBatDau,
                 phongDangThue,
-                phongDaThanhLy
+                phongDaThanhLy,
+                phongDangSuaKhongHopDong
         )) {
             Phong phong = taiPhongTuDuLieuGoc(phongId);
             assertThat(phong.trangThaiDem().name()).isEqualTo(phong.tinhLaiTrangThai(HOM_NAY).name());
@@ -185,13 +193,31 @@ class PhongTrangThaiDemIntegrationTest {
         mockMvc.perform(get("/api/toa-nha/1/phong")
                         .header("Authorization", "Bearer " + managerToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(6)))
-                .andExpect(jsonPath("$[0].trangThai").value("TRONG"))
+                .andExpect(jsonPath("$", hasSize(7)))
+                .andExpect(jsonPath("$[0].trangThai").value("NGUNG"))
                 .andExpect(jsonPath("$[1].trangThai").value("TRONG"))
                 .andExpect(jsonPath("$[2].trangThai").value("DA_COC"))
                 .andExpect(jsonPath("$[3].trangThai").value("TRONG"))
                 .andExpect(jsonPath("$[4].trangThai").value("DANG_THUE"))
-                .andExpect(jsonPath("$[5].trangThai").value("TRONG"));
+                .andExpect(jsonPath("$[5].trangThai").value("TRONG"))
+                .andExpect(jsonPath("$[6].trangThai").value("DANG_SUA"));
+    }
+
+    @Test
+    void FR_BLD_04_CR_012_lenhTinhLaiTrangThaiPhongDungNgayKinhDoanhDuocYeuCau() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "718", "TRONG");
+        Long nguoiThueId = themNguoiThue("Người thuê ngày yêu cầu", "0900003016", "079123456916");
+        themHopDong(phongId, nguoiThueId, "2040-08-20", "2041-08-19", "HIEU_LUC");
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .param("ngay", "2040-08-20")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isNoContent());
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("DANG_THUE");
+        Phong phong = taiPhongTuDuLieuGoc(phongId);
+        assertThat(phong.trangThaiDem()).isEqualTo(phong.tinhLaiTrangThai(LocalDate.of(2040, 8, 20)));
     }
 
     private void assertTrangThaiPhongTrongCoSoDuLieu(Long phongId, String trangThai) {

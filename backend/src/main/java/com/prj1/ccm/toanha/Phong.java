@@ -53,6 +53,9 @@ public record Phong(
             return TrangThaiPhong.DA_COC;
         }
 
-        return TrangThaiPhong.TRONG;
+        return switch (trangThaiDem) {
+            case DANG_SUA, NGUNG -> trangThaiDem;
+            default -> TrangThaiPhong.TRONG;
+        };
     }
 }

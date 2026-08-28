@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -171,14 +173,20 @@ public class ToaNhaController {
 
     /**
      * FR-BLD-04 and CR-012 recompute the system-owned cached room status for one visible building from contract data.
+     * NFR-SEC-03 keeps the repair command restricted to the server-side building authorization check.
      *
      * @param toaNhaId the building identifier
+     * @param ngay the business date for recomputation, or the configured clock date when omitted
      * @param request the current HTTP request carrying the authenticated user attribute
      * @return no content after the repair-style recomputation finishes
      */
     @PostMapping("/{toaNhaId}/phong/tinh-lai-trang-thai")
-    public ResponseEntity<Void> tinhLaiTrangThaiPhong(@PathVariable Long toaNhaId, HttpServletRequest request) {
-        danhMucPhongService.tinhLaiTrangThaiPhong(toaNhaId, nguoiDungHienTai(request));
+    public ResponseEntity<Void> tinhLaiTrangThaiPhong(
+            @PathVariable Long toaNhaId,
+            @RequestParam(name = "ngay", required = false) LocalDate ngay,
+            HttpServletRequest request
+    ) {
+        danhMucPhongService.tinhLaiTrangThaiPhong(toaNhaId, ngay, nguoiDungHienTai(request));
         return ResponseEntity.noContent().build();
     }
 
