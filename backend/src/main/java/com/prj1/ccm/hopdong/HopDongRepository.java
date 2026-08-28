@@ -2,6 +2,8 @@ package com.prj1.ccm.hopdong;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
 import java.sql.ResultSet;
@@ -141,6 +143,34 @@ class HopDongRepository {
         );
     }
 
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    public Optional<HopDongXungDot> findXungDotTheoPhongVaKhoangNgay(Long phongId, LocalDate ngayBatDau, LocalDate ngayKetThuc) {
+        return jdbcTemplate.query(
+                        """
+                                SELECT hd.id, hd.phong_id, p.so_phong, hd.ngay_ket_thuc
+                                FROM HOP_DONG hd
+                                JOIN PHONG p ON p.id = hd.phong_id
+                                WHERE hd.phong_id = ?
+                                  AND hd.trang_thai <> 'DA_THANH_LY'
+                                  AND daterange(hd.ngay_bat_dau, hd.ngay_ket_thuc, '[]')
+                                      && daterange(?, ?, '[]')
+                                ORDER BY hd.ngay_ket_thuc ASC, hd.id ASC
+                                LIMIT 1
+                                """,
+                        (resultSet, rowNum) -> new HopDongXungDot(
+                                resultSet.getLong("id"),
+                                resultSet.getLong("phong_id"),
+                                resultSet.getString("so_phong"),
+                                resultSet.getObject("ngay_ket_thuc", LocalDate.class)
+                        ),
+                        phongId,
+                        Date.valueOf(ngayBatDau),
+                        Date.valueOf(ngayKetThuc)
+                )
+                .stream()
+                .findFirst();
+    }
+
     private HopDong mapHopDong(ResultSet resultSet) throws SQLException {
         return new HopDong(
                 resultSet.getLong("id"),
@@ -180,6 +210,14 @@ class HopDongRepository {
             Long toaNhaId,
             String soPhong,
             String hoTenNguoiThue
+    ) {
+    }
+
+    record HopDongXungDot(
+            Long id,
+            Long phongId,
+            String soPhong,
+            LocalDate ngayKetThuc
     ) {
     }
 }

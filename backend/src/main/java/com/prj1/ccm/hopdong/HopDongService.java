@@ -34,6 +34,7 @@ public class HopDongService {
     private static final String THONG_BAO_KHONG_TIM_THAY_GIA_AP_DUNG = "Không tìm thấy đơn giá áp dụng cho dịch vụ.";
     private static final String THONG_BAO_CHUYEN_TRANG_THAI = "Không thể chuyển trạng thái hợp đồng bằng hành động này.";
     private static final String THONG_BAO_CHUA_TOI_NGAY_BAT_DAU = "Chưa tới ngày bắt đầu nên chưa thể kích hoạt hợp đồng.";
+    private static final String THONG_BAO_HOP_DONG_CHONG_NGAY = "Phòng %s đang có hợp đồng #%d chiếm chỗ đến hết %s.";
 
     private final HopDongRepository hopDongRepository;
     private final PhongRepository phongRepository;
@@ -74,6 +75,22 @@ public class HopDongService {
             );
             return chiTiet(hopDongId, nguoiDung);
         } catch (DataIntegrityViolationException exception) {
+            var hopDongXungDot = hopDongRepository.findXungDotTheoPhongVaKhoangNgay(
+                            hopDongDaChuanHoa.hopDong().phongId(),
+                            hopDongDaChuanHoa.hopDong().ngayBatDau(),
+                            hopDongDaChuanHoa.hopDong().ngayKetThuc()
+                    );
+            if (hopDongXungDot.isPresent()) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        THONG_BAO_HOP_DONG_CHONG_NGAY.formatted(
+                                hopDongXungDot.get().soPhong(),
+                                hopDongXungDot.get().id(),
+                                hopDongXungDot.get().ngayKetThuc()
+                        ),
+                        exception
+                );
+            }
             throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_DICH_VU_KHONG_HOP_LE, exception);
         }
     }

@@ -3,6 +3,9 @@ package com.prj1.ccm.hopdong;
 import com.prj1.ccm.auth.PasswordHasher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -28,7 +31,12 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -344,6 +352,223 @@ class HopDongIntegrationTest {
                 .andExpect(jsonPath("$[1].id").value(hopDongSapHet))
                 .andExpect(jsonPath("$[1].sapHetHan").value(true))
                 .andExpect(jsonPath("$[1].soNgayConLai").value(28));
+    }
+
+    @ParameterizedTest(name = "FR_TNT_05_CR_001_{0}")
+    @MethodSource("cacKhoangNgayChongLenHopDongDangHieuLuc")
+    void FR_TNT_05_CR_001_tuChoiCacKhoangNgayChongLenHopDongDangHieuLuc(
+            String tenTinhHuong,
+            String ngayBatDauMoi,
+            String ngayKetThucMoi
+    ) throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "501");
+        Long nguoiThueHienTai = themNguoiThue("Phạm Ngọc An", "0900001007", "079123456785");
+        Long nguoiThueMoi = themNguoiThue("Phạm Ngọc Bình", "0900001008", "079123456786");
+        Long internetId = themDichVuCoBangGia(1L, "Internet", "250000.00");
+        Long hopDongDangHieuLuc = taoHopDong(
+                managerToken,
+                phongId,
+                nguoiThueHienTai,
+                internetId,
+                "2040-09-10",
+                "2040-09-20"
+        );
+
+        mockMvc.perform(post("/api/hop-dong")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "phongId": %d,
+                                  "nguoiThueId": %d,
+                                  "ngayBatDau": "%s",
+                                  "ngayKetThuc": "%s",
+                                  "giaThue": "3500000.00",
+                                  "tienCoc": "3500000.00",
+                                  "soNgayBaoTruoc": 30,
+                                  "dichVuApDung": [
+                                    { "dichVuId": %d }
+                                  ]
+                                }
+                                """.formatted(phongId, nguoiThueMoi, ngayBatDauMoi, ngayKetThucMoi, internetId)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.thongBao", containsString("hợp đồng #" + hopDongDangHieuLuc)))
+                .andExpect(jsonPath("$.thongBao", containsString("2040-09-20")));
+    }
+
+    @Test
+    void FR_TNT_05_CR_001_choPhepHopDongKeSatNgayKhongChongLenHopDongDangHieuLuc() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "502");
+        Long nguoiThueHienTai = themNguoiThue("Đỗ Minh Anh", "0900001009", "079123456787");
+        Long nguoiThueMoi = themNguoiThue("Đỗ Minh Bình", "0900001010", "079123456788");
+        Long internetId = themDichVuCoBangGia(1L, "Internet", "250000.00");
+
+        taoHopDong(managerToken, phongId, nguoiThueHienTai, internetId, "2040-09-10", "2040-09-20");
+
+        mockMvc.perform(post("/api/hop-dong")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "phongId": %d,
+                                  "nguoiThueId": %d,
+                                  "ngayBatDau": "2040-09-21",
+                                  "ngayKetThuc": "2040-10-05",
+                                  "giaThue": "3500000.00",
+                                  "tienCoc": "3500000.00",
+                                  "soNgayBaoTruoc": 30,
+                                  "dichVuApDung": [
+                                    { "dichVuId": %d }
+                                  ]
+                                }
+                                """.formatted(phongId, nguoiThueMoi, internetId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.phongId").value(phongId))
+                .andExpect(jsonPath("$.ngayBatDau").value("2040-09-21"))
+                .andExpect(jsonPath("$.ngayKetThuc").value("2040-10-05"));
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM HOP_DONG WHERE phong_id = ?",
+                Integer.class,
+                phongId
+        )).isEqualTo(2);
+    }
+
+    @Test
+    void FR_TNT_05_CR_001_choPhepHopDongMoiKhiHopDongCuDaThanhLy() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "503");
+        Long nguoiThueCu = themNguoiThue("Lý Quang Huy", "0900001011", "079123456789");
+        Long nguoiThueMoi = themNguoiThue("Lý Quang Hân", "0900001012", "079123456790");
+        Long internetId = themDichVuCoBangGia(1L, "Internet", "250000.00");
+
+        Long hopDongCu = taoHopDong(managerToken, phongId, nguoiThueCu, internetId, "2040-07-01", "2040-09-30");
+
+        mockMvc.perform(post("/api/hop-dong/" + hopDongCu + "/nhan-coc")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/hop-dong/" + hopDongCu + "/kich-hoat")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/hop-dong/" + hopDongCu + "/thanh-ly")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/hop-dong")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "phongId": %d,
+                                  "nguoiThueId": %d,
+                                  "ngayBatDau": "2040-08-15",
+                                  "ngayKetThuc": "2040-10-15",
+                                  "giaThue": "3500000.00",
+                                  "tienCoc": "3500000.00",
+                                  "soNgayBaoTruoc": 30,
+                                  "dichVuApDung": [
+                                    { "dichVuId": %d }
+                                  ]
+                                }
+                                """.formatted(phongId, nguoiThueMoi, internetId)))
+                .andExpect(status().isCreated());
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM HOP_DONG WHERE phong_id = ?",
+                Integer.class,
+                phongId
+        )).isEqualTo(2);
+    }
+
+    @Test
+    void FR_TNT_05_CR_001_haiNguoiCungLucChiChoMotNguoiThanhCong() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "504");
+        Long nguoiThueA = themNguoiThue("Trịnh Minh A", "0900001013", "079123456791");
+        Long nguoiThueB = themNguoiThue("Trịnh Minh B", "0900001014", "079123456792");
+        Long internetId = themDichVuCoBangGia(1L, "Internet", "250000.00");
+
+        CountDownLatch sanSang = new CountDownLatch(2);
+        CountDownLatch batDau = new CountDownLatch(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+
+        try {
+            Future<Integer> ketQuaA = executorService.submit(() -> guiYeuCauTaoHopDongDongThoi(
+                    managerToken,
+                    phongId,
+                    nguoiThueA,
+                    internetId,
+                    "2040-09-10",
+                    "2040-09-20",
+                    sanSang,
+                    batDau
+            ));
+            Future<Integer> ketQuaB = executorService.submit(() -> guiYeuCauTaoHopDongDongThoi(
+                    managerToken,
+                    phongId,
+                    nguoiThueB,
+                    internetId,
+                    "2040-09-12",
+                    "2040-09-22",
+                    sanSang,
+                    batDau
+            ));
+
+            sanSang.await();
+            batDau.countDown();
+
+            Integer trangThaiA = ketQuaA.get();
+            Integer trangThaiB = ketQuaB.get();
+
+            assertThat(List.of(trangThaiA, trangThaiB)).containsExactlyInAnyOrder(201, 409);
+        } finally {
+            executorService.shutdownNow();
+        }
+    }
+
+    static Stream<Arguments> cacKhoangNgayChongLenHopDongDangHieuLuc() {
+        return Stream.of(
+                Arguments.of("chongDau", "2040-09-01", "2040-09-12"),
+                Arguments.of("chongCuoi", "2040-09-18", "2040-09-30"),
+                Arguments.of("baoTron", "2040-09-01", "2040-09-30"),
+                Arguments.of("namGonBenTrong", "2040-09-12", "2040-09-18")
+        );
+    }
+
+    private Integer guiYeuCauTaoHopDongDongThoi(
+            String token,
+            Long phongId,
+            Long nguoiThueId,
+            Long dichVuId,
+            String ngayBatDau,
+            String ngayKetThuc,
+            CountDownLatch sanSang,
+            CountDownLatch batDau
+    ) throws Exception {
+        sanSang.countDown();
+        batDau.await();
+        return mockMvc.perform(post("/api/hop-dong")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "phongId": %d,
+                                  "nguoiThueId": %d,
+                                  "ngayBatDau": "%s",
+                                  "ngayKetThuc": "%s",
+                                  "giaThue": "3500000.00",
+                                  "tienCoc": "3500000.00",
+                                  "soNgayBaoTruoc": 30,
+                                  "dichVuApDung": [
+                                    { "dichVuId": %d }
+                                  ]
+                                }
+                                """.formatted(phongId, nguoiThueId, ngayBatDau, ngayKetThuc, dichVuId)))
+                .andReturn()
+                .getResponse()
+                .getStatus();
     }
 
     private Long taoHopDong(String token, Long phongId, Long nguoiThueId, Long dichVuId, String ngayBatDau, String ngayKetThuc)
