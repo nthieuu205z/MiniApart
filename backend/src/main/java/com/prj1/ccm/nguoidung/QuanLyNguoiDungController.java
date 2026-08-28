@@ -65,7 +65,7 @@ public class QuanLyNguoiDungController {
     }
 
     /**
-     * FR-AUT-06 creates a new account without accepting a creator-known raw password.
+     * FR-AUT-06, CR-001 creates a new account without accepting a creator-known raw password.
      *
      * @param yeuCau the submitted account data
      * @param request the current HTTP request carrying the authenticated user attribute
@@ -81,7 +81,7 @@ public class QuanLyNguoiDungController {
     }
 
     /**
-     * FR-AUT-06 updates an existing account's profile and building assignments.
+     * FR-AUT-06, CR-001 updates an existing account's profile and building assignments.
      *
      * @param nguoiDungId the account identifier
      * @param yeuCau the submitted account data
@@ -118,7 +118,7 @@ public class QuanLyNguoiDungController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Yêu cầu không hợp lệ");
         }
 
-        Set<String> khoaHopLe = Set.of("hoTen", "soDienThoai", "vaiTro", "toaNhaIds");
+        Set<String> khoaHopLe = Set.of("hoTen", "soDienThoai", "vaiTro", "nguoiThueId", "toaNhaIds");
         List<String> khoaLa = new ArrayList<>();
         yeuCau.propertyNames().forEach(khoa -> {
             if (!khoaHopLe.contains(khoa)) {
@@ -140,6 +140,15 @@ public class QuanLyNguoiDungController {
         }
 
         List<Long> toaNhaIds = new ArrayList<>();
+        Long nguoiThueId = null;
+        JsonNode nguoiThueIdNode = yeuCau.get("nguoiThueId");
+        if (nguoiThueIdNode != null && !nguoiThueIdNode.isNull()) {
+            if (!nguoiThueIdNode.isIntegralNumber()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Yêu cầu không hợp lệ");
+            }
+            nguoiThueId = nguoiThueIdNode.longValue();
+        }
+
         JsonNode toaNhaIdsNode = yeuCau.get("toaNhaIds");
         if (toaNhaIdsNode != null && !toaNhaIdsNode.isNull()) {
             if (!toaNhaIdsNode.isArray()) {
@@ -153,7 +162,7 @@ public class QuanLyNguoiDungController {
             }
         }
 
-        return new YeuCauQuanLyNguoiDung(hoTen, soDienThoai, vaiTro, toaNhaIds);
+        return new YeuCauQuanLyNguoiDung(hoTen, soDienThoai, vaiTro, nguoiThueId, toaNhaIds);
     }
 
     private String layTextBatBuoc(JsonNode yeuCau, String tenTruong) {

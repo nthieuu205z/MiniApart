@@ -24,19 +24,12 @@ public class NguoiDungRepository {
     public Optional<NguoiDung> findBySoDienThoai(String soDienThoai) {
         return jdbcTemplate.query(
                         """
-                                SELECT id, ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai, phien_ban_token
+                                SELECT id, ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai,
+                                       phien_ban_token, nguoi_thue_id
                                 FROM NGUOI_DUNG
                                 WHERE so_dien_thoai = ?
                                 """,
-                        (resultSet, rowNum) -> new NguoiDung(
-                                resultSet.getLong("id"),
-                                resultSet.getString("ho_ten"),
-                                resultSet.getString("so_dien_thoai"),
-                                resultSet.getString("mat_khau_hash"),
-                                VaiTro.valueOf(resultSet.getString("vai_tro")),
-                                TrangThaiNguoiDung.valueOf(resultSet.getString("trang_thai")),
-                                resultSet.getInt("phien_ban_token")
-                        ),
+                        (resultSet, rowNum) -> toNguoiDung(resultSet),
                         soDienThoai
                 )
                 .stream()
@@ -46,19 +39,12 @@ public class NguoiDungRepository {
     public Optional<NguoiDung> findById(Long id) {
         return jdbcTemplate.query(
                         """
-                                SELECT id, ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai, phien_ban_token
+                                SELECT id, ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai,
+                                       phien_ban_token, nguoi_thue_id
                                 FROM NGUOI_DUNG
                                 WHERE id = ?
                                 """,
-                        (resultSet, rowNum) -> new NguoiDung(
-                                resultSet.getLong("id"),
-                                resultSet.getString("ho_ten"),
-                                resultSet.getString("so_dien_thoai"),
-                                resultSet.getString("mat_khau_hash"),
-                                VaiTro.valueOf(resultSet.getString("vai_tro")),
-                                TrangThaiNguoiDung.valueOf(resultSet.getString("trang_thai")),
-                                resultSet.getInt("phien_ban_token")
-                        ),
+                        (resultSet, rowNum) -> toNguoiDung(resultSet),
                         id
                 )
                 .stream()
@@ -68,19 +54,12 @@ public class NguoiDungRepository {
     public List<NguoiDung> findAll() {
         return jdbcTemplate.query(
                 """
-                        SELECT id, ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai, phien_ban_token
+                        SELECT id, ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai,
+                               phien_ban_token, nguoi_thue_id
                         FROM NGUOI_DUNG
                         ORDER BY id
                         """,
-                (resultSet, rowNum) -> new NguoiDung(
-                        resultSet.getLong("id"),
-                        resultSet.getString("ho_ten"),
-                        resultSet.getString("so_dien_thoai"),
-                        resultSet.getString("mat_khau_hash"),
-                        VaiTro.valueOf(resultSet.getString("vai_tro")),
-                        TrangThaiNguoiDung.valueOf(resultSet.getString("trang_thai")),
-                        resultSet.getInt("phien_ban_token")
-                )
+                (resultSet, rowNum) -> toNguoiDung(resultSet)
         );
     }
 
@@ -116,15 +95,16 @@ public class NguoiDungRepository {
                 """
                         INSERT INTO NGUOI_DUNG(
                             ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai,
-                            phien_ban_token, so_lan_sai, lan_sai_dau_tien, khoa_den
-                        ) VALUES (?, ?, ?, ?, ?, ?, 0, NULL, NULL)
+                            phien_ban_token, so_lan_sai, lan_sai_dau_tien, khoa_den, nguoi_thue_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, 0, NULL, NULL, ?)
                         """,
                 nguoiDung.hoTen(),
                 nguoiDung.soDienThoai(),
                 nguoiDung.matKhauHash(),
                 nguoiDung.vaiTro().name(),
                 nguoiDung.trangThai().name(),
-                nguoiDung.phienBanToken()
+                nguoiDung.phienBanToken(),
+                nguoiDung.nguoiThueId()
         );
 
         return jdbcTemplate.queryForObject(
@@ -134,18 +114,54 @@ public class NguoiDungRepository {
         );
     }
 
-    public void capNhatThongTinNguoiDung(Long nguoiDungId, String hoTen, String soDienThoai, VaiTro vaiTro) {
+    public void capNhatThongTinNguoiDung(Long nguoiDungId, String hoTen, String soDienThoai, VaiTro vaiTro, Long nguoiThueId) {
         jdbcTemplate.update(
                 """
                         UPDATE NGUOI_DUNG
-                        SET ho_ten = ?, so_dien_thoai = ?, vai_tro = ?
+                        SET ho_ten = ?, so_dien_thoai = ?, vai_tro = ?, nguoi_thue_id = ?
                         WHERE id = ?
                         """,
                 hoTen,
                 soDienThoai,
                 vaiTro.name(),
+                nguoiThueId,
                 nguoiDungId
         );
+    }
+
+    public boolean existsNguoiThueById(Long nguoiThueId) {
+        Integer soLuong = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM NGUOI_THUE WHERE id = ?",
+                Integer.class,
+                nguoiThueId
+        );
+        return soLuong != null && soLuong > 0;
+    }
+
+    public boolean existsNguoiDungByNguoiThueIdExceptId(Long nguoiThueId, Long nguoiDungId) {
+        if (nguoiDungId == null) {
+            Integer soLuong = jdbcTemplate.queryForObject(
+                    """
+                            SELECT COUNT(*)
+                            FROM NGUOI_DUNG
+                            WHERE nguoi_thue_id = ?
+                            """,
+                    Integer.class,
+                    nguoiThueId
+            );
+            return soLuong != null && soLuong > 0;
+        }
+        Integer soLuong = jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM NGUOI_DUNG
+                        WHERE nguoi_thue_id = ? AND id <> ?
+                        """,
+                Integer.class,
+                nguoiThueId,
+                nguoiDungId
+        );
+        return soLuong != null && soLuong > 0;
     }
 
     public void capNhatSoDienThoaiDangNhap(String soDienThoaiCu, String soDienThoaiMoi) {
@@ -313,7 +329,7 @@ public class NguoiDungRepository {
         return jdbcTemplate.query(
                         """
                                 SELECT id, ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai, phien_ban_token,
-                                       so_lan_sai, lan_sai_dau_tien, khoa_den
+                                       nguoi_thue_id, so_lan_sai, lan_sai_dau_tien, khoa_den
                                 FROM NGUOI_DUNG
                                 WHERE so_dien_thoai = ?
                                 FOR UPDATE
@@ -326,6 +342,7 @@ public class NguoiDungRepository {
                                 VaiTro.valueOf(resultSet.getString("vai_tro")),
                                 TrangThaiNguoiDung.valueOf(resultSet.getString("trang_thai")),
                                 resultSet.getInt("phien_ban_token"),
+                                resultSet.getObject("nguoi_thue_id", Long.class),
                                 resultSet.getInt("so_lan_sai"),
                                 toInstant(resultSet.getTimestamp("lan_sai_dau_tien")),
                                 toInstant(resultSet.getTimestamp("khoa_den"))
@@ -340,7 +357,7 @@ public class NguoiDungRepository {
         return jdbcTemplate.query(
                         """
                                 SELECT id, ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai, phien_ban_token,
-                                       so_lan_sai, lan_sai_dau_tien, khoa_den
+                                       nguoi_thue_id, so_lan_sai, lan_sai_dau_tien, khoa_den
                                 FROM NGUOI_DUNG
                                 WHERE id = ?
                                 """,
@@ -352,6 +369,7 @@ public class NguoiDungRepository {
                                 VaiTro.valueOf(resultSet.getString("vai_tro")),
                                 TrangThaiNguoiDung.valueOf(resultSet.getString("trang_thai")),
                                 resultSet.getInt("phien_ban_token"),
+                                resultSet.getObject("nguoi_thue_id", Long.class),
                                 resultSet.getInt("so_lan_sai"),
                                 toInstant(resultSet.getTimestamp("lan_sai_dau_tien")),
                                 toInstant(resultSet.getTimestamp("khoa_den"))
@@ -491,6 +509,20 @@ public class NguoiDungRepository {
 
     private Instant toInstant(Timestamp timestamp) {
         return timestamp == null ? null : timestamp.toInstant();
+    }
+
+    private NguoiDung toNguoiDung(java.sql.ResultSet resultSet) throws java.sql.SQLException {
+        Long nguoiThueId = resultSet.getObject("nguoi_thue_id", Long.class);
+        return new NguoiDung(
+                resultSet.getLong("id"),
+                resultSet.getString("ho_ten"),
+                resultSet.getString("so_dien_thoai"),
+                resultSet.getString("mat_khau_hash"),
+                VaiTro.valueOf(resultSet.getString("vai_tro")),
+                TrangThaiNguoiDung.valueOf(resultSet.getString("trang_thai")),
+                resultSet.getInt("phien_ban_token"),
+                nguoiThueId
+        );
     }
 
     private Timestamp toTimestamp(Instant instant) {

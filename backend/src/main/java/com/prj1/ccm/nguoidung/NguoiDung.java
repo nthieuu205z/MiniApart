@@ -7,7 +7,8 @@ public record NguoiDung(
         String matKhauHash,
         VaiTro vaiTro,
         TrangThaiNguoiDung trangThai,
-        int phienBanToken
+        int phienBanToken,
+        Long nguoiThueId
 ) {
     public boolean hoatDong() {
         return trangThai == TrangThaiNguoiDung.HOAT_DONG;

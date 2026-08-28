@@ -6,10 +6,14 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Migration thêm `nguoi_thue_id` vào `NGUOI_DUNG`: khoá ngoại, **cho phép rỗng**, và **duy nhất**
-- [ ] Cho phép rỗng vì tài khoản của Chủ sở hữu, Quản lý, Thợ, Quản trị hệ thống không gắn với hồ sơ người thuê nào
-- [ ] Duy nhất để một hồ sơ người thuê không bị hai tài khoản cùng nhận là mình
-- [ ] Quy tắc ở tầng ứng dụng: vai trò là `NGUOI_THUE` thì `nguoi_thue_id` **bắt buộc** phải có giá trị. Có test cho việc tạo tài khoản người thuê mà bỏ trống thì bị từ chối
-- [ ] Tên test mang mã `CR-001`
+- [x] Migration thêm `nguoi_thue_id` vào `NGUOI_DUNG`: khoá ngoại, **cho phép rỗng**, và **duy nhất**
+- [x] Cho phép rỗng vì tài khoản của Chủ sở hữu, Quản lý, Thợ, Quản trị hệ thống không gắn với hồ sơ người thuê nào
+- [x] Duy nhất để một hồ sơ người thuê không bị hai tài khoản cùng nhận là mình
+- [x] Quy tắc ở tầng ứng dụng: vai trò là `NGUOI_THUE` thì `nguoi_thue_id` **bắt buộc** phải có giá trị. Có test cho việc tạo tài khoản người thuê mà bỏ trống thì bị từ chối
+- [x] Tên test mang mã `CR-001`
+
+## Agent comment
+
+Task 3 implemented in `codex/slice-02-nguoi-thue-hop-dong` with TDD. Added Flyway `V11__link_account_to_tenant.sql`, account-management request/response support for `nguoiThueId`, application-boundary validation for `NGUOI_THUE`, duplicate/nonexistent tenant client errors, and auth-side propagation of the linked tenant id for future tenant portal flows. Red check: `./gradlew test --tests '*CR_001*'` failed before production changes with missing `nguoi_thue_id`/unsupported payload behavior. Final verification: `./gradlew test` passed.

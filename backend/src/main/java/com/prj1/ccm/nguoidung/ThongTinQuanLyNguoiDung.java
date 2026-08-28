@@ -10,6 +10,7 @@ public record ThongTinQuanLyNguoiDung(
         String tenVaiTro,
         String trangThai,
         String tenTrangThai,
+        Long nguoiThueId,
         List<Long> toaNhaIds
 ) {
     public static ThongTinQuanLyNguoiDung tuNguoiDung(NguoiDung nguoiDung, List<Long> toaNhaIds) {
@@ -21,6 +22,7 @@ public record ThongTinQuanLyNguoiDung(
                 nguoiDung.vaiTro().tenHienThi(),
                 nguoiDung.trangThai().name(),
                 nguoiDung.trangThai().tenHienThi(),
+                nguoiDung.nguoiThueId(),
                 toaNhaIds
         );
     }
