@@ -88,26 +88,8 @@ public class HopDongService {
             trangThaiPhongService.dongBoTheoPhongId(hopDongDaChuanHoa.hopDong().phongId());
             return chiTiet(hopDongId, nguoiDung);
         } catch (DataIntegrityViolationException exception) {
-            if (!laRangBuocChongNgay(exception)) {
-                throw exception;
-            }
-            var hopDongXungDot = hopDongRepository.findXungDotTheoPhongVaKhoangNgay(
-                            hopDongDaChuanHoa.hopDong().phongId(),
-                            hopDongDaChuanHoa.hopDong().ngayBatDau(),
-                            hopDongDaChuanHoa.hopDong().ngayKetThuc()
-                    );
-            if (hopDongXungDot.isPresent()) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        THONG_BAO_HOP_DONG_CHONG_NGAY.formatted(
-                                hopDongXungDot.get().soPhong(),
-                                hopDongXungDot.get().id(),
-                                hopDongXungDot.get().ngayKetThuc()
-                        ),
-                        exception
-                );
-            }
-            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_DICH_VU_KHONG_HOP_LE, exception);
+            chuyenDoiNgoaiLeChongNgay(hopDongDaChuanHoa.hopDong(), exception);
+            throw exception;
         }
     }
 
@@ -188,7 +170,13 @@ public class HopDongService {
                 hopDongCu.soNgayBaoTruoc(),
                 tienCocCanThu.signum() == 0 ? TrangThaiHopDong.DA_COC : TrangThaiHopDong.CHO_KY
         );
-        Long hopDongMoiId = hopDongRepository.insert(hopDongMoi);
+        Long hopDongMoiId;
+        try {
+            hopDongMoiId = hopDongRepository.insert(hopDongMoi);
+        } catch (DataIntegrityViolationException exception) {
+            chuyenDoiNgoaiLeChongNgay(hopDongMoi, exception);
+            throw exception;
+        }
         hopDongRepository.insertDichVuApDung(hopDongRepository.findDichVuApDungDeGiaHan(hopDongId).stream()
                 .map(item -> new HopDongDichVu(hopDongMoiId, item.dichVuId(), item.donGiaApDung()))
                 .toList());
@@ -351,6 +339,29 @@ public class HopDongService {
             return false;
         }
         return TEN_RANG_BUOC_CHONG_NGAY.equals(layTenRangBuoc(sqlException));
+    }
+
+    private void chuyenDoiNgoaiLeChongNgay(HopDong hopDong, DataIntegrityViolationException exception) {
+        if (!laRangBuocChongNgay(exception)) {
+            return;
+        }
+        var hopDongXungDot = hopDongRepository.findXungDotTheoPhongVaKhoangNgay(
+                hopDong.phongId(),
+                hopDong.ngayBatDau(),
+                hopDong.ngayKetThuc()
+        );
+        if (hopDongXungDot.isPresent()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    THONG_BAO_HOP_DONG_CHONG_NGAY.formatted(
+                            hopDongXungDot.get().soPhong(),
+                            hopDongXungDot.get().id(),
+                            hopDongXungDot.get().ngayKetThuc()
+                    ),
+                    exception
+            );
+        }
+        throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_DICH_VU_KHONG_HOP_LE, exception);
     }
 
     private String layTenRangBuoc(SQLException sqlException) {

@@ -165,6 +165,30 @@ class GiaHanHopDongIntegrationTest {
     }
 
     @Test
+    void FR_TNT_07_giaHanLanHaiTraVe409VaChiTaoMotHopDongKeTiep() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "804");
+        Long nguoiThueId = themNguoiThue("Người thuê gửi lại", "0900008401", "079123456841");
+        Long hopDongCuId = themHopDong(phongId, nguoiThueId, "2040-01-01", "2040-09-01", "3500000.00", "3500000.00", "HIEU_LUC");
+        String yeuCauGiaHan = "{\"ngayKetThuc\":\"2041-09-01\"}";
+
+        mockMvc.perform(post("/api/hop-dong/" + hopDongCuId + "/gia-han")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(yeuCauGiaHan))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/hop-dong/" + hopDongCuId + "/gia-han")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(yeuCauGiaHan))
+                .andExpect(status().isConflict());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM HOP_DONG WHERE phong_id = ?", Integer.class, phongId))
+                .isEqualTo(2);
+    }
+
+    @Test
     void FR_TNT_07_thoNhan403KhiGiaHanHopDong() throws Exception {
         Long phongId = themPhong(1L, "803");
         Long nguoiThueId = themNguoiThue("Người thuê cấm quyền", "0900008301", "079123456831");
