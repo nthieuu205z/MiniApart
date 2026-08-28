@@ -20,13 +20,19 @@ import java.util.List;
 public class ToaNhaController {
     private final PhanQuyenToaService phanQuyenToaService;
     private final DanhMucToaNhaService danhMucToaNhaService;
+    private final DanhMucPhongService danhMucPhongService;
+    private final DanhMucDichVuService danhMucDichVuService;
 
     public ToaNhaController(
             PhanQuyenToaService phanQuyenToaService,
-            DanhMucToaNhaService danhMucToaNhaService
+            DanhMucToaNhaService danhMucToaNhaService,
+            DanhMucPhongService danhMucPhongService,
+            DanhMucDichVuService danhMucDichVuService
     ) {
         this.phanQuyenToaService = phanQuyenToaService;
         this.danhMucToaNhaService = danhMucToaNhaService;
+        this.danhMucPhongService = danhMucPhongService;
+        this.danhMucDichVuService = danhMucDichVuService;
     }
 
     /**
@@ -91,6 +97,144 @@ public class ToaNhaController {
             HttpServletRequest request
     ) {
         return danhMucToaNhaService.capNhat(toaNhaId, yeuCau, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-BLD-02 lists rooms in one visible building and optionally filters them by floor.
+     *
+     * @param toaNhaId the building identifier
+     * @param tang the optional floor filter
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the room list inside the selected building
+     */
+    @GetMapping("/{toaNhaId}/phong")
+    public List<ThongTinPhong> danhSachPhong(
+            @PathVariable Long toaNhaId,
+            Integer tang,
+            HttpServletRequest request
+    ) {
+        return danhMucPhongService.danhSachPhong(toaNhaId, tang, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-BLD-02 creates a single room inside one visible building with system-owned initial TRONG status.
+     *
+     * @param toaNhaId the building identifier
+     * @param yeuCau the submitted room data without client-owned status
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the newly created room
+     */
+    @PostMapping("/{toaNhaId}/phong")
+    public ResponseEntity<ThongTinPhong> taoPhong(
+            @PathVariable Long toaNhaId,
+            @RequestBody YeuCauPhong yeuCau,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(danhMucPhongService.taoPhong(toaNhaId, yeuCau, nguoiDungHienTai(request)));
+    }
+
+    /**
+     * FR-BLD-02 previews a consecutive room range before any persistence.
+     *
+     * @param toaNhaId the building identifier
+     * @param yeuCau the submitted room-range template
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the non-persistent preview list
+     */
+    @PostMapping("/{toaNhaId}/phong/hang-loat/xem-truoc")
+    public KetQuaPhongHangLoat xemTruocPhongHangLoat(
+            @PathVariable Long toaNhaId,
+            @RequestBody YeuCauPhongHangLoat yeuCau,
+            HttpServletRequest request
+    ) {
+        return danhMucPhongService.xemTruocPhongHangLoat(toaNhaId, yeuCau, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-BLD-02 confirms and creates a previously previewed consecutive room range.
+     *
+     * @param toaNhaId the building identifier
+     * @param yeuCau the submitted room-range template
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the created room list
+     */
+    @PostMapping("/{toaNhaId}/phong/hang-loat")
+    public ResponseEntity<KetQuaPhongHangLoat> taoPhongHangLoat(
+            @PathVariable Long toaNhaId,
+            @RequestBody YeuCauPhongHangLoat yeuCau,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(danhMucPhongService.taoPhongHangLoat(toaNhaId, yeuCau, nguoiDungHienTai(request)));
+    }
+
+    /**
+     * FR-BLD-05 lists services for one visible building with their calculation mode, unit, and active state.
+     *
+     * @param toaNhaId the building identifier
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the service catalog inside the selected building
+     */
+    @GetMapping("/{toaNhaId}/dich-vu")
+    public List<ThongTinDichVu> danhSachDichVu(@PathVariable Long toaNhaId, HttpServletRequest request) {
+        return danhMucDichVuService.danhSachDichVu(toaNhaId, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-BLD-05 creates one service inside a visible building with one of the four approved calculation modes.
+     *
+     * @param toaNhaId the building identifier
+     * @param yeuCau the submitted service data
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the newly created service
+     */
+    @PostMapping("/{toaNhaId}/dich-vu")
+    public ResponseEntity<ThongTinDichVu> taoDichVu(
+            @PathVariable Long toaNhaId,
+            @RequestBody YeuCauDichVu yeuCau,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(danhMucDichVuService.taoDichVu(toaNhaId, yeuCau, nguoiDungHienTai(request)));
+    }
+
+    /**
+     * FR-BLD-05 updates the catalog fields of an existing service without deleting historical usage.
+     *
+     * @param toaNhaId the building identifier
+     * @param dichVuId the service identifier
+     * @param yeuCau the submitted service data
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the updated service
+     */
+    @PutMapping("/{toaNhaId}/dich-vu/{dichVuId}")
+    public ThongTinDichVu capNhatDichVu(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long dichVuId,
+            @RequestBody YeuCauDichVu yeuCau,
+            HttpServletRequest request
+    ) {
+        return danhMucDichVuService.capNhatDichVu(toaNhaId, dichVuId, yeuCau, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-BLD-05 enables or disables one service without deleting it from historical billing data.
+     *
+     * @param toaNhaId the building identifier
+     * @param dichVuId the service identifier
+     * @param yeuCau the requested active-state change
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the service after the active-state update
+     */
+    @PutMapping("/{toaNhaId}/dich-vu/{dichVuId}/trang-thai")
+    public ThongTinDichVu capNhatTrangThaiDichVu(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long dichVuId,
+            @RequestBody YeuCauTrangThaiDichVu yeuCau,
+            HttpServletRequest request
+    ) {
+        return danhMucDichVuService.capNhatTrangThai(toaNhaId, dichVuId, yeuCau, nguoiDungHienTai(request));
     }
 
     private NguoiDung nguoiDungHienTai(HttpServletRequest request) {
