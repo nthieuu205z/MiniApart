@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-class NguoiThueRepository {
+public class NguoiThueRepository {
     private final JdbcTemplate jdbcTemplate;
 
-    NguoiThueRepository(JdbcTemplate jdbcTemplate) {
+    public NguoiThueRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
