@@ -157,7 +157,7 @@ Command:
 Output:
 
 ```text
-BUILD SUCCESSFUL in 13s
+BUILD SUCCESSFUL in 9s
 4 actionable tasks: 2 executed, 2 up-to-date
 ```
 
