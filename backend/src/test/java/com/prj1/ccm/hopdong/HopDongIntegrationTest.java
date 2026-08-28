@@ -221,6 +221,46 @@ class HopDongIntegrationTest {
     }
 
     @Test
+    void FR_TNT_04_CR_005_taoHopDongHopLeVoiDanhSachDichVuApDungRong() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "306A");
+        Long nguoiThueId = themNguoiThue("Phạm Thu Trang", "0900001006", "079123456784");
+
+        mockMvc.perform(post("/api/hop-dong")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "phongId": %d,
+                                  "nguoiThueId": %d,
+                                  "ngayBatDau": "2040-09-15",
+                                  "ngayKetThuc": "2041-09-14",
+                                  "giaThue": "3200000.00",
+                                  "tienCoc": "3200000.00",
+                                  "soNgayBaoTruoc": 15,
+                                  "dichVuApDung": []
+                                }
+                                """.formatted(phongId, nguoiThueId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.phongId").value(phongId))
+                .andExpect(jsonPath("$.nguoiThueId").value(nguoiThueId))
+                .andExpect(jsonPath("$.trangThai").value("CHO_KY"))
+                .andExpect(jsonPath("$.dichVuApDung", hasSize(0)));
+
+        Long hopDongId = jdbcTemplate.queryForObject(
+                "SELECT id FROM HOP_DONG WHERE phong_id = ?",
+                Long.class,
+                phongId
+        );
+        assertThat(hopDongId).isNotNull();
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM HOP_DONG_DICH_VU WHERE hop_dong_id = ?",
+                Integer.class,
+                hopDongId
+        )).isEqualTo(0);
+    }
+
+    @Test
     void FR_TNT_04_CR_005_chuyenTrangThaiHopDongBangHanhDongThayViChoSuaTay() throws Exception {
         String managerToken = login(3L, "0900000003");
         Long phongId = themPhong(1L, "307");

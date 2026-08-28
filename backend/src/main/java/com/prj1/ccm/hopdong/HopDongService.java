@@ -157,8 +157,7 @@ public class HopDongService {
                 || yeuCau.giaThue() == null
                 || yeuCau.tienCoc() == null
                 || yeuCau.soNgayBaoTruoc() == null
-                || yeuCau.dichVuApDung() == null
-                || yeuCau.dichVuApDung().isEmpty()) {
+                || yeuCau.dichVuApDung() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_KHONG_HOP_LE);
         }
         if (!yeuCau.ngayKetThuc().isAfter(yeuCau.ngayBatDau())) {
