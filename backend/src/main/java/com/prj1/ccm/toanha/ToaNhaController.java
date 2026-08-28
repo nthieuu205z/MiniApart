@@ -170,6 +170,19 @@ public class ToaNhaController {
     }
 
     /**
+     * FR-BLD-04 and CR-012 recompute the system-owned cached room status for one visible building from contract data.
+     *
+     * @param toaNhaId the building identifier
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return no content after the repair-style recomputation finishes
+     */
+    @PostMapping("/{toaNhaId}/phong/tinh-lai-trang-thai")
+    public ResponseEntity<Void> tinhLaiTrangThaiPhong(@PathVariable Long toaNhaId, HttpServletRequest request) {
+        danhMucPhongService.tinhLaiTrangThaiPhong(toaNhaId, nguoiDungHienTai(request));
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * FR-BLD-05 lists services for one visible building with their calculation mode, unit, and active state.
      *
      * @param toaNhaId the building identifier

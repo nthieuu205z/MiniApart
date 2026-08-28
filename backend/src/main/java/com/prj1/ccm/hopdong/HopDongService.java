@@ -11,6 +11,7 @@ import com.prj1.ccm.toanha.DichVuRepository;
 import com.prj1.ccm.toanha.PhanQuyenToaService;
 import com.prj1.ccm.toanha.Phong;
 import com.prj1.ccm.toanha.PhongRepository;
+import com.prj1.ccm.toanha.TrangThaiPhongService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,7 @@ public class HopDongService {
     private final DichVuRepository dichVuRepository;
     private final BangGiaRepository bangGiaRepository;
     private final PhanQuyenToaService phanQuyenToaService;
+    private final TrangThaiPhongService trangThaiPhongService;
     private final Clock clock;
 
     public HopDongService(
@@ -55,6 +57,7 @@ public class HopDongService {
             DichVuRepository dichVuRepository,
             BangGiaRepository bangGiaRepository,
             PhanQuyenToaService phanQuyenToaService,
+            TrangThaiPhongService trangThaiPhongService,
             Clock clock
     ) {
         this.hopDongRepository = hopDongRepository;
@@ -63,6 +66,7 @@ public class HopDongService {
         this.dichVuRepository = dichVuRepository;
         this.bangGiaRepository = bangGiaRepository;
         this.phanQuyenToaService = phanQuyenToaService;
+        this.trangThaiPhongService = trangThaiPhongService;
         this.clock = clock;
     }
 
@@ -77,6 +81,7 @@ public class HopDongService {
                             .map(item -> new HopDongDichVu(hopDongId, item.dichVuId(), item.donGiaApDung()))
                             .toList()
             );
+            trangThaiPhongService.dongBoTheoPhongId(hopDongDaChuanHoa.hopDong().phongId());
             return chiTiet(hopDongId, nguoiDung);
         } catch (DataIntegrityViolationException exception) {
             if (!laRangBuocChongNgay(exception)) {
@@ -143,6 +148,7 @@ public class HopDongService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_CHUYEN_TRANG_THAI);
         }
         hopDongRepository.updateTrangThai(hopDongId, TrangThaiHopDong.DA_THANH_LY);
+        trangThaiPhongService.dongBoTheoPhongId(hopDongView.hopDong().phongId());
         return chiTiet(hopDongId, nguoiDung);
     }
 
@@ -162,6 +168,7 @@ public class HopDongService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_CHUA_TOI_NGAY_BAT_DAU);
         }
         hopDongRepository.updateTrangThai(hopDongId, sangTrangThai);
+        trangThaiPhongService.dongBoTheoPhongId(hopDong.phongId());
         return chiTiet(hopDongId, nguoiDung);
     }
 

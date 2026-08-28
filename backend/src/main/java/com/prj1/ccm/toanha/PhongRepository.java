@@ -1,11 +1,16 @@
 package com.prj1.ccm.toanha;
 
+import com.prj1.ccm.hopdong.HopDong;
+import com.prj1.ccm.hopdong.TrangThaiHopDong;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -42,6 +47,14 @@ public class PhongRepository {
                 )
                 .stream()
                 .findFirst();
+    }
+
+    public Optional<Phong> findByIdKemHopDong(Long id) {
+        return findById(id).map(phong -> ganHopDong(List.of(phong)).get(0));
+    }
+
+    public List<Phong> findByToaNhaIdKemHopDong(Long toaNhaId) {
+        return ganHopDong(findByToaNhaId(toaNhaId, null));
     }
 
     public boolean existsByToaNhaIdAndSoPhong(Long toaNhaId, String soPhong) {
@@ -104,6 +117,62 @@ public class PhongRepository {
         );
     }
 
+    public void updateTrangThaiDem(Long phongId, TrangThaiPhong trangThai) {
+        jdbcTemplate.update(
+                """
+                        UPDATE PHONG
+                        SET trang_thai = ?
+                        WHERE id = ?
+                        """,
+                trangThai.name(),
+                phongId
+        );
+    }
+
+    private List<Phong> ganHopDong(List<Phong> phong) {
+        if (phong.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, List<HopDong>> hopDongTheoPhong = timHopDongTheoPhong(
+                phong.stream().map(Phong::id).toList()
+        );
+
+        return phong.stream()
+                .map(item -> new Phong(
+                        item.id(),
+                        item.toaNhaId(),
+                        item.soPhong(),
+                        item.tang(),
+                        item.dienTich(),
+                        item.sucChua(),
+                        item.giaThueMacDinh(),
+                        item.loaiPhong(),
+                        item.trangThaiDem(),
+                        hopDongTheoPhong.getOrDefault(item.id(), List.of())
+                ))
+                .toList();
+    }
+
+    private Map<Long, List<HopDong>> timHopDongTheoPhong(List<Long> phongIds) {
+        String placeholders = phongIds.stream().map(ignore -> "?").collect(Collectors.joining(", "));
+        Map<Long, List<HopDong>> hopDongTheoPhong = new LinkedHashMap<>();
+        jdbcTemplate.query(
+                """
+                        SELECT id, phong_id, nguoi_thue_id, ngay_bat_dau, ngay_ket_thuc, gia_thue, tien_coc, so_ngay_bao_truoc, trang_thai
+                        FROM HOP_DONG
+                        WHERE phong_id IN (%s)
+                        ORDER BY phong_id, ngay_bat_dau, id
+                        """.formatted(placeholders),
+                resultSet -> {
+                    HopDong hopDong = mapHopDong(resultSet);
+                    hopDongTheoPhong.computeIfAbsent(hopDong.phongId(), ignore -> new java.util.ArrayList<>()).add(hopDong);
+                },
+                phongIds.toArray()
+        );
+        return hopDongTheoPhong;
+    }
+
     private String cauLenhPhongCoBan() {
         return """
                 SELECT id, toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai
@@ -122,6 +191,20 @@ public class PhongRepository {
                 resultSet.getBigDecimal("gia_thue_mac_dinh"),
                 resultSet.getString("loai_phong"),
                 TrangThaiPhong.valueOf(resultSet.getString("trang_thai"))
+        );
+    }
+
+    private HopDong mapHopDong(ResultSet resultSet) throws SQLException {
+        return new HopDong(
+                resultSet.getLong("id"),
+                resultSet.getLong("phong_id"),
+                resultSet.getLong("nguoi_thue_id"),
+                resultSet.getObject("ngay_bat_dau", LocalDate.class),
+                resultSet.getObject("ngay_ket_thuc", LocalDate.class),
+                resultSet.getBigDecimal("gia_thue"),
+                resultSet.getBigDecimal("tien_coc"),
+                resultSet.getInt("so_ngay_bao_truoc"),
+                TrangThaiHopDong.valueOf(resultSet.getString("trang_thai"))
         );
     }
 }

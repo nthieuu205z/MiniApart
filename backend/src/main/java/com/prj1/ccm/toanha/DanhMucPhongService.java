@@ -24,10 +24,16 @@ public class DanhMucPhongService {
 
     private final PhanQuyenToaService phanQuyenToaService;
     private final PhongRepository phongRepository;
+    private final TrangThaiPhongService trangThaiPhongService;
 
-    public DanhMucPhongService(PhanQuyenToaService phanQuyenToaService, PhongRepository phongRepository) {
+    public DanhMucPhongService(
+            PhanQuyenToaService phanQuyenToaService,
+            PhongRepository phongRepository,
+            TrangThaiPhongService trangThaiPhongService
+    ) {
         this.phanQuyenToaService = phanQuyenToaService;
         this.phongRepository = phongRepository;
+        this.trangThaiPhongService = trangThaiPhongService;
     }
 
     public List<ThongTinPhong> danhSachPhong(Long toaNhaId, Integer tang, NguoiDung nguoiDung) {
@@ -71,6 +77,12 @@ public class DanhMucPhongService {
         }
 
         return new KetQuaPhongHangLoat(phongDaTao);
+    }
+
+    @Transactional
+    public void tinhLaiTrangThaiPhong(Long toaNhaId, NguoiDung nguoiDung) {
+        kiemTraQuyenPhong(nguoiDung, toaNhaId);
+        trangThaiPhongService.dongBoTheoToaNhaId(toaNhaId);
     }
 
     private void kiemTraQuyenPhong(NguoiDung nguoiDung, Long toaNhaId) {

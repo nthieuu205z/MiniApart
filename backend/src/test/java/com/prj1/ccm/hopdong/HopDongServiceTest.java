@@ -13,6 +13,7 @@ import com.prj1.ccm.toanha.Phong;
 import com.prj1.ccm.toanha.PhongRepository;
 import com.prj1.ccm.toanha.ToaNha;
 import com.prj1.ccm.toanha.TrangThaiPhong;
+import com.prj1.ccm.toanha.TrangThaiPhongService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,6 +58,9 @@ class HopDongServiceTest {
     @Mock
     private PhanQuyenToaService phanQuyenToaService;
 
+    @Mock
+    private TrangThaiPhongService trangThaiPhongService;
+
     private HopDongService hopDongService;
 
     @BeforeEach
@@ -68,6 +72,7 @@ class HopDongServiceTest {
                 dichVuRepository,
                 bangGiaRepository,
                 phanQuyenToaService,
+                trangThaiPhongService,
                 Clock.fixed(LocalDate.of(2040, 8, 1).atStartOfDay(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant(), ZoneId.of("Asia/Ho_Chi_Minh"))
         );
     }
