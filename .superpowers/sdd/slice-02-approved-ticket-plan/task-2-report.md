@@ -26,3 +26,23 @@
 - No frontend, `Doc/`, account-linking, contract, occupant, or room-status changes.
 - V1–V9 migrations remain untouched.
 - The generic schema permits the future `CHI_SO_DICH_VU` and `YEU_CAU_SUA_CHUA` attachment owners without a second storage/signing implementation.
+
+## Round 1 reviewer fixes
+
+### Finding 1 — real image decoding
+
+Replaced the PNG-header/JPEG-marker check in `AnhDinhKemService` with the JDK `ImageReader` pipeline. The validator now discovers an image reader from the bytes, sets the reader to seek-forward-only mode, decodes the first image with `read(0)`, and accepts only PNG or JPEG reader formats. Unknown formats, missing readers, and decode exceptions return the existing exact 400 validation message. The upload size limit and storage behavior are unchanged.
+
+TDD evidence: the test first changed its invalid fixture to a payload beginning with a valid-looking PNG signature followed by undecodable bytes. Against the previous implementation it failed with 201 instead of 400. After the decoder change it passes. The valid synthetic fixtures were generated through `ImageIO` so the stricter reader validates real decodable inputs.
+
+### Finding 2 — signed-link query integrity
+
+Added a 403 regression assertion that appends a second `hetHan` query parameter to an otherwise valid signed URL. The download controller now rejects duplicate `hetHan` or `chuKy` values before binding them, preventing ambiguous parameter parsing from bypassing the signed capability. Existing HMAC binding of attachment ID and expiry remains in place, as do the exact expiry and error behavior.
+
+TDD evidence: the new duplicate-parameter test failed against the previous implementation with 200 instead of 403. After rejecting duplicate signed parameters it passes.
+
+### Round 1 verification
+
+- `./gradlew test --tests com.prj1.ccm.nguoithue.NguoiThueAnhGiayToIntegrationTest` — passed: 3 tests, 0 failures.
+- `./gradlew test --rerun-tasks` — passed: 20 test classes, 93 tests, 0 failures and 0 errors.
+- `git diff --check` — passed before staging the fix commit.

@@ -11,6 +11,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -18,8 +22,9 @@ import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.time.Clock;
-import java.util.Arrays;
 import java.util.Base64;
+import java.util.Iterator;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -93,18 +98,25 @@ public class AnhDinhKemService {
     }
 
     private String loaiNoiDungCua(byte[] duLieu) {
-        if (laPng(duLieu)) return "image/png";
-        if (laJpeg(duLieu)) return "image/jpeg";
-        return null;
-    }
-
-    private boolean laPng(byte[] duLieu) {
-        byte[] dauPng = {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
-        return duLieu.length >= dauPng.length && MessageDigest.isEqual(dauPng, Arrays.copyOf(duLieu, dauPng.length));
-    }
-
-    private boolean laJpeg(byte[] duLieu) {
-        return duLieu.length >= 4 && duLieu[0] == (byte) 0xFF && duLieu[1] == (byte) 0xD8 && duLieu[duLieu.length - 2] == (byte) 0xFF && duLieu[duLieu.length - 1] == (byte) 0xD9;
+        try (ImageInputStream input = ImageIO.createImageInputStream(new ByteArrayInputStream(duLieu))) {
+            if (input == null) return null;
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+            if (!readers.hasNext()) return null;
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(input, true, true);
+                reader.read(0);
+                return switch (reader.getFormatName().toLowerCase(Locale.ROOT)) {
+                    case "png" -> "image/png";
+                    case "jpeg", "jpg" -> "image/jpeg";
+                    default -> null;
+                };
+            } finally {
+                reader.dispose();
+            }
+        } catch (IOException | RuntimeException exception) {
+            return null;
+        }
     }
 
     private String phanMoRongCua(String loaiNoiDung) { return "image/png".equals(loaiNoiDung) ? ".png" : ".jpg"; }

@@ -22,6 +22,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import tools.jackson.databind.ObjectMapper;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -49,6 +53,8 @@ class NguoiThueAnhGiayToIntegrationTest {
     private static final ZoneId TEST_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final Instant TEST_NOW = Instant.parse("2040-08-15T03:00:00Z");
     private static final Path STORAGE_ROOT = taoThuMucTam();
+    private static final byte[] PNG_1X1 = taoAnh1X1("png");
+    private static final byte[] JPEG_1X1 = taoAnh1X1("jpeg");
 
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:17-alpine");
@@ -168,6 +174,10 @@ class NguoiThueAnhGiayToIntegrationTest {
 
         String signedUrl = xinLienKet(managerToken, anhId);
 
+        mockMvc.perform(get(signedUrl + "&hetHan=1"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.thongBao").value("Liên kết ảnh không hợp lệ hoặc đã hết hạn"));
+
         mockMvc.perform(get(signedUrl))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.IMAGE_JPEG_VALUE))
@@ -210,7 +220,7 @@ class NguoiThueAnhGiayToIntegrationTest {
                 "tep",
                 "nguy-trang.png",
                 MediaType.IMAGE_PNG_VALUE,
-                "khong-phai-anh".getBytes()
+                pngGiaVo()
         );
         MockMultipartFile quaLon = new MockMultipartFile(
                 "tep",
@@ -318,41 +328,31 @@ class NguoiThueAnhGiayToIntegrationTest {
     }
 
     private static byte[] png1x1() {
+        return PNG_1X1.clone();
+    }
+
+    private static byte[] pngGiaVo() {
         return new byte[]{
                 (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
-                0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
-                0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-                0x08, 0x02, 0x00, 0x00, 0x00, (byte) 0x90, 0x77, 0x53,
-                (byte) 0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41, 0x54,
-                0x08, (byte) 0xD7, 0x63, (byte) 0xF8, 0x0F, 0x00, 0x01, 0x01,
-                0x01, 0x00, 0x18, (byte) 0xDD, (byte) 0x8D, (byte) 0xB1, 0x00,
-                0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, (byte) 0xAE,
-                0x42, 0x60, (byte) 0x82
+                0x6B, 0x68, 0x6F, 0x6E, 0x67, 0x2D, 0x67, 0x69, 0x61
         };
     }
 
     private static byte[] jpeg1x1() {
-        return new byte[]{
-                (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0x00, 0x10,
-                0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01,
-                0x00, 0x01, 0x00, 0x00, (byte) 0xFF, (byte) 0xDB, 0x00, 0x43,
-                0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08, 0x07, 0x07,
-                0x07, 0x09, 0x09, 0x08, 0x0A, 0x0C, 0x14, 0x0D, 0x0C, 0x0B,
-                0x0B, 0x0C, 0x19, 0x12, 0x13, 0x0F, 0x14, 0x1D, 0x1A, 0x1F,
-                0x1E, 0x1D, 0x1A, 0x1C, 0x1C, 0x20, 0x24, 0x2E, 0x27, 0x20,
-                0x22, 0x2C, 0x23, 0x1C, 0x1C, 0x28, 0x37, 0x29, 0x2C, 0x30,
-                0x31, 0x34, 0x34, 0x34, 0x1F, 0x27, 0x39, 0x3D, 0x38, 0x32,
-                0x3C, 0x2E, 0x33, 0x34, 0x32, (byte) 0xFF, (byte) 0xC0, 0x00,
-                0x11, 0x08, 0x00, 0x01, 0x00, 0x01, 0x03, 0x01, 0x22, 0x00,
-                0x02, 0x11, 0x01, 0x03, 0x11, 0x01, (byte) 0xFF, (byte) 0xC4,
-                0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08,
-                (byte) 0xFF, (byte) 0xC4, 0x00, 0x14, 0x10, 0x01, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, (byte) 0xFF, (byte) 0xDA, 0x00, 0x0C,
-                0x03, 0x01, 0x00, 0x02, 0x11, 0x03, 0x11, 0x00, 0x3F, 0x00,
-                (byte) 0xD2, (byte) 0xCF, 0x20, (byte) 0xFF, (byte) 0xD9
-        };
+        return JPEG_1X1.clone();
+    }
+
+    private static byte[] taoAnh1X1(String dinhDang) {
+        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+        image.setRGB(0, 0, 0x336699);
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            if (!ImageIO.write(image, dinhDang, output)) {
+                throw new IllegalStateException("Khong co bo ghi anh cho " + dinhDang);
+            }
+            return output.toByteArray();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Khong tao duoc anh kiem thu", exception);
+        }
     }
 
     private static byte[] jpegCoKichThuoc(int kichThuoc) {
