@@ -75,3 +75,54 @@ BUILD SUCCESSFUL in 54s
 
 - Gradle wrapper needed cache access outside the sandbox (`~/.gradle`), so the first focused test run had to be rerun with escalated permission.
 - None remaining.
+
+## Fix Round 1
+
+### RED
+
+Command:
+
+```bash
+./gradlew test --tests com.prj1.ccm.hopdong.HopDongServiceTest
+```
+
+Output:
+
+```text
+HopDongServiceTest > FR_TNT_05_CR_002_khongDoiDataIntegrityKhacThanhXungDotChongNgay() FAILED
+1 test completed, 1 failed
+BUILD FAILED
+```
+
+### GREEN
+
+Changed files:
+
+- `backend/src/main/java/com/prj1/ccm/hopdong/HopDongService.java`
+- `backend/src/test/java/com/prj1/ccm/hopdong/HopDongServiceTest.java`
+
+Focused verification:
+
+```bash
+./gradlew test --tests com.prj1.ccm.hopdong.HopDongServiceTest
+./gradlew test --tests com.prj1.ccm.hopdong.HopDongIntegrationTest
+./gradlew test
+```
+
+Output:
+
+```text
+BUILD SUCCESSFUL in 2s
+BUILD SUCCESSFUL in 11s
+BUILD SUCCESSFUL in 1m 7s
+```
+
+### Self-review
+
+- The overlap 409 path now requires both SQLSTATE `23P01` and the migration's constraint name.
+- Non-overlap integrity failures keep their original exception path and no longer trigger overlap lookup.
+- Existing overlap, adjacency, liquidation, and concurrency behaviors still pass.
+
+### Concerns
+
+- None.

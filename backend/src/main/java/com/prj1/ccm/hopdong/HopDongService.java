@@ -17,8 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.SQLException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -35,6 +37,8 @@ public class HopDongService {
     private static final String THONG_BAO_CHUYEN_TRANG_THAI = "Không thể chuyển trạng thái hợp đồng bằng hành động này.";
     private static final String THONG_BAO_CHUA_TOI_NGAY_BAT_DAU = "Chưa tới ngày bắt đầu nên chưa thể kích hoạt hợp đồng.";
     private static final String THONG_BAO_HOP_DONG_CHONG_NGAY = "Phòng %s đang có hợp đồng #%d chiếm chỗ đến hết %s.";
+    private static final String SQLSTATE_EXCLUSION_VIOLATION = "23P01";
+    private static final String TEN_RANG_BUOC_CHONG_NGAY = "ex_hop_dong_phong_khong_chong_ngay";
 
     private final HopDongRepository hopDongRepository;
     private final PhongRepository phongRepository;
@@ -75,6 +79,9 @@ public class HopDongService {
             );
             return chiTiet(hopDongId, nguoiDung);
         } catch (DataIntegrityViolationException exception) {
+            if (!laRangBuocChongNgay(exception)) {
+                throw exception;
+            }
             var hopDongXungDot = hopDongRepository.findXungDotTheoPhongVaKhoangNgay(
                             hopDongDaChuanHoa.hopDong().phongId(),
                             hopDongDaChuanHoa.hopDong().ngayBatDau(),
@@ -257,6 +264,32 @@ public class HopDongService {
                 && nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    private boolean laRangBuocChongNgay(DataIntegrityViolationException exception) {
+        Throwable nguyenNhanSautChinh = exception.getMostSpecificCause();
+        if (!(nguyenNhanSautChinh instanceof SQLException sqlException)) {
+            return false;
+        }
+        if (!SQLSTATE_EXCLUSION_VIOLATION.equals(sqlException.getSQLState())) {
+            return false;
+        }
+        return TEN_RANG_BUOC_CHONG_NGAY.equals(layTenRangBuoc(sqlException));
+    }
+
+    private String layTenRangBuoc(SQLException sqlException) {
+        try {
+            Method layThongDiepLoi = sqlException.getClass().getMethod("getServerErrorMessage");
+            Object thongDiepLoi = layThongDiepLoi.invoke(sqlException);
+            if (thongDiepLoi == null) {
+                return null;
+            }
+            Method layTenRangBuoc = thongDiepLoi.getClass().getMethod("getConstraint");
+            Object tenRangBuoc = layTenRangBuoc.invoke(thongDiepLoi);
+            return tenRangBuoc == null ? null : tenRangBuoc.toString();
+        } catch (ReflectiveOperationException exception) {
+            return null;
         }
     }
 
