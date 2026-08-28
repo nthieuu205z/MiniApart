@@ -52,7 +52,7 @@ Focused rerun command:
 Result:
 
 ```text
-BUILD SUCCESSFUL in 13s
+BUILD SUCCESSFUL in 9s
 4 actionable tasks: 2 executed, 2 up-to-date
 ```
 
@@ -131,3 +131,50 @@ BUILD SUCCESSFUL in 1m 52s
 - The ticket did not prescribe an exact count URL or JSON contract. The implementation records the count as `/so-luong` and returns `phongId`, `soPhong`, `ngay`, `soNguoi`, `sucChua`, and `canhBaoQuaSucChua`.
 - There is no update/delete endpoint for timeline rows because the ticket asks only for list/create/query behavior.
 - `NHAN_KHAU_KY` remains intentionally deferred to Slice 4 as required by the ticket.
+
+## Round 1 fix
+
+Review finding: the three `NguoiOCungController` endpoint Javadocs had FR markers but omitted the applicable change/security codes required by `AGENTS.md`.
+
+Fix applied without behavior or scope changes:
+
+- List: `FR-TNT-02`, `CR-002`, `NFR-SEC-03`.
+- Create: `FR-TNT-02`, `FR-TNT-03`, `CR-002`, `NFR-SEC-03`.
+- Count: `FR-TNT-03`, `CR-002`, `NFR-SEC-03`.
+
+Covering test:
+
+```text
+NguoiOCungIntegrationTest
+```
+
+Command:
+
+```text
+./gradlew test --tests com.prj1.ccm.hopdong.NguoiOCungIntegrationTest
+```
+
+Output:
+
+```text
+BUILD SUCCESSFUL in 13s
+4 actionable tasks: 2 executed, 2 up-to-date
+```
+
+## Review Verdict
+
+### Spec Compliance
+
+Needs fixes.
+
+- `NguoiOCungController` endpoint Javadocs only carry FR markers, but the repo rule requires FR/CR/NFR codes on every endpoint Javadoc: [NguoiOCungController.java](</Users/nthieuu/Documents/Codex/Code/PRJ1/.worktrees/codex-slice-02-nguoi-thue-hop-dong/backend/src/main/java/com/prj1/ccm/hopdong/NguoiOCungController.java:35>), [..:41] and [..:53].
+
+Cannot-verify items:
+
+- Duplicate/overlapping occupant rows are not ruled out by the diff; `NguoiOCungService.tao` accepts any existing tenant id and the migration has no uniqueness or overlap constraint, so duplicate semantics remain unspecified.
+
+### Code Quality
+
+Approved.
+
+- No blocking code-quality issue stands out in the diff beyond the spec/documentation gap above.

@@ -32,13 +32,13 @@ public class NguoiOCungController {
         this.nguoiOCungService = nguoiOCungService;
     }
 
-    /** FR-TNT-02 returns the full temporal occupant source for one contract. */
+    /** FR-TNT-02 and CR-002 return the full temporal occupant source for one contract; NFR-SEC-03 enforces server-side access control. */
     @GetMapping
     public List<ThongTinNguoiOCung> danhSach(@PathVariable Long hopDongId, HttpServletRequest request) {
         return nguoiOCungService.danhSach(hopDongId, nguoiDungHienTai(request));
     }
 
-    /** FR-TNT-02 creates an occupant interval, including the representative tenant profile when selected. */
+    /** FR-TNT-02, FR-TNT-03, and CR-002 create an occupant interval and report capacity warnings; NFR-SEC-03 enforces server-side access control. */
     @PostMapping
     public ResponseEntity<ThongTinThemNguoiOCung> tao(
             @PathVariable Long hopDongId,
@@ -50,7 +50,7 @@ public class NguoiOCungController {
         );
     }
 
-    /** FR-TNT-03 counts occupants on an inclusive date, so denNgay remains occupied on that date. */
+    /** FR-TNT-03 and CR-002 count occupants on an inclusive date, so denNgay remains occupied on that date; NFR-SEC-03 enforces server-side access control. */
     @GetMapping("/so-luong")
     public ThongTinSoNguoiO soLuong(
             @PathVariable Long hopDongId,
