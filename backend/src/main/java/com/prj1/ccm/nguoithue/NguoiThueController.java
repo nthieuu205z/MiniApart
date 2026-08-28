@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.JsonNode;
 
@@ -27,9 +28,11 @@ public class NguoiThueController {
     private static final Set<String> KHOA_HOP_LE = Set.of("hoTen", "ngaySinh", "soDienThoai", "soGiayTo", "queQuan");
 
     private final NguoiThueService nguoiThueService;
+    private final AnhDinhKemService anhDinhKemService;
 
-    public NguoiThueController(NguoiThueService nguoiThueService) {
+    public NguoiThueController(NguoiThueService nguoiThueService, AnhDinhKemService anhDinhKemService) {
         this.nguoiThueService = nguoiThueService;
+        this.anhDinhKemService = anhDinhKemService;
     }
 
     /**
@@ -88,6 +91,13 @@ public class NguoiThueController {
             HttpServletRequest request
     ) {
         return nguoiThueService.capNhat(nguoiThueId, chuyenThanhYeuCau(yeuCau), nguoiDungHienTai(request));
+    }
+
+    /** FR-TNT-01 and CR-013 store an identity-document side. NFR-SEC-04 validates image content and never returns the internal storage key. */
+    @PostMapping("/{nguoiThueId}/anh")
+    public ResponseEntity<ThongTinAnhDinhKem> taiLenAnh(@PathVariable Long nguoiThueId, @RequestParam("tep") MultipartFile tep,
+                                                         @RequestParam(required = false) String ghiChu, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(anhDinhKemService.taiLenAnhNguoiThue(nguoiThueId, ghiChu, tep, nguoiDungHienTai(request)));
     }
 
     private NguoiDung nguoiDungHienTai(HttpServletRequest request) {
