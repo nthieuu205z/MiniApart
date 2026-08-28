@@ -99,6 +99,22 @@ class BangGiaAuthorizationIntegrationTest {
     }
 
     @Test
+    void FR_BLD_06_assignedManagerCanReadFixedPricesButReceives403OnFixedPricePost() throws Exception {
+        Long dichVuId = themDichVuDien(1L);
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bang-gia")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bangGiaPayload()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void FR_BLD_07_FR_BLD_08_forbiddenRolesReceive403OnEveryTieredPriceEndpoint() throws Exception {
         Long dichVuId = themDichVu(1L);
         String workerToken = login(4L, "0900000004");
@@ -123,6 +139,22 @@ class BangGiaAuthorizationIntegrationTest {
                 .andExpect(status().isForbidden());
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuNgoaiPhamViId + "/bac-thang")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bacThangPayload()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_BLD_07_FR_BLD_08_assignedManagerCanReadTieredPricesButReceives403OnTieredPricePost() throws Exception {
+        Long dichVuId = themDichVuDien(1L);
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
                         .header("Authorization", "Bearer " + managerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bacThangPayload()))
@@ -168,6 +200,18 @@ class BangGiaAuthorizationIntegrationTest {
                 """
                         INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
                         VALUES (?, 'Dịch vụ giá cố định', 'CO_DINH', 'CO_DINH', 'tháng', FALSE, TRUE)
+                        RETURNING id
+                        """,
+                Long.class,
+                toaNhaId
+        );
+    }
+
+    private Long themDichVuDien(Long toaNhaId) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
+                        VALUES (?, 'Điện sinh hoạt', 'THEO_CHI_SO', 'CO_DINH', 'kWh', TRUE, TRUE)
                         RETURNING id
                         """,
                 Long.class,

@@ -26,6 +26,11 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
@@ -222,6 +227,39 @@ class BangGiaDichVuIntegrationTest {
     }
 
     @Test
+    void FR_BLD_06_rejectsZeroAndNegativeFixedPricesForMeteredService() throws Exception {
+        Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
+        String adminToken = login(1L, "0900000001");
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bangGiaPayload("0.00", "2026-01-01")))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bangGiaPayload("-1.00", "2026-02-01")))
+                .andExpect(status().isBadRequest());
+
+        Assertions.assertEquals(0, demBanGhi("SELECT COUNT(*) FROM BANG_GIA WHERE dich_vu_id = ?", dichVuId));
+    }
+
+    @Test
+    void FR_BLD_06_allowsZeroFixedPriceForNonMeteredService() throws Exception {
+        Long dichVuId = themDichVu(1L, "Internet miễn phí");
+        String adminToken = login(1L, "0900000001");
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bangGiaPayload("0.00", "2026-01-01")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.donGia").value("0.00"));
+    }
+
+    @Test
     void FR_BLD_08_listsTieredPriceHistoryMarksTodayAndLooksUpApplicableTierSetByRequestedDate() throws Exception {
         Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
         ganToaChoNguoiDung(2L, 1L);
@@ -397,6 +435,53 @@ class BangGiaDichVuIntegrationTest {
     }
 
     @Test
+    void FR_BLD_08_concurrentIdenticalTierPostsReturnOneCreatedOneConflictAndPersistFiveRows() throws Exception {
+        Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
+        String adminToken = login(1L, "0900000001");
+        String payload = bacThangPayload("2204.0655", "2026-01-01");
+        batDongBoHaiLanChenBacDauTien();
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch sanSang = new CountDownLatch(2);
+        CountDownLatch batDau = new CountDownLatch(1);
+        try {
+            Future<Integer> ketQuaMot = executor.submit(() -> guiBangGiaBacThangDongThoi(
+                    dichVuId,
+                    adminToken,
+                    payload,
+                    sanSang,
+                    batDau
+            ));
+            Future<Integer> ketQuaHai = executor.submit(() -> guiBangGiaBacThangDongThoi(
+                    dichVuId,
+                    adminToken,
+                    payload,
+                    sanSang,
+                    batDau
+            ));
+
+            Assertions.assertTrue(sanSang.await(5, TimeUnit.SECONDS));
+            batDau.countDown();
+
+            List<Integer> trangThai = List.of(
+                            ketQuaMot.get(15, TimeUnit.SECONDS),
+                            ketQuaHai.get(15, TimeUnit.SECONDS)
+                    )
+                    .stream()
+                    .sorted()
+                    .toList();
+            Assertions.assertEquals(List.of(201, 409), trangThai);
+            Assertions.assertEquals(
+                    5,
+                    demBanGhi("SELECT COUNT(*) FROM BANG_GIA_BAC_THANG WHERE dich_vu_id = ?", dichVuId)
+            );
+        } finally {
+            executor.shutdownNow();
+            tatDongBoHaiLanChenBacDauTien();
+        }
+    }
+
+    @Test
     void FR_BLD_08_rejectsNullTierEntryAndNullTierNumberWithBadRequest() throws Exception {
         Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
         String adminToken = login(1L, "0900000001");
@@ -429,6 +514,40 @@ class BangGiaDichVuIntegrationTest {
                                   ]
                                 }
                                 """))
+                .andExpect(status().isBadRequest());
+
+        Assertions.assertEquals(
+                0,
+                demBanGhi("SELECT COUNT(*) FROM BANG_GIA_BAC_THANG WHERE dich_vu_id = ?", dichVuId)
+        );
+    }
+
+    @Test
+    void FR_BLD_08_rejectsOverPrecisionTierQuantityWithBadRequest() throws Exception {
+        Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
+        String adminToken = login(1L, "0900000001");
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bacThangPayload("2204.0655", "2026-01-01", "0.001", "90.00")))
+                .andExpect(status().isBadRequest());
+
+        Assertions.assertEquals(
+                0,
+                demBanGhi("SELECT COUNT(*) FROM BANG_GIA_BAC_THANG WHERE dich_vu_id = ?", dichVuId)
+        );
+    }
+
+    @Test
+    void FR_BLD_08_rejectsOverPrecisionTierPercentageWithBadRequest() throws Exception {
+        Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
+        String adminToken = login(1L, "0900000001");
+
+        mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bacThangPayload("2204.0655", "2026-01-01", "0.00", "90.001")))
                 .andExpect(status().isBadRequest());
 
         Assertions.assertEquals(
@@ -471,6 +590,72 @@ class BangGiaDichVuIntegrationTest {
         );
     }
 
+    private int guiBangGiaBacThangDongThoi(
+            Long dichVuId,
+            String token,
+            String payload,
+            CountDownLatch sanSang,
+            CountDownLatch batDau
+    ) throws Exception {
+        sanSang.countDown();
+        if (!batDau.await(5, TimeUnit.SECONDS)) {
+            throw new IllegalStateException("Hai yêu cầu đồng thời không sẵn sàng đúng hạn.");
+        }
+        return mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andReturn()
+                .getResponse()
+                .getStatus();
+    }
+
+    private void batDongBoHaiLanChenBacDauTien() {
+        tatDongBoHaiLanChenBacDauTien();
+        jdbcTemplate.execute("CREATE SEQUENCE fr_bld_08_concurrent_insert_arrivals START WITH 1");
+        jdbcTemplate.execute(
+                """
+                        CREATE FUNCTION fr_bld_08_wait_for_concurrent_insert()
+                        RETURNS trigger
+                        LANGUAGE plpgsql
+                        AS $$
+                        DECLARE
+                            lan_cho INTEGER;
+                        BEGIN
+                            IF NEW.bac <> 1 THEN
+                                RETURN NEW;
+                            END IF;
+
+                            PERFORM nextval('fr_bld_08_concurrent_insert_arrivals');
+                            FOR lan_cho IN 1..1000 LOOP
+                                EXIT WHEN (SELECT last_value FROM fr_bld_08_concurrent_insert_arrivals) >= 2;
+                                PERFORM pg_sleep(0.01);
+                            END LOOP;
+
+                            IF (SELECT last_value FROM fr_bld_08_concurrent_insert_arrivals) < 2 THEN
+                                RAISE EXCEPTION 'Timed out waiting for concurrent tier insert';
+                            END IF;
+                            RETURN NEW;
+                        END;
+                        $$
+                        """
+        );
+        jdbcTemplate.execute(
+                """
+                        CREATE TRIGGER tg_fr_bld_08_wait_for_concurrent_insert
+                        BEFORE INSERT ON BANG_GIA_BAC_THANG
+                        FOR EACH ROW
+                        EXECUTE FUNCTION fr_bld_08_wait_for_concurrent_insert()
+                        """
+        );
+    }
+
+    private void tatDongBoHaiLanChenBacDauTien() {
+        jdbcTemplate.execute("DROP TRIGGER IF EXISTS tg_fr_bld_08_wait_for_concurrent_insert ON BANG_GIA_BAC_THANG");
+        jdbcTemplate.execute("DROP FUNCTION IF EXISTS fr_bld_08_wait_for_concurrent_insert()");
+        jdbcTemplate.execute("DROP SEQUENCE IF EXISTS fr_bld_08_concurrent_insert_arrivals");
+    }
+
     private int demBanGhi(String sql, Long dichVuId) {
         Integer soLuong = jdbcTemplate.queryForObject(sql, Integer.class, dichVuId);
         return soLuong == null ? 0 : soLuong;
@@ -486,19 +671,28 @@ class BangGiaDichVuIntegrationTest {
     }
 
     private String bacThangPayload(String giaBanLeBinhQuan, String ngayHieuLuc) {
+        return bacThangPayload(giaBanLeBinhQuan, ngayHieuLuc, "0.00", "90.00");
+    }
+
+    private String bacThangPayload(
+            String giaBanLeBinhQuan,
+            String ngayHieuLuc,
+            String tuSoLuongBacMot,
+            String tyLeBacMot
+    ) {
         return """
                 {
                   "giaBanLeBinhQuan": "%s",
                   "ngayHieuLuc": "%s",
                   "cacBac": [
-                    { "bac": 1, "tuSoLuong": "0.00", "denSoLuong": "100.00", "tyLe": "90.00" },
+                    { "bac": 1, "tuSoLuong": "%s", "denSoLuong": "100.00", "tyLe": "%s" },
                     { "bac": 2, "tuSoLuong": "101.00", "denSoLuong": "200.00", "tyLe": "108.00" },
                     { "bac": 3, "tuSoLuong": "201.00", "denSoLuong": "400.00", "tyLe": "136.00" },
                     { "bac": 4, "tuSoLuong": "401.00", "denSoLuong": "700.00", "tyLe": "162.00" },
                     { "bac": 5, "tuSoLuong": "701.00", "denSoLuong": null, "tyLe": "180.00" }
                   ]
                 }
-                """.formatted(giaBanLeBinhQuan, ngayHieuLuc);
+                """.formatted(giaBanLeBinhQuan, ngayHieuLuc, tuSoLuongBacMot, tyLeBacMot);
     }
 
     private String login(Long nguoiDungId, String soDienThoai) throws Exception {

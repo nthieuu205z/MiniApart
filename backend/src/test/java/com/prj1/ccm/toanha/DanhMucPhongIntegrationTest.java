@@ -252,6 +252,62 @@ class DanhMucPhongIntegrationTest {
                 .andExpect(jsonPath("$.thongBao", containsString("Dải số phòng")));
     }
 
+    @Test
+    void FR_BLD_02_createsSingleRoomAtIntegerMaximumWithoutOverflow() throws Exception {
+        ganToaChoNguoiDung(2L, 1L);
+        String ownerToken = login(2L, "0900000002");
+        String payload = hangLoatPayload(
+                "2147483647",
+                "2147483647",
+                2,
+                "20.00",
+                3,
+                "3200000.00",
+                "Studio"
+        );
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/hang-loat")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.phong", hasSize(1)))
+                .andExpect(jsonPath("$.phong[0].soPhong").value("2147483647"));
+
+        List<String> soPhongDaLuu = jdbcTemplate.queryForList(
+                "SELECT so_phong FROM PHONG WHERE toa_nha_id = 1",
+                String.class
+        );
+        Assertions.assertEquals(List.of("2147483647"), soPhongDaLuu);
+    }
+
+    @Test
+    void FR_BLD_02_rejectsParseableBatchAboveOneThousandWithoutPersistence() throws Exception {
+        ganToaChoNguoiDung(2L, 1L);
+        String ownerToken = login(2L, "0900000002");
+        String payload = hangLoatPayload("1", "1001", 2, "20.00", 3, "3200000.00", "Studio");
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/hang-loat/xem-truoc")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.thongBao", containsString("1.000")));
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/hang-loat")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.thongBao", containsString("1.000")));
+
+        Integer demPhong = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM PHONG WHERE toa_nha_id = 1",
+                Integer.class
+        );
+        Assertions.assertEquals(0, demPhong);
+    }
+
     private void themPhong(
             Long toaNhaId,
             String soPhong,

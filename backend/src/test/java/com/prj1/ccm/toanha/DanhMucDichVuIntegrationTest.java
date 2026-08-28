@@ -115,7 +115,7 @@ class DanhMucDichVuIntegrationTest {
         Assertions.assertEquals(Boolean.TRUE, dichVuMoi.get("dang_su_dung"));
 
         mockMvc.perform(put("/api/toa-nha/1/dich-vu/" + internetId)
-                        .header("Authorization", "Bearer " + managerToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(dichVuPayload("Internet cáp quang", "CO_DINH", "CO_DINH", "tháng", false)))
                 .andExpect(status().isOk())
@@ -125,7 +125,7 @@ class DanhMucDichVuIntegrationTest {
                 .andExpect(jsonPath("$.donVi").value("tháng"));
 
         mockMvc.perform(put("/api/toa-nha/1/dich-vu/" + internetId + "/trang-thai")
-                        .header("Authorization", "Bearer " + managerToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

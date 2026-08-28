@@ -1,6 +1,7 @@
 package com.prj1.ccm.toanha;
 
 import com.prj1.ccm.nguoidung.NguoiDung;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +43,7 @@ public class BangGiaDichVuService {
     }
 
     public List<ThongTinBangGia> danhSachBangGia(Long dichVuId, NguoiDung nguoiDung) {
-        DichVu dichVu = danhMucDichVuService.layDichVuNguoiDungDuocQuanLy(dichVuId, nguoiDung);
+        DichVu dichVu = danhMucDichVuService.layDichVuNguoiDungDuocXem(dichVuId, nguoiDung);
         BangGia bangGiaHienTai = bangGiaRepository.findApplicableByDichVuIdAndNgay(dichVu.id(), LocalDate.now(clock))
                 .orElse(null);
 
@@ -58,7 +59,7 @@ public class BangGiaDichVuService {
     @Transactional
     public ThongTinBangGia themBangGia(Long dichVuId, YeuCauBangGia yeuCau, NguoiDung nguoiDung) {
         DichVu dichVu = danhMucDichVuService.layDichVuNguoiDungDuocQuanLy(dichVuId, nguoiDung);
-        BangGia bangGiaMoi = chuanHoa(dichVu.id(), yeuCau);
+        BangGia bangGiaMoi = chuanHoa(dichVu, yeuCau);
         Long bangGiaId = bangGiaRepository.insert(bangGiaMoi);
         BangGia bangGiaDaLuu = bangGiaRepository.findById(bangGiaId);
         return ThongTinBangGia.tuBangGia(
@@ -68,14 +69,14 @@ public class BangGiaDichVuService {
     }
 
     public ThongTinBangGia layBangGiaTheoNgay(Long dichVuId, LocalDate ngay, NguoiDung nguoiDung) {
-        DichVu dichVu = danhMucDichVuService.layDichVuNguoiDungDuocQuanLy(dichVuId, nguoiDung);
+        DichVu dichVu = danhMucDichVuService.layDichVuNguoiDungDuocXem(dichVuId, nguoiDung);
         BangGia bangGia = bangGiaRepository.findApplicableByDichVuIdAndNgay(dichVu.id(), ngay)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, THONG_BAO_KHONG_TIM_THAY_GIA_HIEU_LUC));
         return ThongTinBangGia.tuBangGia(bangGia, bangGiaCoDangApDungHomNay(bangGia));
     }
 
     public List<ThongTinBangGiaBacThang> danhSachBangGiaBacThang(Long dichVuId, NguoiDung nguoiDung) {
-        DichVu dichVu = layDichVuDienTheoChiSo(dichVuId, nguoiDung);
+        DichVu dichVu = layDichVuDienTheoChiSoNguoiDungDuocXem(dichVuId, nguoiDung);
         LocalDate ngayHieuLucHienTai = bangGiaRepository
                 .findApplicableNgayHieuLucBacThangByDichVuIdAndNgay(dichVu.id(), ngayApDungHomNay())
                 .orElse(null);
@@ -90,7 +91,7 @@ public class BangGiaDichVuService {
     }
 
     public ThongTinBangGiaBacThang layBangGiaBacThangTheoNgay(Long dichVuId, LocalDate ngay, NguoiDung nguoiDung) {
-        DichVu dichVu = layDichVuDienTheoChiSo(dichVuId, nguoiDung);
+        DichVu dichVu = layDichVuDienTheoChiSoNguoiDungDuocXem(dichVuId, nguoiDung);
         LocalDate ngayHieuLuc = bangGiaRepository.findApplicableNgayHieuLucBacThangByDichVuIdAndNgay(dichVu.id(), ngay)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, THONG_BAO_KHONG_TIM_THAY_GIA_HIEU_LUC));
         return taoThongTinBangGiaBacThang(
@@ -102,12 +103,20 @@ public class BangGiaDichVuService {
 
     @Transactional
     public ThongTinBangGiaBacThang themBangGiaBacThang(Long dichVuId, YeuCauBangGiaBacThang yeuCau, NguoiDung nguoiDung) {
-        DichVu dichVu = layDichVuDienTheoChiSo(dichVuId, nguoiDung);
+        DichVu dichVu = layDichVuDienTheoChiSoNguoiDungDuocQuanLy(dichVuId, nguoiDung);
         List<BangGiaBacThang> cacBac = chuanHoaBangGiaBacThang(dichVu.id(), yeuCau);
         if (bangGiaRepository.existsBacThangByDichVuIdAndNgayHieuLuc(dichVu.id(), yeuCau.ngayHieuLuc())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_BANG_GIA_BAC_THANG_DA_TON_TAI);
         }
-        bangGiaRepository.insertBacThang(cacBac);
+        try {
+            bangGiaRepository.insertBacThang(cacBac);
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    THONG_BAO_BANG_GIA_BAC_THANG_DA_TON_TAI,
+                    exception
+            );
+        }
         return taoThongTinBangGiaBacThang(
                 dichVu.id(),
                 yeuCau.ngayHieuLuc(),
@@ -115,17 +124,18 @@ public class BangGiaDichVuService {
         );
     }
 
-    private BangGia chuanHoa(Long dichVuId, YeuCauBangGia yeuCau) {
+    private BangGia chuanHoa(DichVu dichVu, YeuCauBangGia yeuCau) {
         if (yeuCau == null
                 || yeuCau.donGia() == null
                 || yeuCau.ngayHieuLuc() == null
-                || yeuCau.donGia().signum() < 0) {
+                || yeuCau.donGia().signum() < 0
+                || (dichVu.cachTinh() == CachTinh.THEO_CHI_SO && yeuCau.donGia().signum() == 0)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_BANG_GIA_KHONG_HOP_LE);
         }
 
         return new BangGia(
                 null,
-                dichVuId,
+                dichVu.id(),
                 yeuCau.donGia(),
                 yeuCau.ngayHieuLuc()
         );
@@ -155,9 +165,9 @@ public class BangGiaDichVuService {
                         null,
                         dichVuId,
                         bac.bac(),
-                        bac.tuSoLuong().setScale(2, RoundingMode.UNNECESSARY),
-                        bac.denSoLuong() == null ? null : bac.denSoLuong().setScale(2, RoundingMode.UNNECESSARY),
-                        bac.tyLe().setScale(2, RoundingMode.UNNECESSARY),
+                        chuanHoaHaiChuSo(bac.tuSoLuong()),
+                        bac.denSoLuong() == null ? null : chuanHoaHaiChuSo(bac.denSoLuong()),
+                        chuanHoaHaiChuSo(bac.tyLe()),
                         tinhDonGiaTheoTyLe(yeuCau.giaBanLeBinhQuan(), bac.tyLe()),
                         yeuCau.ngayHieuLuc()
                 ))
@@ -180,7 +190,7 @@ public class BangGiaDichVuService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_BANG_GIA_KHONG_HOP_LE);
             }
 
-            BigDecimal tuSoLuong = bac.tuSoLuong().setScale(2, RoundingMode.UNNECESSARY);
+            BigDecimal tuSoLuong = chuanHoaHaiChuSo(bac.tuSoLuong());
             if (index == 0 && tuSoLuong.compareTo(BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY)) != 0) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_BAC_DAU_TIEN_PHAI_BAT_DAU_TU_0);
             }
@@ -196,7 +206,7 @@ public class BangGiaDichVuService {
                 continue;
             }
 
-            BigDecimal denSoLuong = bac.denSoLuong().setScale(2, RoundingMode.UNNECESSARY);
+            BigDecimal denSoLuong = chuanHoaHaiChuSo(bac.denSoLuong());
             if (denSoLuong.compareTo(tuSoLuong) <= 0) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_BANG_GIA_KHONG_HOP_LE);
             }
@@ -213,6 +223,18 @@ public class BangGiaDichVuService {
                 .multiply(tyLe)
                 .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP)
                 .setScale(2, RoundingMode.UNNECESSARY);
+    }
+
+    private BigDecimal chuanHoaHaiChuSo(BigDecimal giaTri) {
+        try {
+            return giaTri.setScale(2, RoundingMode.UNNECESSARY);
+        } catch (ArithmeticException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    THONG_BAO_YEU_CAU_BANG_GIA_KHONG_HOP_LE,
+                    exception
+            );
+        }
     }
 
     private boolean bangGiaCoDangApDungHomNay(BangGia bangGia) {
@@ -236,8 +258,19 @@ public class BangGiaDichVuService {
         );
     }
 
-    private DichVu layDichVuDienTheoChiSo(Long dichVuId, NguoiDung nguoiDung) {
-        DichVu dichVu = danhMucDichVuService.layDichVuNguoiDungDuocQuanLy(dichVuId, nguoiDung);
+    private DichVu layDichVuDienTheoChiSoNguoiDungDuocXem(Long dichVuId, NguoiDung nguoiDung) {
+        return kiemTraDichVuDienTheoChiSo(
+                danhMucDichVuService.layDichVuNguoiDungDuocXem(dichVuId, nguoiDung)
+        );
+    }
+
+    private DichVu layDichVuDienTheoChiSoNguoiDungDuocQuanLy(Long dichVuId, NguoiDung nguoiDung) {
+        return kiemTraDichVuDienTheoChiSo(
+                danhMucDichVuService.layDichVuNguoiDungDuocQuanLy(dichVuId, nguoiDung)
+        );
+    }
+
+    private DichVu kiemTraDichVuDienTheoChiSo(DichVu dichVu) {
         if (!dichVu.laDien() || dichVu.cachTinh() != CachTinh.THEO_CHI_SO) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_DICH_VU_BAC_THANG_KHONG_HOP_LE);
         }

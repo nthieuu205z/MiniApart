@@ -110,6 +110,38 @@ class DichVuAuthorizationIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void FR_BLD_05_assignedManagerCanReadButReceives403OnEveryServiceWrite() throws Exception {
+        Long dichVuId = themDichVu(1L);
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(get("/api/toa-nha/1/dich-vu")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/toa-nha/1/dich-vu")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(dichVuPayload()))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/api/toa-nha/1/dich-vu/" + dichVuId)
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(dichVuPayload()))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/api/toa-nha/1/dich-vu/" + dichVuId + "/trang-thai")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dangSuDung": false
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
     private void assert403OnAllServiceEndpoints(String token, Long dichVuId) throws Exception {
         mockMvc.perform(get("/api/toa-nha/1/dich-vu")
                         .header("Authorization", "Bearer " + token))

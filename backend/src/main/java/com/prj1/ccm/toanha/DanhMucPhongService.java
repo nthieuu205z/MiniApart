@@ -11,7 +11,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 @Service
@@ -20,6 +19,8 @@ public class DanhMucPhongService {
     private static final String THONG_BAO_SUC_CHUA = "Sức chứa phải lớn hơn 0.";
     private static final String THONG_BAO_TRUNG_SO_PHONG = "Số phòng đã tồn tại trong toà nhà này.";
     private static final String THONG_BAO_DAI_SO_PHONG = "Dải số phòng không hợp lệ.";
+    private static final String THONG_BAO_QUA_NHIEU_PHONG = "Mỗi lần chỉ được tạo tối đa 1.000 phòng.";
+    private static final long SO_PHONG_TOI_DA_MOI_LO = 1_000L;
 
     private final PhanQuyenToaService phanQuyenToaService;
     private final PhongRepository phongRepository;
@@ -159,11 +160,11 @@ public class DanhMucPhongService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_DAI_SO_PHONG);
         }
 
-        int batDau;
-        int ketThuc;
+        long batDau;
+        long ketThuc;
         try {
-            batDau = Integer.parseInt(soBatDau);
-            ketThuc = Integer.parseInt(soKetThuc);
+            batDau = Long.parseLong(soBatDau);
+            ketThuc = Long.parseLong(soKetThuc);
         } catch (NumberFormatException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_DAI_SO_PHONG, exception);
         }
@@ -171,9 +172,16 @@ public class DanhMucPhongService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_DAI_SO_PHONG);
         }
 
+        long khoangCach = ketThuc - batDau;
+        if (khoangCach >= SO_PHONG_TOI_DA_MOI_LO) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_QUA_NHIEU_PHONG);
+        }
+
         int doRong = Math.max(soBatDau.length(), soKetThuc.length());
-        LinkedHashSet<String> ketQua = new LinkedHashSet<>();
-        for (int so = batDau; so <= ketThuc; so += 1) {
+        int soLuongPhong = Math.toIntExact(khoangCach + 1L);
+        List<String> ketQua = new ArrayList<>(soLuongPhong);
+        for (long viTri = 0L; viTri < soLuongPhong; viTri += 1L) {
+            long so = batDau + viTri;
             ketQua.add(String.format("%0" + doRong + "d", so));
         }
         return List.copyOf(ketQua);

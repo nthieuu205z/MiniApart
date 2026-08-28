@@ -25,7 +25,7 @@ public class DanhMucDichVuService {
     }
 
     public List<ThongTinDichVu> danhSachDichVu(Long toaNhaId, NguoiDung nguoiDung) {
-        kiemTraQuyenDichVu(nguoiDung, toaNhaId);
+        kiemTraQuyenXemDichVu(nguoiDung, toaNhaId);
         return dichVuRepository.findByToaNhaId(toaNhaId)
                 .stream()
                 .map(ThongTinDichVu::tuDichVu)
@@ -34,7 +34,7 @@ public class DanhMucDichVuService {
 
     @Transactional
     public ThongTinDichVu taoDichVu(Long toaNhaId, YeuCauDichVu yeuCau, NguoiDung nguoiDung) {
-        kiemTraQuyenDichVu(nguoiDung, toaNhaId);
+        kiemTraQuyenQuanLyDichVu(nguoiDung, toaNhaId);
         DichVu dichVu = chuanHoa(null, toaNhaId, yeuCau, CheDoGia.CO_DINH, true);
         Long dichVuId = dichVuRepository.insert(dichVu);
         return ThongTinDichVu.tuDichVu(layDichVuTonTai(toaNhaId, dichVuId));
@@ -42,7 +42,7 @@ public class DanhMucDichVuService {
 
     @Transactional
     public ThongTinDichVu capNhatDichVu(Long toaNhaId, Long dichVuId, YeuCauDichVu yeuCau, NguoiDung nguoiDung) {
-        kiemTraQuyenDichVu(nguoiDung, toaNhaId);
+        kiemTraQuyenQuanLyDichVu(nguoiDung, toaNhaId);
         DichVu hienTai = layDichVuTonTai(toaNhaId, dichVuId);
         DichVu dichVu = chuanHoa(dichVuId, toaNhaId, yeuCau, hienTai.cheDoGia(), hienTai.dangSuDung());
         dichVuRepository.update(dichVu);
@@ -51,7 +51,7 @@ public class DanhMucDichVuService {
 
     @Transactional
     public ThongTinDichVu capNhatTrangThai(Long toaNhaId, Long dichVuId, YeuCauTrangThaiDichVu yeuCau, NguoiDung nguoiDung) {
-        kiemTraQuyenDichVu(nguoiDung, toaNhaId);
+        kiemTraQuyenQuanLyDichVu(nguoiDung, toaNhaId);
         if (yeuCau == null || yeuCau.dangSuDung() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_KHONG_HOP_LE);
         }
@@ -61,6 +61,19 @@ public class DanhMucDichVuService {
     }
 
     DichVu layDichVuNguoiDungDuocQuanLy(Long dichVuId, NguoiDung nguoiDung) {
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
+                && nguoiDung.vaiTro() != VaiTro.CHU)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        DichVu dichVu = dichVuRepository.findById(dichVuId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, dichVu.toaNhaId());
+        return dichVu;
+    }
+
+    DichVu layDichVuNguoiDungDuocXem(Long dichVuId, NguoiDung nguoiDung) {
         if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
                 && nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
@@ -74,10 +87,19 @@ public class DanhMucDichVuService {
         return dichVu;
     }
 
-    private void kiemTraQuyenDichVu(NguoiDung nguoiDung, Long toaNhaId) {
+    private void kiemTraQuyenXemDichVu(NguoiDung nguoiDung, Long toaNhaId) {
         if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
                 && nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+    }
+
+    private void kiemTraQuyenQuanLyDichVu(NguoiDung nguoiDung, Long toaNhaId) {
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
+                && nguoiDung.vaiTro() != VaiTro.CHU)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
