@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -143,6 +144,40 @@ class GiaHanHopDongIntegrationTest {
                 .containsEntry("den_ngay", null);
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM NGUOI_O_CUNG WHERE hop_dong_id = ?", Integer.class, hopDongCuId))
                 .isEqualTo(2);
+    }
+
+    @Test
+    void FR_TNT_07_giaHanChiDemNguoiOCungDangOTiepTucMotLanTrongKyKeTiep() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "805");
+        Long nguoiThueId = themNguoiThue("Người thuê đếm gia hạn", "0900008501", "079123456851");
+        Long nguoiOCungId = themNguoiThue("Người ở cùng liên tục", "0900008502", "079123456852");
+        Long hopDongCuId = themHopDong(phongId, nguoiThueId, "2040-01-01", "2040-09-01", "3500000.00", "3500000.00", "HIEU_LUC");
+        themNguoiOCung(hopDongCuId, nguoiOCungId, "Bạn", "2040-03-01", null);
+
+        String body = mockMvc.perform(post("/api/hop-dong/" + hopDongCuId + "/gia-han")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ngayKetThuc\":\"2041-09-01\"}"))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Long hopDongMoiId = layIdHopDongMoi(body);
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM NGUOI_O_CUNG WHERE nguoi_thue_id = ? AND hop_dong_id IN (?, ?)",
+                Integer.class,
+                nguoiOCungId,
+                hopDongCuId,
+                hopDongMoiId
+        )).isEqualTo(2);
+
+        mockMvc.perform(get("/api/hop-dong/" + hopDongMoiId + "/nguoi-o-cung/so-luong")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .param("ngay", "2040-09-02"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.soNguoi").value(1));
     }
 
     @Test

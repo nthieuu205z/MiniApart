@@ -74,11 +74,15 @@ class NguoiOCungRepository {
                         FROM NGUOI_O_CUNG noc
                         JOIN HOP_DONG hd ON hd.id = noc.hop_dong_id
                         WHERE hd.phong_id = ?
+                          AND hd.ngay_bat_dau <= ?
+                          AND hd.ngay_ket_thuc >= ?
                           AND noc.tu_ngay <= ?
                           AND (noc.den_ngay IS NULL OR noc.den_ngay >= ?)
                         """,
                 Integer.class,
                 phongId,
+                Date.valueOf(ngay),
+                Date.valueOf(ngay),
                 Date.valueOf(ngay),
                 Date.valueOf(ngay)
         );

@@ -27,7 +27,7 @@ class AuthMigrationRegressionTest {
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:17-alpine");
 
     @Test
-    void CR_001_nguoiDungNguoiThueIdLaKhoaNgoaiDuyNhatVaChoPhepRong() {
+    void FR_AUT_06_CR_001_nguoiDungNguoiThueIdLaKhoaNgoaiDuyNhatVaChoPhepRong() {
         Flyway flyway = Flyway.configure()
                 .cleanDisabled(false)
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())

@@ -21,7 +21,7 @@ public class AnhDinhKemController {
     /** FR-TNT-01 and CR-013 issue a checked signed link only after management authorization. NFR-SEC-04 fixes the link lifetime at 15 minutes. */
     @GetMapping("/{anhId}/lien-ket")
     public LienKetAnhKy lienKet(@PathVariable Long anhId, HttpServletRequest request) { return anhDinhKemService.taoLienKet(anhId, (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE)); }
-    /** CR-013 serves a stored image only after checking its signature and expiry. NFR-SEC-04 refuses links after 15 minutes. */
+    /** FR-TNT-01 and CR-013 serve a stored image only after checking its signature and expiry. NFR-SEC-04 refuses links after 15 minutes. */
     @GetMapping("/{anhId}/xem")
     public ResponseEntity<byte[]> xem(@PathVariable Long anhId, @RequestParam long hetHan, @RequestParam String chuKy, HttpServletRequest request) {
         if (coNhieuGiaTri(request, "hetHan") || coNhieuGiaTri(request, "chuKy")) {

@@ -157,7 +157,7 @@ class NguoiDungQuanLyIntegrationTest {
     }
 
     @Test
-    void CR_001_taoTaiKhoanNguoiThueGanNguoiThueIdVaKhongTraVeMatKhau() throws Exception {
+    void FR_AUT_06_CR_001_taoTaiKhoanNguoiThueGanNguoiThueIdVaKhongTraVeMatKhau() throws Exception {
         String adminToken = tokenCuaNguoiDung(1L, "0900000001");
         Long nguoiThueId = seedNguoiThue("Người thuê có tài khoản", uniquePhone(), "001234567891");
         String soDienThoai = uniquePhone();
@@ -189,7 +189,7 @@ class NguoiDungQuanLyIntegrationTest {
     }
 
     @Test
-    void CR_001_taoTaiKhoanNguoiThueKhongCoNguoiThueIdBiTuChoi() throws Exception {
+    void FR_AUT_06_CR_001_taoTaiKhoanNguoiThueKhongCoNguoiThueIdBiTuChoi() throws Exception {
         String adminToken = tokenCuaNguoiDung(1L, "0900000001");
 
         mockMvc.perform(post("/api/nguoi-dung")
@@ -208,7 +208,7 @@ class NguoiDungQuanLyIntegrationTest {
     }
 
     @Test
-    void CR_001_taoTaiKhoanKhongPhaiNguoiThueChoPhepNguoiThueIdRong() throws Exception {
+    void FR_AUT_06_CR_001_taoTaiKhoanKhongPhaiNguoiThueChoPhepNguoiThueIdRong() throws Exception {
         String adminToken = tokenCuaNguoiDung(1L, "0900000001");
         String soDienThoai = uniquePhone();
 
@@ -235,7 +235,7 @@ class NguoiDungQuanLyIntegrationTest {
     }
 
     @Test
-    void CR_001_taoTaiKhoanNguoiThueVoiNguoiThueKhongTonTaiBiTuChoiKhongLoChiTietNoiBo() throws Exception {
+    void FR_AUT_06_CR_001_taoTaiKhoanNguoiThueVoiNguoiThueKhongTonTaiBiTuChoiKhongLoChiTietNoiBo() throws Exception {
         String adminToken = tokenCuaNguoiDung(1L, "0900000001");
 
         mockMvc.perform(post("/api/nguoi-dung")
@@ -255,7 +255,7 @@ class NguoiDungQuanLyIntegrationTest {
     }
 
     @Test
-    void CR_001_taoTaiKhoanNguoiThueTrungLienKetBiTuChoiKhongLoChiTietNoiBo() throws Exception {
+    void FR_AUT_06_CR_001_taoTaiKhoanNguoiThueTrungLienKetBiTuChoiKhongLoChiTietNoiBo() throws Exception {
         String adminToken = tokenCuaNguoiDung(1L, "0900000001");
         Long nguoiThueId = seedNguoiThue("Người thuê dùng một lần", uniquePhone(), "001234567892");
 
