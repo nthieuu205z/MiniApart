@@ -8,13 +8,19 @@ Khi tổng số người ở vượt sức chứa tối đa của phòng thì **
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Bảng `NGUOI_O_CUNG` có `tu_ngay` và `den_ngay` (rỗng nghĩa là còn ở)
-- [ ] Một truy vấn trả về số người ở của một phòng tại một ngày bất kỳ
-- [ ] Cảnh báo khi vượt `suc_chua` của phòng, hiện rõ đang mấy người trên sức chứa bao nhiêu — **không chặn** lưu
-- [ ] Người ở cùng có thể chính là người thuê đại diện, hoặc là người khác có hồ sơ riêng
-- [ ] Có test: khai một người chuyển đến giữa kỳ, kiểm tra số người ở **đầu kỳ** và **cuối kỳ** khác nhau đúng như mong đợi
-- [ ] Tên test mang mã `FR-TNT-02` và `CR-002`
+- [x] Bảng `NGUOI_O_CUNG` có `tu_ngay` và `den_ngay` (rỗng nghĩa là còn ở)
+- [x] Một truy vấn trả về số người ở của một phòng tại một ngày bất kỳ
+- [x] Cảnh báo khi vượt `suc_chua` của phòng, hiện rõ đang mấy người trên sức chứa bao nhiêu — **không chặn** lưu
+- [x] Người ở cùng có thể chính là người thuê đại diện, hoặc là người khác có hồ sơ riêng
+- [x] Có test: khai một người chuyển đến giữa kỳ, kiểm tra số người ở **đầu kỳ** và **cuối kỳ** khác nhau đúng như mong đợi
+- [x] Tên test mang mã `FR-TNT-02` và `CR-002`
 
 **Ghi chú — phần (b) của CR-002 KHÔNG thuộc ticket này.** Bảng `NHAN_KHAU_KY`, bản kết tinh bất biến ghi lúc chốt kỳ, là việc của **Slice 4**. Ticket này chỉ làm nguồn sự thật; bản kết tinh phải ghi đúng lúc chốt kỳ nên nó thuộc về quy trình tạo hoá đơn.
+
+## Comments
+
+- Đã thêm migration `V14__temporal_co_occupants.sql`; không sửa migration cũ, không thêm `NHAN_KHAU_KY`, và không đụng hành vi cache trạng thái phòng.
+- Chọn khoảng ngày đóng, bao gồm cả `tuNgay` và `denNgay`; `denNgay = null` nghĩa là còn ở. Truy vấn dùng `tu_ngay <= ngay` và `den_ngay IS NULL OR den_ngay >= ngay`.
+- Khi tạo một khoảng mới, cảnh báo tính tại `tuNgay` sau khi lưu, hiển thị số người hiện tại và sức chứa. Đây là cảnh báo không chặn, nên trả HTTP 201.

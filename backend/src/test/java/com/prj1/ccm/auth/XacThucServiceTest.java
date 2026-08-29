@@ -158,6 +158,7 @@ class XacThucServiceTest {
                 VaiTro.QUAN_LY,
                 TrangThaiNguoiDung.HOAT_DONG,
                 0,
+                null,
                 0,
                 null,
                 null
@@ -290,6 +291,7 @@ class XacThucServiceTest {
                     nguoiDungDangNhap.vaiTro(),
                     nguoiDungDangNhap.trangThai(),
                     phienBanToken,
+                    nguoiDungDangNhap.nguoiThueId(),
                     soLanSai,
                     lanSaiDauTien,
                     khoaDen

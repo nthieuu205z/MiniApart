@@ -69,6 +69,7 @@ class NguoiDungQuanLyIntegrationTest {
         jdbcTemplate.update("DELETE FROM KICH_HOAT_TAI_KHOAN");
         jdbcTemplate.update("DELETE FROM PHAN_QUYEN_TOA");
         jdbcTemplate.update("DELETE FROM NGUOI_DUNG");
+        jdbcTemplate.update("DELETE FROM NGUOI_THUE");
         kichHoatTaiKhoanDelivery.xoaTatCa();
         seedNguoiDung();
         jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (3, 1)");
@@ -153,6 +154,139 @@ class NguoiDungQuanLyIntegrationTest {
                                 """))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.thongBao").value("Số điện thoại đã được sử dụng"));
+    }
+
+    @Test
+    void FR_AUT_06_CR_001_taoTaiKhoanNguoiThueGanNguoiThueIdVaKhongTraVeMatKhau() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+        Long nguoiThueId = seedNguoiThue("Người thuê có tài khoản", uniquePhone(), "001234567891");
+        String soDienThoai = uniquePhone();
+
+        mockMvc.perform(post("/api/nguoi-dung")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Người thuê đăng nhập",
+                                  "soDienThoai": "%s",
+                                  "vaiTro": "NGUOI_THUE",
+                                  "nguoiThueId": %d,
+                                  "toaNhaIds": []
+                                }
+                                """.formatted(soDienThoai, nguoiThueId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.vaiTro").value("NGUOI_THUE"))
+                .andExpect(jsonPath("$.nguoiThueId").value(nguoiThueId))
+                .andExpect(jsonPath("$.matKhau").doesNotExist())
+                .andExpect(jsonPath("$.matKhauHash").doesNotExist());
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT nguoi_thue_id FROM NGUOI_DUNG WHERE so_dien_thoai = ?",
+                Long.class,
+                soDienThoai
+        )).isEqualTo(nguoiThueId);
+    }
+
+    @Test
+    void FR_AUT_06_CR_001_taoTaiKhoanNguoiThueKhongCoNguoiThueIdBiTuChoi() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+
+        mockMvc.perform(post("/api/nguoi-dung")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Người thuê thiếu liên kết",
+                                  "soDienThoai": "%s",
+                                  "vaiTro": "NGUOI_THUE",
+                                  "toaNhaIds": []
+                                }
+                                """.formatted(uniquePhone())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.thongBao").value("Tài khoản người thuê phải gắn với hồ sơ người thuê"));
+    }
+
+    @Test
+    void FR_AUT_06_CR_001_taoTaiKhoanKhongPhaiNguoiThueChoPhepNguoiThueIdRong() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+        String soDienThoai = uniquePhone();
+
+        mockMvc.perform(post("/api/nguoi-dung")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Thợ không gắn hồ sơ thuê",
+                                  "soDienThoai": "%s",
+                                  "vaiTro": "THO",
+                                  "toaNhaIds": [1]
+                                }
+                                """.formatted(soDienThoai)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.vaiTro").value("THO"))
+                .andExpect(jsonPath("$.nguoiThueId").doesNotExist());
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT nguoi_thue_id FROM NGUOI_DUNG WHERE so_dien_thoai = ?",
+                Long.class,
+                soDienThoai
+        )).isNull();
+    }
+
+    @Test
+    void FR_AUT_06_CR_001_taoTaiKhoanNguoiThueVoiNguoiThueKhongTonTaiBiTuChoiKhongLoChiTietNoiBo() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+
+        mockMvc.perform(post("/api/nguoi-dung")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Người thuê không tồn tại",
+                                  "soDienThoai": "%s",
+                                  "vaiTro": "NGUOI_THUE",
+                                  "nguoiThueId": 999999,
+                                  "toaNhaIds": []
+                                }
+                                """.formatted(uniquePhone())))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.thongBao").value("Không tìm thấy dữ liệu"));
+    }
+
+    @Test
+    void FR_AUT_06_CR_001_taoTaiKhoanNguoiThueTrungLienKetBiTuChoiKhongLoChiTietNoiBo() throws Exception {
+        String adminToken = tokenCuaNguoiDung(1L, "0900000001");
+        Long nguoiThueId = seedNguoiThue("Người thuê dùng một lần", uniquePhone(), "001234567892");
+
+        mockMvc.perform(post("/api/nguoi-dung")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Người thuê thứ nhất",
+                                  "soDienThoai": "%s",
+                                  "vaiTro": "NGUOI_THUE",
+                                  "nguoiThueId": %d,
+                                  "toaNhaIds": []
+                                }
+                                """.formatted(uniquePhone(), nguoiThueId)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/nguoi-dung")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Người thuê thứ hai",
+                                  "soDienThoai": "%s",
+                                  "vaiTro": "NGUOI_THUE",
+                                  "nguoiThueId": %d,
+                                  "toaNhaIds": []
+                                }
+                                """.formatted(uniquePhone(), nguoiThueId)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.thongBao").value("Hồ sơ người thuê đã được gắn với tài khoản khác"));
     }
 
     @Test
@@ -661,6 +795,23 @@ class NguoiDungQuanLyIntegrationTest {
                 5L, "Người thuê mẫu", "0900000006",
                 "pbkdf2$150000$mWjKLFx22XqiFMknpYRNWA==$SlG5dhkkjfyl1JKyRqKlGn8HhBdg0B8vRcw72bXCO7o=",
                 "NGUOI_THUE", "HOAT_DONG", 0, 0, null, null
+        );
+    }
+
+    private Long seedNguoiThue(String hoTen, String soDienThoai, String soGiayTo) {
+        jdbcTemplate.update(
+                """
+                        INSERT INTO NGUOI_THUE(ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan, trang_thai_luu_tru)
+                        VALUES (?, DATE '1995-01-01', ?, ?, 'Hà Nội', 'DANG_THUE')
+                        """,
+                hoTen,
+                soDienThoai,
+                soGiayTo
+        );
+        return jdbcTemplate.queryForObject(
+                "SELECT id FROM NGUOI_THUE WHERE so_giay_to = ?",
+                Long.class,
+                soGiayTo
         );
     }
 

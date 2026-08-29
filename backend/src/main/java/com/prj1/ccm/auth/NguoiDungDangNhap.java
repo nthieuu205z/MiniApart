@@ -14,6 +14,7 @@ public record NguoiDungDangNhap(
         VaiTro vaiTro,
         TrangThaiNguoiDung trangThai,
         int phienBanToken,
+        Long nguoiThueId,
         int soLanSai,
         Instant lanSaiDauTien,
         Instant khoaDen
@@ -34,7 +35,8 @@ public record NguoiDungDangNhap(
                 matKhauHash,
                 vaiTro,
                 trangThai,
-                phienBanToken
+                phienBanToken,
+                nguoiThueId
         );
     }
 }

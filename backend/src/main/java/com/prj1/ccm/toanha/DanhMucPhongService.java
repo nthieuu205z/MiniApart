@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,10 +25,16 @@ public class DanhMucPhongService {
 
     private final PhanQuyenToaService phanQuyenToaService;
     private final PhongRepository phongRepository;
+    private final TrangThaiPhongService trangThaiPhongService;
 
-    public DanhMucPhongService(PhanQuyenToaService phanQuyenToaService, PhongRepository phongRepository) {
+    public DanhMucPhongService(
+            PhanQuyenToaService phanQuyenToaService,
+            PhongRepository phongRepository,
+            TrangThaiPhongService trangThaiPhongService
+    ) {
         this.phanQuyenToaService = phanQuyenToaService;
         this.phongRepository = phongRepository;
+        this.trangThaiPhongService = trangThaiPhongService;
     }
 
     public List<ThongTinPhong> danhSachPhong(Long toaNhaId, Integer tang, NguoiDung nguoiDung) {
@@ -71,6 +78,12 @@ public class DanhMucPhongService {
         }
 
         return new KetQuaPhongHangLoat(phongDaTao);
+    }
+
+    @Transactional
+    public void tinhLaiTrangThaiPhong(Long toaNhaId, LocalDate ngay, NguoiDung nguoiDung) {
+        kiemTraQuyenPhong(nguoiDung, toaNhaId);
+        trangThaiPhongService.dongBoTheoToaNhaId(toaNhaId, ngay);
     }
 
     private void kiemTraQuyenPhong(NguoiDung nguoiDung, Long toaNhaId) {

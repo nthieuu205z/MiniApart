@@ -100,6 +100,29 @@ class PhongAuthorizationIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void FR_BLD_04_CR_012_thoVaNguoiThueNhan403ChoLenhTinhLaiTrangThaiPhong() throws Exception {
+        String workerToken = login(4L, "0900000004");
+        String tenantToken = login(5L, "0900000006");
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_BLD_04_CR_012_quanLyNhan403ChoLenhTinhLaiTrangThaiPhongNgoaiPhamVi() throws Exception {
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(post("/api/toa-nha/2/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+    }
+
     private void assert403OnAllRoomEndpoints(String token) throws Exception {
         mockMvc.perform(get("/api/toa-nha/1/phong")
                         .header("Authorization", "Bearer " + token))

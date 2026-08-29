@@ -2,6 +2,7 @@ package com.prj1.ccm.auth;
 
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -24,6 +25,103 @@ class AuthMigrationRegressionTest {
 
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:17-alpine");
+
+    @Test
+    void FR_AUT_06_CR_001_nguoiDungNguoiThueIdLaKhoaNgoaiDuyNhatVaChoPhepRong() {
+        Flyway flyway = Flyway.configure()
+                .cleanDisabled(false)
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .load();
+        flyway.clean();
+        flyway.migrate();
+
+        JdbcTemplate jdbcTemplate = taoJdbcTemplate();
+        jdbcTemplate.update(
+                """
+                        INSERT INTO NGUOI_DUNG(
+                            ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai,
+                            phien_ban_token, so_lan_sai, lan_sai_dau_tien, khoa_den, nguoi_thue_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                "Thợ không gắn hồ sơ thuê",
+                "0901777001",
+                "pbkdf2$test",
+                "THO",
+                "HOAT_DONG",
+                0,
+                0,
+                null,
+                null,
+                null
+        );
+        jdbcTemplate.update(
+                """
+                        INSERT INTO NGUOI_THUE(ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan, trang_thai_luu_tru)
+                        VALUES ('Người thuê ràng buộc', DATE '1995-01-01', '0901777002', '001234567899', 'Hà Nội', 'DANG_THUE')
+                        """
+        );
+        Long nguoiThueId = jdbcTemplate.queryForObject(
+                "SELECT id FROM NGUOI_THUE WHERE so_giay_to = '001234567899'",
+                Long.class
+        );
+        jdbcTemplate.update(
+                """
+                        INSERT INTO NGUOI_DUNG(
+                            ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai,
+                            phien_ban_token, so_lan_sai, lan_sai_dau_tien, khoa_den, nguoi_thue_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                "Người thuê có liên kết",
+                "0901777003",
+                "pbkdf2$test",
+                "NGUOI_THUE",
+                "HOAT_DONG",
+                0,
+                0,
+                null,
+                null,
+                nguoiThueId
+        );
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                """
+                        INSERT INTO NGUOI_DUNG(
+                            ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai,
+                            phien_ban_token, so_lan_sai, lan_sai_dau_tien, khoa_den, nguoi_thue_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                "Người thuê trùng liên kết",
+                "0901777004",
+                "pbkdf2$test",
+                "NGUOI_THUE",
+                "HOAT_DONG",
+                0,
+                0,
+                null,
+                null,
+                nguoiThueId
+        )).isInstanceOf(DataIntegrityViolationException.class);
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                """
+                        INSERT INTO NGUOI_DUNG(
+                            ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai,
+                            phien_ban_token, so_lan_sai, lan_sai_dau_tien, khoa_den, nguoi_thue_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                "Người thuê sai liên kết",
+                "0901777005",
+                "pbkdf2$test",
+                "NGUOI_THUE",
+                "HOAT_DONG",
+                0,
+                0,
+                null,
+                null,
+                999999L
+        )).isInstanceOf(DataIntegrityViolationException.class);
+    }
 
     @Test
     void FR_AUT_02_existingNguoiDungLockRemainsActiveAfterTrackerMigrationBackfill() {

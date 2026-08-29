@@ -6,6 +6,7 @@ public record YeuCauQuanLyNguoiDung(
         String hoTen,
         String soDienThoai,
         VaiTro vaiTro,
+        Long nguoiThueId,
         List<Long> toaNhaIds
 ) {
 }

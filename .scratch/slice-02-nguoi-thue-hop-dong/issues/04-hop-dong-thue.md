@@ -15,12 +15,21 @@
 
 **Blocked by:** 01, `slice-01 · 02` (phòng), `slice-01 · 04` (dịch vụ)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Bảng `HOP_DONG` theo ERD, `trang_thai` ép bằng `CHECK` với đúng bốn giá trị trên
-- [ ] `gia_thue` và `tien_coc` là `NUMERIC(15,2)`
-- [ ] Bảng `HOP_DONG_DICH_VU` nối hợp đồng với các dịch vụ áp dụng, kèm chỗ ghi đè đơn giá riêng nếu hợp đồng có thoả thuận khác
-- [ ] Ngày kết thúc phải sau ngày bắt đầu
-- [ ] Hợp đồng chuyển trạng thái theo **hành động**, không cho sửa tay giá trị trạng thái trên giao diện — CR-012
-- [ ] "Sắp hết hạn" hiện lên danh sách bằng **truy vấn theo ngày**, không phải bằng một cột lưu sẵn. Có test đẩy đồng hồ tới để chứng minh danh sách tự đổi mà không cần chạy tác vụ nào
-- [ ] Tên test mang mã `FR-TNT-04` và `CR-005`
+- [x] Bảng `HOP_DONG` theo ERD, `trang_thai` ép bằng `CHECK` với đúng bốn giá trị trên
+- [x] `gia_thue` và `tien_coc` là `NUMERIC(15,2)`
+- [x] Bảng `HOP_DONG_DICH_VU` nối hợp đồng với các dịch vụ áp dụng, kèm chỗ ghi đè đơn giá riêng nếu hợp đồng có thoả thuận khác
+- [x] Ngày kết thúc phải sau ngày bắt đầu
+- [x] Hợp đồng chuyển trạng thái theo **hành động**, không cho sửa tay giá trị trạng thái trên giao diện — CR-012
+- [x] "Sắp hết hạn" hiện lên danh sách bằng **truy vấn theo ngày**, không phải bằng một cột lưu sẵn. Có test đẩy đồng hồ tới để chứng minh danh sách tự đổi mà không cần chạy tác vụ nào
+- [x] Tên test mang mã `FR-TNT-04` và `CR-005`
+
+## Comments
+
+- Implemented `HOP_DONG` and `HOP_DONG_DICH_VU` in `V12__rental_contracts.sql` with `NUMERIC(15,2)` money fields and a four-value `CHECK` on `trang_thai`.
+- Added `/api/hop-dong` list/create/detail plus explicit action endpoints `/nhan-coc`, `/kich-hoat`, `/thanh-ly`; the controller rejects caller-supplied `trangThai` by rejecting unknown payload keys.
+- Used `Clock` to compute `sapHetHan` at query time. The integration test advances the same mutable clock and re-authenticates to avoid confusing contract expiry with JWT expiry on August 28, 2026.
+- Carried forward the approved ruling that this ticket does **not** add a per-contract payment-cycle column. The API and schema preserve the approved ERD and rely on the existing `KY_THANH_TOAN` model for billing periods.
+- Additional implementation ruling: when `donGiaApDung` is omitted, the service snapshots the currently effective fixed price on the contract signing date (`Clock` today). This keeps the join row self-contained without mutating shared price history.
+- Known scope boundary recorded in the report: this ticket does not yet recompute `PHONG.trang_thai` from contract actions, and it does not add the separate BR-10 overlap guard because that acceptance criterion was not part of the approved ticket text.

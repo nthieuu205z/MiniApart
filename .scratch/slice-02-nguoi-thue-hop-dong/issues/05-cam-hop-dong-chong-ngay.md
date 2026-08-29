@@ -10,7 +10,7 @@ PostgreSQL có **kiểu khoảng** (`daterange`) và **ràng buộc loại trừ
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Ràng buộc loại trừ trên `HOP_DONG`, cấm chồng khoảng ngày trên cùng `phong_id`
 - [ ] Ràng buộc **chỉ áp dụng cho hợp đồng chưa thanh lý** — một hợp đồng đã thanh lý không cản trở hợp đồng mới

@@ -5,6 +5,7 @@ import com.prj1.ccm.auth.PasswordHasher;
 import com.prj1.ccm.auth.NguoiDungRepository;
 import com.prj1.ccm.auth.SoDienThoaiKey;
 import com.prj1.ccm.toanha.ToaNhaRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,9 @@ import java.util.List;
 
 @Service
 public class QuanLyNguoiDungService {
+    private static final String THONG_BAO_NGUOI_THUE_BAT_BUOC = "Tài khoản người thuê phải gắn với hồ sơ người thuê";
+    private static final String THONG_BAO_NGUOI_THUE_DA_GAN = "Hồ sơ người thuê đã được gắn với tài khoản khác";
+
     private final NguoiDungRepository nguoiDungRepository;
     private final ToaNhaRepository toaNhaRepository;
     private final PasswordHasher passwordHasher;
@@ -65,6 +69,7 @@ public class QuanLyNguoiDungService {
         }
 
         List<Long> toaNhaIds = chuanHoaToaNhaIds(yeuCau.toaNhaIds());
+        Long nguoiThueId = chuanHoaNguoiThueId(yeuCau, null);
         NguoiDung moi = new NguoiDung(
                 null,
                 yeuCau.hoTen(),
@@ -72,9 +77,15 @@ public class QuanLyNguoiDungService {
                 passwordHasher.hash(maNgauNhienDeVoHieuHoaMatKhauBanDau()),
                 yeuCau.vaiTro(),
                 TrangThaiNguoiDung.HOAT_DONG,
-                0
+                0,
+                nguoiThueId
         );
-        Long nguoiDungId = nguoiDungRepository.insert(moi);
+        Long nguoiDungId;
+        try {
+            nguoiDungId = nguoiDungRepository.insert(moi);
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_NGUOI_THUE_DA_GAN, exception);
+        }
         nguoiDungRepository.capNhatQuyenToa(nguoiDungId, toaNhaIds);
         NguoiDung nguoiDungMoi = layNguoiDung(nguoiDungId);
         kichHoatTaiKhoanService.taoMaKichHoat(nguoiDungMoi);
@@ -94,13 +105,18 @@ public class QuanLyNguoiDungService {
         }
 
         List<Long> toaNhaIds = chuanHoaToaNhaIds(yeuCau.toaNhaIds());
+        Long nguoiThueId = chuanHoaNguoiThueId(yeuCau, nguoiDungId);
         if (!hienTai.soDienThoai().equals(soDienThoai)) {
             nguoiDungRepository.capNhatSoDienThoaiDangNhap(
                     SoDienThoaiKey.tu(hienTai.soDienThoai()),
                     soDienThoai
             );
         }
-        nguoiDungRepository.capNhatThongTinNguoiDung(nguoiDungId, yeuCau.hoTen(), soDienThoai, yeuCau.vaiTro());
+        try {
+            nguoiDungRepository.capNhatThongTinNguoiDung(nguoiDungId, yeuCau.hoTen(), soDienThoai, yeuCau.vaiTro(), nguoiThueId);
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_NGUOI_THUE_DA_GAN, exception);
+        }
         nguoiDungRepository.capNhatQuyenToa(nguoiDungId, toaNhaIds);
         return toThongTinQuanLyNguoiDung(layNguoiDung(nguoiDungId));
     }
@@ -149,6 +165,22 @@ public class QuanLyNguoiDungService {
             uniqueIds.add(toaNhaId);
         }
         return List.copyOf(uniqueIds);
+    }
+
+    private Long chuanHoaNguoiThueId(YeuCauQuanLyNguoiDung yeuCau, Long nguoiDungId) {
+        if (yeuCau.vaiTro() != VaiTro.NGUOI_THUE) {
+            return null;
+        }
+        if (yeuCau.nguoiThueId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_NGUOI_THUE_BAT_BUOC);
+        }
+        if (!nguoiDungRepository.existsNguoiThueById(yeuCau.nguoiThueId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        if (nguoiDungRepository.existsNguoiDungByNguoiThueIdExceptId(yeuCau.nguoiThueId(), nguoiDungId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_NGUOI_THUE_DA_GAN);
+        }
+        return yeuCau.nguoiThueId();
     }
 
     private ThongTinQuanLyNguoiDung toThongTinQuanLyNguoiDung(NguoiDung nguoiDung) {
