@@ -6,14 +6,19 @@
 
 **Blocked by:** 01, `slice-01 · 04` (dịch vụ), `slice-02 · 04` (hợp đồng)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Bảng `CHI_SO_DICH_VU` theo ERD: phòng, dịch vụ, kỳ, chỉ số đầu, chỉ số cuối, người ghi, thời điểm ghi
-- [ ] Chỉ số đầu kỳ **tự lấy** từ chỉ số cuối của kỳ trước, không bắt gõ lại
-- [ ] Ô nhập dùng bàn phím số trên điện thoại, cỡ chữ đủ lớn để đọc ngoài hành lang
-- [ ] Mức tiêu thụ hiện **ngay khi gõ**, không phải sau khi bấm lưu
-- [ ] Chỉ hiện những phòng **có hợp đồng hiệu lực trong kỳ** — phòng trống không có gì để ghi
-- [ ] Lưu từng phòng một, không phải lưu cả trang một lần: mất mạng giữa chừng thì mất một phòng, không mất cả buổi
-- [ ] Hiện rõ đã ghi bao nhiêu trên tổng bao nhiêu phòng
-- [ ] **Kiểm chứng thật trên khung điện thoại**, không phải thu nhỏ cửa sổ trình duyệt rồi coi là xong
-- [ ] Tên test mang mã `FR-MTR-01` và `FR-MTR-02`
+- [x] Bảng `CHI_SO_DICH_VU` theo ERD: phòng, dịch vụ, kỳ, chỉ số đầu, chỉ số cuối, người ghi, thời điểm ghi
+- [x] Chỉ số đầu kỳ **tự lấy** từ chỉ số cuối của kỳ trước, không bắt gõ lại
+- [x] Ô nhập dùng bàn phím số trên điện thoại, cỡ chữ đủ lớn để đọc ngoài hành lang
+- [x] Mức tiêu thụ hiện **ngay khi gõ**, không phải sau khi bấm lưu
+- [x] Chỉ hiện những phòng **có hợp đồng hiệu lực trong kỳ** — phòng trống không có gì để ghi
+- [x] Lưu từng phòng một, không phải lưu cả trang một lần: mất mạng giữa chừng thì mất một phòng, không mất cả buổi
+- [x] Hiện rõ đã ghi bao nhiêu trên tổng bao nhiêu phòng
+- [x] **Kiểm chứng thật trên khung điện thoại**, không phải thu nhỏ cửa sổ trình duyệt rồi coi là xong
+- [x] Tên test mang mã `FR-MTR-01` và `FR-MTR-02`
+
+## Comments
+
+- Backend lưu từng cặp phòng/dịch vụ qua API, tự lấy chỉ số đầu từ kỳ trước và lọc hợp đồng hiệu lực.
+- Frontend đã kiểm chứng trên viewport 390×844: nhập số, tính tiêu thụ tức thời, nhấn Enter lưu và chuyển focus sang ô kế tiếp.

@@ -240,6 +240,12 @@ describe('App role navigation', () => {
       setInputValue(createForm.querySelector('input[name="soNgayHanTt"]') as HTMLInputElement, '5')
       setInputValue(createForm.querySelector('input[name="tkNganHang"]') as HTMLInputElement, '0123456789')
       setInputValue(createForm.querySelector('input[name="nguongThatThoat"]') as HTMLInputElement, '12.35')
+    })
+
+    const mandatoryPhotoPolicy = createForm.querySelector('input[name="batBuocAnhCongTo"]') as HTMLInputElement
+    expect(mandatoryPhotoPolicy.checked).toBe(false)
+
+    await act(async () => {
       createForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
     })
 
@@ -261,6 +267,7 @@ describe('App role navigation', () => {
       soNgayHanTt: 5,
       tkNganHang: '0123456789',
       nguongThatThoat: '12.35',
+      batBuocAnhCongTo: false,
     })
 
     await act(async () => {
@@ -659,6 +666,7 @@ function buildFetchMock(
       soNgayHanTt: 7,
       tkNganHang: '123456789',
       nguongThatThoat: '20.00',
+      batBuocAnhCongTo: false,
     },
     {
       id: 2,
@@ -670,6 +678,7 @@ function buildFetchMock(
       soNgayHanTt: 7,
       tkNganHang: '987654321',
       nguongThatThoat: '20.00',
+      batBuocAnhCongTo: false,
     },
   ]
   const roles = [

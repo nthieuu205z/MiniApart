@@ -160,6 +160,10 @@ dd {
   color: #a33737;
 }
 
+.status-message--warning {
+  color: #8a5a00;
+}
+
 .login-form,
 .welcome-panel,
 .dashboard-panel {
@@ -226,6 +230,15 @@ dd {
 .ghost-button:disabled {
   cursor: wait;
   opacity: 0.65;
+}
+
+.meter-service__warning {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.8rem;
+  border: 1px solid #efd584;
+  border-radius: 0.8rem;
+  background: #fff9df;
 }
 
 .primary-button:hover,
@@ -1003,5 +1016,117 @@ dd {
     background:
       linear-gradient(135deg, rgba(107, 114, 128, 0.2), rgba(9, 33, 31, 0)),
       rgba(15, 23, 42, 0.55);
+  }
+}
+
+.field input[type='number'] {
+  font-size: 1.15rem;
+}
+
+.meter-screen {
+  display: grid;
+  gap: 1rem;
+}
+
+.meter-header,
+.meter-toolbar {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.meter-progress {
+  margin: 0;
+  color: #0f766e;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.meter-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.meter-room {
+  padding: 1rem;
+  border: 1px solid #d5e6e1;
+  border-radius: 1rem;
+  background: #f9fcfb;
+}
+
+.meter-room__header h4 {
+  margin: 0;
+  color: #0f4f4a;
+  font-size: 1.15rem;
+}
+
+.meter-services {
+  display: grid;
+  gap: 1rem;
+}
+
+.meter-service {
+  display: grid;
+  gap: 0.65rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e1ece8;
+}
+
+.meter-service__meta {
+  display: grid;
+  gap: 0.2rem;
+  color: #52706b;
+}
+
+.meter-service__meta strong {
+  color: #0f4f4a;
+}
+
+.meter-input {
+  width: 100%;
+  padding: 1rem 1.05rem;
+  border: 1px solid #c5dbd5;
+  border-radius: 1rem;
+  background: #fff;
+  color: #14322f;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.meter-input:focus {
+  outline: 2px solid rgba(15, 118, 110, 0.25);
+  border-color: #0f766e;
+}
+
+.meter-service__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #335a55;
+  font-weight: 650;
+}
+
+.meter-service__toggle input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #0f766e;
+}
+
+.meter-service__consumption {
+  margin: 0;
+  color: #0f766e;
+  font-size: 0.98rem;
+  font-weight: 750;
+}
+
+.meter-service__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (min-width: 720px) {
+  .meter-header,
+  .meter-toolbar {
+    grid-template-columns: 1fr auto;
+    align-items: end;
   }
 }

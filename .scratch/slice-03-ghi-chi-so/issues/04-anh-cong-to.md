@@ -6,11 +6,11 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Dùng lại `ANH_DINH_KEM` với `doi_tuong_loai` = `CHI_SO_DICH_VU`, và dùng lại cơ chế **liên kết ký hạn 15 phút** của `slice-02 · 02` — không viết cơ chế lưu ảnh thứ hai
-- [ ] Cờ bắt buộc ảnh khai ở cấp **toà nhà** (FR-MTR-07), mặc định tắt
-- [ ] Bật cờ mà lưu không có ảnh thì bị từ chối ở máy chủ, không chỉ ở giao diện
-- [ ] Chụp thẳng bằng máy ảnh điện thoại, không bắt phải vào thư viện ảnh
-- [ ] Ảnh nén lại trước khi tải lên — ảnh gốc điện thoại vài megabyte mà sóng hành lang thì yếu
-- [ ] Tên test mang mã `FR-MTR-06` và `FR-MTR-07`
+- [x] Dùng lại `ANH_DINH_KEM` với `doi_tuong_loai` = `CHI_SO_DICH_VU`, và dùng lại cơ chế **liên kết ký hạn 15 phút** của `slice-02 · 02` — không viết cơ chế lưu ảnh thứ hai
+- [x] Cờ bắt buộc ảnh khai ở cấp **toà nhà** (FR-MTR-07), mặc định tắt
+- [x] Bật cờ mà lưu không có ảnh thì bị từ chối ở máy chủ, không chỉ ở giao diện
+- [x] Chụp thẳng bằng máy ảnh điện thoại, không bắt phải vào thư viện ảnh
+- [x] Ảnh nén lại trước khi tải lên — ảnh gốc điện thoại vài megabyte mà sóng hành lang thì yếu
+- [x] Tên test mang mã `FR-MTR-06` và `FR-MTR-07`

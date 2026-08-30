@@ -11,6 +11,7 @@ import {
 import { clearStoredToken, readStoredToken, storeToken } from './authSession'
 import DanhMucToaNha from './DanhMucToaNha'
 import DanhMucPhong from './DanhMucPhong'
+import GhiChiSo from './GhiChiSo'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { layMenuTheoVaiTro, xacDinhTrangTheoVaiTro } from './roleNavigation'
 import './styles.css'
@@ -139,15 +140,25 @@ function App() {
     && duongDanHienTai === '/phong'
     && nguoiDung.vaiTro === 'QUAN_LY',
   )
+  const hienThiGhiChiSo = Boolean(
+    token
+    && nguoiDung
+    && duongDanHienTai === '/ghi-chi-so'
+    && nguoiDung.vaiTro === 'QUAN_LY',
+  )
   const tieuDeTheChinh = hienThiDanhMucToaNha
     ? 'Toà nhà'
     : hienThiDanhMucPhong
       ? 'Phòng'
+      : hienThiGhiChiSo
+        ? 'Ghi chỉ số'
       : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
   const maTruyVetTheChinh = hienThiDanhMucToaNha
     ? 'FR-BLD-01'
     : hienThiDanhMucPhong
       ? 'FR-BLD-02'
+      : hienThiGhiChiSo
+        ? 'FR-MTR-01'
       : nguoiDung ? 'FR-AUT-04' : 'FR-AUT-01'
 
   return (
@@ -219,6 +230,8 @@ function App() {
               <DanhMucToaNha token={token} vaiTro={nguoiDung.vaiTro} />
             ) : hienThiDanhMucPhong && token ? (
               <DanhMucPhong token={token} />
+            ) : hienThiGhiChiSo && token ? (
+              <GhiChiSo token={token} />
             ) : nguoiDung.vaiTro === 'QTHT' && duongDanHienTai === '/tai-khoan' && token ? (
               <QuanLyTaiKhoan token={token} />
             ) : trangVaiTro ? (

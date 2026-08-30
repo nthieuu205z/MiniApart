@@ -22,6 +22,21 @@ export type ThongTinQuanLyNguoiDung = {
   toaNhaIds: number[]
 }
 
+export type ThongTinKyThanhToan = {
+  id: number
+  nam: number
+  thang: number
+  ngayBatDau: string
+  ngayKetThuc: string
+  trangThai: string
+}
+
+export type ThongTinPhongChuaGhiChiSo = {
+  id: number
+  soPhong: string
+  tang: number
+}
+
 export type ThongTinToaNha = {
   id: number
   maToa: string
@@ -32,6 +47,7 @@ export type ThongTinToaNha = {
   soNgayHanTt: number
   tkNganHang: string
   nguongThatThoat: string
+  batBuocAnhCongTo: boolean
 }
 
 export type ThongTinPhong = {
@@ -70,6 +86,65 @@ export type KetQuaPhongHangLoat = {
   phong: ThongTinPhong[]
 }
 
+export type ThongTinGhiChiSo = {
+  tongPhong: number
+  daGhi: number
+  phong: Array<{
+    id: number
+    soPhong: string
+    tang: number
+    dichVu: Array<{
+      id: number
+      tenDichVu: string
+      donVi: string
+      chiSoDau: string
+      chiSoCuoi?: string | null
+      mucTieuThu?: string | null
+      coThayCongTo: boolean
+      chiSoCuoiCongToCu?: string | null
+      chiSoDauCongToMoi?: string | null
+      anhCongToId?: number | null
+      daXacNhanCanhBao?: boolean
+      thongTinCanhBaoTieuThu?: {
+        soKyLichSu: number
+        trungBinhBaKyTruoc: string
+        nguongCanhBao: string
+      } | null
+    }>
+  }>
+}
+
+export type YeuCauGhiChiSo = {
+  phongId: number
+  dichVuId: number
+  chiSoCuoi: string
+  coThayCongTo: boolean
+  chiSoCuoiCongToCu?: string
+  chiSoDauCongToMoi?: string
+  xacNhanCanhBao?: boolean
+  tep?: File
+}
+
+export type ThongTinKetQuaGhiChiSo = {
+  phongId: number
+  dichVuId: number
+  chiSoDau: string
+  chiSoCuoi: string
+  mucTieuThu: string
+  coThayCongTo: boolean
+  chiSoCuoiCongToCu?: string | null
+  chiSoDauCongToMoi?: string | null
+  anhCongToId?: number | null
+  canhBaoTieuThuBatThuong?: {
+    coCanhBao: boolean
+    thongBaoCanhBao: string
+    mucTieuThuKyNay: string
+    trungBinhBaKyTruoc: string
+    gapTrungBinh: string
+    nguongCanhBao: string
+  } | null
+}
+
 export type YeuCauToaNha = {
   maToa: string
   ten: string
@@ -79,6 +154,7 @@ export type YeuCauToaNha = {
   soNgayHanTt: number
   tkNganHang: string
   nguongThatThoat: string
+  batBuocAnhCongTo: boolean
 }
 
 export type ThongTinVaiTro = {
@@ -219,6 +295,112 @@ export async function fetchPhong(token: string, toaNhaId: number, tang?: number)
   return response.json() as Promise<ThongTinPhong[]>
 }
 
+export async function fetchKyThanhToan(token: string, toaNhaId: number): Promise<ThongTinKyThanhToan[]> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/ky-thanh-toan`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải danh sách kỳ thanh toán.')
+  }
+
+  return response.json() as Promise<ThongTinKyThanhToan[]>
+}
+
+export async function fetchChiSoDichVu(
+  token: string,
+  toaNhaId: number,
+  kyId: number,
+): Promise<ThongTinGhiChiSo> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/ky-thanh-toan/${kyId}/chi-so`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải danh sách ghi chỉ số.')
+  }
+
+  return response.json() as Promise<ThongTinGhiChiSo>
+}
+
+export async function fetchPhongChuaGhiChiSo(
+  token: string,
+  toaNhaId: number,
+  kyId: number,
+): Promise<ThongTinPhongChuaGhiChiSo[]> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/ky-thanh-toan/${kyId}/thieu-chi-so`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải danh sách phòng còn thiếu chỉ số.')
+  }
+
+  return response.json() as Promise<ThongTinPhongChuaGhiChiSo[]>
+}
+
+export async function ghiChiSoDichVu(
+  token: string,
+  toaNhaId: number,
+  kyId: number,
+  payload: YeuCauGhiChiSo,
+): Promise<ThongTinKetQuaGhiChiSo> {
+  const tep = payload.tep
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/ky-thanh-toan/${kyId}/chi-so`, {
+    method: 'POST',
+    headers: tep ? authorizationHeaders(token) : jsonAuthorizationHeaders(token),
+    body: tep ? taoFormDataGhiChiSo(payload) : JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể lưu chỉ số.')
+  }
+
+  return response.json() as Promise<ThongTinKetQuaGhiChiSo>
+}
+
+export async function chotKyThanhToan(
+  token: string,
+  toaNhaId: number,
+  kyId: number,
+): Promise<{ kyThanhToan: ThongTinKyThanhToan } | { phongThieuChiSo: ThongTinPhongChuaGhiChiSo[] }> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/ky-thanh-toan/${kyId}/chot`, {
+    method: 'POST',
+    headers: authorizationHeaders(token),
+  })
+
+  if (response.ok) {
+    return { kyThanhToan: await response.json() as ThongTinKyThanhToan }
+  }
+
+  if (response.status === 409) {
+    const body = await docJsonNeuCo(response)
+    if (laDanhSachPhongChuaGhiChiSo(body)) {
+      return { phongThieuChiSo: body }
+    }
+    throw taoApiErrorTuBody(response.status, body, 'Không thể chốt kỳ thanh toán.')
+  }
+
+  throw await toApiError(response, 'Không thể chốt kỳ thanh toán.')
+}
+
+function taoFormDataGhiChiSo(payload: YeuCauGhiChiSo): FormData {
+  const formData = new FormData()
+  formData.set('phongId', String(payload.phongId))
+  formData.set('dichVuId', String(payload.dichVuId))
+  formData.set('chiSoCuoi', payload.chiSoCuoi)
+  formData.set('coThayCongTo', String(payload.coThayCongTo))
+  if (payload.chiSoCuoiCongToCu !== undefined) formData.set('chiSoCuoiCongToCu', payload.chiSoCuoiCongToCu)
+  if (payload.chiSoDauCongToMoi !== undefined) formData.set('chiSoDauCongToMoi', payload.chiSoDauCongToMoi)
+  if (payload.xacNhanCanhBao) {
+    formData.set('xacNhanCanhBao', 'true')
+  }
+  if (payload.tep) {
+    formData.set('tep', payload.tep)
+  }
+  return formData
+}
+
 export async function taoPhong(token: string, toaNhaId: number, payload: YeuCauPhong): Promise<ThongTinPhong> {
   const response = await fetch(`/api/toa-nha/${toaNhaId}/phong`, {
     method: 'POST',
@@ -341,11 +523,28 @@ function jsonAuthorizationHeaders(token: string) {
 }
 
 async function toApiError(response: Response, fallbackMessage: string) {
-  const contentType = response.headers.get('Content-Type') ?? ''
-  if (contentType.includes('application/json')) {
-    const body = (await response.json()) as { thongBao?: string }
-    return new ApiError(response.status, body.thongBao ?? fallbackMessage)
-  }
+  return taoApiErrorTuBody(response.status, await docJsonNeuCo(response), fallbackMessage)
+}
 
-  return new ApiError(response.status, fallbackMessage)
+async function docJsonNeuCo(response: Response): Promise<unknown> {
+  const contentType = response.headers.get('Content-Type') ?? ''
+  if (!contentType.includes('application/json')) return null
+  return response.json()
+}
+
+function taoApiErrorTuBody(status: number, body: unknown, fallbackMessage: string) {
+  const message = typeof body === 'object' && body !== null && 'thongBao' in body && typeof body.thongBao === 'string'
+    ? body.thongBao
+    : fallbackMessage
+  return new ApiError(status, message)
+}
+
+function laDanhSachPhongChuaGhiChiSo(body: unknown): body is ThongTinPhongChuaGhiChiSo[] {
+  return Array.isArray(body) && body.every((item) => (
+    typeof item === 'object'
+    && item !== null
+    && 'id' in item
+    && 'soPhong' in item
+    && 'tang' in item
+  ))
 }

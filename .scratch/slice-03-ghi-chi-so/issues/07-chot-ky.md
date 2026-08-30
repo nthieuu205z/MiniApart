@@ -6,10 +6,17 @@ Chốt kỳ khi còn phòng thiếu chỉ số nghĩa là phòng đó không ra 
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Màn hình chốt kỳ liệt kê rõ từng phòng còn thiếu, bấm vào là nhảy thẳng tới ô nhập của phòng đó
-- [ ] Chặn ở **máy chủ**, không chỉ ẩn nút trên giao diện
-- [ ] Phòng không có hợp đồng hiệu lực trong kỳ **không tính là thiếu**
-- [ ] Chốt kỳ là một thao tác nguyên tử: hoặc chốt trọn, hoặc không đổi gì
-- [ ] Tên test mang mã `FR-MTR-08`
+- [x] Màn hình chốt kỳ liệt kê rõ từng phòng còn thiếu, bấm vào là nhảy thẳng tới ô nhập của phòng đó
+- [x] Chặn ở **máy chủ**, không chỉ ẩn nút trên giao diện
+- [x] Phòng không có hợp đồng hiệu lực trong kỳ **không tính là thiếu**
+- [x] Chốt kỳ là một thao tác nguyên tử: hoặc chốt trọn, hoặc không đổi gì
+- [x] Tên test mang mã `FR-MTR-08`
+
+## Comments
+
+- Thêm `GET /api/toa-nha/{toaNhaId}/ky-thanh-toan/{kyId}/thieu-chi-so` để màn hình lấy danh sách phòng còn thiếu.
+- Thêm `POST /api/toa-nha/{toaNhaId}/ky-thanh-toan/{kyId}/chot`; nếu còn phòng thiếu thì trả 409 kèm danh sách phòng, nếu đủ thì đổi đúng kỳ đó sang `DA_CHOT`.
+- Danh sách thiếu được tính từ cùng scope với `findChoNhap`, nên phòng không có dịch vụ theo chỉ số hợp lệ không bị liệt kê.
+- Chuyển trạng thái và kiểm tra thiếu cùng nằm trong một transaction để tránh UI cũ làm chốt nhầm.

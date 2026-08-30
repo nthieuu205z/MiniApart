@@ -6,10 +6,16 @@ Ticket này không đóng một FR nào, nhưng **không có nó thì bảy tick
 
 **Blocked by:** `slice-01 · 01` (toà nhà)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Bảng `KY_THANH_TOAN` theo ERD, gắn với một toà nhà, có năm, tháng, ngày bắt đầu, ngày kết thúc, trạng thái
-- [ ] Ngày bắt đầu và kết thúc suy ra từ `TOA_NHA.ngay_chot_so` — kỳ **không** nhất thiết trùng tháng dương lịch
-- [ ] Một toà không có hai kỳ trùng năm-tháng: ràng buộc duy nhất ở tầng cơ sở dữ liệu
-- [ ] Chỉ có **một kỳ đang mở** cho mỗi toà tại một thời điểm
-- [ ] Kỳ đã chốt thì không mở lại được bằng thao tác thường
+- [x] Bảng `KY_THANH_TOAN` theo ERD, gắn với một toà nhà, có năm, tháng, ngày bắt đầu, ngày kết thúc, trạng thái
+- [x] Ngày bắt đầu và kết thúc suy ra từ `TOA_NHA.ngay_chot_so` — kỳ **không** nhất thiết trùng tháng dương lịch
+- [x] Một toà không có hai kỳ trùng năm-tháng: ràng buộc duy nhất ở tầng cơ sở dữ liệu
+- [x] Chỉ có **một kỳ đang mở** cho mỗi toà tại một thời điểm
+- [x] Kỳ đã chốt thì không mở lại được bằng thao tác thường
+
+## Comments
+
+- Dùng endpoint con của toà nhà để giữ đúng mẫu phân quyền theo toà hiện có.
+- Khóa trùng kỳ và một-kỳ-mở được chốt ở cả service lẫn ràng buộc cơ sở dữ liệu.
+- Không thêm thao tác mở lại hay chốt kỳ trong ticket này để giữ đúng phạm vi nền tảng của slice.
