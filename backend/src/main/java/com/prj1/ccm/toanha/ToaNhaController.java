@@ -4,6 +4,7 @@ import com.prj1.ccm.auth.AuthInterceptor;
 import com.prj1.ccm.nguoidung.NguoiDung;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,17 +26,23 @@ public class ToaNhaController {
     private final DanhMucToaNhaService danhMucToaNhaService;
     private final DanhMucPhongService danhMucPhongService;
     private final DanhMucDichVuService danhMucDichVuService;
+    private final KyThanhToanService kyThanhToanService;
+    private final ChiSoDichVuService chiSoDichVuService;
 
     public ToaNhaController(
             PhanQuyenToaService phanQuyenToaService,
             DanhMucToaNhaService danhMucToaNhaService,
             DanhMucPhongService danhMucPhongService,
-            DanhMucDichVuService danhMucDichVuService
+            DanhMucDichVuService danhMucDichVuService,
+            KyThanhToanService kyThanhToanService,
+            ChiSoDichVuService chiSoDichVuService
     ) {
         this.phanQuyenToaService = phanQuyenToaService;
         this.danhMucToaNhaService = danhMucToaNhaService;
         this.danhMucPhongService = danhMucPhongService;
         this.danhMucDichVuService = danhMucDichVuService;
+        this.kyThanhToanService = kyThanhToanService;
+        this.chiSoDichVuService = chiSoDichVuService;
     }
 
     /**
@@ -256,6 +264,197 @@ public class ToaNhaController {
             HttpServletRequest request
     ) {
         return danhMucDichVuService.capNhatTrangThai(toaNhaId, dichVuId, yeuCau, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-MTR-01 lists the payment periods of one visible building so metering and later billing can anchor to a period.
+     *
+     * @param toaNhaId the building identifier
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the payment-period list with open and closed status
+     */
+    @GetMapping("/{toaNhaId}/ky-thanh-toan")
+    public List<ThongTinKyThanhToan> danhSachKyThanhToan(
+            @PathVariable Long toaNhaId,
+            HttpServletRequest request
+    ) {
+        return kyThanhToanService.danhSachKyThanhToan(toaNhaId, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-MTR-01 opens one new payment period for a visible building using the building closing day to derive the date range.
+     *
+     * @param toaNhaId the building identifier
+     * @param yeuCau the requested period month and year
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the newly opened payment period
+     */
+    @PostMapping("/{toaNhaId}/ky-thanh-toan")
+    public ResponseEntity<ThongTinKyThanhToan> moKyThanhToan(
+            @PathVariable Long toaNhaId,
+            @RequestBody YeuCauMoKyThanhToan yeuCau,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(kyThanhToanService.moKyThanhToan(toaNhaId, yeuCau, nguoiDungHienTai(request)));
+    }
+
+    /**
+     * FR-MTR-08 lists the rooms that are still missing meter readings before a payment period can be closed.
+     *
+     * @param toaNhaId the building identifier
+     * @param kyId the payment-period identifier
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the rooms that still need readings
+     */
+    @GetMapping("/{toaNhaId}/ky-thanh-toan/{kyId}/thieu-chi-so")
+    public List<ThongTinPhongChuaGhiChiSo> danhSachPhongChuaGhiChiSo(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long kyId,
+            HttpServletRequest request
+    ) {
+        return kyThanhToanService.danhSachPhongChuaGhiChiSo(toaNhaId, kyId, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-MTR-08 closes one open payment period only when every eligible metered room already has a persisted reading.
+     *
+     * @param toaNhaId the building identifier
+     * @param kyId the payment-period identifier
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the closed period when successful, or the missing-room list with HTTP 409 when not
+     */
+    @PostMapping("/{toaNhaId}/ky-thanh-toan/{kyId}/chot")
+    public ResponseEntity<?> chotKyThanhToan(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long kyId,
+            HttpServletRequest request
+    ) {
+        KetQuaChotKy ketQua = kyThanhToanService.chotKyThanhToan(toaNhaId, kyId, nguoiDungHienTai(request));
+        if (!ketQua.phongThieuChiSo().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ketQua.phongThieuChiSo());
+        }
+        return ResponseEntity.ok(ketQua.kyThanhToan());
+    }
+
+    /**
+     * FR-MTR-01 loads the mobile meter-reading list for one visible building and payment period.
+     * FR-MTR-04 includes same-room history and the configured anomaly-warning context for each service.
+     *
+     * @param toaNhaId the building identifier
+     * @param kyId the payment-period identifier
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the room/service reading grid for the selected period
+     */
+    @GetMapping("/{toaNhaId}/ky-thanh-toan/{kyId}/chi-so")
+    public ThongTinGhiChiSo danhSachChiSo(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long kyId,
+            HttpServletRequest request
+    ) {
+        return chiSoDichVuService.danhSachChiSo(toaNhaId, kyId, nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-MTR-02 saves one room/service meter reading for one visible building and payment period.
+     * FR-MTR-03 rejects readings lower than the previous reading unless the replacement-meter flag is explicitly declared.
+     * FR-MTR-04 requires acknowledgement before saving an anomalously high consumption reading.
+     * FR-MTR-09 accepts both replacement-meter readings and calculates the two-segment consumption.
+     * FR-MTR-10 blocks new saves from mutating a payment period after that period has been closed.
+     *
+     * @param toaNhaId the building identifier
+     * @param kyId the payment-period identifier
+     * @param yeuCau the submitted reading
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the saved reading summary
+     */
+    @PostMapping(
+            value = "/{toaNhaId}/ky-thanh-toan/{kyId}/chi-so",
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<ThongTinKetQuaGhiChiSo> ghiChiSo(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long kyId,
+            @RequestBody YeuCauGhiChiSo yeuCau,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(chiSoDichVuService.ghiChiSo(toaNhaId, kyId, yeuCau, nguoiDungHienTai(request)));
+    }
+
+    /**
+     * FR-MTR-06 saves one room/service meter reading together with a meter-face photo using the shared attachment store.
+     * FR-MTR-07 rejects photo-less saves on buildings whose policy marks meter photos as mandatory.
+     * FR-MTR-04 requires acknowledgement before saving an anomalously high consumption reading.
+     * FR-MTR-09 accepts both replacement-meter readings and calculates the two-segment consumption.
+     * FR-MTR-10 blocks multipart saves from mutating a payment period after that period has been closed.
+     *
+     * @param toaNhaId the building identifier
+     * @param kyId the payment-period identifier
+     * @param phongId the room identifier
+     * @param dichVuId the service identifier
+     * @param chiSoCuoi the submitted closing reading
+     * @param coThayCongTo the optional replacement-meter flag
+     * @param chiSoCuoiCongToCu the required closing reading from the replaced meter when applicable
+     * @param chiSoDauCongToMoi the required opening reading from the replacement meter when applicable
+     * @param xacNhanCanhBao whether the authenticated user explicitly acknowledged an anomaly warning
+     * @param tep the optional meter-face photo file
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the saved reading summary with its latest meter-photo attachment id when present
+     */
+    @PostMapping(
+            value = "/{toaNhaId}/ky-thanh-toan/{kyId}/chi-so",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<ThongTinKetQuaGhiChiSo> ghiChiSoKemAnh(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long kyId,
+            @RequestParam Long phongId,
+            @RequestParam Long dichVuId,
+            @RequestParam java.math.BigDecimal chiSoCuoi,
+            @RequestParam(required = false) Boolean coThayCongTo,
+            @RequestParam(required = false) java.math.BigDecimal chiSoCuoiCongToCu,
+            @RequestParam(required = false) java.math.BigDecimal chiSoDauCongToMoi,
+            @RequestParam(required = false) Boolean xacNhanCanhBao,
+            @RequestParam(name = "tep", required = false) MultipartFile tep,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(chiSoDichVuService.ghiChiSo(
+                        toaNhaId,
+                        kyId,
+                        new YeuCauGhiChiSo(
+                                phongId, dichVuId, chiSoCuoi, coThayCongTo,
+                                chiSoCuoiCongToCu, chiSoDauCongToMoi, xacNhanCanhBao
+                        ),
+                        tep,
+                        nguoiDungHienTai(request)
+                ));
+    }
+
+    /**
+     * FR-MTR-10 allows only the assigned owner to revise a closed-period meter reading, and each revision must carry a reason.
+     * FR-MTR-09 keeps replacement-meter fields available when the owner revises a closed-period reading.
+     *
+     * @param toaNhaId the building identifier
+     * @param kyId the closed payment-period identifier
+     * @param yeuCau the submitted closed-period revision
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the revised reading summary
+     */
+    @PutMapping(
+            value = "/{toaNhaId}/ky-thanh-toan/{kyId}/chi-so",
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<ThongTinKetQuaGhiChiSo> capNhatChiSoDaChot(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long kyId,
+            @RequestBody YeuCauCapNhatChiSoDaChot yeuCau,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.ok(
+                chiSoDichVuService.capNhatChiSoDaChot(toaNhaId, kyId, yeuCau, nguoiDungHienTai(request))
+        );
     }
 
     private NguoiDung nguoiDungHienTai(HttpServletRequest request) {

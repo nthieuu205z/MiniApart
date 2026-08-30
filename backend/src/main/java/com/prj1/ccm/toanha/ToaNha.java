@@ -11,6 +11,7 @@ public record ToaNha(
         int ngayChotSo,
         int soNgayHanTt,
         String tkNganHang,
-        BigDecimal nguongThatThoat
+        BigDecimal nguongThatThoat,
+        boolean batBuocAnhCongTo
 ) {
 }

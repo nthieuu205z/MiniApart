@@ -15,3 +15,5 @@ app:
   auth:
     jwt-secret: ${JWT_SECRET:dev-only-slice-00-signing-secret-not-for-production}
     token-ttl-seconds: ${JWT_TTL_SECONDS:1800}
+  toa-nha:
+    canh-bao-tieu-thu-nguong: ${METER_ANOMALY_WARNING_THRESHOLD:1.50}

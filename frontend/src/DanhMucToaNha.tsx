@@ -23,6 +23,7 @@ type BieuMauToaNha = {
   soNgayHanTt: string
   tkNganHang: string
   nguongThatThoat: string
+  batBuocAnhCongTo: boolean
 }
 
 export default function DanhMucToaNha({ token, vaiTro }: Props) {
@@ -75,6 +76,7 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
       soNgayHanTt: '7',
       tkNganHang: '',
       nguongThatThoat: '0.00',
+      batBuocAnhCongTo: false,
     })
   }
 
@@ -91,6 +93,7 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
       soNgayHanTt: String(toaNha.soNgayHanTt),
       tkNganHang: toaNha.tkNganHang,
       nguongThatThoat: toaNha.nguongThatThoat,
+      batBuocAnhCongTo: toaNha.batBuocAnhCongTo,
     })
     setToaDangChonId(toaNha.id)
   }
@@ -130,7 +133,7 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
     }
   }
 
-  function capNhatTruong(tenTruong: keyof BieuMauToaNha, giaTri: string) {
+  function capNhatTruong(tenTruong: keyof BieuMauToaNha, giaTri: string | boolean) {
     setBieuMau((current) => current ? { ...current, [tenTruong]: giaTri } : current)
   }
 
@@ -340,6 +343,16 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
                 />
               </label>
 
+              <label className="field field--checkbox">
+                <input
+                  name="batBuocAnhCongTo"
+                  type="checkbox"
+                  checked={bieuMau.batBuocAnhCongTo}
+                  onChange={(event) => capNhatTruong('batBuocAnhCongTo', event.target.checked)}
+                />
+                <span>Bắt buộc ảnh công tơ khi ghi chỉ số</span>
+              </label>
+
               <div className="building-form__actions">
                 <button type="button" className="ghost-button" onClick={huyBieuMau}>
                   Huỷ
@@ -366,6 +379,7 @@ function chuyenThanhPayload(bieuMau: BieuMauToaNha): YeuCauToaNha {
     soNgayHanTt: Number(bieuMau.soNgayHanTt),
     tkNganHang: bieuMau.tkNganHang,
     nguongThatThoat: bieuMau.nguongThatThoat,
+    batBuocAnhCongTo: bieuMau.batBuocAnhCongTo,
   }
 }
 

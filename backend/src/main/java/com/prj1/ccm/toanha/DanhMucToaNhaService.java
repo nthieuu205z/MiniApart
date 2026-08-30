@@ -108,7 +108,8 @@ public class DanhMucToaNhaService {
                 yeuCau.ngayChotSo(),
                 yeuCau.soNgayHanTt(),
                 yeuCau.tkNganHang().trim(),
-                nguongThatThoat
+                nguongThatThoat,
+                Boolean.TRUE.equals(yeuCau.batBuocAnhCongTo())
         );
     }
 }

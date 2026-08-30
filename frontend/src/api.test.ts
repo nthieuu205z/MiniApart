@@ -2,9 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ApiError,
   capNhatNguoiDungQuanLy,
+  chotKyThanhToan,
   fetchCurrentUser,
   fetchNguoiDungQuanLy,
   fetchHealth,
+  fetchPhongChuaGhiChiSo,
+  ghiChiSoDichVu,
   fetchToaNha,
   fetchVaiTro,
   khoaNguoiDungQuanLy,
@@ -138,6 +141,154 @@ describe('fetchHealth', () => {
     })
   })
 
+  it('FR-MTR-06 posts meter photos as multipart form data when saving a reading', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        phongId: 11,
+        dichVuId: 21,
+        chiSoDau: '1240.00',
+        chiSoCuoi: '1252.75',
+        mucTieuThu: '12.75',
+        coThayCongTo: false,
+        anhCongToId: 77,
+      }, 201),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const tep = new File([new Uint8Array([1, 2, 3, 4])], 'cong-to.jpg', { type: 'image/jpeg' })
+
+    await expect(ghiChiSoDichVu('meter-token', 1, 8, {
+      phongId: 11,
+      dichVuId: 21,
+      chiSoCuoi: '1252.75',
+      coThayCongTo: false,
+      tep,
+    } as any)).resolves.toEqual({
+      phongId: 11,
+      dichVuId: 21,
+      chiSoDau: '1240.00',
+      chiSoCuoi: '1252.75',
+      mucTieuThu: '12.75',
+      coThayCongTo: false,
+      anhCongToId: 77,
+    })
+
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('/api/toa-nha/1/ky-thanh-toan/8/chi-so')
+    expect(init?.method).toBe('POST')
+    expect(init?.body).toBeInstanceOf(FormData)
+    const body = init?.body as FormData
+    expect(body.get('phongId')).toBe('11')
+    expect(body.get('dichVuId')).toBe('21')
+    expect(body.get('chiSoCuoi')).toBe('1252.75')
+    expect(body.get('coThayCongTo')).toBe('false')
+    expect(body.get('tep')).toBeInstanceOf(File)
+    expect((body.get('tep') as File).name).toBe('cong-to.jpg')
+  })
+
+  it('FR-MTR-04 includes anomaly acknowledgement in multipart meter-photo saves', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        phongId: 11,
+        dichVuId: 21,
+        chiSoDau: '136.00',
+        chiSoCuoi: '160.00',
+        mucTieuThu: '24.00',
+        coThayCongTo: false,
+        anhCongToId: 77,
+        canhBaoTieuThuBatThuong: { coCanhBao: true },
+      }, 201),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const tep = new File([new Uint8Array([1, 2, 3, 4])], 'cong-to.jpg', { type: 'image/jpeg' })
+
+    await ghiChiSoDichVu('meter-token', 1, 8, {
+      phongId: 11,
+      dichVuId: 21,
+      chiSoCuoi: '160.00',
+      coThayCongTo: false,
+      xacNhanCanhBao: true,
+      tep,
+    })
+
+    const [, init] = fetchMock.mock.calls[0]
+    expect(init?.body).toBeInstanceOf(FormData)
+    expect((init?.body as FormData).get('xacNhanCanhBao')).toBe('true')
+    expect((init?.body as FormData).get('tep')).toBe(tep)
+  })
+
+  it('FR-MTR-09 CR-004 sends replacement readings through multipart meter-photo saves', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({
+      phongId: 11,
+      dichVuId: 21,
+      chiSoDau: '1240.00',
+      chiSoCuoi: '15.25',
+      mucTieuThu: '50.75',
+      coThayCongTo: true,
+      chiSoCuoiCongToCu: '1275.50',
+      chiSoDauCongToMoi: '0.00',
+    }, 201))
+    vi.stubGlobal('fetch', fetchMock)
+    const tep = new File([new Uint8Array([1, 2, 3, 4])], 'cong-to.jpg', { type: 'image/jpeg' })
+
+    await ghiChiSoDichVu('meter-token', 1, 8, {
+      phongId: 11,
+      dichVuId: 21,
+      chiSoCuoi: '15.25',
+      coThayCongTo: true,
+      chiSoCuoiCongToCu: '1275.50',
+      chiSoDauCongToMoi: '0.00',
+      tep,
+    })
+
+    const [, init] = fetchMock.mock.calls[0]
+    const body = init?.body as FormData
+    expect(body.get('chiSoCuoiCongToCu')).toBe('1275.50')
+    expect(body.get('chiSoDauCongToMoi')).toBe('0.00')
+  })
+
+  it('FR-MTR-08 fetches the missing-room list for a payment period', async () => {
+    const missingRooms = [
+      { id: 11, soPhong: '101', tang: 1 },
+      { id: 12, soPhong: '202', tang: 2 },
+    ]
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(missingRooms))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchPhongChuaGhiChiSo('meter-token', 1, 8)).resolves.toEqual(missingRooms)
+    expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/ky-thanh-toan/8/thieu-chi-so', {
+      headers: { Authorization: 'Bearer meter-token' },
+    })
+  })
+
+  it('FR-MTR-08 returns the missing-room list when closing is rejected', async () => {
+    const missingRooms = [
+      { id: 11, soPhong: '101', tang: 1 },
+    ]
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse(missingRooms, 409),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(chotKyThanhToan('meter-token', 1, 8)).resolves.toEqual({
+      phongThieuChiSo: missingRooms,
+    })
+    expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/ky-thanh-toan/8/chot', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer meter-token' },
+    })
+  })
+
+  it('FR-MTR-08 routes close-period 409 error objects through API error conversion', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ thongBao: 'Kỳ thanh toán không còn ở trạng thái mở.' }, 409),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(chotKyThanhToan('meter-token', 1, 8)).rejects.toEqual(
+      new ApiError(409, 'Kỳ thanh toán không còn ở trạng thái mở.'),
+    )
+  })
+
   it('FR-AUT-06 fetches server-owned role labels for the account form', async () => {
     const roles = [
       { vaiTro: 'THO', tenVaiTro: 'Thợ sửa chữa' },
@@ -232,6 +383,7 @@ function buildingFixture() {
     soNgayHanTt: 7,
     tkNganHang: '123456789',
     nguongThatThoat: '20.00',
+    batBuocAnhCongTo: false,
   }
 }
 

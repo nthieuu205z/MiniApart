@@ -11,7 +11,8 @@ public record ThongTinToaNha(
         int ngayChotSo,
         int soNgayHanTt,
         String tkNganHang,
-        String nguongThatThoat
+        String nguongThatThoat,
+        boolean batBuocAnhCongTo
 ) {
     public static ThongTinToaNha tuToaNha(ToaNha toaNha) {
         return new ThongTinToaNha(
@@ -23,7 +24,8 @@ public record ThongTinToaNha(
                 toaNha.ngayChotSo(),
                 toaNha.soNgayHanTt(),
                 toaNha.tkNganHang(),
-                toaNha.nguongThatThoat().setScale(2, RoundingMode.UNNECESSARY).toPlainString()
+                toaNha.nguongThatThoat().setScale(2, RoundingMode.UNNECESSARY).toPlainString(),
+                toaNha.batBuocAnhCongTo()
         );
     }
 }

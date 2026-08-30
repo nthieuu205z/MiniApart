@@ -6,11 +6,11 @@ Mục đích là bắt lỗi gõ nhầm ngay lúc còn đứng trước công t�
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] So với trung bình ba kỳ gần nhất **của chính phòng đó**, không phải trung bình cả toà
-- [ ] Phòng chưa có đủ ba kỳ lịch sử thì **không cảnh báo** — không đủ dữ liệu để nói gì có ý nghĩa
-- [ ] Cảnh báo hiện rõ: kỳ này bao nhiêu, trung bình ba kỳ trước bao nhiêu, gấp mấy lần
-- [ ] Người ghi bấm xác nhận là lưu được. Việc xác nhận đó **ghi lại** để về sau đối chiếu
-- [ ] Ngưỡng 150% để ở một chỗ đặt được cấu hình, không rải số 1.5 khắp mã nguồn
-- [ ] Tên test mang mã `FR-MTR-04`
+- [x] So với trung bình ba kỳ gần nhất **của chính phòng đó**, không phải trung bình cả toà
+- [x] Phòng chưa có đủ ba kỳ lịch sử thì **không cảnh báo** — không đủ dữ liệu để nói gì có ý nghĩa
+- [x] Cảnh báo hiện rõ: kỳ này bao nhiêu, trung bình ba kỳ trước bao nhiêu, gấp mấy lần
+- [x] Người ghi bấm xác nhận là lưu được. Việc xác nhận đó **ghi lại** để về sau đối chiếu
+- [x] Ngưỡng 150% để ở một chỗ đặt được cấu hình, không rải số 1.5 khắp mã nguồn
+- [x] Tên test mang mã `FR-MTR-04`

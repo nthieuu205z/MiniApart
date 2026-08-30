@@ -82,9 +82,9 @@ public class ToaNhaRepository {
         return jdbcTemplate.queryForObject(
                 """
                         INSERT INTO TOA_NHA (
-                            ma_toa, ten, dia_chi, so_tang, ngay_chot_so, so_ngay_han_tt, tk_ngan_hang, nguong_that_thoat
+                            ma_toa, ten, dia_chi, so_tang, ngay_chot_so, so_ngay_han_tt, tk_ngan_hang, nguong_that_thoat, bat_buoc_anh_cong_to
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                         RETURNING id
                         """,
                 Long.class,
@@ -95,7 +95,8 @@ public class ToaNhaRepository {
                 toaNha.ngayChotSo(),
                 toaNha.soNgayHanTt(),
                 toaNha.tkNganHang(),
-                toaNha.nguongThatThoat()
+                toaNha.nguongThatThoat(),
+                toaNha.batBuocAnhCongTo()
         );
     }
 
@@ -110,7 +111,8 @@ public class ToaNhaRepository {
                             ngay_chot_so = ?,
                             so_ngay_han_tt = ?,
                             tk_ngan_hang = ?,
-                            nguong_that_thoat = ?
+                            nguong_that_thoat = ?,
+                            bat_buoc_anh_cong_to = ?
                         WHERE id = ?
                         """,
                 toaNha.maToa(),
@@ -121,6 +123,7 @@ public class ToaNhaRepository {
                 toaNha.soNgayHanTt(),
                 toaNha.tkNganHang(),
                 toaNha.nguongThatThoat(),
+                toaNha.batBuocAnhCongTo(),
                 toaNha.id()
         );
     }
@@ -152,7 +155,7 @@ public class ToaNhaRepository {
 
     private String cauLenhToaNhaCoBan() {
         return """
-                SELECT id, ma_toa, ten, dia_chi, so_tang, ngay_chot_so, so_ngay_han_tt, tk_ngan_hang, nguong_that_thoat
+                SELECT id, ma_toa, ten, dia_chi, so_tang, ngay_chot_so, so_ngay_han_tt, tk_ngan_hang, nguong_that_thoat, bat_buoc_anh_cong_to
                 FROM TOA_NHA
                 WHERE 1 = 1
                 """;
@@ -168,7 +171,8 @@ public class ToaNhaRepository {
                 resultSet.getInt("ngay_chot_so"),
                 resultSet.getInt("so_ngay_han_tt"),
                 resultSet.getString("tk_ngan_hang"),
-                resultSet.getBigDecimal("nguong_that_thoat")
+                resultSet.getBigDecimal("nguong_that_thoat"),
+                resultSet.getBoolean("bat_buoc_anh_cong_to")
         );
     }
 }

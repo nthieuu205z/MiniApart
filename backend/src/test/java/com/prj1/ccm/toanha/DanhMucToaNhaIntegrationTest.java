@@ -101,13 +101,15 @@ class DanhMucToaNhaIntegrationTest {
                                   "ngayChotSo": 28,
                                   "soNgayHanTt": 5,
                                   "tkNganHang": "0123456789",
-                                  "nguongThatThoat": "12.35"
+                                  "nguongThatThoat": "12.35",
+                                  "batBuocAnhCongTo": true
                                 }
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.maToa").value("TN-C"))
                 .andExpect(jsonPath("$.soTang").value(3))
-                .andExpect(jsonPath("$.nguongThatThoat").value("12.35"));
+                .andExpect(jsonPath("$.nguongThatThoat").value("12.35"))
+                .andExpect(jsonPath("$.batBuocAnhCongTo").value(true));
 
         Long toaNhaId = jdbcTemplate.queryForObject(
                 "SELECT id FROM TOA_NHA WHERE ma_toa = 'TN-C'", Long.class);
@@ -116,7 +118,8 @@ class DanhMucToaNhaIntegrationTest {
                         .header("Authorization", "Bearer " + ownerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id").value(toaNhaId));
+                .andExpect(jsonPath("$[0].id").value(toaNhaId))
+                .andExpect(jsonPath("$[0].batBuocAnhCongTo").value(true));
 
         mockMvc.perform(put("/api/toa-nha/" + toaNhaId)
                         .header("Authorization", "Bearer " + ownerToken)
@@ -130,12 +133,14 @@ class DanhMucToaNhaIntegrationTest {
                                   "ngayChotSo": 27,
                                   "soNgayHanTt": 8,
                                   "tkNganHang": "0123456789 — Ngân hàng Mẫu",
-                                  "nguongThatThoat": "12.35"
+                                  "nguongThatThoat": "12.35",
+                                  "batBuocAnhCongTo": false
                                 }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ten").value("Toà C đã sửa"))
-                .andExpect(jsonPath("$.nguongThatThoat").value("12.35"));
+                .andExpect(jsonPath("$.nguongThatThoat").value("12.35"))
+                .andExpect(jsonPath("$.batBuocAnhCongTo").value(false));
     }
 
     @Test
@@ -154,7 +159,8 @@ class DanhMucToaNhaIntegrationTest {
                   "ngayChotSo": 1,
                   "soNgayHanTt": 5,
                   "tkNganHang": "0123",
-                  "nguongThatThoat": "10.00"
+                  "nguongThatThoat": "10.00",
+                  "batBuocAnhCongTo": false
                 }
                 """;
 
@@ -183,11 +189,13 @@ class DanhMucToaNhaIntegrationTest {
                                   "ngayChotSo": 25,
                                   "soNgayHanTt": 7,
                                   "tkNganHang": "9704",
-                                  "nguongThatThoat": "150000.00"
+                                  "nguongThatThoat": "150000.00",
+                                  "batBuocAnhCongTo": true
                                 }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.ten").value("Toà A do quản lý cập nhật"));
+                .andExpect(jsonPath("$.ten").value("Toà A do quản lý cập nhật"))
+                .andExpect(jsonPath("$.batBuocAnhCongTo").value(true));
 
         String updatePayload = """
                 {
@@ -259,7 +267,8 @@ class DanhMucToaNhaIntegrationTest {
                   "ngayChotSo": %d,
                   "soNgayHanTt": 5,
                   "tkNganHang": "0123",
-                  "nguongThatThoat": "10.00"
+                  "nguongThatThoat": "10.00",
+                  "batBuocAnhCongTo": false
                 }
                 """.formatted(maToa, ngayChotSo);
     }
