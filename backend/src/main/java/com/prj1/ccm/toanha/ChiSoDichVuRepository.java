@@ -253,6 +253,23 @@ public class ChiSoDichVuRepository {
         ).stream().findFirst();
     }
 
+    public Optional<Long> findNguoiThueIdByChiSoId(Long chiSoId) {
+        return jdbcTemplate.query("""
+                        SELECT hd.nguoi_thue_id
+                        FROM CHI_SO_DICH_VU cs
+                        JOIN KY_THANH_TOAN kt ON kt.id = cs.ky_id
+                        JOIN HOP_DONG hd ON hd.phong_id = cs.phong_id
+                        WHERE cs.id = ?
+                          AND daterange(hd.ngay_bat_dau, hd.ngay_ket_thuc, '[]')
+                              && daterange(kt.ngay_bat_dau, kt.ngay_ket_thuc, '[]')
+                        ORDER BY hd.id DESC
+                        LIMIT 1
+                        """,
+                (resultSet, rowNum) -> resultSet.getLong("nguoi_thue_id"),
+                chiSoId
+        ).stream().findFirst();
+    }
+
     private ChiSoDichVu mapChiSoDichVu(java.sql.ResultSet resultSet) throws java.sql.SQLException {
         return new ChiSoDichVu(
                 resultSet.getLong("id"),

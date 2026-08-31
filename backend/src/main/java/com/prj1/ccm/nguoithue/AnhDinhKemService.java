@@ -27,6 +27,7 @@ import java.time.Clock;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -70,7 +71,9 @@ public class AnhDinhKemService {
 
     @Transactional(readOnly = true)
     public LienKetAnhKy taoLienKet(Long anhId, NguoiDung nguoiDung) {
-        kiemTraQuyen(nguoiDung);
+        if (nguoiDung == null || nguoiDung.vaiTro() != VaiTro.NGUOI_THUE) {
+            kiemTraQuyen(nguoiDung);
+        }
         kiemTraQuyenXemAnh(anhId, nguoiDung);
         long hetHan = clock.instant().getEpochSecond() + thoiHanLienKetGiay;
         return new LienKetAnhKy("/api/anh/" + anhId + "/xem?hetHan=" + hetHan + "&chuKy=" + chuKy(anhId, hetHan));
@@ -155,10 +158,20 @@ public class AnhDinhKemService {
     private void kiemTraQuyenXemAnh(Long anhId, NguoiDung nguoiDung) {
         AnhDinhKem anh = anhDinhKemRepository.findById(anhId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (DOI_TUONG_NGUOI_THUE.equals(anh.doiTuongLoai())) {
+            if (nguoiDung != null && nguoiDung.vaiTro() == VaiTro.NGUOI_THUE) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
             layAnhNguoiThue(anhId);
             return;
         }
         if (DOI_TUONG_CHI_SO_DICH_VU.equals(anh.doiTuongLoai())) {
+            if (nguoiDung != null && nguoiDung.vaiTro() == VaiTro.NGUOI_THUE) {
+                Long nguoiThueId = chiSoDichVuRepository.findNguoiThueIdByChiSoId(anh.doiTuongId()).orElse(null);
+                if (!Objects.equals(nguoiDung.nguoiThueId(), nguoiThueId)) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+                }
+                return;
+            }
             Long toaNhaId = chiSoDichVuRepository.findToaNhaIdByChiSoId(anh.doiTuongId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
             phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);

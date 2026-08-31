@@ -8,15 +8,22 @@ Với hoá đơn tính theo bậc thang, phải hiện **từng bậc một dòn
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Mỗi dòng chi tiết hiện đủ dữ liệu để tính lại bằng tay
-- [ ] Hoá đơn bậc thang hiện từng bậc: khoảng sản lượng, định mức sau khi nhân số hộ quy đổi, đơn giá, thành tiền
-- [ ] Hiện rõ **số người ở đã dùng để tính** và số hộ quy đổi, kèm một câu giải thích quy tắc 4 người một hộ
-- [ ] Dòng làm tròn hiện cả khi **mang dấu âm**, không giấu đi
-- [ ] Ảnh công tơ của kỳ tương ứng xem được từ đây, qua liên kết ký hạn của `slice-02 · 02`
-- [ ] In ra giấy A4 đọc được, không vỡ cột — đây là thứ dán lên cửa phòng
-- [ ] Số tiền hiển thị theo định dạng Việt Nam, dấu chấm ngăn nghìn
-- [ ] Tên test mang mã `FR-INV-02`
+- [x] Mỗi dòng chi tiết hiện đủ dữ liệu để tính lại bằng tay
+- [x] Hoá đơn bậc thang hiện từng bậc: khoảng sản lượng, định mức sau khi nhân số hộ quy đổi, đơn giá, thành tiền
+- [x] Hiện rõ **số người ở đã dùng để tính** và số hộ quy đổi, kèm một câu giải thích quy tắc 4 người một hộ
+- [x] Dòng làm tròn hiện cả khi **mang dấu âm**, không giấu đi
+- [x] Ảnh công tơ của kỳ tương ứng xem được từ đây, qua liên kết ký hạn của `slice-02 · 02`
+- [x] In ra giấy A4 đọc được, không vỡ cột — đây là thứ dán lên cửa phòng
+- [x] Số tiền hiển thị theo định dạng Việt Nam, dấu chấm ngăn nghìn
+- [x] Tên test mang mã `FR-INV-02`
+
+## Comments
+
+- API chi tiết trả snapshot đủ để kiểm tra lại bằng tay: chỉ số, mức tiêu thụ, số ngày, đơn giá, bậc thang, số người và số hộ quy đổi.
+- Đã thêm màn hình hoá đơn và chế độ in A4; dòng làm tròn âm vẫn được hiển thị. Liên kết ảnh công tơ dùng signed URL thời hạn 900 giây.
+- Định dạng tiền giữ nguyên giá trị decimal từ backend và nhóm dấu chấm theo định dạng Việt Nam, không chuyển qua số thực ở frontend.
+- Kiểm thử backend/frontend mang mã `FR-INV-02` bao phủ dữ liệu bậc thang, quyền truy cập, signed link, quá hạn và luồng mở hoá đơn theo ID.
 
 **Ghi chú.** Xuất PDF (FR-INV-09) và mã QR chuyển khoản (FR-INV-10) **không thuộc slice này** — cả hai ở Vertical Slice 5.

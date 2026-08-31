@@ -115,6 +115,101 @@ class KyThanhToanAuthorizationIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void FR_INV_01_forbiddenRolesReceive403OnDraftInvoiceCalculationEndpoint() throws Exception {
+        assert403OnDraftInvoiceCalculationEndpoint(login(4L, "0900000004"));
+        assert403OnDraftInvoiceCalculationEndpoint(login(5L, "0900000006"));
+    }
+
+    @Test
+    void FR_AUT_05_managerReceives403ForDraftInvoiceCalculationOutsideAssignedBuildingScope() throws Exception {
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(get("/api/toa-nha/2/ky-thanh-toan/1/hoa-don/tinh-thu")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .param("hopDongId", "1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_INV_01_missingAuthenticationReturns401OnDraftInvoiceCalculationEndpoint() throws Exception {
+        mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/tinh-thu")
+                        .param("hopDongId", "1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void FR_INV_01_forbiddenRolesReceive403OnBulkDraftInvoiceCreationEndpoint() throws Exception {
+        assert403OnBulkDraftInvoiceCreationEndpoint(login(4L, "0900000004"));
+        assert403OnBulkDraftInvoiceCreationEndpoint(login(5L, "0900000006"));
+    }
+
+    @Test
+    void FR_INV_01_forbiddenRoleWithBuildingVisibilityReceives403BeforeBulkScopeLookup() throws Exception {
+        jdbcTemplate.update(
+                "INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (4, 1)"
+        );
+
+        assert403OnBulkDraftInvoiceCreationEndpoint(login(4L, "0900000004"));
+    }
+
+    @Test
+    void FR_AUT_05_managerReceives403ForBulkDraftInvoiceCreationOutsideAssignedBuildingScope() throws Exception {
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(post("/api/toa-nha/2/ky-thanh-toan/1/hoa-don/tao-hang-loat")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/toa-nha/2/ky-thanh-toan/1/hoa-don/1/huy")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_INV_01_missingAuthenticationReturns401OnBulkDraftInvoiceCreationEndpoint() throws Exception {
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/tao-hang-loat"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void FR_INV_06_BR_08_forbiddenRolesReceive403OnInvoiceReleaseEndpoint() throws Exception {
+        assert403OnInvoiceReleaseEndpoint(login(4L, "0900000004"));
+        assert403OnInvoiceReleaseEndpoint(login(5L, "0900000006"));
+    }
+
+    @Test
+    void FR_INV_06_BR_08_missingAuthenticationReturns401OnInvoiceReleaseEndpoint() throws Exception {
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/1/phat-hanh"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void FR_INV_05_CR_008_forbiddenRolesReceive403OnDraftInvoiceCancelEndpoint() throws Exception {
+        assert403OnDraftInvoiceCancelEndpoint(login(4L, "0900000004"));
+        assert403OnDraftInvoiceCancelEndpoint(login(5L, "0900000006"));
+    }
+
+    @Test
+    void FR_INV_05_BR_08_forbiddenRolesReceive403OnDraftInvoiceContentEditEndpoint() throws Exception {
+        assert403OnDraftInvoiceContentEditEndpoint(login(4L, "0900000004"));
+        assert403OnDraftInvoiceContentEditEndpoint(login(5L, "0900000006"));
+    }
+
+    @Test
+    void FR_INV_05_CR_008_missingAuthenticationReturns401OnDraftInvoiceCancelEndpoint() throws Exception {
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/1/huy"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void FR_INV_05_BR_08_missingAuthenticationReturns401OnDraftInvoiceContentEditEndpoint() throws Exception {
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/1/noi-dung")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(noiDungHoaDonPayload()))
+                .andExpect(status().isUnauthorized());
+    }
+
     private void assert403OnKyThanhToanEndpoints(String token) throws Exception {
         mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan")
                         .header("Authorization", "Bearer " + token))
@@ -137,11 +232,55 @@ class KyThanhToanAuthorizationIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    private void assert403OnDraftInvoiceCalculationEndpoint(String token) throws Exception {
+        mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/tinh-thu")
+                        .header("Authorization", "Bearer " + token)
+                        .param("hopDongId", "1"))
+                .andExpect(status().isForbidden());
+    }
+
+    private void assert403OnBulkDraftInvoiceCreationEndpoint(String token) throws Exception {
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/tao-hang-loat")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    private void assert403OnInvoiceReleaseEndpoint(String token) throws Exception {
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/1/phat-hanh")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    private void assert403OnDraftInvoiceCancelEndpoint(String token) throws Exception {
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/1/huy")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    private void assert403OnDraftInvoiceContentEditEndpoint(String token) throws Exception {
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/1/noi-dung")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(noiDungHoaDonPayload()))
+                .andExpect(status().isForbidden());
+    }
+
     private String kyThanhToanPayload() {
         return """
                 {
                   "nam": 2026,
                   "thang": 8
+                }
+                """;
+    }
+
+    private String noiDungHoaDonPayload() {
+        return """
+                {
+                  "tenKhoan": "Tien phat tre",
+                  "soTien": "80000.00",
+                  "loai": "PHAT_SINH",
+                  "lyDo": "Nop tien tre"
                 }
                 """;
     }

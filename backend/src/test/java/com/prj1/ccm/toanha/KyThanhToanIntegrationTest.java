@@ -16,12 +16,19 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -53,6 +60,8 @@ class KyThanhToanIntegrationTest {
 
     @BeforeEach
     void resetDatabase() {
+        xoaDuLieuNhanKhauKyNeuTonTai();
+        jdbcTemplate.update("DELETE FROM NGUOI_O_CUNG");
         jdbcTemplate.update("DELETE FROM CHI_SO_DICH_VU");
         jdbcTemplate.update("DELETE FROM HOP_DONG_DICH_VU");
         jdbcTemplate.update("DELETE FROM HOP_DONG");
@@ -464,6 +473,350 @@ class KyThanhToanIntegrationTest {
         )).isEqualTo(2);
     }
 
+    @Test
+    void CR_002_closingPeriodSnapshotsResidentsPerRoomAndKeepsUnknownSeparateFromZero() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long dienId = themDichVu(1L, "Điện sinh hoạt", "kWh", "THEO_CHI_SO", true, true);
+        Long phong101 = themPhong(1L, "101", 1);
+        Long phong202 = themPhong(1L, "202", 2);
+        Long nguoiThue101 = themNguoiThue("Nguoi thue 101", "0900000291");
+        Long nguoiThue202 = themNguoiThue("Nguoi thue 202", "0900000292");
+        Long nguoiO101A = themNguoiThue("Nguoi o 101 A", "0900000293");
+        Long nguoiO101B = themNguoiThue("Nguoi o 101 B", "0900000294");
+        Long hopDong101 = themHopDong(phong101, nguoiThue101, "2026-07-01", "2026-08-31");
+        Long hopDong202 = themHopDong(phong202, nguoiThue202, "2026-07-01", "2026-08-31");
+        themDichVuHopDong(hopDong101, dienId, "3500.00");
+        themDichVuHopDong(hopDong202, dienId, "3500.00");
+        themNguoiOCung(hopDong101, nguoiO101A, "Ban cung phong", "2026-07-10", null);
+        themNguoiOCung(hopDong101, nguoiO101B, "Nguoi than", "2026-08-01", null);
+        Long kyId = themKyThanhToan(1L, 2026, 8, "2026-07-26", "2026-08-25", "DANG_MO");
+        themChiSo(kyId, phong101, dienId, "1240.00", "1250.00", 3L);
+        themChiSo(kyId, phong202, dienId, "220.00", "233.50", 3L);
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/chot".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DA_CHOT"));
+
+        assertThat(jdbcTemplate.queryForList(
+                """
+                        SELECT phong_id, so_nguoi
+                        FROM NHAN_KHAU_KY
+                        WHERE ky_id = ?
+                        ORDER BY phong_id
+                """,
+                kyId
+        )).extracting(row -> row.get("phong_id"))
+                .containsExactly(phong101, phong202);
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        SELECT so_nguoi
+                        FROM NHAN_KHAU_KY
+                        WHERE ky_id = ?
+                          AND phong_id = ?
+                        """,
+                Integer.class,
+                kyId,
+                phong101
+        )).isEqualTo(2);
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM NHAN_KHAU_KY
+                        WHERE ky_id = ?
+                          AND phong_id = ?
+                          AND so_nguoi IS NULL
+                        """,
+                Integer.class,
+                kyId,
+                phong202
+        )).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM NHAN_KHAU_KY
+                        WHERE ky_id = ?
+                          AND thoi_diem_chot IS NOT NULL
+                        """,
+                Integer.class,
+                kyId
+        )).isEqualTo(2);
+    }
+
+    @Test
+    void CR_002_closingPeriodCountsResidentsAtCloseAndKeepsZeroSeparateFromUnknown() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long dienId = themDichVu(1L, "Điện sinh hoạt", "kWh", "THEO_CHI_SO", true, true);
+        Long phong101 = themPhong(1L, "101", 1);
+        Long phong202 = themPhong(1L, "202", 2);
+        Long phong303 = themPhong(1L, "303", 3);
+        Long nguoiThue101 = themNguoiThue("Nguoi thue 101 close", "0900000301");
+        Long nguoiThue202 = themNguoiThue("Nguoi thue 202 close", "0900000302");
+        Long nguoiThue303 = themNguoiThue("Nguoi thue 303 close", "0900000303");
+        Long nguoiODangO = themNguoiThue("Nguoi dang o", "0900000304");
+        Long nguoiODaRoi101 = themNguoiThue("Nguoi da roi 101", "0900000305");
+        Long nguoiODaRoi202 = themNguoiThue("Nguoi da roi 202", "0900000306");
+        Long hopDong101 = themHopDong(phong101, nguoiThue101, "2026-07-01", "2026-08-31");
+        Long hopDong202 = themHopDong(phong202, nguoiThue202, "2026-07-01", "2026-08-31");
+        Long hopDong303 = themHopDong(phong303, nguoiThue303, "2026-07-01", "2026-08-31");
+        themDichVuHopDong(hopDong101, dienId, "3500.00");
+        themDichVuHopDong(hopDong202, dienId, "3500.00");
+        themDichVuHopDong(hopDong303, dienId, "3500.00");
+        themNguoiOCung(hopDong101, nguoiODangO, "Ban cung phong", "2026-07-01", null);
+        themNguoiOCung(hopDong101, nguoiODaRoi101, "Nguoi than", "2026-07-01", "2026-08-10");
+        themNguoiOCung(hopDong202, nguoiODaRoi202, "Ban cung phong", "2026-07-01", "2026-08-10");
+        Long kyId = themKyThanhToan(1L, 2026, 8, "2026-07-26", "2026-08-25", "DANG_MO");
+        themChiSo(kyId, phong101, dienId, "1240.00", "1250.00", 3L);
+        themChiSo(kyId, phong202, dienId, "220.00", "233.50", 3L);
+        themChiSo(kyId, phong303, dienId, "330.00", "341.00", 3L);
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/chot".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DA_CHOT"));
+
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        SELECT so_nguoi
+                        FROM NHAN_KHAU_KY
+                        WHERE ky_id = ?
+                          AND phong_id = ?
+                        """,
+                Integer.class,
+                kyId,
+                phong101
+        )).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        SELECT so_nguoi
+                        FROM NHAN_KHAU_KY
+                        WHERE ky_id = ?
+                          AND phong_id = ?
+                        """,
+                Integer.class,
+                kyId,
+                phong202
+        )).isEqualTo(0);
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM NHAN_KHAU_KY
+                        WHERE ky_id = ?
+                          AND phong_id = ?
+                          AND so_nguoi IS NULL
+                        """,
+                Integer.class,
+                kyId,
+                phong303
+        )).isEqualTo(1);
+    }
+
+    @Test
+    void CR_002_closingPeriodRollsBackResidentSnapshotWhenNextPeriodInsertConflicts() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long dienId = themDichVu(1L, "Điện sinh hoạt", "kWh", "THEO_CHI_SO", true, true);
+        Long phongId = themPhong(1L, "101", 1);
+        Long nguoiThueId = themNguoiThue("Nguoi thue 101", "0900000295");
+        Long nguoiOCungId = themNguoiThue("Nguoi o 101", "0900000296");
+        Long hopDongId = themHopDong(phongId, nguoiThueId, "2026-07-01", "2026-09-30");
+        themDichVuHopDong(hopDongId, dienId, "3500.00");
+        themNguoiOCung(hopDongId, nguoiOCungId, "Ban cung phong", "2026-07-01", null);
+        Long kyId = themKyThanhToan(1L, 2026, 8, "2026-07-26", "2026-08-25", "DANG_MO");
+        themChiSo(kyId, phongId, dienId, "1240.00", "1250.00", 3L);
+        themKyThanhToan(1L, 2026, 9, "2026-08-26", "2026-09-25", "DA_CHOT");
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/chot".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isConflict());
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM NHAN_KHAU_KY WHERE ky_id = ?",
+                Integer.class,
+                kyId
+        )).isEqualTo(0);
+    }
+
+    @Test
+    void CR_002_changingNguoiOCungAfterClosingDoesNotRewriteHistoricalResidentSnapshot() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long dienId = themDichVu(1L, "Điện sinh hoạt", "kWh", "THEO_CHI_SO", true, true);
+        Long phongId = themPhong(1L, "101", 1);
+        Long nguoiThueId = themNguoiThue("Nguoi thue 101", "0900000297");
+        Long nguoiO1 = themNguoiThue("Nguoi o 1", "0900000298");
+        Long nguoiO2 = themNguoiThue("Nguoi o 2", "0900000299");
+        Long hopDongId = themHopDong(phongId, nguoiThueId, "2026-07-01", "2026-08-31");
+        themDichVuHopDong(hopDongId, dienId, "3500.00");
+        Long nguoiOCung1 = themNguoiOCung(hopDongId, nguoiO1, "Ban cung phong", "2026-07-01", null);
+        themNguoiOCung(hopDongId, nguoiO2, "Nguoi than", "2026-07-15", null);
+        Long kyId = themKyThanhToan(1L, 2026, 8, "2026-07-26", "2026-08-25", "DANG_MO");
+        themChiSo(kyId, phongId, dienId, "1240.00", "1250.00", 3L);
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/chot".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+
+        jdbcTemplate.update(
+                """
+                        UPDATE NGUOI_O_CUNG
+                        SET den_ngay = DATE '2026-07-20'
+                        WHERE id = ?
+                        """,
+                nguoiOCung1
+        );
+
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        SELECT so_nguoi
+                        FROM NHAN_KHAU_KY
+                        WHERE ky_id = ?
+                          AND phong_id = ?
+                        """,
+                Integer.class,
+                kyId,
+                phongId
+        )).isEqualTo(2);
+    }
+
+    @Test
+    void CR_002_recalculatingClosedPeriodUsesFrozenResidentSnapshotAfterNguoiOCungChanges() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long dichVuTheoNguoiId = themDichVu(1L, "Gui xe", "nguoi", "THEO_NGUOI", false, true);
+        Long phongId = themPhong(1L, "101", 1);
+        Long nguoiThueId = themNguoiThue("Nguoi thue 101", "0900000311");
+        Long nguoiO1 = themNguoiThue("Nguoi o 1", "0900000312");
+        Long nguoiO2 = themNguoiThue("Nguoi o 2", "0900000313");
+        Long hopDongId = themHopDong(phongId, nguoiThueId, "2026-07-01", "2026-08-31");
+        themDichVuHopDong(hopDongId, dichVuTheoNguoiId, "100000.00");
+        Long nguoiOCung1 = themNguoiOCung(hopDongId, nguoiO1, "Ban cung phong", "2026-07-01", null);
+        themNguoiOCung(hopDongId, nguoiO2, "Nguoi than", "2026-07-15", null);
+        Long kyId = themKyThanhToan(1L, 2026, 8, "2026-07-26", "2026-08-25", "DANG_MO");
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/chot".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/tinh-thu".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken)
+                        .param("hopDongId", hopDongId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tongTien").value("3700000.00"));
+
+        jdbcTemplate.update(
+                """
+                        UPDATE NGUOI_O_CUNG
+                        SET den_ngay = DATE '2026-07-20'
+                        WHERE id = ?
+                        """,
+                nguoiOCung1
+        );
+
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM NGUOI_O_CUNG
+                        WHERE hop_dong_id = ?
+                          AND tu_ngay <= DATE '2026-08-25'
+                          AND (den_ngay IS NULL OR den_ngay >= DATE '2026-08-25')
+                        """,
+                Integer.class,
+                hopDongId
+        )).isEqualTo(1);
+
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        SELECT so_nguoi
+                        FROM NHAN_KHAU_KY
+                        WHERE ky_id = ?
+                          AND phong_id = ?
+                        """,
+                Integer.class,
+                kyId,
+                phongId
+        )).isEqualTo(2);
+
+        mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/tinh-thu".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken)
+                        .param("hopDongId", hopDongId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tongTien").value("3700000.00"));
+    }
+
+    @Test
+    void CR_002_draftInvoiceReportsQuantityBasedServiceWhenQuantitySourceDoesNotExistYet() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long dichVuTheoSoLuongId = themDichVu(1L, "Gui xe may", "xe", "THEO_SO_LUONG", false, true);
+        Long phongId = themPhong(1L, "101", 1);
+        Long nguoiThueId = themNguoiThue("Nguoi thue co xe", "0900000316");
+        Long nguoiOCungId = themNguoiThue("Nguoi o co xe", "0900000317");
+        Long hopDongId = themHopDong(phongId, nguoiThueId, "2026-07-01", "2026-08-31");
+        themNguoiOCung(hopDongId, nguoiOCungId, "Ban cung phong", "2026-07-01", null);
+        themDichVuHopDong(hopDongId, dichVuTheoSoLuongId, "80000.00");
+        Long kyId = themKyThanhToan(1L, 2026, 8, "2026-07-26", "2026-08-25", "DANG_MO");
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/chot".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/tinh-thu".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken)
+                        .param("hopDongId", hopDongId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.thanhCong").value(false))
+                .andExpect(jsonPath("$.tongTien").value(nullValue()))
+                .andExpect(jsonPath("$.cacDong", hasSize(0)))
+                .andExpect(jsonPath("$.lyDoBoQua", hasSize(1)))
+                .andExpect(jsonPath("$.lyDoBoQua[0].phongId").value(phongId))
+                .andExpect(jsonPath("$.lyDoBoQua[0].ma").value("THIEU_SO_LUONG_DICH_VU"));
+    }
+
+    @Test
+    void CR_002_concurrentCloseReturnsOneSuccessOneControlledConflictAndOneResidentSnapshot() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long dienId = themDichVu(1L, "Điện sinh hoạt", "kWh", "THEO_CHI_SO", true, true);
+        Long phongId = themPhong(1L, "101", 1);
+        Long nguoiThueId = themNguoiThue("Nguoi thue 101", "0900000314");
+        Long nguoiOCungId = themNguoiThue("Nguoi o 101", "0900000315");
+        Long hopDongId = themHopDong(phongId, nguoiThueId, "2026-07-01", "2026-09-30");
+        themDichVuHopDong(hopDongId, dienId, "3500.00");
+        themNguoiOCung(hopDongId, nguoiOCungId, "Ban cung phong", "2026-07-01", null);
+        Long kyId = themKyThanhToan(1L, 2026, 8, "2026-07-26", "2026-08-25", "DANG_MO");
+        themChiSo(kyId, phongId, dienId, "1240.00", "1250.00", 3L);
+
+        CountDownLatch sanSang = new CountDownLatch(2);
+        CountDownLatch batDau = new CountDownLatch(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        try {
+            Future<Integer> ketQuaA = executorService.submit(() -> guiYeuCauChotKyDongThoi(managerToken, kyId, sanSang, batDau));
+            Future<Integer> ketQuaB = executorService.submit(() -> guiYeuCauChotKyDongThoi(managerToken, kyId, sanSang, batDau));
+
+            assertThat(sanSang.await(5, TimeUnit.SECONDS)).isTrue();
+            batDau.countDown();
+
+            assertThat(List.of(
+                    ketQuaA.get(15, TimeUnit.SECONDS),
+                    ketQuaB.get(15, TimeUnit.SECONDS)
+            )).containsExactlyInAnyOrder(200, 409);
+        } finally {
+            executorService.shutdownNow();
+        }
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT trang_thai FROM KY_THANH_TOAN WHERE id = ?",
+                String.class,
+                kyId
+        )).isEqualTo("DA_CHOT");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM NHAN_KHAU_KY WHERE ky_id = ?",
+                Integer.class,
+                kyId
+        )).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM KY_THANH_TOAN WHERE toa_nha_id = ?",
+                Integer.class,
+                1L
+        )).isEqualTo(2);
+    }
+
     private Long themKyThanhToan(
             Long toaNhaId,
             int nam,
@@ -560,6 +913,37 @@ class KyThanhToanIntegrationTest {
         );
     }
 
+    private Long themNguoiOCung(Long hopDongId, Long nguoiThueId, String quanHe, String tuNgay, String denNgay) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO NGUOI_O_CUNG (hop_dong_id, nguoi_thue_id, quan_he, tu_ngay, den_ngay)
+                        VALUES (?, ?, ?, ?, ?)
+                        RETURNING id
+                        """,
+                Long.class,
+                hopDongId,
+                nguoiThueId,
+                quanHe,
+                java.sql.Date.valueOf(tuNgay),
+                denNgay == null ? null : java.sql.Date.valueOf(denNgay)
+        );
+    }
+
+    private void xoaDuLieuNhanKhauKyNeuTonTai() {
+        Integer tonTai = jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM information_schema.tables
+                        WHERE table_schema = 'public'
+                          AND table_name = 'nhan_khau_ky'
+                        """,
+                Integer.class
+        );
+        if (tonTai != null && tonTai > 0) {
+            jdbcTemplate.update("DELETE FROM NHAN_KHAU_KY");
+        }
+    }
+
     private void themChiSo(Long kyId, Long phongId, Long dichVuId, String chiSoDau, String chiSoCuoi, Long nguoiDungId) {
         jdbcTemplate.update(
                 """
@@ -575,6 +959,21 @@ class KyThanhToanIntegrationTest {
                 new java.math.BigDecimal(chiSoCuoi),
                 nguoiDungId
         );
+    }
+
+    private Integer guiYeuCauChotKyDongThoi(
+            String token,
+            Long kyId,
+            CountDownLatch sanSang,
+            CountDownLatch batDau
+    ) throws Exception {
+        sanSang.countDown();
+        batDau.await();
+        return mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/chot".formatted(kyId))
+                        .header("Authorization", "Bearer " + token))
+                .andReturn()
+                .getResponse()
+                .getStatus();
     }
 
     private DataIntegrityViolationException captureConstraintViolation(Runnable thaoTac) {

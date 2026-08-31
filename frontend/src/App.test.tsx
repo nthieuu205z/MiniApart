@@ -3,7 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import App from './App'
+import App, { layDinhDanhHoaDonTuUrl } from './App'
 import { clearStoredToken } from './authSession'
 import type { ThongTinNguoiDung, ThongTinPhong, ThongTinQuanLyNguoiDung, ThongTinToaNha } from './api'
 
@@ -566,7 +566,6 @@ describe('App role navigation', () => {
     expect(roomDetail.textContent).not.toContain('Lịch sử công tơ')
   })
 })
-
 async function mountAppAndLogin(nguoiDung: ThongTinNguoiDung, path = '/', fetchMock = buildFetchMock(nguoiDung)) {
   window.history.replaceState({}, '', '/')
   vi.stubGlobal('fetch', fetchMock)
@@ -631,6 +630,7 @@ function buildFetchMock(
   nguoiDung: ThongTinNguoiDung,
   options?: {
     roomsByBuilding?: Map<number, ThongTinPhong[]>
+    invoiceResponse?: Record<string, unknown>
   },
 ) {
   const accounts: ThongTinQuanLyNguoiDung[] = [
@@ -894,6 +894,13 @@ function buildFetchMock(
       })
     }
 
+    if (url === '/api/toa-nha/1/ky-thanh-toan/8/hoa-don/10' && method === 'GET' && options?.invoiceResponse) {
+      return new Response(JSON.stringify(options.invoiceResponse), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
     const accountIdMatch = url.match(/^\/api\/nguoi-dung\/(\d+)(?:\/khoa)?$/)
     if (accountIdMatch && method === 'PUT') {
       const accountId = Number(accountIdMatch[1])
@@ -1019,3 +1026,68 @@ function buildPreviewRooms(
 function readMenuLabels(container: HTMLDivElement) {
   return [...container.querySelectorAll('nav a')].map((link) => link.textContent?.trim() ?? '')
 }
+
+describe('invoice navigation', () => {
+  let mountedApp: MountedApp | null = null
+
+  beforeEach(() => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true
+    clearStoredToken()
+    window.history.replaceState({}, '', '/')
+    document.body.innerHTML = ''
+  })
+
+  afterEach(async () => {
+    if (mountedApp) {
+      await act(async () => mountedApp?.root.unmount())
+      mountedApp = null
+    }
+    clearStoredToken()
+    vi.restoreAllMocks()
+  })
+
+  it('FR-INV-02 opens the identified invoice from the tenant query route', async () => {
+    const nguoiThue = MENU_BY_ROLE[4].nguoiDung
+    const fetchMock = buildFetchMock(nguoiThue, {
+      invoiceResponse: {
+        hoaDonId: 10,
+        maHoaDon: 'TN-A-101-202608',
+        kyId: 8,
+        hopDongId: 11,
+        soPhong: '101',
+        nguoiThue: 'Người thuê 101',
+        ngayPhatHanh: '2026-08-31',
+        hanThanhToan: '2026-09-07',
+        trangThai: 'DA_PHAT_HANH',
+        tongTien: '3889500.00',
+        daThu: '0.00',
+        conLai: '3889500.00',
+        cacDong: [],
+      },
+    })
+
+    mountedApp = await mountAppAndLogin(nguoiThue, '/hoa-don-cua-toi?toaNhaId=1&kyId=8&hoaDonId=10', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="invoice-detail"]')).not.toBeNull()
+      expect(mountedApp!.container.textContent).toContain('TN-A-101-202608')
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/toa-nha/1/ky-thanh-toan/8/hoa-don/10',
+      expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }),
+    )
+  })
+
+  it('FR-INV-02 reads all invoice identifiers from the detail query link', () => {
+    expect(layDinhDanhHoaDonTuUrl('https://miniapart.test/hoa-don?toaNhaId=1&kyId=8&hoaDonId=10')).toEqual({
+      toaNhaId: 1,
+      kyId: 8,
+      hoaDonId: 10,
+    })
+  })
+
+  it('FR-INV-02 ignores an incomplete invoice query instead of opening an ambiguous invoice', () => {
+    expect(layDinhDanhHoaDonTuUrl('https://miniapart.test/hoa-don?toaNhaId=1&kyId=8')).toEqual({})
+  })
+})

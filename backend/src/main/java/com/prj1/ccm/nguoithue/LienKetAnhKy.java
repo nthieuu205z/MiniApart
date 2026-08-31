@@ -1,4 +1,4 @@
 package com.prj1.ccm.nguoithue;
 
-record LienKetAnhKy(String url) {
+public record LienKetAnhKy(String url) {
 }
