@@ -2,9 +2,9 @@
 
 **What to decide:** Vai trò `QTHT` hiện **đi xuyên qua mọi kiểm tra phạm vi toà nhà**. Cần một quyết định của người về việc giữ hay bỏ, vì ba nguồn trong dự án đang nói ba kiểu khác nhau.
 
-**Status:** ready-for-human
+**Status:** done
 
-**Đây không phải việc của agent.** Ticket này cần một ruling, không cần mã. Sau khi có ruling mới sinh ra ticket cài đặt.
+**Đã có ruling của người dùng:** chọn phương án B. Ticket cài đặt tương ứng là ticket 06.
 
 ## Mã đang làm gì
 
@@ -48,9 +48,13 @@ Chốt bây giờ tốn một quyết định. Chốt sau tốn một quyết đ
 
 ## Cần gì để đóng ticket
 
-- [ ] Chọn A, B hay C
-- [ ] Nếu chọn B hoặc C: sửa `Doc/PRJ1_Phan-tich-yeu-cau_Chung-cu-mini.md` dòng 1039 cho hết mâu thuẫn với BR-17, và ghi vào `Doc/PRJ1_Phieu-thay-doi_Lo-01.md` như một CR
-- [ ] Nếu chọn A: ghi lý do vào ADR, và sửa `Doc/UX/05-quan-tri-he-thong.md` cho khớp — **đừng để hai tài liệu đá nhau**
-- [ ] Sinh ticket cài đặt tương ứng, đặt vào slice phù hợp
+- [x] Chọn B — QTHT chỉ quản lý tài khoản, xem danh sách toàn bộ toà nhà và xem nhật ký thao tác
+- [x] Sửa bảng phân vùng trong `Doc/PRJ1_Phan-tich-yeu-cau_Chung-cu-mini.md` và ghi thay đổi vào `Doc/PRJ1_Phieu-thay-doi_Lo-01.md` dưới CR-016
+- [x] Không chọn A nên không cần sửa ADR theo phương án A
+- [x] Sinh ticket cài đặt tương ứng: ticket 06
 
 ## Comments
+
+- Người dùng đã duyệt phương án B để áp dụng nguyên tắc ít quyền nhất: QTHT không truy cập dữ liệu nghiệp vụ của toà nhà.
+- Đã cập nhật bảng phân quyền, mô tả khu vực quản trị và BR-17 trong SRS; ghi nhận quyết định tại CR-016.
+- Ticket 06 đã thực thi ruling và được xác minh bằng 333 test backend xanh.

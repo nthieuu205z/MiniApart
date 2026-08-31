@@ -179,9 +179,14 @@ class HoaDonChiTietIntegrationTest {
     @Test
     void FR_INV_02_wrongRolesReceive403OnInvoiceDetailEndpoint() throws Exception {
         String thoToken = login(4L, "0900000004");
+        String systemAdminToken = login(1L, "0900000001");
 
         mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s".formatted(kyId, hoaDonId))
                         .header("Authorization", "Bearer " + thoToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s".formatted(kyId, hoaDonId))
+                        .header("Authorization", "Bearer " + systemAdminToken))
                 .andExpect(status().isForbidden());
     }
 

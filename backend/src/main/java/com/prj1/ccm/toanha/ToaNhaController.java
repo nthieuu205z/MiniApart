@@ -77,7 +77,7 @@ public class ToaNhaController {
     }
 
     /**
-     * FR-BLD-01 creates a new building for the owner or system administrator catalog flow.
+     * FR-BLD-01 creates a new building for the owner; QTHT is limited to building-list access.
      *
      * @param yeuCau the submitted building data
      * @param request the current HTTP request carrying the authenticated user attribute
@@ -93,7 +93,7 @@ public class ToaNhaController {
     }
 
     /**
-     * FR-BLD-01 updates a visible building for the owner, manager, or system administrator.
+     * FR-BLD-01 updates a visible building for the owner or manager; QTHT cannot mutate building business data.
      *
      * @param toaNhaId the building identifier
      * @param yeuCau the submitted building data

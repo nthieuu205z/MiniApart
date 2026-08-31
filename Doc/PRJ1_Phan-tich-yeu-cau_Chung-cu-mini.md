@@ -1036,7 +1036,7 @@ Sau bước thu thập, nhóm rút ra 10 nhóm yêu cầu sơ bộ, làm đầu 
 
 | Khu vực | Người dùng | Đặc điểm |
 |---|---|---|
-| **Khu vực quản trị** | Chủ sở hữu, Quản lý toà nhà, Thợ sửa chữa, Quản trị hệ thống | Chức năng đầy đủ, dữ liệu giới hạn theo toà được giao |
+| **Khu vực quản trị** | Chủ sở hữu, Quản lý toà nhà, Thợ sửa chữa, Quản trị hệ thống | Phân quyền theo vai trò; QTHT chỉ quản lý tài khoản, xem danh sách toàn bộ toà nhà và nhật ký, còn các vai trò vận hành chỉ thấy dữ liệu toà được giao |
 | **Cổng người thuê** | Người thuê, Người ở cùng | Chỉ đọc là chính, chỉ thấy dữ liệu phòng mình, giao diện tối giản cho điện thoại |
 
 **Sơ đồ ngữ cảnh (mức khái niệm)**
@@ -1058,18 +1058,20 @@ Sau bước thu thập, nhóm rút ra 10 nhóm yêu cầu sơ bộ, làm đầu 
 | Chức năng | Quản trị HT | Chủ sở hữu | Quản lý toà | Thợ sửa chữa | Người thuê |
 |---|:---:|:---:|:---:|:---:|:---:|
 | Quản lý tài khoản, phân quyền | Có | Có | Không | Không | Không |
-| Khai báo toà nhà, phòng | Có | Có | Sửa (toà được giao) | Không | Không |
-| Khai báo dịch vụ và đơn giá | Có | Có | Không | Không | Không |
-| Quản lý người thuê, hợp đồng | Có | Có | Có (toà được giao) | Không | Xem của mình |
-| Ghi chỉ số dịch vụ | Có | Có | Có | Không | Xem của mình |
-| Tạo và phát hành hoá đơn | Có | Có | Có | Không | Xem của mình |
-| Huỷ hoá đơn đã phát hành | Có | Có | Không | Không | Không |
-| Ghi nhận thanh toán | Có | Có | Có | Không | Không |
-| Tạo yêu cầu sửa chữa | Có | Có | Có | Không | Có |
-| Xử lý yêu cầu sửa chữa | Có | Có | Có | Có (việc được giao) | Xác nhận của mình |
-| Xem báo cáo tổng hợp nhiều toà | Có | Có | Không | Không | Không |
+| Khai báo toà nhà, phòng | Xem danh sách toà | Có | Sửa (toà được giao) | Không | Không |
+| Khai báo dịch vụ và đơn giá | Không | Có | Không | Không | Không |
+| Quản lý người thuê, hợp đồng | Không | Có | Có (toà được giao) | Không | Xem của mình |
+| Ghi chỉ số dịch vụ | Không | Có | Có | Không | Xem của mình |
+| Tạo và phát hành hoá đơn | Không | Có | Có | Không | Xem của mình |
+| Huỷ hoá đơn đã phát hành | Không | Có | Không | Không | Không |
+| Ghi nhận thanh toán | Không | Có | Có | Không | Không |
+| Tạo yêu cầu sửa chữa | Không | Có | Có | Không | Có |
+| Xử lý yêu cầu sửa chữa | Không | Có | Có | Có (việc được giao) | Xác nhận của mình |
+| Xem báo cáo tổng hợp nhiều toà | Không | Có | Không | Không | Không |
 | Xem ảnh giấy tờ tuỳ thân | Không | Có | Có (toà được giao) | Không | Của mình |
 | Xem nhật ký thao tác | Có | Có | Không | Không | Không |
+
+> **Phạm vi QTHT theo CR-016:** Quản trị hệ thống là vai trò kỹ thuật, chỉ được quản lý tài khoản, xem danh sách toàn bộ toà nhà và xem nhật ký thao tác. QTHT không được mở chi tiết hoặc xem, sửa dữ liệu nghiệp vụ của bất kỳ toà nhà nào.
 
 ## 5.3. Yêu cầu chức năng (Functional Requirements)
 
@@ -1371,7 +1373,7 @@ Mới tiếp nhận -> Đã tiếp nhận -> Đã phân công -> Đang xử lý 
 Tự động chuyển từ *Chờ xác nhận* sang *Đã đóng* sau 72 giờ không phản hồi.
 
 **BR-17 — Bảo mật dữ liệu cá nhân**
-Ảnh giấy tờ tuỳ thân chỉ hiển thị cho Chủ sở hữu và Quản lý của chính toà nhà đó. Mọi lượt xem đều ghi nhật ký. Ảnh không được đặt ở đường dẫn công khai đoán được.
+Ảnh giấy tờ tuỳ thân chỉ hiển thị cho Chủ sở hữu và Quản lý của chính toà nhà đó; Quản trị hệ thống không có quyền truy cập dữ liệu này. Mọi lượt xem đều ghi nhật ký. Ảnh không được đặt ở đường dẫn công khai đoán được.
 
 **BR-18 — Không xoá dữ liệu tài chính**
 Hoá đơn đã phát hành, bản ghi thanh toán và nhật ký thao tác **không bao giờ bị xoá vật lý**, chỉ đánh dấu trạng thái hoặc bù trừ bằng bút toán đối ứng.

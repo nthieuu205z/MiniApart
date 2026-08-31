@@ -27,9 +27,7 @@ public class NguoiThueService {
     @Transactional(readOnly = true)
     public List<ThongTinNguoiThue> danhSach(String q, NguoiDung nguoiDung) {
         kiemTraQuyen(nguoiDung);
-        List<NguoiThue> nguoiThue = (q == null || q.isBlank())
-                ? nguoiThueRepository.findAll()
-                : nguoiThueRepository.search(q);
+        List<NguoiThue> nguoiThue = danhSachTheoPhamVi(q, nguoiDung);
         return nguoiThue.stream()
                 .map(item -> ThongTinNguoiThue.tuDanhSach(item, canhBaoCho(item.id(), item.soGiayTo())))
                 .toList();
@@ -47,7 +45,8 @@ public class NguoiThueService {
     @Transactional
     public ThongTinNguoiThue capNhat(Long nguoiThueId, YeuCauNguoiThue yeuCau, NguoiDung nguoiDung) {
         kiemTraQuyen(nguoiDung);
-        layNguoiThue(nguoiThueId);
+        NguoiThue hienTai = layNguoiThue(nguoiThueId);
+        kiemTraPhamVi(hienTai, nguoiDung);
         NguoiThue capNhat = chuanHoa(nguoiThueId, yeuCau);
         nguoiThueRepository.update(capNhat);
         NguoiThue daLuu = layNguoiThue(nguoiThueId);
@@ -58,6 +57,7 @@ public class NguoiThueService {
     public ThongTinNguoiThue chiTiet(Long nguoiThueId, NguoiDung nguoiDung) {
         kiemTraQuyen(nguoiDung);
         NguoiThue nguoiThue = layNguoiThue(nguoiThueId);
+        kiemTraPhamVi(nguoiThue, nguoiDung);
         nhatKyThaoTacRepository.ghi(
                 nguoiDung.id(),
                 HANH_DONG_XEM_SO_GIAY_TO,
@@ -69,9 +69,21 @@ public class NguoiThueService {
     }
 
     private void kiemTraQuyen(NguoiDung nguoiDung) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    private List<NguoiThue> danhSachTheoPhamVi(String q, NguoiDung nguoiDung) {
+        // kiemTraQuyen has already limited this service to scoped business roles.
+        return q == null || q.isBlank()
+                ? nguoiThueRepository.findAllTrongPhamVi(nguoiDung.id())
+                : nguoiThueRepository.searchTrongPhamVi(q, nguoiDung.id());
+    }
+
+    private void kiemTraPhamVi(NguoiThue nguoiThue, NguoiDung nguoiDung) {
+        if (!nguoiThueRepository.coNguoiThueTrongPhamVi(nguoiDung.id(), nguoiThue.id())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
     }

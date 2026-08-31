@@ -71,6 +71,19 @@ class KyThanhToanAuthorizationIntegrationTest {
     }
 
     @Test
+    void FR_AUT_04_systemAdminReceives403OnEveryPaymentAndInvoiceEndpoint() throws Exception {
+        String systemAdminToken = login(1L, "0900000001");
+
+        assert403OnKyThanhToanEndpoints(systemAdminToken);
+        assert403OnKyThanhToanClosingEndpoints(systemAdminToken);
+        assert403OnDraftInvoiceCalculationEndpoint(systemAdminToken);
+        assert403OnBulkDraftInvoiceCreationEndpoint(systemAdminToken);
+        assert403OnInvoiceReleaseEndpoint(systemAdminToken);
+        assert403OnDraftInvoiceCancelEndpoint(systemAdminToken);
+        assert403OnDraftInvoiceContentEditEndpoint(systemAdminToken);
+    }
+
+    @Test
     void FR_AUT_05_managerReceives403ForPaymentPeriodsOutsideAssignedBuildingScope() throws Exception {
         String managerToken = login(3L, "0900000003");
 
@@ -151,6 +164,16 @@ class KyThanhToanAuthorizationIntegrationTest {
         );
 
         assert403OnBulkDraftInvoiceCreationEndpoint(login(4L, "0900000004"));
+    }
+
+    @Test
+    void FR_AUT_04_forbiddenRolesWithBuildingVisibilityReceive403BeforeDraftCalculationScopeLookup() throws Exception {
+        jdbcTemplate.update(
+                "INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (4, 1), (5, 1)"
+        );
+
+        assert403OnDraftInvoiceCalculationEndpoint(login(4L, "0900000004"));
+        assert403OnDraftInvoiceCalculationEndpoint(login(5L, "0900000006"));
     }
 
     @Test

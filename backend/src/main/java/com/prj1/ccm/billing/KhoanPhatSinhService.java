@@ -41,7 +41,7 @@ public class KhoanPhatSinhService {
         kiemTraVaiTro(nguoiDung);
         KhoanPhatSinhRepository.HopDongTrongPhamVi hopDong = khoanPhatSinhRepository.timHopDongTrongPhamVi(hopDongId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, hopDong.toaNhaId());
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, hopDong.toaNhaId());
 
         KhoanPhatSinhDaChuanHoa khoan = chuanHoa(hopDong.hopDongId(), yeuCau);
         Long id = khoanPhatSinhRepository.tao(new KhoanPhatSinhRepository.KhoanPhatSinhMoi(
@@ -94,8 +94,7 @@ public class KhoanPhatSinhService {
     }
 
     private void kiemTraVaiTro(NguoiDung nguoiDung) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }

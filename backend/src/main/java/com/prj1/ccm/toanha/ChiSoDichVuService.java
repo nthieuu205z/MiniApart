@@ -348,19 +348,18 @@ public class ChiSoDichVuService {
     }
 
     private ToaNha kiemTraQuyen(NguoiDung nguoiDung, Long toaNhaId) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        return phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+        return phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
     }
 
     private ToaNha kiemTraQuyenCapNhatKyDaChot(NguoiDung nguoiDung, Long toaNhaId) {
         if (nguoiDung == null || nguoiDung.vaiTro() != VaiTro.CHU) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        return phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+        return phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
     }
 
     private KyThanhToan layKyThanhToan(Long toaNhaId, Long kyId) {

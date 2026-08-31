@@ -17,24 +17,27 @@ public class NguoiThueRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<NguoiThue> findAll() {
+    public List<NguoiThue> findAllTrongPhamVi(Long nguoiDungId) {
         return jdbcTemplate.query(
-                cauLenhCoBan() + " ORDER BY ho_ten, id",
-                (resultSet, rowNum) -> mapNguoiThue(resultSet)
+                cauLenhCoBan() + dieuKienNguoiThueTrongPhamVi() + " ORDER BY nt.ho_ten, nt.id",
+                (resultSet, rowNum) -> mapNguoiThue(resultSet),
+                nguoiDungId
         );
     }
 
-    public List<NguoiThue> search(String q) {
+    public List<NguoiThue> searchTrongPhamVi(String q, Long nguoiDungId) {
         String tenPattern = "%" + q.trim().toLowerCase() + "%";
         String soDienThoaiPattern = "%" + q.replaceAll("\\s+", "") + "%";
         return jdbcTemplate.query(
                 cauLenhCoBan()
+                        + dieuKienNguoiThueTrongPhamVi()
                         + """
-                           WHERE LOWER(ho_ten) LIKE ?
-                              OR so_dien_thoai LIKE ?
-                           ORDER BY ho_ten, id
+                           AND (LOWER(nt.ho_ten) LIKE ?
+                                OR nt.so_dien_thoai LIKE ?)
+                           ORDER BY nt.ho_ten, nt.id
                            """,
                 (resultSet, rowNum) -> mapNguoiThue(resultSet),
+                nguoiDungId,
                 tenPattern,
                 soDienThoaiPattern
         );
@@ -103,10 +106,80 @@ public class NguoiThueRepository {
         return soLuong != null && soLuong > 0;
     }
 
+    public boolean coNguoiThueTrongPhamVi(Long nguoiDungId, Long nguoiThueId) {
+        Boolean trongPhamVi = jdbcTemplate.queryForObject(
+                """
+                        SELECT EXISTS (
+                                   SELECT 1
+                                   FROM NGUOI_THUE nt
+                                   WHERE nt.id = ?
+                               )
+                               AND (
+                                   NOT EXISTS (
+                                       SELECT 1
+                                       FROM HOP_DONG hd_chua_gan
+                                       WHERE hd_chua_gan.nguoi_thue_id = ?
+                                   )
+                                   OR EXISTS (
+                                       SELECT 1
+                                       FROM HOP_DONG hd
+                                       JOIN PHONG p ON p.id = hd.phong_id
+                                       JOIN PHAN_QUYEN_TOA pqt ON pqt.toa_nha_id = p.toa_nha_id
+                                       WHERE hd.nguoi_thue_id = ?
+                                         AND pqt.nguoi_dung_id = ?
+                                   )
+                               )
+                        """,
+                Boolean.class,
+                nguoiThueId,
+                nguoiThueId,
+                nguoiThueId,
+                nguoiDungId
+        );
+        return Boolean.TRUE.equals(trongPhamVi);
+    }
+
+    public boolean coNguoiThueTrongToaDuocPhanCong(Long nguoiDungId, Long nguoiThueId) {
+        Boolean trongToaDuocPhanCong = jdbcTemplate.queryForObject(
+                """
+                        SELECT EXISTS (
+                            SELECT 1
+                            FROM HOP_DONG hd
+                            JOIN PHONG p ON p.id = hd.phong_id
+                            JOIN PHAN_QUYEN_TOA pqt ON pqt.toa_nha_id = p.toa_nha_id
+                            WHERE hd.nguoi_thue_id = ?
+                              AND pqt.nguoi_dung_id = ?
+                        )
+                        """,
+                Boolean.class,
+                nguoiThueId,
+                nguoiDungId
+        );
+        return Boolean.TRUE.equals(trongToaDuocPhanCong);
+    }
+
     private String cauLenhCoBan() {
         return """
-                SELECT id, ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan, trang_thai_luu_tru
-                FROM NGUOI_THUE
+                SELECT nt.id, nt.ho_ten, nt.ngay_sinh, nt.so_dien_thoai, nt.so_giay_to, nt.que_quan, nt.trang_thai_luu_tru
+                FROM NGUOI_THUE nt
+                """;
+    }
+
+    private String dieuKienNguoiThueTrongPhamVi() {
+        return """
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM HOP_DONG hd_chua_gan
+                    WHERE hd_chua_gan.nguoi_thue_id = nt.id
+                )
+                OR EXISTS (
+                    SELECT 1
+                    FROM HOP_DONG hd
+                    JOIN PHONG p ON p.id = hd.phong_id
+                    JOIN PHAN_QUYEN_TOA pqt ON pqt.toa_nha_id = p.toa_nha_id
+                    WHERE hd.nguoi_thue_id = nt.id
+                      AND pqt.nguoi_dung_id = ?
+                )
                 """;
     }
 

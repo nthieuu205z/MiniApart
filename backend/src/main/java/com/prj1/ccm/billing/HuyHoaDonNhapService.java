@@ -35,7 +35,7 @@ public class HuyHoaDonNhapService {
     @Transactional
     public void huy(Long toaNhaId, Long kyId, Long hoaDonId, YeuCauHuyHoaDon yeuCau, NguoiDung nguoiDung) {
         kiemTraVaiTro(nguoiDung);
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
         TinhHoaDonRepository.HoaDonTrongPhamVi hoaDon = tinhHoaDonRepository.timHoaDonTrongPhamVi(toaNhaId, kyId, hoaDonId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (hoaDon.trangThai() == TrangThaiHoaDon.NHAP) {
@@ -82,8 +82,7 @@ public class HuyHoaDonNhapService {
     }
 
     private void kiemTraVaiTro(NguoiDung nguoiDung) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }

@@ -79,12 +79,11 @@ public class TaoHoaDonHangLoatService {
     }
 
     private ToaNha kiemTraQuyen(Long toaNhaId, NguoiDung nguoiDung) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        return phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+        return phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
     }
 
     private KetQuaXuLyHopDong xuLyHopDong(ToaNha toaNha, KyThanhToan kyThanhToan, TinhHoaDonRepository.HopDongTrongKy hopDong) {

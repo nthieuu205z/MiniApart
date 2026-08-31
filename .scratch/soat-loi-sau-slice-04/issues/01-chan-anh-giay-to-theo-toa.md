@@ -2,9 +2,9 @@
 
 **What to build:** Thêm kiểm tra phạm vi toà nhà vào đường xin liên kết xem **ảnh giấy tờ tuỳ thân**. Hiện tại chỉ có kiểm tra vai trò, không có kiểm tra toà — nên một Quản lý toà A xin được liên kết xem ảnh căn cước của người thuê ở toà B.
 
-**Status:** ready-for-agent
+**Status:** done
 
-**Blocked by:** None — làm được ngay. Nhưng **đọc ticket 03 trước**: nó đang chờ người chốt xem QTHT có được giữ quyền này không. Ticket này cài đặt **đúng nguyên văn BR-17**; nếu sau đó có ruling cho QTHT thì sửa tiếp ở ticket 03.
+**Blocked by:** 03 (đã giải quyết). Ruling B áp dụng; ticket này cài đặt kiểm tra phạm vi theo đúng BR-17.
 
 ## Lỗi hiện tại
 
@@ -57,13 +57,17 @@ HOP_DONG.phong_id  →  PHONG.toa_nha_id
 
 ## Hoàn thành khi
 
-- [ ] Nhánh `DOI_TUONG_NGUOI_THUE` trong `kiemTraQuyenXemAnh` gọi kiểm tra phạm vi toà, không chỉ kiểm tra vai trò
-- [ ] `CHU` xem được ảnh giấy tờ của người thuê trong các toà thuộc quyền
-- [ ] `QUAN_LY` **chỉ** xem được ảnh giấy tờ của người thuê có hợp đồng ở toà mình được phân công; sai toà thì nhận **403**, không phải 404 và không phải 500
-- [ ] `NGUOI_THUE` và `THO` vẫn 403 như cũ — không làm hồi quy hành vi đã có
-- [ ] Truy vấn mới đặt trong `AnhDinhKemRepository` hoặc `NguoiThueRepository`, không viết SQL thẳng trong service
-- [ ] **Ca kiểm thử bắt buộc, đây là lý do tồn tại của ticket:** dựng hai toà, mỗi toà một người thuê có ảnh giấy tờ, một `QUAN_LY` chỉ được phân công toà A. Gọi xin liên kết cho ảnh của người thuê toà B → **403**. Ca này phải đỏ nếu gỡ đoạn sửa ra
-- [ ] Tên test mang mã `BR-17`
-- [ ] Dữ liệu mẫu trong test là **bịa hoàn toàn** — không số giấy tờ của người thật, theo rủi ro R-13
+- [x] Nhánh `DOI_TUONG_NGUOI_THUE` trong `kiemTraQuyenXemAnh` gọi kiểm tra phạm vi toà, không chỉ kiểm tra vai trò
+- [x] `CHU` xem được ảnh giấy tờ của người thuê trong các toà thuộc quyền
+- [x] `QUAN_LY` **chỉ** xem được ảnh giấy tờ của người thuê có hợp đồng ở toà mình được phân công; sai toà nhận **403**, không phải 404 hay 500
+- [x] `NGUOI_THUE` và `THO` vẫn 403 như cũ — không làm hồi quy hành vi đã có
+- [x] Truy vấn mới đặt trong `NguoiThueRepository`, không viết SQL thẳng trong service
+- [x] Ca kiểm thử hai toà, hai người thuê, quản lý chỉ được phân công toà A; xin link ảnh của người thuê toà B nhận **403**
+- [x] Tên test mang mã `BR-17`
+- [x] Dữ liệu mẫu trong test là **bịa hoàn toàn** — không số giấy tờ của người thật, theo rủi ro R-13
 
 ## Comments
+
+- Đã thêm truy vấn từ `NGUOI_THUE` qua `HOP_DONG` và `PHONG` để kiểm tra người thuê thuộc ít nhất một toà mà tài khoản được phân công; hợp đồng lịch sử vẫn được tính.
+- Đã thêm ca thành công cho `CHU`, ca sai toà cho `QUAN_LY`, và ca từ chối cho `THO`/`NGUOI_THUE` trong `NguoiThueAnhGiayToIntegrationTest`.
+- Test lớp ảnh giấy tờ và full backend suite đều xanh: 333/333 test.

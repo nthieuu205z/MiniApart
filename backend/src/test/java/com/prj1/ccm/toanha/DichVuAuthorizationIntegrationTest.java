@@ -79,6 +79,13 @@ class DichVuAuthorizationIntegrationTest {
     }
 
     @Test
+    void FR_AUT_04_systemAdminReceives403OnEveryServiceEndpoint() throws Exception {
+        Long dichVuId = themDichVu(1L);
+
+        assert403OnAllServiceEndpoints(login(1L, "0900000001"), dichVuId);
+    }
+
+    @Test
     void FR_BLD_05_managerReceives403OutsideAssignedBuildingScope() throws Exception {
         Long dichVuNgoaiPhamViId = themDichVu(2L);
         String managerToken = login(3L, "0900000003");

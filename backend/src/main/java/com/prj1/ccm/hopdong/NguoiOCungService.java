@@ -101,13 +101,12 @@ public class NguoiOCungService {
         kiemTraVaiTro(nguoiDung);
         HopDongRepository.HopDongView hopDongView = hopDongRepository.findViewById(hopDongId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, hopDongView.toaNhaId());
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, hopDongView.toaNhaId());
         return hopDongView;
     }
 
     private void kiemTraVaiTro(NguoiDung nguoiDung) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }

@@ -15,7 +15,7 @@ Sau khi hoàn tất tài liệu phân tích yêu cầu phiên bản 1.0, nhóm t
 
 Phương pháp: duyệt lần lượt 23 quy tắc nghiệp vụ, với mỗi quy tắc xác định những trường dữ liệu mà công thức của nó cần đọc, rồi đối chiếu xem các trường đó có tồn tại trong ERD không.
 
-**Kết quả: 15 vấn đề, trong đó 10 vấn đề khiến quy tắc nghiệp vụ không thể thực hiện được.** Phiếu thứ 15 phát sinh sau đó, khi nhóm chuẩn hoá danh mục tài liệu tham khảo — xem CR-015. Đợt rà soát này diễn ra **trước khi tài liệu được thông qua làm baseline**, nên theo mục 2.6.1 các thay đổi dưới đây chưa phải thay đổi baseline. Nhóm vẫn chủ động lập phiếu đầy đủ, vì hai lý do:
+**Kết quả: 15 vấn đề, trong đó 10 vấn đề khiến quy tắc nghiệp vụ không thể thực hiện được.** Phiếu thứ 15 phát sinh sau đó, khi nhóm chuẩn hoá danh mục tài liệu tham khảo — xem CR-015. Sau khi Slice 04 đóng, đợt soát lỗi bảo mật bổ sung CR-016; phiếu này là phụ lục cập nhật, không làm thay đổi số liệu của đợt rà soát ban đầu. Đợt rà soát ban đầu diễn ra **trước khi tài liệu được thông qua làm baseline**, nên theo mục 2.6.1 các thay đổi dưới đây chưa phải thay đổi baseline. Nhóm vẫn chủ động lập phiếu đầy đủ, vì hai lý do:
 
 1. Ghi lại được **lý do đằng sau mỗi quyết định thiết kế** — thứ sẽ thất lạc nếu chỉ lặng lẽ sửa sơ đồ
 2. Kiểm chứng chính quy trình ở mục 2.6.3 bằng một tình huống thật, thay vì để nó là quy trình chỉ tồn tại trên giấy
@@ -313,6 +313,26 @@ Ngoài ra, vì mỗi dòng mang `ngay_hieu_luc` riêng, biểu 6 bậc cũ và b
 **Một phát hiện bổ sung, ảnh hưởng tới cách thiết kế bảng giá.** Quyết định 14/2025/QĐ-TTg không quy định đơn giá từng bậc bằng số tiền cố định, mà bằng **tỷ lệ phần trăm của giá bán lẻ điện bình quân**. Khi Nhà nước điều chỉnh giá điện, thông thường chỉ giá bình quân thay đổi còn các tỷ lệ giữ nguyên. Do đó bảng `BANG_GIA_BAC_THANG` nên lưu **cả hai**: tỷ lệ phần trăm để cập nhật toàn bộ biểu giá chỉ bằng một thao tác khi giá bình quân đổi, và đơn giá đã quy đổi để hoá đơn cũ in lại vẫn ra đúng số cũ.
 
 **Bài học rút ra.** Phiếu này khác 14 phiếu trước ở chỗ: nó **không phải lỗi thiết kế mà là lỗi dữ kiện**, và nó không được tìm ra bằng phép đối chiếu quy tắc với mô hình. Nó lộ ra vì một lý do rất tình cờ — nhóm đi tra số hiệu văn bản để chuẩn hoá danh mục tài liệu tham khảo. Điều này cho thấy việc **trích dẫn đầy đủ số hiệu văn bản** không chỉ là hình thức học thuật: nếu phiên bản 1.0 đã ghi số hiệu ngay từ đầu, sai lệch này có thể được phát hiện sớm hơn nhiều.
+
+---
+
+## CR-016
+
+| Trường | Nội dung |
+|---|---|
+| **Mã CR** | CR-016 |
+| **Ngày đề xuất** | 01/09/2026 |
+| **Người đề xuất** | *(điền tên)* |
+| **Mô tả thay đổi** | Chốt lại phạm vi của vai trò `QTHT`: chỉ được quản lý tài khoản, xem danh sách toàn bộ toà nhà và xem nhật ký thao tác; không được mở chi tiết hoặc xem, sửa dữ liệu nghiệp vụ của toà nhà. |
+| **Lý do** | Bảng phân vùng cũ xếp QTHT vào nhóm có chức năng đầy đủ, trong khi BR-17 chỉ cho Chủ sở hữu và Quản lý của chính toà nhà xem ảnh giấy tờ; đặc tả UX cũng xác định QTHT là vai trò kỹ thuật quản trị tài khoản. Giữ quyền xuyên mọi toà sẽ vi phạm nguyên tắc từ chối mặc định và cấp quyền đọc dữ liệu nhạy cảm vượt quá nhiệm vụ. |
+| **Yêu cầu bị ảnh hưởng** | FR-AUT-04, FR-AUT-05, BR-17 và các FR nghiệp vụ có dữ liệu theo toà |
+| **Ước lượng công thêm** | Đã thực hiện trong đợt soát lỗi sau Slice 04 |
+| **Quyết định** | Chấp nhận phương án B |
+| **Ngày cập nhật tài liệu** | 01/09/2026 |
+
+**Phạm vi sau thay đổi.** QTHT vẫn quản lý tài khoản, xem toàn bộ danh sách toà nhà và xem nhật ký. QTHT nhận `403 Forbidden` khi mở chi tiết toà hoặc truy cập danh mục phòng, dịch vụ, bảng giá, người thuê, hợp đồng, chỉ số, kỳ thanh toán, hoá đơn, ảnh giấy tờ và ảnh công tơ. Chủ sở hữu và Quản lý vẫn bị giới hạn bởi danh sách phân công toà; việc xem ảnh giấy tờ của Quản lý đi qua hợp đồng của người thuê, kể cả hợp đồng lịch sử đã hết hạn.
+
+**Ghi chú triển khai.** Ruling được thực thi ở ticket `.scratch/soat-loi-sau-slice-04/issues/06-thuc-thi-ranh-gioi-qtht.md`, với test phân quyền cho QTHT, test phạm vi ảnh giấy tờ và test hồi quy toàn bộ backend.
 
 ---
 

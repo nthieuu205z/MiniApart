@@ -87,13 +87,12 @@ public class DanhMucPhongService {
     }
 
     private void kiemTraQuyenPhong(NguoiDung nguoiDung, Long toaNhaId) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
     }
 
     private Phong chuanHoaPhongDon(Long toaNhaId, YeuCauPhong yeuCau) {

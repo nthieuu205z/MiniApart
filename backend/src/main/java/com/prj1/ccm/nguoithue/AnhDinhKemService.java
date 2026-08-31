@@ -70,7 +70,12 @@ public class AnhDinhKemService {
     @Transactional
     public ThongTinAnhDinhKem taiLenAnhNguoiThue(Long nguoiThueId, String ghiChu, MultipartFile tep, NguoiDung nguoiDung) {
         kiemTraQuyen(nguoiDung);
-        nguoiThueRepository.findById(nguoiThueId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        nguoiThueRepository.findById(nguoiThueId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if ((nguoiDung.vaiTro() == VaiTro.CHU || nguoiDung.vaiTro() == VaiTro.QUAN_LY)
+                && !nguoiThueRepository.coNguoiThueTrongPhamVi(nguoiDung.id(), nguoiThueId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         return luuAnh(DOI_TUONG_NGUOI_THUE, nguoiThueId, ghiChu, tep);
     }
 
@@ -174,6 +179,12 @@ public class AnhDinhKemService {
             if (nguoiDung != null && nguoiDung.vaiTro() == VaiTro.NGUOI_THUE) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN);
             }
+            // A historical contract still establishes the manager's legitimate audit scope.
+            // Do not filter by contract status or dates: former managers may need old documents.
+            if (nguoiDung == null
+                    || !nguoiThueRepository.coNguoiThueTrongToaDuocPhanCong(nguoiDung.id(), anh.doiTuongId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
             return anh;
         }
         if (DOI_TUONG_CHI_SO_DICH_VU.equals(anh.doiTuongLoai())) {
@@ -186,13 +197,13 @@ public class AnhDinhKemService {
             }
             Long toaNhaId = chiSoDichVuRepository.findToaNhaIdByChiSoId(anh.doiTuongId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-            phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+            phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
             return anh;
         }
         throw new ResponseStatusException(HttpStatus.FORBIDDEN);
     }
     private void kiemTraQuyen(NguoiDung nguoiDung) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT && nguoiDung.vaiTro() != VaiTro.CHU && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
     }
     private String chuKy(Long anhId, long hetHan) {
         try { Mac mac = Mac.getInstance("HmacSHA256"); mac.init(new SecretKeySpec(khoaKy, "HmacSHA256")); return Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal((anhId + ":" + hetHan).getBytes(StandardCharsets.UTF_8))); }

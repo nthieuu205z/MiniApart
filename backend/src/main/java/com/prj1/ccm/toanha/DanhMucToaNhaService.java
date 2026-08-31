@@ -52,7 +52,7 @@ public class DanhMucToaNhaService {
     }
 
     private void kiemTraDuocTao(NguoiDung nguoiDung) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU && nguoiDung.vaiTro() != VaiTro.QTHT)) {
+        if (nguoiDung == null || nguoiDung.vaiTro() != VaiTro.CHU) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
     }
@@ -63,8 +63,7 @@ public class DanhMucToaNhaService {
         }
 
         return switch (nguoiDung.vaiTro()) {
-            case QTHT -> layToaNhaTonTai(toaNhaId);
-            case CHU, QUAN_LY -> phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+            case CHU, QUAN_LY -> phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
             default -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         };
     }

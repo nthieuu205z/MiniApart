@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
@@ -91,6 +92,7 @@ class NguoiThueAnhGiayToIntegrationTest {
         mutableClock.dat(TEST_NOW);
         jdbcTemplate.update("DELETE FROM ANH_DINH_KEM");
         jdbcTemplate.update("DELETE FROM NHAT_KY_THAO_TAC");
+        jdbcTemplate.update("DELETE FROM HOP_DONG");
         jdbcTemplate.update("DELETE FROM NGUOI_THUE");
         jdbcTemplate.update("DELETE FROM BANG_GIA_BAC_THANG");
         jdbcTemplate.update("DELETE FROM BANG_GIA");
@@ -117,6 +119,8 @@ class NguoiThueAnhGiayToIntegrationTest {
     void FR_TNT_01_NFR_SEC_04_taiLenAnhGiayToXinLienKetKyVaTuChoiSauKhiHetHan() throws Exception {
         String managerToken = login(3L, "0900000003");
         Long nguoiThueId = themNguoiThue("Lâm Bảo An", "1996-07-20", "0907000111", "079123456789", "Hà Tĩnh");
+        Long phongId = themPhong(1L, "901");
+        themHopDong(phongId, nguoiThueId, LocalDate.of(2039, 1, 1), LocalDate.of(2039, 12, 31));
 
         MockMultipartFile matTruoc = new MockMultipartFile(
                 "tep",
@@ -194,6 +198,9 @@ class NguoiThueAnhGiayToIntegrationTest {
     void BR_17_xinLienKetAnhGiayToGhiMotNhatKyVoiDungNguoiDungVaNguoiThue() throws Exception {
         String ownerToken = login(2L, "0900000002");
         Long nguoiThueId = themNguoiThue("Hồ sơ nhật ký bịa", "1995-02-14", "0907000444", "112233445566", "Quảng Nam");
+        Long phongId = themPhong(1L, "901");
+        themHopDong(phongId, nguoiThueId, LocalDate.of(2039, 1, 1), LocalDate.of(2039, 12, 31));
+        ganToaChoNguoiDung(2L, 1L);
         Long anhId = themAnhDinhKem(nguoiThueId, "mat truoc", "audit-document.png", MediaType.IMAGE_PNG_VALUE, (long) png1x1().length);
 
         xinLienKet(ownerToken, anhId);
@@ -213,6 +220,164 @@ class NguoiThueAnhGiayToIntegrationTest {
             assertThat(record.get("gia_tri_truoc")).isNull();
             assertThat(record.get("gia_tri_sau")).isNull();
         });
+    }
+
+    @Test
+    void BR_17_quanLyChiXinLienKetAnhGiayToCuaNguoiThueThuocToaDuocPhanCong() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long nguoiThueToaA = themNguoiThue("Hồ sơ toà A bịa", "1994-06-10", "0907000555", "223344556677", "Đồng Nai");
+        Long nguoiThueToaB = themNguoiThue("Hồ sơ toà B bịa", "1993-07-11", "0907000666", "334455667788", "Gia Lai");
+        Long phongToaA = themPhong(1L, "902");
+        Long phongToaB = themPhong(2L, "903");
+        themHopDong(phongToaA, nguoiThueToaA, LocalDate.of(2039, 1, 1), LocalDate.of(2039, 12, 31));
+        themHopDong(phongToaB, nguoiThueToaB, LocalDate.of(2039, 1, 1), LocalDate.of(2039, 12, 31));
+        Long anhToaAId = themAnhDinhKem(nguoiThueToaA, "mat truoc A", "building-a-document.png", MediaType.IMAGE_PNG_VALUE, (long) png1x1().length);
+        Long anhToaBId = themAnhDinhKem(nguoiThueToaB, "mat truoc B", "building-b-document.png", MediaType.IMAGE_PNG_VALUE, (long) png1x1().length);
+
+        xinLienKet(managerToken, anhToaAId);
+
+        mockMvc.perform(get("/api/anh/" + anhToaBId + "/lien-ket")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+
+        MockMultipartFile tepNgoaiPhamVi = new MockMultipartFile(
+                "tep",
+                "foreign-building-document.png",
+                MediaType.IMAGE_PNG_VALUE,
+                png1x1()
+        );
+        mockMvc.perform(multipart("/api/nguoi-thue/" + nguoiThueToaB + "/anh")
+                        .file(tepNgoaiPhamVi)
+                        .param("ghiChu", "không được phép")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM ANH_DINH_KEM WHERE doi_tuong_id = ?",
+                Integer.class,
+                nguoiThueToaB
+        )).isEqualTo(1);
+    }
+
+    @Test
+    void FR_AUT_04_BR_17_wrongRoleCannotRequestIdentityDocumentLinkEvenWhenAssignedToBuilding() throws Exception {
+        Long nguoiThueId = themNguoiThue("Hồ sơ thợ bịa", "1991-04-12", "0907000888", "556677889900", "Lâm Đồng");
+        Long phongId = themPhong(1L, "904");
+        themHopDong(phongId, nguoiThueId, LocalDate.of(2039, 1, 1), LocalDate.of(2039, 12, 31));
+        ganToaChoNguoiDung(4L, 1L);
+        Long anhId = themAnhDinhKem(nguoiThueId, "mat truoc", "worker-document.png", MediaType.IMAGE_PNG_VALUE, (long) png1x1().length);
+        String workerToken = login(4L, "0900000004");
+
+        mockMvc.perform(get("/api/anh/" + anhId + "/lien-ket")
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isForbidden());
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM NHAT_KY_THAO_TAC WHERE hanh_dong = 'XEM_ANH_GIAY_TO'",
+                Integer.class
+        )).isZero();
+    }
+
+    @Test
+    void FR_AUT_04_BR_17_systemAdminCannotRequestIdentityDocumentLink() throws Exception {
+        String systemAdminToken = login(1L, "0900000001");
+        Long nguoiThueId = themNguoiThue("Hồ sơ QTHT bịa", "1992-08-12", "0907000777", "445566778899", "Bình Thuận");
+        Long anhId = themAnhDinhKem(nguoiThueId, "mat truoc", "system-admin-document.png", MediaType.IMAGE_PNG_VALUE, (long) png1x1().length);
+
+        mockMvc.perform(get("/api/anh/" + anhId + "/lien-ket")
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_AUT_04_BR_17_systemAdminCannotUploadIdentityDocument() throws Exception {
+        String systemAdminToken = login(1L, "0900000001");
+        Long nguoiThueId = themNguoiThue("Hồ sơ QTHT upload bịa", "1992-08-13", "0900000778", "445566778880", "Bình Thuận");
+        MockMultipartFile tep = new MockMultipartFile(
+                "tep",
+                "system-admin-upload.png",
+                MediaType.IMAGE_PNG_VALUE,
+                png1x1()
+        );
+
+        mockMvc.perform(multipart("/api/nguoi-thue/" + nguoiThueId + "/anh")
+                        .file(tep)
+                        .param("ghiChu", "không được phép")
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM ANH_DINH_KEM", Integer.class)).isZero();
+    }
+
+    @Test
+    void FR_TNT_01_managerCanUploadIdentityDocumentForOnboardingTenantWithoutContract() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long nguoiThueId = themNguoiThue("Hồ sơ onboarding bịa", "1990-02-02", "0900000998", "778899001123", "Ninh Bình");
+        MockMultipartFile tep = new MockMultipartFile(
+                "tep",
+                "onboarding-document.png",
+                MediaType.IMAGE_PNG_VALUE,
+                png1x1()
+        );
+
+        mockMvc.perform(multipart("/api/nguoi-thue/" + nguoiThueId + "/anh")
+                        .file(tep)
+                        .param("ghiChu", "ảnh onboarding")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.doiTuongLoai").value("NGUOI_THUE"))
+                .andExpect(jsonPath("$.doiTuongId").value(nguoiThueId))
+                .andExpect(jsonPath("$.ghiChu").value("ảnh onboarding"));
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM ANH_DINH_KEM WHERE doi_tuong_loai = 'NGUOI_THUE' AND doi_tuong_id = ?",
+                Integer.class,
+                nguoiThueId
+        )).isEqualTo(1);
+    }
+
+    @Test
+    void FR_AUT_05_ownerCannotUploadIdentityDocumentForTenantOnlyInForeignBuilding() throws Exception {
+        String ownerToken = login(2L, "0900000002");
+        Long nguoiThueId = themNguoiThue("Hồ sơ chủ ngoài phạm vi", "1990-03-03", "0900000997", "778899001124", "Ninh Bình");
+        Long phongToaB = themPhong(2L, "909");
+        themHopDong(phongToaB, nguoiThueId, LocalDate.of(2039, 1, 1), LocalDate.of(2039, 12, 31));
+        ganToaChoNguoiDung(2L, 1L);
+        MockMultipartFile tep = new MockMultipartFile(
+                "tep",
+                "owner-foreign-building.png",
+                MediaType.IMAGE_PNG_VALUE,
+                png1x1()
+        );
+
+        mockMvc.perform(multipart("/api/nguoi-thue/" + nguoiThueId + "/anh")
+                        .file(tep)
+                        .param("ghiChu", "không được phép")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isForbidden());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM ANH_DINH_KEM", Integer.class)).isZero();
+    }
+
+    @Test
+    void BR_17_khongChoXinLienKetAnhGiayToCuaHoSoKhongTonTai() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long anhId = themAnhDinhKem(999999L, "ảnh mồ côi", "orphan-document.png", MediaType.IMAGE_PNG_VALUE, (long) png1x1().length);
+
+        mockMvc.perform(get("/api/anh/" + anhId + "/lien-ket")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void BR_17_khongChoXinLienKetAnhGiayToCuaHoSoDangOnboardingChuaCoHopDong() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long nguoiThueId = themNguoiThue("Hồ sơ chờ ký", "1990-01-01", "0907000999", "778899001122", "Ninh Bình");
+        Long anhId = themAnhDinhKem(nguoiThueId, "ảnh chờ ký", "pending-contract-document.png", MediaType.IMAGE_PNG_VALUE, (long) png1x1().length);
+
+        mockMvc.perform(get("/api/anh/" + anhId + "/lien-ket")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -299,6 +464,40 @@ class NguoiThueAnhGiayToIntegrationTest {
                 soDienThoai,
                 soGiayTo,
                 queQuan
+        );
+    }
+
+    private Long themPhong(Long toaNhaId, String soPhong) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO PHONG(toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai)
+                        VALUES (?, ?, 9, 22.50, 4, 3500000.00, 'Studio', 'TRONG')
+                        RETURNING id
+                        """,
+                Long.class,
+                toaNhaId,
+                soPhong
+        );
+    }
+
+    private void themHopDong(Long phongId, Long nguoiThueId, LocalDate ngayBatDau, LocalDate ngayKetThuc) {
+        jdbcTemplate.update(
+                """
+                        INSERT INTO HOP_DONG(phong_id, nguoi_thue_id, ngay_bat_dau, ngay_ket_thuc, gia_thue, tien_coc, so_ngay_bao_truoc, trang_thai)
+                        VALUES (?, ?, ?, ?, 3500000.00, 3500000.00, 30, 'HIEU_LUC')
+                        """,
+                phongId,
+                nguoiThueId,
+                java.sql.Date.valueOf(ngayBatDau),
+                java.sql.Date.valueOf(ngayKetThuc)
+        );
+    }
+
+    private void ganToaChoNguoiDung(Long nguoiDungId, Long toaNhaId) {
+        jdbcTemplate.update(
+                "INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+                nguoiDungId,
+                toaNhaId
         );
     }
 
