@@ -1,5 +1,6 @@
 package com.prj1.ccm.toanha;
 
+import com.prj1.ccm.hopdong.NguoiOCungRepository;
 import com.prj1.ccm.nguoidung.NguoiDung;
 import com.prj1.ccm.nguoidung.VaiTro;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,15 +31,21 @@ public class KyThanhToanService {
     private final PhanQuyenToaService phanQuyenToaService;
     private final KyThanhToanRepository kyThanhToanRepository;
     private final ChiSoDichVuRepository chiSoDichVuRepository;
+    private final NguoiOCungRepository nguoiOCungRepository;
+    private final NhanKhauKyRepository nhanKhauKyRepository;
 
     public KyThanhToanService(
             PhanQuyenToaService phanQuyenToaService,
             KyThanhToanRepository kyThanhToanRepository,
-            ChiSoDichVuRepository chiSoDichVuRepository
+            ChiSoDichVuRepository chiSoDichVuRepository,
+            NguoiOCungRepository nguoiOCungRepository,
+            NhanKhauKyRepository nhanKhauKyRepository
     ) {
         this.phanQuyenToaService = phanQuyenToaService;
         this.kyThanhToanRepository = kyThanhToanRepository;
         this.chiSoDichVuRepository = chiSoDichVuRepository;
+        this.nguoiOCungRepository = nguoiOCungRepository;
+        this.nhanKhauKyRepository = nhanKhauKyRepository;
     }
 
     public List<ThongTinKyThanhToan> danhSachKyThanhToan(Long toaNhaId, NguoiDung nguoiDung) {
@@ -124,6 +132,8 @@ public class KyThanhToanService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_KY_KHONG_MO);
         }
 
+        luuNhanKhauKy(kyHienTai);
+
         KyThanhToan kyKeTiep = taoKyKeTiep(toaNha, kyHienTai);
         try {
             kyThanhToanRepository.insert(kyKeTiep);
@@ -143,6 +153,19 @@ public class KyThanhToanService {
                 )),
                 List.of()
         );
+    }
+
+    private void luuNhanKhauKy(KyThanhToan kyThanhToan) {
+        List<NhanKhauKyRepository.NhanKhauKy> nhanKhauTrongKy = nguoiOCungRepository
+                .findSoNguoiOChotKy(
+                        kyThanhToan.toaNhaId(),
+                        kyThanhToan.ngayBatDau(),
+                        kyThanhToan.ngayKetThuc()
+                )
+                .stream()
+                .map(soNguoi -> new NhanKhauKyRepository.NhanKhauKy(soNguoi.phongId(), soNguoi.soNguoi()))
+                .toList();
+        nhanKhauKyRepository.insertAll(kyThanhToan.id(), nhanKhauTrongKy, Instant.now());
     }
 
     static String thongBaoXungDotTuRangBuoc(DataIntegrityViolationException exception) {

@@ -12,6 +12,7 @@ import { clearStoredToken, readStoredToken, storeToken } from './authSession'
 import DanhMucToaNha from './DanhMucToaNha'
 import DanhMucPhong from './DanhMucPhong'
 import GhiChiSo from './GhiChiSo'
+import HoaDon from './HoaDon'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { layMenuTheoVaiTro, xacDinhTrangTheoVaiTro } from './roleNavigation'
 import './styles.css'
@@ -128,6 +129,9 @@ function App() {
   const trangVaiTro = nguoiDung
     ? xacDinhTrangTheoVaiTro(nguoiDung.vaiTro, nguoiDung.tenVaiTro, duongDanHienTai)
     : null
+  const dinhDanhHoaDon = typeof window === 'undefined'
+    ? {}
+    : layDinhDanhHoaDonTuUrl(window.location.href)
   const hienThiDanhMucToaNha = Boolean(
     token
     && nguoiDung
@@ -146,19 +150,29 @@ function App() {
     && duongDanHienTai === '/ghi-chi-so'
     && nguoiDung.vaiTro === 'QUAN_LY',
   )
+  const hienThiHoaDon = Boolean(
+    token
+    && nguoiDung
+    && ['/hoa-don', '/hoa-don-cua-toi'].includes(duongDanHienTai)
+    && ['QTHT', 'CHU', 'QUAN_LY', 'NGUOI_THUE'].includes(nguoiDung.vaiTro),
+  )
   const tieuDeTheChinh = hienThiDanhMucToaNha
     ? 'Toà nhà'
     : hienThiDanhMucPhong
       ? 'Phòng'
       : hienThiGhiChiSo
         ? 'Ghi chỉ số'
-      : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
+        : hienThiHoaDon
+          ? 'Hoá đơn'
+        : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
   const maTruyVetTheChinh = hienThiDanhMucToaNha
     ? 'FR-BLD-01'
     : hienThiDanhMucPhong
       ? 'FR-BLD-02'
       : hienThiGhiChiSo
         ? 'FR-MTR-01'
+        : hienThiHoaDon
+          ? 'FR-INV-02'
       : nguoiDung ? 'FR-AUT-04' : 'FR-AUT-01'
 
   return (
@@ -232,6 +246,8 @@ function App() {
               <DanhMucPhong token={token} />
             ) : hienThiGhiChiSo && token ? (
               <GhiChiSo token={token} />
+            ) : hienThiHoaDon && token ? (
+              <HoaDon token={token} {...dinhDanhHoaDon} />
             ) : nguoiDung.vaiTro === 'QTHT' && duongDanHienTai === '/tai-khoan' && token ? (
               <QuanLyTaiKhoan token={token} />
             ) : trangVaiTro ? (
@@ -335,6 +351,25 @@ function layDuongDanHienTai() {
   }
 
   return window.location.pathname || '/'
+}
+
+export function layDinhDanhHoaDonTuUrl(url: string | URL) {
+  const searchParams = new URL(url, 'http://miniapart.local').searchParams
+  const toaNhaId = soNguyenDuong(searchParams.get('toaNhaId'))
+  const kyId = soNguyenDuong(searchParams.get('kyId'))
+  const hoaDonId = soNguyenDuong(searchParams.get('hoaDonId'))
+  if (toaNhaId === undefined || kyId === undefined || hoaDonId === undefined) {
+    return {}
+  }
+  return { toaNhaId, kyId, hoaDonId }
+}
+
+function soNguyenDuong(value: string | null) {
+  if (value === null || !/^[1-9]\d*$/.test(value)) {
+    return undefined
+  }
+  const parsed = Number(value)
+  return Number.isSafeInteger(parsed) ? parsed : undefined
 }
 
 function dieuHuongToi(duongDan: string) {

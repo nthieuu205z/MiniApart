@@ -6,13 +6,20 @@
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Bảng `KHOAN_PHAT_SINH(id, hop_dong_id, nguon_loai, nguon_id, ten_khoan, so_tien, loai, trang_thai, hoa_don_id)` đúng như CR-008
-- [ ] `trang_thai` chỉ nhận `CHO_TINH` hoặc `DA_TINH`, ép bằng `CHECK`
-- [ ] Tạo hoá đơn thì quét các khoản `CHO_TINH` của hợp đồng, đưa vào hoá đơn, và **chuyển sang `DA_TINH` trong cùng một giao dịch**. Nửa vời ở đây nghĩa là thu lặp hoặc mất khoản
-- [ ] `loai` phân biệt khoản **phải thu thêm** và khoản **giảm trừ** — giảm trừ mang dấu âm
-- [ ] **Ca kiểm thử bắt buộc:** tạo một khoản phát sinh, chạy tạo hoá đơn **hai kỳ liên tiếp**, khẳng định khoản đó chỉ xuất hiện ở kỳ đầu. Đây là ca trực tiếp chứng minh CR-008 được xử lý đúng
-- [ ] Huỷ một hoá đơn nháp thì các khoản của nó **quay về `CHO_TINH`**, không bị mất
-- [ ] Cặp `nguon_loai`/`nguon_id` **không kiểm được bằng khoá ngoại** ở tầng cơ sở dữ liệu. CR-008 đã nêu rõ đây là đánh đổi có cân nhắc, và đòi bù lại bằng **kiểm ở tầng ứng dụng kèm kiểm thử riêng**. Phải có ca kiểm thử cho việc trỏ tới một nguồn không tồn tại
-- [ ] Tên test mang mã `CR-008` và `FR-INV-05`
+- [x] Bảng `KHOAN_PHAT_SINH(id, hop_dong_id, nguon_loai, nguon_id, ten_khoan, so_tien, loai, trang_thai, hoa_don_id)` đúng như CR-008
+- [x] `trang_thai` chỉ nhận `CHO_TINH` hoặc `DA_TINH`, ép bằng `CHECK`
+- [x] Tạo hoá đơn thì quét các khoản `CHO_TINH` của hợp đồng, đưa vào hoá đơn, và **chuyển sang `DA_TINH` trong cùng một giao dịch**. Nửa vời ở đây nghĩa là thu lặp hoặc mất khoản
+- [x] `loai` phân biệt khoản **phải thu thêm** và khoản **giảm trừ** — giảm trừ mang dấu âm
+- [x] **Ca kiểm thử bắt buộc:** tạo một khoản phát sinh, chạy tạo hoá đơn **hai kỳ liên tiếp**, khẳng định khoản đó chỉ xuất hiện ở kỳ đầu. Đây là ca trực tiếp chứng minh CR-008 được xử lý đúng
+- [x] Huỷ một hoá đơn nháp thì các khoản của nó **quay về `CHO_TINH`**, không bị mất
+- [x] Cặp `nguon_loai`/`nguon_id` **không kiểm được bằng khoá ngoại** ở tầng cơ sở dữ liệu. CR-008 đã nêu rõ đây là đánh đổi có cân nhắc, và đòi bù lại bằng **kiểm ở tầng ứng dụng kèm kiểm thử riêng**. Phải có ca kiểm thử cho việc trỏ tới một nguồn không tồn tại
+- [x] Tên test mang mã `CR-008` và `FR-INV-05`
+
+## Comments
+
+- Đã thêm migration `V23__pending_invoice_extras.sql` với trạng thái `CHO_TINH`/`DA_TINH`, ràng buộc `CHECK`, số tiền `NUMERIC(15,2)` và liên kết tới hợp đồng/hoá đơn.
+- Luồng tạo hoá đơn khoá các khoản chờ trên đường ghi và chuyển sang `DA_TINH` trong cùng transaction; huỷ hoá đơn nháp đưa khoản về `CHO_TINH`. Có kiểm thử chạy hai kỳ, giảm trừ âm, rollback và cạnh tranh.
+- Kiểm tra nguồn được đóng qua `NguonKhoanPhatSinhValidator` theo kiểu fail-closed, có test cho nguồn không tồn tại. Các bảng nguồn cụ thể `SUA_CHUA`, `DEN_BU`, `PHAT` chưa thuộc các slice hiện tại, nên slice nguồn tương ứng sẽ đăng ký validator tồn tại thật sau này; không tạo bảng nguồn giả trong ticket này.
+- Kiểm thử mang mã `CR-008` và `FR-INV-05`; toàn bộ backend vẫn phải chạy qua suite chung.

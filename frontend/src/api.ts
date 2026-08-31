@@ -145,6 +145,52 @@ export type ThongTinKetQuaGhiChiSo = {
   } | null
 }
 
+export type ThongTinBacHoaDon = {
+  bac: number
+  tuSoLuong: string
+  denSoLuong?: string | null
+  dinhMucQuyDoi?: string | null
+  soLuong: string
+  donGia: string
+  thanhTien: string
+  dienGiai: string
+}
+
+export type ThongTinDongHoaDon = {
+  tenKhoan: string
+  chiSoDau?: string | null
+  chiSoCuoi?: string | null
+  soLuong?: string | null
+  donGia?: string | null
+  thanhTien: string
+  loaiKhoan: string
+  dichVuId?: number | null
+  dienGiai: string
+  anhCongToId?: number | null
+  anhCongToUrl?: string | null
+  cacBac: ThongTinBacHoaDon[]
+  lyDo?: string | null
+}
+
+export type ThongTinHoaDonChiTiet = {
+  hoaDonId: number
+  maHoaDon: string
+  kyId: number
+  hopDongId: number
+  soPhong: string
+  nguoiThue: string
+  ngayPhatHanh: string
+  hanThanhToan: string
+  trangThai: string
+  tongTien: string
+  daThu: string
+  conLai: string
+  soNguoiO?: number | null
+  soHoQuyDoi?: number | null
+  giaiThichSoHo?: string | null
+  cacDong: ThongTinDongHoaDon[]
+}
+
 export type YeuCauToaNha = {
   maToa: string
   ten: string
@@ -357,6 +403,23 @@ export async function ghiChiSoDichVu(
   }
 
   return response.json() as Promise<ThongTinKetQuaGhiChiSo>
+}
+
+export async function fetchHoaDonChiTiet(
+  token: string,
+  toaNhaId: number,
+  kyId: number,
+  hoaDonId: number,
+): Promise<ThongTinHoaDonChiTiet> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/ky-thanh-toan/${kyId}/hoa-don/${hoaDonId}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải chi tiết hoá đơn.')
+  }
+
+  return response.json() as Promise<ThongTinHoaDonChiTiet>
 }
 
 export async function chotKyThanhToan(

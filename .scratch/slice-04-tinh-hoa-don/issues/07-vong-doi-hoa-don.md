@@ -14,13 +14,20 @@ Nháp --phát hành--> Đã phát hành --thu một phần--> Đã thu một ph�
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Chuyển trạng thái đi qua **một chỗ duy nhất** kiểm tra bước chuyển có hợp lệ không, không rải `setTrangThai` khắp nơi
-- [ ] **Chỉ hoá đơn Nháp mới sửa được nội dung** — FR-INV-05. Thêm khoản phát sinh và khoản giảm trừ kèm lý do
-- [ ] Hoá đơn đã phát hành: **không có đường nào sửa nội dung**. Có ca kiểm thử gọi thẳng API sửa và khẳng định bị từ chối
-- [ ] **Chỉ Chủ sở hữu** huỷ được hoá đơn đã phát hành, **bắt buộc nhập lý do**, và thao tác **ghi nhật ký**
-- [ ] Hoá đơn **Đã thanh toán không quay lại được** trạng thái trước
-- [ ] "Quá hạn" tính từ `TOA_NHA.so_ngay_han_tt`. Cân nhắc làm bằng **điều kiện truy vấn** thay vì một giá trị lưu sẵn — cùng lý lẽ như CR-012 đã dùng cho `SAP_HET`: nó đổi theo ngày mà không ai động vào dữ liệu
-- [ ] Có kiểm thử cho **mọi bước chuyển không hợp lệ**, không chỉ các bước hợp lệ
-- [ ] Tên test mang mã `BR-08`, `FR-INV-05`, `FR-INV-06`
+- [x] Chuyển trạng thái đi qua **một chỗ duy nhất** kiểm tra bước chuyển có hợp lệ không, không rải `setTrangThai` khắp nơi
+- [x] **Chỉ hoá đơn Nháp mới sửa được nội dung** — FR-INV-05. Thêm khoản phát sinh và khoản giảm trừ kèm lý do
+- [x] Hoá đơn đã phát hành: **không có đường nào sửa nội dung**. Có ca kiểm thử gọi thẳng API sửa và khẳng định bị từ chối
+- [x] **Chỉ Chủ sở hữu** huỷ được hoá đơn đã phát hành, **bắt buộc nhập lý do**, và thao tác **ghi nhật ký**
+- [x] Hoá đơn **Đã thanh toán không quay lại được** trạng thái trước
+- [x] "Quá hạn" tính từ `TOA_NHA.so_ngay_han_tt`. Cân nhắc làm bằng **điều kiện truy vấn** thay vì một giá trị lưu sẵn — cùng lý lẽ như CR-012 đã dùng cho `SAP_HET`: nó đổi theo ngày mà không ai động vào dữ liệu
+- [x] Có kiểm thử cho **mọi bước chuyển không hợp lệ**, không chỉ các bước hợp lệ
+- [x] Tên test mang mã `BR-08`, `FR-INV-05`, `FR-INV-06`
+
+## Comments
+
+- Vòng đời được gom về một luật chuyển trạng thái duy nhất trong `billing/calc`, sau đó các service dùng cùng luật cho phát hành, thanh toán, quá hạn và huỷ.
+- Chỉ bản nháp được sửa nội dung; hoá đơn đã phát hành chỉ chủ sở hữu được huỷ với lý do bắt buộc và có nhật ký. Hoá đơn đã thanh toán là trạng thái kết thúc, không quay ngược.
+- Trạng thái `QUA_HAN` được chiếu theo hạn thanh toán hiện hành của toà nhà và tổng đã thu, không phụ thuộc giá trị trạng thái cũ lưu trong hoá đơn.
+- Test bao phủ cả chuyển hợp lệ và mọi chuyển không hợp lệ, với mã `BR-08`, `FR-INV-05`, `FR-INV-06`.

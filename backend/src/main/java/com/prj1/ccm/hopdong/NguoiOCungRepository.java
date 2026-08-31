@@ -10,10 +10,10 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-class NguoiOCungRepository {
+public class NguoiOCungRepository {
     private final JdbcTemplate jdbcTemplate;
 
-    NguoiOCungRepository(JdbcTemplate jdbcTemplate) {
+    public NguoiOCungRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -87,6 +87,41 @@ class NguoiOCungRepository {
                 Date.valueOf(ngay)
         );
         return soNguoi == null ? 0 : soNguoi;
+    }
+
+    public List<SoNguoiOTrongKy> findSoNguoiOChotKy(Long toaNhaId, LocalDate ngayBatDau, LocalDate ngayKetThuc) {
+        return jdbcTemplate.query(
+                """
+                        SELECT hd.phong_id,
+                               CASE WHEN COUNT(noc.id) = 0 THEN NULL
+                                    ELSE COUNT(noc.id) FILTER (
+                                        WHERE noc.tu_ngay <= ?
+                                          AND (noc.den_ngay IS NULL OR noc.den_ngay >= ?)
+                                    )::INTEGER
+                               END AS so_nguoi
+                        FROM HOP_DONG hd
+                        JOIN PHONG p ON p.id = hd.phong_id
+                        LEFT JOIN NGUOI_O_CUNG noc ON noc.hop_dong_id = hd.id
+                        WHERE p.toa_nha_id = ?
+                          AND hd.trang_thai = 'HIEU_LUC'
+                          AND daterange(hd.ngay_bat_dau, hd.ngay_ket_thuc, '[]')
+                              && daterange(?, ?, '[]')
+                        GROUP BY hd.phong_id
+                        ORDER BY hd.phong_id
+                        """,
+                (resultSet, rowNum) -> new SoNguoiOTrongKy(
+                        resultSet.getLong("phong_id"),
+                        resultSet.getObject("so_nguoi", Integer.class)
+                ),
+                Date.valueOf(ngayKetThuc),
+                Date.valueOf(ngayKetThuc),
+                toaNhaId,
+                Date.valueOf(ngayBatDau),
+                Date.valueOf(ngayKetThuc)
+        );
+    }
+
+    public record SoNguoiOTrongKy(Long phongId, Integer soNguoi) {
     }
 
     private NguoiOCung mapNguoiOCung(ResultSet resultSet) throws SQLException {

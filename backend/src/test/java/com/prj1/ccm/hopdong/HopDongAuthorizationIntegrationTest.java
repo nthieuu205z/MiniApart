@@ -39,6 +39,7 @@ class HopDongAuthorizationIntegrationTest {
     private PasswordHasher passwordHasher;
 
     private Long hopDongId;
+    private Long hopDongNgoaiPhamViId;
     private Long phongNgoaiPhamViId;
     private Long nguoiThueNgoaiPhamViId;
     private Long dichVuNgoaiPhamViId;
@@ -97,6 +98,16 @@ class HopDongAuthorizationIntegrationTest {
                 hopDongId,
                 dichVuTrongPhamViId
         );
+        hopDongNgoaiPhamViId = jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO HOP_DONG(phong_id, nguoi_thue_id, ngay_bat_dau, ngay_ket_thuc, gia_thue, tien_coc, so_ngay_bao_truoc, trang_thai)
+                        VALUES (?, ?, DATE '2040-01-01', DATE '2040-12-31', 3600000.00, 3600000.00, 30, 'HIEU_LUC')
+                        RETURNING id
+                        """,
+                Long.class,
+                phongNgoaiPhamViId,
+                nguoiThueNgoaiPhamViId
+        );
     }
 
     @Test
@@ -122,6 +133,26 @@ class HopDongAuthorizationIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(hopDongPayload(phongNgoaiPhamViId, nguoiThueNgoaiPhamViId, dichVuNgoaiPhamViId)))
                 .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/hop-dong/" + hopDongNgoaiPhamViId + "/khoan-phat-sinh")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(khoanPhatSinhPayload()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_INV_05_CR_008_forbiddenRolesReceive403OnPendingExtraCreationEndpoint() throws Exception {
+        assert403OnPendingExtraCreationEndpoint(login(4L, "0900000004"));
+        assert403OnPendingExtraCreationEndpoint(login(5L, "0900000006"));
+    }
+
+    @Test
+    void FR_INV_05_CR_008_missingAuthenticationReturns401OnPendingExtraCreationEndpoint() throws Exception {
+        mockMvc.perform(post("/api/hop-dong/" + hopDongId + "/khoan-phat-sinh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(khoanPhatSinhPayload()))
+                .andExpect(status().isUnauthorized());
     }
 
     private void assert403OnAllContractEndpoints(String token) throws Exception {
@@ -151,6 +182,16 @@ class HopDongAuthorizationIntegrationTest {
         mockMvc.perform(post("/api/hop-dong/" + hopDongId + "/thanh-ly")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
+
+        assert403OnPendingExtraCreationEndpoint(token);
+    }
+
+    private void assert403OnPendingExtraCreationEndpoint(String token) throws Exception {
+        mockMvc.perform(post("/api/hop-dong/" + hopDongId + "/khoan-phat-sinh")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(khoanPhatSinhPayload()))
+                .andExpect(status().isForbidden());
     }
 
     private String hopDongPayload(Long phongId, Long nguoiThueId, Long dichVuId) {
@@ -168,6 +209,18 @@ class HopDongAuthorizationIntegrationTest {
                   ]
                 }
                 """.formatted(phongId, nguoiThueId, dichVuId);
+    }
+
+    private String khoanPhatSinhPayload() {
+        return """
+                {
+                  "nguonLoai": "SUA_CHUA",
+                  "nguonId": 101,
+                  "tenKhoan": "Tien sua den",
+                  "soTien": "120000.00",
+                  "loai": "PHAT_SINH"
+                }
+                """;
     }
 
     private Long themPhong(Long toaNhaId, String soPhong) {

@@ -8,12 +8,21 @@
 
 **Blocked by:** `slice-03 · 07` (chốt kỳ), `slice-02 · 06` (người ở cùng có chiều thời gian)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Bảng `NHAN_KHAU_KY(ky_id, phong_id, so_nguoi, thoi_diem_chot)` đúng như CR-002
-- [ ] Ghi **một lần** tại thời điểm chốt kỳ, cho **mọi** phòng có hợp đồng hiệu lực trong kỳ
-- [ ] Sau khi ghi thì **không sửa được** bằng thao tác thường
-- [ ] `billing/calc` nhận số người ở **qua tham số**, không tự đi tra — nó là gói thuần tuý, ArchUnit canh
-- [ ] Phòng không xác định được số người ở thì ghi rõ là **không xác định**, không ghi 0. Hai thứ đó khác nhau: 0 người là phòng trống, không xác định là phải áp bậc 3 theo BR-02c
-- [ ] **Ca kiểm thử:** chốt kỳ, đổi `NGUOI_O_CUNG`, tính lại hoá đơn kỳ cũ → con số **không đổi**
-- [ ] Tên test mang mã `CR-002`
+- [x] Bảng `NHAN_KHAU_KY(ky_id, phong_id, so_nguoi, thoi_diem_chot)` đúng như CR-002
+- [x] Ghi **một lần** tại thời điểm chốt kỳ, cho **mọi** phòng có hợp đồng hiệu lực trong kỳ
+- [x] Sau khi ghi thì **không sửa được** bằng thao tác thường
+- [x] `billing/calc` nhận số người ở **qua tham số**, không tự đi tra — nó là gói thuần tuý, ArchUnit canh
+- [x] Phòng không xác định được số người ở thì ghi rõ là **không xác định**, không ghi 0. Hai thứ đó khác nhau: 0 người là phòng trống, không xác định là phải áp bậc 3 theo BR-02c
+- [x] **Ca kiểm thử:** chốt kỳ, đổi `NGUOI_O_CUNG`, tính lại hoá đơn kỳ cũ → con số **không đổi**
+- [x] Tên test mang mã `CR-002`
+
+## Comments
+
+- Thêm migration `V21__period_resident_snapshots.sql` với khoá ngoại tới kỳ/phòng, `UNIQUE (ky_id, phong_id)` và `so_nguoi` nullable để phân biệt không xác định với 0.
+- Snapshot được ghi trong cùng transaction với chốt kỳ và tạo kỳ kế tiếp; nếu tạo kỳ kế tiếp xung đột thì trạng thái chốt và snapshot cùng rollback.
+- Số người được xác định tại `ngayKetThuc` của kỳ, không đếm toàn bộ người từng ở trong kỳ. Phòng có bản ghi người ở nhưng không còn ai tại ngày chốt nhận 0; phòng không có lịch sử nhận `NULL`.
+- Bổ sung `NhanKhauTinhHoaDonService` làm read seam cho lớp ứng dụng: kỳ đã chốt đọc `NHAN_KHAU_KY`, kỳ chưa chốt đọc dữ liệu hiện hành; `billing/calc` vẫn chỉ nhận số người qua tham số.
+- Đưa compare-and-swap cập nhật trạng thái lên trước khi ghi snapshot để lệnh chốt thua cuộc nhận xung đột có kiểm soát, không đụng ràng buộc snapshot. Bổ sung các ca `CR-002` cho read seam và chốt đồng thời.
+- Kiểm thử: `./gradlew test --tests 'com.prj1.ccm.toanha.KyThanhToanIntegrationTest' --tests 'com.prj1.ccm.toanha.KyThanhToanServiceTest'` và `./gradlew test` đều `BUILD SUCCESSFUL`.
