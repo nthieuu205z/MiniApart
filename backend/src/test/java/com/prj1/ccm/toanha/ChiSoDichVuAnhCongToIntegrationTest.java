@@ -176,6 +176,11 @@ class ChiSoDichVuAnhCongToIntegrationTest {
                         .header("Authorization", "Bearer " + managerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.phong[0].dichVu[0].anhCongToId").value(anhId));
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM NHAT_KY_THAO_TAC WHERE hanh_dong = 'XEM_ANH_GIAY_TO'",
+                Integer.class
+        )).isZero();
     }
 
     @Test

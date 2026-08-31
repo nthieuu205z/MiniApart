@@ -191,6 +191,31 @@ class NguoiThueAnhGiayToIntegrationTest {
     }
 
     @Test
+    void BR_17_xinLienKetAnhGiayToGhiMotNhatKyVoiDungNguoiDungVaNguoiThue() throws Exception {
+        String ownerToken = login(2L, "0900000002");
+        Long nguoiThueId = themNguoiThue("Hồ sơ nhật ký bịa", "1995-02-14", "0907000444", "112233445566", "Quảng Nam");
+        Long anhId = themAnhDinhKem(nguoiThueId, "mat truoc", "audit-document.png", MediaType.IMAGE_PNG_VALUE, (long) png1x1().length);
+
+        xinLienKet(ownerToken, anhId);
+
+        List<Map<String, Object>> nhatKy = jdbcTemplate.queryForList(
+                """
+                        SELECT nguoi_dung_id, hanh_dong, doi_tuong, gia_tri_truoc, gia_tri_sau
+                        FROM NHAT_KY_THAO_TAC
+                        WHERE hanh_dong = 'XEM_ANH_GIAY_TO'
+                        """
+        );
+
+        assertThat(nhatKy).singleElement().satisfies(record -> {
+            assertThat(record.get("nguoi_dung_id")).isEqualTo(2L);
+            assertThat(record.get("hanh_dong")).isEqualTo("XEM_ANH_GIAY_TO");
+            assertThat(record.get("doi_tuong")).isEqualTo("NGUOI_THUE:" + nguoiThueId);
+            assertThat(record.get("gia_tri_truoc")).isNull();
+            assertThat(record.get("gia_tri_sau")).isNull();
+        });
+    }
+
+    @Test
     void FR_TNT_01_NFR_SEC_04_thoVaNguoiThueKhongTheTaiLenHoacXinLienKetAnhGiayTo() throws Exception {
         Long nguoiThueId = themNguoiThue("Hồ sơ bị chặn", "1998-11-03", "0907000222", "001122334455", "Phú Thọ");
         Long anhId = themAnhDinhKem(nguoiThueId, "mat truoc", "existing-key.png", MediaType.IMAGE_PNG_VALUE, 68L);
@@ -209,6 +234,11 @@ class NguoiThueAnhGiayToIntegrationTest {
                             .header("Authorization", "Bearer " + token))
                     .andExpect(status().isForbidden());
         }
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM NHAT_KY_THAO_TAC WHERE hanh_dong = 'XEM_ANH_GIAY_TO'",
+                Integer.class
+        )).isZero();
     }
 
     @Test

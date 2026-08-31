@@ -7,6 +7,7 @@ import com.prj1.ccm.toanha.PhanQuyenToaService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,12 +35,14 @@ import java.util.UUID;
 public class AnhDinhKemService {
     private static final String DOI_TUONG_NGUOI_THUE = "NGUOI_THUE";
     private static final String DOI_TUONG_CHI_SO_DICH_VU = "CHI_SO_DICH_VU";
+    private static final String HANH_DONG_XEM_ANH_GIAY_TO = "XEM_ANH_GIAY_TO";
     private static final long KICH_THUOC_TOI_DA = 5L * 1024 * 1024;
     private static final String THONG_BAO_TEP_KHONG_HOP_LE = "Tệp tải lên phải là ảnh PNG hoặc JPEG hợp lệ";
     private static final String THONG_BAO_TEP_QUA_LON = "Tệp tải lên không được vượt quá 5 MB";
     private static final String THONG_BAO_LIEN_KET_KHONG_HOP_LE = "Liên kết ảnh không hợp lệ hoặc đã hết hạn";
     private final AnhDinhKemRepository anhDinhKemRepository;
     private final NguoiThueRepository nguoiThueRepository;
+    private final NhatKyThaoTacRepository nhatKyThaoTacRepository;
     private final PhanQuyenToaService phanQuyenToaService;
     private final ChiSoDichVuRepository chiSoDichVuRepository;
     private final Clock clock;
@@ -48,12 +51,14 @@ public class AnhDinhKemService {
     private final long thoiHanLienKetGiay;
 
     public AnhDinhKemService(AnhDinhKemRepository anhDinhKemRepository, NguoiThueRepository nguoiThueRepository,
-                              PhanQuyenToaService phanQuyenToaService, ChiSoDichVuRepository chiSoDichVuRepository, Clock clock,
+                              NhatKyThaoTacRepository nhatKyThaoTacRepository, PhanQuyenToaService phanQuyenToaService,
+                              ChiSoDichVuRepository chiSoDichVuRepository, Clock clock,
                               @Value("${app.anh.storage-root:${ANH_STORAGE_ROOT:/var/lib/miniapart/private-attachments}}") String thuMucLuuTru,
                               @Value("${app.anh.link-secret:${ANH_LINK_SECRET:dev-only-image-link-secret-not-for-production}}") String khoaKy,
                               @Value("${app.anh.link-ttl-seconds:900}") long thoiHanLienKetGiay) {
         this.anhDinhKemRepository = anhDinhKemRepository;
         this.nguoiThueRepository = nguoiThueRepository;
+        this.nhatKyThaoTacRepository = nhatKyThaoTacRepository;
         this.phanQuyenToaService = phanQuyenToaService;
         this.chiSoDichVuRepository = chiSoDichVuRepository;
         this.clock = clock;
@@ -69,12 +74,21 @@ public class AnhDinhKemService {
         return luuAnh(DOI_TUONG_NGUOI_THUE, nguoiThueId, ghiChu, tep);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public LienKetAnhKy taoLienKet(Long anhId, NguoiDung nguoiDung) {
         if (nguoiDung == null || nguoiDung.vaiTro() != VaiTro.NGUOI_THUE) {
             kiemTraQuyen(nguoiDung);
         }
-        kiemTraQuyenXemAnh(anhId, nguoiDung);
+        AnhDinhKem anh = kiemTraQuyenXemAnh(anhId, nguoiDung);
+        if (DOI_TUONG_NGUOI_THUE.equals(anh.doiTuongLoai())) {
+            nhatKyThaoTacRepository.ghi(
+                    nguoiDung.id(),
+                    HANH_DONG_XEM_ANH_GIAY_TO,
+                    DOI_TUONG_NGUOI_THUE + ":" + anh.doiTuongId(),
+                    null,
+                    null
+            );
+        }
         long hetHan = clock.instant().getEpochSecond() + thoiHanLienKetGiay;
         return new LienKetAnhKy("/api/anh/" + anhId + "/xem?hetHan=" + hetHan + "&chuKy=" + chuKy(anhId, hetHan));
     }
@@ -154,15 +168,13 @@ public class AnhDinhKemService {
         try { Files.createDirectories(thuMucLuuTru); Files.write(thuMucLuuTru.resolve(khoaLuuTru), duLieu); }
         catch (IOException exception) { throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Không thể lưu ảnh giấy tờ"); }
     }
-    private AnhDinhKem layAnhNguoiThue(Long anhId) { return anhDinhKemRepository.findNguoiThueById(anhId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)); }
-    private void kiemTraQuyenXemAnh(Long anhId, NguoiDung nguoiDung) {
+    private AnhDinhKem kiemTraQuyenXemAnh(Long anhId, NguoiDung nguoiDung) {
         AnhDinhKem anh = anhDinhKemRepository.findById(anhId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (DOI_TUONG_NGUOI_THUE.equals(anh.doiTuongLoai())) {
             if (nguoiDung != null && nguoiDung.vaiTro() == VaiTro.NGUOI_THUE) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN);
             }
-            layAnhNguoiThue(anhId);
-            return;
+            return anh;
         }
         if (DOI_TUONG_CHI_SO_DICH_VU.equals(anh.doiTuongLoai())) {
             if (nguoiDung != null && nguoiDung.vaiTro() == VaiTro.NGUOI_THUE) {
@@ -170,12 +182,12 @@ public class AnhDinhKemService {
                 if (!Objects.equals(nguoiDung.nguoiThueId(), nguoiThueId)) {
                     throw new ResponseStatusException(HttpStatus.FORBIDDEN);
                 }
-                return;
+                return anh;
             }
             Long toaNhaId = chiSoDichVuRepository.findToaNhaIdByChiSoId(anh.doiTuongId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
             phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
-            return;
+            return anh;
         }
         throw new ResponseStatusException(HttpStatus.FORBIDDEN);
     }

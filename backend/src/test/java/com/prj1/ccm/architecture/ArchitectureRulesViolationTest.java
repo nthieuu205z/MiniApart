@@ -11,10 +11,24 @@ class ArchitectureRulesViolationTest {
 
     @Test
     void frInv02FloatingPointRuleMustRejectIntentionalViolation() {
-        assertThatThrownBy(() -> ArchitectureRules.noFloatingPointFieldsInBilling().check(importFixtures()))
+        assertThatThrownBy(() -> ArchitectureRules.noFloatingPointInBilling().check(importFixtures()))
                 .isInstanceOf(AssertionError.class)
                 .hasMessageContaining("HoaDonDungDouble.tongTien")
                 .hasMessageContaining("Tien phai dung BigDecimal");
+    }
+
+    @Test
+    void frInv02FloatingPointRuleMustRejectMethodReturnTypeViolation() {
+        assertThatThrownBy(() -> ArchitectureRules.noFloatingPointInBilling().check(importFixtures()))
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("HoaDonDungDouble.tinhTien()");
+    }
+
+    @Test
+    void frInv02FloatingPointRuleMustRejectMethodParameterViolation() {
+        assertThatThrownBy(() -> ArchitectureRules.noFloatingPointInBilling().check(importFixtures()))
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("HoaDonNhanDouble.apDung(double)");
     }
 
     @Test

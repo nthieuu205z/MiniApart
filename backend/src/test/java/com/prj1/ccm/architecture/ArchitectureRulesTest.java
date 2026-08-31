@@ -15,11 +15,12 @@ class ArchitectureRulesTest {
         JavaClasses productionClasses = importProductionClasses();
 
         assertThat(productionClasses.size()).isGreaterThan(0);
+        assertThat(productionClasses.contain("com.prj1.ccm.billing.calc.TienTe")).isTrue();
     }
 
     @Test
-    void frInv02ProductionCodeMustRejectFloatingPointFieldsInBilling() {
-        ArchitectureRules.noFloatingPointFieldsInBilling().check(importProductionClasses());
+    void frInv02ProductionCodeMustRejectFloatingPointMembersInBilling() {
+        ArchitectureRules.noFloatingPointInBilling().check(importProductionClasses());
     }
 
     @Test
