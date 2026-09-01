@@ -76,6 +76,8 @@ describe('DanhMucPhong', () => {
     const tile = await vi.waitFor(() => container.querySelector('[data-testid="room-tile"]') as HTMLButtonElement)
     await act(async () => tile.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
     await vi.waitFor(() => expect(container.querySelector('[data-testid="room-detail"]')?.textContent).toContain('Chi tiết phòng 101'))
+    await act(async () => tile.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true })))
+    await vi.waitFor(() => expect(container.querySelector('[data-testid="room-detail"]')?.textContent).toContain('Chi tiết phòng 101'))
   })
 
   it('FR-BLD-02 previews a batch without creating it, then creates the exact preview only after confirmation', async () => {
