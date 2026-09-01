@@ -43,7 +43,7 @@ export function BuildingSection({ label, floors, columns = 6, showStairs = true,
         }}
       />
       {floors.map((floor) => (
-        <div key={floor.name} style={{ display: "grid", gridTemplateColumns: grid, gap: 6, alignItems: "stretch" }}>
+        <section key={floor.name} className="room-floor-section" data-testid="room-floor-section" aria-labelledby={`floor-title-${floor.name}`} style={{ display: "grid", gridTemplateColumns: grid, gap: 6, alignItems: "stretch" }}>
           <div
             style={{
               fontFamily: "var(--ma-font-mono)",
@@ -54,13 +54,13 @@ export function BuildingSection({ label, floors, columns = 6, showStairs = true,
               alignItems: "center",
             }}
           >
-            {floor.name}
+            <h4 id={`floor-title-${floor.name}`} style={{ margin: 0, font: 'inherit' }}>Tầng {floor.name.replace(/^T/, '')}</h4>
           </div>
-          {floor.rooms.map((r) => (
-            <RoomCell key={r.room} {...r} />
-          ))}
+          <div className="room-floor-grid" data-testid="room-floor-grid" data-compact-layout="true" style={{ display: 'contents' }}>
+            {floor.rooms.map(({ className, ...r }) => <RoomCell key={r.room} className={`room-tile ${className ?? ''}`} data-testid="room-tile" role="button" tabIndex={0} {...r} />)}
+          </div>
           {showStairs ? <div style={{ borderLeft: "1px solid var(--ma-border-default)" }} /> : null}
-        </div>
+        </section>
       ))}
       <div style={{ borderTop: "2px solid var(--ma-ink-900)", marginTop: 2 }} />
       <div

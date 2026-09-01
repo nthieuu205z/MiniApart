@@ -33,8 +33,8 @@ export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 
       <div style={{ fontSize: 15.5, fontWeight: 700 }}>{title}</div>
       <div style={{ fontSize: 13, color: "var(--ma-text-secondary)", marginTop: 7, lineHeight: 1.55 }}>{consequence}</div>
       <div style={{ display: "flex", gap: 9, marginTop: 14 }}>
-        <Button variant="primary" size="sm" onClick={onConfirm}>{confirmLabel}</Button>
-        <Button variant="secondary" size="sm" onClick={onCancel}>{cancelLabel}</Button>
+        <Button variant="primary" size="sm" onClick={onConfirm} style={{ minHeight: 44 }}>{confirmLabel}</Button>
+        <Button variant="secondary" size="sm" onClick={onCancel} style={{ minHeight: 44 }}>{cancelLabel}</Button>
       </div>
     </div>
   );

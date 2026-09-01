@@ -53,12 +53,12 @@ export function RoomCell({ room, state = 'recorded', label, taskCount, multiSumm
         {...rest}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontFamily: "var(--ma-font-mono)", fontSize: 15, fontWeight: 700 }}>{room}</span>
+          <span className="room-tile__number" style={{ fontFamily: "var(--ma-font-mono)", fontSize: 15, fontWeight: 700 }}>{room}</span>
           <span style={{ fontFamily: "var(--ma-font-mono)", fontSize: 10, fontWeight: 700, background: "var(--ma-urgent)", padding: "1px 5px" }}>
             {taskCount}
           </span>
         </div>
-        <div style={{ fontSize: 11, marginTop: 5, color: "var(--ma-text-secondary-on-inverse)" }}>{multiSummary}</div>
+        <div className="room-tile__status" style={{ fontSize: 11, marginTop: 5, color: "var(--ma-text-secondary-on-inverse)" }}>{multiSummary}</div>
       </div>
     );
   }
@@ -79,6 +79,7 @@ export function RoomCell({ room, state = 'recorded', label, taskCount, multiSumm
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span
+          className="room-tile__number"
           style={{
             fontFamily: "var(--ma-font-mono)",
             fontSize: 15,
@@ -91,6 +92,7 @@ export function RoomCell({ room, state = 'recorded', label, taskCount, multiSumm
         <Glyph name={s.glyph} color={s.glyphColor} size={13} strokeWidth={1.7} />
       </div>
       <div
+        className="room-tile__status"
         style={{
           fontFamily: s.mono ? "var(--ma-font-mono)" : "var(--ma-font-ui)",
           fontSize: 11,

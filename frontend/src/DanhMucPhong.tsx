@@ -83,6 +83,20 @@ export default function DanhMucPhong({ token }: Props) {
   const toaDangChon = danhSachToa.find((item) => item.id === toaDangChonId) ?? null
   const nhomPhongTheoTang = taoNhomPhongTheoTang(danhSachPhong)
   const phongDangXem = danhSachPhong.find((phong) => phong.id === phongDangXemId) ?? null
+  const floors = nhomPhongTheoTang.map(({ tang, phong }) => ({
+    name: `T${tang}`,
+    rooms: phong.map((item) => {
+      const status = layThongTinTrangThai(item)
+      return {
+        room: item.soPhong,
+        state: item.trangThai === 'TRONG' ? 'vacant' as const : item.trangThai === 'DANG_SUA' ? 'repair' as const : 'recorded' as const,
+        label: status.nhan,
+        className: `${status.lopCss} ${phongDangXem?.id === item.id ? 'room-tile--active' : ''}`,
+        'aria-pressed': phongDangXem?.id === item.id,
+        onClick: () => setPhongDangXemId(item.id),
+      }
+    }),
+  }))
 
   useEffect(() => {
     let mounted = true
@@ -301,35 +315,7 @@ export default function DanhMucPhong({ token }: Props) {
               </section>
 
               <section className="room-floor-map" data-testid="room-floor-map" aria-label="Sơ đồ phòng theo tầng">
-                <BuildingSection label={`Mặt cắt ${toaDangChon?.ten ?? ''} · ${danhSachPhong.length} phòng`} columns={3} style={{ marginBottom: 16 }} floors={nhomPhongTheoTang.map(({ tang, phong }) => ({ name: `T${tang}`, rooms: phong.map((item) => ({ room: item.soPhong, state: item.trangThai === 'TRONG' ? 'vacant' : item.trangThai === 'DANG_SUA' ? 'repair' : 'recorded', label: layThongTinTrangThai(item).nhan })) }))} />
-                {nhomPhongTheoTang.map(({ tang, phong }) => (
-                  <section key={tang} className="room-floor-section" data-testid="room-floor-section" aria-labelledby={`floor-title-${tang}`}>
-                    <div className="room-floor-section__header">
-                      <h4 id={`floor-title-${tang}`}>Tầng {tang}</h4>
-                      <span>{phong.length} phòng</span>
-                    </div>
-                    <div className="room-floor-grid" data-testid="room-floor-grid" data-compact-layout="true">
-                      {phong.map((phongItem) => {
-                        const trangThai = layThongTinTrangThai(phongItem)
-                        const dangChon = phongDangXem?.id === phongItem.id
-
-                        return (
-                          <button
-                            key={phongItem.id ?? `${phongItem.tang}-${phongItem.soPhong}`}
-                            type="button"
-                            className={`room-tile ${trangThai.lopCss} ${dangChon ? 'room-tile--active' : ''}`}
-                            data-testid="room-tile"
-                            aria-pressed={dangChon}
-                            onClick={() => setPhongDangXemId(phongItem.id)}
-                          >
-                            <strong className="room-tile__number">{phongItem.soPhong}</strong>
-                            <span className="room-tile__status">{trangThai.nhan}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </section>
-                ))}
+                <BuildingSection label={`Mặt cắt ${toaDangChon?.ten ?? ''} · ${danhSachPhong.length} phòng`} columns={3} floors={floors} />
               </section>
             </>
           )}
@@ -429,9 +415,9 @@ export default function DanhMucPhong({ token }: Props) {
 
             <div className="building-form__actions">
               <p className="building-form__hint">Máy chủ sẽ tự gán trạng thái ban đầu là Trống.</p>
-              <button type="submit" className="primary-button" disabled={dangLuu || !toaDangChonId}>
+              <Button type="submit" blocked={dangLuu || !toaDangChonId} style={{ minHeight: 44 }}>
                 {dangLuu ? 'Đang lưu…' : 'Khai báo phòng'}
-              </button>
+              </Button>
             </div>
           </form>
 
@@ -484,9 +470,9 @@ export default function DanhMucPhong({ token }: Props) {
               </label>
 
               <div className="building-form__actions">
-                <button type="submit" className="ghost-button" disabled={dangXuLyHangLoat || !toaDangChonId}>
+                <Button type="submit" variant="secondary" blocked={dangXuLyHangLoat || !toaDangChonId} style={{ minHeight: 44 }}>
                   {dangXuLyHangLoat ? 'Đang xem trước…' : 'Xem trước'}
-                </button>
+                </Button>
                 {xemTruoc.length > 0 ? (
                   <ConfirmDialog title="Tạo dãy phòng?" consequence={`Sẽ tạo ${xemTruoc.length} phòng, từ số ${yeuCauPhongHangLoatDaXemTruoc?.soBatDau} đến số ${yeuCauPhongHangLoatDaXemTruoc?.soKetThuc}.`} confirmLabel="Xác nhận tạo dãy phòng" onConfirm={handleXacNhanHangLoat} onCancel={() => { setXemTruoc([]); setYeuCauPhongHangLoatDaXemTruoc(null) }} />
                 ) : null}
