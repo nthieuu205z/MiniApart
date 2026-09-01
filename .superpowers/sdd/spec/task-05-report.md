@@ -70,3 +70,84 @@ Worktree: `/Users/nthieuu/Documents/Codex/Code/PRJ1/.worktrees/codex-nap-bo-thie
 
 - Live visual verification of the authenticated shell was not possible against the local browser run because the local backend was not serving valid JSON for `/api/health`; authenticated shell behavior is therefore covered by the Vitest suite rather than an end-to-end browser session.
 - `GhiChiSo` still owns its own screen-level shell from Ticket 04, so `App.tsx` now contains a route-specific exception for `/ghi-chi-so`. This is intentional for Ticket 05, but it is worth revisiting once the remaining screens are migrated and Ticket 08 removes the legacy shell glue.
+
+---
+
+# Fix round 1 — 2026-09-01
+
+## Scope
+
+Resolved the four Important review findings for Ticket 05 without changing login, session, API, or role-navigation behavior. No backend or `Doc/` file was changed.
+
+## Changed files
+
+- `frontend/src/App.tsx`
+- `frontend/src/design/shell/NavPanel.tsx`
+- `frontend/src/App.test.tsx`
+- `.superpowers/sdd/spec/task-05-report.md`
+
+## Root causes and fixes
+
+1. The unauthenticated layout always used a two-column grid with a 320px minimum second column. At 360px, page padding plus the 24px grid gap made that impossible to fit. The login grid now switches to one flexible column below the existing 768px breakpoint.
+2. `NavPanel` used `--ma-hit-desktop` (32px) for links. It now uses the required `--ma-hit-mobile` token (44px), including under global `border-box` sizing.
+3. The `/ghi-chi-so` exception was used to conditionally omit the system-status section as well as the duplicate top bar. The top-bar exception remains, while system status now renders for every authenticated route.
+4. Added focused behavior checks that exercise the 360px layout branch, every navigation-link hit target, and system status on `/ghi-chi-so`.
+
+## TDD evidence
+
+Added the three regression tests first, then ran:
+
+```text
+cd frontend && npm test -- src/App.test.tsx
+Test Files  1 failed (1)
+Tests  3 failed | 17 passed (20)
+
+NFR-USA-01: expected two-column grid to be one column at 360px
+NFR-USA-03: expected var(--ma-hit-mobile), received var(--ma-hit-desktop)
+FR-MTR-01: expected Trạng thái hệ thống, received undefined
+```
+
+After the production changes, reran:
+
+```text
+cd frontend && npm test -- src/App.test.tsx
+Test Files  1 passed (1)
+Tests  20 passed (20)
+```
+
+## Verification commands and output
+
+```text
+cd frontend && npm test
+Test Files  9 passed (9)
+Tests  58 passed (58)
+
+cd frontend && npm run build
+tsc -b && vite build
+✓ built in 106ms
+
+git diff --check
+(no output; exit 0)
+
+rg -n "#[0-9a-fA-F]{3,8}" frontend/src/App.tsx
+(no matches; exit 1)
+```
+
+Browser verification on `http://127.0.0.1:5174/` at a 360×800 viewport returned:
+
+```text
+{"bodyScrollWidth":360,"innerWidth":360,"loginGrid":"328px","scrollWidth":360}
+```
+
+This proves the login page has no horizontal overflow at 360px. The temporary viewport override and browser tab were reset/closed after the check.
+
+## Self-review
+
+- The focused tests are regression tests rather than label-presence tests: reverting each respective production fix makes one fail.
+- `App.tsx` remains free of hard-coded hex colors.
+- The existing `/ghi-chi-so` top-bar exception was retained only to avoid the pre-existing duplicate header; status availability is no longer coupled to it.
+- Only the four files above will be committed; pre-existing changes to `.scratch/nap-bo-thiet-ke-frontend/spec.md` and untracked tickets 06/07 remain untouched.
+
+## Remaining concerns
+
+- Authenticated browser layout was not exercised against a running backend because no valid local credentials/backend session were available. The route behavior and hit-target contract are covered by the focused Vitest checks.

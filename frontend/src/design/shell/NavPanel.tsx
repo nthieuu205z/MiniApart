@@ -71,7 +71,7 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
                   gap: 11,
                   padding: "9px 20px",
                   fontSize: 14.5,
-                  minHeight: "var(--ma-hit-desktop)",
+                  minHeight: "var(--ma-hit-mobile)",
                   textDecoration: "none",
                   fontWeight: it.active ? 700 : 400,
                   color: it.active ? "var(--ma-text-primary)" : "var(--ma-text-secondary)",

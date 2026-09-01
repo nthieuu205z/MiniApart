@@ -123,6 +123,51 @@ describe('App role navigation', () => {
     expect(mountedApp.container.textContent).toContain('Kỳ')
   })
 
+  it('NFR-USA-01 stacks the login panels at 360px so the form remains within the viewport', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
+    const fetchMock = buildFetchMock(MENU_BY_ROLE[2].nguoiDung)
+    vi.stubGlobal('fetch', fetchMock)
+
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    mountedApp = { container, root }
+
+    await act(async () => {
+      root.render(<App />)
+    })
+
+    const loginGrid = await vi.waitFor(() => {
+      const grid = container.querySelector('main > section') as HTMLElement | null
+      expect(grid).not.toBeNull()
+      return grid as HTMLElement
+    })
+
+    expect(loginGrid.style.gridTemplateColumns).toBe('minmax(0, 1fr)')
+  })
+
+  it('NFR-USA-03 gives every role-navigation link the 44px mobile hit target', async () => {
+    const quanLyToaNha = MENU_BY_ROLE[2]
+    mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelectorAll('nav a')).not.toHaveLength(0)
+    })
+
+    for (const link of mountedApp.container.querySelectorAll('nav a')) {
+      expect((link as HTMLElement).style.minHeight).toBe('var(--ma-hit-mobile)')
+    }
+  })
+
+  it('FR-MTR-01 keeps the system-status section visible on the meter-reading route', async () => {
+    const quanLyToaNha = MENU_BY_ROLE[2]
+    mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung, '/ghi-chi-so')
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('#status-title')?.textContent).toBe('Trạng thái hệ thống')
+    })
+  })
+
   it('FR-AUT-04 shows a friendly no-permission state for a typed route outside the role menu', async () => {
     const chuSoHuu = MENU_BY_ROLE[1]
     mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/tai-khoan')

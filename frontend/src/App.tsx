@@ -46,6 +46,11 @@ const styleGridKhach: CSSProperties = {
   alignItems: 'start',
 }
 
+const styleGridKhachManHinhHep: CSSProperties = {
+  ...styleGridKhach,
+  gridTemplateColumns: 'minmax(0, 1fr)',
+}
+
 const styleThe: CSSProperties = {
   border: '1px solid var(--ma-border-default)',
   background: 'var(--ma-bg-card)',
@@ -323,7 +328,7 @@ function App() {
   if (!nguoiDung) {
     return (
       <main style={styleKhungKhach}>
-        <section style={styleGridKhach}>
+        <section style={laManHinhHep ? styleGridKhachManHinhHep : styleGridKhach}>
           <article
             style={{
               ...styleTheNoiDung,
@@ -556,11 +561,9 @@ function App() {
             </section>
           ) : null}
 
-          {!hienThiGhiChiSo ? (
-            <section style={styleTheNoiDung} aria-labelledby="status-title">
-              {renderTrangThaiHeThong(health, healthError)}
-            </section>
-          ) : null}
+          <section style={styleTheNoiDung} aria-labelledby="status-title">
+            {renderTrangThaiHeThong(health, healthError)}
+          </section>
         </section>
       </div>
     </main>
