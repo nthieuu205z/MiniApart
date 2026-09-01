@@ -80,6 +80,56 @@ describe('DanhMucPhong', () => {
     await vi.waitFor(() => expect(container.querySelector('[data-testid="room-detail"]')?.textContent).toContain('Chi tiết phòng 101'))
   })
 
+  it('NFR-USA-01 owns a responsive room layout without legacy CSS rules', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === '/api/toa-nha') return jsonResponse([toaA])
+      return jsonResponse([phong101, phong201])
+    }))
+
+    await renderScreen()
+    const catalog = await vi.waitFor(() => container.querySelector('[data-testid="room-catalog"]') as HTMLElement)
+    const layout = catalog.querySelector('.building-layout') as HTMLElement
+    const list = catalog.querySelector('.building-list') as HTMLElement
+    const detail = catalog.querySelector('.building-detail') as HTMLElement
+    const summary = catalog.querySelector('.room-status-summary') as HTMLElement
+    const form = catalog.querySelector('[data-testid="room-form"]') as HTMLElement
+
+    expect(catalog.style.display).toBe('flex')
+    expect(catalog.style.flexDirection).toBe('column')
+    expect(catalog.style.gap).toBe('var(--ma-space-6)')
+    expect(layout.style.display).toBe('grid')
+    expect(layout.style.gridTemplateColumns).toBe('repeat(auto-fit, minmax(min(100%, 30rem), 1fr))')
+    expect(layout.style.minWidth).toBe('0px')
+    expect(list.style.display).toBe('grid')
+    expect(list.style.minWidth).toBe('0px')
+    expect(detail.style.display).toBe('grid')
+    expect(detail.style.minWidth).toBe('0px')
+
+    for (const panel of [summary, form]) {
+      expect(panel.style.background).toBe('var(--ma-bg-card)')
+      expect(panel.style.border).toBe('var(--ma-border-width) solid var(--ma-border-default)')
+      expect(panel.style.padding).toBe('var(--ma-space-6)')
+      expect(panel.style.gap).toBe('var(--ma-space-4)')
+    }
+
+    expect((summary.querySelector('.room-status-summary__grid') as HTMLElement).style.gridTemplateColumns)
+      .toBe('repeat(auto-fit, minmax(min(100%, 9rem), 1fr))')
+    const formRow = form.querySelector('.building-form__row') as HTMLElement
+    expect(formRow.style.gridTemplateColumns)
+      .toBe('repeat(auto-fit, minmax(min(100%, 14rem), 1fr))')
+    const actions = form.querySelector('.building-form__actions') as HTMLElement
+    expect(actions.style.display).toBe('flex')
+    expect(actions.style.flexWrap).toBe('wrap')
+    expect((form.querySelector('.building-form__hint') as HTMLElement).style.flex).toBe('1 1 14rem')
+    expect((catalog.querySelector('.room-floor-section') as HTMLElement).style.gridTemplateColumns)
+      .toBe('34px repeat(3, minmax(0, 1fr)) 30px')
+
+    await act(async () => (catalog.querySelector('[data-testid="room-tile"]') as HTMLElement).click())
+    const facts = catalog.querySelector('.building-summary__facts') as HTMLElement
+    expect(facts.style.display).toBe('grid')
+    expect(facts.style.minWidth).toBe('0px')
+  })
+
   it('FR-BLD-02 previews a batch without creating it, then creates the exact preview only after confirmation', async () => {
     const preview = [{ ...phong101, id: null, soPhong: '301', tang: 3 }, { ...phong101, id: null, soPhong: '302', tang: 3 }]
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {

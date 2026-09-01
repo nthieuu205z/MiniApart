@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 import {
   ApiError,
   fetchPhong,
@@ -52,6 +52,184 @@ const BIEU_MAU_PHONG_MAC_DINH: BieuMauPhong = {
   sucChua: '2',
   giaThueMacDinh: '0.00',
   loaiPhong: '',
+}
+
+const styleDanhMucPhong: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--ma-space-6)',
+  minWidth: 0,
+  width: '100%',
+  maxWidth: '80rem',
+  margin: '0 auto',
+  padding: 'clamp(var(--ma-space-4), 3vw, var(--ma-space-8))',
+  fontFamily: 'var(--ma-font-ui)',
+  color: 'var(--ma-text-primary)',
+}
+
+const styleTieuDeManHinh: CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  justifyContent: 'space-between',
+  flexWrap: 'wrap',
+  gap: 'var(--ma-space-4)',
+  minWidth: 0,
+  paddingBottom: 'var(--ma-space-5)',
+  borderBottom: 'var(--ma-border-width-rule) solid var(--ma-ink-900)',
+}
+
+const styleHangBoLoc: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 14rem), 1fr))',
+  gap: 'var(--ma-space-4)',
+  minWidth: 0,
+}
+
+const styleNhanTruong: CSSProperties = {
+  display: 'grid',
+  gap: 'var(--ma-space-2)',
+  minWidth: 0,
+  color: 'var(--ma-text-primary)',
+  font: 'var(--ma-text-body)',
+}
+
+const styleOTruong: CSSProperties = {
+  width: '100%',
+  minWidth: 0,
+  minHeight: 'var(--ma-hit-mobile)',
+  padding: 'var(--ma-space-3) var(--ma-space-4)',
+  border: 'var(--ma-border-width) solid var(--ma-border-strong)',
+  borderRadius: 'var(--ma-radius)',
+  background: 'var(--ma-bg-card)',
+  color: 'var(--ma-text-primary)',
+  font: 'var(--ma-text-body)',
+}
+
+const styleBoCucHaiCot: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 30rem), 1fr))',
+  gap: 'var(--ma-space-6)',
+  minWidth: 0,
+  alignItems: 'start',
+}
+
+const styleCotDanhSach: CSSProperties = {
+  display: 'grid',
+  gap: 'var(--ma-space-5)',
+  minWidth: 0,
+  alignContent: 'start',
+}
+
+const styleCotChiTiet: CSSProperties = {
+  display: 'grid',
+  gap: 'var(--ma-space-5)',
+  minWidth: 0,
+  alignContent: 'start',
+}
+
+const styleTamThe: CSSProperties = {
+  display: 'grid',
+  gap: 'var(--ma-space-4)',
+  minWidth: 0,
+  padding: 'var(--ma-space-6)',
+  border: 'var(--ma-border-width) solid var(--ma-border-default)',
+  background: 'var(--ma-bg-card)',
+}
+
+const styleHangBieuMau: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 14rem), 1fr))',
+  gap: 'var(--ma-space-4)',
+  minWidth: 0,
+}
+
+const styleHangHanhDong: CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  flexWrap: 'wrap',
+  gap: 'var(--ma-space-3)',
+  minWidth: 0,
+}
+
+const styleGoiYBieuMau: CSSProperties = {
+  flex: '1 1 14rem',
+  minWidth: 0,
+  margin: 0,
+  color: 'var(--ma-text-secondary)',
+  font: 'var(--ma-text-caption)',
+}
+
+const styleThongBao: CSSProperties = {
+  margin: 0,
+  minWidth: 0,
+  color: 'var(--ma-text-secondary)',
+  font: 'var(--ma-text-body)',
+  lineHeight: 1.5,
+}
+
+const styleSoDoPhong: CSSProperties = {
+  display: 'grid',
+  gap: 'var(--ma-space-3)',
+  minWidth: 0,
+  overflow: 'hidden',
+  padding: 'var(--ma-space-6)',
+  border: 'var(--ma-border-width) solid var(--ma-border-default)',
+  background: 'var(--ma-bg-card)',
+}
+
+const styleNhomTrangThai: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 9rem), 1fr))',
+  gap: 'var(--ma-space-3)',
+  minWidth: 0,
+}
+
+const styleMucTrangThai: CSSProperties = {
+  display: 'grid',
+  gap: 'var(--ma-space-2)',
+  minWidth: 0,
+  padding: 'var(--ma-space-4)',
+  border: 'var(--ma-border-width) solid var(--ma-border-default)',
+  background: 'var(--ma-bg-sunken)',
+  color: 'var(--ma-text-primary)',
+}
+
+const styleSuKienPhong: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  flexWrap: 'wrap',
+  gap: 'var(--ma-space-3)',
+  minWidth: 0,
+}
+
+const styleThongTinPhong: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 12rem), 1fr))',
+  gap: 'var(--ma-space-4)',
+  minWidth: 0,
+  margin: 0,
+}
+
+const styleDongThongTinPhong: CSSProperties = {
+  display: 'grid',
+  gap: 'var(--ma-space-1)',
+  minWidth: 0,
+  paddingTop: 'var(--ma-space-3)',
+  borderTop: 'var(--ma-border-width) solid var(--ma-border-subtle)',
+}
+
+const styleNhanThongTinPhong: CSSProperties = {
+  color: 'var(--ma-text-secondary)',
+  font: 'var(--ma-text-caption)',
+}
+
+const styleGiaTriThongTinPhong: CSSProperties = {
+  minWidth: 0,
+  margin: 0,
+  color: 'var(--ma-text-primary)',
+  font: 'var(--ma-text-body)',
+  overflowWrap: 'anywhere',
 }
 
 export default function DanhMucPhong({ token }: Props) {
@@ -234,11 +412,11 @@ export default function DanhMucPhong({ token }: Props) {
   }
 
   return (
-    <section className="building-management room-management" data-testid="room-catalog" aria-labelledby="room-management-title">
-      <div className="building-management__heading">
+    <section className="building-management room-management" data-testid="room-catalog" aria-labelledby="room-management-title" style={styleDanhMucPhong}>
+      <div className="building-management__heading" style={styleTieuDeManHinh}>
         <div>
-          <p className="eyebrow">FR-BLD-02</p>
-          <h3 id="room-management-title">Danh mục phòng</h3>
+          <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-02</p>
+          <h3 id="room-management-title" style={{ margin: 0, font: 'var(--ma-text-block-title)' }}>Danh mục phòng</h3>
         </div>
         <Button type="button" variant="secondary" onClick={() => setHienBieuMauHangLoat((current) => !current)} style={{ minHeight: 44 }}>
           Xem trước dãy phòng
@@ -246,15 +424,15 @@ export default function DanhMucPhong({ token }: Props) {
       </div>
       {tangLoc ? <FilterChip active onRemove={() => setTangLoc('')}>Tầng {tangLoc}</FilterChip> : null}
 
-      <p className="status-message">
+      <p className="status-message" style={styleThongBao}>
         Trạng thái phòng do hệ thống tự ghi. Bạn chỉ khai báo số phòng, tầng, diện tích, sức chứa, giá thuê mặc định và loại phòng.
       </p>
 
-      {loi ? <p className="status-message status-message--error" role="alert">{loi}</p> : null}
-      {thongBao ? <p className="status-message status-message--success" role="status">{thongBao}</p> : null}
+      {loi ? <p className="status-message status-message--error" role="alert" style={{ ...styleThongBao, color: 'var(--ma-urgent)' }}>{loi}</p> : null}
+      {thongBao ? <p className="status-message status-message--success" role="status" style={{ ...styleThongBao, color: 'var(--ma-done-text)' }}>{thongBao}</p> : null}
 
-      <div className="building-form__row">
-        <label className="field">
+      <div className="building-form__row" style={styleHangBoLoc}>
+        <label className="field" style={styleNhanTruong}>
           <span>Toà nhà</span>
           <select
             name="toaNhaId"
@@ -265,6 +443,7 @@ export default function DanhMucPhong({ token }: Props) {
               setYeuCauPhongHangLoatDaXemTruoc(null)
             }}
             disabled={dangTai || danhSachToa.length === 0}
+            style={styleOTruong}
           >
             {danhSachToa.map((toa) => (
               <option key={toa.id} value={toa.id}>
@@ -274,9 +453,9 @@ export default function DanhMucPhong({ token }: Props) {
           </select>
         </label>
 
-        <label className="field">
+        <label className="field" style={styleNhanTruong}>
           <span>Lọc theo tầng</span>
-          <select name="tangLoc" value={tangLoc} onChange={(event) => setTangLoc(event.target.value)} disabled={!toaDangChon}>
+          <select name="tangLoc" value={tangLoc} onChange={(event) => setTangLoc(event.target.value)} disabled={!toaDangChon} style={styleOTruong}>
             <option value="">Tất cả các tầng</option>
             {taoDanhSachTang(toaDangChon?.soTang ?? 0).map((soTang) => (
               <option key={soTang} value={soTang}>
@@ -287,134 +466,134 @@ export default function DanhMucPhong({ token }: Props) {
         </label>
       </div>
 
-      <div className="building-layout">
-        <div className="building-list">
+      <div className="building-layout" style={styleBoCucHaiCot}>
+        <div className="building-list" style={styleCotDanhSach}>
           {dangTai || dangTaiPhong ? (
-            <p className="status-message" aria-live="polite">Đang tải danh sách phòng…</p>
+            <p className="status-message" aria-live="polite" style={styleThongBao}>Đang tải danh sách phòng…</p>
           ) : danhSachPhong.length === 0 ? (
             <EmptyState kind={tangLoc ? "filtered" : "first"} title={tangLoc ? `Không có phòng nào ở tầng ${tangLoc}.` : "Toà này chưa có phòng nào."} filters={tangLoc ? <FilterChip active onRemove={() => setTangLoc('')}>Tầng {tangLoc}</FilterChip> : undefined} />
           ) : (
             <>
-              <StatStrip stats={[{ label: 'TỔNG PHÒNG', value: danhSachPhong.length }, { label: 'TRỐNG', value: demPhongTheoTrangThai(danhSachPhong, 'TRONG') }, { label: 'ĐANG THUÊ', value: demPhongTheoTrangThai(danhSachPhong, 'DANG_THUE') }]} />
-              <section className="building-summary room-status-summary" aria-labelledby="room-status-summary-title">
-                <div className="building-summary__heading">
+              <StatStrip stats={[{ label: 'TỔNG PHÒNG', value: danhSachPhong.length }, { label: 'TRỐNG', value: demPhongTheoTrangThai(danhSachPhong, 'TRONG') }, { label: 'ĐANG THUÊ', value: demPhongTheoTrangThai(danhSachPhong, 'DANG_THUE') }]} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 7rem), 1fr))', minWidth: 0 }} />
+              <section className="building-summary room-status-summary" aria-labelledby="room-status-summary-title" style={styleTamThe}>
+                <div className="building-summary__heading" style={styleSuKienPhong}>
                   <div>
-                    <p className="eyebrow">FR-BLD-03</p>
-                    <h4 id="room-status-summary-title">Tổng quan sơ đồ phòng</h4>
+                    <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-03</p>
+                    <h4 id="room-status-summary-title" style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Tổng quan sơ đồ phòng</h4>
                   </div>
-                  <span className="room-status-summary__total">{danhSachPhong.length} phòng</span>
+                  <span className="room-status-summary__total" style={{ color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)' }}>{danhSachPhong.length} phòng</span>
                 </div>
-                <div className="room-status-summary__grid">
+                <div className="room-status-summary__grid" style={styleNhomTrangThai}>
                   {TONG_QUAN_TRANG_THAI.map((muc) => (
-                    <article key={muc.ma} className={`room-status-chip room-status-chip--${muc.ma.toLowerCase()}`}>
-                      <span>{muc.nhan}</span>
-                      <strong>{demPhongTheoTrangThai(danhSachPhong, muc.ma)}</strong>
+                    <article key={muc.ma} className={`room-status-chip room-status-chip--${muc.ma.toLowerCase()}`} style={{ ...styleMucTrangThai, ...(muc.ma === 'DANG_THUE' ? { background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)' } : muc.ma === 'DANG_SUA' ? { background: 'var(--ma-urgent-bg)', color: 'var(--ma-urgent)' } : {}) }}>
+                      <span style={{ font: 'var(--ma-text-caption)' }}>{muc.nhan}</span>
+                      <strong style={{ font: 'var(--ma-text-figure-sm)' }}>{demPhongTheoTrangThai(danhSachPhong, muc.ma)}</strong>
                     </article>
                   ))}
                 </div>
               </section>
 
-              <section className="room-floor-map" data-testid="room-floor-map" aria-label="Sơ đồ phòng theo tầng">
+              <section className="room-floor-map" data-testid="room-floor-map" aria-label="Sơ đồ phòng theo tầng" style={styleSoDoPhong}>
                 <BuildingSection label={`Mặt cắt ${toaDangChon?.ten ?? ''} · ${danhSachPhong.length} phòng`} columns={3} floors={floors} />
               </section>
             </>
           )}
         </div>
 
-        <div className="building-detail">
-          <section className="building-summary room-detail" data-testid="room-detail" aria-live="polite">
+        <div className="building-detail" style={styleCotChiTiet}>
+          <section className="building-summary room-detail" data-testid="room-detail" aria-live="polite" style={styleTamThe}>
             {phongDangXem ? (
               <>
-                <div className="building-summary__heading">
+                <div className="building-summary__heading" style={styleSuKienPhong}>
                   <div>
-                    <p className="eyebrow">FR-BLD-03</p>
-                    <h4>Chi tiết phòng {phongDangXem.soPhong}</h4>
+                    <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-03</p>
+                    <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Chi tiết phòng {phongDangXem.soPhong}</h4>
                   </div>
-                  <span className={`room-detail__status ${layThongTinTrangThai(phongDangXem).lopCss.replace('room-tile', 'room-detail__status')}`}>
+                  <span className={`room-detail__status ${layThongTinTrangThai(phongDangXem).lopCss.replace('room-tile', 'room-detail__status')}`} style={styleTrangThaiPhong(phongDangXem.trangThai)}>
                     {layThongTinTrangThai(phongDangXem).nhan}
                   </span>
                 </div>
-                <dl className="building-summary__facts">
-                  <div>
-                    <dt>Tầng</dt>
-                    <dd>{phongDangXem.tang}</dd>
+                <dl className="building-summary__facts" style={styleThongTinPhong}>
+                  <div style={styleDongThongTinPhong}>
+                    <dt style={styleNhanThongTinPhong}>Tầng</dt>
+                    <dd style={styleGiaTriThongTinPhong}>{phongDangXem.tang}</dd>
                   </div>
-                  <div>
-                    <dt>Loại phòng</dt>
-                    <dd>{phongDangXem.loaiPhong}</dd>
+                  <div style={styleDongThongTinPhong}>
+                    <dt style={styleNhanThongTinPhong}>Loại phòng</dt>
+                    <dd style={styleGiaTriThongTinPhong}>{phongDangXem.loaiPhong}</dd>
                   </div>
-                  <div>
-                    <dt>Diện tích</dt>
-                    <dd>{phongDangXem.dienTich} m²</dd>
+                  <div style={styleDongThongTinPhong}>
+                    <dt style={styleNhanThongTinPhong}>Diện tích</dt>
+                    <dd style={styleGiaTriThongTinPhong}>{phongDangXem.dienTich} m²</dd>
                   </div>
-                  <div>
-                    <dt>Sức chứa</dt>
-                    <dd>{phongDangXem.sucChua} người</dd>
+                  <div style={styleDongThongTinPhong}>
+                    <dt style={styleNhanThongTinPhong}>Sức chứa</dt>
+                    <dd style={styleGiaTriThongTinPhong}>{phongDangXem.sucChua} người</dd>
                   </div>
-                  <div>
-                    <dt>Giá thuê mặc định</dt>
-                    <dd>{phongDangXem.giaThueMacDinh}</dd>
+                  <div style={styleDongThongTinPhong}>
+                    <dt style={styleNhanThongTinPhong}>Giá thuê mặc định</dt>
+                    <dd style={styleGiaTriThongTinPhong}>{phongDangXem.giaThueMacDinh}</dd>
                   </div>
                 </dl>
-                <p className="status-message">
+                <p className="status-message" style={styleThongBao}>
                   Chi tiết lấy trực tiếp từ danh sách phòng hiện có.
                 </p>
               </>
             ) : (
               <>
                 <div>
-                  <p className="eyebrow">FR-BLD-03</p>
-                  <h4>Chi tiết phòng</h4>
+                  <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-03</p>
+                  <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Chi tiết phòng</h4>
                 </div>
-                <p className="status-message">Chọn một ô phòng trong sơ đồ để xem chi tiết hiện tại của phòng đó.</p>
+                <p className="status-message" style={styleThongBao}>Chọn một ô phòng trong sơ đồ để xem chi tiết hiện tại của phòng đó.</p>
               </>
             )}
           </section>
 
-          <form className="building-form" data-testid="room-form" onSubmit={handleTaoPhong}>
+          <form className="building-form" data-testid="room-form" onSubmit={handleTaoPhong} style={styleTamThe}>
             <div>
-              <p className="eyebrow">FR-BLD-02</p>
-              <h4>Khai báo một phòng</h4>
+              <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-02</p>
+              <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Khai báo một phòng</h4>
             </div>
 
-            <div className="building-form__row">
-              <label className="field">
+            <div className="building-form__row" style={styleHangBieuMau}>
+              <label className="field" style={styleNhanTruong}>
                 <span>Số phòng</span>
-                <input name="soPhong" value={bieuMauPhong.soPhong} onChange={(event) => capNhatBieuMauPhong('soPhong', event.target.value)} required />
+                <input name="soPhong" value={bieuMauPhong.soPhong} onChange={(event) => capNhatBieuMauPhong('soPhong', event.target.value)} required style={styleOTruong} />
               </label>
 
-              <label className="field">
+              <label className="field" style={styleNhanTruong}>
                 <span>Tầng</span>
-                <input type="number" min="1" name="tang" value={bieuMauPhong.tang} onChange={(event) => capNhatBieuMauPhong('tang', event.target.value)} required />
+                <input type="number" min="1" name="tang" value={bieuMauPhong.tang} onChange={(event) => capNhatBieuMauPhong('tang', event.target.value)} required style={styleOTruong} />
               </label>
             </div>
 
-            <div className="building-form__row">
-              <label className="field">
+            <div className="building-form__row" style={styleHangBieuMau}>
+              <label className="field" style={styleNhanTruong}>
                 <span>Diện tích</span>
-                <input type="number" min="0.01" step="0.01" name="dienTich" value={bieuMauPhong.dienTich} onChange={(event) => capNhatBieuMauPhong('dienTich', event.target.value)} required />
+                <input type="number" min="0.01" step="0.01" name="dienTich" value={bieuMauPhong.dienTich} onChange={(event) => capNhatBieuMauPhong('dienTich', event.target.value)} required style={styleOTruong} />
               </label>
 
-              <label className="field">
+              <label className="field" style={styleNhanTruong}>
                 <span>Sức chứa</span>
-                <input type="number" min="1" name="sucChua" value={bieuMauPhong.sucChua} onChange={(event) => capNhatBieuMauPhong('sucChua', event.target.value)} required />
+                <input type="number" min="1" name="sucChua" value={bieuMauPhong.sucChua} onChange={(event) => capNhatBieuMauPhong('sucChua', event.target.value)} required style={styleOTruong} />
               </label>
             </div>
 
-            <div className="building-form__row">
-              <label className="field">
+            <div className="building-form__row" style={styleHangBieuMau}>
+              <label className="field" style={styleNhanTruong}>
                 <span>Giá thuê mặc định</span>
-                <input type="number" min="0" step="0.01" name="giaThueMacDinh" value={bieuMauPhong.giaThueMacDinh} onChange={(event) => capNhatBieuMauPhong('giaThueMacDinh', event.target.value)} required />
+                <input type="number" min="0" step="0.01" name="giaThueMacDinh" value={bieuMauPhong.giaThueMacDinh} onChange={(event) => capNhatBieuMauPhong('giaThueMacDinh', event.target.value)} required style={styleOTruong} />
               </label>
 
-              <label className="field">
+              <label className="field" style={styleNhanTruong}>
                 <span>Loại phòng</span>
-                <input name="loaiPhong" value={bieuMauPhong.loaiPhong} onChange={(event) => capNhatBieuMauPhong('loaiPhong', event.target.value)} required />
+                <input name="loaiPhong" value={bieuMauPhong.loaiPhong} onChange={(event) => capNhatBieuMauPhong('loaiPhong', event.target.value)} required style={styleOTruong} />
               </label>
             </div>
 
-            <div className="building-form__actions">
-              <p className="building-form__hint">Máy chủ sẽ tự gán trạng thái ban đầu là Trống.</p>
+            <div className="building-form__actions" style={styleHangHanhDong}>
+              <p className="building-form__hint" style={styleGoiYBieuMau}>Máy chủ sẽ tự gán trạng thái ban đầu là Trống.</p>
               <Button type="submit" blocked={dangLuu || !toaDangChonId} style={{ minHeight: 44 }}>
                 {dangLuu ? 'Đang lưu…' : 'Khai báo phòng'}
               </Button>
@@ -422,64 +601,64 @@ export default function DanhMucPhong({ token }: Props) {
           </form>
 
           {hienBieuMauHangLoat ? (
-            <form className="building-form" data-testid="room-batch-form" onSubmit={handleXemTruocHangLoat}>
+            <form className="building-form" data-testid="room-batch-form" onSubmit={handleXemTruocHangLoat} style={styleTamThe}>
               <div>
-                <p className="eyebrow">FR-BLD-02</p>
-                <h4>Tạo nhanh dãy phòng</h4>
+                <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-02</p>
+                <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Tạo nhanh dãy phòng</h4>
               </div>
 
-              <div className="building-form__row">
-                <label className="field">
+              <div className="building-form__row" style={styleHangBieuMau}>
+                <label className="field" style={styleNhanTruong}>
                   <span>Số bắt đầu</span>
-                  <input name="soBatDau" value={bieuMauHangLoat.soBatDau} onChange={(event) => capNhatBieuMauHangLoat('soBatDau', event.target.value)} required />
+                  <input name="soBatDau" value={bieuMauHangLoat.soBatDau} onChange={(event) => capNhatBieuMauHangLoat('soBatDau', event.target.value)} required style={styleOTruong} />
                 </label>
 
-                <label className="field">
+                <label className="field" style={styleNhanTruong}>
                   <span>Số kết thúc</span>
-                  <input name="soKetThuc" value={bieuMauHangLoat.soKetThuc} onChange={(event) => capNhatBieuMauHangLoat('soKetThuc', event.target.value)} required />
+                  <input name="soKetThuc" value={bieuMauHangLoat.soKetThuc} onChange={(event) => capNhatBieuMauHangLoat('soKetThuc', event.target.value)} required style={styleOTruong} />
                 </label>
               </div>
 
-              <div className="building-form__row">
-                <label className="field">
+              <div className="building-form__row" style={styleHangBieuMau}>
+                <label className="field" style={styleNhanTruong}>
                   <span>Tầng</span>
-                  <input type="number" min="1" name="tang" value={bieuMauHangLoat.tang} onChange={(event) => capNhatBieuMauHangLoat('tang', event.target.value)} required />
+                  <input type="number" min="1" name="tang" value={bieuMauHangLoat.tang} onChange={(event) => capNhatBieuMauHangLoat('tang', event.target.value)} required style={styleOTruong} />
                 </label>
 
-                <label className="field">
+                <label className="field" style={styleNhanTruong}>
                   <span>Diện tích</span>
-                  <input type="number" min="0.01" step="0.01" name="dienTich" value={bieuMauHangLoat.dienTich} onChange={(event) => capNhatBieuMauHangLoat('dienTich', event.target.value)} required />
+                  <input type="number" min="0.01" step="0.01" name="dienTich" value={bieuMauHangLoat.dienTich} onChange={(event) => capNhatBieuMauHangLoat('dienTich', event.target.value)} required style={styleOTruong} />
                 </label>
               </div>
 
-              <div className="building-form__row">
-                <label className="field">
+              <div className="building-form__row" style={styleHangBieuMau}>
+                <label className="field" style={styleNhanTruong}>
                   <span>Sức chứa</span>
-                  <input type="number" min="1" name="sucChua" value={bieuMauHangLoat.sucChua} onChange={(event) => capNhatBieuMauHangLoat('sucChua', event.target.value)} required />
+                  <input type="number" min="1" name="sucChua" value={bieuMauHangLoat.sucChua} onChange={(event) => capNhatBieuMauHangLoat('sucChua', event.target.value)} required style={styleOTruong} />
                 </label>
 
-                <label className="field">
+                <label className="field" style={styleNhanTruong}>
                   <span>Giá thuê mặc định</span>
-                  <input type="number" min="0" step="0.01" name="giaThueMacDinh" value={bieuMauHangLoat.giaThueMacDinh} onChange={(event) => capNhatBieuMauHangLoat('giaThueMacDinh', event.target.value)} required />
+                  <input type="number" min="0" step="0.01" name="giaThueMacDinh" value={bieuMauHangLoat.giaThueMacDinh} onChange={(event) => capNhatBieuMauHangLoat('giaThueMacDinh', event.target.value)} required style={styleOTruong} />
                 </label>
               </div>
 
-              <label className="field">
+              <label className="field" style={styleNhanTruong}>
                 <span>Loại phòng</span>
-                <input name="loaiPhong" value={bieuMauHangLoat.loaiPhong} onChange={(event) => capNhatBieuMauHangLoat('loaiPhong', event.target.value)} required />
+                <input name="loaiPhong" value={bieuMauHangLoat.loaiPhong} onChange={(event) => capNhatBieuMauHangLoat('loaiPhong', event.target.value)} required style={styleOTruong} />
               </label>
 
-              <div className="building-form__actions">
+              <div className="building-form__actions" style={styleHangHanhDong}>
                 <Button type="submit" variant="secondary" blocked={dangXuLyHangLoat || !toaDangChonId} style={{ minHeight: 44 }}>
                   {dangXuLyHangLoat ? 'Đang xem trước…' : 'Xem trước'}
                 </Button>
                 {xemTruoc.length > 0 ? (
-                  <ConfirmDialog title="Tạo dãy phòng?" consequence={`Sẽ tạo ${xemTruoc.length} phòng, từ số ${yeuCauPhongHangLoatDaXemTruoc?.soBatDau} đến số ${yeuCauPhongHangLoatDaXemTruoc?.soKetThuc}.`} confirmLabel="Xác nhận tạo dãy phòng" onConfirm={handleXacNhanHangLoat} onCancel={() => { setXemTruoc([]); setYeuCauPhongHangLoatDaXemTruoc(null) }} />
+                  <ConfirmDialog title="Tạo dãy phòng?" consequence={`Sẽ tạo ${xemTruoc.length} phòng, từ số ${yeuCauPhongHangLoatDaXemTruoc?.soBatDau} đến số ${yeuCauPhongHangLoatDaXemTruoc?.soKetThuc}.`} confirmLabel="Xác nhận tạo dãy phòng" onConfirm={handleXacNhanHangLoat} onCancel={() => { setXemTruoc([]); setYeuCauPhongHangLoatDaXemTruoc(null) }} style={{ width: '100%', maxWidth: '100%', minWidth: 0, flex: '1 1 18rem' }} />
                 ) : null}
               </div>
 
               {xemTruoc.length > 0 ? (
-                <p className="status-message">
+                <p className="status-message" style={styleThongBao}>
                   {xemTruoc.map((phong) => phong.soPhong).join(', ')}
                 </p>
               ) : null}
@@ -574,6 +753,34 @@ function layThongTinTrangThai(phong: ThongTinPhong) {
     nhan: phong.tenTrangThai || macDinh.nhan,
     lopCss: macDinh.lopCss,
   }
+}
+
+function styleTrangThaiPhong(trangThai: string): CSSProperties {
+  const styleChung: CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 'var(--ma-hit-mobile)',
+    padding: 'var(--ma-space-2) var(--ma-space-3)',
+    border: 'var(--ma-border-width) solid var(--ma-border-default)',
+    background: 'var(--ma-bg-sunken)',
+    color: 'var(--ma-text-secondary)',
+    font: 'var(--ma-text-caption)',
+  }
+
+  if (trangThai === 'DANG_THUE') {
+    return { ...styleChung, background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)' }
+  }
+  if (trangThai === 'DANG_SUA') {
+    return { ...styleChung, background: 'var(--ma-urgent-bg)', color: 'var(--ma-urgent)' }
+  }
+  if (trangThai === 'DA_COC') {
+    return { ...styleChung, background: 'var(--ma-bg-card)', color: 'var(--ma-waiting)', borderColor: 'var(--ma-waiting-border)' }
+  }
+  if (trangThai === 'NGUNG') {
+    return { ...styleChung, background: 'var(--ma-bg-sunken)', color: 'var(--ma-text-disabled)' }
+  }
+  return styleChung
 }
 
 function demPhongTheoTrangThai(danhSachPhong: ThongTinPhong[], trangThai: string) {

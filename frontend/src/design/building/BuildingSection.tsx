@@ -25,11 +25,11 @@ export interface BuildingSectionProps extends React.HTMLAttributes<HTMLDivElemen
 
 /** Mặt cắt toà nhà: tầng cao nhất ở trên, mái và móng vẽ bằng dải gạch chéo. */
 export function BuildingSection({ label, floors, columns = 6, showStairs = true, style, ...rest }: BuildingSectionProps): React.ReactElement {
-  const grid = `34px repeat(${columns}, 1fr)${showStairs ? " 30px" : ""}`;
+  const grid = `34px repeat(${columns}, minmax(0, 1fr))${showStairs ? " 30px" : ""}`;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6, ...(style || {}) }} {...rest}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0, ...(style || {}) }} {...rest}>
       {label ? (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 2 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, minWidth: 0, paddingBottom: 2 }}>
           <SysLabel style={{ fontSize: 10, letterSpacing: "0.12em" }}>{label}</SysLabel>
           <SysLabel style={{ fontSize: 10, letterSpacing: "0.12em" }}>Sân thượng</SysLabel>
         </div>
@@ -43,7 +43,7 @@ export function BuildingSection({ label, floors, columns = 6, showStairs = true,
         }}
       />
       {floors.map((floor) => (
-        <section key={floor.name} className="room-floor-section" data-testid="room-floor-section" aria-labelledby={`floor-title-${floor.name}`} style={{ display: "grid", gridTemplateColumns: grid, gap: 6, alignItems: "stretch" }}>
+        <section key={floor.name} className="room-floor-section" data-testid="room-floor-section" aria-labelledby={`floor-title-${floor.name}`} style={{ display: "grid", gridTemplateColumns: grid, gap: 6, minWidth: 0, alignItems: "stretch" }}>
           <div
             style={{
               fontFamily: "var(--ma-font-mono)",
@@ -52,6 +52,7 @@ export function BuildingSection({ label, floors, columns = 6, showStairs = true,
               color: "var(--ma-text-secondary)",
               display: "flex",
               alignItems: "center",
+              minWidth: 0,
             }}
           >
             <h4 id={`floor-title-${floor.name}`} style={{ margin: 0, font: 'inherit' }}>Tầng {floor.name.replace(/^T/, '')}</h4>
