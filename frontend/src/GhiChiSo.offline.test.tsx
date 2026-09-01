@@ -12,13 +12,21 @@ declare global {
 let container: HTMLDivElement
 let root: Root
 let storage: Storage
+let storageOperations: StorageOperation[]
+
+type StorageOperation = {
+  type: 'setItem' | 'removeItem'
+  key: string
+  value?: string
+}
 
 describe('GhiChiSo offline flow', () => {
   beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     container = document.createElement('div')
     document.body.appendChild(container)
-    storage = createStorage()
+    storageOperations = []
+    storage = createStorage(storageOperations)
     vi.stubGlobal('localStorage', storage)
     localStorage.clear()
   })
@@ -297,6 +305,99 @@ describe('GhiChiSo offline flow', () => {
     await vi.waitFor(() => expect(container.textContent).toContain('CHỜ GỬI'))
     expect(localStorage.getItem('miniapart-ghi-chi-so-1-8')).toContain('"chiSoCuoi":"1252.75"')
   })
+
+  it('FR-MTR-05 never overwrites the stored queue during the initial restore commit', async () => {
+    localStorage.setItem('miniapart-ghi-chi-so-1-8', JSON.stringify({
+      banNhap: {},
+      hangCho: {
+        '11-21': {
+          phongId: 11,
+          dichVuId: 21,
+          chiSoCuoi: '1252.75',
+          coThayCongTo: false,
+        },
+      },
+    }))
+    localStorage.setItem('miniapart-ghi-chi-so-bootstrap', JSON.stringify({
+      toaNhaId: 1,
+      kyId: 8,
+      danhSachToaNha: [{ id: 1, ten: 'Toà A' }],
+      danhSachKy: [{ id: 8, nam: 2026, thang: 8, trangThai: 'DANG_MO' }],
+      duLieu: {
+        tongPhong: 1,
+        daGhi: 0,
+        phong: [{
+          id: 11,
+          soPhong: '101',
+          tang: 1,
+          dichVu: [{ id: 21, tenDichVu: 'Điện', donVi: 'kWh', chiSoDau: '1240.00', coThayCongTo: false }],
+        }],
+      },
+      danhSachPhongChuaGhiChiSo: [],
+    }))
+    storageOperations.length = 0
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('offline')
+    }))
+    setOnlineState(false)
+
+    await renderScreen()
+
+    const contextOperations = storageOperations.filter(({ key }) => key === 'miniapart-ghi-chi-so-1-8')
+    expect(contextOperations).not.toContainEqual({ type: 'removeItem', key: 'miniapart-ghi-chi-so-1-8' })
+    expect(contextOperations.every(({ type, value }) => type === 'setItem' && value?.includes('"chiSoCuoi":"1252.75"'))).toBe(true)
+  })
+
+  it('FR-MTR-05 does not persist the previous period under a newly selected period key', async () => {
+    localStorage.setItem('miniapart-ghi-chi-so-1-8', JSON.stringify({
+      banNhap: {},
+      hangCho: {
+        '11-21': {
+          phongId: 11,
+          dichVuId: 21,
+          chiSoCuoi: '1252.75',
+          coThayCongTo: false,
+        },
+      },
+    }))
+    localStorage.setItem('miniapart-ghi-chi-so-bootstrap', JSON.stringify({
+      toaNhaId: 1,
+      kyId: 8,
+      danhSachToaNha: [{ id: 1, ten: 'Toà A' }],
+      danhSachKy: [
+        { id: 8, nam: 2026, thang: 8, trangThai: 'DANG_MO' },
+        { id: 9, nam: 2026, thang: 9, trangThai: 'DANG_MO' },
+      ],
+      duLieu: {
+        tongPhong: 1,
+        daGhi: 0,
+        phong: [{
+          id: 11,
+          soPhong: '101',
+          tang: 1,
+          dichVu: [{ id: 21, tenDichVu: 'Điện', donVi: 'kWh', chiSoDau: '1240.00', coThayCongTo: false }],
+        }],
+      },
+      danhSachPhongChuaGhiChiSo: [],
+    }))
+    storageOperations.length = 0
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('offline')
+    }))
+    setOnlineState(false)
+
+    await renderScreen()
+    await vi.waitFor(() => expect(container.querySelectorAll('select')).toHaveLength(2))
+    storageOperations.length = 0
+
+    const periodSelect = container.querySelectorAll('select')[1] as HTMLSelectElement
+    await act(async () => {
+      periodSelect.value = '9'
+      periodSelect.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+
+    expect(storageOperations.filter(({ key }) => key === 'miniapart-ghi-chi-so-1-9')).toEqual([])
+  })
 })
 
 async function renderScreen() {
@@ -321,7 +422,7 @@ function setOnlineState(isOnline: boolean) {
   })
 }
 
-function createStorage(): Storage {
+function createStorage(operations: StorageOperation[] = []): Storage {
   const data = new Map<string, string>()
   return {
     get length() {
@@ -337,9 +438,11 @@ function createStorage(): Storage {
       return Array.from(data.keys())[index] ?? null
     },
     removeItem(key) {
+      operations.push({ type: 'removeItem', key })
       data.delete(key)
     },
     setItem(key, value) {
+      operations.push({ type: 'setItem', key, value })
       data.set(key, value)
     },
   }

@@ -129,7 +129,7 @@ export default function GhiChiSo({ token }: Props) {
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const daThuDongBoTuDong = useRef(false)
   const khoaDangNapTrangThai = useRef<string | null>(null)
-  const daKhoiPhucTrangThai = useRef(false)
+  const [khoaDaKhoiPhuc, setKhoaDaKhoiPhuc] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -243,7 +243,7 @@ export default function GhiChiSo({ token }: Props) {
 
   useEffect(() => {
     khoaDangNapTrangThai.current = null
-    daKhoiPhucTrangThai.current = false
+    setKhoaDaKhoiPhuc(null)
   }, [toaNhaId, kyId])
 
   useEffect(() => {
@@ -286,7 +286,7 @@ export default function GhiChiSo({ token }: Props) {
     setHangChoDongBo(duLieuDaLuu.hangCho)
     daThuDongBoTuDong.current = false
     khoaDangNapTrangThai.current = khoaTrangThai
-    daKhoiPhucTrangThai.current = true
+    setKhoaDaKhoiPhuc(khoaTrangThai)
   }, [duLieu, toaNhaId, kyId])
 
   useEffect(() => {
@@ -315,7 +315,8 @@ export default function GhiChiSo({ token }: Props) {
   }, [thongBaoDaLuu])
 
   useEffect(() => {
-    if (toaNhaId === null || kyId === null || duLieu === null || !daKhoiPhucTrangThai.current) return
+    const khoaHienTai = khoaLuuTru(toaNhaId, kyId)
+    if (toaNhaId === null || kyId === null || khoaHienTai === null || duLieu === null || khoaDaKhoiPhuc !== khoaHienTai) return
     luuTrangThaiTrenMay(
       toaNhaId,
       kyId,
@@ -335,7 +336,7 @@ export default function GhiChiSo({ token }: Props) {
       duLieu,
       danhSachPhongChuaGhiChiSo,
     })
-  }, [danhSachKy, danhSachPhongChuaGhiChiSo, danhSachToaNha, duLieu, hangChoDongBo, kyId, pendingReplacementFlags, pendingReplacementReadings, pendingValues, toaNhaId])
+  }, [danhSachKy, danhSachPhongChuaGhiChiSo, danhSachToaNha, duLieu, hangChoDongBo, khoaDaKhoiPhuc, kyId, pendingReplacementFlags, pendingReplacementReadings, pendingValues, toaNhaId])
 
   useEffect(() => {
     if (toaNhaId === null || kyId === null || ngoaiTuyen || dangDongBoHangCho || daThuDongBoTuDong.current) return
@@ -490,7 +491,9 @@ export default function GhiChiSo({ token }: Props) {
 
       const danhSachKyMoi = await fetchKyThanhToan(token, toaNhaId)
       setDanhSachKy(danhSachKyMoi)
-      setKyId(danhSachKyMoi.find((item) => item.trangThai === 'DANG_MO')?.id ?? danhSachKyMoi[0]?.id ?? null)
+      const kyMoiId = danhSachKyMoi.find((item) => item.trangThai === 'DANG_MO')?.id ?? danhSachKyMoi[0]?.id ?? null
+      setDuLieu(null)
+      setKyId(kyMoiId)
     } catch (reason: unknown) {
       setLoi(chuanHoaLoi(reason, 'Không thể chốt kỳ thanh toán.'))
     } finally {
@@ -629,7 +632,10 @@ export default function GhiChiSo({ token }: Props) {
             <span>Kỳ thanh toán</span>
             <select
               value={kyId ?? ''}
-              onChange={(event) => setKyId(Number(event.target.value))}
+              onChange={(event) => {
+                setKyId(Number(event.target.value))
+                setDuLieu(null)
+              }}
               disabled={dangTaiChiSo || danhSachKy.length === 0}
               style={styleSelect}
             >
