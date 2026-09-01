@@ -176,11 +176,10 @@ export default function QuanLyTaiKhoan({ token }: Props) {
                   <td>{danhSachToaNha(nguoiDung.toaNhaIds, toaNha)}</td>
                   <td><StatusTag tone={nguoiDung.trangThai === 'BI_KHOA' ? 'closed' : 'done'}>{nguoiDung.tenTrangThai}</StatusTag></td>
                   <td><TableActions>
-                    <Button variant="secondary" onClick={() => batDauSua(nguoiDung)} style={{ minHeight: 44 }}>Sửa {nguoiDung.hoTen}</Button>
+                    <Button variant="secondary" onClick={() => batDauSua(nguoiDung)}>Sửa {nguoiDung.hoTen}</Button>
                     {nguoiDung.trangThai === 'HOAT_DONG' ? (
                       <Button
                         variant="secondary"
-                        style={{ minHeight: 44 }}
                         type="button"
                         blocked={idDangKhoa === nguoiDung.id}
                         blockedReason={idDangKhoa === nguoiDung.id ? 'Đang cập nhật trạng thái tài khoản.' : undefined}
@@ -236,7 +235,7 @@ export default function QuanLyTaiKhoan({ token }: Props) {
 
           <CheckboxGroup legend="Toà nhà được giao">
             {toaNha.length === 0 ? (
-              <p style={{ margin: 0, color: 'var(--ma-text-secondary)' }}>Chưa có toà nhà để gán.</p>
+              <ScreenNotice>Chưa có toà nhà để gán.</ScreenNotice>
             ) : (
               toaNha.map((item) => (
                 <CheckboxField key={item.id}>
@@ -264,7 +263,7 @@ export default function QuanLyTaiKhoan({ token }: Props) {
             <Button type="submit" blocked={dangLuu} blockedReason={dangLuu ? 'Đang lưu tài khoản.' : undefined}>
               {dangLuu ? 'Đang lưu…' : bieuMau.id === null ? 'Tạo tài khoản' : 'Lưu thay đổi'}
             </Button>
-            <Button type="button" variant="secondary" onClick={huyBieuMau} blocked={dangLuu} style={{ minHeight: 44 }}>Huỷ</Button>
+            <Button type="button" variant="secondary" onClick={huyBieuMau} blocked={dangLuu}>Huỷ</Button>
           </ActionRow>
         </FormPanel>
       ) : null}
@@ -275,7 +274,6 @@ export default function QuanLyTaiKhoan({ token }: Props) {
         cancelLabel="Để sau"
         onCancel={() => setNguoiDungChoKhoa(null)}
         onConfirm={() => { const account = nguoiDungChoKhoa; setNguoiDungChoKhoa(null); void khoaTaiKhoan(account) }}
-        style={{ width: 'min(420px, 100%)', margin: '0 auto' }}
       /> : null}
     </ScreenSurface>
   )

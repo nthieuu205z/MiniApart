@@ -23,6 +23,7 @@ export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 
         border: "1px solid var(--ma-ink-900)",
         background: "var(--ma-bg-card)",
         padding: 16,
+        width: '100%',
         maxWidth: 420,
         fontFamily: "var(--ma-font-ui)",
         borderRadius: 0,
