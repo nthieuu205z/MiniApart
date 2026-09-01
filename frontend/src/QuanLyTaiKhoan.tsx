@@ -18,6 +18,7 @@ import { SysLabel } from './design/core/SysLabel'
 import { ConfirmDialog } from './design/feedback/ConfirmDialog'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Toast } from './design/feedback/Toast'
+import { ActionRow, CheckboxField, CheckboxGroup, FormField, FormPanel, ScreenHeader, ScreenNotice, ScreenSurface, TableActions, TableFrame } from './design/layout/Screen'
 
 type Props = {
   token: string
@@ -136,27 +137,25 @@ export default function QuanLyTaiKhoan({ token }: Props) {
   }
 
   return (
-    <section data-testid="account-management" aria-labelledby="account-management-title" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+    <ScreenSurface data-testid="account-management" aria-labelledby="account-management-title">
+      <ScreenHeader action={<Button onClick={batDauTao}>Tạo tài khoản</Button>}>
         <div>
           <SysLabel>FR-AUT-06</SysLabel>
           <h3 id="account-management-title">Quản lý tài khoản</h3>
         </div>
-        <Button onClick={batDauTao}>Tạo tài khoản</Button>
-      </div>
+      </ScreenHeader>
 
-      <p style={{ margin: 0, color: 'var(--ma-text-secondary)', lineHeight: 1.6 }}>
+      <ScreenNotice>
         Tạo tài khoản sẽ gửi mã kích hoạt để người dùng tự chọn mật khẩu. Tài khoản đã phát sinh dữ liệu chỉ được khoá, không xoá.
-      </p>
+      </ScreenNotice>
 
-      {loi ? <p style={{ margin: 0, color: 'var(--ma-urgent)' }} role="alert">{loi}</p> : null}
+      {loi ? <ScreenNotice tone="urgent">{loi}</ScreenNotice> : null}
       {thongBao ? <Toast>{thongBao}</Toast> : null}
 
       {dangTai ? (
-        <p style={{ margin: 0, color: 'var(--ma-text-secondary)' }} aria-live="polite">Đang tải danh sách tài khoản…</p>
+        <ScreenNotice live>Đang tải danh sách tài khoản…</ScreenNotice>
       ) : (
-        <div style={{ overflowX: 'auto', border: '1px solid var(--ma-border-default)' }}>
-          <table style={{ width: '100%', minWidth: 700, borderCollapse: 'collapse', textAlign: 'left' }}>
+        <TableFrame minWidth={700}>
             <caption>Danh sách tài khoản</caption>
             <thead>
               <tr>
@@ -176,7 +175,7 @@ export default function QuanLyTaiKhoan({ token }: Props) {
                   <td>{nguoiDung.tenVaiTro}</td>
                   <td>{danhSachToaNha(nguoiDung.toaNhaIds, toaNha)}</td>
                   <td><StatusTag tone={nguoiDung.trangThai === 'BI_KHOA' ? 'closed' : 'done'}>{nguoiDung.tenTrangThai}</StatusTag></td>
-                  <td style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <td><TableActions>
                     <Button variant="secondary" onClick={() => batDauSua(nguoiDung)} style={{ minHeight: 44 }}>Sửa {nguoiDung.hoTen}</Button>
                     {nguoiDung.trangThai === 'HOAT_DONG' ? (
                       <Button
@@ -190,34 +189,31 @@ export default function QuanLyTaiKhoan({ token }: Props) {
                         {idDangKhoa === nguoiDung.id ? 'Đang khoá…' : `Khoá ${nguoiDung.hoTen}`}
                       </Button>
                     ) : null}
-                  </td>
+                  </TableActions></td>
                 </tr>
               ))}
             </tbody>
-          </table>
           {danhSach.length === 0 ? <EmptyState title="Chưa có tài khoản nào." /> : null}
-        </div>
+        </TableFrame>
       )}
 
       {bieuMau ? (
-        <form data-testid="account-form" onSubmit={luuTaiKhoan} style={{ display: 'grid', gap: 16, padding: 16, border: '1px solid var(--ma-border-default)', minWidth: 0 }}>
+        <FormPanel testId="account-form" onSubmit={luuTaiKhoan}>
           <div>
             <SysLabel>FR-AUT-06</SysLabel>
             <h4>{bieuMau.id === null ? 'Tạo tài khoản' : 'Sửa tài khoản'}</h4>
           </div>
 
-          <label style={FIELD_STYLE}>
-            <span>Họ tên</span>
+          <FormField label="Họ tên">
             <input
               name="hoTen"
               value={bieuMau.hoTen}
               onChange={(event) => setBieuMau((current) => current ? { ...current, hoTen: event.target.value } : current)}
               required
             />
-          </label>
+          </FormField>
 
-          <label style={FIELD_STYLE}>
-            <span>Số điện thoại</span>
+          <FormField label="Số điện thoại">
             <input
               name="soDienThoai"
               value={bieuMau.soDienThoai}
@@ -225,10 +221,9 @@ export default function QuanLyTaiKhoan({ token }: Props) {
               inputMode="tel"
               required
             />
-          </label>
+          </FormField>
 
-          <label style={FIELD_STYLE}>
-            <span>Vai trò</span>
+          <FormField label="Vai trò">
             <select
               name="vaiTro"
               value={bieuMau.vaiTro}
@@ -237,15 +232,14 @@ export default function QuanLyTaiKhoan({ token }: Props) {
             >
               {vaiTro.map((role) => <option key={role.vaiTro} value={role.vaiTro}>{role.tenVaiTro}</option>)}
             </select>
-          </label>
+          </FormField>
 
-          <fieldset style={{ display: 'grid', gap: 10, margin: 0, padding: 0, border: 0 }}>
-            <legend>Toà nhà được giao</legend>
+          <CheckboxGroup legend="Toà nhà được giao">
             {toaNha.length === 0 ? (
               <p style={{ margin: 0, color: 'var(--ma-text-secondary)' }}>Chưa có toà nhà để gán.</p>
             ) : (
               toaNha.map((item) => (
-                <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
+                <CheckboxField key={item.id}>
                   <input
                     type="checkbox"
                     name="toaNhaIds"
@@ -260,19 +254,19 @@ export default function QuanLyTaiKhoan({ token }: Props) {
                     })}
                   />
                   <span>{item.maToa} · {item.ten}</span>
-                </label>
+                </CheckboxField>
               ))
             )}
-          </fieldset>
+          </CheckboxGroup>
 
-          <p style={{ margin: 0, color: 'var(--ma-text-secondary)', lineHeight: 1.6 }}>Không nhập mật khẩu hộ người dùng. Mã kích hoạt sẽ được gửi riêng để họ tự đặt mật khẩu.</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <ScreenNotice>Không nhập mật khẩu hộ người dùng. Mã kích hoạt sẽ được gửi riêng để họ tự đặt mật khẩu.</ScreenNotice>
+          <ActionRow>
             <Button type="submit" blocked={dangLuu} blockedReason={dangLuu ? 'Đang lưu tài khoản.' : undefined}>
               {dangLuu ? 'Đang lưu…' : bieuMau.id === null ? 'Tạo tài khoản' : 'Lưu thay đổi'}
             </Button>
             <Button type="button" variant="secondary" onClick={huyBieuMau} blocked={dangLuu} style={{ minHeight: 44 }}>Huỷ</Button>
-          </div>
-        </form>
+          </ActionRow>
+        </FormPanel>
       ) : null}
       {nguoiDungChoKhoa ? <ConfirmDialog
         title={`Khoá tài khoản ${nguoiDungChoKhoa.hoTen}?`}
@@ -283,11 +277,9 @@ export default function QuanLyTaiKhoan({ token }: Props) {
         onConfirm={() => { const account = nguoiDungChoKhoa; setNguoiDungChoKhoa(null); void khoaTaiKhoan(account) }}
         style={{ width: 'min(420px, 100%)', margin: '0 auto' }}
       /> : null}
-    </section>
+    </ScreenSurface>
   )
 }
-
-const FIELD_STYLE: React.CSSProperties = { display: 'grid', gap: 6, minWidth: 0 }
 
 function danhSachToaNha(ids: number[], toaNha: ThongTinToaNha[]) {
   if (ids.length === 0) return 'Chưa gán'
