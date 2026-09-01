@@ -52,6 +52,16 @@ type StoredMeterState = {
   banNhap: StoredDrafts
   hangCho: PendingSyncQueue
 }
+type StoredMeterBootstrap = {
+  toaNhaId: number
+  kyId: number
+  danhSachToaNha: ThongTinToaNha[]
+  danhSachKy: ThongTinKyThanhToan[]
+  duLieu: ThongTinGhiChiSo
+  danhSachPhongChuaGhiChiSo: ThongTinPhongChuaGhiChiSo[]
+}
+
+const KHOA_BOOTSTRAP = 'miniapart-ghi-chi-so-bootstrap'
 
 const styleNhanTruong = {
   display: 'grid',
@@ -93,12 +103,13 @@ const styleThongBao = {
 }
 
 export default function GhiChiSo({ token }: Props) {
-  const [danhSachToaNha, setDanhSachToaNha] = useState<ThongTinToaNha[]>([])
-  const [danhSachKy, setDanhSachKy] = useState<ThongTinKyThanhToan[]>([])
-  const [toaNhaId, setToaNhaId] = useState<number | null>(null)
-  const [kyId, setKyId] = useState<number | null>(null)
-  const [duLieu, setDuLieu] = useState<ThongTinGhiChiSo | null>(null)
-  const [danhSachPhongChuaGhiChiSo, setDanhSachPhongChuaGhiChiSo] = useState<ThongTinPhongChuaGhiChiSo[]>([])
+  const [bootstrap] = useState<StoredMeterBootstrap | null>(() => docBootstrapTrenMay())
+  const [danhSachToaNha, setDanhSachToaNha] = useState<ThongTinToaNha[]>(() => bootstrap?.danhSachToaNha ?? [])
+  const [danhSachKy, setDanhSachKy] = useState<ThongTinKyThanhToan[]>(() => bootstrap?.danhSachKy ?? [])
+  const [toaNhaId, setToaNhaId] = useState<number | null>(() => bootstrap?.toaNhaId ?? null)
+  const [kyId, setKyId] = useState<number | null>(() => bootstrap?.kyId ?? null)
+  const [duLieu, setDuLieu] = useState<ThongTinGhiChiSo | null>(() => bootstrap?.duLieu ?? null)
+  const [danhSachPhongChuaGhiChiSo, setDanhSachPhongChuaGhiChiSo] = useState<ThongTinPhongChuaGhiChiSo[]>(() => bootstrap?.danhSachPhongChuaGhiChiSo ?? [])
   const [pendingValues, setPendingValues] = useState<PendingValues>({})
   const [pendingReplacementFlags, setPendingReplacementFlags] = useState<PendingReplacementFlags>({})
   const [pendingReplacementReadings, setPendingReplacementReadings] = useState<PendingReplacementReadings>({})
@@ -118,6 +129,7 @@ export default function GhiChiSo({ token }: Props) {
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const daThuDongBoTuDong = useRef(false)
   const khoaDangNapTrangThai = useRef<string | null>(null)
+  const daKhoiPhucTrangThai = useRef(false)
 
   useEffect(() => {
     let mounted = true
@@ -231,6 +243,7 @@ export default function GhiChiSo({ token }: Props) {
 
   useEffect(() => {
     khoaDangNapTrangThai.current = null
+    daKhoiPhucTrangThai.current = false
   }, [toaNhaId, kyId])
 
   useEffect(() => {
@@ -273,6 +286,7 @@ export default function GhiChiSo({ token }: Props) {
     setHangChoDongBo(duLieuDaLuu.hangCho)
     daThuDongBoTuDong.current = false
     khoaDangNapTrangThai.current = khoaTrangThai
+    daKhoiPhucTrangThai.current = true
   }, [duLieu, toaNhaId, kyId])
 
   useEffect(() => {
@@ -301,7 +315,7 @@ export default function GhiChiSo({ token }: Props) {
   }, [thongBaoDaLuu])
 
   useEffect(() => {
-    if (toaNhaId === null || kyId === null || duLieu === null) return
+    if (toaNhaId === null || kyId === null || duLieu === null || !daKhoiPhucTrangThai.current) return
     luuTrangThaiTrenMay(
       toaNhaId,
       kyId,
@@ -313,7 +327,15 @@ export default function GhiChiSo({ token }: Props) {
         hangChoDongBo,
       ),
     )
-  }, [duLieu, hangChoDongBo, kyId, pendingReplacementFlags, pendingReplacementReadings, pendingValues, toaNhaId])
+    luuBootstrapTrenMay({
+      toaNhaId,
+      kyId,
+      danhSachToaNha,
+      danhSachKy,
+      duLieu,
+      danhSachPhongChuaGhiChiSo,
+    })
+  }, [danhSachKy, danhSachPhongChuaGhiChiSo, danhSachToaNha, duLieu, hangChoDongBo, kyId, pendingReplacementFlags, pendingReplacementReadings, pendingValues, toaNhaId])
 
   useEffect(() => {
     if (toaNhaId === null || kyId === null || ngoaiTuyen || dangDongBoHangCho || daThuDongBoTuDong.current) return
@@ -1037,6 +1059,24 @@ function chuanHoaLoi(reason: unknown, fallback: string) {
   return reason instanceof Error ? reason.message : fallback
 }
 
+function docBootstrapTrenMay(): StoredMeterBootstrap | null {
+  if (typeof localStorage === 'undefined') return null
+
+  try {
+    const raw = localStorage.getItem(KHOA_BOOTSTRAP)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return laBootstrap(parsed) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function luuBootstrapTrenMay(state: StoredMeterBootstrap) {
+  if (typeof localStorage === 'undefined') return
+  localStorage.setItem(KHOA_BOOTSTRAP, JSON.stringify(state))
+}
+
 function docTrangThaiTrenMay(toaNhaId: number | null, kyId: number | null): StoredMeterState {
   const key = khoaLuuTru(toaNhaId, kyId)
   if (!key || typeof localStorage === 'undefined') {
@@ -1259,4 +1299,16 @@ function taoBanNhapCanLuu(
 
 function laTrangThaiLuuTru(value: unknown): value is StoredMeterState {
   return typeof value === 'object' && value !== null && 'banNhap' in value && 'hangCho' in value
+}
+
+function laBootstrap(value: unknown): value is StoredMeterBootstrap {
+  if (typeof value !== 'object' || value === null) return false
+  const state = value as Partial<StoredMeterBootstrap>
+  return typeof state.toaNhaId === 'number'
+    && typeof state.kyId === 'number'
+    && Array.isArray(state.danhSachToaNha)
+    && Array.isArray(state.danhSachKy)
+    && typeof state.duLieu === 'object'
+    && state.duLieu !== null
+    && Array.isArray(state.danhSachPhongChuaGhiChiSo)
 }

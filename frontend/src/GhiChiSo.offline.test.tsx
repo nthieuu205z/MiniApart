@@ -204,6 +204,99 @@ describe('GhiChiSo offline flow', () => {
     expect((container.querySelector('input[name="chiSoDauCongToMoi-11-21"]') as HTMLInputElement).value).toBe('0.00')
     expect(container.textContent).toContain('CHỜ GỬI')
   })
+
+  it('FR-MTR-05 restores the working building, period, rows, and queue when the server is unavailable on reload', async () => {
+    const storedState = {
+      banNhap: {
+        '11-21': {
+          chiSoCuoi: '1252.75',
+          coThayCongTo: false,
+          chiSoCuoiCongToCu: '',
+          chiSoDauCongToMoi: '',
+        },
+      },
+      hangCho: {
+        '11-21': {
+          phongId: 11,
+          dichVuId: 21,
+          chiSoCuoi: '1252.75',
+          coThayCongTo: false,
+        },
+      },
+    }
+    localStorage.setItem('miniapart-ghi-chi-so-1-8', JSON.stringify(storedState))
+    localStorage.setItem('miniapart-ghi-chi-so-bootstrap', JSON.stringify({
+      toaNhaId: 1,
+      kyId: 8,
+      danhSachToaNha: [{ id: 1, ten: 'Toà A' }],
+      danhSachKy: [{ id: 8, nam: 2026, thang: 8, trangThai: 'DANG_MO' }],
+      duLieu: {
+        tongPhong: 1,
+        daGhi: 0,
+        phong: [{
+          id: 11,
+          soPhong: '101',
+          tang: 1,
+          dichVu: [{ id: 21, tenDichVu: 'Điện', donVi: 'kWh', chiSoDau: '1240.00', coThayCongTo: false }],
+        }],
+      },
+      danhSachPhongChuaGhiChiSo: [],
+    }))
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('offline')
+    }))
+    setOnlineState(false)
+
+    await renderScreen()
+
+    await vi.waitFor(() => expect(container.querySelector('input[name="chiSoCuoi-11-21"]')).not.toBeNull())
+    expect(container.textContent).toContain('Toà A')
+    expect(container.textContent).toContain('Kỳ 8/2026')
+    expect(container.textContent).toContain('101')
+    expect((container.querySelector('input[name="chiSoCuoi-11-21"]') as HTMLInputElement).value).toBe('1252.75')
+    expect(container.textContent).toContain('CHỜ GỬI')
+  })
+
+  it('FR-MTR-05 preserves the stored queue while the cached screen state is restoring', async () => {
+    const storedState = {
+      banNhap: {},
+      hangCho: {
+        '11-21': {
+          phongId: 11,
+          dichVuId: 21,
+          chiSoCuoi: '1252.75',
+          coThayCongTo: false,
+        },
+      },
+    }
+    localStorage.setItem('miniapart-ghi-chi-so-1-8', JSON.stringify(storedState))
+    localStorage.setItem('miniapart-ghi-chi-so-bootstrap', JSON.stringify({
+      toaNhaId: 1,
+      kyId: 8,
+      danhSachToaNha: [{ id: 1, ten: 'Toà A' }],
+      danhSachKy: [{ id: 8, nam: 2026, thang: 8, trangThai: 'DANG_MO' }],
+      duLieu: {
+        tongPhong: 1,
+        daGhi: 0,
+        phong: [{
+          id: 11,
+          soPhong: '101',
+          tang: 1,
+          dichVu: [{ id: 21, tenDichVu: 'Điện', donVi: 'kWh', chiSoDau: '1240.00', coThayCongTo: false }],
+        }],
+      },
+      danhSachPhongChuaGhiChiSo: [],
+    }))
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('offline')
+    }))
+    setOnlineState(false)
+
+    await renderScreen()
+
+    await vi.waitFor(() => expect(container.textContent).toContain('CHỜ GỬI'))
+    expect(localStorage.getItem('miniapart-ghi-chi-so-1-8')).toContain('"chiSoCuoi":"1252.75"')
+  })
 })
 
 async function renderScreen() {

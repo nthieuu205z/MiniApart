@@ -76,3 +76,7 @@ Gặp chỗ component gợi ý hành vi khác `Doc/UX/` thì **`Doc/UX/` thắng
 - [x] `npm run build` và `npm test` xanh
 - [x] Component chỉ dùng biến `--ma-*`, **không có mã màu ghi cứng**. Kiểm bằng `grep -nE "#[0-9a-fA-F]{3,8}" frontend/src/design/` → rỗng
 - [x] Màn `GhiChiSo.tsx` import các component cần thiết ở Ticket 04; không có sidecar `.d.ts` hoặc `.jsx` còn lại.
+
+## Comments
+
+- Round sửa Ticket 04 xác minh ticket này vẫn `done`: full frontend suite 59/59 và build xanh; không thay đổi component kit, `allowJs` vẫn `false`, không thêm sidecar.

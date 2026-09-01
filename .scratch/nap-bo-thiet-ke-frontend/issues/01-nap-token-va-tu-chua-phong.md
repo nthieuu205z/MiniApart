@@ -52,3 +52,4 @@ Cách làm: tải bốn trọng lượng của **Archivo** và bốn của **IBM
 - Nạp toàn bộ token qua `tokens/index.css`, rồi import một lần trước `styles.css` ở `main.tsx`.
 - Thay CDN bằng tám tệp WOFF2 cục bộ với `font-display: swap`; không thay đổi `styles.css` cũ nên năm màn hiện có không bị đổi hình thức.
 - Bổ sung kiểm thử DOM cho hai token đại diện và đã xác minh full frontend test/build.
+- Round sửa Ticket 04 xác minh lại ticket này vẫn `done`: full frontend suite 59/59 và `npm run build` xanh; không có thay đổi token, font hoặc `styles.css`.
