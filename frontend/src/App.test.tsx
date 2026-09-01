@@ -108,6 +108,21 @@ describe('App role navigation', () => {
     },
   )
 
+  it('FR-AUT-04 shows the manager shell with grouped navigation and top-bar context', async () => {
+    const quanLyToaNha = MENU_BY_ROLE[2]
+    mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.textContent).toContain('Hàng ngày')
+      expect(mountedApp!.container.textContent).toContain('Tiền')
+      expect(mountedApp!.container.textContent).toContain('Toà nhà')
+      expect(mountedApp!.container.textContent).toContain('Thông báo')
+    })
+
+    expect(mountedApp.container.textContent).toContain('Quản lý toà nhà')
+    expect(mountedApp.container.textContent).toContain('Kỳ')
+  })
+
   it('FR-AUT-04 shows a friendly no-permission state for a typed route outside the role menu', async () => {
     const chuSoHuu = MENU_BY_ROLE[1]
     mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/tai-khoan')
