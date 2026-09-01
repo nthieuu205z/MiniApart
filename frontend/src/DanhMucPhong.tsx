@@ -11,6 +11,12 @@ import {
   type YeuCauPhongHangLoat,
   xemTruocPhongHangLoat,
 } from './api'
+import { Button } from './design/core/Button'
+import { BuildingSection } from './design/building/BuildingSection'
+import { ConfirmDialog } from './design/feedback/ConfirmDialog'
+import { EmptyState } from './design/feedback/EmptyState'
+import { FilterChip } from './design/forms/FilterChip'
+import { StatStrip } from './design/shell/StatStrip'
 
 type Props = {
   token: string
@@ -220,10 +226,11 @@ export default function DanhMucPhong({ token }: Props) {
           <p className="eyebrow">FR-BLD-02</p>
           <h3 id="room-management-title">Danh mục phòng</h3>
         </div>
-        <button type="button" className="ghost-button" onClick={() => setHienBieuMauHangLoat((current) => !current)}>
+        <Button type="button" variant="secondary" onClick={() => setHienBieuMauHangLoat((current) => !current)} style={{ minHeight: 44 }}>
           Xem trước dãy phòng
-        </button>
+        </Button>
       </div>
+      {tangLoc ? <FilterChip active onRemove={() => setTangLoc('')}>Tầng {tangLoc}</FilterChip> : null}
 
       <p className="status-message">
         Trạng thái phòng do hệ thống tự ghi. Bạn chỉ khai báo số phòng, tầng, diện tích, sức chứa, giá thuê mặc định và loại phòng.
@@ -271,9 +278,10 @@ export default function DanhMucPhong({ token }: Props) {
           {dangTai || dangTaiPhong ? (
             <p className="status-message" aria-live="polite">Đang tải danh sách phòng…</p>
           ) : danhSachPhong.length === 0 ? (
-            <p className="status-message">Chưa có phòng nào trong bộ lọc hiện tại.</p>
+            <EmptyState kind={tangLoc ? "filtered" : "first"} title={tangLoc ? `Không có phòng nào ở tầng ${tangLoc}.` : "Toà này chưa có phòng nào."} filters={tangLoc ? <FilterChip active onRemove={() => setTangLoc('')}>Tầng {tangLoc}</FilterChip> : undefined} />
           ) : (
             <>
+              <StatStrip stats={[{ label: 'TỔNG PHÒNG', value: danhSachPhong.length }, { label: 'TRỐNG', value: demPhongTheoTrangThai(danhSachPhong, 'TRONG') }, { label: 'ĐANG THUÊ', value: demPhongTheoTrangThai(danhSachPhong, 'DANG_THUE') }]} />
               <section className="building-summary room-status-summary" aria-labelledby="room-status-summary-title">
                 <div className="building-summary__heading">
                   <div>
@@ -293,6 +301,7 @@ export default function DanhMucPhong({ token }: Props) {
               </section>
 
               <section className="room-floor-map" data-testid="room-floor-map" aria-label="Sơ đồ phòng theo tầng">
+                <BuildingSection label={`Mặt cắt ${toaDangChon?.ten ?? ''} · ${danhSachPhong.length} phòng`} columns={3} style={{ marginBottom: 16 }} floors={nhomPhongTheoTang.map(({ tang, phong }) => ({ name: `T${tang}`, rooms: phong.map((item) => ({ room: item.soPhong, state: item.trangThai === 'TRONG' ? 'vacant' : item.trangThai === 'DANG_SUA' ? 'repair' : 'recorded', label: layThongTinTrangThai(item).nhan })) }))} />
                 {nhomPhongTheoTang.map(({ tang, phong }) => (
                   <section key={tang} className="room-floor-section" data-testid="room-floor-section" aria-labelledby={`floor-title-${tang}`}>
                     <div className="room-floor-section__header">
@@ -479,9 +488,7 @@ export default function DanhMucPhong({ token }: Props) {
                   {dangXuLyHangLoat ? 'Đang xem trước…' : 'Xem trước'}
                 </button>
                 {xemTruoc.length > 0 ? (
-                  <button type="button" className="primary-button" onClick={handleXacNhanHangLoat} disabled={dangXuLyHangLoat}>
-                    Xác nhận tạo dãy phòng
-                  </button>
+                  <ConfirmDialog title="Tạo dãy phòng?" consequence={`Sẽ tạo ${xemTruoc.length} phòng, từ số ${yeuCauPhongHangLoatDaXemTruoc?.soBatDau} đến số ${yeuCauPhongHangLoatDaXemTruoc?.soKetThuc}.`} confirmLabel="Xác nhận tạo dãy phòng" onConfirm={handleXacNhanHangLoat} onCancel={() => { setXemTruoc([]); setYeuCauPhongHangLoatDaXemTruoc(null) }} />
                 ) : null}
               </div>
 
