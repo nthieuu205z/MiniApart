@@ -260,6 +260,17 @@ describe('App role navigation', () => {
     const lockButton = findButton(mountedApp.container, 'Khoá Thợ trực mới đã sửa')
     await act(async () => {
       lockButton.click()
+      await Promise.resolve()
+    })
+
+    expect(fetchMock).not.toHaveBeenCalledWith('/api/nguoi-dung/6/khoa', expect.objectContaining({ method: 'POST' }))
+    const confirmLockButton = await vi.waitFor(() => {
+      const button = findButton(mountedApp!.container, 'Khoá tài khoản')
+      expect(mountedApp!.container.querySelector('[role="dialog"]')).not.toBeNull()
+      return button
+    })
+    await act(async () => {
+      confirmLockButton.click()
     })
 
     await vi.waitFor(() => {
