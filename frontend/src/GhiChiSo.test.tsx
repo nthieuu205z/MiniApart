@@ -350,7 +350,7 @@ describe('GhiChiSo mobile screen', () => {
     await vi.waitFor(() => expect(container.textContent).toContain('Phòng còn thiếu'))
   })
 
-  it('FR-MTR-08 disables closing when the selected period is already closed', async () => {
+  it('FR-MTR-08 blocks closing when the selected period is already closed', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input)
       if (url === '/api/toa-nha') return jsonResponse([{ id: 1, ten: 'Toà A' }])
@@ -369,7 +369,10 @@ describe('GhiChiSo mobile screen', () => {
     await renderScreen()
 
     const closeButton = await vi.waitFor(() => container.querySelector('button[data-close-period]') as HTMLButtonElement)
-    expect(closeButton.disabled).toBe(true)
+    expect(closeButton.disabled).toBe(false)
+    expect(closeButton.getAttribute('aria-disabled')).toBe('true')
+    closeButton.focus()
+    expect(document.activeElement).toBe(closeButton)
   })
 
   it('FR-MTR-03 blocks lower readings until replacement meter is declared', async () => {
@@ -403,7 +406,8 @@ describe('GhiChiSo mobile screen', () => {
     })
 
     expect(container.textContent).toContain("Chỉ số mới không được nhỏ hơn chỉ số cũ (1240.00). Nếu vừa thay công tơ, hãy chọn 'Thay công tơ'.")
-    expect(saveButton.disabled).toBe(true)
+    expect(saveButton.disabled).toBe(false)
+    expect(saveButton.getAttribute('aria-disabled')).toBe('true')
 
     await act(async () => {
       input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))

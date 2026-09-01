@@ -49,10 +49,10 @@ Gặp chỗ `Doc/UX/01-quan-ly-toa-nha.md` mô tả hành vi khác mã hiện t�
 
 - `TopBar` và `Breadcrumb` chưa có chế độ mobile riêng, nên màn phải tự ép `flex-wrap`, padding và chiều cao để không tràn ngang ở 360 px.
 - `Button` và `MeterInput` đã đủ cho vùng bấm chính, nhưng các control native như `select` và `input[type=file]` vẫn phải bọc style cấp màn để giữ hit target 44×44 px trên điện thoại.
-- `SyncBanner` chỉ cung cấp tone và glyph, chưa có biến thể sẵn cho “đang chờ gửi” theo từng phòng, nên copy cho trạng thái ngoại tuyến/sync phải ghép từ state của màn.
-- Bộ kit chưa có primitive lưu trữ/đồng bộ theo hàng; màn phải tự quản lý localStorage, queue theo dịch vụ, xử lý sự kiện `online`, và giữ queue khi API trả lỗi/xung đột.
-- `ButtonProps` cố ý không nhận `disabled`; màn phải truyền `blocked` để giữ nhãn/lý do và component nội bộ mới áp native disabled.
-- Round sửa: thêm bootstrap cache chứa tòa nhà, kỳ, danh sách phòng và danh sách phòng thiếu gần nhất; màn khởi động từ cache khi fetch đầu tiên thất bại, đồng thời chặn persist cho đến khi draft/queue được khôi phục. Regression offline RED rồi GREEN; focused 5/5, full 59/59, build xanh.
+- `SyncBanner` có trong bộ kit nhưng chưa được nối vào màn vì Ticket 04 chỉ chuyển đổi hình thức, không có quyền định nghĩa hành vi lưu ngoại tuyến hay đồng bộ.
+- `ButtonProps` cố ý không nhận `disabled`; trạng thái `blocked` dùng `aria-disabled`, vẫn nhận focus và chặn kích hoạt bằng chuột hoặc bàn phím trong component.
+- Phần queue/bootstrap từng thêm trong lúc chuyển giao diện đã được gỡ để khôi phục đúng hành vi và API trước Ticket 04.
+- `FR-MTR-05` về lưu bền ngoại tuyến và đồng bộ cần một ticket hành vi riêng đã được phê duyệt, bao gồm quy tắc lưu nháp, hàng chờ, ảnh công tơ, xung đột và thời điểm đồng bộ.
+- `GhiChiSo.test.tsx` chỉ đổi hai khẳng định native `disabled` sang `aria-disabled` và khả năng nhận focus để khớp hợp đồng `blocked`; các khẳng định API và nghiệp vụ gốc được giữ nguyên.
 - Theo ruling của controller, không thêm bắt buộc ảnh cho `FR-MTR-07` trong ticket chuyển giao diện này; đây là UX/code gap có sẵn, để ticket hành vi sau xử lý.
-- Theo ruling của controller, không thêm dialog/API keep/replace cho xung đột; queue vẫn được giữ và lỗi đồng bộ vẫn hiển thị đọc được. Đây là giới hạn UX của design kit, cần ticket/API riêng nếu muốn giải quyết.
-- Round sửa 2: thay cờ restore dạng ref bằng context key dạng state; persistence chỉ chạy khi context đã restore khớp key hiện tại. Khi đổi kỳ hoặc chốt sang kỳ mới, dữ liệu kỳ cũ được xóa khỏi màn trong lúc tải để không ghi nhầm sang key mới. Regression storage-operation đã RED rồi GREEN; status vẫn `done`.
+- Không thêm dialog/API giữ hoặc thay thế dữ liệu khi xung đột; hành vi đó cũng thuộc ticket `FR-MTR-05` riêng.

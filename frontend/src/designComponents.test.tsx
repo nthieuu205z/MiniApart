@@ -27,18 +27,39 @@ describe('MiniApart design components', () => {
     container.remove()
   })
 
-  it('keeps a blocked action visible and explains the missing condition', async () => {
+  it('keeps a blocked action focusable while suppressing pointer and keyboard activation', async () => {
+    let activationCount = 0
     await act(async () => {
       root.render(
-        <Button blocked blockedReason="Cần đủ chỉ số 24/24 phòng. Hiện còn 3 phòng thiếu.">
+        <Button
+          blocked
+          blockedReason="Cần đủ chỉ số 24/24 phòng. Hiện còn 3 phòng thiếu."
+          onClick={() => {
+            activationCount += 1
+          }}
+        >
           Chốt kỳ 08/2026
         </Button>,
       )
     })
 
-    expect(container.querySelector('button')).not.toBeNull()
-    expect(container.querySelector('button')?.getAttribute('aria-disabled')).toBe('true')
+    const button = container.querySelector('button')
+    expect(button).not.toBeNull()
+    expect(button?.disabled).toBe(false)
+    expect(button?.getAttribute('aria-disabled')).toBe('true')
     expect(container.textContent).toContain('Hiện còn 3 phòng thiếu.')
+
+    button?.focus()
+    expect(document.activeElement).toBe(button)
+
+    button?.click()
+    const keyboardEventAccepted = button?.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Enter',
+      bubbles: true,
+      cancelable: true,
+    }))
+    expect(keyboardEventAccepted).toBe(false)
+    expect(activationCount).toBe(0)
   })
 
   it('renders a named glyph with the requested size and stroke', async () => {

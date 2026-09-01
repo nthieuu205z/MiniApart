@@ -34,4 +34,3 @@ Component `Glyph.jsx` ở ticket 03 phụ thuộc bộ glyph này, và `Button.d
 - Kiểm thử dùng đúng thứ tự 23 khoá trong tài sản nguồn; sprite SVG và JSON được nạp cục bộ.
 - Phần render glyph và kiểm tra kích thước/nét sẽ hoàn thiện cùng component `Glyph` ở Ticket 03.
 - `Glyph.tsx` đã render sprite cục bộ theo đúng kích thước và nét truyền vào; test component khẳng định các thuộc tính SVG này.
-- Round sửa Ticket 04 xác minh lại ticket này vẫn `done`: full frontend suite 59/59 và build xanh; không thay đổi sprite, JSON hay kiểu `GlyphName`.

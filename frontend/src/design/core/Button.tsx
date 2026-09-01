@@ -54,6 +54,7 @@ export function Button({
   children,
   style,
   onClick,
+  onKeyDown,
   ...rest
 }: ButtonProps): React.ReactElement {
   const s: React.CSSProperties = { ...BASE, ...SIZES[size], ...VARIANTS[variant], ...(style || {}) }
@@ -70,7 +71,6 @@ export function Button({
       type="button"
       style={s}
       {...rest}
-      disabled={blocked}
       aria-disabled={blocked || undefined}
       onClick={(event) => {
         if (blocked) {
@@ -78,6 +78,13 @@ export function Button({
           return
         }
         onClick?.(event)
+      }}
+      onKeyDown={(event) => {
+        if (blocked && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          return
+        }
+        onKeyDown?.(event)
       }}
     >
       {glyph ? <Glyph name={glyph} size={15} /> : null}

@@ -18,8 +18,6 @@ import { StatusTag } from './design/core/StatusTag'
 import { SysLabel } from './design/core/SysLabel'
 import { RoomCell } from './design/building/RoomCell'
 import { EmptyState } from './design/feedback/EmptyState'
-import { SyncBanner } from './design/feedback/SyncBanner'
-import { Toast } from './design/feedback/Toast'
 import { MeterInput } from './design/forms/MeterInput'
 import { Breadcrumb } from './design/shell/Breadcrumb'
 import { TopBar } from './design/shell/TopBar'
@@ -33,36 +31,6 @@ type PendingValues = Record<string, string>
 type PendingReplacementFlags = Record<string, boolean>
 type PendingReplacementReadings = Record<string, { chiSoCuoiCongToCu: string, chiSoDauCongToMoi: string }>
 type PendingPhotos = Record<string, File | null>
-type StoredDrafts = Record<string, {
-  chiSoCuoi: string
-  coThayCongTo: boolean
-  chiSoCuoiCongToCu: string
-  chiSoDauCongToMoi: string
-}>
-type PendingSyncQueue = Record<string, {
-  phongId: number
-  dichVuId: number
-  chiSoCuoi: string
-  coThayCongTo: boolean
-  chiSoCuoiCongToCu?: string
-  chiSoDauCongToMoi?: string
-  xacNhanCanhBao?: boolean
-}>
-type StoredMeterState = {
-  banNhap: StoredDrafts
-  hangCho: PendingSyncQueue
-}
-type StoredMeterBootstrap = {
-  toaNhaId: number
-  kyId: number
-  danhSachToaNha: ThongTinToaNha[]
-  danhSachKy: ThongTinKyThanhToan[]
-  duLieu: ThongTinGhiChiSo
-  danhSachPhongChuaGhiChiSo: ThongTinPhongChuaGhiChiSo[]
-}
-
-const KHOA_BOOTSTRAP = 'miniapart-ghi-chi-so-bootstrap'
-
 const styleNhanTruong = {
   display: 'grid',
   gap: 'var(--ma-space-2)',
@@ -103,13 +71,12 @@ const styleThongBao = {
 }
 
 export default function GhiChiSo({ token }: Props) {
-  const [bootstrap] = useState<StoredMeterBootstrap | null>(() => docBootstrapTrenMay())
-  const [danhSachToaNha, setDanhSachToaNha] = useState<ThongTinToaNha[]>(() => bootstrap?.danhSachToaNha ?? [])
-  const [danhSachKy, setDanhSachKy] = useState<ThongTinKyThanhToan[]>(() => bootstrap?.danhSachKy ?? [])
-  const [toaNhaId, setToaNhaId] = useState<number | null>(() => bootstrap?.toaNhaId ?? null)
-  const [kyId, setKyId] = useState<number | null>(() => bootstrap?.kyId ?? null)
-  const [duLieu, setDuLieu] = useState<ThongTinGhiChiSo | null>(() => bootstrap?.duLieu ?? null)
-  const [danhSachPhongChuaGhiChiSo, setDanhSachPhongChuaGhiChiSo] = useState<ThongTinPhongChuaGhiChiSo[]>(() => bootstrap?.danhSachPhongChuaGhiChiSo ?? [])
+  const [danhSachToaNha, setDanhSachToaNha] = useState<ThongTinToaNha[]>([])
+  const [danhSachKy, setDanhSachKy] = useState<ThongTinKyThanhToan[]>([])
+  const [toaNhaId, setToaNhaId] = useState<number | null>(null)
+  const [kyId, setKyId] = useState<number | null>(null)
+  const [duLieu, setDuLieu] = useState<ThongTinGhiChiSo | null>(null)
+  const [danhSachPhongChuaGhiChiSo, setDanhSachPhongChuaGhiChiSo] = useState<ThongTinPhongChuaGhiChiSo[]>([])
   const [pendingValues, setPendingValues] = useState<PendingValues>({})
   const [pendingReplacementFlags, setPendingReplacementFlags] = useState<PendingReplacementFlags>({})
   const [pendingReplacementReadings, setPendingReplacementReadings] = useState<PendingReplacementReadings>({})
@@ -120,16 +87,8 @@ export default function GhiChiSo({ token }: Props) {
   const [dangTaiPhongChuaGhiChiSo, setDangTaiPhongChuaGhiChiSo] = useState(false)
   const [dangLuu, setDangLuu] = useState<string | null>(null)
   const [dangChotKy, setDangChotKy] = useState(false)
-  const [dangDongBoHangCho, setDangDongBoHangCho] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
-  const [ngoaiTuyen, setNgoaiTuyen] = useState(false)
-  const [thongBaoDaLuu, setThongBaoDaLuu] = useState<string | null>(null)
-  const [thongBaoDongBo, setThongBaoDongBo] = useState<{ tone: 'syncing' | 'synced', message: string } | null>(null)
-  const [hangChoDongBo, setHangChoDongBo] = useState<PendingSyncQueue>({})
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
-  const daThuDongBoTuDong = useRef(false)
-  const khoaDangNapTrangThai = useRef<string | null>(null)
-  const [khoaDaKhoiPhuc, setKhoaDaKhoiPhuc] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -242,114 +201,27 @@ export default function GhiChiSo({ token }: Props) {
   }, [token, toaNhaId, kyId])
 
   useEffect(() => {
-    khoaDangNapTrangThai.current = null
-    setKhoaDaKhoiPhuc(null)
-  }, [toaNhaId, kyId])
+    const moi = taoGiaTriBanDau(duLieu)
+    setPendingValues(moi)
+  }, [duLieu])
 
   useEffect(() => {
-    if (toaNhaId === null || kyId === null || duLieu === null) {
-      return
-    }
+    const moi = taoTrangThaiThayCongToBanDau(duLieu)
+    setPendingReplacementFlags(moi)
+  }, [duLieu])
 
-    const khoaTrangThai = khoaLuuTru(toaNhaId, kyId)
-    if (khoaDangNapTrangThai.current === khoaTrangThai) {
-      return
-    }
+  useEffect(() => {
+    setPendingReplacementReadings(taoChiSoThayCongToBanDau(duLieu))
+  }, [duLieu])
 
-    const duLieuDaLuu = docTrangThaiTrenMay(toaNhaId, kyId)
-    const giaTriBanDau = { ...taoGiaTriBanDau(duLieu) }
-    const thayCongToBanDau = { ...taoTrangThaiThayCongToBanDau(duLieu) }
-    const chiSoThayBanDau = { ...taoChiSoThayCongToBanDau(duLieu) }
-
-    Object.entries(duLieuDaLuu.banNhap).forEach(([key, banNhap]) => {
-      giaTriBanDau[key] = banNhap.chiSoCuoi
-      thayCongToBanDau[key] = banNhap.coThayCongTo
-      chiSoThayBanDau[key] = {
-        chiSoCuoiCongToCu: banNhap.chiSoCuoiCongToCu,
-        chiSoDauCongToMoi: banNhap.chiSoDauCongToMoi,
-      }
-    })
-
-    Object.entries(duLieuDaLuu.hangCho).forEach(([key, banNhap]) => {
-      giaTriBanDau[key] = banNhap.chiSoCuoi
-      thayCongToBanDau[key] = banNhap.coThayCongTo
-      chiSoThayBanDau[key] = {
-        chiSoCuoiCongToCu: banNhap.chiSoCuoiCongToCu ?? '',
-        chiSoDauCongToMoi: banNhap.chiSoDauCongToMoi ?? '',
-      }
-    })
-
-    setPendingValues(giaTriBanDau)
-    setPendingReplacementFlags(thayCongToBanDau)
-    setPendingReplacementReadings(chiSoThayBanDau)
+  useEffect(() => {
     setPendingPhotos({})
-    setHangChoDongBo(duLieuDaLuu.hangCho)
-    daThuDongBoTuDong.current = false
-    khoaDangNapTrangThai.current = khoaTrangThai
-    setKhoaDaKhoiPhuc(khoaTrangThai)
-  }, [duLieu, toaNhaId, kyId])
-
-  useEffect(() => {
-    const handleOnline = () => {
-      daThuDongBoTuDong.current = false
-      setNgoaiTuyen(false)
-    }
-    const handleOffline = () => {
-      daThuDongBoTuDong.current = false
-      setNgoaiTuyen(true)
-    }
-
-    setNgoaiTuyen(typeof navigator !== 'undefined' && !navigator.onLine)
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!thongBaoDaLuu) return
-    const timeoutId = window.setTimeout(() => setThongBaoDaLuu(null), 4000)
-    return () => window.clearTimeout(timeoutId)
-  }, [thongBaoDaLuu])
-
-  useEffect(() => {
-    const khoaHienTai = khoaLuuTru(toaNhaId, kyId)
-    if (toaNhaId === null || kyId === null || khoaHienTai === null || duLieu === null || khoaDaKhoiPhuc !== khoaHienTai) return
-    luuTrangThaiTrenMay(
-      toaNhaId,
-      kyId,
-      taoTrangThaiCanLuu(
-        duLieu,
-        pendingValues,
-        pendingReplacementFlags,
-        pendingReplacementReadings,
-        hangChoDongBo,
-      ),
-    )
-    luuBootstrapTrenMay({
-      toaNhaId,
-      kyId,
-      danhSachToaNha,
-      danhSachKy,
-      duLieu,
-      danhSachPhongChuaGhiChiSo,
-    })
-  }, [danhSachKy, danhSachPhongChuaGhiChiSo, danhSachToaNha, duLieu, hangChoDongBo, khoaDaKhoiPhuc, kyId, pendingReplacementFlags, pendingReplacementReadings, pendingValues, toaNhaId])
-
-  useEffect(() => {
-    if (toaNhaId === null || kyId === null || ngoaiTuyen || dangDongBoHangCho || daThuDongBoTuDong.current) return
-    if (Object.keys(hangChoDongBo).length === 0) return
-    daThuDongBoTuDong.current = true
-    void dongBoHangCho()
-  }, [dangDongBoHangCho, hangChoDongBo, kyId, ngoaiTuyen, toaNhaId, token])
+  }, [duLieu])
 
   const toaNhaDangChon = danhSachToaNha.find((item) => item.id === toaNhaId) ?? null
   const kyDangChon = danhSachKy.find((item) => item.id === kyId) ?? null
 
   const danhSachTangPhong = useMemo(() => duLieu?.phong ?? [], [duLieu])
-  const soPhongChoGui = useMemo(() => demSoPhongChoGui(hangChoDongBo), [hangChoDongBo])
 
   async function luuChiSo(phongId: number, dichVuId: number, xacNhanCanhBao = false) {
     if (toaNhaId === null || kyId === null) return
@@ -373,91 +245,29 @@ export default function GhiChiSo({ token }: Props) {
     )
     if (!mucTieuThu || (taoCanhBaoTieuThu(mucTieuThu, thongTinDichVu) && !xacNhanCanhBao)) return
     const tep = pendingPhotos[key] ?? undefined
-    const payload = {
-      phongId,
-      dichVuId,
-      chiSoCuoi: giaTri,
-      coThayCongTo,
-      chiSoCuoiCongToCu: coThayCongTo ? chiSoThayCongTo.chiSoCuoiCongToCu : undefined,
-      chiSoDauCongToMoi: coThayCongTo ? chiSoThayCongTo.chiSoDauCongToMoi : undefined,
-      xacNhanCanhBao: xacNhanCanhBao || undefined,
-      tep,
-    }
-    const soPhong = duLieu?.phong.find((phong) => phong.id === phongId)?.soPhong ?? String(phongId)
-
-    if (ngoaiTuyen) {
-      setHangChoDongBo((current) => ({
-        ...current,
-        [key]: {
-          phongId,
-          dichVuId,
-          chiSoCuoi: giaTri,
-          coThayCongTo,
-          chiSoCuoiCongToCu: coThayCongTo ? chiSoThayCongTo.chiSoCuoiCongToCu : undefined,
-          chiSoDauCongToMoi: coThayCongTo ? chiSoThayCongTo.chiSoDauCongToMoi : undefined,
-          xacNhanCanhBao: xacNhanCanhBao || undefined,
-        },
-      }))
-      setThongBaoDaLuu(`Đã lưu trên máy chỉ số phòng ${soPhong}`)
-      return
-    }
 
     setDangLuu(key)
     setLoi(null)
 
     try {
-      const ketQua = await ghiChiSoDichVu(token, toaNhaId, kyId, payload)
+      const ketQua = await ghiChiSoDichVu(token, toaNhaId, kyId, {
+        phongId,
+        dichVuId,
+        chiSoCuoi: giaTri,
+        coThayCongTo,
+        chiSoCuoiCongToCu: coThayCongTo ? chiSoThayCongTo.chiSoCuoiCongToCu : undefined,
+        chiSoDauCongToMoi: coThayCongTo ? chiSoThayCongTo.chiSoDauCongToMoi : undefined,
+        xacNhanCanhBao: xacNhanCanhBao || undefined,
+        tep,
+      })
 
       setDuLieu((current) => capNhatDuLieu(current, phongId, dichVuId, ketQua))
-      setHangChoDongBo((current) => xoaKhoiHangCho(current, key))
       setPendingPhotos((current) => boAnhDaChon(current, key))
-      setNgoaiTuyen(false)
-      setThongBaoDaLuu(`Đã lưu chỉ số phòng ${soPhong}`)
       requestAnimationFrame(() => focusTiepTheo(phongId, dichVuId))
     } catch (reason: unknown) {
       setLoi(chuanHoaLoi(reason, 'Không thể lưu chỉ số.'))
     } finally {
       setDangLuu(null)
-    }
-  }
-
-  async function dongBoHangCho() {
-    if (toaNhaId === null || kyId === null) return
-    const danhSachHangCho = Object.entries(hangChoDongBo)
-    if (danhSachHangCho.length === 0) return
-
-    const tongSoPhong = demSoPhongChoGui(hangChoDongBo)
-    setDangDongBoHangCho(true)
-    setThongBaoDongBo({ tone: 'syncing', message: `Đang gửi ${tongSoPhong} phòng…` })
-    setLoi(null)
-
-    try {
-      for (const [key, banNhap] of danhSachHangCho) {
-        const ketQua = await ghiChiSoDichVu(token, toaNhaId, kyId, {
-          phongId: banNhap.phongId,
-          dichVuId: banNhap.dichVuId,
-          chiSoCuoi: banNhap.chiSoCuoi,
-          coThayCongTo: banNhap.coThayCongTo,
-          chiSoCuoiCongToCu: banNhap.chiSoCuoiCongToCu,
-          chiSoDauCongToMoi: banNhap.chiSoDauCongToMoi,
-          xacNhanCanhBao: banNhap.xacNhanCanhBao,
-          tep: pendingPhotos[key] ?? undefined,
-        })
-
-        setDuLieu((current) => capNhatDuLieu(current, banNhap.phongId, banNhap.dichVuId, ketQua))
-        setHangChoDongBo((current) => xoaKhoiHangCho(current, key))
-        setPendingPhotos((current) => boAnhDaChon(current, key))
-      }
-
-      setThongBaoDongBo({ tone: 'synced', message: `Đã gửi xong ${tongSoPhong} phòng chờ gửi` })
-      window.setTimeout(() => {
-        setThongBaoDongBo((current) => (current?.tone === 'synced' ? null : current))
-      }, 3000)
-    } catch (reason: unknown) {
-      setLoi(chuanHoaLoi(reason, 'Không thể đồng bộ chỉ số chờ gửi.'))
-      setThongBaoDongBo(null)
-    } finally {
-      setDangDongBoHangCho(false)
     }
   }
 
@@ -491,9 +301,7 @@ export default function GhiChiSo({ token }: Props) {
 
       const danhSachKyMoi = await fetchKyThanhToan(token, toaNhaId)
       setDanhSachKy(danhSachKyMoi)
-      const kyMoiId = danhSachKyMoi.find((item) => item.trangThai === 'DANG_MO')?.id ?? danhSachKyMoi[0]?.id ?? null
-      setDuLieu(null)
-      setKyId(kyMoiId)
+      setKyId(danhSachKyMoi.find((item) => item.trangThai === 'DANG_MO')?.id ?? danhSachKyMoi[0]?.id ?? null)
     } catch (reason: unknown) {
       setLoi(chuanHoaLoi(reason, 'Không thể chốt kỳ thanh toán.'))
     } finally {
@@ -632,10 +440,7 @@ export default function GhiChiSo({ token }: Props) {
             <span>Kỳ thanh toán</span>
             <select
               value={kyId ?? ''}
-              onChange={(event) => {
-                setKyId(Number(event.target.value))
-                setDuLieu(null)
-              }}
+              onChange={(event) => setKyId(Number(event.target.value))}
               disabled={dangTaiChiSo || danhSachKy.length === 0}
               style={styleSelect}
             >
@@ -653,16 +458,6 @@ export default function GhiChiSo({ token }: Props) {
           {kyDangChon ? <p style={styleThongBao}>Kỳ: {kyDangChon.thang}/{kyDangChon.nam}</p> : null}
           {dangTaiKy || dangTaiChiSo ? <p style={styleThongBao}>Đang tải dữ liệu chỉ số…</p> : null}
         </div>
-
-        {ngoaiTuyen ? (
-          <SyncBanner tone="offline">
-            {soPhongChoGui > 0
-              ? `Đang ngoại tuyến — đã lưu ${soPhongChoGui} phòng trên máy, sẽ tự gửi khi có mạng`
-              : 'Đang ngoại tuyến — dữ liệu đã nhập vẫn giữ trên màn hình, sẽ thử gửi khi có mạng'}
-          </SyncBanner>
-        ) : null}
-        {!ngoaiTuyen && thongBaoDongBo ? <SyncBanner tone={thongBaoDongBo.tone}>{thongBaoDongBo.message}</SyncBanner> : null}
-        {thongBaoDaLuu ? <Toast>{thongBaoDaLuu}</Toast> : null}
 
         {kyDangChon ? (
           <section
@@ -745,10 +540,8 @@ export default function GhiChiSo({ token }: Props) {
           ) : (
             <div style={{ display: 'grid', gap: 'var(--ma-space-6)', minWidth: 0 }}>
               {duLieu.phong.map((phong) => {
-                const soDichVuChoGui = phong.dichVu.filter((dichVu) => Boolean(hangChoDongBo[khoa(phong.id, dichVu.id)])).length
-                const phongDaGhi = phong.dichVu.every((dichVu) => Boolean(dichVu.chiSoCuoi) && !hangChoDongBo[khoa(phong.id, dichVu.id)])
+                const phongDaGhi = phong.dichVu.every((dichVu) => Boolean(dichVu.chiSoCuoi))
                 const soDichVuDaGhi = phong.dichVu.filter((dichVu) => Boolean(dichVu.chiSoCuoi)).length
-                const phongDangChoGui = soDichVuChoGui > 0
                 return (
                   <article
                     key={phong.id}
@@ -782,19 +575,17 @@ export default function GhiChiSo({ token }: Props) {
                         >
                           Phòng {phong.soPhong}
                         </h2>
-                        <StatusTag tone={phongDaGhi ? 'done' : phongDangChoGui ? 'waiting' : 'urgent'}>
-                          {phongDaGhi ? 'ĐÃ GHI' : phongDangChoGui ? 'CHỜ GỬI' : 'CHƯA GHI'}
+                        <StatusTag tone={phongDaGhi ? 'done' : 'urgent'}>
+                          {phongDaGhi ? 'ĐÃ GHI' : 'CHƯA GHI'}
                         </StatusTag>
                       </div>
                       <RoomCell
                         room={phong.soPhong}
-                        state={phongDaGhi ? 'recorded' : phongDangChoGui ? 'repair' : 'missing'}
+                        state={phongDaGhi ? 'recorded' : 'missing'}
                         label={
                           phongDaGhi
                             ? `Đã ghi · ${phong.dichVu.length} dịch vụ`
-                            : phongDangChoGui
-                              ? `Chờ gửi · ${soDichVuChoGui}/${phong.dichVu.length} dịch vụ`
-                              : `Chưa ghi · ${soDichVuDaGhi}/${phong.dichVu.length} dịch vụ`
+                            : `Chưa ghi · ${soDichVuDaGhi}/${phong.dichVu.length} dịch vụ`
                         }
                         style={{ minWidth: 128, flex: '0 1 180px' }}
                       />
@@ -819,9 +610,8 @@ export default function GhiChiSo({ token }: Props) {
                         )
                         const canhBaoTieuThu = thongBaoChiSo ? null : taoCanhBaoTieuThu(mucTieuThu, dichVu)
                         const daGhi = Boolean(dichVu.chiSoCuoi)
-                        const dangChoGui = Boolean(hangChoDongBo[key])
-                        const trangThaiDichVu = thongBaoChiSo || canhBaoTieuThu ? 'urgent' : dangChoGui ? 'waiting' : daGhi ? 'done' : 'neutral'
-                        const nhanTrangThaiDichVu = thongBaoChiSo ? 'KIỂM TRA CHỈ SỐ' : canhBaoTieuThu ? 'CAO BẤT THƯỜNG' : dangChoGui ? 'CHỜ GỬI' : daGhi ? 'ĐÃ GHI' : 'CHƯA GHI'
+                        const trangThaiDichVu = thongBaoChiSo || canhBaoTieuThu ? 'urgent' : daGhi ? 'done' : 'neutral'
+                        const nhanTrangThaiDichVu = thongBaoChiSo ? 'KIỂM TRA CHỈ SỐ' : canhBaoTieuThu ? 'CAO BẤT THƯỜNG' : daGhi ? 'ĐÃ GHI' : 'CHƯA GHI'
                         const luuBiChan = kyDaChot || dangLuu === key || !giaTri || (coThayCongTo && (!chiSoThayCongTo.chiSoCuoiCongToCu || !chiSoThayCongTo.chiSoDauCongToMoi)) || Boolean(thongBaoChiSo) || Boolean(canhBaoTieuThu)
                         const lyDoChanLuu = kyDaChot
                           ? 'Kỳ này đã chốt, không thể sửa chỉ số.'
@@ -1053,61 +843,11 @@ function khoa(phongId: number, dichVuId: number) {
   return `${phongId}-${dichVuId}`
 }
 
-function khoaLuuTru(toaNhaId: number | null, kyId: number | null) {
-  if (toaNhaId === null || kyId === null) return null
-  return `miniapart-ghi-chi-so-${toaNhaId}-${kyId}`
-}
-
 function chuanHoaLoi(reason: unknown, fallback: string) {
   if (reason instanceof ApiError) {
     return reason.message
   }
   return reason instanceof Error ? reason.message : fallback
-}
-
-function docBootstrapTrenMay(): StoredMeterBootstrap | null {
-  if (typeof localStorage === 'undefined') return null
-
-  try {
-    const raw = localStorage.getItem(KHOA_BOOTSTRAP)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    return laBootstrap(parsed) ? parsed : null
-  } catch {
-    return null
-  }
-}
-
-function luuBootstrapTrenMay(state: StoredMeterBootstrap) {
-  if (typeof localStorage === 'undefined') return
-  localStorage.setItem(KHOA_BOOTSTRAP, JSON.stringify(state))
-}
-
-function docTrangThaiTrenMay(toaNhaId: number | null, kyId: number | null): StoredMeterState {
-  const key = khoaLuuTru(toaNhaId, kyId)
-  if (!key || typeof localStorage === 'undefined') {
-    return { banNhap: {}, hangCho: {} }
-  }
-
-  try {
-    const raw = localStorage.getItem(key)
-    if (!raw) return { banNhap: {}, hangCho: {} }
-    const parsed = JSON.parse(raw)
-    if (!laTrangThaiLuuTru(parsed)) return { banNhap: {}, hangCho: {} }
-    return parsed
-  } catch {
-    return { banNhap: {}, hangCho: {} }
-  }
-}
-
-function luuTrangThaiTrenMay(toaNhaId: number, kyId: number, state: StoredMeterState) {
-  const key = khoaLuuTru(toaNhaId, kyId)
-  if (!key || typeof localStorage === 'undefined') return
-  if (Object.keys(state.banNhap).length === 0 && Object.keys(state.hangCho).length === 0) {
-    localStorage.removeItem(key)
-    return
-  }
-  localStorage.setItem(key, JSON.stringify(state))
 }
 
 function taoGiaTriBanDau(duLieu: ThongTinGhiChiSo | null): PendingValues {
@@ -1240,81 +980,4 @@ function boAnhDaChon(current: PendingPhotos, key: string): PendingPhotos {
   const next = { ...current }
   delete next[key]
   return next
-}
-
-function xoaKhoiHangCho(current: PendingSyncQueue, key: string): PendingSyncQueue {
-  if (!(key in current)) return current
-  const next = { ...current }
-  delete next[key]
-  return next
-}
-
-function demSoPhongChoGui(hangChoDongBo: PendingSyncQueue) {
-  return new Set(Object.values(hangChoDongBo).map((item) => item.phongId)).size
-}
-
-function taoTrangThaiCanLuu(
-  duLieu: ThongTinGhiChiSo | null,
-  pendingValues: PendingValues,
-  pendingReplacementFlags: PendingReplacementFlags,
-  pendingReplacementReadings: PendingReplacementReadings,
-  hangChoDongBo: PendingSyncQueue,
-): StoredMeterState {
-  return {
-    banNhap: taoBanNhapCanLuu(duLieu, pendingValues, pendingReplacementFlags, pendingReplacementReadings),
-    hangCho: hangChoDongBo,
-  }
-}
-
-function taoBanNhapCanLuu(
-  duLieu: ThongTinGhiChiSo | null,
-  pendingValues: PendingValues,
-  pendingReplacementFlags: PendingReplacementFlags,
-  pendingReplacementReadings: PendingReplacementReadings,
-): StoredDrafts {
-  const ketQua: StoredDrafts = {}
-
-  duLieu?.phong.forEach((phong) => {
-    phong.dichVu.forEach((dichVu) => {
-      const key = khoa(phong.id, dichVu.id)
-      const chiSoCuoi = pendingValues[key] ?? ''
-      const coThayCongTo = pendingReplacementFlags[key] ?? dichVu.coThayCongTo
-      const chiSoThayCongTo = pendingReplacementReadings[key] ?? {
-        chiSoCuoiCongToCu: dichVu.chiSoCuoiCongToCu ?? '',
-        chiSoDauCongToMoi: dichVu.chiSoDauCongToMoi ?? '',
-      }
-
-      if (
-        chiSoCuoi !== (dichVu.chiSoCuoi ?? '')
-        || coThayCongTo !== dichVu.coThayCongTo
-        || chiSoThayCongTo.chiSoCuoiCongToCu !== (dichVu.chiSoCuoiCongToCu ?? '')
-        || chiSoThayCongTo.chiSoDauCongToMoi !== (dichVu.chiSoDauCongToMoi ?? '')
-      ) {
-        ketQua[key] = {
-          chiSoCuoi,
-          coThayCongTo,
-          chiSoCuoiCongToCu: chiSoThayCongTo.chiSoCuoiCongToCu,
-          chiSoDauCongToMoi: chiSoThayCongTo.chiSoDauCongToMoi,
-        }
-      }
-    })
-  })
-
-  return ketQua
-}
-
-function laTrangThaiLuuTru(value: unknown): value is StoredMeterState {
-  return typeof value === 'object' && value !== null && 'banNhap' in value && 'hangCho' in value
-}
-
-function laBootstrap(value: unknown): value is StoredMeterBootstrap {
-  if (typeof value !== 'object' || value === null) return false
-  const state = value as Partial<StoredMeterBootstrap>
-  return typeof state.toaNhaId === 'number'
-    && typeof state.kyId === 'number'
-    && Array.isArray(state.danhSachToaNha)
-    && Array.isArray(state.danhSachKy)
-    && typeof state.duLieu === 'object'
-    && state.duLieu !== null
-    && Array.isArray(state.danhSachPhongChuaGhiChiSo)
 }
