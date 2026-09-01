@@ -78,6 +78,15 @@ class BangGiaAuthorizationIntegrationTest {
     }
 
     @Test
+    void FR_AUT_04_systemAdminReceives403OnEveryPriceEndpoint() throws Exception {
+        Long dichVuId = themDichVu(1L);
+        String systemAdminToken = login(1L, "0900000001");
+
+        assert403OnAllFixedPriceEndpoints(systemAdminToken, dichVuId);
+        assert403OnAllTieredPriceEndpoints(systemAdminToken, dichVuId);
+    }
+
+    @Test
     void FR_BLD_06_managerReceives403OutsideAssignedBuildingScopeForFixedPriceEndpoints() throws Exception {
         Long dichVuNgoaiPhamViId = themDichVu(2L);
         String managerToken = login(3L, "0900000003");

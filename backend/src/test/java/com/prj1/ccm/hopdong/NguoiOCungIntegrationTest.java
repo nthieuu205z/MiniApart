@@ -186,9 +186,11 @@ class NguoiOCungIntegrationTest {
         String workerToken = login(4L, "0900000004");
         String tenantToken = login(5L, "0900000006");
         String managerToken = login(3L, "0900000003");
+        String systemAdminToken = login(1L, "0900000001");
 
         assert403ForNguoiOCungEndpoints(workerToken, hopDongId, nguoiThueKhacId);
         assert403ForNguoiOCungEndpoints(tenantToken, hopDongId, nguoiThueKhacId);
+        assert403ForNguoiOCungEndpoints(systemAdminToken, hopDongId, nguoiThueKhacId);
 
         mockMvc.perform(get("/api/hop-dong/" + hopDongNgoaiPhamViId + "/nguoi-o-cung")
                         .header("Authorization", "Bearer " + managerToken))

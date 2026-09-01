@@ -11,6 +11,8 @@ backend/build/
 backend/.gradle/
 backend/bin/
 *.class
+backend/.jqwik-database
+backend/graphify-out/
 
 # Node
 node_modules/

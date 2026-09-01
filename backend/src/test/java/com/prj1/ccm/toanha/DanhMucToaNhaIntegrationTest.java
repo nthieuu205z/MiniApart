@@ -144,8 +144,9 @@ class DanhMucToaNhaIntegrationTest {
     }
 
     @Test
-    void FR_BLD_01_onlyOwnerAndSystemAdminCreateAndManagerUpdatesOwnBuilding() throws Exception {
-        String adminToken = login(1L, "0900000001");
+    void FR_BLD_01_onlyOwnerCreatesAndSystemAdminCannotEditBusinessBuildingData() throws Exception {
+        String systemAdminToken = login(1L, "0900000001");
+        String ownerToken = login(2L, "0900000002");
         String managerToken = login(3L, "0900000003");
         String workerToken = login(4L, "0900000004");
         String tenantToken = login(5L, "0900000006");
@@ -173,7 +174,10 @@ class DanhMucToaNhaIntegrationTest {
         mockMvc.perform(post("/api/toa-nha").header("Authorization", "Bearer " + tenantToken)
                         .contentType(MediaType.APPLICATION_JSON).content(createPayload))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/toa-nha").header("Authorization", "Bearer " + adminToken)
+        mockMvc.perform(post("/api/toa-nha").header("Authorization", "Bearer " + systemAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON).content(createPayload))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/toa-nha").header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON).content(createPayload))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.maToa").value("TN-NEW"));
@@ -242,15 +246,15 @@ class DanhMucToaNhaIntegrationTest {
 
     @Test
     void FR_BLD_01_invalidClosingDayExplainsFebruaryAndDuplicateCodeIsReadable() throws Exception {
-        String adminToken = login(1L, "0900000001");
+        String ownerToken = login(2L, "0900000002");
 
-        mockMvc.perform(post("/api/toa-nha").header("Authorization", "Bearer " + adminToken)
+        mockMvc.perform(post("/api/toa-nha").header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(buildingPayload("TN-INVALID", 29)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.thongBao", containsString("tháng hai")));
 
-        mockMvc.perform(post("/api/toa-nha").header("Authorization", "Bearer " + adminToken)
+        mockMvc.perform(post("/api/toa-nha").header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(buildingPayload("TN-A", 1)))
                 .andExpect(status().isConflict())

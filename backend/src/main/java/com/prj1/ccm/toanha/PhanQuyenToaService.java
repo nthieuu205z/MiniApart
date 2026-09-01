@@ -21,13 +21,25 @@ public class PhanQuyenToaService {
     }
 
     public ToaNha layToaNhaNeuNguoiDungDuocXem(NguoiDung nguoiDung, Long toaNhaId) {
+        if (nguoiDung == null || nguoiDung.vaiTro() == VaiTro.QTHT) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
         ToaNha toaNha = toaNhaRepository.findById(toaNhaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        if (nguoiDung.vaiTro() == VaiTro.QTHT || toaNhaRepository.existsPhanQuyenToa(nguoiDung.id(), toaNhaId)) {
+        if (toaNhaRepository.existsPhanQuyenToa(nguoiDung.id(), toaNhaId)) {
             return toaNha;
         }
 
         throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    }
+
+    public ToaNha layToaNhaNeuNhanVienDuocXem(NguoiDung nguoiDung, Long toaNhaId) {
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
+                && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
     }
 }

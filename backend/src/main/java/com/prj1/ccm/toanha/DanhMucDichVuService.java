@@ -61,21 +61,19 @@ public class DanhMucDichVuService {
     }
 
     DichVu layDichVuNguoiDungDuocQuanLy(Long dichVuId, NguoiDung nguoiDung) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU)) {
+        if (nguoiDung == null || nguoiDung.vaiTro() != VaiTro.CHU) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         DichVu dichVu = dichVuRepository.findById(dichVuId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, dichVu.toaNhaId());
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, dichVu.toaNhaId());
         return dichVu;
     }
 
     DichVu layDichVuNguoiDungDuocXem(Long dichVuId, NguoiDung nguoiDung) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
@@ -83,27 +81,25 @@ public class DanhMucDichVuService {
         DichVu dichVu = dichVuRepository.findById(dichVuId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, dichVu.toaNhaId());
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, dichVu.toaNhaId());
         return dichVu;
     }
 
     private void kiemTraQuyenXemDichVu(NguoiDung nguoiDung, Long toaNhaId) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
     }
 
     private void kiemTraQuyenQuanLyDichVu(NguoiDung nguoiDung, Long toaNhaId) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU)) {
+        if (nguoiDung == null || nguoiDung.vaiTro() != VaiTro.CHU) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
     }
 
     private DichVu layDichVuTonTai(Long toaNhaId, Long dichVuId) {

@@ -38,7 +38,7 @@ public class HoaDonChiTietService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         if (laNhanVien(nguoiDung)) {
-            phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+            phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
         }
         HoaDonDuLieu hoaDon = hoaDonChiTietRepository.find(toaNhaId, kyId, hoaDonId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -79,8 +79,7 @@ public class HoaDonChiTietService {
     }
 
     private boolean laNhanVien(NguoiDung nguoiDung) {
-        return nguoiDung.vaiTro() == VaiTro.QTHT
-                || nguoiDung.vaiTro() == VaiTro.CHU
+        return nguoiDung.vaiTro() == VaiTro.CHU
                 || nguoiDung.vaiTro() == VaiTro.QUAN_LY;
     }
 

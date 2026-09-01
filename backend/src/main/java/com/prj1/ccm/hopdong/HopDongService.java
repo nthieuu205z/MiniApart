@@ -96,7 +96,7 @@ public class HopDongService {
     @Transactional(readOnly = true)
     public List<ThongTinHopDong> danhSach(Long toaNhaId, TrangThaiHopDong trangThai, NguoiDung nguoiDung) {
         kiemTraVaiTro(nguoiDung);
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
         LocalDate homNay = LocalDate.now(clock);
         return hopDongRepository.findByToaNhaId(toaNhaId, trangThai)
                 .stream()
@@ -222,7 +222,7 @@ public class HopDongService {
     private HopDongRepository.HopDongView layHopDongTrongPhamVi(Long hopDongId, NguoiDung nguoiDung) {
         HopDongRepository.HopDongView hopDongView = hopDongRepository.findViewById(hopDongId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, hopDongView.toaNhaId());
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, hopDongView.toaNhaId());
         return hopDongView;
     }
 
@@ -247,7 +247,7 @@ public class HopDongService {
 
         Phong phong = phongRepository.findById(yeuCau.phongId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, phong.toaNhaId());
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, phong.toaNhaId());
         NguoiThue nguoiThue = nguoiThueRepository.findById(yeuCau.nguoiThueId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
@@ -323,8 +323,7 @@ public class HopDongService {
     }
 
     private void kiemTraVaiTro(NguoiDung nguoiDung) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.QTHT
-                && nguoiDung.vaiTro() != VaiTro.CHU
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }

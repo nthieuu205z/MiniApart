@@ -97,7 +97,7 @@ class HopDongServiceTest {
         when(dichVuRepository.findById(dichVuId)).thenReturn(Optional.of(
                 new DichVu(dichVuId, 1L, "Internet", null, null, "tháng", false, true)
         ));
-        when(phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(eq(quanLy), eq(1L))).thenReturn(
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(eq(quanLy), eq(1L))).thenReturn(
                 new ToaNha(1L, "T01", "Toà A", "Địa chỉ", 5, 25, 7, "0123456789", new BigDecimal("0.15"), false)
         );
         when(hopDongRepository.insert(any())).thenThrow(

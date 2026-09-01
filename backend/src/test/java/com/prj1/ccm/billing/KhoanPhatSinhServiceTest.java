@@ -56,7 +56,7 @@ class KhoanPhatSinhServiceTest {
         NguoiDung quanLy = new NguoiDung(3L, "Quan ly", "0900000003", "hash", VaiTro.QUAN_LY, TrangThaiNguoiDung.HOAT_DONG, 0, null);
         when(khoanPhatSinhRepository.timHopDongTrongPhamVi(88L))
                 .thenReturn(Optional.of(new KhoanPhatSinhRepository.HopDongTrongPhamVi(88L, 1L)));
-        when(phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(quanLy, 1L))
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(quanLy, 1L))
                 .thenReturn(new ToaNha(1L, "TN-A", "Toa A", "Dia chi", 5, 25, 7, "0123", new BigDecimal("0.15"), false));
 
         assertThatThrownBy(() -> khoanPhatSinhService.tao(

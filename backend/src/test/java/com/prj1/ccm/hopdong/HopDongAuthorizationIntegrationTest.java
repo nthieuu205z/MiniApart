@@ -120,6 +120,11 @@ class HopDongAuthorizationIntegrationTest {
     }
 
     @Test
+    void FR_AUT_04_systemAdminReceives403OnEveryContractEndpoint() throws Exception {
+        assert403OnAllContractEndpoints(login(1L, "0900000001"));
+    }
+
+    @Test
     void FR_TNT_04_CR_005_quanLyNhan403KhiVuotPhamViToaNhaDuocGan() throws Exception {
         String managerToken = login(3L, "0900000003");
 

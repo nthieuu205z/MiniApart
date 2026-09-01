@@ -89,6 +89,7 @@ class BangGiaDichVuIntegrationTest {
                         WHERE id IN (1, 2, 3, 4, 5)
                         """
         );
+        ganToaChoNguoiDung(2L, 1L);
     }
 
     @Test
@@ -158,10 +159,10 @@ class BangGiaDichVuIntegrationTest {
     @Test
     void FR_BLD_06_looksUpApplicablePriceByRequestedDateAndPreservesJanuaryPriceHistory() throws Exception {
         Long dichVuId = themDichVu(1L, "Phí quản lý");
-        String adminToken = login(1L, "0900000001");
+        String ownerToken = login(2L, "0900000002");
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bangGiaPayload("100000.00", "2026-01-01")))
                 .andExpect(status().isCreated())
@@ -169,19 +170,19 @@ class BangGiaDichVuIntegrationTest {
 
         mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bang-gia")
                         .param("ngay", "2025-12-31")
-                        .header("Authorization", "Bearer " + adminToken))
+                        .header("Authorization", "Bearer " + ownerToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.thongBao", containsString("giá hiệu lực")));
 
         mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bang-gia")
                         .param("ngay", "2026-01-01")
-                        .header("Authorization", "Bearer " + adminToken))
+                        .header("Authorization", "Bearer " + ownerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.donGia").value("100000.00"))
                 .andExpect(jsonPath("$.ngayHieuLuc").value("2026-01-01"));
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bangGiaPayload("120000.00", "2026-03-01")))
                 .andExpect(status().isCreated())
@@ -189,21 +190,21 @@ class BangGiaDichVuIntegrationTest {
 
         mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bang-gia")
                         .param("ngay", "2026-02-15")
-                        .header("Authorization", "Bearer " + adminToken))
+                        .header("Authorization", "Bearer " + ownerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.donGia").value("100000.00"))
                 .andExpect(jsonPath("$.ngayHieuLuc").value("2026-01-01"));
 
         mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bang-gia")
                         .param("ngay", "2026-01-31")
-                        .header("Authorization", "Bearer " + adminToken))
+                        .header("Authorization", "Bearer " + ownerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.donGia").value("100000.00"))
                 .andExpect(jsonPath("$.ngayHieuLuc").value("2026-01-01"));
 
         mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bang-gia")
                         .param("ngay", "2026-03-01")
-                        .header("Authorization", "Bearer " + adminToken))
+                        .header("Authorization", "Bearer " + ownerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.donGia").value("120000.00"))
                 .andExpect(jsonPath("$.ngayHieuLuc").value("2026-03-01"));
@@ -229,16 +230,16 @@ class BangGiaDichVuIntegrationTest {
     @Test
     void FR_BLD_06_rejectsZeroAndNegativeFixedPricesForMeteredService() throws Exception {
         Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
-        String adminToken = login(1L, "0900000001");
+        String ownerToken = login(2L, "0900000002");
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bangGiaPayload("0.00", "2026-01-01")))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bangGiaPayload("-1.00", "2026-02-01")))
                 .andExpect(status().isBadRequest());
@@ -249,10 +250,10 @@ class BangGiaDichVuIntegrationTest {
     @Test
     void FR_BLD_06_allowsZeroFixedPriceForNonMeteredService() throws Exception {
         Long dichVuId = themDichVu(1L, "Internet miễn phí");
-        String adminToken = login(1L, "0900000001");
+        String ownerToken = login(2L, "0900000002");
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bang-gia")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bangGiaPayload("0.00", "2026-01-01")))
                 .andExpect(status().isCreated())
@@ -343,10 +344,10 @@ class BangGiaDichVuIntegrationTest {
     @Test
     void FR_BLD_08_rejectsTierSetsWithGapOverlapOrWrongInfiniteLastTier() throws Exception {
         Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
-        String adminToken = login(1L, "0900000001");
+        String ownerToken = login(2L, "0900000002");
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -365,7 +366,7 @@ class BangGiaDichVuIntegrationTest {
                 .andExpect(jsonPath("$.thongBao", containsString("liền nhau")));
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -384,7 +385,7 @@ class BangGiaDichVuIntegrationTest {
                 .andExpect(jsonPath("$.thongBao", containsString("liền nhau")));
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -406,17 +407,17 @@ class BangGiaDichVuIntegrationTest {
     @Test
     void FR_BLD_08_rejectsDuplicateTierSetForSameEffectiveDateWithoutMergingRows() throws Exception {
         Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
-        String adminToken = login(1L, "0900000001");
+        String ownerToken = login(2L, "0900000002");
         String ngayHieuLuc = "2026-01-01";
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bacThangPayload("2204.0655", ngayHieuLuc)))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bacThangPayload("2500.0000", ngayHieuLuc)))
                 .andExpect(status().isConflict())
@@ -427,7 +428,7 @@ class BangGiaDichVuIntegrationTest {
                 demBanGhi("SELECT COUNT(*) FROM BANG_GIA_BAC_THANG WHERE dich_vu_id = ?", dichVuId)
         );
         mockMvc.perform(get("/api/dich-vu/" + dichVuId + "/bac-thang")
-                        .header("Authorization", "Bearer " + adminToken))
+                        .header("Authorization", "Bearer " + ownerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].cacBac", hasSize(5)))
@@ -437,7 +438,7 @@ class BangGiaDichVuIntegrationTest {
     @Test
     void FR_BLD_08_concurrentIdenticalTierPostsReturnOneCreatedOneConflictAndPersistFiveRows() throws Exception {
         Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
-        String adminToken = login(1L, "0900000001");
+        String ownerToken = login(2L, "0900000002");
         String payload = bacThangPayload("2204.0655", "2026-01-01");
         batDongBoHaiLanChenBacDauTien();
 
@@ -447,14 +448,14 @@ class BangGiaDichVuIntegrationTest {
         try {
             Future<Integer> ketQuaMot = executor.submit(() -> guiBangGiaBacThangDongThoi(
                     dichVuId,
-                    adminToken,
+                    ownerToken,
                     payload,
                     sanSang,
                     batDau
             ));
             Future<Integer> ketQuaHai = executor.submit(() -> guiBangGiaBacThangDongThoi(
                     dichVuId,
-                    adminToken,
+                    ownerToken,
                     payload,
                     sanSang,
                     batDau
@@ -484,10 +485,10 @@ class BangGiaDichVuIntegrationTest {
     @Test
     void FR_BLD_08_rejectsNullTierEntryAndNullTierNumberWithBadRequest() throws Exception {
         Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
-        String adminToken = login(1L, "0900000001");
+        String ownerToken = login(2L, "0900000002");
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -502,7 +503,7 @@ class BangGiaDichVuIntegrationTest {
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -525,10 +526,10 @@ class BangGiaDichVuIntegrationTest {
     @Test
     void FR_BLD_08_rejectsOverPrecisionTierQuantityWithBadRequest() throws Exception {
         Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
-        String adminToken = login(1L, "0900000001");
+        String ownerToken = login(2L, "0900000002");
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bacThangPayload("2204.0655", "2026-01-01", "0.001", "90.00")))
                 .andExpect(status().isBadRequest());
@@ -542,10 +543,10 @@ class BangGiaDichVuIntegrationTest {
     @Test
     void FR_BLD_08_rejectsOverPrecisionTierPercentageWithBadRequest() throws Exception {
         Long dichVuId = themDichVuDien(1L, "Điện sinh hoạt");
-        String adminToken = login(1L, "0900000001");
+        String ownerToken = login(2L, "0900000002");
 
         mockMvc.perform(post("/api/dich-vu/" + dichVuId + "/bac-thang")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bacThangPayload("2204.0655", "2026-01-01", "0.00", "90.001")))
                 .andExpect(status().isBadRequest());
@@ -584,7 +585,7 @@ class BangGiaDichVuIntegrationTest {
 
     private void ganToaChoNguoiDung(Long nguoiDungId, Long toaNhaId) {
         jdbcTemplate.update(
-                "INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (?, ?)",
+                "INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
                 nguoiDungId,
                 toaNhaId
         );

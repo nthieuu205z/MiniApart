@@ -74,6 +74,11 @@ class PhongAuthorizationIntegrationTest {
     }
 
     @Test
+    void FR_AUT_04_systemAdminReceives403OnEveryRoomEndpoint() throws Exception {
+        assert403OnAllRoomEndpoints(login(1L, "0900000001"));
+    }
+
+    @Test
     void FR_BLD_02_managerReceives403OutsideAssignedBuildingScope() throws Exception {
         String managerToken = login(3L, "0900000003");
 

@@ -49,7 +49,7 @@ class ToaNhaAuthorizationIntegrationTest {
 
     @BeforeEach
     void resetAssignmentsAndAuthState() {
-        jdbcTemplate.update("DELETE FROM PHAN_QUYEN_TOA WHERE nguoi_dung_id IN (2, 4, 5)");
+        jdbcTemplate.update("DELETE FROM PHAN_QUYEN_TOA WHERE nguoi_dung_id IN (1, 2, 4, 5)");
         jdbcTemplate.update("DELETE FROM LAN_DANG_NHAP_SAI");
         jdbcTemplate.update("DELETE FROM THEO_DOI_DANG_NHAP");
         jdbcTemplate.update(
@@ -116,6 +116,21 @@ class ToaNhaAuthorizationIntegrationTest {
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[1].id").value(2));
+    }
+
+    @Test
+    void FR_AUT_05_BR_17_systemAdminCanListBuildingsButCannotOpenBuildingData() throws Exception {
+        ganToaChoNguoiDung(1L, 1L);
+        String token = loginAndExtractToken(1L, "0900000001");
+
+        mockMvc.perform(get("/api/toa-nha")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
+
+        mockMvc.perform(get("/api/toa-nha/1")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
     }
 
     @Test

@@ -24,7 +24,7 @@ public class TinhDuThaoHoaDonService {
 
     @Transactional(readOnly = true)
     public ThongTinTinhHoaDon tinhThuHoaDon(Long toaNhaId, Long kyId, Long hopDongId, NguoiDung nguoiDung) {
-        phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(nguoiDung, toaNhaId);
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
         DuLieuTinhHoaDon duLieu = tinhHoaDonRepository.layDuLieuTinhHoaDon(toaNhaId, kyId, hopDongId);
         if (!duLieu.coTheTinh()) {
             return ThongTinTinhHoaDon.khongTheTinh(kyId, hopDongId, duLieu.lyDoKhongTheTinh());

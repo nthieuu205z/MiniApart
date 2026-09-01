@@ -61,7 +61,7 @@ class KyThanhToanServiceTest {
                 TrangThaiKy.DANG_MO
         );
 
-        when(phanQuyenToaService.layToaNhaNeuNguoiDungDuocXem(quanLy, 1L)).thenReturn(toaNha);
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(quanLy, 1L)).thenReturn(toaNha);
         when(kyThanhToanRepository.findByIdAndToaNhaId(10L, 1L)).thenReturn(Optional.of(kyDangMo));
         when(chiSoDichVuRepository.findChoNhap(1L, 10L, null)).thenReturn(List.of());
         when(kyThanhToanRepository.findByToaNhaId(1L)).thenReturn(List.of(kyDangMo));

@@ -119,17 +119,19 @@ class DanhMucPhongIntegrationTest {
     @Test
     void FR_BLD_02_rejectsDuplicateRoomNumberInsideSameBuildingButAllowsAnotherBuilding() throws Exception {
         themPhong(1L, "101", 1, "20.00", 3, "3000000.00", "Studio", "TRONG");
-        String adminToken = login(1L, "0900000001");
+        ganToaChoNguoiDung(2L, 1L);
+        ganToaChoNguoiDung(2L, 2L);
+        String ownerToken = login(2L, "0900000002");
 
         mockMvc.perform(post("/api/toa-nha/1/phong")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(phongPayload("101", 1, "20.00", 3, "3000000.00", "Studio")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.thongBao", containsString("Số phòng")));
 
         mockMvc.perform(post("/api/toa-nha/2/phong")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + ownerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(phongPayload("101", 1, "20.00", 3, "3000000.00", "Studio")))
                 .andExpect(status().isCreated())
