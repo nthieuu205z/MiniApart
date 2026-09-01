@@ -57,7 +57,7 @@ export function BuildingSection({ label, floors, columns = 6, showStairs = true,
             <h4 id={`floor-title-${floor.name}`} style={{ margin: 0, font: 'inherit' }}>Tầng {floor.name.replace(/^T/, '')}</h4>
           </div>
           <div className="room-floor-grid" data-testid="room-floor-grid" data-compact-layout="true" style={{ display: 'contents' }}>
-            {floor.rooms.map(({ className, ...r }) => <RoomCell key={r.room} className={`room-tile ${className ?? ''}`} data-testid="room-tile" role="button" tabIndex={0} {...r} />)}
+            {floor.rooms.map(({ className, onClick, onKeyDown, ...r }) => <RoomCell key={r.room} className={`room-tile ${className ?? ''}`} data-testid="room-tile" role="button" tabIndex={0} onClick={onClick} onKeyDown={(event) => { onKeyDown?.(event); if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick?.(event as unknown as React.MouseEvent<HTMLDivElement>) } }} {...r} />)}
           </div>
           {showStairs ? <div style={{ borderLeft: "1px solid var(--ma-border-default)" }} /> : null}
         </section>

@@ -67,6 +67,17 @@ describe('DanhMucPhong', () => {
     expect(container.textContent).toContain('Trống')
   })
 
+  it('FR-BLD-02 opens room detail with Enter and Space from the room map', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === '/api/toa-nha') return jsonResponse([toaA])
+      return jsonResponse([phong101])
+    }))
+    await renderScreen()
+    const tile = await vi.waitFor(() => container.querySelector('[data-testid="room-tile"]') as HTMLButtonElement)
+    await act(async () => tile.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+    await vi.waitFor(() => expect(container.querySelector('[data-testid="room-detail"]')?.textContent).toContain('Chi tiết phòng 101'))
+  })
+
   it('FR-BLD-02 previews a batch without creating it, then creates the exact preview only after confirmation', async () => {
     const preview = [{ ...phong101, id: null, soPhong: '301', tang: 3 }, { ...phong101, id: null, soPhong: '302', tang: 3 }]
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
