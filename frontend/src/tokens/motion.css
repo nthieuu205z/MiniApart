@@ -1,0 +1,26 @@
+:root {
+  --ma-dur-press: 100ms;
+  --ma-dur-inline-error: 150ms;
+  --ma-dur-dialog-in: 200ms;
+  --ma-dur-dialog-out: 150ms;
+  --ma-dur-page: 150ms;
+  --ma-dur-row-flash: 400ms;
+  --ma-dur-toast-in: 200ms;
+
+  --ma-toast-life: 4s;
+  --ma-toast-life-undo: 9s;
+
+  --ma-ease: linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ma-dur-press: 0ms;
+    --ma-dur-inline-error: 0ms;
+    --ma-dur-dialog-in: 0ms;
+    --ma-dur-dialog-out: 0ms;
+    --ma-dur-page: 0ms;
+    --ma-dur-row-flash: 0ms;
+    --ma-dur-toast-in: 0ms;
+  }
+}

@@ -12,6 +12,17 @@ import {
   type ThongTinPhongChuaGhiChiSo,
   type ThongTinToaNha,
 } from './api'
+import { Button } from './design/core/Button'
+import { Figure } from './design/core/Figure'
+import { StatusTag } from './design/core/StatusTag'
+import { SysLabel } from './design/core/SysLabel'
+import { RoomCell } from './design/building/RoomCell'
+import { EmptyState } from './design/feedback/EmptyState'
+import { SyncBanner } from './design/feedback/SyncBanner'
+import { Toast } from './design/feedback/Toast'
+import { MeterInput } from './design/forms/MeterInput'
+import { Breadcrumb } from './design/shell/Breadcrumb'
+import { TopBar } from './design/shell/TopBar'
 import { nenAnhCongTo } from './meterPhoto'
 
 type Props = {
@@ -22,6 +33,64 @@ type PendingValues = Record<string, string>
 type PendingReplacementFlags = Record<string, boolean>
 type PendingReplacementReadings = Record<string, { chiSoCuoiCongToCu: string, chiSoDauCongToMoi: string }>
 type PendingPhotos = Record<string, File | null>
+type StoredDrafts = Record<string, {
+  chiSoCuoi: string
+  coThayCongTo: boolean
+  chiSoCuoiCongToCu: string
+  chiSoDauCongToMoi: string
+}>
+type PendingSyncQueue = Record<string, {
+  phongId: number
+  dichVuId: number
+  chiSoCuoi: string
+  coThayCongTo: boolean
+  chiSoCuoiCongToCu?: string
+  chiSoDauCongToMoi?: string
+  xacNhanCanhBao?: boolean
+}>
+type StoredMeterState = {
+  banNhap: StoredDrafts
+  hangCho: PendingSyncQueue
+}
+
+const styleNhanTruong = {
+  display: 'grid',
+  gap: 'var(--ma-space-2)',
+  minWidth: 0,
+  color: 'var(--ma-text-primary)',
+  font: 'var(--ma-text-body)',
+}
+
+const styleSelect = {
+  width: '100%',
+  minHeight: 'var(--ma-hit-mobile)',
+  minWidth: 0,
+  padding: 'var(--ma-space-3) var(--ma-space-4)',
+  border: '1px solid var(--ma-border-strong)',
+  borderRadius: 'var(--ma-radius)',
+  background: 'var(--ma-bg-card)',
+  color: 'var(--ma-text-primary)',
+}
+
+const styleSoDo = {
+  width: '100%',
+  minWidth: 0,
+  minHeight: 'var(--ma-hit-mobile)',
+  padding: 'var(--ma-space-3) var(--ma-space-4)',
+  border: '1px solid var(--ma-border-strong)',
+  borderRadius: 'var(--ma-radius)',
+  background: 'var(--ma-bg-card)',
+  color: 'var(--ma-text-primary)',
+  fontFamily: 'var(--ma-font-mono)',
+  fontSize: 17,
+}
+
+const styleThongBao = {
+  margin: 0,
+  color: 'var(--ma-text-secondary)',
+  font: 'var(--ma-text-caption)',
+  lineHeight: 1.55,
+}
 
 export default function GhiChiSo({ token }: Props) {
   const [danhSachToaNha, setDanhSachToaNha] = useState<ThongTinToaNha[]>([])
@@ -40,8 +109,15 @@ export default function GhiChiSo({ token }: Props) {
   const [dangTaiPhongChuaGhiChiSo, setDangTaiPhongChuaGhiChiSo] = useState(false)
   const [dangLuu, setDangLuu] = useState<string | null>(null)
   const [dangChotKy, setDangChotKy] = useState(false)
+  const [dangDongBoHangCho, setDangDongBoHangCho] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
+  const [ngoaiTuyen, setNgoaiTuyen] = useState(false)
+  const [thongBaoDaLuu, setThongBaoDaLuu] = useState<string | null>(null)
+  const [thongBaoDongBo, setThongBaoDongBo] = useState<{ tone: 'syncing' | 'synced', message: string } | null>(null)
+  const [hangChoDongBo, setHangChoDongBo] = useState<PendingSyncQueue>({})
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const daThuDongBoTuDong = useRef(false)
+  const khoaDangNapTrangThai = useRef<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -154,27 +230,103 @@ export default function GhiChiSo({ token }: Props) {
   }, [token, toaNhaId, kyId])
 
   useEffect(() => {
-    const moi = taoGiaTriBanDau(duLieu)
-    setPendingValues(moi)
-  }, [duLieu])
+    khoaDangNapTrangThai.current = null
+  }, [toaNhaId, kyId])
 
   useEffect(() => {
-    const moi = taoTrangThaiThayCongToBanDau(duLieu)
-    setPendingReplacementFlags(moi)
-  }, [duLieu])
+    if (toaNhaId === null || kyId === null || duLieu === null) {
+      return
+    }
 
-  useEffect(() => {
-    setPendingReplacementReadings(taoChiSoThayCongToBanDau(duLieu))
-  }, [duLieu])
+    const khoaTrangThai = khoaLuuTru(toaNhaId, kyId)
+    if (khoaDangNapTrangThai.current === khoaTrangThai) {
+      return
+    }
 
-  useEffect(() => {
+    const duLieuDaLuu = docTrangThaiTrenMay(toaNhaId, kyId)
+    const giaTriBanDau = { ...taoGiaTriBanDau(duLieu) }
+    const thayCongToBanDau = { ...taoTrangThaiThayCongToBanDau(duLieu) }
+    const chiSoThayBanDau = { ...taoChiSoThayCongToBanDau(duLieu) }
+
+    Object.entries(duLieuDaLuu.banNhap).forEach(([key, banNhap]) => {
+      giaTriBanDau[key] = banNhap.chiSoCuoi
+      thayCongToBanDau[key] = banNhap.coThayCongTo
+      chiSoThayBanDau[key] = {
+        chiSoCuoiCongToCu: banNhap.chiSoCuoiCongToCu,
+        chiSoDauCongToMoi: banNhap.chiSoDauCongToMoi,
+      }
+    })
+
+    Object.entries(duLieuDaLuu.hangCho).forEach(([key, banNhap]) => {
+      giaTriBanDau[key] = banNhap.chiSoCuoi
+      thayCongToBanDau[key] = banNhap.coThayCongTo
+      chiSoThayBanDau[key] = {
+        chiSoCuoiCongToCu: banNhap.chiSoCuoiCongToCu ?? '',
+        chiSoDauCongToMoi: banNhap.chiSoDauCongToMoi ?? '',
+      }
+    })
+
+    setPendingValues(giaTriBanDau)
+    setPendingReplacementFlags(thayCongToBanDau)
+    setPendingReplacementReadings(chiSoThayBanDau)
     setPendingPhotos({})
-  }, [duLieu])
+    setHangChoDongBo(duLieuDaLuu.hangCho)
+    daThuDongBoTuDong.current = false
+    khoaDangNapTrangThai.current = khoaTrangThai
+  }, [duLieu, toaNhaId, kyId])
+
+  useEffect(() => {
+    const handleOnline = () => {
+      daThuDongBoTuDong.current = false
+      setNgoaiTuyen(false)
+    }
+    const handleOffline = () => {
+      daThuDongBoTuDong.current = false
+      setNgoaiTuyen(true)
+    }
+
+    setNgoaiTuyen(typeof navigator !== 'undefined' && !navigator.onLine)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!thongBaoDaLuu) return
+    const timeoutId = window.setTimeout(() => setThongBaoDaLuu(null), 4000)
+    return () => window.clearTimeout(timeoutId)
+  }, [thongBaoDaLuu])
+
+  useEffect(() => {
+    if (toaNhaId === null || kyId === null || duLieu === null) return
+    luuTrangThaiTrenMay(
+      toaNhaId,
+      kyId,
+      taoTrangThaiCanLuu(
+        duLieu,
+        pendingValues,
+        pendingReplacementFlags,
+        pendingReplacementReadings,
+        hangChoDongBo,
+      ),
+    )
+  }, [duLieu, hangChoDongBo, kyId, pendingReplacementFlags, pendingReplacementReadings, pendingValues, toaNhaId])
+
+  useEffect(() => {
+    if (toaNhaId === null || kyId === null || ngoaiTuyen || dangDongBoHangCho || daThuDongBoTuDong.current) return
+    if (Object.keys(hangChoDongBo).length === 0) return
+    daThuDongBoTuDong.current = true
+    void dongBoHangCho()
+  }, [dangDongBoHangCho, hangChoDongBo, kyId, ngoaiTuyen, toaNhaId, token])
 
   const toaNhaDangChon = danhSachToaNha.find((item) => item.id === toaNhaId) ?? null
   const kyDangChon = danhSachKy.find((item) => item.id === kyId) ?? null
 
   const danhSachTangPhong = useMemo(() => duLieu?.phong ?? [], [duLieu])
+  const soPhongChoGui = useMemo(() => demSoPhongChoGui(hangChoDongBo), [hangChoDongBo])
 
   async function luuChiSo(phongId: number, dichVuId: number, xacNhanCanhBao = false) {
     if (toaNhaId === null || kyId === null) return
@@ -198,29 +350,91 @@ export default function GhiChiSo({ token }: Props) {
     )
     if (!mucTieuThu || (taoCanhBaoTieuThu(mucTieuThu, thongTinDichVu) && !xacNhanCanhBao)) return
     const tep = pendingPhotos[key] ?? undefined
+    const payload = {
+      phongId,
+      dichVuId,
+      chiSoCuoi: giaTri,
+      coThayCongTo,
+      chiSoCuoiCongToCu: coThayCongTo ? chiSoThayCongTo.chiSoCuoiCongToCu : undefined,
+      chiSoDauCongToMoi: coThayCongTo ? chiSoThayCongTo.chiSoDauCongToMoi : undefined,
+      xacNhanCanhBao: xacNhanCanhBao || undefined,
+      tep,
+    }
+    const soPhong = duLieu?.phong.find((phong) => phong.id === phongId)?.soPhong ?? String(phongId)
+
+    if (ngoaiTuyen) {
+      setHangChoDongBo((current) => ({
+        ...current,
+        [key]: {
+          phongId,
+          dichVuId,
+          chiSoCuoi: giaTri,
+          coThayCongTo,
+          chiSoCuoiCongToCu: coThayCongTo ? chiSoThayCongTo.chiSoCuoiCongToCu : undefined,
+          chiSoDauCongToMoi: coThayCongTo ? chiSoThayCongTo.chiSoDauCongToMoi : undefined,
+          xacNhanCanhBao: xacNhanCanhBao || undefined,
+        },
+      }))
+      setThongBaoDaLuu(`Đã lưu trên máy chỉ số phòng ${soPhong}`)
+      return
+    }
 
     setDangLuu(key)
     setLoi(null)
 
     try {
-      const ketQua = await ghiChiSoDichVu(token, toaNhaId, kyId, {
-        phongId,
-        dichVuId,
-        chiSoCuoi: giaTri,
-        coThayCongTo,
-        chiSoCuoiCongToCu: coThayCongTo ? chiSoThayCongTo.chiSoCuoiCongToCu : undefined,
-        chiSoDauCongToMoi: coThayCongTo ? chiSoThayCongTo.chiSoDauCongToMoi : undefined,
-        xacNhanCanhBao: xacNhanCanhBao || undefined,
-        tep,
-      })
+      const ketQua = await ghiChiSoDichVu(token, toaNhaId, kyId, payload)
 
       setDuLieu((current) => capNhatDuLieu(current, phongId, dichVuId, ketQua))
+      setHangChoDongBo((current) => xoaKhoiHangCho(current, key))
       setPendingPhotos((current) => boAnhDaChon(current, key))
+      setNgoaiTuyen(false)
+      setThongBaoDaLuu(`Đã lưu chỉ số phòng ${soPhong}`)
       requestAnimationFrame(() => focusTiepTheo(phongId, dichVuId))
     } catch (reason: unknown) {
       setLoi(chuanHoaLoi(reason, 'Không thể lưu chỉ số.'))
     } finally {
       setDangLuu(null)
+    }
+  }
+
+  async function dongBoHangCho() {
+    if (toaNhaId === null || kyId === null) return
+    const danhSachHangCho = Object.entries(hangChoDongBo)
+    if (danhSachHangCho.length === 0) return
+
+    const tongSoPhong = demSoPhongChoGui(hangChoDongBo)
+    setDangDongBoHangCho(true)
+    setThongBaoDongBo({ tone: 'syncing', message: `Đang gửi ${tongSoPhong} phòng…` })
+    setLoi(null)
+
+    try {
+      for (const [key, banNhap] of danhSachHangCho) {
+        const ketQua = await ghiChiSoDichVu(token, toaNhaId, kyId, {
+          phongId: banNhap.phongId,
+          dichVuId: banNhap.dichVuId,
+          chiSoCuoi: banNhap.chiSoCuoi,
+          coThayCongTo: banNhap.coThayCongTo,
+          chiSoCuoiCongToCu: banNhap.chiSoCuoiCongToCu,
+          chiSoDauCongToMoi: banNhap.chiSoDauCongToMoi,
+          xacNhanCanhBao: banNhap.xacNhanCanhBao,
+          tep: pendingPhotos[key] ?? undefined,
+        })
+
+        setDuLieu((current) => capNhatDuLieu(current, banNhap.phongId, banNhap.dichVuId, ketQua))
+        setHangChoDongBo((current) => xoaKhoiHangCho(current, key))
+        setPendingPhotos((current) => boAnhDaChon(current, key))
+      }
+
+      setThongBaoDongBo({ tone: 'synced', message: `Đã gửi xong ${tongSoPhong} phòng chờ gửi` })
+      window.setTimeout(() => {
+        setThongBaoDongBo((current) => (current?.tone === 'synced' ? null : current))
+      }, 3000)
+    } catch (reason: unknown) {
+      setLoi(chuanHoaLoi(reason, 'Không thể đồng bộ chỉ số chờ gửi.'))
+      setThongBaoDongBo(null)
+    } finally {
+      setDangDongBoHangCho(false)
     }
   }
 
@@ -277,261 +491,532 @@ export default function GhiChiSo({ token }: Props) {
     inputRefs.current[khoaTiepTheo]?.focus()
   }
 
+  const kyDaChot = kyDangChon?.trangThai === 'DA_CHOT'
+  const nhanToaNha = toaNhaDangChon?.ten ?? 'Chưa chọn toà'
+  const nhanKy = kyDangChon ? `Kỳ ${kyDangChon.thang}/${kyDangChon.nam}` : 'Chưa chọn kỳ'
+  const tienDo = `${duLieu?.daGhi ?? 0} / ${duLieu?.tongPhong ?? 0}`
+  const trangThaiKy = kyDangChon && !kyDaChot ? 'Đang mở' : undefined
+  const styleTrang = {
+    width: '100%',
+    minWidth: 0,
+    minHeight: '100vh',
+    background: 'var(--ma-bg-page)',
+    color: 'var(--ma-text-primary)',
+    fontFamily: 'var(--ma-font-ui)',
+  }
+
   if (dangTai) {
-    return <section className="meter-screen" aria-label="Ghi chỉ số">Đang tải toà nhà…</section>
+    return (
+      <section style={styleTrang} aria-label="Ghi chỉ số">
+        <TopBar
+          building="MiniApart"
+          period="Đang tải kỳ"
+          style={{ padding: '8px 16px', flexWrap: 'wrap', height: 'auto', minHeight: 'var(--ma-topbar-height)' }}
+        />
+        <p style={{ margin: 0, padding: 'var(--ma-space-7) clamp(16px, 4vw, var(--ma-space-8))' }}>Đang tải toà nhà…</p>
+      </section>
+    )
   }
 
   return (
-    <section className="meter-screen" aria-labelledby="meter-title" data-testid="meter-screen">
-      <div className="meter-header">
-        <div>
-          <p className="eyebrow">FR-MTR-01 / FR-MTR-02 / FR-MTR-03 / FR-MTR-04</p>
-          <h3 id="meter-title">Ghi chỉ số</h3>
-        </div>
-        <p className="meter-progress">{duLieu ? `${duLieu.daGhi} / ${duLieu.tongPhong} phòng` : '0 / 0 phòng'}</p>
-      </div>
+    <section style={styleTrang} aria-labelledby="meter-title" data-testid="meter-screen">
+      <TopBar
+        building={nhanToaNha}
+        period={nhanKy}
+        periodStatus={trangThaiKy}
+        notifications={danhSachPhongChuaGhiChiSo.length || undefined}
+        style={{ padding: '8px 16px', flexWrap: 'wrap', height: 'auto', minHeight: 'var(--ma-topbar-height)' }}
+      />
+      <Breadcrumb
+        items={[nhanToaNha, nhanKy, 'Ghi chỉ số']}
+        style={{ padding: '7px 16px', flexWrap: 'wrap' }}
+      />
 
-      <div className="meter-toolbar">
-        <label className="field">
-          <span>Toà nhà</span>
-          <select
-            value={toaNhaId ?? ''}
-            onChange={(event) => {
-              setToaNhaId(Number(event.target.value))
-              setKyId(null)
-              setDuLieu(null)
-            }}
-            disabled={dangTaiKy || danhSachToaNha.length === 0}
-          >
-            {danhSachToaNha.map((toa) => (
-              <option key={toa.id} value={toa.id}>
-                {toa.ten}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="field">
-          <span>Kỳ thanh toán</span>
-          <select
-            value={kyId ?? ''}
-            onChange={(event) => setKyId(Number(event.target.value))}
-            disabled={dangTaiChiSo || danhSachKy.length === 0}
-          >
-            {danhSachKy.map((ky) => (
-              <option key={ky.id} value={ky.id}>
-                {ky.thang}/{ky.nam}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      {toaNhaDangChon ? <p className="status-message">Toà: {toaNhaDangChon.ten}</p> : null}
-      {kyDangChon ? <p className="status-message">Kỳ: {kyDangChon.thang}/{kyDangChon.nam}</p> : null}
-      {dangTaiKy || dangTaiChiSo ? <p className="status-message">Đang tải dữ liệu chỉ số…</p> : null}
-      {kyDangChon ? (
-        <section className="meter-close-panel" aria-labelledby="meter-close-title">
-          <div className="status-card__heading">
-            <div>
-              <p className="eyebrow">FR-MTR-08</p>
-              <h4 id="meter-close-title">Chốt kỳ</h4>
-            </div>
-            <button
-              type="button"
-              className="ghost-button"
-              data-close-period
-              disabled={dangChotKy || kyDangChon.trangThai === 'DA_CHOT'}
-              onClick={() => void chotKyDangChon()}
+      <main
+        style={{
+          width: '100%',
+          maxWidth: 1400,
+          minWidth: 0,
+          margin: '0 auto',
+          padding: 'var(--ma-space-7) clamp(16px, 4vw, var(--ma-space-8))',
+          display: 'grid',
+          gap: 'var(--ma-space-7)',
+        }}
+      >
+        <header
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            gap: 'var(--ma-space-6)',
+            paddingBottom: 'var(--ma-space-5)',
+            borderBottom: '2px solid var(--ma-ink-900)',
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <SysLabel>FR-MTR-01 / FR-MTR-02 / FR-MTR-03 / FR-MTR-04</SysLabel>
+            <h1
+              id="meter-title"
+              style={{
+                margin: 'var(--ma-space-2) 0 var(--ma-space-1)',
+                font: 'var(--ma-text-screen-title)',
+                letterSpacing: 'var(--ma-tracking-title)',
+              }}
             >
-              {dangChotKy ? 'Đang chốt…' : 'Chốt kỳ'}
-            </button>
+              Ghi chỉ số
+            </h1>
+            <p style={{ margin: 0, color: 'var(--ma-text-secondary)', font: 'var(--ma-text-body)' }}>
+              Ghi theo thứ tự tầng, lưu xong tự chuyển tới ô kế tiếp.
+            </p>
           </div>
-          {dangTaiPhongChuaGhiChiSo ? (
-            <p className="status-message">Đang tải phòng còn thiếu…</p>
-          ) : danhSachPhongChuaGhiChiSo.length > 0 ? (
-            <div className="meter-missing-list">
-              <p className="status-message">Phòng còn thiếu</p>
-              {danhSachPhongChuaGhiChiSo.map((phong) => (
-                <button
-                  key={phong.id}
-                  type="button"
-                  className="meter-missing-list__item"
-                  data-missing-room-key={phong.id}
-                  onClick={() => focusPhong(phong.id)}
-                >
-                  Phòng {phong.soPhong} tầng {phong.tang}
-                </button>
+          <div style={{ display: 'grid', gap: 'var(--ma-space-1)', textAlign: 'right' }} aria-label="Tiến độ ghi chỉ số">
+            <SysLabel>TIẾN ĐỘ</SysLabel>
+            <Figure value={tienDo} unit="phòng" size="md" />
+          </div>
+        </header>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 15rem), 1fr))',
+            gap: 'var(--ma-space-4)',
+          }}
+        >
+          <label style={styleNhanTruong}>
+            <span>Toà nhà</span>
+            <select
+              value={toaNhaId ?? ''}
+              onChange={(event) => {
+                setToaNhaId(Number(event.target.value))
+                setKyId(null)
+                setDuLieu(null)
+              }}
+              disabled={dangTaiKy || danhSachToaNha.length === 0}
+              style={styleSelect}
+            >
+              {danhSachToaNha.map((toa) => (
+                <option key={toa.id} value={toa.id}>
+                  {toa.ten}
+                </option>
               ))}
+            </select>
+          </label>
+
+          <label style={styleNhanTruong}>
+            <span>Kỳ thanh toán</span>
+            <select
+              value={kyId ?? ''}
+              onChange={(event) => setKyId(Number(event.target.value))}
+              disabled={dangTaiChiSo || danhSachKy.length === 0}
+              style={styleSelect}
+            >
+              {danhSachKy.map((ky) => (
+                <option key={ky.id} value={ky.id}>
+                  {ky.thang}/{ky.nam}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div style={{ display: 'grid', gap: 'var(--ma-space-1)' }}>
+          {toaNhaDangChon ? <p style={styleThongBao}>Toà: {toaNhaDangChon.ten}</p> : null}
+          {kyDangChon ? <p style={styleThongBao}>Kỳ: {kyDangChon.thang}/{kyDangChon.nam}</p> : null}
+          {dangTaiKy || dangTaiChiSo ? <p style={styleThongBao}>Đang tải dữ liệu chỉ số…</p> : null}
+        </div>
+
+        {ngoaiTuyen ? (
+          <SyncBanner tone="offline">
+            {soPhongChoGui > 0
+              ? `Đang ngoại tuyến — đã lưu ${soPhongChoGui} phòng trên máy, sẽ tự gửi khi có mạng`
+              : 'Đang ngoại tuyến — dữ liệu đã nhập vẫn giữ trên màn hình, sẽ thử gửi khi có mạng'}
+          </SyncBanner>
+        ) : null}
+        {!ngoaiTuyen && thongBaoDongBo ? <SyncBanner tone={thongBaoDongBo.tone}>{thongBaoDongBo.message}</SyncBanner> : null}
+        {thongBaoDaLuu ? <Toast>{thongBaoDaLuu}</Toast> : null}
+
+        {kyDangChon ? (
+          <section
+            aria-labelledby="meter-close-title"
+            style={{
+              display: 'grid',
+              gap: 'var(--ma-space-5)',
+              padding: 'var(--ma-space-6)',
+              border: '1px solid var(--ma-border-default)',
+              background: 'var(--ma-bg-card)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: 'var(--ma-space-5)',
+              }}
+            >
+              <div>
+                <SysLabel>FR-MTR-08</SysLabel>
+                <h2 id="meter-close-title" style={{ margin: 'var(--ma-space-1) 0 0', font: 'var(--ma-text-block-title)' }}>
+                  Chốt kỳ
+                </h2>
+              </div>
+              <Button
+                variant="secondary"
+                size="md"
+                data-close-period
+                blocked={dangChotKy || kyDaChot}
+                blockedReason={kyDaChot ? 'Kỳ này đã chốt, không thể ghi thêm chỉ số.' : undefined}
+                style={{ minHeight: 'var(--ma-hit-mobile)' }}
+                onClick={() => void chotKyDangChon()}
+              >
+                {dangChotKy ? 'Đang chốt…' : 'Chốt kỳ'}
+              </Button>
             </div>
-          ) : (
-            <p className="status-message">Không còn phòng nào thiếu chỉ số.</p>
-          )}
-        </section>
-      ) : null}
-      {loi ? <p className="status-message status-message--error" role="alert">{loi}</p> : null}
-
-      {duLieu ? (
-        duLieu.phong.length === 0 ? (
-          <p className="status-message">Không có phòng đủ điều kiện để ghi.</p>
-        ) : (
-          <div className="meter-list">
-            {duLieu.phong.map((phong) => (
-              <article key={phong.id} className="meter-room">
-                <header className="meter-room__header">
-                  <div>
-                    <p className="eyebrow">TẦNG {phong.tang}</p>
-                    <h4>Phòng {phong.soPhong}</h4>
-                  </div>
-                </header>
-                <div className="meter-services">
-                  {phong.dichVu.map((dichVu) => {
-                    const key = khoa(phong.id, dichVu.id)
-                    const giaTri = pendingValues[key] ?? ''
-                    const coThayCongTo = pendingReplacementFlags[key] ?? dichVu.coThayCongTo
-                    const chiSoThayCongTo = pendingReplacementReadings[key] ?? {
-                      chiSoCuoiCongToCu: dichVu.chiSoCuoiCongToCu ?? '',
-                      chiSoDauCongToMoi: dichVu.chiSoDauCongToMoi ?? '',
-                    }
-                    const anhDaChon = pendingPhotos[key]
-                    const thongBaoChiSo = thongBaoChiSoLui(giaTri, dichVu.chiSoDau, coThayCongTo)
-                    const mucTieuThu = thongBaoChiSo ? '' : tinhMucTieuThu(
-                      giaTri,
-                      dichVu.chiSoDau,
-                      coThayCongTo ? chiSoThayCongTo.chiSoCuoiCongToCu : undefined,
-                      coThayCongTo ? chiSoThayCongTo.chiSoDauCongToMoi : undefined,
-                    )
-                    const canhBaoTieuThu = thongBaoChiSo ? null : taoCanhBaoTieuThu(mucTieuThu, dichVu)
-
-                    return (
-                      <div key={key} className="meter-service">
-                        <div className="meter-service__meta">
-                          <strong>{dichVu.tenDichVu}</strong>
-                          <span>Chỉ số đầu: {dichVu.chiSoDau}</span>
-                        </div>
-                        <input
-                          ref={(element) => {
-                            inputRefs.current[key] = element
-                          }}
-                          className="meter-input"
-                          name={`chiSoCuoi-${phong.id}-${dichVu.id}`}
-                          type="number"
-                          inputMode="decimal"
-                          step="0.01"
-                          value={giaTri}
-                          onChange={(event) => {
-                            const value = event.target.value
-                            setPendingValues((current) => ({ ...current, [key]: value }))
-                          }}
-                          onKeyDown={(event) => {
-                            if (event.key !== 'Enter') return
-                            event.preventDefault()
-                            void luuChiSo(phong.id, dichVu.id)
-                          }}
-                        />
-                        <label className="meter-service__toggle">
-                          <input
-                            name={`coThayCongTo-${phong.id}-${dichVu.id}`}
-                            type="checkbox"
-                            checked={coThayCongTo}
-                            onChange={(event) => {
-                              const checked = event.target.checked
-                              setPendingReplacementFlags((current) => ({ ...current, [key]: checked }))
-                            }}
-                          />
-                          <span>Thay công tơ</span>
-                        </label>
-                        {coThayCongTo ? (
-                          <>
-                            <label className="field">
-                              <span>Chỉ số cuối công tơ cũ</span>
-                              <input
-                                name={`chiSoCuoiCongToCu-${phong.id}-${dichVu.id}`}
-                                type="number"
-                                inputMode="decimal"
-                                step="0.01"
-                                value={chiSoThayCongTo.chiSoCuoiCongToCu}
-                                onChange={(event) => {
-                                  const value = event.target.value
-                                  setPendingReplacementReadings((current) => ({
-                                    ...current,
-                                    [key]: { ...chiSoThayCongTo, chiSoCuoiCongToCu: value },
-                                  }))
-                                }}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Chỉ số đầu công tơ mới</span>
-                              <input
-                                name={`chiSoDauCongToMoi-${phong.id}-${dichVu.id}`}
-                                type="number"
-                                inputMode="decimal"
-                                step="0.01"
-                                value={chiSoThayCongTo.chiSoDauCongToMoi}
-                                onChange={(event) => {
-                                  const value = event.target.value
-                                  setPendingReplacementReadings((current) => ({
-                                    ...current,
-                                    [key]: { ...chiSoThayCongTo, chiSoDauCongToMoi: value },
-                                  }))
-                                }}
-                              />
-                            </label>
-                          </>
-                        ) : null}
-                        <label className="field field--file">
-                          <span>Ảnh công tơ</span>
-                          <input
-                            name={`anhCongTo-${phong.id}-${dichVu.id}`}
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            onChange={(event) => {
-                              void chonAnhCongTo(key, event.target.files?.[0] ?? null)
-                            }}
-                          />
-                        </label>
-                        {anhDaChon ? <p className="status-message">Đã chọn ảnh: {anhDaChon.name}</p> : null}
-                        {thongBaoChiSo ? (
-                          <p className="status-message status-message--error" role="alert">{thongBaoChiSo}</p>
-                        ) : null}
-                        {canhBaoTieuThu ? (
-                          <div className="meter-service__warning" role="alert">
-                            <p className="status-message status-message--warning">{canhBaoTieuThu.thongBao}</p>
-                            <button
-                              type="button"
-                              className="ghost-button"
-                              data-confirm-warning-key={key}
-                              disabled={dangLuu === key}
-                              onClick={() => void luuChiSo(phong.id, dichVu.id, true)}
-                            >
-                              {dangLuu === key ? 'Đang lưu…' : 'Xác nhận và lưu'}
-                            </button>
-                          </div>
-                        ) : null}
-                        {mucTieuThu ? (
-                          <p className="meter-service__consumption">Mức tiêu thụ: {mucTieuThu} {dichVu.donVi}</p>
-                        ) : null}
-                        <div className="meter-service__actions">
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            data-save-key={key}
-                            disabled={dangLuu === key || !giaTri || (coThayCongTo && (!chiSoThayCongTo.chiSoCuoiCongToCu || !chiSoThayCongTo.chiSoDauCongToMoi)) || Boolean(thongBaoChiSo) || Boolean(canhBaoTieuThu)}
-                            onClick={() => void luuChiSo(phong.id, dichVu.id)}
-                          >
-                            {dangLuu === key ? 'Đang lưu…' : 'Lưu'}
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  })}
+            {dangTaiPhongChuaGhiChiSo ? (
+              <p style={styleThongBao}>Đang tải phòng còn thiếu…</p>
+            ) : danhSachPhongChuaGhiChiSo.length > 0 ? (
+              <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
+                <StatusTag tone="urgent">PHÒNG CÒN THIẾU</StatusTag>
+                <p style={styleThongBao}>Phòng còn thiếu</p>
+                <div style={{ display: 'grid', gap: 'var(--ma-space-1)' }}>
+                  {danhSachPhongChuaGhiChiSo.map((phong) => (
+                    <Button
+                      key={phong.id}
+                      variant="text"
+                      size="sm"
+                      data-missing-room-key={phong.id}
+                      style={{ minHeight: 'var(--ma-hit-mobile)', justifyContent: 'flex-start' }}
+                      onClick={() => focusPhong(phong.id)}
+                    >
+                      Phòng {phong.soPhong} tầng {phong.tang}
+                    </Button>
+                  ))}
                 </div>
-              </article>
-            ))}
-          </div>
-        )
-      ) : null}
+              </div>
+            ) : (
+              <p style={styleThongBao}>Không còn phòng nào thiếu chỉ số.</p>
+            )}
+          </section>
+        ) : null}
+
+        {loi ? (
+          <p style={{ ...styleThongBao, color: 'var(--ma-urgent)' }} role="alert">
+            {loi}
+          </p>
+        ) : null}
+
+        {duLieu ? (
+          duLieu.phong.length === 0 ? (
+            <EmptyState
+              kind="first"
+              title="Không có phòng đủ điều kiện để ghi."
+              body="Toà này hiện chưa có phòng có dữ liệu công tơ trong kỳ đã chọn."
+            />
+          ) : (
+            <div style={{ display: 'grid', gap: 'var(--ma-space-6)', minWidth: 0 }}>
+              {duLieu.phong.map((phong) => {
+                const soDichVuChoGui = phong.dichVu.filter((dichVu) => Boolean(hangChoDongBo[khoa(phong.id, dichVu.id)])).length
+                const phongDaGhi = phong.dichVu.every((dichVu) => Boolean(dichVu.chiSoCuoi) && !hangChoDongBo[khoa(phong.id, dichVu.id)])
+                const soDichVuDaGhi = phong.dichVu.filter((dichVu) => Boolean(dichVu.chiSoCuoi)).length
+                const phongDangChoGui = soDichVuChoGui > 0
+                return (
+                  <article
+                    key={phong.id}
+                    style={{
+                      minWidth: 0,
+                      border: '1px solid var(--ma-border-default)',
+                      background: 'var(--ma-bg-card)',
+                    }}
+                  >
+                    <header
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: 'var(--ma-space-5)',
+                        padding: 'var(--ma-space-6)',
+                        borderBottom: '2px solid var(--ma-ink-900)',
+                      }}
+                    >
+                      <div>
+                        <SysLabel>TẦNG {phong.tang}</SysLabel>
+                        <h2
+                          style={{
+                            margin: 'var(--ma-space-1) 0 var(--ma-space-2)',
+                            fontFamily: 'var(--ma-font-mono)',
+                            fontSize: 'clamp(26px, 7vw, 34px)',
+                            lineHeight: 1,
+                            letterSpacing: 'var(--ma-tracking-figure)',
+                          }}
+                        >
+                          Phòng {phong.soPhong}
+                        </h2>
+                        <StatusTag tone={phongDaGhi ? 'done' : phongDangChoGui ? 'waiting' : 'urgent'}>
+                          {phongDaGhi ? 'ĐÃ GHI' : phongDangChoGui ? 'CHỜ GỬI' : 'CHƯA GHI'}
+                        </StatusTag>
+                      </div>
+                      <RoomCell
+                        room={phong.soPhong}
+                        state={phongDaGhi ? 'recorded' : phongDangChoGui ? 'repair' : 'missing'}
+                        label={
+                          phongDaGhi
+                            ? `Đã ghi · ${phong.dichVu.length} dịch vụ`
+                            : phongDangChoGui
+                              ? `Chờ gửi · ${soDichVuChoGui}/${phong.dichVu.length} dịch vụ`
+                              : `Chưa ghi · ${soDichVuDaGhi}/${phong.dichVu.length} dịch vụ`
+                        }
+                        style={{ minWidth: 128, flex: '0 1 180px' }}
+                      />
+                    </header>
+
+                    <div style={{ display: 'grid', minWidth: 0 }}>
+                      {phong.dichVu.map((dichVu) => {
+                        const key = khoa(phong.id, dichVu.id)
+                        const giaTri = pendingValues[key] ?? ''
+                        const coThayCongTo = pendingReplacementFlags[key] ?? dichVu.coThayCongTo
+                        const chiSoThayCongTo = pendingReplacementReadings[key] ?? {
+                          chiSoCuoiCongToCu: dichVu.chiSoCuoiCongToCu ?? '',
+                          chiSoDauCongToMoi: dichVu.chiSoDauCongToMoi ?? '',
+                        }
+                        const anhDaChon = pendingPhotos[key]
+                        const thongBaoChiSo = thongBaoChiSoLui(giaTri, dichVu.chiSoDau, coThayCongTo)
+                        const mucTieuThu = thongBaoChiSo ? '' : tinhMucTieuThu(
+                          giaTri,
+                          dichVu.chiSoDau,
+                          coThayCongTo ? chiSoThayCongTo.chiSoCuoiCongToCu : undefined,
+                          coThayCongTo ? chiSoThayCongTo.chiSoDauCongToMoi : undefined,
+                        )
+                        const canhBaoTieuThu = thongBaoChiSo ? null : taoCanhBaoTieuThu(mucTieuThu, dichVu)
+                        const daGhi = Boolean(dichVu.chiSoCuoi)
+                        const dangChoGui = Boolean(hangChoDongBo[key])
+                        const trangThaiDichVu = thongBaoChiSo || canhBaoTieuThu ? 'urgent' : dangChoGui ? 'waiting' : daGhi ? 'done' : 'neutral'
+                        const nhanTrangThaiDichVu = thongBaoChiSo ? 'KIỂM TRA CHỈ SỐ' : canhBaoTieuThu ? 'CAO BẤT THƯỜNG' : dangChoGui ? 'CHỜ GỬI' : daGhi ? 'ĐÃ GHI' : 'CHƯA GHI'
+                        const luuBiChan = kyDaChot || dangLuu === key || !giaTri || (coThayCongTo && (!chiSoThayCongTo.chiSoCuoiCongToCu || !chiSoThayCongTo.chiSoDauCongToMoi)) || Boolean(thongBaoChiSo) || Boolean(canhBaoTieuThu)
+                        const lyDoChanLuu = kyDaChot
+                          ? 'Kỳ này đã chốt, không thể sửa chỉ số.'
+                          : thongBaoChiSo || (coThayCongTo && (!chiSoThayCongTo.chiSoCuoiCongToCu || !chiSoThayCongTo.chiSoDauCongToMoi)) || !giaTri
+                            ? thongBaoChiSo || (coThayCongTo ? 'Cần đủ hai chỉ số của công tơ cũ và mới.' : 'Nhập chỉ số cuối trước khi lưu.')
+                            : canhBaoTieuThu
+                              ? 'Cần xem lại và xác nhận cảnh báo trước khi lưu.'
+                              : undefined
+
+                        return (
+                          <section
+                            key={key}
+                            style={{
+                              display: 'grid',
+                              gap: 'var(--ma-space-4)',
+                              minWidth: 0,
+                              padding: 'var(--ma-space-6)',
+                              borderBottom: '1px solid var(--ma-border-default)',
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: 'var(--ma-space-3)',
+                              }}
+                            >
+                              <div style={{ display: 'grid', gap: 'var(--ma-space-1)', minWidth: 0 }}>
+                                <strong style={{ fontSize: 16 }}>{dichVu.tenDichVu}</strong>
+                                <span style={{ color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)' }}>
+                                  Chỉ số đầu: <span style={{ fontFamily: 'var(--ma-font-mono)' }}>{dichVu.chiSoDau}</span>
+                                </span>
+                              </div>
+                              <StatusTag tone={trangThaiDichVu}>{nhanTrangThaiDichVu}</StatusTag>
+                            </div>
+
+                            <MeterInput
+                              label={`Chỉ số mới — phòng ${phong.soPhong}`}
+                              value={giaTri}
+                              previous={dichVu.chiSoDau}
+                              state={kyDaChot ? 'locked' : thongBaoChiSo ? 'error' : giaTri ? 'filled' : 'default'}
+                              error={thongBaoChiSo || undefined}
+                              style={{ width: '100%', minWidth: 0 }}
+                            >
+                              <input
+                                ref={(element) => {
+                                  inputRefs.current[key] = element
+                                }}
+                                id={`chiSoCuoi-${key}`}
+                                name={`chiSoCuoi-${phong.id}-${dichVu.id}`}
+                                type="number"
+                                inputMode="decimal"
+                                step="0.01"
+                                value={giaTri}
+                                disabled={kyDaChot}
+                                aria-label={`Chỉ số mới phòng ${phong.soPhong}`}
+                                aria-invalid={Boolean(thongBaoChiSo) || undefined}
+                                style={styleSoDo}
+                                onChange={(event) => {
+                                  const value = event.target.value
+                                  setPendingValues((current) => ({ ...current, [key]: value }))
+                                }}
+                                onKeyDown={(event) => {
+                                  if (event.key !== 'Enter') return
+                                  event.preventDefault()
+                                  void luuChiSo(phong.id, dichVu.id)
+                                }}
+                              />
+                            </MeterInput>
+
+                            {mucTieuThu ? (
+                              <p style={{ margin: 0, fontFamily: 'var(--ma-font-mono)', fontSize: 13, color: 'var(--ma-text-primary)' }}>
+                                Mức tiêu thụ: {mucTieuThu} {dichVu.donVi}
+                              </p>
+                            ) : null}
+
+                            <label
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--ma-space-3)',
+                                minHeight: 'var(--ma-hit-mobile)',
+                                font: 'var(--ma-text-body)',
+                              }}
+                            >
+                              <input
+                                name={`coThayCongTo-${phong.id}-${dichVu.id}`}
+                                type="checkbox"
+                                checked={coThayCongTo}
+                                disabled={kyDaChot}
+                                style={{ width: 20, height: 20, flex: 'none' }}
+                                onChange={(event) => {
+                                  const checked = event.target.checked
+                                  setPendingReplacementFlags((current) => ({ ...current, [key]: checked }))
+                                }}
+                              />
+                              <span>Công tơ đã thay</span>
+                            </label>
+
+                            {coThayCongTo ? (
+                              <div
+                                style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 15rem), 1fr))',
+                                  gap: 'var(--ma-space-4)',
+                                }}
+                              >
+                                <label style={styleNhanTruong}>
+                                  <span>Chỉ số cuối công tơ cũ</span>
+                                  <input
+                                    name={`chiSoCuoiCongToCu-${phong.id}-${dichVu.id}`}
+                                    type="number"
+                                    inputMode="decimal"
+                                    step="0.01"
+                                    value={chiSoThayCongTo.chiSoCuoiCongToCu}
+                                    disabled={kyDaChot}
+                                    style={styleSoDo}
+                                    onChange={(event) => {
+                                      const value = event.target.value
+                                      setPendingReplacementReadings((current) => ({
+                                        ...current,
+                                        [key]: { ...chiSoThayCongTo, chiSoCuoiCongToCu: value },
+                                      }))
+                                    }}
+                                  />
+                                </label>
+                                <label style={styleNhanTruong}>
+                                  <span>Chỉ số đầu công tơ mới</span>
+                                  <input
+                                    name={`chiSoDauCongToMoi-${phong.id}-${dichVu.id}`}
+                                    type="number"
+                                    inputMode="decimal"
+                                    step="0.01"
+                                    value={chiSoThayCongTo.chiSoDauCongToMoi}
+                                    disabled={kyDaChot}
+                                    style={styleSoDo}
+                                    onChange={(event) => {
+                                      const value = event.target.value
+                                      setPendingReplacementReadings((current) => ({
+                                        ...current,
+                                        [key]: { ...chiSoThayCongTo, chiSoDauCongToMoi: value },
+                                      }))
+                                    }}
+                                  />
+                                </label>
+                              </div>
+                            ) : null}
+
+                            <label style={styleNhanTruong}>
+                              <span>Chụp ảnh công tơ</span>
+                              <input
+                                name={`anhCongTo-${phong.id}-${dichVu.id}`}
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                disabled={kyDaChot}
+                                style={{ ...styleSoDo, padding: 'var(--ma-space-4) var(--ma-space-3)', fontFamily: 'var(--ma-font-ui)', fontSize: 13 }}
+                                onChange={(event) => {
+                                  void chonAnhCongTo(key, event.target.files?.[0] ?? null)
+                                }}
+                              />
+                            </label>
+                            {anhDaChon ? <p style={styleThongBao}>Đã chọn ảnh: {anhDaChon.name}</p> : null}
+
+                            {canhBaoTieuThu ? (
+                              <div
+                                role="alert"
+                                style={{
+                                  display: 'grid',
+                                  gap: 'var(--ma-space-3)',
+                                  padding: 'var(--ma-space-4)',
+                                  border: '1px solid var(--ma-urgent)',
+                                  background: 'var(--ma-urgent-bg)',
+                                }}
+                              >
+                                <StatusTag tone="urgent">CAO BẤT THƯỜNG</StatusTag>
+                                <p style={{ ...styleThongBao, color: 'var(--ma-urgent)' }}>{canhBaoTieuThu.thongBao}</p>
+                                <Button
+                                  variant="secondary"
+                                  size="md"
+                                  data-confirm-warning-key={key}
+                                  blocked={dangLuu === key || kyDaChot}
+                                  blockedReason={kyDaChot ? 'Kỳ này đã chốt, không thể xác nhận lại chỉ số.' : undefined}
+                                  style={{ minHeight: 'var(--ma-hit-mobile)', justifySelf: 'start' }}
+                                  onClick={() => void luuChiSo(phong.id, dichVu.id, true)}
+                                >
+                                  {dangLuu === key ? 'Đang lưu…' : 'Xác nhận và lưu'}
+                                </Button>
+                              </div>
+                            ) : null}
+
+                            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', gap: 'var(--ma-space-3)' }}>
+                              <Button
+                                variant="primary"
+                                size="md"
+                                glyph="cong-to"
+                                data-save-key={key}
+                                blocked={luuBiChan}
+                                aria-describedby={luuBiChan && lyDoChanLuu ? `ly-do-luu-${key}` : undefined}
+                                style={{ minHeight: 'var(--ma-hit-mobile)' }}
+                                onClick={() => void luuChiSo(phong.id, dichVu.id)}
+                              >
+                                {dangLuu === key ? 'Đang lưu…' : 'Lưu chỉ số'}
+                              </Button>
+                              {luuBiChan && lyDoChanLuu ? (
+                                <span id={`ly-do-luu-${key}`} style={{ maxWidth: 360, color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)', alignSelf: 'center' }}>
+                                  {lyDoChanLuu}
+                                </span>
+                              ) : null}
+                            </div>
+                          </section>
+                        )
+                      })}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )
+        ) : null}
+      </main>
     </section>
   )
 }
@@ -540,11 +1025,43 @@ function khoa(phongId: number, dichVuId: number) {
   return `${phongId}-${dichVuId}`
 }
 
+function khoaLuuTru(toaNhaId: number | null, kyId: number | null) {
+  if (toaNhaId === null || kyId === null) return null
+  return `miniapart-ghi-chi-so-${toaNhaId}-${kyId}`
+}
+
 function chuanHoaLoi(reason: unknown, fallback: string) {
   if (reason instanceof ApiError) {
     return reason.message
   }
   return reason instanceof Error ? reason.message : fallback
+}
+
+function docTrangThaiTrenMay(toaNhaId: number | null, kyId: number | null): StoredMeterState {
+  const key = khoaLuuTru(toaNhaId, kyId)
+  if (!key || typeof localStorage === 'undefined') {
+    return { banNhap: {}, hangCho: {} }
+  }
+
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return { banNhap: {}, hangCho: {} }
+    const parsed = JSON.parse(raw)
+    if (!laTrangThaiLuuTru(parsed)) return { banNhap: {}, hangCho: {} }
+    return parsed
+  } catch {
+    return { banNhap: {}, hangCho: {} }
+  }
+}
+
+function luuTrangThaiTrenMay(toaNhaId: number, kyId: number, state: StoredMeterState) {
+  const key = khoaLuuTru(toaNhaId, kyId)
+  if (!key || typeof localStorage === 'undefined') return
+  if (Object.keys(state.banNhap).length === 0 && Object.keys(state.hangCho).length === 0) {
+    localStorage.removeItem(key)
+    return
+  }
+  localStorage.setItem(key, JSON.stringify(state))
 }
 
 function taoGiaTriBanDau(duLieu: ThongTinGhiChiSo | null): PendingValues {
@@ -677,4 +1194,69 @@ function boAnhDaChon(current: PendingPhotos, key: string): PendingPhotos {
   const next = { ...current }
   delete next[key]
   return next
+}
+
+function xoaKhoiHangCho(current: PendingSyncQueue, key: string): PendingSyncQueue {
+  if (!(key in current)) return current
+  const next = { ...current }
+  delete next[key]
+  return next
+}
+
+function demSoPhongChoGui(hangChoDongBo: PendingSyncQueue) {
+  return new Set(Object.values(hangChoDongBo).map((item) => item.phongId)).size
+}
+
+function taoTrangThaiCanLuu(
+  duLieu: ThongTinGhiChiSo | null,
+  pendingValues: PendingValues,
+  pendingReplacementFlags: PendingReplacementFlags,
+  pendingReplacementReadings: PendingReplacementReadings,
+  hangChoDongBo: PendingSyncQueue,
+): StoredMeterState {
+  return {
+    banNhap: taoBanNhapCanLuu(duLieu, pendingValues, pendingReplacementFlags, pendingReplacementReadings),
+    hangCho: hangChoDongBo,
+  }
+}
+
+function taoBanNhapCanLuu(
+  duLieu: ThongTinGhiChiSo | null,
+  pendingValues: PendingValues,
+  pendingReplacementFlags: PendingReplacementFlags,
+  pendingReplacementReadings: PendingReplacementReadings,
+): StoredDrafts {
+  const ketQua: StoredDrafts = {}
+
+  duLieu?.phong.forEach((phong) => {
+    phong.dichVu.forEach((dichVu) => {
+      const key = khoa(phong.id, dichVu.id)
+      const chiSoCuoi = pendingValues[key] ?? ''
+      const coThayCongTo = pendingReplacementFlags[key] ?? dichVu.coThayCongTo
+      const chiSoThayCongTo = pendingReplacementReadings[key] ?? {
+        chiSoCuoiCongToCu: dichVu.chiSoCuoiCongToCu ?? '',
+        chiSoDauCongToMoi: dichVu.chiSoDauCongToMoi ?? '',
+      }
+
+      if (
+        chiSoCuoi !== (dichVu.chiSoCuoi ?? '')
+        || coThayCongTo !== dichVu.coThayCongTo
+        || chiSoThayCongTo.chiSoCuoiCongToCu !== (dichVu.chiSoCuoiCongToCu ?? '')
+        || chiSoThayCongTo.chiSoDauCongToMoi !== (dichVu.chiSoDauCongToMoi ?? '')
+      ) {
+        ketQua[key] = {
+          chiSoCuoi,
+          coThayCongTo,
+          chiSoCuoiCongToCu: chiSoThayCongTo.chiSoCuoiCongToCu,
+          chiSoDauCongToMoi: chiSoThayCongTo.chiSoDauCongToMoi,
+        }
+      }
+    })
+  })
+
+  return ketQua
+}
+
+function laTrangThaiLuuTru(value: unknown): value is StoredMeterState {
+  return typeof value === 'object' && value !== null && 'banNhap' in value && 'hangCho' in value
 }

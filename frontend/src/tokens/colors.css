@@ -1,0 +1,63 @@
+:root {
+  /* Nền — tông giấy ấm, chroma rất thấp */
+  --ma-paper-0: #FFFFFF;
+  --ma-paper-1: #F9F7F6;
+  --ma-paper-2: #F6F4F2;
+  --ma-paper-3: #F2F0ED;
+
+  /* Mực */
+  --ma-ink-900: #161310;
+  --ma-ink-600: #585551;
+  --ma-ink-500: #75716D;
+  --ma-ink-400: #78746F;
+  --ma-ink-300: #95918D;
+
+  /* Viền */
+  --ma-line-100: #EAE7E4;
+  --ma-line-200: #E1DDDA;
+  --ma-line-300: #D4D0CB;
+  --ma-line-600: #75716D;
+
+  /* Tín hiệu — ba màu, không hơn */
+  --ma-red-600: #972527;
+  --ma-red-100: #FFE7E4;
+  --ma-amber-600: #995600;
+  --ma-amber-500: #BD7221;
+  --ma-green-700: #124227;
+  --ma-green-600: #17653C;
+  --ma-green-100: #DCF2E3;
+
+  /* Bí danh theo ngữ nghĩa — dùng cái này khi dựng giao diện */
+  --ma-bg-page: var(--ma-paper-1);
+  --ma-bg-card: var(--ma-paper-0);
+  --ma-bg-nav: var(--ma-paper-3);
+  --ma-bg-sunken: var(--ma-paper-2);
+  --ma-bg-nav-active: #FDFCFB;
+  --ma-bg-inverse: var(--ma-ink-900);
+
+  --ma-text-primary: var(--ma-ink-900);
+  --ma-text-secondary: var(--ma-ink-600);
+  --ma-text-muted: var(--ma-ink-400);
+  --ma-text-disabled: var(--ma-ink-300);
+  --ma-text-on-inverse: #F6F5F3;
+  --ma-text-secondary-on-inverse: #D0C5BA;
+
+  --ma-border-default: var(--ma-line-200);
+  --ma-border-subtle: var(--ma-line-100);
+  --ma-border-dashed: var(--ma-line-300);
+  --ma-border-strong: var(--ma-line-600);
+  --ma-border-inverse: #59544F;
+
+  /* Trạng thái nghiệp vụ */
+  --ma-urgent: var(--ma-red-600);
+  --ma-urgent-bg: var(--ma-red-100);
+  --ma-waiting: var(--ma-amber-600);
+  --ma-waiting-border: var(--ma-amber-500);
+  --ma-done: var(--ma-green-600);
+  --ma-done-bg: var(--ma-green-100);
+  --ma-done-text: var(--ma-green-700);
+  --ma-vacant: var(--ma-ink-300);
+
+  --ma-focus-ring: var(--ma-red-600);
+  --ma-focus-halo: var(--ma-red-100);
+}

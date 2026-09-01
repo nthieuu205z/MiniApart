@@ -1,0 +1,21 @@
+:root {
+  /* Góc vuông tuyệt đối. Không bo tròn ở bất kỳ đâu trong nội dung. */
+  --ma-radius: 0;
+
+  --ma-border-width: 1px;
+  --ma-border-width-strong: 2px;
+  --ma-border-width-rule: 2px;   /* gạch dưới cụm số liệu */
+
+  --ma-icon-stroke: 1.6px;
+  --ma-icon-size: 16px;
+  --ma-icon-viewbox: 16;
+
+  /* Nhấn trạng thái ở đáy thẻ phòng */
+  --ma-flag-inset: inset 0 -3px 0;
+  /* Nhấn mục menu đang chọn */
+  --ma-nav-active-inset: inset 3px 0 0;
+
+  /* Không dùng bóng đổ trong nội dung. Chỉ hai chỗ sau được phép. */
+  --ma-shadow-focus: 0 0 0 2px var(--ma-focus-halo);
+  --ma-shadow-frame: 0 2px 18px rgba(41, 34, 27, 0.16);
+}
