@@ -1,0 +1,27 @@
+{
+  "ticket": "08",
+  "baselineStyles": "git show 61067a0:frontend/src/styles.css",
+  "baselineStylesSha256": "bfed481218b5c6334a2a496d87a200ede90ac3fe8f0246f123a704becc6b15b9",
+  "finalStyles": "frontend/src/styles.css from the current worktree",
+  "finalStylesSha256": "c9ad726fe1f1a2b8872df8993ad359d03cce6694cc193f3c976a11eca1b46095",
+  "fixture": "frontend/evidence/ticket-08/fixture.html",
+  "viewport": {
+    "width": 1440,
+    "height": 3000,
+    "deviceScaleFactor": 1
+  },
+  "images": {
+    "before": "frontend/evidence/ticket-08/before.png",
+    "after": "frontend/evidence/ticket-08/after.png",
+    "diff": "frontend/evidence/ticket-08/diff.png"
+  },
+  "comparison": {
+    "width": 1440,
+    "height": 3000,
+    "totalPixels": 4320000,
+    "differingPixels": 0,
+    "maxChannelDelta": 0,
+    "totalAbsDelta": 0
+  },
+  "pixelIdentity": true
+}
