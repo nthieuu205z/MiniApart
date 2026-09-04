@@ -32,7 +32,7 @@ const BASE: React.CSSProperties = {
 }
 
 const SIZES: Record<NonNullable<ButtonProps['size']>, React.CSSProperties> = {
-  md: { fontSize: 14, fontWeight: 700, padding: "11px 17px", minHeight: 42 },
+  md: { fontSize: 14, fontWeight: 700, padding: "11px 17px", minHeight: 44 },
   sm: { fontSize: 13.5, fontWeight: 600, padding: "9px 14px", minHeight: 36 },
 }
 

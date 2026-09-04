@@ -11,6 +11,8 @@
   --ma-ink-500: #75716D;
   --ma-ink-400: #78746F;
   --ma-ink-300: #95918D;
+  /* Giữ màu tiêu đề màn Ghi chỉ số trong đợt dọn CSS cũ (Ticket 08). */
+  --ma-ink-screen-title: #0F4F4A;
 
   /* Viền */
   --ma-line-100: #EAE7E4;

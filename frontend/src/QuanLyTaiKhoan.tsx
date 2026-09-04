@@ -12,6 +12,13 @@ import {
   type ThongTinVaiTro,
   type YeuCauQuanLyNguoiDung,
 } from './api'
+import { Button } from './design/core/Button'
+import { StatusTag } from './design/core/StatusTag'
+import { SysLabel } from './design/core/SysLabel'
+import { ConfirmDialog } from './design/feedback/ConfirmDialog'
+import { EmptyState } from './design/feedback/EmptyState'
+import { Toast } from './design/feedback/Toast'
+import { ActionRow, CheckboxField, CheckboxGroup, FormField, FormPanel, ScreenHeader, ScreenNotice, ScreenSurface, TableActions, TableFrame } from './design/layout/Screen'
 
 type Props = {
   token: string
@@ -29,6 +36,7 @@ export default function QuanLyTaiKhoan({ token }: Props) {
   const [dangTai, setDangTai] = useState(true)
   const [dangLuu, setDangLuu] = useState(false)
   const [idDangKhoa, setIdDangKhoa] = useState<number | null>(null)
+  const [nguoiDungChoKhoa, setNguoiDungChoKhoa] = useState<ThongTinQuanLyNguoiDung | null>(null)
   const [loi, setLoi] = useState<string | null>(null)
   const [thongBao, setThongBao] = useState<string | null>(null)
 
@@ -129,29 +137,25 @@ export default function QuanLyTaiKhoan({ token }: Props) {
   }
 
   return (
-    <section className="account-management" data-testid="account-management" aria-labelledby="account-management-title">
-      <div className="account-management__heading">
+    <ScreenSurface data-testid="account-management" aria-labelledby="account-management-title">
+      <ScreenHeader action={<Button onClick={batDauTao}>Tạo tài khoản</Button>}>
         <div>
-          <p className="eyebrow">FR-AUT-06</p>
+          <SysLabel>FR-AUT-06</SysLabel>
           <h3 id="account-management-title">Quản lý tài khoản</h3>
         </div>
-        <button type="button" className="primary-button" onClick={batDauTao}>
-          Tạo tài khoản
-        </button>
-      </div>
+      </ScreenHeader>
 
-      <p className="status-message">
+      <ScreenNotice>
         Tạo tài khoản sẽ gửi mã kích hoạt để người dùng tự chọn mật khẩu. Tài khoản đã phát sinh dữ liệu chỉ được khoá, không xoá.
-      </p>
+      </ScreenNotice>
 
-      {loi ? <p className="status-message status-message--error" role="alert">{loi}</p> : null}
-      {thongBao ? <p className="status-message status-message--success" role="status">{thongBao}</p> : null}
+      {loi ? <ScreenNotice tone="urgent">{loi}</ScreenNotice> : null}
+      {thongBao ? <Toast>{thongBao}</Toast> : null}
 
       {dangTai ? (
-        <p className="status-message" aria-live="polite">Đang tải danh sách tài khoản…</p>
+        <ScreenNotice live>Đang tải danh sách tài khoản…</ScreenNotice>
       ) : (
-        <div className="account-table-wrapper">
-          <table className="account-table">
+        <TableFrame minWidth={700}>
             <caption>Danh sách tài khoản</caption>
             <thead>
               <tr>
@@ -164,59 +168,54 @@ export default function QuanLyTaiKhoan({ token }: Props) {
               </tr>
             </thead>
             <tbody>
-              {danhSach.map((nguoiDung) => (
+              {danhSach.length === 0 ? (
+                <tr>
+                  <td colSpan={6}><EmptyState title="Chưa có tài khoản nào." /></td>
+                </tr>
+              ) : danhSach.map((nguoiDung) => (
                 <tr key={nguoiDung.id} data-account-id={nguoiDung.id}>
                   <th scope="row">{nguoiDung.hoTen}</th>
                   <td>{nguoiDung.soDienThoai}</td>
                   <td>{nguoiDung.tenVaiTro}</td>
                   <td>{danhSachToaNha(nguoiDung.toaNhaIds, toaNha)}</td>
-                  <td>
-                    <span className={`account-status account-status--${nguoiDung.trangThai.toLowerCase()}`}>
-                      {nguoiDung.tenTrangThai}
-                    </span>
-                  </td>
-                  <td className="account-table__actions">
-                    <button type="button" className="ghost-button" onClick={() => batDauSua(nguoiDung)}>
-                      Sửa {nguoiDung.hoTen}
-                    </button>
+                  <td><StatusTag tone={nguoiDung.trangThai === 'BI_KHOA' ? 'closed' : 'done'}>{nguoiDung.tenTrangThai}</StatusTag></td>
+                  <td><TableActions>
+                    <Button variant="secondary" onClick={() => batDauSua(nguoiDung)}>Sửa {nguoiDung.hoTen}</Button>
                     {nguoiDung.trangThai === 'HOAT_DONG' ? (
-                      <button
+                      <Button
+                        variant="secondary"
                         type="button"
-                        className="danger-button"
-                        disabled={idDangKhoa === nguoiDung.id}
-                        onClick={() => khoaTaiKhoan(nguoiDung)}
+                        blocked={idDangKhoa === nguoiDung.id}
+                        blockedReason={idDangKhoa === nguoiDung.id ? 'Đang cập nhật trạng thái tài khoản.' : undefined}
+                        onClick={() => setNguoiDungChoKhoa(nguoiDung)}
                       >
                         {idDangKhoa === nguoiDung.id ? 'Đang khoá…' : `Khoá ${nguoiDung.hoTen}`}
-                      </button>
+                      </Button>
                     ) : null}
-                  </td>
+                  </TableActions></td>
                 </tr>
               ))}
             </tbody>
-          </table>
-          {danhSach.length === 0 ? <p className="status-message">Chưa có tài khoản nào.</p> : null}
-        </div>
+        </TableFrame>
       )}
 
       {bieuMau ? (
-        <form className="account-form" data-testid="account-form" onSubmit={luuTaiKhoan}>
+        <FormPanel testId="account-form" onSubmit={luuTaiKhoan}>
           <div>
-            <p className="eyebrow">FR-AUT-06</p>
+            <SysLabel>FR-AUT-06</SysLabel>
             <h4>{bieuMau.id === null ? 'Tạo tài khoản' : 'Sửa tài khoản'}</h4>
           </div>
 
-          <label className="field">
-            <span>Họ tên</span>
+          <FormField label="Họ tên">
             <input
               name="hoTen"
               value={bieuMau.hoTen}
               onChange={(event) => setBieuMau((current) => current ? { ...current, hoTen: event.target.value } : current)}
               required
             />
-          </label>
+          </FormField>
 
-          <label className="field">
-            <span>Số điện thoại</span>
+          <FormField label="Số điện thoại">
             <input
               name="soDienThoai"
               value={bieuMau.soDienThoai}
@@ -224,10 +223,9 @@ export default function QuanLyTaiKhoan({ token }: Props) {
               inputMode="tel"
               required
             />
-          </label>
+          </FormField>
 
-          <label className="field">
-            <span>Vai trò</span>
+          <FormField label="Vai trò">
             <select
               name="vaiTro"
               value={bieuMau.vaiTro}
@@ -236,15 +234,14 @@ export default function QuanLyTaiKhoan({ token }: Props) {
             >
               {vaiTro.map((role) => <option key={role.vaiTro} value={role.vaiTro}>{role.tenVaiTro}</option>)}
             </select>
-          </label>
+          </FormField>
 
-          <fieldset className="building-picker">
-            <legend>Toà nhà được giao</legend>
+          <CheckboxGroup legend="Toà nhà được giao">
             {toaNha.length === 0 ? (
-              <p className="status-message">Chưa có toà nhà để gán.</p>
+              <ScreenNotice>Chưa có toà nhà để gán.</ScreenNotice>
             ) : (
               toaNha.map((item) => (
-                <label key={item.id} className="checkbox-field">
+                <CheckboxField key={item.id}>
                   <input
                     type="checkbox"
                     name="toaNhaIds"
@@ -259,23 +256,29 @@ export default function QuanLyTaiKhoan({ token }: Props) {
                     })}
                   />
                   <span>{item.maToa} · {item.ten}</span>
-                </label>
+                </CheckboxField>
               ))
             )}
-          </fieldset>
+          </CheckboxGroup>
 
-          <p className="status-message">Không nhập mật khẩu hộ người dùng. Mã kích hoạt sẽ được gửi riêng để họ tự đặt mật khẩu.</p>
-          <div className="account-form__actions">
-            <button type="submit" className="primary-button" disabled={dangLuu}>
+          <ScreenNotice>Không nhập mật khẩu hộ người dùng. Mã kích hoạt sẽ được gửi riêng để họ tự đặt mật khẩu.</ScreenNotice>
+          <ActionRow>
+            <Button type="submit" blocked={dangLuu} blockedReason={dangLuu ? 'Đang lưu tài khoản.' : undefined}>
               {dangLuu ? 'Đang lưu…' : bieuMau.id === null ? 'Tạo tài khoản' : 'Lưu thay đổi'}
-            </button>
-            <button type="button" className="ghost-button" onClick={huyBieuMau} disabled={dangLuu}>
-              Huỷ
-            </button>
-          </div>
-        </form>
+            </Button>
+            <Button type="button" variant="secondary" onClick={huyBieuMau} blocked={dangLuu}>Huỷ</Button>
+          </ActionRow>
+        </FormPanel>
       ) : null}
-    </section>
+      {nguoiDungChoKhoa ? <ConfirmDialog
+        title={`Khoá tài khoản ${nguoiDungChoKhoa.hoTen}?`}
+        consequence={<>Người dùng sẽ <strong>không đăng nhập được nữa</strong>; lịch sử thao tác và bản ghi đã tạo vẫn giữ nguyên. Có thể mở khoá lại được.</>}
+        confirmLabel="Khoá tài khoản"
+        cancelLabel="Để sau"
+        onCancel={() => setNguoiDungChoKhoa(null)}
+        onConfirm={() => { const account = nguoiDungChoKhoa; setNguoiDungChoKhoa(null); void khoaTaiKhoan(account) }}
+      /> : null}
+    </ScreenSurface>
   )
 }
 

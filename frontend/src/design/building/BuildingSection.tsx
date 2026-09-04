@@ -25,11 +25,18 @@ export interface BuildingSectionProps extends React.HTMLAttributes<HTMLDivElemen
 
 /** Mặt cắt toà nhà: tầng cao nhất ở trên, mái và móng vẽ bằng dải gạch chéo. */
 export function BuildingSection({ label, floors, columns = 6, showStairs = true, style, ...rest }: BuildingSectionProps): React.ReactElement {
-  const grid = `34px repeat(${columns}, 1fr)${showStairs ? " 30px" : ""}`;
+  const grid = `34px repeat(${columns}, minmax(0, 1fr))${showStairs ? " 30px" : ""}`;
+  const roomGridStyle: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+    gridColumn: showStairs ? '2 / -2' : '2 / -1',
+    gap: 6,
+    minWidth: 0,
+  }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6, ...(style || {}) }} {...rest}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0, ...(style || {}) }} {...rest}>
       {label ? (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 2 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, minWidth: 0, paddingBottom: 2 }}>
           <SysLabel style={{ fontSize: 10, letterSpacing: "0.12em" }}>{label}</SysLabel>
           <SysLabel style={{ fontSize: 10, letterSpacing: "0.12em" }}>Sân thượng</SysLabel>
         </div>
@@ -43,7 +50,7 @@ export function BuildingSection({ label, floors, columns = 6, showStairs = true,
         }}
       />
       {floors.map((floor) => (
-        <div key={floor.name} style={{ display: "grid", gridTemplateColumns: grid, gap: 6, alignItems: "stretch" }}>
+        <section key={floor.name} className="room-floor-section" data-testid="room-floor-section" aria-labelledby={`floor-title-${floor.name}`} style={{ display: "grid", gridTemplateColumns: grid, gap: 6, minWidth: 0, alignItems: "stretch" }}>
           <div
             style={{
               fontFamily: "var(--ma-font-mono)",
@@ -52,15 +59,16 @@ export function BuildingSection({ label, floors, columns = 6, showStairs = true,
               color: "var(--ma-text-secondary)",
               display: "flex",
               alignItems: "center",
+              minWidth: 0,
             }}
           >
-            {floor.name}
+            <h4 id={`floor-title-${floor.name}`} style={{ margin: 0, font: 'inherit' }}>Tầng {floor.name.replace(/^T/, '')}</h4>
           </div>
-          {floor.rooms.map((r) => (
-            <RoomCell key={r.room} {...r} />
-          ))}
-          {showStairs ? <div style={{ borderLeft: "1px solid var(--ma-border-default)" }} /> : null}
-        </div>
+          <div className="room-floor-grid" data-testid="room-floor-grid" data-compact-layout="true" style={roomGridStyle}>
+            {floor.rooms.map(({ className, onClick, onKeyDown, ...r }) => <RoomCell key={r.room} className={`room-tile ${className ?? ''}`} data-testid="room-tile" role="button" tabIndex={0} onClick={onClick} onKeyDown={(event) => { onKeyDown?.(event); if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick?.(event as unknown as React.MouseEvent<HTMLDivElement>) } }} {...r} />)}
+          </div>
+          {showStairs ? <div style={{ borderLeft: "1px solid var(--ma-border-default)", gridColumn: '-2 / -1' }} /> : null}
+        </section>
       ))}
       <div style={{ borderTop: "2px solid var(--ma-ink-900)", marginTop: 2 }} />
       <div

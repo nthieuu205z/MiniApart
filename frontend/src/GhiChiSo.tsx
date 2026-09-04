@@ -393,6 +393,7 @@ export default function GhiChiSo({ token }: Props) {
               id="meter-title"
               style={{
                 margin: 'var(--ma-space-2) 0 var(--ma-space-1)',
+                color: 'var(--ma-ink-screen-title)',
                 font: 'var(--ma-text-screen-title)',
                 letterSpacing: 'var(--ma-tracking-title)',
               }}
@@ -481,7 +482,7 @@ export default function GhiChiSo({ token }: Props) {
             >
               <div>
                 <SysLabel>FR-MTR-08</SysLabel>
-                <h2 id="meter-close-title" style={{ margin: 'var(--ma-space-1) 0 0', font: 'var(--ma-text-block-title)' }}>
+                <h2 id="meter-close-title" style={{ margin: 'var(--ma-space-1) 0 0', font: 'var(--ma-text-block-title)', letterSpacing: 'var(--ma-tracking-title)' }}>
                   Chốt kỳ
                 </h2>
               </div>

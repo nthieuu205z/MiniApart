@@ -72,6 +72,8 @@ const MENU_BY_ROLE: Array<{
   },
 ]
 
+const ORIGINAL_INNER_WIDTH = window.innerWidth
+
 describe('App role navigation', () => {
   let mountedApp: MountedApp | null = null
 
@@ -92,6 +94,7 @@ describe('App role navigation', () => {
     }
     clearStoredToken()
     vi.restoreAllMocks()
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: ORIGINAL_INNER_WIDTH })
   })
 
   it.each(MENU_BY_ROLE)(
@@ -107,6 +110,132 @@ describe('App role navigation', () => {
       expect(mountedApp.container.textContent).toContain('Trang chủ')
     },
   )
+
+  it('FR-AUT-04 shows the manager shell with grouped navigation and top-bar context', async () => {
+    const quanLyToaNha = MENU_BY_ROLE[2]
+    mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.textContent).toContain('Hàng ngày')
+      expect(mountedApp!.container.textContent).toContain('Tiền')
+      expect(mountedApp!.container.textContent).toContain('Toà nhà')
+      expect(mountedApp!.container.textContent).toContain('Thông báo')
+    })
+
+    expect(mountedApp.container.textContent).toContain('Quản lý toà nhà')
+    expect(mountedApp.container.textContent).toContain('Kỳ')
+  })
+
+  it('NFR-USA-01 stacks the login panels at 360px so the form remains within the viewport', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
+    const fetchMock = buildFetchMock(MENU_BY_ROLE[2].nguoiDung)
+    vi.stubGlobal('fetch', fetchMock)
+
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    mountedApp = { container, root }
+
+    await act(async () => {
+      root.render(<App />)
+    })
+
+    const loginGrid = await vi.waitFor(() => {
+      const grid = container.querySelector('main > section') as HTMLElement | null
+      expect(grid).not.toBeNull()
+      return grid as HTMLElement
+    })
+
+    expect(loginGrid.style.gridTemplateColumns).toBe('minmax(0, 1fr)')
+  })
+
+  it('NFR-USA-01 places all role navigation behind a bounded five-slot bottom bar at 360px', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
+    const quanLyToaNha = MENU_BY_ROLE[2]
+    mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung)
+
+    const nav = await vi.waitFor(() => {
+      const element = mountedApp!.container.querySelector('nav')
+      expect(element).not.toBeNull()
+      return element as HTMLElement
+    })
+    const mobileBar = nav.querySelector('[data-testid="mobile-nav-bar"]') as HTMLElement
+
+    expect(nav.dataset.navigationLayout).toBe('bottom')
+    expect(nav.style.position).toBe('fixed')
+    expect(nav.style.bottom).toBe('0px')
+    expect(nav.style.left).toBe('0px')
+    expect(nav.style.right).toBe('0px')
+    expect(nav.style.width).toBe('100%')
+    expect(nav.style.overflowX).toBe('hidden')
+    expect(mobileBar.style.display).toBe('grid')
+    expect(mobileBar.style.gridTemplateColumns).toBe('repeat(5, minmax(0, 1fr))')
+    expect(mobileBar.querySelectorAll('a')).toHaveLength(4)
+    expect([...mobileBar.querySelectorAll('a')].map((link) => link.textContent?.trim())).toEqual(quanLyToaNha.menuLabels.slice(0, 4))
+    expect(readMenuLabels(mountedApp.container)).toEqual(quanLyToaNha.menuLabels)
+
+    const moreButton = findButton(mountedApp.container, 'Thêm')
+    await act(async () => moreButton.click())
+    expect((nav.querySelector('[data-testid="mobile-nav-more"]') as HTMLElement).style.display).toBe('grid')
+    expect(nav.querySelector('a[href="/phong"]')?.textContent?.trim()).toBe('Phòng')
+
+    await act(async () => (nav.querySelector('a[href="/phong"]') as HTMLAnchorElement).click())
+    expect(window.location.pathname).toBe('/phong')
+  })
+
+  it('NFR-USA-01 preserves the vertical left navigation contract at desktop width', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 })
+    mountedApp = await mountAppAndLogin(MENU_BY_ROLE[2].nguoiDung)
+
+    const nav = await vi.waitFor(() => mountedApp!.container.querySelector('nav') as HTMLElement)
+    const appShell = mountedApp.container.querySelector('main') as HTMLElement
+
+    expect(nav.dataset.navigationLayout).toBe('side')
+    expect(nav.style.position).toBe('')
+    expect(nav.style.width).toBe('var(--ma-nav-width)')
+    expect(appShell.style.gridTemplateColumns).toBe('var(--ma-nav-width) minmax(0, 1fr)')
+    expect(readMenuLabels(mountedApp.container)).toEqual(MENU_BY_ROLE[2].menuLabels)
+  })
+
+  it('NFR-USA-01 keeps App-owned definition-list values on design tokens after legacy colors are removed', async () => {
+    mountedApp = await mountAppAndLogin(MENU_BY_ROLE[2].nguoiDung)
+
+    const values = await vi.waitFor(() => {
+      const definitionValues = [...mountedApp!.container.querySelectorAll('dd')]
+      expect(definitionValues).not.toHaveLength(0)
+      return definitionValues
+    })
+
+    expect(values.map((value) => value.style.color)).toEqual([
+      'var(--ma-text-primary)',
+      'var(--ma-text-primary)',
+      'var(--ma-text-primary)',
+      'var(--ma-done-text)',
+      'var(--ma-done-text)',
+    ])
+  })
+
+  it('NFR-USA-03 gives every role-navigation link the 44px mobile hit target', async () => {
+    const quanLyToaNha = MENU_BY_ROLE[2]
+    mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelectorAll('nav a')).not.toHaveLength(0)
+    })
+
+    for (const link of mountedApp.container.querySelectorAll('nav a')) {
+      expect((link as HTMLElement).style.minHeight).toBe('var(--ma-hit-mobile)')
+    }
+  })
+
+  it('FR-MTR-01 keeps the system-status section visible on the meter-reading route', async () => {
+    const quanLyToaNha = MENU_BY_ROLE[2]
+    mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung, '/ghi-chi-so')
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('#status-title')?.textContent).toBe('Trạng thái hệ thống')
+    })
+  })
 
   it('FR-AUT-04 shows a friendly no-permission state for a typed route outside the role menu', async () => {
     const chuSoHuu = MENU_BY_ROLE[1]
@@ -200,6 +329,17 @@ describe('App role navigation', () => {
     const lockButton = findButton(mountedApp.container, 'Khoá Thợ trực mới đã sửa')
     await act(async () => {
       lockButton.click()
+      await Promise.resolve()
+    })
+
+    expect(fetchMock).not.toHaveBeenCalledWith('/api/nguoi-dung/6/khoa', expect.objectContaining({ method: 'POST' }))
+    const confirmLockButton = await vi.waitFor(() => {
+      const button = findButton(mountedApp!.container, 'Khoá tài khoản')
+      expect(mountedApp!.container.querySelector('[role="dialog"]')).not.toBeNull()
+      return button
+    })
+    await act(async () => {
+      confirmLockButton.click()
     })
 
     await vi.waitFor(() => {
