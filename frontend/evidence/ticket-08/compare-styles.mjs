@@ -1,18 +1,30 @@
 import { execFileSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { deflateSync, inflateSync } from 'node:zlib'
+import { createServer } from 'vite'
 
 const scriptPath = fileURLToPath(import.meta.url)
 const evidenceDir = dirname(scriptPath)
 const repoRoot = resolve(evidenceDir, '../../..')
-const fixturePath = join(evidenceDir, 'fixture.html')
+const frontendRoot = join(repoRoot, 'frontend')
 const chromePath = process.env.CHROME_BIN ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-const viewport = { width: 1440, height: 3000, deviceScaleFactor: 1 }
-const tokenFiles = ['borders.css', 'colors.css', 'fonts.css', 'motion.css', 'spacing.css', 'typography.css']
+const viewport = { width: 1440, height: 2200, deviceScaleFactor: 1 }
+const fixtureConfigPath = join(evidenceDir, 'fixture-config.json')
+const renderedComponentFiles = [
+  'frontend/evidence/ticket-08/fixture.tsx',
+  'frontend/src/App.tsx',
+  'frontend/src/DanhMucToaNha.tsx',
+  'frontend/src/DanhMucPhong.tsx',
+  'frontend/src/GhiChiSo.tsx',
+  'frontend/src/HoaDon.tsx',
+  'frontend/src/QuanLyTaiKhoan.tsx',
+]
+
+export const SCREEN_CASES = JSON.parse(readFileSync(fixtureConfigPath, 'utf8'))
 
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
 
@@ -31,32 +43,15 @@ function readBaselineStyles() {
   })
 }
 
-function readTokenStyles() {
-  const fontDirectory = pathToFileURL(join(repoRoot, 'frontend/src/assets/fonts')).href.replace(/\/$/, '')
-  return tokenFiles
-    .map((fileName) => readFileSync(join(repoRoot, 'frontend/src/tokens', fileName), 'utf8'))
-    .join('\n')
-    .replaceAll("url('../assets/fonts/", `url('${fontDirectory}/`)
-}
-
-function createFixture(styles) {
-  const fixture = readFileSync(fixturePath, 'utf8')
-  const requiredHooks = [
-    'data-testid="building-catalog"',
-    'data-testid="room-catalog"',
-    'data-testid="meter-screen"',
-    'data-testid="invoice-detail"',
-    'data-testid="account-management"',
-    'class="eyebrow"',
-    'class="status-message"',
-    'class="field"',
-    'class="ma-no-print"',
-    'class="sr-only"',
-  ]
-
-  for (const hook of requiredHooks) assert(fixture.includes(hook), `fixture is missing required hook: ${hook}`)
-
-  return fixture.replace('__TOKENS__', readTokenStyles()).replace('__STYLES__', styles)
+export function assertRenderedApp(screen, evidence) {
+  assert(evidence.ready, `real App render did not become ready for ${screen.id}`)
+  assert(!evidence.invalid, `runtime App render is invalid for ${screen.id}: ${evidence.invalid}`)
+  assert(evidence.renderer === 'App', `runtime document for ${screen.id} was not rendered through App`)
+  assert(evidence.screen === screen.id, `runtime document reports the wrong screen for ${screen.id}`)
+  assert(evidence.surfacePresent, `runtime App output is missing ${screen.testId}`)
+  assert(evidence.settledTextPresent, `runtime App output for ${screen.id} did not pass the settled textContent check: ${screen.readyText}`)
+  assert(evidence.route === screen.route && evidence.locationPathname === screen.route, `runtime App output reports the wrong route for ${screen.id}`)
+  assert(evidence.apiRequests === 'deterministic-mock' && evidence.unexpectedRequestCount === 0, `runtime App output for ${screen.id} did not use only the deterministic API fixture`)
 }
 
 function pngChunk(type, data) {
@@ -264,86 +259,208 @@ function sleep(milliseconds) {
   return new Promise((resolvePromise) => setTimeout(resolvePromise, milliseconds))
 }
 
-async function stopChrome(chromeProcess) {
-  if (chromeProcess.exitCode !== null) return
-
-  await new Promise((resolvePromise) => {
-    let forcedTermination
-    const finish = () => {
-      clearTimeout(forcedTermination)
-      resolvePromise()
-    }
-    chromeProcess.once('exit', finish)
-    try {
-      process.kill(-chromeProcess.pid, 'SIGTERM')
-    } catch (error) {
-      if (error.code !== 'ESRCH') throw error
-      finish()
-      return
-    }
-    forcedTermination = setTimeout(() => {
-      try {
-        process.kill(-chromeProcess.pid, 'SIGKILL')
-      } catch (error) {
-        if (error.code !== 'ESRCH') throw error
-      }
-    }, 1000)
-  })
-}
-
-async function render(styles, label, temporaryDirectory, outputPath) {
-  const htmlPath = join(temporaryDirectory, `${label}.html`)
-  writeFileSync(htmlPath, createFixture(styles))
-
-  const chromeArguments = [
+function buildChromeArguments(profilePath) {
+  return [
     '--headless=new',
     '--disable-gpu',
     '--disable-extensions',
     '--disable-background-networking',
     '--disable-component-update',
     '--disable-default-apps',
+    '--disable-sync',
+    '--metrics-recording-only',
+    '--no-pings',
     '--no-first-run',
     '--no-default-browser-check',
     '--hide-scrollbars',
     '--run-all-compositor-stages-before-draw',
     '--force-device-scale-factor=1',
     '--force-light-mode',
-    '--virtual-time-budget=3000',
-    `--window-size=${viewport.width},${viewport.height}`,
-    `--user-data-dir=${join(temporaryDirectory, `${label}-profile`)}`,
-    `--screenshot=${outputPath}`,
-    pathToFileURL(htmlPath).href,
+    '--force-prefers-reduced-motion',
+    '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1',
+    `--user-data-dir=${profilePath}`,
+    '--remote-debugging-port=0',
+    'about:blank',
   ]
+}
 
-  const chromeProcess = spawn(chromePath, chromeArguments, {
-    cwd: repoRoot,
+class CdpClient {
+  constructor(webSocketUrl) {
+    this.nextId = 1
+    this.pending = new Map()
+    this.socket = new WebSocket(webSocketUrl)
+  }
+
+  async connect() {
+    await new Promise((resolvePromise, rejectPromise) => {
+      this.socket.addEventListener('open', resolvePromise, { once: true })
+      this.socket.addEventListener('error', rejectPromise, { once: true })
+    })
+    this.socket.addEventListener('message', (event) => {
+      const message = JSON.parse(String(event.data))
+      if (!message.id) return
+      const pending = this.pending.get(message.id)
+      if (!pending) return
+      this.pending.delete(message.id)
+      if (message.error) pending.reject(new Error(message.error.message))
+      else pending.resolve(message.result)
+    })
+  }
+
+  send(method, params = {}) {
+    const id = this.nextId
+    this.nextId += 1
+    return new Promise((resolvePromise, rejectPromise) => {
+      this.pending.set(id, { resolve: resolvePromise, reject: rejectPromise })
+      this.socket.send(JSON.stringify({ id, method, params }))
+    })
+  }
+
+  close() {
+    this.socket.close()
+  }
+}
+
+async function launchChrome(temporaryDirectory) {
+  const profilePath = join(temporaryDirectory, 'chrome-profile')
+  const chromeProcess = spawn(chromePath, buildChromeArguments(profilePath), {
+    cwd: frontendRoot,
     detached: true,
     stdio: 'ignore',
   })
-
-  let previousSize = -1
-  let stableSamples = 0
-  const deadline = Date.now() + 30000
-  while (Date.now() < deadline) {
-    if (existsSync(outputPath)) {
-      const currentSize = statSync(outputPath).size
-      if (currentSize > 0 && currentSize === previousSize) stableSamples += 1
-      else stableSamples = 0
-      previousSize = currentSize
-      if (stableSamples >= 2) break
-    }
-    if (chromeProcess.exitCode !== null && !existsSync(outputPath)) {
-      throw new Error(`Chrome exited before writing ${outputPath}`)
-    }
-    await sleep(100)
+  const portFile = join(profilePath, 'DevToolsActivePort')
+  const deadline = Date.now() + 15000
+  while (!existsSync(portFile) && Date.now() < deadline) {
+    if (chromeProcess.exitCode !== null) throw new Error('Chrome exited before opening its debugging port')
+    await sleep(50)
   }
-
-  try {
-    assert(existsSync(outputPath) && statSync(outputPath).size > 0, `Chrome did not write ${outputPath} within 30 seconds`)
-  } finally {
-    await stopChrome(chromeProcess)
+  assert(existsSync(portFile), 'Chrome did not open its debugging port within 15 seconds')
+  const [port] = readFileSync(portFile, 'utf8').trim().split('\n')
+  const targets = await fetch(`http://127.0.0.1:${port}/json/list`).then((response) => response.json())
+  const page = targets.find((target) => target.type === 'page')
+  assert(page?.webSocketDebuggerUrl, 'Chrome did not expose a page target')
+  const client = new CdpClient(page.webSocketDebuggerUrl)
+  await client.connect()
+  await client.send('Page.enable')
+  await client.send('Runtime.enable')
+  await client.send('Emulation.setDeviceMetricsOverride', {
+    width: viewport.width,
+    height: viewport.height,
+    deviceScaleFactor: viewport.deviceScaleFactor,
+    mobile: false,
+  })
+  return {
+    client,
+    close: async () => {
+      try {
+        await client.send('Browser.close')
+      } catch {
+        try {
+          process.kill(-chromeProcess.pid, 'SIGTERM')
+        } catch (error) {
+          if (error.code !== 'ESRCH') throw error
+        }
+      } finally {
+        client.close()
+      }
+    },
   }
+}
+
+async function render(chrome, serverUrl, screen, variant, outputPath) {
+  const url = `${serverUrl}/evidence/ticket-08/fixture.html?screen=${encodeURIComponent(screen.id)}&variant=${variant}`
+  await chrome.client.send('Page.navigate', { url })
+  const deadline = Date.now() + 15000
+  let state = { ready: false, invalid: null }
+  while (!state.ready && !state.invalid && Date.now() < deadline) {
+    const evaluation = await chrome.client.send('Runtime.evaluate', {
+      expression: `({ ready: document.documentElement.dataset.ticket08Ready === 'true' && document.documentElement.dataset.ticket08Screen === ${JSON.stringify(screen.id)}, invalid: document.documentElement.dataset.ticket08Invalid ?? null })`,
+      returnByValue: true,
+    })
+    state = evaluation.result.value
+    if (!state.ready && !state.invalid) await sleep(25)
+  }
+  assert(!state.invalid, `runtime App render is invalid for ${screen.id}: ${state.invalid}`)
+  assert(state.ready, `real App render did not become ready for ${screen.id} within 15 seconds`)
+  const evidenceEvaluation = await chrome.client.send('Runtime.evaluate', {
+    expression: `({
+      ready: document.documentElement.dataset.ticket08Ready === 'true',
+      renderer: document.documentElement.dataset.ticket08Renderer ?? null,
+      screen: document.documentElement.dataset.ticket08Screen ?? null,
+      route: document.documentElement.dataset.ticket08Route ?? null,
+      locationPathname: window.location.pathname,
+      apiRequests: document.documentElement.dataset.ticket08ApiRequests ?? null,
+      unexpectedRequestCount: Number(document.documentElement.dataset.ticket08UnexpectedRequestCount ?? NaN),
+      surfacePresent: Boolean(document.querySelector(${JSON.stringify(`[data-testid="${screen.testId}"]`)})),
+      settledTextPresent: (document.body.textContent ?? '').includes(${JSON.stringify(screen.readyText)}),
+      invalid: document.documentElement.dataset.ticket08Invalid ?? null,
+    })`,
+    returnByValue: true,
+  })
+  assertRenderedApp(screen, evidenceEvaluation.result.value)
+  const screenshot = await chrome.client.send('Page.captureScreenshot', {
+    format: 'png',
+    fromSurface: true,
+    captureBeyondViewport: false,
+  })
+  writeFileSync(outputPath, Buffer.from(screenshot.data, 'base64'))
   return decodePng(readFileSync(outputPath))
+}
+
+function ticketStylesPlugin(stylesByVariant) {
+  return {
+    name: 'ticket-08-stylesheet-evidence',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        if (!request.url?.startsWith('/__ticket08_styles.css')) return next()
+        const variant = new URL(request.url, 'http://ticket08.local').searchParams.get('variant')
+        const styles = stylesByVariant[variant]
+        if (typeof styles !== 'string') {
+          response.statusCode = 400
+          response.end('unknown ticket stylesheet variant')
+          return
+        }
+        response.setHeader('Content-Type', 'text/css; charset=utf-8')
+        response.setHeader('Cache-Control', 'no-store')
+        response.end(styles)
+      })
+    },
+  }
+}
+
+async function startFixtureServer(stylesByVariant) {
+  const server = await createServer({
+    root: frontendRoot,
+    logLevel: 'error',
+    server: { host: '127.0.0.1', port: 0 },
+    plugins: [ticketStylesPlugin(stylesByVariant)],
+  })
+  await server.listen()
+  const address = server.httpServer?.address()
+  assert(address && typeof address !== 'string', 'Vite evidence server did not expose a local port')
+  return { server, url: `http://127.0.0.1:${address.port}` }
+}
+
+async function assertRealComponentModuleGraph(server) {
+  const entry = await server.moduleGraph.getModuleByUrl('/evidence/ticket-08/fixture.tsx')
+  assert(entry, 'Vite did not load the real-component fixture entry')
+  const visited = new Set()
+  const sourcePaths = new Set()
+  const pending = [entry]
+  while (pending.length > 0) {
+    const module = pending.pop()
+    if (!module || visited.has(module)) continue
+    visited.add(module)
+    if (module.file) sourcePaths.add(relative(repoRoot, module.file))
+    pending.push(...module.importedModules)
+  }
+  for (const sourcePath of renderedComponentFiles) {
+    assert(sourcePaths.has(sourcePath), `Vite runtime module graph did not include ${sourcePath}`)
+  }
+  return renderedComponentFiles.map((sourcePath) => ({
+    path: sourcePath,
+    sha256: sha256(readFileSync(join(repoRoot, sourcePath))),
+  }))
 }
 
 async function run() {
@@ -351,49 +468,101 @@ async function run() {
   const beforeStyles = readBaselineStyles()
   const afterStyles = readFileSync(join(repoRoot, 'frontend/src/styles.css'), 'utf8')
   const temporaryDirectory = mkdtempSync(join(tmpdir(), 'ticket-08-visual-'))
-  const beforePath = join(evidenceDir, 'before.png')
-  const afterPath = join(evidenceDir, 'after.png')
-  const diffPath = join(evidenceDir, 'diff.png')
   const comparisonPath = join(evidenceDir, 'comparison.json')
+  let fixtureServer
+  let chrome
+
+  writeFileSync(comparisonPath, `${JSON.stringify({ ticket: '08', comparisonCompleted: false, status: 'comparison did not complete' }, null, 2)}\n`)
 
   try {
-    const beforeRenderPath = join(temporaryDirectory, 'before.png')
-    const afterRenderPath = join(temporaryDirectory, 'after.png')
-    const before = await render(beforeStyles, 'before', temporaryDirectory, beforeRenderPath)
-    const after = await render(afterStyles, 'after', temporaryDirectory, afterRenderPath)
-    writeFileSync(beforePath, readFileSync(beforeRenderPath))
-    writeFileSync(afterPath, readFileSync(afterRenderPath))
-    const comparison = compareRgba(before, after)
-    writeFileSync(diffPath, encodePng(createDiff(before, after)))
+    fixtureServer = await startFixtureServer({ before: beforeStyles, after: afterStyles })
+    chrome = await launchChrome(temporaryDirectory)
+    const screens = {}
+    let differingPixels = 0
+    let totalPixels = 0
+    let totalAbsDelta = 0
+    let maxChannelDelta = 0
+
+    for (const screen of SCREEN_CASES) {
+      const beforePath = join(evidenceDir, `before-${screen.id}.png`)
+      const afterPath = join(evidenceDir, `after-${screen.id}.png`)
+      const diffPath = join(evidenceDir, `diff-${screen.id}.png`)
+      const beforeRenderPath = join(temporaryDirectory, `before-${screen.id}.png`)
+      const afterRenderPath = join(temporaryDirectory, `after-${screen.id}.png`)
+      const repeatRenderPath = join(temporaryDirectory, `repeat-${screen.id}.png`)
+      const before = await render(chrome, fixtureServer.url, screen, 'before', beforeRenderPath)
+      const after = await render(chrome, fixtureServer.url, screen, 'after', afterRenderPath)
+      const repeat = await render(chrome, fixtureServer.url, screen, 'after', repeatRenderPath)
+      const stability = compareRgba(after, repeat)
+      assert(stability.differingPixels === 0, `Chrome rasterization was not deterministic for ${screen.id}: ${stability.differingPixels} pixels changed on an identical rerender`)
+      const comparison = compareRgba(before, after)
+      writeFileSync(beforePath, readFileSync(beforeRenderPath))
+      writeFileSync(afterPath, readFileSync(afterRenderPath))
+      writeFileSync(diffPath, encodePng(createDiff(before, after)))
+
+      differingPixels += comparison.differingPixels
+      totalPixels += comparison.totalPixels
+      totalAbsDelta += comparison.totalAbsDelta
+      maxChannelDelta = Math.max(maxChannelDelta, comparison.maxChannelDelta)
+      screens[screen.id] = {
+        route: screen.route,
+        renderedThrough: 'App',
+        runtimeTestId: screen.testId,
+        deterministicApiData: true,
+        runtimeChecksPassed: { before: true, after: true },
+        stability,
+        images: {
+          before: relative(repoRoot, beforePath),
+          after: relative(repoRoot, afterPath),
+          diff: relative(repoRoot, diffPath),
+        },
+        comparison,
+        pixelIdentity: comparison.differingPixels === 0,
+      }
+    }
+
+    const renderedComponentSources = await assertRealComponentModuleGraph(fixtureServer.server)
+    const comparison = { totalPixels, differingPixels, maxChannelDelta, totalAbsDelta }
 
     const result = {
       ticket: '08',
+      comparisonCompleted: true,
       baselineStyles: 'git show 61067a0:frontend/src/styles.css',
       baselineStylesSha256: sha256(beforeStyles),
       finalStyles: 'frontend/src/styles.css from the current worktree',
       finalStylesSha256: sha256(afterStyles),
-      fixture: 'frontend/evidence/ticket-08/fixture.html',
-      viewport,
-      images: {
-        before: 'frontend/evidence/ticket-08/before.png',
-        after: 'frontend/evidence/ticket-08/after.png',
-        diff: 'frontend/evidence/ticket-08/diff.png',
+      fixture: {
+        html: 'frontend/evidence/ticket-08/fixture.html',
+        entry: 'frontend/evidence/ticket-08/fixture.tsx',
+        config: 'frontend/evidence/ticket-08/fixture-config.json',
+        renderer: 'App',
+        deterministicApiData: true,
       },
+      renderedComponentSources,
+      browser: execFileSync(chromePath, ['--version'], { encoding: 'utf8' }).trim(),
+      networkPolicy: 'Fixture assets and API mocks are local; Chrome rejects non-local hostname resolution.',
+      viewport,
+      stabilityRequirement: { differingPixels: 0, rationale: 'Each current-styles render is repeated and must be pixel-identical before its baseline/current result is recorded.' },
+      screens,
       comparison,
-      pixelIdentity: comparison.differingPixels === 0,
+      appearancePreservedAtTestedViewport: differingPixels === 0,
+      pixelIdentity: differingPixels === 0,
     }
     writeFileSync(comparisonPath, `${JSON.stringify(result, null, 2)}\n`)
 
     console.log(`baseline: ${result.baselineStyles}`)
     console.log(`candidate: ${result.finalStyles}`)
-    console.log(`fixture: ${result.fixture}`)
+    console.log(`fixture: ${result.fixture.entry} rendering App with deterministic API data`)
     console.log(`viewport: ${viewport.width}x${viewport.height} @${viewport.deviceScaleFactor}x`)
-    console.log(`before: ${relative(repoRoot, beforePath)}`)
-    console.log(`after: ${relative(repoRoot, afterPath)}`)
-    console.log(`diff: ${relative(repoRoot, diffPath)}`)
+    for (const [screenId, screenResult] of Object.entries(screens)) {
+      console.log(`${screenId}: ${screenResult.comparison.differingPixels}/${screenResult.comparison.totalPixels} pixels differ; deterministic rerender ${screenResult.stability.differingPixels} pixels differ`)
+    }
     console.log(`comparison: ${relative(repoRoot, comparisonPath)}`)
-    console.log(`pixels: ${comparison.differingPixels}/${comparison.totalPixels} differ; max channel delta ${comparison.maxChannelDelta}; total absolute delta ${comparison.totalAbsDelta}`)
+    console.log(`aggregate: ${comparison.differingPixels}/${comparison.totalPixels} pixels differ; max channel delta ${comparison.maxChannelDelta}; total absolute delta ${comparison.totalAbsDelta}`)
+    console.log(`pixel identity: ${result.pixelIdentity}`)
   } finally {
+    await chrome?.close()
+    await fixtureServer?.server.close()
     rmSync(temporaryDirectory, { recursive: true, force: true })
   }
 }

@@ -1,27 +1,226 @@
 {
   "ticket": "08",
+  "comparisonCompleted": true,
   "baselineStyles": "git show 61067a0:frontend/src/styles.css",
   "baselineStylesSha256": "bfed481218b5c6334a2a496d87a200ede90ac3fe8f0246f123a704becc6b15b9",
   "finalStyles": "frontend/src/styles.css from the current worktree",
   "finalStylesSha256": "c9ad726fe1f1a2b8872df8993ad359d03cce6694cc193f3c976a11eca1b46095",
-  "fixture": "frontend/evidence/ticket-08/fixture.html",
+  "fixture": {
+    "html": "frontend/evidence/ticket-08/fixture.html",
+    "entry": "frontend/evidence/ticket-08/fixture.tsx",
+    "config": "frontend/evidence/ticket-08/fixture-config.json",
+    "renderer": "App",
+    "deterministicApiData": true
+  },
+  "renderedComponentSources": [
+    {
+      "path": "frontend/evidence/ticket-08/fixture.tsx",
+      "sha256": "192407933a1b6b4fbf857ea9bc92598eacb88e3c6df89b7d292f94ee86931bf0"
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "sha256": "60059e5f64aca333bc7d13af3579b2453881e03b4347c37ba140d07ee3e931dc"
+    },
+    {
+      "path": "frontend/src/DanhMucToaNha.tsx",
+      "sha256": "66ca6a0f7c4c9c2d3a1bc646e28efd43b8dd2573bc482925b30efcda0053dd08"
+    },
+    {
+      "path": "frontend/src/DanhMucPhong.tsx",
+      "sha256": "7e49e3d63b609821706d4f5397de00aa8ef879966d2f8f14e42ed38b92c2cea7"
+    },
+    {
+      "path": "frontend/src/GhiChiSo.tsx",
+      "sha256": "03c53a2e09c4d8c56f219043e579818144c83fb0b1526e0e1acbc77f324ecb03"
+    },
+    {
+      "path": "frontend/src/HoaDon.tsx",
+      "sha256": "468fe82e082173b13d5e6ef48d141fa1715ef39b2d292d3415d54f925f6768ab"
+    },
+    {
+      "path": "frontend/src/QuanLyTaiKhoan.tsx",
+      "sha256": "9ea07193bea922dde0d7191784aa7b56a56a29e3bb6fdbd618e43b4ccb1c2a30"
+    }
+  ],
+  "browser": "Google Chrome 152.0.7977.77",
+  "networkPolicy": "Fixture assets and API mocks are local; Chrome rejects non-local hostname resolution.",
   "viewport": {
     "width": 1440,
-    "height": 3000,
+    "height": 2200,
     "deviceScaleFactor": 1
   },
-  "images": {
-    "before": "frontend/evidence/ticket-08/before.png",
-    "after": "frontend/evidence/ticket-08/after.png",
-    "diff": "frontend/evidence/ticket-08/diff.png"
+  "stabilityRequirement": {
+    "differingPixels": 0,
+    "rationale": "Each current-styles render is repeated and must be pixel-identical before its baseline/current result is recorded."
+  },
+  "screens": {
+    "building": {
+      "route": "/toa-nha",
+      "renderedThrough": "App",
+      "runtimeTestId": "building-catalog",
+      "deterministicApiData": true,
+      "runtimeChecksPassed": {
+        "before": true,
+        "after": true
+      },
+      "stability": {
+        "width": 1440,
+        "height": 2200,
+        "totalPixels": 3168000,
+        "differingPixels": 0,
+        "maxChannelDelta": 0,
+        "totalAbsDelta": 0
+      },
+      "images": {
+        "before": "frontend/evidence/ticket-08/before-building.png",
+        "after": "frontend/evidence/ticket-08/after-building.png",
+        "diff": "frontend/evidence/ticket-08/diff-building.png"
+      },
+      "comparison": {
+        "width": 1440,
+        "height": 2200,
+        "totalPixels": 3168000,
+        "differingPixels": 94211,
+        "maxChannelDelta": 240,
+        "totalAbsDelta": 15345501
+      },
+      "pixelIdentity": false
+    },
+    "room": {
+      "route": "/phong",
+      "renderedThrough": "App",
+      "runtimeTestId": "room-catalog",
+      "deterministicApiData": true,
+      "runtimeChecksPassed": {
+        "before": true,
+        "after": true
+      },
+      "stability": {
+        "width": 1440,
+        "height": 2200,
+        "totalPixels": 3168000,
+        "differingPixels": 0,
+        "maxChannelDelta": 0,
+        "totalAbsDelta": 0
+      },
+      "images": {
+        "before": "frontend/evidence/ticket-08/before-room.png",
+        "after": "frontend/evidence/ticket-08/after-room.png",
+        "diff": "frontend/evidence/ticket-08/diff-room.png"
+      },
+      "comparison": {
+        "width": 1440,
+        "height": 2200,
+        "totalPixels": 3168000,
+        "differingPixels": 3713,
+        "maxChannelDelta": 239,
+        "totalAbsDelta": 1076246
+      },
+      "pixelIdentity": false
+    },
+    "meter": {
+      "route": "/ghi-chi-so",
+      "renderedThrough": "App",
+      "runtimeTestId": "meter-screen",
+      "deterministicApiData": true,
+      "runtimeChecksPassed": {
+        "before": true,
+        "after": true
+      },
+      "stability": {
+        "width": 1440,
+        "height": 2200,
+        "totalPixels": 3168000,
+        "differingPixels": 0,
+        "maxChannelDelta": 0,
+        "totalAbsDelta": 0
+      },
+      "images": {
+        "before": "frontend/evidence/ticket-08/before-meter.png",
+        "after": "frontend/evidence/ticket-08/after-meter.png",
+        "diff": "frontend/evidence/ticket-08/diff-meter.png"
+      },
+      "comparison": {
+        "width": 1440,
+        "height": 2200,
+        "totalPixels": 3168000,
+        "differingPixels": 6940,
+        "maxChannelDelta": 239,
+        "totalAbsDelta": 3387502
+      },
+      "pixelIdentity": false
+    },
+    "invoice": {
+      "route": "/hoa-don-cua-toi",
+      "renderedThrough": "App",
+      "runtimeTestId": "invoice-detail",
+      "deterministicApiData": true,
+      "runtimeChecksPassed": {
+        "before": true,
+        "after": true
+      },
+      "stability": {
+        "width": 1440,
+        "height": 2200,
+        "totalPixels": 3168000,
+        "differingPixels": 0,
+        "maxChannelDelta": 0,
+        "totalAbsDelta": 0
+      },
+      "images": {
+        "before": "frontend/evidence/ticket-08/before-invoice.png",
+        "after": "frontend/evidence/ticket-08/after-invoice.png",
+        "diff": "frontend/evidence/ticket-08/diff-invoice.png"
+      },
+      "comparison": {
+        "width": 1440,
+        "height": 2200,
+        "totalPixels": 3168000,
+        "differingPixels": 5343,
+        "maxChannelDelta": 239,
+        "totalAbsDelta": 1628065
+      },
+      "pixelIdentity": false
+    },
+    "account": {
+      "route": "/tai-khoan",
+      "renderedThrough": "App",
+      "runtimeTestId": "account-management",
+      "deterministicApiData": true,
+      "runtimeChecksPassed": {
+        "before": true,
+        "after": true
+      },
+      "stability": {
+        "width": 1440,
+        "height": 2200,
+        "totalPixels": 3168000,
+        "differingPixels": 0,
+        "maxChannelDelta": 0,
+        "totalAbsDelta": 0
+      },
+      "images": {
+        "before": "frontend/evidence/ticket-08/before-account.png",
+        "after": "frontend/evidence/ticket-08/after-account.png",
+        "diff": "frontend/evidence/ticket-08/diff-account.png"
+      },
+      "comparison": {
+        "width": 1440,
+        "height": 2200,
+        "totalPixels": 3168000,
+        "differingPixels": 2039,
+        "maxChannelDelta": 239,
+        "totalAbsDelta": 628739
+      },
+      "pixelIdentity": false
+    }
   },
   "comparison": {
-    "width": 1440,
-    "height": 3000,
-    "totalPixels": 4320000,
-    "differingPixels": 0,
-    "maxChannelDelta": 0,
-    "totalAbsDelta": 0
+    "totalPixels": 15840000,
+    "differingPixels": 112246,
+    "maxChannelDelta": 240,
+    "totalAbsDelta": 22066053
   },
-  "pixelIdentity": true
+  "appearancePreservedAtTestedViewport": false,
+  "pixelIdentity": false
 }
