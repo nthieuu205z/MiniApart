@@ -82,11 +82,36 @@ describe('DanhMucToaNha', () => {
     await act(async () => submitForm('building-form'))
     await vi.waitFor(() => expect(container.textContent).toContain('Ngày chốt số phải từ 1 đến 28.'))
   })
+
+  it('NFR-USA-01 renders the dedicated mobile building layout', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse([toaA, toaB])))
+
+    await renderScreen('CHU', true)
+
+    await vi.waitFor(() => expect(container.querySelector('[data-testid="building-catalog"]')).not.toBeNull())
+    expect(container.querySelector('[data-layout-variant="mobile"]')).not.toBeNull()
+    expect(container.querySelector('[data-mobile-building-list]')).not.toBeNull()
+  })
+
+  it('NFR-USA-01 wraps the selected building action label on mobile', async () => {
+    const longBuilding = { ...toaA, ten: 'Toà nhà có tên rất dài để kiểm tra giao diện điện thoại' }
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse([longBuilding])))
+
+    await renderScreen('CHU', true)
+
+    const actionButton = [...container.querySelectorAll<HTMLButtonElement>('button')]
+      .find((item) => item.textContent?.startsWith('Sửa'))
+    expect(actionButton).toBeDefined()
+    expect(actionButton?.style.maxWidth).toBe('100%')
+    expect(actionButton?.style.minWidth).toBe('0px')
+    expect(actionButton?.style.whiteSpace).toBe('normal')
+    expect(actionButton?.style.overflowWrap).toBe('anywhere')
+  })
 })
 
-async function renderScreen(vaiTro: string) {
+async function renderScreen(vaiTro: string, mobile = false) {
   root = createRoot(container)
-  await act(async () => root.render(<DanhMucToaNha token="building-token" vaiTro={vaiTro} />))
+  await act(async () => root.render(<DanhMucToaNha token="building-token" vaiTro={vaiTro} mobile={mobile} />))
 }
 
 function clickButton(label: string) {

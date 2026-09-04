@@ -13,13 +13,16 @@ import {
 } from './api'
 import { Button } from './design/core/Button'
 import { BuildingSection } from './design/building/BuildingSection'
+import { RoomCell } from './design/building/RoomCell'
 import { ConfirmDialog } from './design/feedback/ConfirmDialog'
 import { EmptyState } from './design/feedback/EmptyState'
 import { FilterChip } from './design/forms/FilterChip'
 import { StatStrip } from './design/shell/StatStrip'
+import { SysLabel } from './design/core/SysLabel'
 
 type Props = {
   token: string
+  mobile?: boolean
 }
 
 const TRANG_THAI_PHONG_HIEN_THI: Record<string, { nhan: string; lopCss: string }> = {
@@ -239,7 +242,7 @@ const styleGiaTriThongTinPhong: CSSProperties = {
   overflowWrap: 'anywhere',
 }
 
-export default function DanhMucPhong({ token }: Props) {
+export default function DanhMucPhong({ token, mobile = false }: Props) {
   const [danhSachToa, setDanhSachToa] = useState<ThongTinToaNha[]>([])
   const [toaDangChonId, setToaDangChonId] = useState<number | null>(null)
   const [tangLoc, setTangLoc] = useState('')
@@ -423,13 +426,19 @@ export default function DanhMucPhong({ token }: Props) {
   }
 
   return (
-    <section className="building-management room-management" data-testid="room-catalog" aria-labelledby="room-management-title" style={styleDanhMucPhong}>
+    <section
+      className={`building-management room-management room-management--${mobile ? 'mobile' : 'desktop'}`}
+      data-testid="room-catalog"
+      data-layout-variant={mobile ? 'mobile' : 'desktop'}
+      aria-labelledby="room-management-title"
+      style={{ ...styleDanhMucPhong, padding: mobile ? 0 : styleDanhMucPhong.padding }}
+    >
       <div className="building-management__heading" style={styleTieuDeManHinh}>
         <div>
           <p className="eyebrow" style={styleEyebrow}>FR-BLD-02</p>
           <h3 id="room-management-title" style={{ margin: 0, font: 'var(--ma-text-block-title)' }}>Danh mục phòng</h3>
         </div>
-        <Button type="button" variant="secondary" onClick={() => setHienBieuMauHangLoat((current) => !current)} style={{ minHeight: 44 }}>
+        <Button type="button" variant="secondary" onClick={() => setHienBieuMauHangLoat((current) => !current)} style={{ minHeight: 44, width: mobile ? '100%' : undefined, justifyContent: mobile ? 'center' : undefined }}>
           Xem trước dãy phòng
         </Button>
       </div>
@@ -477,42 +486,101 @@ export default function DanhMucPhong({ token }: Props) {
         </label>
       </div>
 
-      <div className="building-layout" style={styleBoCucHaiCot}>
+      <div className="building-layout" style={{ ...styleBoCucHaiCot, gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : styleBoCucHaiCot.gridTemplateColumns }}>
         <div className="building-list" style={styleCotDanhSach}>
           {dangTai || dangTaiPhong ? (
             <p className="status-message" aria-live="polite" style={styleThongBao}>Đang tải danh sách phòng…</p>
           ) : danhSachPhong.length === 0 ? (
             <EmptyState kind={tangLoc ? "filtered" : "first"} title={tangLoc ? `Không có phòng nào ở tầng ${tangLoc}.` : "Toà này chưa có phòng nào."} filters={tangLoc ? <FilterChip active onRemove={() => setTangLoc('')}>Tầng {tangLoc}</FilterChip> : undefined} />
           ) : (
-            <>
-              <StatStrip stats={[{ label: 'TỔNG PHÒNG', value: danhSachPhong.length }, { label: 'TRỐNG', value: demPhongTheoTrangThai(danhSachPhong, 'TRONG') }, { label: 'ĐANG THUÊ', value: demPhongTheoTrangThai(danhSachPhong, 'DANG_THUE') }]} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 7rem), 1fr))', minWidth: 0 }} />
-              <section className="building-summary room-status-summary" aria-labelledby="room-status-summary-title" style={styleTamThe}>
-                <div className="building-summary__heading" style={styleSuKienPhong}>
-                  <div>
-                    <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
-                    <h4 id="room-status-summary-title" style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Tổng quan sơ đồ phòng</h4>
+            mobile ? (
+              <div data-mobile-room-list style={{ display: 'grid', gap: 'var(--ma-space-5)', minWidth: 0 }}>
+                <StatStrip stats={[{ label: 'TỔNG PHÒNG', value: danhSachPhong.length }, { label: 'TRỐNG', value: demPhongTheoTrangThai(danhSachPhong, 'TRONG') }, { label: 'ĐANG THUÊ', value: demPhongTheoTrangThai(danhSachPhong, 'DANG_THUE') }]} style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', minWidth: 0, gap: 8 }} />
+                <section className="building-summary room-status-summary" aria-labelledby="room-status-summary-title-mobile" style={{ ...styleTamThe, padding: 16 }}>
+                  <div className="building-summary__heading" style={styleSuKienPhong}>
+                    <div>
+                      <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
+                      <h4 id="room-status-summary-title-mobile" style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Tổng quan phòng</h4>
+                    </div>
+                    <span className="room-status-summary__total" style={{ color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)' }}>{danhSachPhong.length} phòng</span>
                   </div>
-                  <span className="room-status-summary__total" style={{ color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)' }}>{danhSachPhong.length} phòng</span>
-                </div>
-                <div className="room-status-summary__grid" style={styleNhomTrangThai}>
-                  {TONG_QUAN_TRANG_THAI.map((muc) => (
-                    <article key={muc.ma} className={`room-status-chip room-status-chip--${muc.ma.toLowerCase()}`} style={{ ...styleMucTrangThai, ...(muc.ma === 'DANG_THUE' ? { background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)' } : muc.ma === 'DANG_SUA' ? { background: 'var(--ma-urgent-bg)', color: 'var(--ma-urgent)' } : {}) }}>
-                      <span style={{ font: 'var(--ma-text-caption)' }}>{muc.nhan}</span>
-                      <strong style={{ font: 'var(--ma-text-figure-sm)' }}>{demPhongTheoTrangThai(danhSachPhong, muc.ma)}</strong>
-                    </article>
-                  ))}
-                </div>
-              </section>
+                  <div className="room-status-summary__grid" style={{ ...styleNhomTrangThai, gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+                    {TONG_QUAN_TRANG_THAI.map((muc) => (
+                      <article key={muc.ma} className={`room-status-chip room-status-chip--${muc.ma.toLowerCase()}`} style={{ ...styleMucTrangThai, padding: 10, ...(muc.ma === 'DANG_THUE' ? { background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)' } : muc.ma === 'DANG_SUA' ? { background: 'var(--ma-urgent-bg)', color: 'var(--ma-urgent)' } : {}) }}>
+                        <span style={{ font: 'var(--ma-text-caption)' }}>{muc.nhan}</span>
+                        <strong style={{ font: 'var(--ma-text-figure-sm)' }}>{demPhongTheoTrangThai(danhSachPhong, muc.ma)}</strong>
+                      </article>
+                    ))}
+                  </div>
+                </section>
 
-              <section className="room-floor-map" data-testid="room-floor-map" aria-label="Sơ đồ phòng theo tầng" style={styleSoDoPhong}>
-                <BuildingSection label={`Mặt cắt ${toaDangChon?.ten ?? ''} · ${danhSachPhong.length} phòng`} columns={3} floors={floors} />
-              </section>
-            </>
+                <section aria-label="Danh sách phòng theo tầng" style={{ display: 'grid', gap: 14, minWidth: 0 }}>
+                  {nhomPhongTheoTang.map(({ tang, phong }) => (
+                    <div key={tang} style={{ display: 'grid', gap: 8, minWidth: 0 }}>
+                      <SysLabel>TẦNG {tang}</SysLabel>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, minWidth: 0 }}>
+                        {phong.map((item) => {
+                          const status = layThongTinTrangThai(item)
+                          return (
+                            <RoomCell
+                              key={item.id}
+                              data-testid="room-tile"
+                              data-mobile-room-card="true"
+                              role="button"
+                              tabIndex={0}
+                              room={item.soPhong}
+                              state={layTrangThaiRoomCell(item.trangThai)}
+                              label={status.nhan}
+                              aria-label={`Phòng ${item.soPhong}, ${status.nhan}`}
+                              aria-pressed={phongDangXem?.id === item.id}
+                              className={`${status.lopCss} ${phongDangXem?.id === item.id ? 'room-tile--active' : ''}`}
+                              onClick={() => setPhongDangXemId(item.id)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault()
+                                  setPhongDangXemId(item.id)
+                                }
+                              }}
+                              style={{ minWidth: 0, minHeight: 72 }}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </section>
+              </div>
+            ) : (
+              <>
+                <StatStrip stats={[{ label: 'TỔNG PHÒNG', value: danhSachPhong.length }, { label: 'TRỐNG', value: demPhongTheoTrangThai(danhSachPhong, 'TRONG') }, { label: 'ĐANG THUÊ', value: demPhongTheoTrangThai(danhSachPhong, 'DANG_THUE') }]} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 7rem), 1fr))', minWidth: 0 }} />
+                <section className="building-summary room-status-summary" aria-labelledby="room-status-summary-title" style={styleTamThe}>
+                  <div className="building-summary__heading" style={styleSuKienPhong}>
+                    <div>
+                      <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
+                      <h4 id="room-status-summary-title" style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Tổng quan sơ đồ phòng</h4>
+                    </div>
+                    <span className="room-status-summary__total" style={{ color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)' }}>{danhSachPhong.length} phòng</span>
+                  </div>
+                  <div className="room-status-summary__grid" style={styleNhomTrangThai}>
+                    {TONG_QUAN_TRANG_THAI.map((muc) => (
+                      <article key={muc.ma} className={`room-status-chip room-status-chip--${muc.ma.toLowerCase()}`} style={{ ...styleMucTrangThai, ...(muc.ma === 'DANG_THUE' ? { background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)' } : muc.ma === 'DANG_SUA' ? { background: 'var(--ma-urgent-bg)', color: 'var(--ma-urgent)' } : {}) }}>
+                        <span style={{ font: 'var(--ma-text-caption)' }}>{muc.nhan}</span>
+                        <strong style={{ font: 'var(--ma-text-figure-sm)' }}>{demPhongTheoTrangThai(danhSachPhong, muc.ma)}</strong>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="room-floor-map" data-testid="room-floor-map" aria-label="Sơ đồ phòng theo tầng" style={styleSoDoPhong}>
+                  <BuildingSection label={`Mặt cắt ${toaDangChon?.ten ?? ''} · ${danhSachPhong.length} phòng`} columns={3} floors={floors} />
+                </section>
+              </>
+            )
           )}
         </div>
 
         <div className="building-detail" style={styleCotChiTiet}>
-          <section className="building-summary room-detail" data-testid="room-detail" aria-live="polite" style={styleTamThe}>
+          <section className="building-summary room-detail" data-testid="room-detail" aria-live="polite" style={{ ...styleTamThe, padding: mobile ? 16 : styleTamThe.padding }}>
             {phongDangXem ? (
               <>
                 <div className="building-summary__heading" style={styleSuKienPhong}>
@@ -561,13 +629,13 @@ export default function DanhMucPhong({ token }: Props) {
             )}
           </section>
 
-          <form className="building-form" data-testid="room-form" onSubmit={handleTaoPhong} style={styleTamThe}>
+          <form className="building-form" data-testid="room-form" onSubmit={handleTaoPhong} style={{ ...styleTamThe, padding: mobile ? 16 : styleTamThe.padding }}>
             <div>
               <p className="eyebrow" style={styleEyebrow}>FR-BLD-02</p>
               <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Khai báo một phòng</h4>
             </div>
 
-            <div className="building-form__row" style={styleHangBieuMau}>
+            <div className="building-form__row" style={{ ...styleHangBieuMau, gridTemplateColumns: mobile ? 'minmax(0,1fr)' : styleHangBieuMau.gridTemplateColumns }}>
               <label className="field" style={styleNhanTruong}>
                 <span>Số phòng</span>
                 <input name="soPhong" value={bieuMauPhong.soPhong} onChange={(event) => capNhatBieuMauPhong('soPhong', event.target.value)} required style={styleOTruong} />
@@ -579,7 +647,7 @@ export default function DanhMucPhong({ token }: Props) {
               </label>
             </div>
 
-            <div className="building-form__row" style={styleHangBieuMau}>
+            <div className="building-form__row" style={{ ...styleHangBieuMau, gridTemplateColumns: mobile ? 'minmax(0,1fr)' : styleHangBieuMau.gridTemplateColumns }}>
               <label className="field" style={styleNhanTruong}>
                 <span>Diện tích</span>
                 <input type="number" min="0.01" step="0.01" name="dienTich" value={bieuMauPhong.dienTich} onChange={(event) => capNhatBieuMauPhong('dienTich', event.target.value)} required style={styleOTruong} />
@@ -591,7 +659,7 @@ export default function DanhMucPhong({ token }: Props) {
               </label>
             </div>
 
-            <div className="building-form__row" style={styleHangBieuMau}>
+            <div className="building-form__row" style={{ ...styleHangBieuMau, gridTemplateColumns: mobile ? 'minmax(0,1fr)' : styleHangBieuMau.gridTemplateColumns }}>
               <label className="field" style={styleNhanTruong}>
                 <span>Giá thuê mặc định</span>
                 <input type="number" min="0" step="0.01" name="giaThueMacDinh" value={bieuMauPhong.giaThueMacDinh} onChange={(event) => capNhatBieuMauPhong('giaThueMacDinh', event.target.value)} required style={styleOTruong} />
@@ -612,13 +680,13 @@ export default function DanhMucPhong({ token }: Props) {
           </form>
 
           {hienBieuMauHangLoat ? (
-            <form className="building-form" data-testid="room-batch-form" onSubmit={handleXemTruocHangLoat} style={styleTamThe}>
+            <form className="building-form" data-testid="room-batch-form" onSubmit={handleXemTruocHangLoat} style={{ ...styleTamThe, padding: mobile ? 16 : styleTamThe.padding }}>
               <div>
                 <p className="eyebrow" style={styleEyebrow}>FR-BLD-02</p>
                 <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Tạo nhanh dãy phòng</h4>
               </div>
 
-              <div className="building-form__row" style={styleHangBieuMau}>
+              <div className="building-form__row" style={{ ...styleHangBieuMau, gridTemplateColumns: mobile ? 'minmax(0,1fr)' : styleHangBieuMau.gridTemplateColumns }}>
                 <label className="field" style={styleNhanTruong}>
                   <span>Số bắt đầu</span>
                   <input name="soBatDau" value={bieuMauHangLoat.soBatDau} onChange={(event) => capNhatBieuMauHangLoat('soBatDau', event.target.value)} required style={styleOTruong} />
@@ -630,7 +698,7 @@ export default function DanhMucPhong({ token }: Props) {
                 </label>
               </div>
 
-              <div className="building-form__row" style={styleHangBieuMau}>
+              <div className="building-form__row" style={{ ...styleHangBieuMau, gridTemplateColumns: mobile ? 'minmax(0,1fr)' : styleHangBieuMau.gridTemplateColumns }}>
                 <label className="field" style={styleNhanTruong}>
                   <span>Tầng</span>
                   <input type="number" min="1" name="tang" value={bieuMauHangLoat.tang} onChange={(event) => capNhatBieuMauHangLoat('tang', event.target.value)} required style={styleOTruong} />
@@ -642,7 +710,7 @@ export default function DanhMucPhong({ token }: Props) {
                 </label>
               </div>
 
-              <div className="building-form__row" style={styleHangBieuMau}>
+              <div className="building-form__row" style={{ ...styleHangBieuMau, gridTemplateColumns: mobile ? 'minmax(0,1fr)' : styleHangBieuMau.gridTemplateColumns }}>
                 <label className="field" style={styleNhanTruong}>
                   <span>Sức chứa</span>
                   <input type="number" min="1" name="sucChua" value={bieuMauHangLoat.sucChua} onChange={(event) => capNhatBieuMauHangLoat('sucChua', event.target.value)} required style={styleOTruong} />

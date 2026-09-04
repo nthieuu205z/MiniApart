@@ -482,15 +482,15 @@ function App() {
 
         <section style={hienThiGhiChiSo ? styleVungNoiDungKhongDem : styleVungNoiDung}>
           {hienThiDanhMucToaNha && token ? (
-            <DanhMucToaNha token={token} vaiTro={nguoiDung.vaiTro} />
+            <DanhMucToaNha token={token} vaiTro={nguoiDung.vaiTro} mobile={laManHinhHep} />
           ) : hienThiDanhMucPhong && token ? (
-            <DanhMucPhong token={token} />
+            <DanhMucPhong token={token} mobile={laManHinhHep} />
           ) : hienThiGhiChiSo && token ? (
-            <GhiChiSo token={token} />
+            <GhiChiSo token={token} mobile={laManHinhHep} />
           ) : hienThiHoaDon && token ? (
-            <HoaDon token={token} {...dinhDanhHoaDon} />
+            <HoaDon token={token} {...dinhDanhHoaDon} mobile={laManHinhHep} />
           ) : nguoiDung.vaiTro === 'QTHT' && duongDanHienTai === '/tai-khoan' && token ? (
-            <QuanLyTaiKhoan token={token} />
+            <QuanLyTaiKhoan token={token} mobile={laManHinhHep} />
           ) : trangVaiTro ? (
             <section style={{ ...styleTheNoiDung, display: 'grid', gap: 'var(--ma-space-6)' }} aria-labelledby="current-route-title">
               <div

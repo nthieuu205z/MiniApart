@@ -64,8 +64,8 @@ function response(body: unknown, status = 200) {
 let container: HTMLDivElement
 let root: Root
 
-async function renderScreen() {
-  await act(async () => root.render(<QuanLyTaiKhoan token="test-token" />))
+async function renderScreen(mobile = false) {
+  await act(async () => root.render(<QuanLyTaiKhoan token="test-token" mobile={mobile} />))
   await vi.waitFor(() => expect(container.textContent).toContain('Người quản lý'))
 }
 
@@ -198,5 +198,43 @@ describe('Quản lý tài khoản', () => {
     await setInput(form.querySelector('input[name="soDienThoai"]')!, '0900000001')
     await act(async () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
     await vi.waitFor(() => expect(container.textContent).toContain('Số điện thoại đã tồn tại.'))
+  })
+
+  it('NFR-USA-01 renders account records as mobile cards instead of the desktop table', async () => {
+    vi.stubGlobal('fetch', createFetchMock().fetchMock)
+
+    await renderScreen(true)
+
+    await vi.waitFor(() => expect(container.querySelector('[data-testid="account-management"]')).not.toBeNull())
+    expect(container.querySelector('[data-layout-variant="mobile"]')).not.toBeNull()
+    expect(container.querySelector('[data-account-card]')).not.toBeNull()
+    expect(container.querySelector('table')).toBeNull()
+  })
+
+  it('NFR-USA-01 wraps long account action labels on mobile', async () => {
+    const { fetchMock, accounts } = createFetchMock()
+    accounts[0].hoTen = 'Người quản lý có tên rất dài để kiểm tra giao diện điện thoại'
+    vi.stubGlobal('fetch', fetchMock)
+
+    await renderScreen(true)
+
+    const actionButton = [...container.querySelectorAll<HTMLButtonElement>('[data-account-card] button')]
+      .find((item) => item.textContent?.startsWith('Sửa'))
+    expect(actionButton).toBeDefined()
+    expect(actionButton?.style.maxWidth).toBe('100%')
+    expect(actionButton?.style.minWidth).toBe('0px')
+    expect(actionButton?.style.whiteSpace).toBe('normal')
+    expect(actionButton?.style.overflowWrap).toBe('anywhere')
+  })
+
+  it('NFR-USA-01 keeps desktop account actions inside the table cell at tablet width', async () => {
+    vi.stubGlobal('fetch', createFetchMock().fetchMock)
+
+    await renderScreen(false)
+
+    const actionButtons = [...container.querySelectorAll<HTMLButtonElement>('tbody td:last-child button')]
+    expect(actionButtons.length).toBeGreaterThan(0)
+    expect(actionButtons.every((item) => item.style.maxWidth === '100%' && item.style.whiteSpace === 'normal')).toBe(true)
+    expect(container.querySelector('table')?.parentElement?.style.contain).toBe('paint')
   })
 })

@@ -10,7 +10,7 @@ import {
 import { Button } from "./design/core/Button";
 import { EmptyState } from "./design/feedback/EmptyState";
 import { StatStrip } from "./design/shell/StatStrip";
-type Props = { token: string; vaiTro: string };
+type Props = { token: string; vaiTro: string; mobile?: boolean };
 type Form = {
   id: number | null;
   maToa: string;
@@ -33,7 +33,7 @@ const input = {
   color: "var(--ma-text-primary)",
   font: "inherit",
 };
-export default function DanhMucToaNha({ token, vaiTro }: Props) {
+export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) {
   const [ds, setDs] = useState<ThongTinToaNha[]>([]),
     [loading, setLoading] = useState(true),
     [saving, setSaving] = useState(false),
@@ -124,20 +124,23 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
   }
   return (
     <section
+      className={`building-catalog building-catalog--${mobile ? "mobile" : "desktop"}`}
       data-testid="building-catalog"
+      data-layout-variant={mobile ? "mobile" : "desktop"}
       aria-labelledby="building-management-title"
       style={{
         display: "grid",
-        gap: 18,
+        gap: mobile ? 16 : 18,
         maxWidth: 1280,
         margin: "auto",
-        padding: "clamp(12px,3vw,32px)",
+        padding: mobile ? 0 : "clamp(12px,3vw,32px)",
+        minWidth: 0,
         fontFamily: "var(--ma-font-ui)",
       }}
     >
       <header
         style={{
-          display: "flex",
+          display: mobile ? "grid" : "flex",
           justifyContent: "space-between",
           gap: 12,
           flexWrap: "wrap",
@@ -150,7 +153,7 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
           <h3 id="building-management-title">Danh mục toà nhà</h3>
         </div>
         {canCreate && (
-          <Button onClick={() => open()} style={{ minHeight: 44 }}>
+          <Button onClick={() => open()} style={{ minHeight: 44, width: mobile ? "100%" : undefined, justifyContent: mobile ? "center" : undefined }}>
             Khai báo toà mới
           </Button>
         )}
@@ -182,10 +185,12 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
         />
       )}
       <div
+        data-mobile-building-list={mobile ? "true" : undefined}
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,310px),1fr))",
-          gap: 18,
+          gridTemplateColumns: mobile ? "minmax(0,1fr)" : "repeat(auto-fit,minmax(min(100%,310px),1fr))",
+          gap: mobile ? 16 : 18,
+          minWidth: 0,
         }}
       >
         <div style={{ display: "grid", gap: 8 }}>
@@ -235,6 +240,7 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
               style={{
                 padding: 16,
                 border: "1px solid var(--ma-border-default)",
+                minWidth: 0,
               }}
             >
               <div
@@ -249,7 +255,16 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
                 <Button
                   variant="secondary"
                   onClick={() => open(toa)}
-                  style={{ minHeight: 44 }}
+                  style={{
+                    minHeight: 44,
+                    maxWidth: "100%",
+                    minWidth: 0,
+                    whiteSpace: "normal",
+                    overflowWrap: "anywhere",
+                    textAlign: "center",
+                    width: mobile ? "100%" : undefined,
+                    justifyContent: mobile ? "center" : undefined,
+                  }}
                 >
                   Sửa {toa.ten}
                 </Button>
@@ -274,6 +289,7 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
                 gap: 12,
                 padding: 16,
                 border: "1px solid var(--ma-border-default)",
+                minWidth: 0,
               }}
             >
               <h4>{form.id === null ? "Khai báo toà nhà" : "Sửa toà nhà"}</h4>
@@ -307,7 +323,7 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+                  gridTemplateColumns: mobile ? "minmax(0,1fr)" : "repeat(2,minmax(0,1fr))",
                   gap: 10,
                 }}
               >
@@ -376,7 +392,7 @@ export default function DanhMucToaNha({ token, vaiTro }: Props) {
                 />{" "}
                 Bắt buộc ảnh công tơ khi ghi chỉ số
               </label>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: mobile ? "column-reverse" : undefined }}>
                 <Button
                   variant="secondary"
                   onClick={() => {

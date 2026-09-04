@@ -25,6 +25,7 @@ import { nenAnhCongTo } from './meterPhoto'
 
 type Props = {
   token: string
+  mobile?: boolean
 }
 
 type PendingValues = Record<string, string>
@@ -70,7 +71,7 @@ const styleThongBao = {
   lineHeight: 1.55,
 }
 
-export default function GhiChiSo({ token }: Props) {
+export default function GhiChiSo({ token, mobile = false }: Props) {
   const [danhSachToaNha, setDanhSachToaNha] = useState<ThongTinToaNha[]>([])
   const [danhSachKy, setDanhSachKy] = useState<ThongTinKyThanhToan[]>([])
   const [toaNhaId, setToaNhaId] = useState<number | null>(null)
@@ -340,7 +341,7 @@ export default function GhiChiSo({ token }: Props) {
 
   if (dangTai) {
     return (
-      <section style={styleTrang} aria-label="Ghi chỉ số">
+      <section style={styleTrang} aria-label="Ghi chỉ số" data-layout-variant={mobile ? 'mobile' : 'desktop'}>
         <TopBar
           building="MiniApart"
           period="Đang tải kỳ"
@@ -352,7 +353,7 @@ export default function GhiChiSo({ token }: Props) {
   }
 
   return (
-    <section style={styleTrang} aria-labelledby="meter-title" data-testid="meter-screen">
+    <section style={styleTrang} aria-labelledby="meter-title" data-testid="meter-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'}>
       <TopBar
         building={nhanToaNha}
         period={nhanKy}
@@ -371,7 +372,7 @@ export default function GhiChiSo({ token }: Props) {
           maxWidth: 1400,
           minWidth: 0,
           margin: '0 auto',
-          padding: 'var(--ma-space-7) clamp(16px, 4vw, var(--ma-space-8))',
+          padding: mobile ? 'var(--ma-space-6) 0 calc(var(--ma-space-9) + var(--ma-hit-mobile))' : 'var(--ma-space-7) clamp(16px, 4vw, var(--ma-space-8))',
           display: 'grid',
           gap: 'var(--ma-space-7)',
         }}
@@ -381,9 +382,10 @@ export default function GhiChiSo({ token }: Props) {
             display: 'flex',
             flexWrap: 'wrap',
             justifyContent: 'space-between',
-            alignItems: 'flex-end',
+            alignItems: mobile ? 'flex-start' : 'flex-end',
+            flexDirection: mobile ? 'column' : undefined,
             gap: 'var(--ma-space-6)',
-            paddingBottom: 'var(--ma-space-5)',
+            padding: mobile ? '0 var(--ma-space-4) var(--ma-space-5)' : '0 0 var(--ma-space-5)',
             borderBottom: '2px solid var(--ma-ink-900)',
           }}
         >
@@ -413,8 +415,9 @@ export default function GhiChiSo({ token }: Props) {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 15rem), 1fr))',
+            gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'repeat(auto-fit, minmax(min(100%, 15rem), 1fr))',
             gap: 'var(--ma-space-4)',
+            padding: mobile ? '0 var(--ma-space-4)' : undefined,
           }}
         >
           <label style={styleNhanTruong}>
@@ -466,7 +469,7 @@ export default function GhiChiSo({ token }: Props) {
             style={{
               display: 'grid',
               gap: 'var(--ma-space-5)',
-              padding: 'var(--ma-space-6)',
+              padding: mobile ? 'var(--ma-space-4)' : 'var(--ma-space-6)',
               border: '1px solid var(--ma-border-default)',
               background: 'var(--ma-bg-card)',
             }}
@@ -539,7 +542,7 @@ export default function GhiChiSo({ token }: Props) {
               body="Toà này hiện chưa có phòng có dữ liệu công tơ trong kỳ đã chọn."
             />
           ) : (
-            <div style={{ display: 'grid', gap: 'var(--ma-space-6)', minWidth: 0 }}>
+            <div data-mobile-meter-list={mobile ? 'true' : undefined} style={{ display: 'grid', gap: 'var(--ma-space-6)', minWidth: 0 }}>
               {duLieu.phong.map((phong) => {
                 const phongDaGhi = phong.dichVu.every((dichVu) => Boolean(dichVu.chiSoCuoi))
                 const soDichVuDaGhi = phong.dichVu.filter((dichVu) => Boolean(dichVu.chiSoCuoi)).length
@@ -559,7 +562,7 @@ export default function GhiChiSo({ token }: Props) {
                         alignItems: 'flex-start',
                         justifyContent: 'space-between',
                         gap: 'var(--ma-space-5)',
-                        padding: 'var(--ma-space-6)',
+                        padding: mobile ? 'var(--ma-space-4)' : 'var(--ma-space-6)',
                         borderBottom: '2px solid var(--ma-ink-900)',
                       }}
                     >
@@ -629,7 +632,7 @@ export default function GhiChiSo({ token }: Props) {
                               display: 'grid',
                               gap: 'var(--ma-space-4)',
                               minWidth: 0,
-                              padding: 'var(--ma-space-6)',
+                              padding: mobile ? 'var(--ma-space-4)' : 'var(--ma-space-6)',
                               borderBottom: '1px solid var(--ma-border-default)',
                             }}
                           >
@@ -718,7 +721,7 @@ export default function GhiChiSo({ token }: Props) {
                               <div
                                 style={{
                                   display: 'grid',
-                                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 15rem), 1fr))',
+                                  gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'repeat(auto-fit, minmax(min(100%, 15rem), 1fr))',
                                   gap: 'var(--ma-space-4)',
                                 }}
                               >
@@ -806,7 +809,7 @@ export default function GhiChiSo({ token }: Props) {
                               </div>
                             ) : null}
 
-                            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', gap: 'var(--ma-space-3)' }}>
+                            <div style={{ display: 'flex', flexDirection: mobile ? 'column' : undefined, flexWrap: 'wrap', alignItems: mobile ? 'stretch' : 'flex-start', gap: 'var(--ma-space-3)' }}>
                               <Button
                                 variant="primary"
                                 size="md"
@@ -814,7 +817,7 @@ export default function GhiChiSo({ token }: Props) {
                                 data-save-key={key}
                                 blocked={luuBiChan}
                                 aria-describedby={luuBiChan && lyDoChanLuu ? `ly-do-luu-${key}` : undefined}
-                                style={{ minHeight: 'var(--ma-hit-mobile)' }}
+                                style={{ minHeight: 'var(--ma-hit-mobile)', width: mobile ? '100%' : undefined, justifyContent: mobile ? 'center' : undefined }}
                                 onClick={() => void luuChiSo(phong.id, dichVu.id)}
                               >
                                 {dangLuu === key ? 'Đang lưu…' : 'Lưu chỉ số'}

@@ -263,11 +263,25 @@ describe('DanhMucPhong', () => {
     expect(container.querySelector('button')?.textContent).not.toContain('Xác nhận tạo dãy phòng')
     expect(fetchMock).not.toHaveBeenCalledWith('/api/toa-nha/1/phong/hang-loat', expect.anything())
   })
+
+  it('NFR-USA-01 renders the dedicated mobile room layout', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === '/api/toa-nha') return jsonResponse([toaA])
+      return jsonResponse([phong101, phong201])
+    }))
+
+    await renderScreen(true)
+
+    await vi.waitFor(() => expect(container.querySelector('[data-testid="room-catalog"]')).not.toBeNull())
+    expect(container.querySelector('[data-layout-variant="mobile"]')).not.toBeNull()
+    expect(container.querySelector('[data-mobile-room-list]')).not.toBeNull()
+    expect(container.querySelector('[data-mobile-room-card]')).not.toBeNull()
+  })
 })
 
-async function renderScreen() {
+async function renderScreen(mobile = false) {
   root = createRoot(container)
-  await act(async () => root.render(<DanhMucPhong token="room-token" />))
+  await act(async () => root.render(<DanhMucPhong token="room-token" mobile={mobile} />))
 }
 
 function clickButton(label: string) {

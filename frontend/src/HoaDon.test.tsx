@@ -110,4 +110,30 @@ describe('HoaDon detail and print view', () => {
     expect(dinhDangTien('-12345678901234.56')).toBe('-12.345.678.901.234,56')
     expect(dinhDangTien('3714500.00')).toBe('3.714.500')
   })
+
+  it('NFR-USA-01 renders invoice lines as mobile cards instead of the desktop table', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      hoaDonId: 10,
+      maHoaDon: 'TN-A-101-202608',
+      kyId: 8,
+      hopDongId: 11,
+      soPhong: '101',
+      nguoiThue: 'Người thuê 101',
+      ngayPhatHanh: '2026-08-31',
+      hanThanhToan: '2026-09-07',
+      trangThai: 'DA_PHAT_HANH',
+      tongTien: '1000.00',
+      daThu: '0.00',
+      conLai: '1000.00',
+      cacDong: [{ tenKhoan: 'Tiền điện', thanhTien: '1000.00', loaiKhoan: 'DICH_VU', dienGiai: '10 × 100 = 1000', cacBac: [] }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } })))
+
+    root = createRoot(container)
+    await act(async () => root.render(<HoaDon token="invoice-token" toaNhaId={1} kyId={8} hoaDonId={10} mobile />))
+
+    await vi.waitFor(() => expect(container.querySelector('[data-testid="invoice-detail"]')).not.toBeNull())
+    expect(container.querySelector('[data-layout-variant="mobile"]')).not.toBeNull()
+    expect(container.querySelector('[data-mobile-invoice-lines]')).not.toBeNull()
+    expect(container.querySelector('table')).toBeNull()
+  })
 })

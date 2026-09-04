@@ -22,13 +22,14 @@ import { ActionRow, CheckboxField, CheckboxGroup, FormField, FormPanel, ScreenHe
 
 type Props = {
   token: string
+  mobile?: boolean
 }
 
 type BieuMauTaiKhoan = YeuCauQuanLyNguoiDung & {
   id: number | null
 }
 
-export default function QuanLyTaiKhoan({ token }: Props) {
+export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
   const [danhSach, setDanhSach] = useState<ThongTinQuanLyNguoiDung[]>([])
   const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
   const [vaiTro, setVaiTro] = useState<ThongTinVaiTro[]>([])
@@ -137,7 +138,12 @@ export default function QuanLyTaiKhoan({ token }: Props) {
   }
 
   return (
-    <ScreenSurface data-testid="account-management" aria-labelledby="account-management-title">
+    <ScreenSurface
+      className={`account-management account-management--${mobile ? 'mobile' : 'desktop'}`}
+      data-testid="account-management"
+      data-layout-variant={mobile ? 'mobile' : 'desktop'}
+      aria-labelledby="account-management-title"
+    >
       <ScreenHeader action={<Button onClick={batDauTao}>Tạo tài khoản</Button>}>
         <div>
           <SysLabel>FR-AUT-06</SysLabel>
@@ -154,6 +160,54 @@ export default function QuanLyTaiKhoan({ token }: Props) {
 
       {dangTai ? (
         <ScreenNotice live>Đang tải danh sách tài khoản…</ScreenNotice>
+      ) : mobile ? (
+        <div data-mobile-account-list style={{ display: 'grid', gap: 10, minWidth: 0 }}>
+          <h4 style={{ margin: 0 }}>Danh sách tài khoản</h4>
+          {danhSach.length === 0 ? (
+            <EmptyState title="Chưa có tài khoản nào." />
+          ) : danhSach.map((nguoiDung) => (
+            <article key={nguoiDung.id} data-account-card="true" data-account-id={nguoiDung.id} style={{ display: 'grid', gap: 12, minWidth: 0, padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }}>
+              <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, minWidth: 0 }}>
+                <div style={{ minWidth: 0 }}>
+                  <strong style={{ display: 'block', overflowWrap: 'anywhere' }}>{nguoiDung.hoTen}</strong>
+                  <span style={{ display: 'block', marginTop: 4, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)', fontSize: 13 }}>{nguoiDung.soDienThoai}</span>
+                </div>
+                <StatusTag tone={nguoiDung.trangThai === 'BI_KHOA' ? 'closed' : 'done'}>{nguoiDung.tenTrangThai}</StatusTag>
+              </header>
+              <dl style={{ display: 'grid', gap: 8, margin: 0 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(7rem, 0.8fr) minmax(0, 1.2fr)', gap: 10, paddingTop: 8, borderTop: '1px solid var(--ma-border-subtle)' }}>
+                  <dt style={{ color: 'var(--ma-text-secondary)' }}>Vai trò</dt>
+                  <dd style={{ margin: 0, minWidth: 0, overflowWrap: 'anywhere' }}>{nguoiDung.tenVaiTro}</dd>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(7rem, 0.8fr) minmax(0, 1.2fr)', gap: 10, paddingTop: 8, borderTop: '1px solid var(--ma-border-subtle)' }}>
+                  <dt style={{ color: 'var(--ma-text-secondary)' }}>Toà được giao</dt>
+                  <dd style={{ margin: 0, minWidth: 0, overflowWrap: 'anywhere' }}>{danhSachToaNha(nguoiDung.toaNhaIds, toaNha)}</dd>
+                </div>
+              </dl>
+              <TableActions>
+                <Button
+                  variant="secondary"
+                  onClick={() => batDauSua(nguoiDung)}
+                  style={{ flex: '1 1 8rem', maxWidth: '100%', minWidth: 0, whiteSpace: 'normal', overflowWrap: 'anywhere', justifyContent: 'center', textAlign: 'center' }}
+                >
+                  Sửa {nguoiDung.hoTen}
+                </Button>
+                {nguoiDung.trangThai === 'HOAT_DONG' ? (
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    blocked={idDangKhoa === nguoiDung.id}
+                    blockedReason={idDangKhoa === nguoiDung.id ? 'Đang cập nhật trạng thái tài khoản.' : undefined}
+                    onClick={() => setNguoiDungChoKhoa(nguoiDung)}
+                    style={{ flex: '1 1 8rem', maxWidth: '100%', minWidth: 0, whiteSpace: 'normal', overflowWrap: 'anywhere', justifyContent: 'center', textAlign: 'center' }}
+                  >
+                    {idDangKhoa === nguoiDung.id ? 'Đang khoá…' : `Khoá ${nguoiDung.hoTen}`}
+                  </Button>
+                ) : null}
+              </TableActions>
+            </article>
+          ))}
+        </div>
       ) : (
         <TableFrame minWidth={700}>
             <caption>Danh sách tài khoản</caption>
@@ -180,7 +234,13 @@ export default function QuanLyTaiKhoan({ token }: Props) {
                   <td>{danhSachToaNha(nguoiDung.toaNhaIds, toaNha)}</td>
                   <td><StatusTag tone={nguoiDung.trangThai === 'BI_KHOA' ? 'closed' : 'done'}>{nguoiDung.tenTrangThai}</StatusTag></td>
                   <td><TableActions>
-                    <Button variant="secondary" onClick={() => batDauSua(nguoiDung)}>Sửa {nguoiDung.hoTen}</Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => batDauSua(nguoiDung)}
+                      style={{ maxWidth: '100%', minWidth: 0, whiteSpace: 'normal', overflowWrap: 'anywhere', justifyContent: 'center', textAlign: 'center' }}
+                    >
+                      Sửa {nguoiDung.hoTen}
+                    </Button>
                     {nguoiDung.trangThai === 'HOAT_DONG' ? (
                       <Button
                         variant="secondary"
@@ -188,6 +248,7 @@ export default function QuanLyTaiKhoan({ token }: Props) {
                         blocked={idDangKhoa === nguoiDung.id}
                         blockedReason={idDangKhoa === nguoiDung.id ? 'Đang cập nhật trạng thái tài khoản.' : undefined}
                         onClick={() => setNguoiDungChoKhoa(nguoiDung)}
+                        style={{ maxWidth: '100%', minWidth: 0, whiteSpace: 'normal', overflowWrap: 'anywhere', justifyContent: 'center', textAlign: 'center' }}
                       >
                         {idDangKhoa === nguoiDung.id ? 'Đang khoá…' : `Khoá ${nguoiDung.hoTen}`}
                       </Button>

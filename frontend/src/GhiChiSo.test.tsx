@@ -49,6 +49,22 @@ describe('GhiChiSo mobile screen', () => {
     expect((container.querySelector('input[name="chiSoCuoi-11-21"]') as HTMLInputElement).type).toBe('number')
   })
 
+  it('NFR-USA-01 renders the dedicated mobile meter layout', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/toa-nha') return jsonResponse([{ id: 1, ten: 'Toà A' }])
+      if (url === '/api/toa-nha/1/ky-thanh-toan') return jsonResponse([{ id: 8, nam: 2026, thang: 8, trangThai: 'DANG_MO' }])
+      if (url.endsWith('/thieu-chi-so')) return jsonResponse([])
+      return jsonResponse({ tongPhong: 1, daGhi: 0, phong: [{ id: 11, soPhong: '101', tang: 1, dichVu: [{ id: 21, tenDichVu: 'Điện', donVi: 'kWh', chiSoDau: '1240.00' }] }] })
+    }))
+
+    await renderScreen(true)
+
+    await vi.waitFor(() => expect(container.querySelector('[data-testid="meter-screen"]')).not.toBeNull())
+    expect(container.querySelector('[data-layout-variant="mobile"]')).not.toBeNull()
+    expect(container.querySelector('[data-mobile-meter-list]')).not.toBeNull()
+  })
+
   it('FR-MTR-02 calculates consumption immediately and advances focus after saving one room', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
@@ -565,9 +581,9 @@ describe('GhiChiSo mobile screen', () => {
   })
 })
 
-async function renderScreen() {
+async function renderScreen(mobile = false) {
   root = createRoot(container)
-  await act(async () => root.render(<GhiChiSo token="meter-token" />))
+  await act(async () => root.render(<GhiChiSo token="meter-token" mobile={mobile} />))
 }
 
 function setInputValue(input: HTMLInputElement, value: string) {
