@@ -12,7 +12,6 @@ const evidenceDir = dirname(scriptPath)
 const repoRoot = resolve(evidenceDir, '../../..')
 const frontendRoot = join(repoRoot, 'frontend')
 const chromePath = process.env.CHROME_BIN ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-const viewport = { width: 1440, height: 2200, deviceScaleFactor: 1 }
 const fixtureConfigPath = join(evidenceDir, 'fixture-config.json')
 const renderedComponentFiles = [
   'frontend/evidence/ticket-08/fixture.tsx',
@@ -24,7 +23,18 @@ const renderedComponentFiles = [
   'frontend/src/QuanLyTaiKhoan.tsx',
 ]
 
-export const SCREEN_CASES = JSON.parse(readFileSync(fixtureConfigPath, 'utf8'))
+const fixtureConfig = JSON.parse(readFileSync(fixtureConfigPath, 'utf8'))
+
+export const SCREEN_CASES = fixtureConfig.screens
+export const VIEWPORTS = fixtureConfig.viewports
+
+export function buildEvidencePlan(viewports = VIEWPORTS, screens = SCREEN_CASES) {
+  return viewports.flatMap((viewport) => screens.map((screen) => ({
+    viewport,
+    screen,
+    imageStem: `${viewport.id}-${screen.id}`,
+  })))
+}
 
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
 
@@ -52,6 +62,7 @@ export function assertRenderedApp(screen, evidence) {
   assert(evidence.settledTextPresent, `runtime App output for ${screen.id} did not pass the settled textContent check: ${screen.readyText}`)
   assert(evidence.route === screen.route && evidence.locationPathname === screen.route, `runtime App output reports the wrong route for ${screen.id}`)
   assert(evidence.apiRequests === 'deterministic-mock' && evidence.unexpectedRequestCount === 0, `runtime App output for ${screen.id} did not use only the deterministic API fixture`)
+  assert(evidence.prefersLightColorScheme === true, `runtime App output for ${screen.id} was not rendered under the required light color scheme`)
 }
 
 function pngChunk(type, data) {
@@ -231,6 +242,13 @@ export function compareRgba(before, after) {
   }
 }
 
+export function assertAppearancePreserved(comparison) {
+  assert(
+    comparison.differingPixels === 0,
+    `${comparison.differingPixels} rendered pixel${comparison.differingPixels === 1 ? '' : 's'} differ; Ticket 08 requires pixel identity`,
+  )
+}
+
 function createDiff(before, after) {
   const pixels = new Uint8Array(before.pixels.length)
   for (let offset = 0; offset < pixels.length; offset += 4) {
@@ -321,8 +339,8 @@ class CdpClient {
   }
 }
 
-async function launchChrome(temporaryDirectory) {
-  const profilePath = join(temporaryDirectory, 'chrome-profile')
+async function launchChrome(temporaryDirectory, viewport) {
+  const profilePath = join(temporaryDirectory, `chrome-profile-${viewport.id}`)
   const chromeProcess = spawn(chromePath, buildChromeArguments(profilePath), {
     cwd: frontendRoot,
     detached: true,
@@ -348,6 +366,9 @@ async function launchChrome(temporaryDirectory) {
     height: viewport.height,
     deviceScaleFactor: viewport.deviceScaleFactor,
     mobile: false,
+  })
+  await client.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-color-scheme', value: 'light' }],
   })
   return {
     client,
@@ -391,6 +412,7 @@ async function render(chrome, serverUrl, screen, variant, outputPath) {
       locationPathname: window.location.pathname,
       apiRequests: document.documentElement.dataset.ticket08ApiRequests ?? null,
       unexpectedRequestCount: Number(document.documentElement.dataset.ticket08UnexpectedRequestCount ?? NaN),
+      prefersLightColorScheme: window.matchMedia('(prefers-color-scheme: light)').matches,
       surfacePresent: Boolean(document.querySelector(${JSON.stringify(`[data-testid="${screen.testId}"]`)})),
       settledTextPresent: (document.body.textContent ?? '').includes(${JSON.stringify(screen.readyText)}),
       invalid: document.documentElement.dataset.ticket08Invalid ?? null,
@@ -398,6 +420,13 @@ async function render(chrome, serverUrl, screen, variant, outputPath) {
     returnByValue: true,
   })
   assertRenderedApp(screen, evidenceEvaluation.result.value)
+  if (process.env.TICKET08_DEBUG_SCREEN === screen.id) {
+    const styleEvaluation = await chrome.client.send('Runtime.evaluate', {
+      expression: `Array.from(document.querySelectorAll('h1,h2,h3,h4,p,dt,dd,.eyebrow,.field,.status-message')).map((element, index) => { const style = getComputedStyle(element); const rect = element.getBoundingClientRect(); return { index, tag: element.tagName, className: element.className, text: (element.textContent || '').trim().slice(0, 80), rect: [rect.x, rect.y, rect.width, rect.height], color: style.color, margin: [style.marginTop, style.marginRight, style.marginBottom, style.marginLeft], font: [style.fontFamily, style.fontSize, style.fontWeight, style.lineHeight, style.letterSpacing], padding: [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft], border: [style.borderTopWidth, style.borderTopColor], background: style.backgroundColor, display: style.display, gap: style.gap } })`,
+      returnByValue: true,
+    })
+    console.log(`STYLE_DEBUG ${screen.id} ${variant} ${JSON.stringify(styleEvaluation.result.value)}`)
+  }
   const screenshot = await chrome.client.send('Page.captureScreenshot', {
     format: 'png',
     fromSurface: true,
@@ -476,48 +505,79 @@ async function run() {
 
   try {
     fixtureServer = await startFixtureServer({ before: beforeStyles, after: afterStyles })
-    chrome = await launchChrome(temporaryDirectory)
-    const screens = {}
+    const viewports = {}
     let differingPixels = 0
     let totalPixels = 0
     let totalAbsDelta = 0
     let maxChannelDelta = 0
 
-    for (const screen of SCREEN_CASES) {
-      const beforePath = join(evidenceDir, `before-${screen.id}.png`)
-      const afterPath = join(evidenceDir, `after-${screen.id}.png`)
-      const diffPath = join(evidenceDir, `diff-${screen.id}.png`)
-      const beforeRenderPath = join(temporaryDirectory, `before-${screen.id}.png`)
-      const afterRenderPath = join(temporaryDirectory, `after-${screen.id}.png`)
-      const repeatRenderPath = join(temporaryDirectory, `repeat-${screen.id}.png`)
-      const before = await render(chrome, fixtureServer.url, screen, 'before', beforeRenderPath)
-      const after = await render(chrome, fixtureServer.url, screen, 'after', afterRenderPath)
-      const repeat = await render(chrome, fixtureServer.url, screen, 'after', repeatRenderPath)
-      const stability = compareRgba(after, repeat)
-      assert(stability.differingPixels === 0, `Chrome rasterization was not deterministic for ${screen.id}: ${stability.differingPixels} pixels changed on an identical rerender`)
-      const comparison = compareRgba(before, after)
-      writeFileSync(beforePath, readFileSync(beforeRenderPath))
-      writeFileSync(afterPath, readFileSync(afterRenderPath))
-      writeFileSync(diffPath, encodePng(createDiff(before, after)))
+    for (const viewport of VIEWPORTS) {
+      chrome = await launchChrome(temporaryDirectory, viewport)
+      const viewportScreens = {}
+      let viewportDifferingPixels = 0
+      let viewportTotalPixels = 0
+      let viewportTotalAbsDelta = 0
+      let viewportMaxChannelDelta = 0
 
-      differingPixels += comparison.differingPixels
-      totalPixels += comparison.totalPixels
-      totalAbsDelta += comparison.totalAbsDelta
-      maxChannelDelta = Math.max(maxChannelDelta, comparison.maxChannelDelta)
-      screens[screen.id] = {
-        route: screen.route,
-        renderedThrough: 'App',
-        runtimeTestId: screen.testId,
-        deterministicApiData: true,
-        runtimeChecksPassed: { before: true, after: true },
-        stability,
-        images: {
-          before: relative(repoRoot, beforePath),
-          after: relative(repoRoot, afterPath),
-          diff: relative(repoRoot, diffPath),
-        },
-        comparison,
-        pixelIdentity: comparison.differingPixels === 0,
+      try {
+        for (const { screen, imageStem } of buildEvidencePlan([viewport])) {
+          const beforePath = join(evidenceDir, `before-${imageStem}.png`)
+          const afterPath = join(evidenceDir, `after-${imageStem}.png`)
+          const diffPath = join(evidenceDir, `diff-${imageStem}.png`)
+          const beforeRenderPath = join(temporaryDirectory, `before-${imageStem}.png`)
+          const afterRenderPath = join(temporaryDirectory, `after-${imageStem}.png`)
+          const repeatRenderPath = join(temporaryDirectory, `repeat-${imageStem}.png`)
+          const before = await render(chrome, fixtureServer.url, screen, 'before', beforeRenderPath)
+          const after = await render(chrome, fixtureServer.url, screen, 'after', afterRenderPath)
+          const repeat = await render(chrome, fixtureServer.url, screen, 'after', repeatRenderPath)
+          const stability = compareRgba(after, repeat)
+          assert(stability.differingPixels === 0, `Chrome rasterization was not deterministic for ${imageStem}: ${stability.differingPixels} pixels changed on an identical rerender`)
+          const comparison = compareRgba(before, after)
+          writeFileSync(beforePath, readFileSync(beforeRenderPath))
+          writeFileSync(afterPath, readFileSync(afterRenderPath))
+          writeFileSync(diffPath, encodePng(createDiff(before, after)))
+
+          viewportDifferingPixels += comparison.differingPixels
+          viewportTotalPixels += comparison.totalPixels
+          viewportTotalAbsDelta += comparison.totalAbsDelta
+          viewportMaxChannelDelta = Math.max(viewportMaxChannelDelta, comparison.maxChannelDelta)
+          viewportScreens[screen.id] = {
+            route: screen.route,
+            renderedThrough: 'App',
+            runtimeTestId: screen.testId,
+            deterministicApiData: true,
+            runtimeChecksPassed: { before: true, after: true },
+            stability,
+            images: {
+              before: relative(repoRoot, beforePath),
+              after: relative(repoRoot, afterPath),
+              diff: relative(repoRoot, diffPath),
+            },
+            comparison,
+            pixelIdentity: comparison.differingPixels === 0,
+          }
+        }
+      } finally {
+        await chrome.close()
+        chrome = undefined
+      }
+
+      const viewportComparison = {
+        totalPixels: viewportTotalPixels,
+        differingPixels: viewportDifferingPixels,
+        maxChannelDelta: viewportMaxChannelDelta,
+        totalAbsDelta: viewportTotalAbsDelta,
+      }
+      differingPixels += viewportComparison.differingPixels
+      totalPixels += viewportComparison.totalPixels
+      totalAbsDelta += viewportComparison.totalAbsDelta
+      maxChannelDelta = Math.max(maxChannelDelta, viewportComparison.maxChannelDelta)
+      viewports[viewport.id] = {
+        viewport,
+        screens: viewportScreens,
+        comparison: viewportComparison,
+        appearancePreserved: viewportComparison.differingPixels === 0,
+        pixelIdentity: viewportComparison.differingPixels === 0,
       }
     }
 
@@ -541,9 +601,9 @@ async function run() {
       renderedComponentSources,
       browser: execFileSync(chromePath, ['--version'], { encoding: 'utf8' }).trim(),
       networkPolicy: 'Fixture assets and API mocks are local; Chrome rejects non-local hostname resolution.',
-      viewport,
+      viewports: VIEWPORTS,
       stabilityRequirement: { differingPixels: 0, rationale: 'Each current-styles render is repeated and must be pixel-identical before its baseline/current result is recorded.' },
-      screens,
+      viewportResults: viewports,
       comparison,
       appearancePreservedAtTestedViewport: differingPixels === 0,
       pixelIdentity: differingPixels === 0,
@@ -553,17 +613,21 @@ async function run() {
     console.log(`baseline: ${result.baselineStyles}`)
     console.log(`candidate: ${result.finalStyles}`)
     console.log(`fixture: ${result.fixture.entry} rendering App with deterministic API data`)
-    console.log(`viewport: ${viewport.width}x${viewport.height} @${viewport.deviceScaleFactor}x`)
-    for (const [screenId, screenResult] of Object.entries(screens)) {
-      console.log(`${screenId}: ${screenResult.comparison.differingPixels}/${screenResult.comparison.totalPixels} pixels differ; deterministic rerender ${screenResult.stability.differingPixels} pixels differ`)
+    console.log(`viewports: ${VIEWPORTS.map(({ width, height }) => `${width}x${height}`).join(', ')}`)
+    for (const [viewportId, viewportResult] of Object.entries(viewports)) {
+      console.log(`${viewportId}: ${viewportResult.comparison.differingPixels}/${viewportResult.comparison.totalPixels} pixels differ`)
+      for (const [screenId, screenResult] of Object.entries(viewportResult.screens)) {
+        console.log(`${viewportId}/${screenId}: ${screenResult.comparison.differingPixels}/${screenResult.comparison.totalPixels} pixels differ; deterministic rerender ${screenResult.stability.differingPixels} pixels differ`)
+      }
     }
     console.log(`comparison: ${relative(repoRoot, comparisonPath)}`)
     console.log(`aggregate: ${comparison.differingPixels}/${comparison.totalPixels} pixels differ; max channel delta ${comparison.maxChannelDelta}; total absolute delta ${comparison.totalAbsDelta}`)
     console.log(`pixel identity: ${result.pixelIdentity}`)
+    assertAppearancePreserved(comparison)
   } finally {
     await chrome?.close()
     await fixtureServer?.server.close()
-    rmSync(temporaryDirectory, { recursive: true, force: true })
+    rmSync(temporaryDirectory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })
   }
 }
 

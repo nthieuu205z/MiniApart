@@ -168,7 +168,11 @@ export default function QuanLyTaiKhoan({ token }: Props) {
               </tr>
             </thead>
             <tbody>
-              {danhSach.map((nguoiDung) => (
+              {danhSach.length === 0 ? (
+                <tr>
+                  <td colSpan={6}><EmptyState title="Chưa có tài khoản nào." /></td>
+                </tr>
+              ) : danhSach.map((nguoiDung) => (
                 <tr key={nguoiDung.id} data-account-id={nguoiDung.id}>
                   <th scope="row">{nguoiDung.hoTen}</th>
                   <td>{nguoiDung.soDienThoai}</td>
@@ -192,7 +196,6 @@ export default function QuanLyTaiKhoan({ token }: Props) {
                 </tr>
               ))}
             </tbody>
-          {danhSach.length === 0 ? <EmptyState title="Chưa có tài khoản nào." /> : null}
         </TableFrame>
       )}
 

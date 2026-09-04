@@ -105,6 +105,22 @@ describe('Quản lý tài khoản', () => {
     expect(container.textContent).toContain('Toà A')
   })
 
+  it('FR-AUT-06 renders an empty account list with valid table semantics', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/nguoi-dung') return response([])
+      if (url === '/api/toa-nha') return response(buildings)
+      if (url === '/api/nguoi-dung/vai-tro') return response(roles)
+      return response([])
+    }))
+
+    await act(async () => root.render(<QuanLyTaiKhoan token="test-token" />))
+    const emptyCell = await vi.waitFor(() => container.querySelector('tbody td[colspan="6"]'))
+
+    expect(emptyCell?.textContent).toContain('Chưa có tài khoản nào.')
+    expect(container.querySelector('table > div')).toBeNull()
+  })
+
   it('FR-AUT-06 tạo tài khoản với vai trò và phân công toà', async () => {
     const { fetchMock } = createFetchMock()
     vi.stubGlobal('fetch', fetchMock)

@@ -1,5 +1,10 @@
-[
-  {
+{
+  "viewports": [
+    { "id": "mobile-360", "width": 360, "height": 2200, "deviceScaleFactor": 1 },
+    { "id": "desktop-1920", "width": 1920, "height": 2200, "deviceScaleFactor": 1 }
+  ],
+  "screens": [
+    {
     "id": "building",
     "route": "/toa-nha",
     "url": "/toa-nha",
@@ -38,5 +43,6 @@
     "testId": "account-management",
     "readyText": "Vũ Kỹ Thuật",
     "user": { "id": 4, "hoTen": "Phạm Quản Trị", "soDienThoai": "0900000004", "vaiTro": "QTHT", "tenVaiTro": "Quản trị hệ thống" }
-  }
-]
+    }
+  ]
+}

@@ -102,6 +102,11 @@ const styleCotNoiDung: CSSProperties = {
   flexDirection: 'column',
 }
 
+const styleCotNoiDungMobile: CSSProperties = {
+  ...styleCotNoiDung,
+  paddingBottom: 'calc(var(--ma-hit-mobile) + var(--ma-space-6))',
+}
+
 const styleVungNoiDung: CSSProperties = {
   flex: 1,
   minWidth: 0,
@@ -121,6 +126,10 @@ const styleVungNoiDungKhongDem: CSSProperties = {
 const styleTieuDe: CSSProperties = {
   margin: 'var(--ma-space-2) 0 0',
   font: 'var(--ma-text-screen-title)',
+  letterSpacing: 'var(--ma-tracking-title)',
+}
+
+const styleTieuDeKhoi: CSSProperties = {
   letterSpacing: 'var(--ma-tracking-title)',
 }
 
@@ -364,7 +373,7 @@ function App() {
           <section style={{ ...styleTheNoiDung, display: 'grid', gap: 'var(--ma-space-6)' }} aria-labelledby="auth-title">
             <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
               <SysLabel>{maTruyVetTheChinh}</SysLabel>
-              <h2 id="auth-title" style={{ margin: 0, font: 'var(--ma-text-block-title)' }}>
+              <h2 id="auth-title" style={{ margin: 0, font: 'var(--ma-text-block-title)', ...styleTieuDeKhoi }}>
                 {tieuDeTheChinh}
               </h2>
             </div>
@@ -435,6 +444,7 @@ function App() {
   return (
     <main style={laManHinhHep ? styleKhungUngDungMobile : styleKhungUngDungDesktop}>
       <NavPanel
+        mobile={laManHinhHep}
         aria-label="Điều hướng theo vai trò"
         groups={nhomDieuHuong}
         subtitle={nguoiDung.tenVaiTro}
@@ -445,14 +455,13 @@ function App() {
         }}
         onClick={handleNavClick}
         style={{
-          width: laManHinhHep ? '100%' : undefined,
+          width: laManHinhHep ? '100%' : 'var(--ma-nav-width)',
           minWidth: 0,
           borderRight: laManHinhHep ? undefined : '1px solid var(--ma-border-default)',
-          borderBottom: laManHinhHep ? '1px solid var(--ma-border-default)' : undefined,
         }}
       />
 
-      <div style={styleCotNoiDung}>
+      <div style={laManHinhHep ? styleCotNoiDungMobile : styleCotNoiDung}>
         {canDungTopBarToanCuc ? (
           <>
             <TopBar
@@ -497,7 +506,7 @@ function App() {
               >
                 <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
                   <SysLabel>{maTruyVetTheChinh}</SysLabel>
-                  <h2 id="current-route-title" style={{ margin: 0, font: 'var(--ma-text-block-title)' }}>
+                  <h2 id="current-route-title" style={{ margin: 0, font: 'var(--ma-text-block-title)', ...styleTieuDeKhoi }}>
                     {trangVaiTro.tieuDe}
                   </h2>
                   <p style={styleDoanMoTa}>{trangVaiTro.thongDiep}</p>
@@ -541,19 +550,19 @@ function App() {
                       <dt>
                         <SysLabel>Số điện thoại</SysLabel>
                       </dt>
-                      <dd style={{ margin: 0, font: 'var(--ma-text-body)' }}>{nguoiDung.soDienThoai}</dd>
+                      <dd style={{ margin: 0, font: 'var(--ma-text-body)', color: 'var(--ma-text-primary)' }}>{nguoiDung.soDienThoai}</dd>
                     </div>
                     <div style={styleHangThongTin}>
                       <dt>
                         <SysLabel>Vai trò</SysLabel>
                       </dt>
-                      <dd style={{ margin: 0, font: 'var(--ma-text-body)' }}>{nguoiDung.tenVaiTro}</dd>
+                      <dd style={{ margin: 0, font: 'var(--ma-text-body)', color: 'var(--ma-text-primary)' }}>{nguoiDung.tenVaiTro}</dd>
                     </div>
                     <div style={styleHangThongTin}>
                       <dt>
                         <SysLabel>Mã vai trò</SysLabel>
                       </dt>
-                      <dd style={{ margin: 0, font: 'var(--ma-text-body)' }}>{nguoiDung.vaiTro}</dd>
+                      <dd style={{ margin: 0, font: 'var(--ma-text-body)', color: 'var(--ma-text-primary)' }}>{nguoiDung.vaiTro}</dd>
                     </div>
                   </dl>
                 </div>
@@ -586,7 +595,7 @@ function renderTrangThaiHeThong(health: HealthStatus | null, healthError: string
       >
         <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
           <SysLabel>BẢN KIỂM TRA KẾT NỐI</SysLabel>
-          <h2 id="status-title" style={{ margin: 0, font: 'var(--ma-text-block-title)' }}>
+          <h2 id="status-title" style={{ margin: 0, font: 'var(--ma-text-block-title)', ...styleTieuDeKhoi }}>
             Trạng thái hệ thống
           </h2>
         </div>
@@ -621,13 +630,13 @@ function renderTrangThaiHeThong(health: HealthStatus | null, healthError: string
             <dt>
               <SysLabel>Ứng dụng</SysLabel>
             </dt>
-            <dd style={{ margin: 0, font: 'var(--ma-text-body)' }}>{health.status}</dd>
+            <dd style={{ margin: 0, font: 'var(--ma-text-body)', color: 'var(--ma-done-text)' }}>{health.status}</dd>
           </div>
           <div style={styleHangThongTin}>
             <dt>
               <SysLabel>Cơ sở dữ liệu</SysLabel>
             </dt>
-            <dd style={{ margin: 0, font: 'var(--ma-text-body)' }}>{health.database}</dd>
+            <dd style={{ margin: 0, font: 'var(--ma-text-body)', color: 'var(--ma-done-text)' }}>{health.database}</dd>
           </div>
         </dl>
       ) : (

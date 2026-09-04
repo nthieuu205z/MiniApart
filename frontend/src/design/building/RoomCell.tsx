@@ -6,7 +6,7 @@ export interface RoomCellProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Số phòng, ví dụ "302". */
   room: string
   /** recorded=đã ghi · missing=chưa ghi số · debt=còn nợ · repair=chờ thợ · vacant=trống · multi=nhiều việc */
-  state?: 'recorded' | 'missing' | 'debt' | 'repair' | 'vacant' | 'multi'
+  state?: 'recorded' | 'missing' | 'debt' | 'repair' | 'vacant' | 'reserved' | 'occupied' | 'stopped' | 'multi'
   /** Nhãn chữ dưới số phòng: "Đã ghi · 58 kWh", "Nợ 1.720.000", "Trống 12 ngày". */
   label?: string
   /** Chỉ dùng với state="multi": số việc đang tồn ở phòng đó. */
@@ -34,6 +34,9 @@ const STATES: Record<SingleRoomState, RoomStateStyle> = {
   debt:     { glyph: "con-no", glyphColor: "var(--ma-urgent)", flag: "var(--ma-urgent)", labelColor: "var(--ma-urgent)", labelWeight: 700, mono: true },
   repair:   { glyph: "cho-tho", glyphColor: "var(--ma-waiting)", flag: "var(--ma-waiting-border)", labelColor: "var(--ma-waiting)", labelWeight: 700 },
   vacant:   { glyph: "phong-trong", glyphColor: "var(--ma-ink-300)", flag: null, labelColor: "var(--ma-text-disabled)", labelWeight: 400, dashed: true },
+  reserved: { glyph: "hop-dong", glyphColor: "var(--ma-waiting)", flag: "var(--ma-waiting-border)", border: "1px solid var(--ma-waiting-border)", labelColor: "var(--ma-waiting)", labelWeight: 700 },
+  occupied: { glyph: "hop-dong", glyphColor: "var(--ma-done-text)", flag: "var(--ma-done-text)", border: "1px solid var(--ma-done-text)", labelColor: "var(--ma-done-text)", labelWeight: 700 },
+  stopped:  { glyph: "bi-chan", glyphColor: "var(--ma-ink-900)", flag: "var(--ma-ink-900)", border: "1px solid var(--ma-border-strong)", labelColor: "var(--ma-ink-900)", labelWeight: 700 },
 };
 
 /** Một phòng trên mặt cắt toà nhà. Phòng nhiều việc thì dùng multi — đổi sang nền mực, KHÔNG xếp nhiều ký hiệu. */

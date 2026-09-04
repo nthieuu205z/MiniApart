@@ -130,6 +130,45 @@ describe('DanhMucPhong', () => {
     expect(facts.style.minWidth).toBe('0px')
   })
 
+  it('FR-BLD-03 gives persisted room statuses distinct token-owned color treatments and preserves labels and hooks', async () => {
+    const rooms = [
+      { ...phong201, id: 21, soPhong: '101', trangThai: 'TRONG', tenTrangThai: 'Trống' },
+      { ...phong101, id: 22, soPhong: '102', trangThai: 'DA_COC', tenTrangThai: 'Đã đặt cọc' },
+      { ...phong101, id: 23, soPhong: '103', trangThai: 'DANG_THUE', tenTrangThai: 'Đang thuê' },
+      { ...phong101, id: 24, soPhong: '104', trangThai: 'DANG_SUA', tenTrangThai: 'Đang sửa' },
+      { ...phong101, id: 25, soPhong: '105', trangThai: 'NGUNG', tenTrangThai: 'Ngừng' },
+    ]
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === '/api/toa-nha') return jsonResponse([toaA])
+      return jsonResponse(rooms)
+    }))
+
+    await renderScreen()
+    await vi.waitFor(() => expect(container.querySelectorAll('[data-testid="room-tile"]')).toHaveLength(5))
+
+    const readTile = (room: string) => {
+      const tile = [...container.querySelectorAll('[data-testid="room-tile"]')]
+        .find((candidate) => candidate.querySelector('.room-tile__number')?.textContent?.trim() === room) as HTMLElement
+      const status = tile.querySelector('.room-tile__status') as HTMLElement
+      return {
+        tile,
+        text: status.textContent?.trim(),
+        color: status.style.color,
+        border: tile.style.border,
+        glyph: tile.querySelector('svg')?.getAttribute('stroke'),
+      }
+    }
+
+    expect(readTile('101')).toMatchObject({ text: 'Trống', color: 'var(--ma-text-disabled)', border: '1px dashed var(--ma-border-dashed)' })
+    expect(readTile('102')).toMatchObject({ text: 'Đã đặt cọc', color: 'var(--ma-waiting)', border: '1px solid var(--ma-waiting-border)', glyph: 'var(--ma-waiting)' })
+    expect(readTile('103')).toMatchObject({ text: 'Đang thuê', color: 'var(--ma-done-text)', border: '1px solid var(--ma-done-text)', glyph: 'var(--ma-done-text)' })
+    expect(readTile('104')).toMatchObject({ text: 'Đang sửa', color: 'var(--ma-waiting)' })
+    expect(readTile('105')).toMatchObject({ text: 'Ngừng', color: 'var(--ma-ink-900)', border: '1px solid var(--ma-border-strong)', glyph: 'var(--ma-ink-900)' })
+    expect(readTile('102').tile.className).toContain('room-tile--da_coc')
+    expect(readTile('103').tile.className).toContain('room-tile--dang_thue')
+    expect(readTile('105').tile.className).toContain('room-tile--ngung')
+  })
+
   it('FR-BLD-02 previews a batch without creating it, then creates the exact preview only after confirmation', async () => {
     const preview = [{ ...phong101, id: null, soPhong: '301', tang: 3 }, { ...phong101, id: null, soPhong: '302', tang: 3 }]
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -150,9 +189,56 @@ describe('DanhMucPhong', () => {
     await fillBatch('loaiPhong', 'Studio')
     await act(async () => submitForm('room-batch-form'))
     await vi.waitFor(() => expect(container.textContent).toContain('301, 302'))
+    expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/phong/hang-loat/xem-truoc', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({
+        soBatDau: '301',
+        soKetThuc: '302',
+        tang: 1,
+        dienTich: '20.00',
+        sucChua: 2,
+        giaThueMacDinh: '0.00',
+        loaiPhong: 'Studio',
+      }),
+    }))
     expect(fetchMock).not.toHaveBeenCalledWith('/api/toa-nha/1/phong/hang-loat', expect.anything())
     await act(async () => clickButton('Xác nhận tạo dãy phòng'))
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/phong/hang-loat', expect.objectContaining({ method: 'POST' })))
+  })
+
+  it('FR-BLD-02 ignores a second batch confirmation while the first request is pending', async () => {
+    const preview = [{ ...phong101, id: null, soPhong: '301', tang: 3 }]
+    let resolveCreate: ((response: Response) => void) | undefined
+    const createRequest = new Promise<Response>((resolve) => {
+      resolveCreate = resolve
+    })
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      if (url === '/api/toa-nha') return jsonResponse([toaA])
+      if (url === '/api/toa-nha/1/phong') return jsonResponse([])
+      if (url.endsWith('/xem-truoc') && init?.method === 'POST') return jsonResponse({ phong: preview })
+      if (url === '/api/toa-nha/1/phong/hang-loat' && init?.method === 'POST') return createRequest
+      return jsonResponse([])
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await renderScreen()
+    await vi.waitFor(() => expect(container.textContent).toContain('Xem trước dãy phòng'))
+    await act(async () => clickButton('Xem trước dãy phòng'))
+    await fillBatch('soBatDau', '301')
+    await fillBatch('soKetThuc', '301')
+    await fillBatch('loaiPhong', 'Studio')
+    await act(async () => submitForm('room-batch-form'))
+    await vi.waitFor(() => expect(container.textContent).toContain('301'))
+
+    await act(async () => {
+      clickButton('Xác nhận tạo dãy phòng')
+      clickButton('Xác nhận tạo dãy phòng')
+    })
+
+    expect(fetchMock.mock.calls.filter(([input, init]) => String(input) === '/api/toa-nha/1/phong/hang-loat' && init?.method === 'POST')).toHaveLength(1)
+    resolveCreate?.(jsonResponse({ phong: [{ ...preview[0], id: 31 }] }, 201))
+    await vi.waitFor(() => expect(container.textContent).toContain('Đã tạo dãy phòng 301 - 301.'))
   })
 
   it('FR-BLD-02 shows duplicate room numbers as a preview error and does not create them', async () => {

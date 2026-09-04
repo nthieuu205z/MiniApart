@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { SCREEN_CASES, assertRenderedApp, compareRgba } from './compare-styles.mjs'
+import * as comparator from './compare-styles.mjs'
+
+const { SCREEN_CASES, assertRenderedApp, compareRgba } = comparator
 
 describe('Ticket 08 visual comparator', () => {
   it('covers the five migrated routes through the real App entry point', () => {
@@ -12,6 +14,30 @@ describe('Ticket 08 visual comparator', () => {
     ])
   })
 
+  it('plans evidence for both required responsive viewports', () => {
+    expect(comparator.VIEWPORTS).toEqual([
+      expect.objectContaining({ width: 360, height: 2200, deviceScaleFactor: 1 }),
+      expect.objectContaining({ width: 1920, height: 2200, deviceScaleFactor: 1 }),
+    ])
+
+    const plan = comparator.buildEvidencePlan()
+
+    expect(plan).toHaveLength(10)
+    expect([...new Set(plan.map(({ viewport }) => viewport.width))]).toEqual([360, 1920])
+    expect(plan.map(({ imageStem }) => imageStem)).toEqual([
+      'mobile-360-building',
+      'mobile-360-room',
+      'mobile-360-meter',
+      'mobile-360-invoice',
+      'mobile-360-account',
+      'desktop-1920-building',
+      'desktop-1920-room',
+      'desktop-1920-meter',
+      'desktop-1920-invoice',
+      'desktop-1920-account',
+    ])
+  })
+
   it('rejects synthetic hook-only HTML that was not rendered and settled through App', () => {
     const syntheticFixture = {
       ready: false,
@@ -21,6 +47,7 @@ describe('Ticket 08 visual comparator', () => {
       locationPathname: '/toa-nha',
       apiRequests: null,
       unexpectedRequestCount: 0,
+      prefersLightColorScheme: true,
       surfacePresent: true,
       settledTextPresent: true,
       invalid: null,
@@ -38,6 +65,7 @@ describe('Ticket 08 visual comparator', () => {
       locationPathname: '/toa-nha',
       apiRequests: 'deterministic-mock',
       unexpectedRequestCount: 0,
+      prefersLightColorScheme: true,
       surfacePresent: false,
       settledTextPresent: true,
       invalid: null,
@@ -56,6 +84,7 @@ describe('Ticket 08 visual comparator', () => {
       locationPathname: '/phong',
       apiRequests: 'deterministic-mock',
       unexpectedRequestCount: 0,
+      prefersLightColorScheme: true,
       surfacePresent: true,
       settledTextPresent: true,
       invalid: null,
@@ -74,12 +103,32 @@ describe('Ticket 08 visual comparator', () => {
       locationPathname: '/ghi-chi-so',
       apiRequests: 'deterministic-mock',
       unexpectedRequestCount: 0,
+      prefersLightColorScheme: true,
       surfacePresent: true,
       settledTextPresent: true,
       invalid: null,
     }
 
     expect(() => assertRenderedApp(meter, settledMeter)).not.toThrow()
+  })
+
+  it('rejects a render captured under an unintended dark color scheme', () => {
+    const building = SCREEN_CASES[0]
+    const darkRender = {
+      ready: true,
+      renderer: 'App',
+      screen: 'building',
+      route: '/toa-nha',
+      locationPathname: '/toa-nha',
+      apiRequests: 'deterministic-mock',
+      unexpectedRequestCount: 0,
+      prefersLightColorScheme: false,
+      surfacePresent: true,
+      settledTextPresent: true,
+      invalid: null,
+    }
+
+    expect(() => assertRenderedApp(building, darkRender)).toThrow(/light color scheme/)
   })
 
   it('reports identical rendered pixels without a diff', () => {
@@ -107,5 +156,10 @@ describe('Ticket 08 visual comparator', () => {
       maxChannelDelta: 10,
       totalAbsDelta: 17,
     })
+  })
+
+  it('rejects evidence when any required rendered pixel changed', () => {
+    expect(comparator.assertAppearancePreserved).toBeTypeOf('function')
+    expect(() => comparator.assertAppearancePreserved({ differingPixels: 1 })).toThrow(/1 rendered pixel/)
   })
 })

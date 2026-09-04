@@ -54,6 +54,12 @@ describe('Ticket 08 legacy stylesheet cleanup', () => {
     expect(styles).toContain('.sr-only {')
   })
 
+  it('NFR-USA-01 removes legacy definition-list colors while retaining the margin reset', () => {
+    expect(styles).toContain('dl,\ndt,\ndd {\n  margin: 0;')
+    expect(styles).not.toMatch(/(?:^|\n)(?:dt|dd)\s*\{[^}]*color\s*:/m)
+    expect(styles).not.toMatch(/#[0-9a-fA-F]{3,8}/)
+  })
+
   it('keeps compatibility class names while room-catalog presentation remains token-owned inline', () => {
     for (const compatibilityClass of ['eyebrow', 'field', 'status-message']) {
       expect(roomCatalogSource).toMatch(

@@ -21,6 +21,21 @@ select {
   font: inherit;
 }
 
+/* Normalize the browser's heading/paragraph default block margin for screens
+ * assembled from the design primitives. Individual components own all other
+ * presentation. */
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+dl,
+dt,
+dd {
+  margin: 0;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

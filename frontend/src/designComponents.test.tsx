@@ -7,6 +7,7 @@ import { Button } from './design/core/Button'
 import { Figure } from './design/core/Figure'
 import { Glyph } from './design/core/Glyph'
 import { MeterInput } from './design/forms/MeterInput'
+import { MetaItem, TableCell, TableHeadCell } from './design/layout/Screen'
 
 // @ts-expect-error ButtonProps intentionally omits native disabled; use blocked instead.
 const buttonWithDisabledProp = <Button disabled>Không hợp lệ</Button>
@@ -106,5 +107,29 @@ describe('MiniApart design components', () => {
 
     expect(container.textContent).toContain('8.450.000')
     expect(container.textContent).toContain('đ')
+  })
+
+  it('FR-INV-02 distinguishes column and invoice line-item row header scopes', async () => {
+    await act(async () => {
+      root.render(
+        <table>
+          <thead><tr><TableHeadCell>Khoản mục</TableHeadCell></tr></thead>
+          <tbody><tr><TableCell header>Tiền điện</TableCell></tr></tbody>
+        </table>,
+      )
+    })
+
+    expect(container.querySelector('thead th')?.getAttribute('scope')).toBe('col')
+    expect(container.querySelector('tbody th')?.getAttribute('scope')).toBe('row')
+  })
+
+  it('FR-INV-02 keeps definition-list metadata colors owned by design tokens', async () => {
+    await act(async () => {
+      root.render(<dl><MetaItem label="Phòng">101</MetaItem></dl>)
+    })
+
+    expect(container.querySelector('dt')?.style.color).toBe('var(--ma-text-secondary)')
+    expect(container.querySelector('dd')?.style.color).toBe('var(--ma-text-primary)')
+    expect(container.querySelector('dd')?.style.fontWeight).toBe('800')
   })
 })

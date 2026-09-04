@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import App from '../../src/App'
 import '../../src/tokens/index.css'
-import screenCases from './fixture-config.json'
+import fixtureConfig from './fixture-config.json'
 
 const buildings = [
   { id: 1, maToa: 'TN-A', ten: 'MiniApart Hai Bà Trưng', diaChi: '18 phố Minh Khai, Hà Nội', soTang: 5, ngayChotSo: 28, soNgayHanTt: 7, tkNganHang: 'Vietcombank 0123456789', nguongThatThoat: '10.00', batBuocAnhCongTo: true },
@@ -65,7 +65,7 @@ const roles = [
 const params = new URLSearchParams(window.location.search)
 const screenId = params.get('screen')
 const variant = params.get('variant')
-const screen = screenCases.find((candidate) => candidate.id === screenId)
+const screen = fixtureConfig.screens.find((candidate) => candidate.id === screenId)
 const unexpectedRequests: string[] = []
 
 function markInvalid(reason: unknown) {

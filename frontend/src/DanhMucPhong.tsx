@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import {
   ApiError,
   fetchPhong,
@@ -52,6 +52,13 @@ const BIEU_MAU_PHONG_MAC_DINH: BieuMauPhong = {
   sucChua: '2',
   giaThueMacDinh: '0.00',
   loaiPhong: '',
+}
+
+const styleEyebrow: CSSProperties = {
+  margin: '0 0 var(--ma-space-2)',
+  color: 'var(--ma-text-secondary)',
+  font: 'var(--ma-text-syslabel)',
+  letterSpacing: 'var(--ma-tracking-navgroup)',
 }
 
 const styleDanhMucPhong: CSSProperties = {
@@ -257,6 +264,7 @@ export default function DanhMucPhong({ token }: Props) {
   })
   const [xemTruoc, setXemTruoc] = useState<ThongTinPhong[]>([])
   const [yeuCauPhongHangLoatDaXemTruoc, setYeuCauPhongHangLoatDaXemTruoc] = useState<YeuCauPhongHangLoat | null>(null)
+  const dangXuLyHangLoatRef = useRef(false)
 
   const toaDangChon = danhSachToa.find((item) => item.id === toaDangChonId) ?? null
   const nhomPhongTheoTang = taoNhomPhongTheoTang(danhSachPhong)
@@ -267,7 +275,7 @@ export default function DanhMucPhong({ token }: Props) {
       const status = layThongTinTrangThai(item)
       return {
         room: item.soPhong,
-        state: item.trangThai === 'TRONG' ? 'vacant' as const : item.trangThai === 'DANG_SUA' ? 'repair' as const : 'recorded' as const,
+        state: layTrangThaiRoomCell(item.trangThai),
         label: status.nhan,
         className: `${status.lopCss} ${phongDangXem?.id === item.id ? 'room-tile--active' : ''}`,
         'aria-pressed': phongDangXem?.id === item.id,
@@ -385,7 +393,9 @@ export default function DanhMucPhong({ token }: Props) {
 
   async function handleXacNhanHangLoat() {
     if (!toaDangChonId || xemTruoc.length === 0 || !yeuCauPhongHangLoatDaXemTruoc) return
+    if (dangXuLyHangLoatRef.current) return
 
+    dangXuLyHangLoatRef.current = true
     setDangXuLyHangLoat(true)
     setLoi(null)
     setThongBao(null)
@@ -407,6 +417,7 @@ export default function DanhMucPhong({ token }: Props) {
     } catch (reason: unknown) {
       setLoi(thongBaoLoi(reason, 'Không thể tạo dãy phòng.'))
     } finally {
+      dangXuLyHangLoatRef.current = false
       setDangXuLyHangLoat(false)
     }
   }
@@ -415,7 +426,7 @@ export default function DanhMucPhong({ token }: Props) {
     <section className="building-management room-management" data-testid="room-catalog" aria-labelledby="room-management-title" style={styleDanhMucPhong}>
       <div className="building-management__heading" style={styleTieuDeManHinh}>
         <div>
-          <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-02</p>
+          <p className="eyebrow" style={styleEyebrow}>FR-BLD-02</p>
           <h3 id="room-management-title" style={{ margin: 0, font: 'var(--ma-text-block-title)' }}>Danh mục phòng</h3>
         </div>
         <Button type="button" variant="secondary" onClick={() => setHienBieuMauHangLoat((current) => !current)} style={{ minHeight: 44 }}>
@@ -478,7 +489,7 @@ export default function DanhMucPhong({ token }: Props) {
               <section className="building-summary room-status-summary" aria-labelledby="room-status-summary-title" style={styleTamThe}>
                 <div className="building-summary__heading" style={styleSuKienPhong}>
                   <div>
-                    <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-03</p>
+                    <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
                     <h4 id="room-status-summary-title" style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Tổng quan sơ đồ phòng</h4>
                   </div>
                   <span className="room-status-summary__total" style={{ color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)' }}>{danhSachPhong.length} phòng</span>
@@ -506,7 +517,7 @@ export default function DanhMucPhong({ token }: Props) {
               <>
                 <div className="building-summary__heading" style={styleSuKienPhong}>
                   <div>
-                    <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-03</p>
+                    <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
                     <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Chi tiết phòng {phongDangXem.soPhong}</h4>
                   </div>
                   <span className={`room-detail__status ${layThongTinTrangThai(phongDangXem).lopCss.replace('room-tile', 'room-detail__status')}`} style={styleTrangThaiPhong(phongDangXem.trangThai)}>
@@ -542,7 +553,7 @@ export default function DanhMucPhong({ token }: Props) {
             ) : (
               <>
                 <div>
-                  <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-03</p>
+                  <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
                   <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Chi tiết phòng</h4>
                 </div>
                 <p className="status-message" style={styleThongBao}>Chọn một ô phòng trong sơ đồ để xem chi tiết hiện tại của phòng đó.</p>
@@ -552,7 +563,7 @@ export default function DanhMucPhong({ token }: Props) {
 
           <form className="building-form" data-testid="room-form" onSubmit={handleTaoPhong} style={styleTamThe}>
             <div>
-              <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-02</p>
+              <p className="eyebrow" style={styleEyebrow}>FR-BLD-02</p>
               <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Khai báo một phòng</h4>
             </div>
 
@@ -603,7 +614,7 @@ export default function DanhMucPhong({ token }: Props) {
           {hienBieuMauHangLoat ? (
             <form className="building-form" data-testid="room-batch-form" onSubmit={handleXemTruocHangLoat} style={styleTamThe}>
               <div>
-                <p className="eyebrow" style={{ margin: '0 0 var(--ma-space-2)', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-syslabel)' }}>FR-BLD-02</p>
+                <p className="eyebrow" style={styleEyebrow}>FR-BLD-02</p>
                 <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Tạo nhanh dãy phòng</h4>
               </div>
 
@@ -752,6 +763,23 @@ function layThongTinTrangThai(phong: ThongTinPhong) {
   return {
     nhan: phong.tenTrangThai || macDinh.nhan,
     lopCss: macDinh.lopCss,
+  }
+}
+
+function layTrangThaiRoomCell(trangThai: string) {
+  switch (trangThai) {
+    case 'TRONG':
+      return 'vacant' as const
+    case 'DANG_SUA':
+      return 'repair' as const
+    case 'DA_COC':
+      return 'reserved' as const
+    case 'DANG_THUE':
+      return 'occupied' as const
+    case 'NGUNG':
+      return 'stopped' as const
+    default:
+      return 'recorded' as const
   }
 }
 
