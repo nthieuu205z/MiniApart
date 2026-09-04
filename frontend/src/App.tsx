@@ -17,10 +17,6 @@ import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { layMenuTheoVaiTro, xacDinhTrangTheoVaiTro } from './roleNavigation'
 import './styles.css'
 
-const styleTrackedTitle = {
-  letterSpacing: 'var(--ma-tracking-title)',
-} as const
-
 function App() {
   const [health, setHealth] = useState<HealthStatus | null>(null)
   const [healthError, setHealthError] = useState<string | null>(null)
@@ -193,7 +189,7 @@ function App() {
         <div className="status-card__heading">
           <div>
             <p className="eyebrow">{maTruyVetTheChinh}</p>
-            <h2 id="auth-title" style={styleTrackedTitle}>{tieuDeTheChinh}</h2>
+            <h2 id="auth-title">{tieuDeTheChinh}</h2>
           </div>
           {nguoiDung ? (
             <button type="button" className="ghost-button" onClick={handleLogout}>
@@ -315,7 +311,7 @@ function App() {
         <div className="status-card__heading">
           <div>
             <p className="eyebrow">BẢN KIỂM TRA KẾT NỐI</p>
-            <h2 id="status-title" style={styleTrackedTitle}>Trạng thái hệ thống</h2>
+            <h2 id="status-title">Trạng thái hệ thống</h2>
           </div>
           <span className={`status-badge ${health ? 'status-badge--up' : 'status-badge--pending'}`}>
             {health ? 'Đang hoạt động' : healthError ? 'Cần kiểm tra' : 'Đang kiểm tra'}

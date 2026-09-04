@@ -70,19 +70,6 @@ const styleThongBao = {
   lineHeight: 1.55,
 }
 
-const styleTieuDeManHinh = {
-  margin: 'var(--ma-space-2) 0 var(--ma-space-1)',
-  color: '#0f4f4a',
-  font: 'var(--ma-text-screen-title)',
-  letterSpacing: 'var(--ma-tracking-title)',
-} as const
-
-const styleTieuDeKhoi = {
-  margin: 'var(--ma-space-1) 0 0',
-  font: 'var(--ma-text-block-title)',
-  letterSpacing: 'var(--ma-tracking-title)',
-} as const
-
 export default function GhiChiSo({ token }: Props) {
   const [danhSachToaNha, setDanhSachToaNha] = useState<ThongTinToaNha[]>([])
   const [danhSachKy, setDanhSachKy] = useState<ThongTinKyThanhToan[]>([])
@@ -402,7 +389,16 @@ export default function GhiChiSo({ token }: Props) {
         >
           <div style={{ minWidth: 0 }}>
             <SysLabel>FR-MTR-01 / FR-MTR-02 / FR-MTR-03 / FR-MTR-04</SysLabel>
-            <h1 id="meter-title" style={styleTieuDeManHinh}>Ghi chỉ số</h1>
+            <h1
+              id="meter-title"
+              style={{
+                margin: 'var(--ma-space-2) 0 var(--ma-space-1)',
+                font: 'var(--ma-text-screen-title)',
+                letterSpacing: 'var(--ma-tracking-title)',
+              }}
+            >
+              Ghi chỉ số
+            </h1>
             <p style={{ margin: 0, color: 'var(--ma-text-secondary)', font: 'var(--ma-text-body)' }}>
               Ghi theo thứ tự tầng, lưu xong tự chuyển tới ô kế tiếp.
             </p>
@@ -485,7 +481,9 @@ export default function GhiChiSo({ token }: Props) {
             >
               <div>
                 <SysLabel>FR-MTR-08</SysLabel>
-                <h2 id="meter-close-title" style={styleTieuDeKhoi}>Chốt kỳ</h2>
+                <h2 id="meter-close-title" style={{ margin: 'var(--ma-space-1) 0 0', font: 'var(--ma-text-block-title)' }}>
+                  Chốt kỳ
+                </h2>
               </div>
               <Button
                 variant="secondary"

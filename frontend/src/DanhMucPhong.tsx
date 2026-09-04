@@ -48,10 +48,6 @@ const BIEU_MAU_PHONG_MAC_DINH: BieuMauPhong = {
   loaiPhong: '',
 }
 
-const styleEyebrow = {
-  letterSpacing: 'var(--ma-tracking-navgroup)',
-} as const
-
 export default function DanhMucPhong({ token }: Props) {
   const [danhSachToa, setDanhSachToa] = useState<ThongTinToaNha[]>([])
   const [toaDangChonId, setToaDangChonId] = useState<number | null>(null)
@@ -221,7 +217,7 @@ export default function DanhMucPhong({ token }: Props) {
     <section className="building-management room-management" data-testid="room-catalog" aria-labelledby="room-management-title">
       <div className="building-management__heading">
         <div>
-          <p className="eyebrow" style={styleEyebrow}>FR-BLD-02</p>
+          <p className="eyebrow">FR-BLD-02</p>
           <h3 id="room-management-title">Danh mục phòng</h3>
         </div>
         <button type="button" className="ghost-button" onClick={() => setHienBieuMauHangLoat((current) => !current)}>
@@ -281,7 +277,7 @@ export default function DanhMucPhong({ token }: Props) {
               <section className="building-summary room-status-summary" aria-labelledby="room-status-summary-title">
                 <div className="building-summary__heading">
                   <div>
-                    <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
+                    <p className="eyebrow">FR-BLD-03</p>
                     <h4 id="room-status-summary-title">Tổng quan sơ đồ phòng</h4>
                   </div>
                   <span className="room-status-summary__total">{danhSachPhong.length} phòng</span>
@@ -336,7 +332,7 @@ export default function DanhMucPhong({ token }: Props) {
               <>
                 <div className="building-summary__heading">
                   <div>
-                    <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
+                    <p className="eyebrow">FR-BLD-03</p>
                     <h4>Chi tiết phòng {phongDangXem.soPhong}</h4>
                   </div>
                   <span className={`room-detail__status ${layThongTinTrangThai(phongDangXem).lopCss.replace('room-tile', 'room-detail__status')}`}>
@@ -372,7 +368,7 @@ export default function DanhMucPhong({ token }: Props) {
             ) : (
               <>
                 <div>
-                  <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
+                  <p className="eyebrow">FR-BLD-03</p>
                   <h4>Chi tiết phòng</h4>
                 </div>
                 <p className="status-message">Chọn một ô phòng trong sơ đồ để xem chi tiết hiện tại của phòng đó.</p>
@@ -382,7 +378,7 @@ export default function DanhMucPhong({ token }: Props) {
 
           <form className="building-form" data-testid="room-form" onSubmit={handleTaoPhong}>
             <div>
-              <p className="eyebrow" style={styleEyebrow}>FR-BLD-02</p>
+              <p className="eyebrow">FR-BLD-02</p>
               <h4>Khai báo một phòng</h4>
             </div>
 
@@ -433,7 +429,7 @@ export default function DanhMucPhong({ token }: Props) {
           {hienBieuMauHangLoat ? (
             <form className="building-form" data-testid="room-batch-form" onSubmit={handleXemTruocHangLoat}>
               <div>
-                <p className="eyebrow" style={styleEyebrow}>FR-BLD-02</p>
+                <p className="eyebrow">FR-BLD-02</p>
                 <h4>Tạo nhanh dãy phòng</h4>
               </div>
 

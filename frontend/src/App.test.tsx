@@ -105,9 +105,6 @@ describe('App role navigation', () => {
 
       expect(mountedApp.container.textContent).toContain(nguoiDung.tenVaiTro)
       expect(mountedApp.container.textContent).toContain('Trang chủ')
-      expect(mountedApp.container.querySelector('#status-title')?.getAttribute('style')).toContain(
-        'letter-spacing: var(--ma-tracking-title);',
-      )
     },
   )
 
@@ -508,13 +505,6 @@ describe('App role navigation', () => {
       expect(element).not.toBeNull()
       return element as HTMLElement
     })
-    const roomEyebrows = [...mountedApp.container.querySelectorAll('.room-management .eyebrow')]
-    expect(roomEyebrows.length).toBeGreaterThan(0)
-    expect(
-      roomEyebrows.every((element) =>
-        element.getAttribute('style')?.includes('letter-spacing: var(--ma-tracking-navgroup);'),
-      ),
-    ).toBe(true)
 
     const floorSections = [...floorMap.querySelectorAll('[data-testid="room-floor-section"]')]
     expect(floorSections).toHaveLength(4)
