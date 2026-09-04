@@ -373,6 +373,10 @@ describe('GhiChiSo mobile screen', () => {
     expect(closeButton.getAttribute('aria-disabled')).toBe('true')
     closeButton.focus()
     expect(document.activeElement).toBe(closeButton)
+    expect((container.querySelector('#meter-title') as HTMLElement).style.color).toBe('rgb(15, 79, 74)')
+    expect((container.querySelector('#meter-close-title') as HTMLElement).getAttribute('style')).toContain(
+      'letter-spacing: var(--ma-tracking-title);',
+    )
   })
 
   it('FR-MTR-03 blocks lower readings until replacement meter is declared', async () => {
