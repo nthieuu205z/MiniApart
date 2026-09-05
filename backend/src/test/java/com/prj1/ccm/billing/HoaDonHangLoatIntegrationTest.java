@@ -122,6 +122,7 @@ class HoaDonHangLoatIntegrationTest {
             executorService.shutdownNow();
         }
         xoaTriggerEpLoiKhiDanhDauKhoanPhatSinh();
+        xoaTriggerEpLoiKhiPhatHanhHoaDon();
     }
 
     @Test
@@ -239,6 +240,33 @@ class HoaDonHangLoatIntegrationTest {
                 .andExpect(jsonPath("$.soHoaDonDaPhatHanh").value(0))
                 .andExpect(jsonPath("$.soHoaDonDaOTrangThaiKhac").value(2))
                 .andExpect(jsonPath("$.soHoaDonBoQua").value(1));
+    }
+
+    @Test
+    void FR_INV_08_continuesBulkPublicationWhenOneInvoiceProcessingFails() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long kyId = themKyThanhToan(1L, 2026, 8, "2026-07-28", "2026-08-28", "DANG_MO");
+        Long hoaDonLoiId = chenHoaDon("TN-A-405-202608", kyId, themHopDong(
+                themPhong(1L, "405", 4), themNguoiThue("Nguoi thue 405", "0907000405"),
+                "3500000.00", "2026-07-01", "2026-09-30"));
+        Long hoaDonThanhCongId = chenHoaDon("TN-A-406-202608", kyId, themHopDong(
+                themPhong(1L, "406", 4), themNguoiThue("Nguoi thue 406", "0907000406"),
+                "3500000.00", "2026-07-01", "2026-09-30"));
+        taoTriggerEpLoiKhiPhatHanhHoaDon(hoaDonLoiId);
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/phat-hanh-hang-loat".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.soHoaDonDaPhatHanh").value(1))
+                .andExpect(jsonPath("$.soHoaDonDaOTrangThaiKhac").value(0))
+                .andExpect(jsonPath("$.soHoaDonBoQua").value(1))
+                .andExpect(jsonPath("$.lyDoBoQua", hasSize(1)))
+                .andExpect(jsonPath("$.lyDoBoQua[0].ma").value("KHONG_THE_PHAT_HANH"));
+
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOA_DON WHERE id = ?", String.class, hoaDonLoiId))
+                .isEqualTo("NHAP");
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOA_DON WHERE id = ?", String.class, hoaDonThanhCongId))
+                .isEqualTo("DA_PHAT_HANH");
     }
 
     @Test
@@ -1084,6 +1112,37 @@ class HoaDonHangLoatIntegrationTest {
     private void xoaTriggerEpLoiKhiDanhDauKhoanPhatSinh() {
         jdbcTemplate.execute("DROP TRIGGER IF EXISTS task6_fail_pending_extra_mark ON KHOAN_PHAT_SINH");
         jdbcTemplate.execute("DROP FUNCTION IF EXISTS task6_fail_pending_extra_mark()");
+    }
+
+    private void taoTriggerEpLoiKhiPhatHanhHoaDon(Long hoaDonId) {
+        jdbcTemplate.execute(
+                """
+                        CREATE OR REPLACE FUNCTION task1_fail_invoice_publication()
+                        RETURNS trigger
+                        LANGUAGE plpgsql
+                        AS $$
+                        BEGIN
+                            IF NEW.id = TG_ARGV[0]::bigint THEN
+                                RAISE EXCEPTION 'forced invoice publication failure';
+                            END IF;
+                            RETURN NEW;
+                        END;
+                        $$
+                        """
+        );
+        jdbcTemplate.execute(
+                """
+                        CREATE TRIGGER task1_fail_invoice_publication
+                        BEFORE UPDATE OF trang_thai ON HOA_DON
+                        FOR EACH ROW
+                        EXECUTE FUNCTION task1_fail_invoice_publication('%s')
+                        """.formatted(hoaDonId)
+        );
+    }
+
+    private void xoaTriggerEpLoiKhiPhatHanhHoaDon() {
+        jdbcTemplate.execute("DROP TRIGGER IF EXISTS task1_fail_invoice_publication ON HOA_DON");
+        jdbcTemplate.execute("DROP FUNCTION IF EXISTS task1_fail_invoice_publication()");
     }
 
     private String login(Long nguoiDungId, String soDienThoai) throws Exception {
