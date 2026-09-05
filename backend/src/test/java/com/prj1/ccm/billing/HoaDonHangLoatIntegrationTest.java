@@ -812,12 +812,22 @@ class HoaDonHangLoatIntegrationTest {
     @Test
     void FR_INV_16_BR_13_systemAdminAndOutOfScopeManagerReceive403ForBalanceConsumingInvoiceCreation() throws Exception {
         Long kyId = themKyThanhToan(1L, 2026, 10, "2026-09-29", "2026-10-28", "DA_CHOT");
+        String outOfScopeManagerPhone = "091" + UUID.randomUUID().toString().replace("-", "").substring(0, 7);
+        Long outOfScopeManagerId = jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO NGUOI_DUNG (ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai)
+                        VALUES ('Quan ly ngoai pham vi', ?, 'placeholder', 'QUAN_LY', 'HOAT_DONG')
+                        RETURNING id
+                        """,
+                Long.class,
+                outOfScopeManagerPhone
+        );
 
         mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/tao-hang-loat".formatted(kyId))
                         .header("Authorization", "Bearer " + login(1L, "0900000001")))
                 .andExpect(status().isForbidden());
         mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/tao-hang-loat".formatted(kyId))
-                        .header("Authorization", "Bearer " + login(4L, "0900000004")))
+                        .header("Authorization", "Bearer " + login(outOfScopeManagerId, outOfScopeManagerPhone)))
                 .andExpect(status().isForbidden());
     }
 
