@@ -19,3 +19,15 @@ CREATE INDEX ix_so_du_kha_dung_hop_dong_kha_dung
 
 CREATE INDEX ix_so_du_kha_dung_hoa_don_su_dung
     ON SO_DU_KHA_DUNG (hoa_don_su_dung_id);
+
+-- Preserve credit already present in the immutable payment ledger on V26 upgrades.
+-- Backfilled provenance uses the source invoice's issue date, never the migration date.
+INSERT INTO SO_DU_KHA_DUNG (hop_dong_id, so_tien, nguon_hoa_don_id, ngay_phat_sinh)
+SELECT hd.hop_dong_id,
+       SUM(tt.so_tien) - hd.tong_tien,
+       hd.id,
+       hd.ngay_phat_hanh
+FROM HOA_DON hd
+JOIN THANH_TOAN tt ON tt.hoa_don_id = hd.id
+GROUP BY hd.id, hd.hop_dong_id, hd.tong_tien, hd.ngay_phat_hanh
+HAVING SUM(tt.so_tien) > hd.tong_tien;

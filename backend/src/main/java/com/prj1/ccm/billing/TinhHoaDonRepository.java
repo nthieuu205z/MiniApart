@@ -53,7 +53,21 @@ class TinhHoaDonRepository {
     }
 
     DuLieuTinhHoaDon layDuLieuTinhHoaDonDeTaoHoaDon(Long toaNhaId, Long kyId, Long hopDongId) {
+        khoaHopDongDeTaoHoaDon(toaNhaId, hopDongId);
         return layDuLieuTinhHoaDon(toaNhaId, kyId, hopDongId, true);
+    }
+
+    private void khoaHopDongDeTaoHoaDon(Long toaNhaId, Long hopDongId) {
+        List<Long> hopDongs = jdbcTemplate.queryForList(
+                """
+                        SELECT hd.id FROM HOP_DONG hd
+                        JOIN PHONG p ON p.id = hd.phong_id
+                        WHERE hd.id = ? AND p.toa_nha_id = ?
+                        FOR UPDATE OF hd
+                        """,
+                Long.class, hopDongId, toaNhaId
+        );
+        if (hopDongs.size() != 1) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
     private DuLieuTinhHoaDon layDuLieuTinhHoaDon(Long toaNhaId, Long kyId, Long hopDongId, boolean khoaKhoanPhatSinh) {
