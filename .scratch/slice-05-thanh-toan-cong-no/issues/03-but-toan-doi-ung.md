@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Vì sao đây là ticket đáng bảo vệ nhất của slice
 
