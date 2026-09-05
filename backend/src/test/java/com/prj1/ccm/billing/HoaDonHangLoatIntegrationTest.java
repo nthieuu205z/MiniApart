@@ -83,6 +83,8 @@ class HoaDonHangLoatIntegrationTest {
 
     @BeforeEach
     void resetDatabase() {
+        xoaNeuBangTonTai("SO_DU_KHA_DUNG");
+        xoaNeuBangTonTai("THANH_TOAN");
         xoaNeuBangTonTai("KHOAN_PHAT_SINH");
         xoaNeuBangTonTai("CHI_TIET_HOA_DON");
         xoaNeuBangTonTai("HOA_DON");
@@ -702,6 +704,60 @@ class HoaDonHangLoatIntegrationTest {
                 .orElseThrow();
 
         assertThat(hoaDon.trangThai()).isEqualTo(com.prj1.ccm.billing.calc.TrangThaiHoaDon.DA_PHAT_HANH);
+    }
+
+    @Test
+    void FR_INV_16_CR_006_BR_13_usesAvailableBalanceOnceSplitsRemainderAndRestoresItWhenReleasedInvoiceIsCancelled() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "301", 1);
+        Long hopDongId = themHopDong(phongId, themNguoiThue("Nguoi thue 301", "0907000301"),
+                "3500000.00", "2026-07-01", "2026-10-31");
+        Long internetId = themDichVu(1L, "Internet 301", "thang", "CO_DINH", false, true);
+        themDichVuHopDong(hopDongId, internetId, "250000.00");
+        Long kyNguon = themKyThanhToan(1L, 2026, 7, "2026-06-28", "2026-07-28", "DA_CHOT");
+        Long hoaDonNguonId = chenHoaDon("TN-A-301-202607", kyNguon, hopDongId);
+        Long kyThuNhat = themKyThanhToan(1L, 2026, 8, "2026-07-29", "2026-08-28", "DA_CHOT");
+        Long kyThuHai = themKyThanhToan(1L, 2026, 9, "2026-08-29", "2026-09-28", "DA_CHOT");
+        jdbcTemplate.update(
+                "INSERT INTO SO_DU_KHA_DUNG (hop_dong_id, so_tien, nguon_hoa_don_id, ngay_phat_sinh) VALUES (?, 4000000.00, ?, DATE '2026-08-01')",
+                hopDongId, hoaDonNguonId
+        );
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/tao-hang-loat".formatted(kyThuNhat))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+        Long hoaDonThuNhat = jdbcTemplate.queryForObject(
+                "SELECT id FROM HOA_DON WHERE ky_id = ? AND hop_dong_id = ?", Long.class, kyThuNhat, hopDongId
+        );
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT thanh_tien FROM CHI_TIET_HOA_DON WHERE hoa_don_id = ? AND loai_khoan = 'SO_DU'",
+                BigDecimal.class, hoaDonThuNhat)).isEqualByComparingTo("-3750000.00");
+        assertThat(jdbcTemplate.queryForList(
+                "SELECT so_tien FROM SO_DU_KHA_DUNG WHERE hoa_don_su_dung_id IS NULL ORDER BY id", BigDecimal.class
+        )).containsExactly(new BigDecimal("250000.00"));
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/tao-hang-loat".formatted(kyThuHai))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+        Long hoaDonThuHai = jdbcTemplate.queryForObject(
+                "SELECT id FROM HOA_DON WHERE ky_id = ? AND hop_dong_id = ?", Long.class, kyThuHai, hopDongId
+        );
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT thanh_tien FROM CHI_TIET_HOA_DON WHERE hoa_don_id = ? AND loai_khoan = 'SO_DU'",
+                BigDecimal.class, hoaDonThuHai)).isEqualByComparingTo("-250000.00");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM SO_DU_KHA_DUNG WHERE hoa_don_su_dung_id IS NULL", Integer.class)).isZero();
+
+        jdbcTemplate.update("UPDATE HOA_DON SET trang_thai = 'DA_PHAT_HANH' WHERE id = ?", hoaDonThuNhat);
+        jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (2, 1) ON CONFLICT DO NOTHING");
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s/huy".formatted(kyThuNhat, hoaDonThuNhat))
+                        .header("Authorization", "Bearer " + login(2L, "0900000002"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(huyHoaDonPayload("Can huy hoa don dung so du")))
+                .andExpect(status().isNoContent());
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM SO_DU_KHA_DUNG WHERE hoa_don_su_dung_id IS NULL AND so_tien = 3750000.00", Integer.class
+        )).isEqualTo(1);
     }
 
     private Long themKyThanhToan(

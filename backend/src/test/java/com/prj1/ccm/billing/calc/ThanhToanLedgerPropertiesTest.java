@@ -31,4 +31,20 @@ class ThanhToanLedgerPropertiesTest {
                 .list()
                 .ofMaxSize(30);
     }
+
+    @Property(tries = 1000)
+    void FR_INV_16_BR_13_availableBalanceNeverBecomesNegative(
+            @ForAll("soDuDuong") BigDecimal soDu,
+            @ForAll("soDuDuong") BigDecimal tongHoaDon
+    ) {
+        BigDecimal soDuDaDung = soDu.min(tongHoaDon);
+
+        assertThat(soDu.subtract(soDuDaDung).signum()).isGreaterThanOrEqualTo(0);
+    }
+
+    @Provide
+    Arbitrary<BigDecimal> soDuDuong() {
+        return Arbitraries.longs().between(0L, 5_000_000_000L)
+                .map(soTien -> BigDecimal.valueOf(soTien, 2));
+    }
 }

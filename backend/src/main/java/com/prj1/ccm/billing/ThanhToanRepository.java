@@ -25,7 +25,7 @@ class ThanhToanRepository {
             boolean khoa
     ) {
         String sql = """
-                SELECT hd.id, hd.tong_tien, hd.trang_thai, hd.han_thanh_toan
+                SELECT hd.id, hd.hop_dong_id, hd.tong_tien, hd.trang_thai, hd.han_thanh_toan
                 FROM HOA_DON hd
                 JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
                 JOIN PHONG p ON p.id = hop_dong.phong_id
@@ -40,6 +40,7 @@ class ThanhToanRepository {
                         sql,
                         (resultSet, rowNum) -> new HoaDonThanhToan(
                                 resultSet.getLong("id"),
+                                resultSet.getLong("hop_dong_id"),
                                 resultSet.getBigDecimal("tong_tien"),
                                 TrangThaiHoaDon.valueOf(resultSet.getString("trang_thai")),
                                 resultSet.getObject("han_thanh_toan", LocalDate.class)
@@ -154,8 +155,22 @@ class ThanhToanRepository {
         }
     }
 
+    void taoSoDuKhaDung(Long hopDongId, Long nguonHoaDonId, BigDecimal soTien, LocalDate ngayPhatSinh) {
+        jdbcTemplate.update(
+                """
+                        INSERT INTO SO_DU_KHA_DUNG (hop_dong_id, so_tien, nguon_hoa_don_id, ngay_phat_sinh)
+                        VALUES (?, ?, ?, ?)
+                        """,
+                hopDongId,
+                soTien,
+                nguonHoaDonId,
+                java.sql.Date.valueOf(ngayPhatSinh)
+        );
+    }
+
     record HoaDonThanhToan(
             Long hoaDonId,
+            Long hopDongId,
             BigDecimal tongTien,
             TrangThaiHoaDon trangThaiLuu,
             LocalDate hanThanhToan

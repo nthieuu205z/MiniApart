@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Đừng viết lại phép trừ — nó đã có rồi
 
@@ -54,3 +54,5 @@ Ca kiểm thử bắt buộc: sinh một khoản dư, chạy tạo hoá đơn **
 - [ ] Test 403 cho QTHT và Quản lý sai toà
 
 ## Comments
+
+- Cancellation ruling implemented: when an issued or overdue invoice is cancelled, its consumed `SO_DU_KHA_DUNG` rows are restored atomically by clearing `hoa_don_su_dung_id` and `ngay_su_dung`. The original owner, reason, and audit requirements remain unchanged.

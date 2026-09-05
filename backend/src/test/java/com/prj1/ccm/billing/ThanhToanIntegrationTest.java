@@ -68,6 +68,7 @@ class ThanhToanIntegrationTest {
 
     @BeforeEach
     void resetDatabase() {
+        xoaNeuBangTonTai("SO_DU_KHA_DUNG");
         xoaNeuBangTonTai("THANH_TOAN");
         xoaNeuBangTonTai("CHI_TIET_HOA_DON_BAC_THANG");
         xoaNeuBangTonTai("CHI_TIET_HOA_DON");
@@ -462,6 +463,55 @@ class ThanhToanIntegrationTest {
                 Integer.class
         );
         assertThat(uniqueReceiptConstraints).isEqualTo(1);
+    }
+
+    @Test
+    void FR_INV_16_CR_006_recordsOnlyIncrementalOverpaymentWithInvoiceAndContractProvenance() throws Exception {
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(post(paymentUrl())
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(paymentPayload("1900000.00", "2026-09-01", false)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.soTienThanhSoDu").value("12000.00"));
+
+        mockMvc.perform(post(paymentUrl())
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(paymentPayload("10000.00", "2026-09-02", true)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.soTienThanhSoDu").value("22000.00"));
+
+        assertThat(jdbcTemplate.queryForList(
+                "SELECT so_tien FROM SO_DU_KHA_DUNG ORDER BY id", BigDecimal.class
+        )).containsExactly(new BigDecimal("12000.00"), new BigDecimal("10000.00"));
+        assertThat(jdbcTemplate.queryForMap(
+                "SELECT hop_dong_id, nguon_hoa_don_id, ngay_phat_sinh, hoa_don_su_dung_id, ngay_su_dung "
+                        + "FROM SO_DU_KHA_DUNG ORDER BY id LIMIT 1"
+        )).containsEntry("nguon_hoa_don_id", hoaDonId)
+                .containsEntry("ngay_phat_sinh", java.sql.Date.valueOf("2026-09-02"))
+                .containsEntry("hoa_don_su_dung_id", null)
+                .containsEntry("ngay_su_dung", null);
+    }
+
+    @Test
+    void FR_INV_16_CR_006_balanceSchemaHasTraceablePositiveMoneyAndPairedConsumptionColumns() {
+        Map<String, Object> moneyColumn = jdbcTemplate.queryForMap(
+                """
+                        SELECT data_type, numeric_precision, numeric_scale
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public' AND table_name = 'so_du_kha_dung' AND column_name = 'so_tien'
+                        """
+        );
+        assertThat(moneyColumn).containsEntry("data_type", "numeric")
+                .containsEntry("numeric_precision", 15)
+                .containsEntry("numeric_scale", 2);
+        List<String> columns = jdbcTemplate.queryForList(
+                "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'so_du_kha_dung'",
+                String.class
+        );
+        assertThat(columns).contains("hop_dong_id", "nguon_hoa_don_id", "ngay_phat_sinh", "hoa_don_su_dung_id", "ngay_su_dung");
     }
 
     private String paymentUrl() {

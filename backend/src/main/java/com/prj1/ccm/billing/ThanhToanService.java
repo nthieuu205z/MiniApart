@@ -92,6 +92,9 @@ public class ThanhToanService {
                 )
         );
         BigDecimal daThu = tongDaiSo(hoaDon.hoaDonId());
+        BigDecimal soDuTangThem = daThu.subtract(hoaDon.tongTien())
+                .max(BigDecimal.ZERO)
+                .subtract(daThuTruoc.subtract(hoaDon.tongTien()).max(BigDecimal.ZERO));
         TrangThaiHoaDon trangThaiMoi = chuyenTrangThai(
                 trangThaiTruoc,
                 hoaDon.tongTien(),
@@ -101,6 +104,11 @@ public class ThanhToanService {
 
         thanhToanRepository.capNhatDaThu(hoaDon.hoaDonId(), daThu);
         thanhToanRepository.capNhatTrangThai(hoaDon.hoaDonId(), trangThaiMoi);
+        if (soDuTangThem.signum() > 0) {
+            thanhToanRepository.taoSoDuKhaDung(
+                    hoaDon.hopDongId(), hoaDon.hoaDonId(), soDuTangThem, LocalDate.now(clock)
+            );
+        }
         nhatKyThaoTacRepository.ghi(
                 nguoiDung.id(),
                 "GHI_NHAN_THANH_TOAN",
@@ -227,7 +235,7 @@ public class ThanhToanService {
     ) {
         return tinhTrangThai(
                 new ThanhToanRepository.HoaDonThanhToan(
-                        hoaDon.hoaDonId(), hoaDon.tongTien(), hoaDon.trangThaiLuu(), hoaDon.hanThanhToan()
+                        hoaDon.hoaDonId(), null, hoaDon.tongTien(), hoaDon.trangThaiLuu(), hoaDon.hanThanhToan()
                 ),
                 daThu
         );

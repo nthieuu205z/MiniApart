@@ -124,6 +124,7 @@ public class TaoHoaDonHangLoatService {
                 duLieu.boiCanh().khoanChoTinh().stream().map(KhoanPhatSinh::id).toList(),
                 hoaDonId
         );
+        tinhHoaDonRepository.danhDauSoDuDaSuDung(hopDong.hopDongId(), hoaDonId, ketQua);
         return KetQuaXuLyHopDong.taoMoi();
     }
 

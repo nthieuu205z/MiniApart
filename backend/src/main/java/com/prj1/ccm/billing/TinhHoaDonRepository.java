@@ -88,7 +88,7 @@ class TinhHoaDonRepository {
                         cacBangGia,
                         cacSoLuongDichVuChuaCoNguonLuuTru(),
                         khoanChoTinhChuaCoNguonLuuTru(hopDong.id(), khoaKhoanPhatSinh),
-                        soDuKhaDungChuaCoNguonLuuTru()
+                        soDuKhaDungChuaCoNguonLuuTru(hopDong.id(), khoaKhoanPhatSinh)
                 ),
                 lyDoKhongTheTinh
         );
@@ -120,8 +120,19 @@ class TinhHoaDonRepository {
         );
     }
 
-    private TienTe soDuKhaDungChuaCoNguonLuuTru() {
-        return new TienTe(BigDecimal.ZERO);
+    private TienTe soDuKhaDungChuaCoNguonLuuTru(Long hopDongId, boolean khoaSoDu) {
+        String sql = """
+                SELECT so_tien FROM SO_DU_KHA_DUNG
+                WHERE hop_dong_id = ? AND hoa_don_su_dung_id IS NULL
+                ORDER BY id
+                """;
+        if (khoaSoDu) {
+            sql += " FOR UPDATE";
+        }
+        BigDecimal tong = jdbcTemplate.queryForList(sql, BigDecimal.class, hopDongId).stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .max(BigDecimal.ZERO);
+        return new TienTe(tong);
     }
 
     private List<LyDoBoQua> lyDoKhongTheTinh(Long phongId, List<DichVuApDung> dichVuApDung) {
@@ -263,6 +274,43 @@ class TinhHoaDonRepository {
         }
     }
 
+    void danhDauSoDuDaSuDung(Long hopDongId, Long hoaDonId, KetQuaTinhHoaDon ketQua) {
+        BigDecimal soTienCanDung = ketQua.cacDong().stream()
+                .filter(dong -> dong.loaiKhoan() == com.prj1.ccm.billing.calc.LoaiKhoan.SO_DU)
+                .map(dong -> dong.thanhTien().giaTri().negate())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (soTienCanDung.signum() <= 0) {
+            return;
+        }
+        List<SoDuKhaDung> cacSoDu = jdbcTemplate.query(
+                """
+                        SELECT id, so_tien, nguon_hoa_don_id, ngay_phat_sinh
+                        FROM SO_DU_KHA_DUNG
+                        WHERE hop_dong_id = ? AND hoa_don_su_dung_id IS NULL
+                        ORDER BY id
+                        FOR UPDATE
+                        """,
+                (rs, rowNum) -> new SoDuKhaDung(rs.getLong("id"), rs.getBigDecimal("so_tien"),
+                        rs.getLong("nguon_hoa_don_id"), rs.getObject("ngay_phat_sinh", LocalDate.class)),
+                hopDongId
+        );
+        BigDecimal conLai = soTienCanDung;
+        for (SoDuKhaDung soDu : cacSoDu) {
+            if (conLai.signum() <= 0) break;
+            BigDecimal phanDaDung = soDu.soTien().min(conLai);
+            jdbcTemplate.update(
+                    "UPDATE SO_DU_KHA_DUNG SET so_tien = ?, hoa_don_su_dung_id = ?, ngay_su_dung = ? WHERE id = ? AND hoa_don_su_dung_id IS NULL",
+                    phanDaDung, hoaDonId, java.sql.Date.valueOf(LocalDate.now(clock)), soDu.id());
+            if (soDu.soTien().compareTo(phanDaDung) > 0) {
+                jdbcTemplate.update(
+                        "INSERT INTO SO_DU_KHA_DUNG (hop_dong_id, so_tien, nguon_hoa_don_id, ngay_phat_sinh) VALUES (?, ?, ?, ?)",
+                        hopDongId, soDu.soTien().subtract(phanDaDung), soDu.nguonHoaDonId(), java.sql.Date.valueOf(soDu.ngayPhatSinh()));
+            }
+            conLai = conLai.subtract(phanDaDung);
+        }
+        if (conLai.signum() != 0) throw new IllegalStateException("So du kha dung khong con du de danh dau");
+    }
+
     boolean laXungDotHoaDonTrung(DataIntegrityViolationException exception) {
         Throwable goc = NestedExceptionUtils.getMostSpecificCause(exception);
         if (!(goc instanceof SQLException sqlException) || !"23505".equals(sqlException.getSQLState())) {
@@ -377,6 +425,13 @@ class TinhHoaDonRepository {
                             hoa_don_id = NULL
                         WHERE hoa_don_id = ?
                         """,
+                hoaDonId
+        );
+    }
+
+    void khoiPhucSoDuKhaDung(Long hoaDonId) {
+        jdbcTemplate.update(
+                "UPDATE SO_DU_KHA_DUNG SET hoa_don_su_dung_id = NULL, ngay_su_dung = NULL WHERE hoa_don_su_dung_id = ?",
                 hoaDonId
         );
     }
@@ -498,6 +553,9 @@ class TinhHoaDonRepository {
     }
 
     private record DichVuApDung(DichVu dichVu, TienTe donGia) {
+    }
+
+    private record SoDuKhaDung(Long id, BigDecimal soTien, Long nguonHoaDonId, LocalDate ngayPhatSinh) {
     }
 
     record HopDongTrongKy(Long hopDongId, Long phongId, String soPhong) {

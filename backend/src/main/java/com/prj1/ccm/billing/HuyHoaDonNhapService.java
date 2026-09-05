@@ -60,6 +60,7 @@ public class HuyHoaDonNhapService {
         }
         TrangThaiHoaDon trangThaiMoi = chuyen(hoaDon.trangThai(), TrangThaiHoaDon.DA_HUY);
         tinhHoaDonRepository.capNhatTrangThaiHoaDon(hoaDon.hoaDonId(), trangThaiMoi);
+        tinhHoaDonRepository.khoiPhucSoDuKhaDung(hoaDon.hoaDonId());
         nhatKyThaoTacRepository.ghi(
                 nguoiDung.id(),
                 "HUY_HOA_DON",
