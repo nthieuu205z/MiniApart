@@ -16,11 +16,13 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 public class ThanhToanService {
     private static final int MONEY_SCALE = 2;
     private static final int MONEY_PRECISION = 15;
+    private static final int GIO_DOI_UNG_CUA_QUAN_LY = 24;
     private static final String THONG_BAO_YEU_CAU_KHONG_HOP_LE = "Yêu cầu ghi nhận thanh toán không hợp lệ.";
     private static final String THONG_BAO_SO_TIEN_LON_HON_KHONG = "Số tiền thanh toán phải lớn hơn 0.";
     private static final String THONG_BAO_HOA_DON_DA_THANH_TOAN =
@@ -28,6 +30,11 @@ public class ThanhToanService {
     private static final String THONG_BAO_HOA_DON_CHUA_PHAT_HANH = "Chỉ hoá đơn đã phát hành mới được ghi nhận thanh toán.";
     private static final String THONG_BAO_HOA_DON_DA_HUY = "Hoá đơn đã huỷ không được ghi nhận thanh toán.";
     private static final String THONG_BAO_CHUYEN_TRANG_THAI_KHONG_HOP_LE = "Không thể cập nhật trạng thái hoá đơn.";
+    private static final String THONG_BAO_DOI_UNG_KHONG_HOP_LE = "Yêu cầu bút toán đối ứng không hợp lệ.";
+    private static final String THONG_BAO_DOI_UNG_SO_TIEN_LON_HON_KHONG = "Số tiền đối ứng phải lớn hơn 0.";
+    private static final String THONG_BAO_DOI_UNG_CUA_DOI_UNG = "Không được lập bút toán đối ứng cho một bút toán đối ứng.";
+    private static final String THONG_BAO_QUAN_LY_QUA_HAN_DOI_UNG =
+            "Đã quá 24 giờ kể từ khi ghi nhận; vui lòng nhờ Chủ sở hữu lập bút toán đối ứng.";
 
     private final PhanQuyenToaService phanQuyenToaService;
     private final ThanhToanRepository thanhToanRepository;
@@ -124,6 +131,71 @@ public class ThanhToanService {
         );
     }
 
+    /** FR-INV-14, CR-010, and BR-18 create an immutable negative counter-entry. */
+    @Transactional
+    public ThongTinThanhToan ghiNhanDoiUng(Long thanhToanId, YeuCauDoiUng yeuCau, NguoiDung nguoiDung) {
+        kiemTraVaiTro(nguoiDung);
+        YeuCauDoiUng hopLe = chuanHoaDoiUng(yeuCau);
+        ThanhToanRepository.ThanhToanCanDoiUng thanhToanGoc = thanhToanRepository
+                .timThanhToanCanDoiUng(thanhToanId, true)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (nguoiDung.vaiTro() == VaiTro.QUAN_LY) {
+            phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, thanhToanGoc.toaNhaId());
+        }
+        if ("DOI_UNG".equals(thanhToanGoc.loai())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_DOI_UNG_CUA_DOI_UNG);
+        }
+        kiemTraThoiHanDoiUngCuaQuanLy(nguoiDung, thanhToanGoc.thoiDiemTao());
+
+        BigDecimal daThuTruoc = tongDaiSo(thanhToanGoc.hoaDonId());
+        TrangThaiHoaDon trangThaiTruoc = tinhTrangThai(thanhToanGoc, daThuTruoc);
+        ThanhToanRepository.ThanhToanDaGhi doiUng = thanhToanRepository.ghiNhanDoiUng(
+                new ThanhToanRepository.ThanhToanDoiUngMoi(
+                        thanhToanGoc.hoaDonId(),
+                        hopLe.soTien().negate(),
+                        thanhToanGoc.thanhToanId(),
+                        hopLe.lyDo().trim(),
+                        nguoiDung.id()
+                )
+        );
+        BigDecimal daThu = tongDaiSo(thanhToanGoc.hoaDonId());
+        TrangThaiHoaDon trangThaiMoi = chuyenTrangThaiDoiUng(
+                trangThaiTruoc,
+                thanhToanGoc.tongTien(),
+                daThu,
+                thanhToanGoc.hanThanhToan()
+        );
+        thanhToanRepository.capNhatDaThu(thanhToanGoc.hoaDonId(), daThu);
+        thanhToanRepository.capNhatTrangThai(thanhToanGoc.hoaDonId(), trangThaiMoi);
+        nhatKyThaoTacRepository.ghi(
+                nguoiDung.id(),
+                "LAP_BUT_TOAN_DOI_UNG",
+                "THANH_TOAN:" + thanhToanGoc.thanhToanId(),
+                trangThaiTruoc.name() + ":" + daThuTruoc.toPlainString(),
+                trangThaiMoi.name() + ":" + daThu.toPlainString(),
+                null,
+                null,
+                hopLe.lyDo().trim(),
+                null
+        );
+        BigDecimal conLai = thanhToanGoc.tongTien().subtract(daThu).max(BigDecimal.ZERO).setScale(MONEY_SCALE);
+        BigDecimal soTienThanhSoDu = daThu.subtract(thanhToanGoc.tongTien()).max(BigDecimal.ZERO).setScale(MONEY_SCALE);
+        return new ThongTinThanhToan(
+                doiUng.thanhToanId(),
+                thanhToanGoc.hoaDonId(),
+                doiUng.maBienLai(),
+                hopLe.soTien().negate().toPlainString(),
+                null,
+                "DOI_UNG",
+                null,
+                thanhToanGoc.tongTien().toPlainString(),
+                daThu.toPlainString(),
+                conLai.toPlainString(),
+                soTienThanhSoDu.toPlainString(),
+                trangThaiMoi.name()
+        );
+    }
+
     private BigDecimal tongDaiSo(Long hoaDonId) {
         return TongThanhToan.tinh(
                 thanhToanRepository.layCacSoTien(hoaDonId).stream().map(TienTe::new).toList()
@@ -149,6 +221,18 @@ public class ThanhToanService {
         );
     }
 
+    private TrangThaiHoaDon tinhTrangThai(
+            ThanhToanRepository.ThanhToanCanDoiUng hoaDon,
+            BigDecimal daThu
+    ) {
+        return tinhTrangThai(
+                new ThanhToanRepository.HoaDonThanhToan(
+                        hoaDon.hoaDonId(), hoaDon.tongTien(), hoaDon.trangThaiLuu(), hoaDon.hanThanhToan()
+                ),
+                daThu
+        );
+    }
+
     private TrangThaiHoaDon chuyenTrangThai(
             TrangThaiHoaDon trangThaiHienTai,
             BigDecimal tongTien,
@@ -157,6 +241,25 @@ public class ThanhToanService {
     ) {
         try {
             return quyTacTrangThaiHoaDon.ghiNhanThanhToan(
+                    trangThaiHienTai,
+                    new TienTe(tongTien),
+                    new TienTe(daThu),
+                    LocalDate.now(clock),
+                    hanThanhToan
+            );
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_CHUYEN_TRANG_THAI_KHONG_HOP_LE, exception);
+        }
+    }
+
+    private TrangThaiHoaDon chuyenTrangThaiDoiUng(
+            TrangThaiHoaDon trangThaiHienTai,
+            BigDecimal tongTien,
+            BigDecimal daThu,
+            LocalDate hanThanhToan
+    ) {
+        try {
+            return quyTacTrangThaiHoaDon.ghiNhanThanhToanDoiUng(
                     trangThaiHienTai,
                     new TienTe(tongTien),
                     new TienTe(daThu),
@@ -180,6 +283,27 @@ public class ThanhToanService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_KHONG_HOP_LE);
         }
         return new YeuCauThanhToan(yeuCau.soTien().setScale(MONEY_SCALE), yeuCau.hinhThuc(), yeuCau.ngayThu(), yeuCau.xacNhanThuThem());
+    }
+
+    private YeuCauDoiUng chuanHoaDoiUng(YeuCauDoiUng yeuCau) {
+        if (yeuCau == null || yeuCau.soTien() == null || yeuCau.lyDo() == null || yeuCau.lyDo().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_DOI_UNG_KHONG_HOP_LE);
+        }
+        if (yeuCau.soTien().signum() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_DOI_UNG_SO_TIEN_LON_HON_KHONG);
+        }
+        if (yeuCau.soTien().scale() > MONEY_SCALE
+                || yeuCau.soTien().precision() - yeuCau.soTien().scale() > MONEY_PRECISION - MONEY_SCALE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_DOI_UNG_KHONG_HOP_LE);
+        }
+        return new YeuCauDoiUng(yeuCau.soTien().setScale(MONEY_SCALE), yeuCau.lyDo());
+    }
+
+    private void kiemTraThoiHanDoiUngCuaQuanLy(NguoiDung nguoiDung, LocalDateTime thoiDiemTao) {
+        if (nguoiDung.vaiTro() == VaiTro.QUAN_LY
+                && LocalDateTime.now(clock).isAfter(thoiDiemTao.plusHours(GIO_DOI_UNG_CUA_QUAN_LY))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, THONG_BAO_QUAN_LY_QUA_HAN_DOI_UNG);
+        }
     }
 
     private void kiemTraVaiTro(NguoiDung nguoiDung) {

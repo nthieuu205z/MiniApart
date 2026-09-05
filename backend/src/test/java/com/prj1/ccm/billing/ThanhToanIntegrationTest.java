@@ -290,6 +290,124 @@ class ThanhToanIntegrationTest {
     }
 
     @Test
+    void FR_INV_14_CR_010_BR_18_recordsNegativeCounterEntryPreservesOriginalAndRecalculatesInvoice() throws Exception {
+        Long originalPaymentId = ghiNhanThu("1888000.00");
+        Map<String, Object> original = jdbcTemplate.queryForMap(
+                "SELECT hoa_don_id, so_tien, loai, dieu_chinh_cho_id, ly_do, hinh_thuc, ngay_thu, nguoi_thu_id, ma_bien_lai, thoi_diem_tao FROM THANH_TOAN WHERE id = ?",
+                originalPaymentId
+        );
+
+        mockMvc.perform(post(counterEntryUrl(originalPaymentId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(counterEntryPayload("888000.00", "Gõ nhầm số tiền đã thu")))
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
+                .andExpect(jsonPath("$.loai").value("DOI_UNG"))
+                .andExpect(jsonPath("$.soTien").value("-888000.00"))
+                .andExpect(jsonPath("$.daThu").value("1000000.00"))
+                .andExpect(jsonPath("$.trangThai").value("DA_THU_MOT_PHAN"));
+
+        assertThat(jdbcTemplate.queryForMap(
+                "SELECT hoa_don_id, so_tien, loai, dieu_chinh_cho_id, ly_do, hinh_thuc, ngay_thu, nguoi_thu_id, ma_bien_lai, thoi_diem_tao FROM THANH_TOAN WHERE id = ?",
+                originalPaymentId
+        )).isEqualTo(original);
+        assertThat(jdbcTemplate.queryForMap(
+                "SELECT loai, so_tien, dieu_chinh_cho_id, ly_do FROM THANH_TOAN WHERE id <> ?",
+                originalPaymentId
+        )).containsEntry("loai", "DOI_UNG")
+                .containsEntry("dieu_chinh_cho_id", originalPaymentId)
+                .containsEntry("ly_do", "Gõ nhầm số tiền đã thu");
+        assertThat(jdbcTemplate.queryForObject("SELECT da_thu FROM HOA_DON WHERE id = ?", BigDecimal.class, hoaDonId))
+                .isEqualByComparingTo("1000000.00");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COALESCE(SUM(so_tien), 0.00) FROM THANH_TOAN WHERE hoa_don_id = ?", BigDecimal.class, hoaDonId
+        )).isEqualByComparingTo("1000000.00");
+        assertThat(jdbcTemplate.queryForMap(
+                "SELECT nguoi_dung_id, ly_do FROM NHAT_KY_THAO_TAC WHERE hanh_dong = 'LAP_BUT_TOAN_DOI_UNG'"
+        )).containsEntry("nguoi_dung_id", 3L).containsEntry("ly_do", "Gõ nhầm số tiền đã thu");
+    }
+
+    @Test
+    void FR_INV_14_BR_18_rejectsBlankCounterEntryReasonWithoutPersistingEntry() throws Exception {
+        Long originalPaymentId = ghiNhanThu("1000000.00");
+
+        mockMvc.perform(post(counterEntryUrl(originalPaymentId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(counterEntryPayload("100000.00", "   ")))
+                .andExpect(status().isBadRequest());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM THANH_TOAN", Integer.class)).isEqualTo(1);
+    }
+
+    @Test
+    void FR_INV_14_managerMayCreateCounterEntryAtExactly24HoursButMustAskOwnerAfterward() throws Exception {
+        Long originalPaymentId = ghiNhanThu("1000000.00");
+        jdbcTemplate.update("UPDATE THANH_TOAN SET thoi_diem_tao = TIMESTAMP '2026-09-01 12:00:00' WHERE id = ?", originalPaymentId);
+
+        mockMvc.perform(post(counterEntryUrl(originalPaymentId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(counterEntryPayload("100000.00", "Điều chỉnh đúng biên 24 giờ")))
+                .andExpect(status().isCreated());
+
+        Long laterPaymentId = ghiNhanThu("100000.00");
+        jdbcTemplate.update("UPDATE THANH_TOAN SET thoi_diem_tao = TIMESTAMP '2026-09-01 11:59:59' WHERE id = ?", laterPaymentId);
+        mockMvc.perform(post(counterEntryUrl(laterPaymentId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(counterEntryPayload("10000.00", "Điều chỉnh quá hạn")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.thongBao").value(containsString("Chủ sở hữu")));
+    }
+
+    @Test
+    void FR_INV_14_ownerMayCreateCounterEntryAfter24HoursButSystemAdminAndOutOfScopeManagerReceive403() throws Exception {
+        Long originalPaymentId = ghiNhanThu("1000000.00");
+        jdbcTemplate.update("UPDATE THANH_TOAN SET thoi_diem_tao = TIMESTAMP '2020-01-01 00:00:00' WHERE id = ?", originalPaymentId);
+
+        mockMvc.perform(post(counterEntryUrl(originalPaymentId))
+                        .header("Authorization", "Bearer " + login(2L, "0900000002"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(counterEntryPayload("100000.00", "Chủ sở hữu điều chỉnh lịch sử")))
+                .andExpect(status().isCreated());
+
+        Long anotherPaymentId = ghiNhanThu("100000.00");
+        mockMvc.perform(post(counterEntryUrl(anotherPaymentId))
+                        .header("Authorization", "Bearer " + login(1L, "0900000001"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(counterEntryPayload("10000.00", "QTHT không được phép")))
+                .andExpect(status().isForbidden());
+
+        jdbcTemplate.update("DELETE FROM PHAN_QUYEN_TOA WHERE nguoi_dung_id = 3 AND toa_nha_id = 1");
+        mockMvc.perform(post(counterEntryUrl(anotherPaymentId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(counterEntryPayload("10000.00", "Quản lý sai toà")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_INV_14_rejectsCounterEntryAgainstAnotherCounterEntry() throws Exception {
+        Long originalPaymentId = ghiNhanThu("1000000.00");
+        mockMvc.perform(post(counterEntryUrl(originalPaymentId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(counterEntryPayload("100000.00", "Điều chỉnh ban đầu")))
+                .andExpect(status().isCreated());
+        Long counterEntryId = jdbcTemplate.queryForObject(
+                "SELECT id FROM THANH_TOAN WHERE loai = 'DOI_UNG'", Long.class
+        );
+
+        mockMvc.perform(post(counterEntryUrl(counterEntryId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(counterEntryPayload("10000.00", "Không được lồng đối ứng")))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     void FR_AUT_04_systemAdminReceives403OnPaymentRecording() throws Exception {
         mockMvc.perform(post(paymentUrl())
                         .header("Authorization", "Bearer " + login(1L, "0900000001"))
@@ -348,6 +466,28 @@ class ThanhToanIntegrationTest {
 
     private String paymentUrl() {
         return "/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s/thanh-toan".formatted(kyId, hoaDonId);
+    }
+
+    private Long ghiNhanThu(String soTien) throws Exception {
+        mockMvc.perform(post(paymentUrl())
+                        .header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(paymentPayload(soTien, "2026-09-01", false)))
+                .andExpect(status().isCreated());
+        return jdbcTemplate.queryForObject("SELECT id FROM THANH_TOAN ORDER BY id DESC LIMIT 1", Long.class);
+    }
+
+    private String counterEntryUrl(Long paymentId) {
+        return "/api/thanh-toan/%s/doi-ung".formatted(paymentId);
+    }
+
+    private String counterEntryPayload(String soTien, String lyDo) {
+        return """
+                {
+                  "soTien": "%s",
+                  "lyDo": "%s"
+                }
+                """.formatted(soTien, lyDo);
     }
 
     private String paymentPayload(String soTien, String ngayThu, boolean xacNhanThuThem) {
