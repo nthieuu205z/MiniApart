@@ -34,10 +34,18 @@ class ThanhToanLedgerPropertiesTest {
 
     @Property(tries = 1000)
     void FR_INV_16_BR_13_availableBalanceNeverBecomesNegative(
-            @ForAll("soDuDuong") BigDecimal soDu,
-            @ForAll("soDuDuong") BigDecimal tongHoaDon
+            @ForAll("soDuDuong") BigDecimal soDu
     ) {
-        BigDecimal soDuDaDung = soDu.min(tongHoaDon);
+        BoiCanhTinh goc = BillingCalcTestFixtures.boiCanhViDuMuc545();
+        BoiCanhTinh boiCanh = new BoiCanhTinh(
+                goc.ky(), goc.hopDong(), goc.soNgayOThucTe(), goc.soNguoiOTrongKy(),
+                goc.cacChiSo(), goc.cacBangGia(), goc.cacSoLuongDichVu(), goc.khoanChoTinh(), new TienTe(soDu)
+        );
+        KetQuaTinhHoaDon ketQua = new MayTinhHoaDon().tinh(boiCanh);
+        BigDecimal soDuDaDung = ketQua.cacDong().stream()
+                .filter(dong -> dong.loaiKhoan() == LoaiKhoan.SO_DU)
+                .map(dong -> dong.thanhTien().giaTri().negate())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         assertThat(soDu.subtract(soDuDaDung).signum()).isGreaterThanOrEqualTo(0);
     }

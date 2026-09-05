@@ -735,6 +735,11 @@ class HoaDonHangLoatIntegrationTest {
         assertThat(jdbcTemplate.queryForList(
                 "SELECT so_tien FROM SO_DU_KHA_DUNG WHERE hoa_don_su_dung_id IS NULL ORDER BY id", BigDecimal.class
         )).containsExactly(new BigDecimal("250000.00"));
+        assertThat(jdbcTemplate.queryForMap(
+                "SELECT hoa_don_su_dung_id, ngay_su_dung FROM SO_DU_KHA_DUNG WHERE hoa_don_su_dung_id = ?",
+                hoaDonThuNhat
+        )).containsEntry("hoa_don_su_dung_id", hoaDonThuNhat)
+                .containsEntry("ngay_su_dung", java.sql.Date.valueOf("2026-09-03"));
 
         mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/tao-hang-loat".formatted(kyThuHai))
                         .header("Authorization", "Bearer " + managerToken))
@@ -758,6 +763,62 @@ class HoaDonHangLoatIntegrationTest {
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM SO_DU_KHA_DUNG WHERE hoa_don_su_dung_id IS NULL AND so_tien = 3750000.00", Integer.class
         )).isEqualTo(1);
+    }
+
+    @Test
+    void FR_INV_16_BR_13_cancellingDraftInvoiceRestoresItsConsumedAvailableBalance() throws Exception {
+        Long hoaDonId = hoaDonDaPhatHanh("302", "0907000302");
+        Long hopDongId = jdbcTemplate.queryForObject("SELECT hop_dong_id FROM HOA_DON WHERE id = ?", Long.class, hoaDonId);
+        jdbcTemplate.update("UPDATE HOA_DON SET trang_thai = 'NHAP' WHERE id = ?", hoaDonId);
+        jdbcTemplate.update(
+                "INSERT INTO SO_DU_KHA_DUNG (hop_dong_id, so_tien, nguon_hoa_don_id, ngay_phat_sinh, hoa_don_su_dung_id, ngay_su_dung) VALUES (?, 100000.00, ?, DATE '2026-08-01', ?, DATE '2026-09-02')",
+                hopDongId, hoaDonId, hoaDonId
+        );
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s/huy".formatted(
+                        jdbcTemplate.queryForObject("SELECT ky_id FROM HOA_DON WHERE id = ?", Long.class, hoaDonId), hoaDonId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isNoContent());
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM SO_DU_KHA_DUNG WHERE hoa_don_su_dung_id IS NULL AND ngay_su_dung IS NULL AND so_tien = 100000.00",
+                Integer.class)).isEqualTo(1);
+    }
+
+    @Test
+    void FR_INV_16_BR_13_ownerCancelsOverdueInvoiceAndRestoresConsumedAvailableBalance() throws Exception {
+        Long hoaDonId = hoaDonDaPhatHanh("303", "0907000303");
+        Long hopDongId = jdbcTemplate.queryForObject("SELECT hop_dong_id FROM HOA_DON WHERE id = ?", Long.class, hoaDonId);
+        Long kyId = jdbcTemplate.queryForObject("SELECT ky_id FROM HOA_DON WHERE id = ?", Long.class, hoaDonId);
+        jdbcTemplate.update("UPDATE HOA_DON SET han_thanh_toan = DATE '2026-09-01' WHERE id = ?", hoaDonId);
+        jdbcTemplate.update(
+                "INSERT INTO SO_DU_KHA_DUNG (hop_dong_id, so_tien, nguon_hoa_don_id, ngay_phat_sinh, hoa_don_su_dung_id, ngay_su_dung) VALUES (?, 100000.00, ?, DATE '2026-08-01', ?, DATE '2026-09-02')",
+                hopDongId, hoaDonId, hoaDonId
+        );
+        jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (2, 1) ON CONFLICT DO NOTHING");
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s/huy".formatted(kyId, hoaDonId))
+                        .header("Authorization", "Bearer " + login(2L, "0900000002"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(huyHoaDonPayload("Huy hoa don qua han")))
+                .andExpect(status().isNoContent());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOA_DON WHERE id = ?", String.class, hoaDonId))
+                .isEqualTo("DA_HUY");
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM SO_DU_KHA_DUNG WHERE hoa_don_su_dung_id IS NULL", Integer.class))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void FR_INV_16_BR_13_systemAdminAndOutOfScopeManagerReceive403ForBalanceConsumingInvoiceCreation() throws Exception {
+        Long kyId = themKyThanhToan(1L, 2026, 10, "2026-09-29", "2026-10-28", "DA_CHOT");
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/tao-hang-loat".formatted(kyId))
+                        .header("Authorization", "Bearer " + login(1L, "0900000001")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/tao-hang-loat".formatted(kyId))
+                        .header("Authorization", "Bearer " + login(4L, "0900000004")))
+                .andExpect(status().isForbidden());
     }
 
     private Long themKyThanhToan(
