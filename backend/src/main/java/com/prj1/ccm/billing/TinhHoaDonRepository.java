@@ -370,6 +370,28 @@ class TinhHoaDonRepository {
                 .findFirst();
     }
 
+    List<HoaDonCanPhatHanh> layHoaDonCanPhatHanh(Long toaNhaId, Long kyId) {
+        return jdbcTemplate.query(
+                """
+                        SELECT hd.id, hop_dong.phong_id, hd.trang_thai, hd.tong_tien
+                        FROM HOA_DON hd
+                        JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
+                        JOIN PHONG p ON p.id = hop_dong.phong_id
+                        WHERE hd.ky_id = ?
+                          AND p.toa_nha_id = ?
+                        ORDER BY p.so_phong, hd.id
+                        """,
+                (resultSet, rowNum) -> new HoaDonCanPhatHanh(
+                        resultSet.getLong("id"),
+                        resultSet.getLong("phong_id"),
+                        TrangThaiHoaDon.valueOf(resultSet.getString("trang_thai")),
+                        resultSet.getBigDecimal("tong_tien")
+                ),
+                kyId,
+                toaNhaId
+        );
+    }
+
     private TrangThaiHoaDon tinhTrangThai(
             TrangThaiHoaDon trangThaiLuu,
             BigDecimal tongTien,
@@ -589,5 +611,8 @@ class TinhHoaDonRepository {
     }
 
     record HoaDonTrongPhamVi(Long hoaDonId, TrangThaiHoaDon trangThai) {
+    }
+
+    record HoaDonCanPhatHanh(Long hoaDonId, Long phongId, TrangThaiHoaDon trangThai, BigDecimal tongTien) {
     }
 }

@@ -205,6 +205,87 @@ class HoaDonHangLoatIntegrationTest {
     }
 
     @Test
+    void FR_INV_08_publishesDraftInvoicesInBulkReportsOtherStatesAndSkipsZeroTotalInvoicesOnRerun() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long kyId = themKyThanhToan(1L, 2026, 8, "2026-07-28", "2026-08-28", "DANG_MO");
+        Long hoaDonNhapId = chenHoaDon("TN-A-401-202608", kyId, themHopDong(
+                themPhong(1L, "401", 4), themNguoiThue("Nguoi thue 401", "0907000401"),
+                "3500000.00", "2026-07-01", "2026-09-30"));
+        Long hoaDonDaPhatHanhId = chenHoaDon("TN-A-402-202608", kyId, themHopDong(
+                themPhong(1L, "402", 4), themNguoiThue("Nguoi thue 402", "0907000402"),
+                "3500000.00", "2026-07-01", "2026-09-30"));
+        Long hoaDonTongKhongId = chenHoaDon("TN-A-403-202608", kyId, themHopDong(
+                themPhong(1L, "403", 4), themNguoiThue("Nguoi thue 403", "0907000403"),
+                "3500000.00", "2026-07-01", "2026-09-30"));
+        jdbcTemplate.update("UPDATE HOA_DON SET trang_thai = 'DA_PHAT_HANH' WHERE id = ?", hoaDonDaPhatHanhId);
+        jdbcTemplate.update("UPDATE HOA_DON SET tong_tien = 0.00 WHERE id = ?", hoaDonTongKhongId);
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/phat-hanh-hang-loat".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.kyId").value(kyId))
+                .andExpect(jsonPath("$.soHoaDonDaPhatHanh").value(1))
+                .andExpect(jsonPath("$.soHoaDonDaOTrangThaiKhac").value(1))
+                .andExpect(jsonPath("$.soHoaDonBoQua").value(1))
+                .andExpect(jsonPath("$.lyDoBoQua", hasSize(1)))
+                .andExpect(jsonPath("$.lyDoBoQua[0].ma").value("TONG_TIEN_BANG_KHONG"));
+
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOA_DON WHERE id = ?", String.class, hoaDonNhapId))
+                .isEqualTo("DA_PHAT_HANH");
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/phat-hanh-hang-loat".formatted(kyId))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.soHoaDonDaPhatHanh").value(0))
+                .andExpect(jsonPath("$.soHoaDonDaOTrangThaiKhac").value(2))
+                .andExpect(jsonPath("$.soHoaDonBoQua").value(1));
+    }
+
+    @Test
+    void FR_INV_08_BR_08_allowsOnlyOwnerToCancelOverdueInvoiceWithReasonAndAudit() throws Exception {
+        Long hoaDonId = hoaDonDaPhatHanh("404", "0907000404");
+        Long kyId = jdbcTemplate.queryForObject("SELECT ky_id FROM HOA_DON WHERE id = ?", Long.class, hoaDonId);
+        jdbcTemplate.update("UPDATE HOA_DON SET han_thanh_toan = DATE '2026-09-01' WHERE id = ?", hoaDonId);
+        jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (2, 1) ON CONFLICT DO NOTHING");
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s/huy".formatted(kyId, hoaDonId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(huyHoaDonPayload("Can huy hoa don qua han")))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s/huy".formatted(kyId, hoaDonId))
+                        .header("Authorization", "Bearer " + login(2L, "0900000002"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(huyHoaDonPayload("Can huy hoa don qua han")))
+                .andExpect(status().isNoContent());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOA_DON WHERE id = ?", String.class, hoaDonId))
+                .isEqualTo("DA_HUY");
+        assertThat(jdbcTemplate.queryForMap(
+                "SELECT hanh_dong, gia_tri_truoc, gia_tri_sau, ly_do FROM NHAT_KY_THAO_TAC WHERE doi_tuong = ?",
+                "HOA_DON:" + hoaDonId
+        )).containsEntry("hanh_dong", "HUY_HOA_DON")
+                .containsEntry("gia_tri_truoc", "QUA_HAN")
+                .containsEntry("gia_tri_sau", "DA_HUY")
+                .containsEntry("ly_do", "Can huy hoa don qua han");
+    }
+
+    @Test
+    void FR_INV_08_BR_08_systemAdminReceives403ForBulkPublicationAndOverdueCancellation() throws Exception {
+        String systemAdminToken = login(1L, "0900000001");
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/phat-hanh-hang-loat")
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/1/hoa-don/1/huy")
+                        .header("Authorization", "Bearer " + systemAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(huyHoaDonPayload("Khong duoc phep")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void FR_INV_01_FR_INV_03_missingApplicableTieredPriceSkipsOneRoomAndCommitsOtherRooms() throws Exception {
         String managerToken = login(3L, "0900000003");
         Long dienBacThangId = jdbcTemplate.queryForObject(

@@ -85,6 +85,25 @@ public class HoaDonController {
     }
 
     /**
+     * FR-INV-08 publishes every eligible draft invoice in one payment period and returns a summary
+     * for published, already-transitioned, and skipped invoices. Tenant notification is deferred to Slice 08.
+     *
+     * @param toaNhaId the building identifier
+     * @param kyId the payment-period identifier
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the bulk publication summary
+     */
+    @PostMapping("/phat-hanh-hang-loat")
+    public ThongTinPhatHanhHoaDonHangLoat phatHanhHangLoat(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long kyId,
+            HttpServletRequest request
+    ) {
+        NguoiDung nguoiDung = (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
+        return phatHanhHoaDonService.phatHanhHangLoat(toaNhaId, kyId, nguoiDung);
+    }
+
+    /**
      * FR-INV-06 and BR-08 release one draft invoice after the centralized lifecycle rule confirms
      * the transition from NHAP to DA_PHAT_HANH is valid.
      *

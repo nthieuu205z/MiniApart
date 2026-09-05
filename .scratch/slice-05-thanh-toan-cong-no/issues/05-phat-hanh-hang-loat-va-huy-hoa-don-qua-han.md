@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Hai việc, một ticket, vì cùng chạm vòng đời
 
@@ -36,14 +36,19 @@ Hoá đơn không phát hành được (đã phát hành rồi, đã huỷ, tổ
 
 ## Hoàn thành khi
 
-- [ ] Phát hành nhiều hoá đơn nháp của một kỳ trong **một thao tác**
-- [ ] Hoá đơn không phát hành được **bị bỏ qua có lý do phân loại**, không làm gián đoạn phần còn lại
-- [ ] Kết quả trả về đếm rõ: đã phát hành / đã ở trạng thái khác / bỏ qua kèm lý do
-- [ ] Chạy lần hai trên cùng kỳ **không** phát hành lại cái đã phát hành
-- [ ] Huỷ được hoá đơn đang `QUA_HAN`: **Chủ sở hữu**, lý do bắt buộc không rỗng, ghi `NHAT_KY_THAO_TAC`
-- [ ] Quản lý toà thử huỷ → **403**, kể cả đúng toà — BR-08 chỉ cho Chủ sở hữu
-- [ ] QTHT → 403 ở cả hai chức năng
-- [ ] Tên test mang mã `FR-INV-08` và `BR-08`
-- [ ] `## Comments` ghi rõ vế thông báo của FR-INV-08 **chưa làm**, thuộc Slice 08
+- [x] Phát hành nhiều hoá đơn nháp của một kỳ trong **một thao tác**
+- [x] Hoá đơn không phát hành được **bị bỏ qua có lý do phân loại**, không làm gián đoạn phần còn lại
+- [x] Kết quả trả về đếm rõ: đã phát hành / đã ở trạng thái khác / bỏ qua kèm lý do
+- [x] Chạy lần hai trên cùng kỳ **không** phát hành lại cái đã phát hành
+- [x] Huỷ được hoá đơn đang `QUA_HAN`: **Chủ sở hữu**, lý do bắt buộc không rỗng, ghi `NHAT_KY_THAO_TAC`
+- [x] Quản lý toà thử huỷ → **403**, kể cả đúng toà — BR-08 chỉ cho Chủ sở hữu
+- [x] QTHT → 403 ở cả hai chức năng
+- [x] Tên test mang mã `FR-INV-08` và `BR-08`
+- [x] `## Comments` ghi rõ vế thông báo của FR-INV-08 **chưa làm**, thuộc Slice 08
 
 ## Comments
+
+- `POST /api/toa-nha/{toaNhaId}/ky-thanh-toan/{kyId}/hoa-don/phat-hanh-hang-loat` reuses the Slice 04 bulk-summary shape: it publishes `NHAP` invoices, counts invoices already in another state, and returns `ThongTinLyDoBoQua`-style classified skips without interrupting the remaining invoices.
+- Each publish is isolated in a new transaction so one invoice-level failure is reported as a skip rather than rolling back the period's other publications.
+- `QUA_HAN` cancellation needs no separate authorization path: the existing issued-invoice owner/reason/audit flow applies after the lifecycle rule derives the overdue state from the stored due date.
+- The tenant-notification half of **FR-INV-08 is intentionally deferred to Slice 08** under ruling 3; this ticket implements bulk publication only.
