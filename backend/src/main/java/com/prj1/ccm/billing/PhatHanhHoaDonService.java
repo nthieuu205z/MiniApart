@@ -21,6 +21,11 @@ import java.util.List;
 @Service
 public class PhatHanhHoaDonService {
     private static final String THONG_BAO_CHUYEN_TRANG_THAI_KHONG_HOP_LE = "Không thể chuyển trạng thái hoá đơn.";
+    private static final String MA_DA_O_TRANG_THAI_KHAC = "DA_O_TRANG_THAI_KHAC";
+    private static final String MA_TONG_TIEN_BANG_KHONG = "TONG_TIEN_BANG_KHONG";
+    private static final String MA_KHONG_THE_PHAT_HANH = "KHONG_THE_PHAT_HANH";
+    private static final String THONG_BAO_TONG_TIEN_BANG_KHONG = "Hoá đơn có tổng tiền bằng không nên không thể phát hành.";
+    private static final String THONG_BAO_LOI_XU_LY = "Không thể phát hành hoá đơn do lỗi xử lý.";
 
     private final PhanQuyenToaService phanQuyenToaService;
     private final KyThanhToanRepository kyThanhToanRepository;
@@ -59,53 +64,80 @@ public class PhatHanhHoaDonService {
 
         int soHoaDonDaPhatHanh = 0;
         int soHoaDonDaOTrangThaiKhac = 0;
+        int soHoaDonBoQua = 0;
         List<ThongTinLyDoBoQua> lyDoBoQua = new ArrayList<>();
         for (TinhHoaDonRepository.HoaDonCanPhatHanh hoaDon : tinhHoaDonRepository.layHoaDonCanPhatHanh(toaNhaId, kyId)) {
             if (hoaDon.trangThai() != TrangThaiHoaDon.NHAP) {
                 soHoaDonDaOTrangThaiKhac++;
+                lyDoBoQua.add(lyDoDaOTrangThaiKhac(hoaDon));
                 continue;
             }
             if (hoaDon.tongTien().compareTo(BigDecimal.ZERO) == 0) {
-                lyDoBoQua.add(new ThongTinLyDoBoQua(
-                        hoaDon.phongId(),
-                        "TONG_TIEN_BANG_KHONG",
-                        "Hoa don co tong tien bang khong nen khong the phat hanh"
-                ));
+                lyDoBoQua.add(lyDoTongTienBangKhong(hoaDon));
+                soHoaDonBoQua++;
                 continue;
             }
-            if (phatHanhTrongGiaoDichMoi(hoaDon, lyDoBoQua)) {
-                soHoaDonDaPhatHanh++;
+            KetQuaPhatHanh ketQua = phatHanhTrongGiaoDichMoi(hoaDon, lyDoBoQua);
+            switch (ketQua) {
+                case DA_PHAT_HANH -> soHoaDonDaPhatHanh++;
+                case DA_O_TRANG_THAI_KHAC -> soHoaDonDaOTrangThaiKhac++;
+                case BO_QUA -> soHoaDonBoQua++;
             }
         }
         return new ThongTinPhatHanhHoaDonHangLoat(
                 kyId,
                 soHoaDonDaPhatHanh,
                 soHoaDonDaOTrangThaiKhac,
-                lyDoBoQua.size(),
+                soHoaDonBoQua,
                 lyDoBoQua
         );
     }
 
-    private boolean phatHanhTrongGiaoDichMoi(
+    private KetQuaPhatHanh phatHanhTrongGiaoDichMoi(
             TinhHoaDonRepository.HoaDonCanPhatHanh hoaDon,
             List<ThongTinLyDoBoQua> lyDoBoQua
     ) {
         try {
-            return Boolean.TRUE.equals(giaoDichMoi.execute(status -> {
-                tinhHoaDonRepository.capNhatTrangThaiHoaDon(
-                        hoaDon.hoaDonId(),
-                        chuyen(hoaDon.trangThai(), TrangThaiHoaDon.DA_PHAT_HANH)
-                );
-                return true;
-            }));
+            int soDongCapNhat = giaoDichMoi.execute(status -> tinhHoaDonRepository
+                    .phatHanhHoaDonNeuDangNhapVaTongTienKhacKhong(hoaDon.hoaDonId()));
+            if (soDongCapNhat == 1) {
+                return KetQuaPhatHanh.DA_PHAT_HANH;
+            }
+            TinhHoaDonRepository.HoaDonCanPhatHanh hienTai = tinhHoaDonRepository
+                    .timHoaDonCanPhatHanh(hoaDon.hoaDonId())
+                    .orElse(hoaDon);
+            if (hienTai.trangThai() != TrangThaiHoaDon.NHAP) {
+                lyDoBoQua.add(lyDoDaOTrangThaiKhac(hienTai));
+                return KetQuaPhatHanh.DA_O_TRANG_THAI_KHAC;
+            }
+            lyDoBoQua.add(lyDoTongTienBangKhong(hienTai));
+            return KetQuaPhatHanh.BO_QUA;
         } catch (RuntimeException exception) {
             lyDoBoQua.add(new ThongTinLyDoBoQua(
                     hoaDon.phongId(),
-                    "KHONG_THE_PHAT_HANH",
-                    "Hoa don khong the phat hanh: " + exception.getMessage()
+                    MA_KHONG_THE_PHAT_HANH,
+                    THONG_BAO_LOI_XU_LY
             ));
-            return false;
+            return KetQuaPhatHanh.BO_QUA;
         }
+    }
+
+    private ThongTinLyDoBoQua lyDoDaOTrangThaiKhac(TinhHoaDonRepository.HoaDonCanPhatHanh hoaDon) {
+        return new ThongTinLyDoBoQua(
+                hoaDon.phongId(),
+                MA_DA_O_TRANG_THAI_KHAC,
+                "Hoá đơn đã ở trạng thái %s nên không thể phát hành.".formatted(hoaDon.trangThai())
+        );
+    }
+
+    private ThongTinLyDoBoQua lyDoTongTienBangKhong(TinhHoaDonRepository.HoaDonCanPhatHanh hoaDon) {
+        return new ThongTinLyDoBoQua(hoaDon.phongId(), MA_TONG_TIEN_BANG_KHONG, THONG_BAO_TONG_TIEN_BANG_KHONG);
+    }
+
+    private enum KetQuaPhatHanh {
+        DA_PHAT_HANH,
+        DA_O_TRANG_THAI_KHAC,
+        BO_QUA
     }
 
     private TrangThaiHoaDon chuyen(TrangThaiHoaDon hienTai, TrangThaiHoaDon mongMuon) {

@@ -453,6 +453,39 @@ class TinhHoaDonRepository {
         );
     }
 
+    int phatHanhHoaDonNeuDangNhapVaTongTienKhacKhong(Long hoaDonId) {
+        return jdbcTemplate.update(
+                """
+                        UPDATE HOA_DON
+                        SET trang_thai = 'DA_PHAT_HANH'
+                        WHERE id = ?
+                          AND trang_thai = 'NHAP'
+                          AND tong_tien <> 0.00
+                        """,
+                hoaDonId
+        );
+    }
+
+    java.util.Optional<HoaDonCanPhatHanh> timHoaDonCanPhatHanh(Long hoaDonId) {
+        return jdbcTemplate.query(
+                        """
+                                SELECT hd.id, hop_dong.phong_id, hd.trang_thai, hd.tong_tien
+                                FROM HOA_DON hd
+                                JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
+                                WHERE hd.id = ?
+                                """,
+                        (resultSet, rowNum) -> new HoaDonCanPhatHanh(
+                                resultSet.getLong("id"),
+                                resultSet.getLong("phong_id"),
+                                TrangThaiHoaDon.valueOf(resultSet.getString("trang_thai")),
+                                resultSet.getBigDecimal("tong_tien")
+                        ),
+                        hoaDonId
+                )
+                .stream()
+                .findFirst();
+    }
+
     void khoiPhucKhoanPhatSinhChoTinh(Long hoaDonId) {
         jdbcTemplate.update(
                 """

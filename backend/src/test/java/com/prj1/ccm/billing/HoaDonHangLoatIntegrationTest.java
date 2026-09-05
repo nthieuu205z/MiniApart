@@ -228,8 +228,9 @@ class HoaDonHangLoatIntegrationTest {
                 .andExpect(jsonPath("$.soHoaDonDaPhatHanh").value(1))
                 .andExpect(jsonPath("$.soHoaDonDaOTrangThaiKhac").value(1))
                 .andExpect(jsonPath("$.soHoaDonBoQua").value(1))
-                .andExpect(jsonPath("$.lyDoBoQua", hasSize(1)))
-                .andExpect(jsonPath("$.lyDoBoQua[0].ma").value("TONG_TIEN_BANG_KHONG"));
+                .andExpect(jsonPath("$.lyDoBoQua", hasSize(2)))
+                .andExpect(jsonPath("$.lyDoBoQua[0].ma").value("DA_O_TRANG_THAI_KHAC"))
+                .andExpect(jsonPath("$.lyDoBoQua[1].ma").value("TONG_TIEN_BANG_KHONG"));
 
         assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOA_DON WHERE id = ?", String.class, hoaDonNhapId))
                 .isEqualTo("DA_PHAT_HANH");
@@ -239,7 +240,11 @@ class HoaDonHangLoatIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.soHoaDonDaPhatHanh").value(0))
                 .andExpect(jsonPath("$.soHoaDonDaOTrangThaiKhac").value(2))
-                .andExpect(jsonPath("$.soHoaDonBoQua").value(1));
+                .andExpect(jsonPath("$.soHoaDonBoQua").value(1))
+                .andExpect(jsonPath("$.lyDoBoQua", hasSize(3)))
+                .andExpect(jsonPath("$.lyDoBoQua[0].ma").value("DA_O_TRANG_THAI_KHAC"))
+                .andExpect(jsonPath("$.lyDoBoQua[1].ma").value("DA_O_TRANG_THAI_KHAC"))
+                .andExpect(jsonPath("$.lyDoBoQua[2].ma").value("TONG_TIEN_BANG_KHONG"));
     }
 
     @Test
@@ -261,12 +266,58 @@ class HoaDonHangLoatIntegrationTest {
                 .andExpect(jsonPath("$.soHoaDonDaOTrangThaiKhac").value(0))
                 .andExpect(jsonPath("$.soHoaDonBoQua").value(1))
                 .andExpect(jsonPath("$.lyDoBoQua", hasSize(1)))
-                .andExpect(jsonPath("$.lyDoBoQua[0].ma").value("KHONG_THE_PHAT_HANH"));
+                .andExpect(jsonPath("$.lyDoBoQua[0].ma").value("KHONG_THE_PHAT_HANH"))
+                .andExpect(jsonPath("$.lyDoBoQua[0].moTa").value("Không thể phát hành hoá đơn do lỗi xử lý."));
 
         assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOA_DON WHERE id = ?", String.class, hoaDonLoiId))
                 .isEqualTo("NHAP");
         assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOA_DON WHERE id = ?", String.class, hoaDonThanhCongId))
                 .isEqualTo("DA_PHAT_HANH");
+    }
+
+    @Test
+    void FR_INV_08_atomicPublicationDoesNotResurrectInvoiceCancelledAfterThePeriodSnapshot() {
+        Long kyId = themKyThanhToan(1L, 2026, 8, "2026-07-28", "2026-08-28", "DANG_MO");
+        Long hoaDonId = chenHoaDon("TN-A-407-202608", kyId, themHopDong(
+                themPhong(1L, "407", 4), themNguoiThue("Nguoi thue 407", "0907000407"),
+                "3500000.00", "2026-07-01", "2026-09-30"));
+        TinhHoaDonRepository.HoaDonCanPhatHanh hoaDonTuSnapshot = tinhHoaDonRepository
+                .layHoaDonCanPhatHanh(1L, kyId)
+                .getFirst();
+        jdbcTemplate.update("UPDATE HOA_DON SET trang_thai = 'DA_HUY' WHERE id = ?", hoaDonId);
+
+        assertThat(tinhHoaDonRepository.phatHanhHoaDonNeuDangNhapVaTongTienKhacKhong(hoaDonTuSnapshot.hoaDonId()))
+                .isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOA_DON WHERE id = ?", String.class, hoaDonId))
+                .isEqualTo("DA_HUY");
+    }
+
+    @Test
+    void FR_INV_08_ownerCanBulkPublishButOutOfScopeManagerAndForeignOrUnknownPeriodsCannotChangeInvoices() throws Exception {
+        Long kyId = themKyThanhToan(1L, 2026, 8, "2026-07-28", "2026-08-28", "DANG_MO");
+        Long hoaDonId = chenHoaDon("TN-A-408-202608", kyId, themHopDong(
+                themPhong(1L, "408", 4), themNguoiThue("Nguoi thue 408", "0907000408"),
+                "3500000.00", "2026-07-01", "2026-09-30"));
+        Long kyToaKhacId = themKyThanhToan(2L, 2026, 8, "2026-07-28", "2026-08-28", "DANG_MO");
+        jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (2, 1) ON CONFLICT DO NOTHING");
+
+        mockMvc.perform(post("/api/toa-nha/2/ky-thanh-toan/%s/hoa-don/phat-hanh-hang-loat".formatted(kyToaKhacId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/phat-hanh-hang-loat".formatted(kyToaKhacId))
+                        .header("Authorization", "Bearer " + login(2L, "0900000002")))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/999999/hoa-don/phat-hanh-hang-loat")
+                        .header("Authorization", "Bearer " + login(2L, "0900000002")))
+                .andExpect(status().isNotFound());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOA_DON WHERE id = ?", String.class, hoaDonId))
+                .isEqualTo("NHAP");
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/phat-hanh-hang-loat".formatted(kyId))
+                        .header("Authorization", "Bearer " + login(2L, "0900000002")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.soHoaDonDaPhatHanh").value(1));
     }
 
     @Test
