@@ -23,6 +23,7 @@ public class HoaDonController {
     private final NoiDungHoaDonService noiDungHoaDonService;
     private final PhatHanhHoaDonService phatHanhHoaDonService;
     private final HoaDonChiTietService hoaDonChiTietService;
+    private final ThanhToanService thanhToanService;
 
     public HoaDonController(
             TinhDuThaoHoaDonService tinhDuThaoHoaDonService,
@@ -30,7 +31,8 @@ public class HoaDonController {
             HuyHoaDonNhapService huyHoaDonNhapService,
             NoiDungHoaDonService noiDungHoaDonService,
             PhatHanhHoaDonService phatHanhHoaDonService,
-            HoaDonChiTietService hoaDonChiTietService
+            HoaDonChiTietService hoaDonChiTietService,
+            ThanhToanService thanhToanService
     ) {
         this.tinhDuThaoHoaDonService = tinhDuThaoHoaDonService;
         this.taoHoaDonHangLoatService = taoHoaDonHangLoatService;
@@ -38,6 +40,7 @@ public class HoaDonController {
         this.noiDungHoaDonService = noiDungHoaDonService;
         this.phatHanhHoaDonService = phatHanhHoaDonService;
         this.hoaDonChiTietService = hoaDonChiTietService;
+        this.thanhToanService = thanhToanService;
     }
 
     /**
@@ -151,6 +154,32 @@ public class HoaDonController {
         NguoiDung nguoiDung = (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
         huyHoaDonNhapService.huy(toaNhaId, kyId, hoaDonId, yeuCau, nguoiDung);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * FR-INV-11, FR-INV-12, FR-INV-13, FR-INV-14, and BR-18 record one immutable payment entry,
+     * recalculate the algebraic paid total, update the invoice lifecycle, and return its receipt.
+     *
+     * @param toaNhaId the building identifier
+     * @param kyId the payment-period identifier
+     * @param hoaDonId the invoice identifier
+     * @param yeuCau the payment command
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the created payment receipt and updated invoice totals
+     */
+    @PostMapping("/{hoaDonId}/thanh-toan")
+    public ResponseEntity<ThongTinThanhToan> ghiNhanThanhToan(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long kyId,
+            @PathVariable Long hoaDonId,
+            @RequestBody YeuCauThanhToan yeuCau,
+            HttpServletRequest request
+    ) {
+        NguoiDung nguoiDung = (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
+        ThongTinThanhToan ketQua = thanhToanService.ghiNhan(toaNhaId, kyId, hoaDonId, yeuCau, nguoiDung);
+        return ResponseEntity.created(URI.create(
+                "/api/thanh-toan/" + ketQua.thanhToanId()
+        )).body(ketQua);
     }
 
     /**

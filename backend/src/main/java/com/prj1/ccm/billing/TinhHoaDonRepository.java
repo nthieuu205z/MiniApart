@@ -15,6 +15,7 @@ import com.prj1.ccm.billing.calc.LyDoBoQua;
 import com.prj1.ccm.billing.calc.MaLyDo;
 import com.prj1.ccm.billing.calc.TienTe;
 import com.prj1.ccm.billing.calc.TrangThaiHoaDon;
+import com.prj1.ccm.billing.calc.QuyTacTrangThaiHoaDon;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,7 @@ class TinhHoaDonRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final Clock clock;
+    private final QuyTacTrangThaiHoaDon quyTacTrangThaiHoaDon = new QuyTacTrangThaiHoaDon();
 
     TinhHoaDonRepository(JdbcTemplate jdbcTemplate, Clock clock) {
         this.jdbcTemplate = jdbcTemplate;
@@ -275,33 +277,56 @@ class TinhHoaDonRepository {
         return jdbcTemplate.query(
                         """
                                 SELECT hd.id,
-                                       CASE
-                                           WHEN hd.trang_thai IN ('NHAP', 'DA_HUY', 'DA_THANH_TOAN') THEN hd.trang_thai
-                                           WHEN hd.da_thu >= hd.tong_tien THEN 'DA_THANH_TOAN'
-                                           WHEN ?::date > kt.ngay_ket_thuc + tn.so_ngay_han_tt THEN 'QUA_HAN'
-                                           WHEN hd.da_thu > 0 THEN 'DA_THU_MOT_PHAN'
-                                           ELSE 'DA_PHAT_HANH'
-                                       END AS trang_thai
+                                       hd.trang_thai,
+                                       hd.tong_tien,
+                                       COALESCE(
+                                           (SELECT SUM(tt.so_tien) FROM THANH_TOAN tt WHERE tt.hoa_don_id = hd.id),
+                                           0.00
+                                       ) AS da_thu,
+                                       hd.han_thanh_toan
                                 FROM HOA_DON hd
                                 JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
                                 JOIN PHONG p ON p.id = hop_dong.phong_id
-                                JOIN KY_THANH_TOAN kt ON kt.id = hd.ky_id
-                                JOIN TOA_NHA tn ON tn.id = p.toa_nha_id
                                 WHERE hd.id = ?
                                   AND hd.ky_id = ?
                                   AND p.toa_nha_id = ?
                                 """,
                         (resultSet, rowNum) -> new HoaDonTrongPhamVi(
                                 resultSet.getLong("id"),
-                                TrangThaiHoaDon.valueOf(resultSet.getString("trang_thai"))
+                                tinhTrangThai(
+                                        TrangThaiHoaDon.valueOf(resultSet.getString("trang_thai")),
+                                        resultSet.getBigDecimal("tong_tien"),
+                                        resultSet.getBigDecimal("da_thu"),
+                                        resultSet.getObject("han_thanh_toan", LocalDate.class)
+                                )
                         ),
-                        java.sql.Date.valueOf(LocalDate.now(clock)),
                         hoaDonId,
                         kyId,
                         toaNhaId
                 )
                 .stream()
                 .findFirst();
+    }
+
+    private TrangThaiHoaDon tinhTrangThai(
+            TrangThaiHoaDon trangThaiLuu,
+            BigDecimal tongTien,
+            BigDecimal daThu,
+            LocalDate hanThanhToan
+    ) {
+        if (trangThaiLuu == TrangThaiHoaDon.NHAP || trangThaiLuu == TrangThaiHoaDon.DA_HUY) {
+            return trangThaiLuu;
+        }
+        if (daThu.signum() == 0 && !LocalDate.now(clock).isAfter(hanThanhToan)) {
+            return trangThaiLuu;
+        }
+        return quyTacTrangThaiHoaDon.ghiNhanThanhToan(
+                trangThaiLuu,
+                new TienTe(tongTien),
+                new TienTe(daThu),
+                LocalDate.now(clock),
+                hanThanhToan
+        );
     }
 
     Long themNoiDungHoaDon(Long hoaDonId, String tenKhoan, BigDecimal thanhTien, String lyDo) {

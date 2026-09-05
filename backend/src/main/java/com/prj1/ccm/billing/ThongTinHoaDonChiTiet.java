@@ -28,7 +28,7 @@ public record ThongTinHoaDonChiTiet(
             TrangThaiHoaDon trangThai,
             List<ThongTinDongHoaDon> cacDong
     ) {
-        BigDecimal conLai = hoaDon.tongTien().subtract(hoaDon.daThu());
+        BigDecimal conLai = hoaDon.tongTien().subtract(hoaDon.daThu()).max(BigDecimal.ZERO).setScale(2);
         return new ThongTinHoaDonChiTiet(
                 hoaDon.id(),
                 hoaDon.maHoaDon(),

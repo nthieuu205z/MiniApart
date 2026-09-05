@@ -167,13 +167,13 @@ class HoaDonChiTietIntegrationTest {
     }
 
     @Test
-    void FR_INV_02_overdueDetailUsesCurrentBuildingGraceDaysInsteadOfStoredInvoiceStatus() throws Exception {
+    void FR_INV_02_detailUsesStoredInvoiceDueDateInsteadOfCurrentBuildingGraceDays() throws Exception {
         jdbcTemplate.update("UPDATE TOA_NHA SET so_ngay_han_tt = 3 WHERE id = 1");
 
         mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s".formatted(kyId, hoaDonId))
                         .header("Authorization", "Bearer " + login(3L, "0900000003")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.trangThai").value("QUA_HAN"));
+                .andExpect(jsonPath("$.trangThai").value("DA_PHAT_HANH"));
     }
 
     @Test

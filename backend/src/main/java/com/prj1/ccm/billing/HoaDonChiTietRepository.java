@@ -20,7 +20,11 @@ class HoaDonChiTietRepository {
         return jdbcTemplate.query(
                         """
                                 SELECT hd.id, hd.ma_hoa_don, hd.ky_id, hd.hop_dong_id,
-                                       hd.ngay_phat_hanh, hd.han_thanh_toan, hd.tong_tien, hd.da_thu,
+                                       hd.ngay_phat_hanh, hd.han_thanh_toan, hd.tong_tien,
+                                       COALESCE(
+                                           (SELECT SUM(tt.so_tien) FROM THANH_TOAN tt WHERE tt.hoa_don_id = hd.id),
+                                           0.00
+                                       ) AS da_thu,
                                        hd.so_nguoi_o, hd.so_ho_quy_doi, hd.giai_thich_so_ho,
                                        hop_dong.nguoi_thue_id, p.so_phong, nt.ho_ten
                                 FROM HOA_DON hd

@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Lược đồ
 
@@ -55,17 +55,26 @@ Khối `CASE` ở `TinhHoaDonRepository:278-284` đang tái hiện BR-08/BR-12 *
 
 ## Hoàn thành khi
 
-- [ ] Migration tạo `THANH_TOAN` đúng ERD + cột `thoi_diem_tao`, mọi cột tiền là `NUMERIC(15,2)`
-- [ ] Ghi nhận **nhiều lần** thu trên một hoá đơn; trạng thái tự đổi đúng BR-08
-- [ ] **Trả đủ trong một lần** từ `DA_PHAT_HANH` cho ra `DA_THANH_TOAN` — ca ticket 01 vừa mở
-- [ ] Số tiền `<= 0` bị từ chối ở đường `THU` (E1 của sơ đồ tuần tự)
-- [ ] Trả cho hoá đơn đã đủ thì **cảnh báo trước**, nói rõ phần thu thêm sẽ thành số dư (E2). Số dư thật do ticket 04 làm
-- [ ] `ma_bien_lai` sinh tự động, **có ràng buộc duy nhất** ở cơ sở dữ liệu
-- [ ] Quá hạn xác định theo **cột `han_thanh_toan`**, không tính lại từ kỳ — ruling 2
-- [ ] `TinhHoaDonRepository:278-284` không còn quyết định trạng thái bằng SQL
-- [ ] **Test đối chiếu:** sau mọi dãy thao tác, `HOA_DON.da_thu == SUM(THANH_TOAN.so_tien)` — tổng **đại số**
-- [ ] **Tính chất tầng 2 (jqwik):** *"với mọi dãy thanh toán, đã thu luôn bằng tổng đại số các bút toán"* — kế hoạch mục 5
-- [ ] Test 403: QTHT bị chặn; Quản lý sai toà bị chặn — quy ước 3, CR-016
-- [ ] Ghi `NHAT_KY_THAO_TAC` cho mỗi lần ghi nhận
+- [x] Migration tạo `THANH_TOAN` đúng ERD + cột `thoi_diem_tao`, mọi cột tiền là `NUMERIC(15,2)`
+- [x] Ghi nhận **nhiều lần** thu trên một hoá đơn; trạng thái tự đổi đúng BR-08
+- [x] **Trả đủ trong một lần** từ `DA_PHAT_HANH` cho ra `DA_THANH_TOAN` — ca ticket 01 vừa mở
+- [x] Số tiền `<= 0` bị từ chối ở đường `THU` (E1 của sơ đồ tuần tự)
+- [x] Trả cho hoá đơn đã đủ thì **cảnh báo trước**, nói rõ phần thu thêm sẽ thành số dư (E2). Số dư thật do ticket 04 làm
+- [x] `ma_bien_lai` sinh tự động, **có ràng buộc duy nhất** ở cơ sở dữ liệu
+- [x] Quá hạn xác định theo **cột `han_thanh_toan`**, không tính lại từ kỳ — ruling 2
+- [x] `TinhHoaDonRepository:278-284` không còn quyết định trạng thái bằng SQL
+- [x] **Test đối chiếu:** sau mọi dãy thao tác, `HOA_DON.da_thu == SUM(THANH_TOAN.so_tien)` — tổng **đại số**
+- [x] **Tính chất tầng 2 (jqwik):** *"với mọi dãy thanh toán, đã thu luôn bằng tổng đại số các bút toán"* — kế hoạch mục 5
+- [x] Test 403: QTHT bị chặn; Quản lý sai toà bị chặn — quy ước 3, CR-016
+- [x] Ghi `NHAT_KY_THAO_TAC` cho mỗi lần ghi nhận
 
 ## Comments
+
+- Đã thêm migration `V26__payments.sql`: `THANH_TOAN` giữ nguyên lịch sử, cho phép bút toán âm, có `thoi_diem_tao` theo ruling 4, mã biên lai sinh tự động từ sequence và ràng buộc duy nhất.
+- Endpoint ghi nhận thu tiền dùng đường dẫn có phạm vi toà/kỳ: `POST /api/toa-nha/{toaNhaId}/ky-thanh-toan/{kyId}/hoa-don/{hoaDonId}/thanh-toan`. Dịch vụ khoá dòng hoá đơn, ghi bút toán `THU`, tính lại tổng đại số, cập nhật `da_thu`/trạng thái trong cùng transaction và ghi nhật ký.
+- Luồng thu thêm sau khi đã đủ trả `409` kèm cảnh báo; chỉ ghi khi request xác nhận. Phần số dư chỉ được trả về trong kết quả, chưa tạo bảng số dư theo đúng ranh giới ticket 04.
+- SQL chỉ đọc dữ liệu; trạng thái được quyết định bởi `QuyTacTrangThaiHoaDon`, hạn dùng `HOA_DON.han_thanh_toan`, không còn tính từ ngày kết thúc kỳ và cấu hình toà.
+- Migration có nhánh tương thích: nếu cơ sở dữ liệu đã có `HOA_DON.da_thu` trước khi có ledger, tạo một dòng `THU` legacy để không làm mất tổng đã thu; người thu, hình thức và ngày thu đều để rỗng vì dữ liệu cũ không lưu các thông tin đó, không giả mạo dữ liệu audit.
+- Số dư còn lại trên chi tiết hoá đơn được chặn ở `0.00` khi phát sinh thu dư; phần vượt vẫn được trả riêng trong kết quả ghi nhận.
+- API từ chối số tiền vượt giới hạn `NUMERIC(15,2)` bằng `400` trước khi chạm cơ sở dữ liệu.
+- Đã cập nhật test cũ đang kiểm tra hành vi theo ruling cũ. Xác minh: `./gradlew clean test` — `BUILD SUCCESSFUL`.

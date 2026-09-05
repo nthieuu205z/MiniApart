@@ -680,7 +680,7 @@ class HoaDonHangLoatIntegrationTest {
     }
 
     @Test
-    void FR_INV_06_BR_08_overdueStatusUsesCurrentBuildingGraceDaysInsteadOfStoredDueDate() {
+    void FR_INV_06_BR_08_overdueStatusUsesStoredInvoiceDueDateInsteadOfBuildingGraceDays() {
         Long phongId = themPhong(1L, "206", 2);
         Long hopDongId = themHopDong(phongId, themNguoiThue("Nguoi thue 206", "0907000206"),
                 "3500000.00", "2026-07-01", "2026-09-30");
@@ -701,7 +701,7 @@ class HoaDonHangLoatIntegrationTest {
                 .timHoaDonTrongPhamVi(1L, kyId, hoaDonId)
                 .orElseThrow();
 
-        assertThat(hoaDon.trangThai()).isEqualTo(com.prj1.ccm.billing.calc.TrangThaiHoaDon.QUA_HAN);
+        assertThat(hoaDon.trangThai()).isEqualTo(com.prj1.ccm.billing.calc.TrangThaiHoaDon.DA_PHAT_HANH);
     }
 
     private Long themKyThanhToan(
