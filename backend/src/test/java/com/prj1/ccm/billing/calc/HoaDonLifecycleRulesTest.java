@@ -37,11 +37,56 @@ class HoaDonLifecycleRulesTest {
     }
 
     @Test
+    void FR_INV_12_BR_08_marksReleasedInvoicePaidWhenOnePaymentCoversTheFullAmount() {
+        TrangThaiHoaDon trangThai = new QuyTacTrangThaiHoaDon().ghiNhanThanhToan(
+                TrangThaiHoaDon.DA_PHAT_HANH,
+                BillingCalcTestFixtures.tien("1888000"),
+                BillingCalcTestFixtures.tien("1888000"),
+                LocalDate.of(2026, 9, 1),
+                LocalDate.of(2026, 9, 2)
+        );
+
+        assertThat(trangThai).isEqualTo(TrangThaiHoaDon.DA_THANH_TOAN);
+    }
+
+    @Test
     void FR_INV_06_BR_08_requiresOwnerRoleAndCancellationReasonToCancelReleasedInvoice() {
         TrangThaiHoaDon trangThai = new QuyTacTrangThaiHoaDon()
                 .huy(TrangThaiHoaDon.DA_PHAT_HANH, true, "Sai bang gia ap dung");
 
         assertThat(trangThai).isEqualTo(TrangThaiHoaDon.DA_HUY);
+    }
+
+    @Test
+    void FR_INV_12_BR_08_allowsOwnerToCancelOverdueInvoiceWithAReason() {
+        TrangThaiHoaDon trangThai = new QuyTacTrangThaiHoaDon()
+                .huy(TrangThaiHoaDon.QUA_HAN, true, "Sai bang gia ap dung");
+
+        assertThat(trangThai).isEqualTo(TrangThaiHoaDon.DA_HUY);
+    }
+
+    @Test
+    void BR_08_rejectsPaidInvoiceBacktrackingThroughRegularPaymentPath() {
+        assertThatThrownBy(() -> new QuyTacTrangThaiHoaDon().ghiNhanThanhToan(
+                TrangThaiHoaDon.DA_THANH_TOAN,
+                BillingCalcTestFixtures.tien("1888000"),
+                BillingCalcTestFixtures.tien("1000000"),
+                LocalDate.of(2026, 9, 1),
+                LocalDate.of(2026, 9, 2)
+        )).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void FR_INV_14_BR_08_allowsPaidInvoiceToMoveBackwardOnlyThroughExplicitCounterEntryPath() {
+        TrangThaiHoaDon trangThai = new QuyTacTrangThaiHoaDon().ghiNhanThanhToanDoiUng(
+                TrangThaiHoaDon.DA_THANH_TOAN,
+                BillingCalcTestFixtures.tien("1888000"),
+                BillingCalcTestFixtures.tien("1000000"),
+                LocalDate.of(2026, 9, 1),
+                LocalDate.of(2026, 9, 2)
+        );
+
+        assertThat(trangThai).isEqualTo(TrangThaiHoaDon.DA_THU_MOT_PHAN);
     }
 
     @Test
@@ -96,6 +141,7 @@ class HoaDonLifecycleRulesTest {
         hopLe.put(TrangThaiHoaDon.NHAP, EnumSet.of(TrangThaiHoaDon.DA_PHAT_HANH, TrangThaiHoaDon.DA_HUY));
         hopLe.put(TrangThaiHoaDon.DA_PHAT_HANH, EnumSet.of(
                 TrangThaiHoaDon.DA_THU_MOT_PHAN,
+                TrangThaiHoaDon.DA_THANH_TOAN,
                 TrangThaiHoaDon.QUA_HAN,
                 TrangThaiHoaDon.DA_HUY
         ));
@@ -103,7 +149,7 @@ class HoaDonLifecycleRulesTest {
                 TrangThaiHoaDon.DA_THANH_TOAN,
                 TrangThaiHoaDon.QUA_HAN
         ));
-        hopLe.put(TrangThaiHoaDon.QUA_HAN, EnumSet.of(TrangThaiHoaDon.DA_THANH_TOAN));
+        hopLe.put(TrangThaiHoaDon.QUA_HAN, EnumSet.of(TrangThaiHoaDon.DA_THANH_TOAN, TrangThaiHoaDon.DA_HUY));
         hopLe.put(TrangThaiHoaDon.DA_THANH_TOAN, EnumSet.noneOf(TrangThaiHoaDon.class));
         hopLe.put(TrangThaiHoaDon.DA_HUY, EnumSet.noneOf(TrangThaiHoaDon.class));
 

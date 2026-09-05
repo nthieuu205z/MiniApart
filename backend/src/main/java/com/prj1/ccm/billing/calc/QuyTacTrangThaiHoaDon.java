@@ -35,15 +35,51 @@ public final class QuyTacTrangThaiHoaDon {
             LocalDate ngayHienTai,
             LocalDate hanThanhToan
     ) {
-        TrangThaiHoaDon mongMuon;
-        if (soTienDaThu.giaTri().compareTo(tongPhaiThu.giaTri()) >= 0) {
-            mongMuon = TrangThaiHoaDon.DA_THANH_TOAN;
-        } else if (ngayHienTai.isAfter(hanThanhToan)) {
-            mongMuon = TrangThaiHoaDon.QUA_HAN;
-        } else {
-            mongMuon = TrangThaiHoaDon.DA_THU_MOT_PHAN;
+        return chuyen(hienTai, xacDinhTrangThaiSauThanhToan(
+                tongPhaiThu,
+                soTienDaThu,
+                ngayHienTai,
+                hanThanhToan
+        ));
+    }
+
+    /**
+     * BR-08/FR-INV-14: recalculate the invoice state for an explicit counter-entry.
+     * The regular payment path deliberately keeps paid invoices terminal; only this
+     * named path may reflect a paid amount reduced by an accounting correction.
+     */
+    public TrangThaiHoaDon ghiNhanThanhToanDoiUng(
+            TrangThaiHoaDon hienTai,
+            TienTe tongPhaiThu,
+            TienTe soTienDaThu,
+            LocalDate ngayHienTai,
+            LocalDate hanThanhToan
+    ) {
+        TrangThaiHoaDon mongMuon = xacDinhTrangThaiSauThanhToan(
+                tongPhaiThu,
+                soTienDaThu,
+                ngayHienTai,
+                hanThanhToan
+        );
+        if (hienTai == TrangThaiHoaDon.DA_THANH_TOAN
+                && mongMuon != TrangThaiHoaDon.DA_THANH_TOAN) {
+            return mongMuon;
         }
         return chuyen(hienTai, mongMuon);
+    }
+
+    private TrangThaiHoaDon xacDinhTrangThaiSauThanhToan(
+            TienTe tongPhaiThu,
+            TienTe soTienDaThu,
+            LocalDate ngayHienTai,
+            LocalDate hanThanhToan
+    ) {
+        if (soTienDaThu.giaTri().compareTo(tongPhaiThu.giaTri()) >= 0) {
+            return TrangThaiHoaDon.DA_THANH_TOAN;
+        }
+        return ngayHienTai.isAfter(hanThanhToan)
+                ? TrangThaiHoaDon.QUA_HAN
+                : TrangThaiHoaDon.DA_THU_MOT_PHAN;
     }
 
     public TrangThaiHoaDon huy(TrangThaiHoaDon hienTai, boolean laChuSoHuu, String lyDo) {
@@ -62,6 +98,7 @@ public final class QuyTacTrangThaiHoaDon {
         hopLe.put(TrangThaiHoaDon.NHAP, EnumSet.of(TrangThaiHoaDon.DA_PHAT_HANH, TrangThaiHoaDon.DA_HUY));
         hopLe.put(TrangThaiHoaDon.DA_PHAT_HANH, EnumSet.of(
                 TrangThaiHoaDon.DA_THU_MOT_PHAN,
+                TrangThaiHoaDon.DA_THANH_TOAN,
                 TrangThaiHoaDon.QUA_HAN,
                 TrangThaiHoaDon.DA_HUY
         ));
@@ -69,7 +106,7 @@ public final class QuyTacTrangThaiHoaDon {
                 TrangThaiHoaDon.DA_THANH_TOAN,
                 TrangThaiHoaDon.QUA_HAN
         ));
-        hopLe.put(TrangThaiHoaDon.QUA_HAN, EnumSet.of(TrangThaiHoaDon.DA_THANH_TOAN));
+        hopLe.put(TrangThaiHoaDon.QUA_HAN, EnumSet.of(TrangThaiHoaDon.DA_THANH_TOAN, TrangThaiHoaDon.DA_HUY));
         hopLe.put(TrangThaiHoaDon.DA_THANH_TOAN, EnumSet.noneOf(TrangThaiHoaDon.class));
         hopLe.put(TrangThaiHoaDon.DA_HUY, EnumSet.noneOf(TrangThaiHoaDon.class));
         return Map.copyOf(hopLe);

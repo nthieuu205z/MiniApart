@@ -4,7 +4,7 @@
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Vì sao ticket này phải đi trước mọi ticket có migration
 
@@ -36,14 +36,18 @@ Lý do: nếu suy ngầm thì một lỗi tính toán làm đã-thu giảm cũng
 
 ## Hoàn thành khi
 
-- [ ] `DA_PHAT_HANH → DA_THANH_TOAN` hợp lệ; trả đủ một lần cho ra `DA_THANH_TOAN`
-- [ ] `QUA_HAN → DA_HUY` hợp lệ, giữ nguyên điều kiện Chủ sở hữu + lý do không rỗng
-- [ ] Cạnh lùi từ `DA_THANH_TOAN` **chỉ mở khi gọi tường minh cho bút toán đối ứng**, không suy ngầm từ số tiền giảm
-- [ ] Mọi đường lùi khác từ `DA_THANH_TOAN` vẫn bị chặn — BR-08 phần còn lại không đổi
-- [ ] `NHAP` vẫn là trạng thái duy nhất sửa được nội dung
-- [ ] Ba ca ở bảng trên có test riêng, tên mang mã `BR-08`
-- [ ] Test cho **cạnh lùi bị lạm dụng**: gọi đường thường trên hoá đơn `DA_THANH_TOAN` với số tiền giảm → vẫn phải ném lỗi
-- [ ] Gói `billing.calc` **không** thêm phụ thuộc Spring/JPA nào — ArchUnit vẫn xanh
-- [ ] Toàn bộ 333 test hiện có vẫn xanh
+- [x] `DA_PHAT_HANH → DA_THANH_TOAN` hợp lệ; trả đủ một lần cho ra `DA_THANH_TOAN`
+- [x] `QUA_HAN → DA_HUY` hợp lệ, giữ nguyên điều kiện Chủ sở hữu + lý do không rỗng
+- [x] Cạnh lùi từ `DA_THANH_TOAN` **chỉ mở khi gọi tường minh cho bút toán đối ứng**, không suy ngầm từ số tiền giảm
+- [x] Mọi đường lùi khác từ `DA_THANH_TOAN` vẫn bị chặn — BR-08 phần còn lại không đổi
+- [x] `NHAP` vẫn là trạng thái duy nhất sửa được nội dung
+- [x] Ba ca ở bảng trên có test riêng, tên mang mã `BR-08`
+- [x] Test cho **cạnh lùi bị lạm dụng**: gọi đường thường trên hoá đơn `DA_THANH_TOAN` với số tiền giảm → vẫn phải ném lỗi
+- [x] Gói `billing.calc` **không** thêm phụ thuộc Spring/JPA nào — ArchUnit vẫn xanh
+- [x] Toàn bộ test hiện có vẫn xanh
 
 ## Comments
+
+- 2026-09-05: Bổ sung chuyển `DA_PHAT_HANH → DA_THANH_TOAN` cho ca trả đủ một lần và `QUA_HAN → DA_HUY` với cùng điều kiện chủ sở hữu + lý do không rỗng.
+- 2026-09-05: Thêm `ghiNhanThanhToanDoiUng(...)` làm đường gọi tường minh cho bút toán đối ứng; đường `ghiNhanThanhToan(...)` thông thường và `chuyen(...)` vẫn chặn mọi cạnh lùi từ `DA_THANH_TOAN`.
+- 2026-09-05: TDD đã xác nhận RED trên hai ca thiếu, sau đó GREEN; `./gradlew test` tại `backend/` đạt toàn bộ test hiện có, gồm ArchUnit và integration tests với Testcontainers/Colima.
