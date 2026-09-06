@@ -3,6 +3,8 @@ package com.prj1.ccm.billing;
 import com.prj1.ccm.auth.AuthInterceptor;
 import com.prj1.ccm.nguoidung.NguoiDung;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -205,24 +207,59 @@ public class HoaDonController {
     }
 
     /**
-     * FR-INV-10 generates a current PNG bank-transfer QR code whose account, amount, and payment
-     * content come from the selected invoice and its building.
+     * FR-INV-10 issues a 900-second signed link for a current bank-transfer QR code whose account,
+     * amount, and payment content come from the selected invoice and its building.
      *
      * @param toaNhaId the building identifier
      * @param kyId the payment-period identifier
      * @param hoaDonId the invoice identifier
      * @param request the current HTTP request carrying the authenticated user attribute
-     * @return the generated QR image without persisting it
+     * @return the signed link for the generated QR image
      */
-    @GetMapping(value = "/{hoaDonId}/ma-qr-chuyen-khoan", produces = "image/png")
-    public ResponseEntity<byte[]> maQrChuyenKhoan(
+    @GetMapping("/{hoaDonId}/ma-qr-chuyen-khoan")
+    public LienKetMaQrChuyenKhoan maQrChuyenKhoan(
             @PathVariable Long toaNhaId,
             @PathVariable Long kyId,
             @PathVariable Long hoaDonId,
             HttpServletRequest request
     ) {
         NguoiDung nguoiDung = (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
-        return ResponseEntity.ok(maQrChuyenKhoanService.tao(toaNhaId, kyId, hoaDonId, nguoiDung));
+        return maQrChuyenKhoanService.taoLienKet(toaNhaId, kyId, hoaDonId, nguoiDung);
+    }
+
+    /**
+     * FR-INV-10 validates a path-bound, time-limited QR link and regenerates the current PNG without
+     * requiring a JWT or persisting the payload/image.
+     *
+     * @param toaNhaId the building identifier bound into the signature
+     * @param kyId the payment-period identifier bound into the signature
+     * @param hoaDonId the invoice identifier bound into the signature
+     * @param hetHan the signed Unix expiry second
+     * @param chuKy the HMAC signature
+     * @param request the current HTTP request, used to reject duplicate signed parameters
+     * @return the regenerated QR image
+     */
+    @GetMapping(value = "/{hoaDonId}/ma-qr-chuyen-khoan/xem", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<byte[]> xemMaQrChuyenKhoan(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long kyId,
+            @PathVariable Long hoaDonId,
+            @RequestParam long hetHan,
+            @RequestParam String chuKy,
+            HttpServletRequest request
+    ) {
+        if (coNhieuGiaTri(request, "hetHan") || coNhieuGiaTri(request, "chuKy")) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Liên kết mã QR không hợp lệ hoặc đã hết hạn");
+        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .body(maQrChuyenKhoanService.taoAnh(toaNhaId, kyId, hoaDonId, hetHan, chuKy));
+    }
+
+    private boolean coNhieuGiaTri(HttpServletRequest request, String tenThamSo) {
+        String[] giaTri = request.getParameterValues(tenThamSo);
+        return giaTri != null && giaTri.length != 1;
     }
 
     /**

@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Vì sao làm sớm
 
@@ -24,7 +24,8 @@ Thêm phụ thuộc là **việc đầu tiên** của ticket này.
 
 | Cần | Lấy ở đâu |
 |---|---|
-| Số tài khoản | `TOA_NHA.tk_ngan_hang` — đã có từ `V2` |
+| Mã ngân hàng | `TOA_NHA.ma_ngan_hang` — BIN đúng 6 chữ số, thêm ở `V28` |
+| Số tài khoản | `TOA_NHA.tk_ngan_hang` — số tài khoản dài 1–19 chữ số |
 | Số tiền | `HOA_DON.tong_tien − HOA_DON.da_thu` |
 | Nội dung chuyển khoản | `HOA_DON.ma_hoa_don` |
 
@@ -32,25 +33,27 @@ Thêm phụ thuộc là **việc đầu tiên** của ticket này.
 
 ## Ba điều cần cẩn thận
 
-1. **Không ghi ảnh QR vào cơ sở dữ liệu.** Nó suy ra được hoàn toàn từ ba trường trên. Lưu lại là tạo ra một giá trị đệm thứ ba phải canh — dự án đã có hai (`PHONG.trang_thai`, `HOA_DON.da_thu`), đủ rồi.
-2. **QR đổi theo số tiền còn lại**, nên phải sinh lúc yêu cầu, không cache.
+1. **Không ghi ảnh hoặc payload QR vào cơ sở dữ liệu.** Nó suy ra được hoàn toàn từ dữ liệu toà nhà và hoá đơn. Lưu lại là tạo ra một giá trị đệm thứ ba phải canh — dự án đã có hai (`PHONG.trang_thai`, `HOA_DON.da_thu`), đủ rồi.
+2. **QR đổi theo số tiền còn lại**, nên ảnh phải được sinh lại khi endpoint signed-link được gọi, không cache.
 3. **Không dùng số tiền dạng `double` ở bất kỳ khâu nào** — kể cả khi ghép chuỗi. ArchUnit đã canh `billing`, nhưng chuỗi định dạng thì nó không soi được.
+4. **Không tự chế payload.** Dùng cấu trúc VietQR/NAPAS EMVCo TLV và CRC16-CCITT; ZXing chỉ chịu trách nhiệm vẽ payload thành PNG.
 
 ## Hoàn thành khi
 
 - [x] Thư viện QR thêm vào `build.gradle` **trước** khi viết mã
-- [x] Endpoint trả mã QR cho một hoá đơn, có mã `FR-INV-10` trong Javadoc
-- [x] Nội dung QR chứa đúng số tài khoản của **toà chứa hoá đơn đó**, không phải toà bất kỳ
-- [x] Số tiền trong QR là **phần còn phải thu**, không phải tổng hoá đơn
-- [x] Nội dung chuyển khoản là `ma_hoa_don`
-- [x] Hoá đơn đã thanh toán đủ → không sinh QR, trả lời rõ lý do
-- [x] Ảnh QR **không** lưu vào cơ sở dữ liệu
-- [x] Test giải mã lại chuỗi trong QR và khẳng định ba trường đúng — **không chỉ khẳng định "có trả về ảnh"**
-- [x] Test 403 cho QTHT và Quản lý sai toà
+- [x] Migration `V28__viet_qr_bank_identifier.sql` thêm BIN 6 chữ số và chuẩn hoá dữ liệu tài khoản cũ
+- [x] Luồng cấu hình toà nhà đọc/ghi `ma_ngan_hang` và `tk_ngan_hang`, kiểm tra BIN/tài khoản hợp lệ
+- [x] Endpoint cấp signed link cho một hoá đơn, có mã `FR-INV-10` trong Javadoc; link hết hạn sau 900 giây
+- [x] Endpoint ảnh kiểm chữ ký/hạn rồi sinh PNG từ dữ liệu hiện tại, có content type rõ ràng
+- [x] Payload giải mã được theo chuẩn VietQR/NAPAS EMVCo, có đúng BIN, số tài khoản của toà chứa hoá đơn, số tiền còn lại và mã hoá đơn
+- [x] Hoá đơn đã thanh toán đủ hoặc trả thừa → không sinh QR, trả lời rõ lý do
+- [x] Ảnh và payload QR **không** lưu vào cơ sở dữ liệu; ảnh được sinh lại khi số tiền còn lại thay đổi
+- [x] Test hết hạn/chữ ký sai, overpaid, owner success, manager success, QTHT 403 và manager sai toà 403
 
 ## Comments
 
-- Added ZXing before production QR code. The endpoint renders a PNG at request time from the invoice building's account, the `BigDecimal` outstanding amount, and the invoice code; it does not add storage or a migration.
-- `MaQrChuyenKhoanIntegrationTest` decodes the PNG and uses an invoice in Toà B with a distinct account, so it catches an accidental lookup of a different building account. It also covers paid-in-full 409 and the required QTHT/out-of-scope-manager 403 cases.
-- Review gate reopened the ticket: the current `account=...&amount=...&content=...` payload is not a bank-scannable VietQR/EMVCo payload, and the current `TOA_NHA.tk_ngan_hang` field is free-form and lacks the BIN/acquirer identifier required by the official payment format. Resolve the data contract in the Matt planning layer before the fix round.
-- Review also requires QR image delivery through a 15-minute signed link under the project image-delivery convention; QR bytes must still be regenerated on demand and never persisted.
+- Added ZXing before production QR code in the first attempt. The review reopened the ticket because `account=...&amount=...&content=...` is not bank-scannable VietQR/EMVCo and `TOA_NHA.tk_ngan_hang` alone lacks the BIN/acquirer identifier required by the official payment format.
+- Contract decision: add `TOA_NHA.ma_ngan_hang` as a required 6-digit BIN in `V28`; keep `tk_ngan_hang` as the 1–19 digit account number, and update building configuration read/write DTOs and repository queries for both fields.
+- The revised endpoint issues a 900-second HMAC-signed link. The signed image endpoint validates path-bound parameters and expiry, then regenerates the current PNG; it never stores an image or payload.
+- Fix round completed: `V28` removes the legacy `9704` prefix before stripping separators, so the seeded `9704-0000-0000-0101/0202` values become `000000000101/000000000202`; VietQR TLV uses the backfilled BIN and CRC16-CCITT.
+- Verification covers scoped owner and manager success, QTHT and out-of-scope manager 403, overpaid/paid-in-full rejection, current-data regeneration, invalid/expired signatures, building BIN/account validation, and absence of QR storage.

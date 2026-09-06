@@ -17,7 +17,7 @@ class MaQrChuyenKhoanRepository {
     Optional<DuLieuMaQrChuyenKhoan> timHoaDon(Long toaNhaId, Long kyId, Long hoaDonId) {
         return jdbcTemplate.query(
                         """
-                                SELECT tn.tk_ngan_hang, hd.tong_tien, hd.da_thu, hd.ma_hoa_don
+                                SELECT tn.ma_ngan_hang, tn.tk_ngan_hang, hd.tong_tien, hd.da_thu, hd.ma_hoa_don
                                 FROM HOA_DON hd
                                 JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
                                 JOIN PHONG p ON p.id = hop_dong.phong_id
@@ -27,6 +27,7 @@ class MaQrChuyenKhoanRepository {
                                   AND tn.id = ?
                                 """,
                         (resultSet, rowNum) -> new DuLieuMaQrChuyenKhoan(
+                                resultSet.getString("ma_ngan_hang"),
                                 resultSet.getString("tk_ngan_hang"),
                                 resultSet.getBigDecimal("tong_tien"),
                                 resultSet.getBigDecimal("da_thu"),
@@ -41,6 +42,7 @@ class MaQrChuyenKhoanRepository {
     }
 
     record DuLieuMaQrChuyenKhoan(
+            String maNganHang,
             String taiKhoanNganHang,
             BigDecimal tongTien,
             BigDecimal daThu,

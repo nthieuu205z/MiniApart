@@ -10,6 +10,7 @@ public record ToaNha(
         int soTang,
         int ngayChotSo,
         int soNgayHanTt,
+        String maNganHang,
         String tkNganHang,
         BigDecimal nguongThatThoat,
         boolean batBuocAnhCongTo

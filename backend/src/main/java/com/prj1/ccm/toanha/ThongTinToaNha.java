@@ -10,6 +10,7 @@ public record ThongTinToaNha(
         int soTang,
         int ngayChotSo,
         int soNgayHanTt,
+        String maNganHang,
         String tkNganHang,
         String nguongThatThoat,
         boolean batBuocAnhCongTo
@@ -23,6 +24,7 @@ public record ThongTinToaNha(
                 toaNha.soTang(),
                 toaNha.ngayChotSo(),
                 toaNha.soNgayHanTt(),
+                toaNha.maNganHang(),
                 toaNha.tkNganHang(),
                 toaNha.nguongThatThoat().setScale(2, RoundingMode.UNNECESSARY).toPlainString(),
                 toaNha.batBuocAnhCongTo()

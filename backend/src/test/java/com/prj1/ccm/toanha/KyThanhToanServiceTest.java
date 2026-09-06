@@ -50,7 +50,7 @@ class KyThanhToanServiceTest {
         );
         NguoiDung quanLy = new NguoiDung(3L, "Quan ly", "0900000003", "hash", VaiTro.QUAN_LY,
                 TrangThaiNguoiDung.HOAT_DONG, 0, null);
-        ToaNha toaNha = new ToaNha(1L, "TOA-A", "Toa A", "Dia chi", 5, 25, 3, "123", BigDecimal.ZERO, true);
+        ToaNha toaNha = new ToaNha(1L, "TOA-A", "Toa A", "Dia chi", 5, 25, 3, "970405", "123", BigDecimal.ZERO, true);
         KyThanhToan kyDangMo = new KyThanhToan(
                 10L,
                 1L,

@@ -9,6 +9,7 @@ public record YeuCauToaNha(
         Integer soTang,
         Integer ngayChotSo,
         Integer soNgayHanTt,
+        String maNganHang,
         String tkNganHang,
         BigDecimal nguongThatThoat,
         Boolean batBuocAnhCongTo

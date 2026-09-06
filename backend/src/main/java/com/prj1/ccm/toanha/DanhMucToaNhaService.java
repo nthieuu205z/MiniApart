@@ -78,7 +78,9 @@ public class DanhMucToaNhaService {
                 || yeuCau.maToa() == null || yeuCau.maToa().isBlank()
                 || yeuCau.ten() == null || yeuCau.ten().isBlank()
                 || yeuCau.diaChi() == null || yeuCau.diaChi().isBlank()
+                || yeuCau.maNganHang() == null || !yeuCau.maNganHang().trim().matches("[0-9]{6}")
                 || yeuCau.tkNganHang() == null || yeuCau.tkNganHang().isBlank()
+                || !yeuCau.tkNganHang().trim().matches("[0-9]{1,19}")
                 || yeuCau.soTang() == null || yeuCau.soTang() <= 0
                 || yeuCau.soNgayHanTt() == null || yeuCau.soNgayHanTt() <= 0
                 || yeuCau.ngayChotSo() == null
@@ -106,6 +108,7 @@ public class DanhMucToaNhaService {
                 yeuCau.soTang(),
                 yeuCau.ngayChotSo(),
                 yeuCau.soNgayHanTt(),
+                yeuCau.maNganHang().trim(),
                 yeuCau.tkNganHang().trim(),
                 nguongThatThoat,
                 Boolean.TRUE.equals(yeuCau.batBuocAnhCongTo())

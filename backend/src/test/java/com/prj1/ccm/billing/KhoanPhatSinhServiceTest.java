@@ -57,7 +57,7 @@ class KhoanPhatSinhServiceTest {
         when(khoanPhatSinhRepository.timHopDongTrongPhamVi(88L))
                 .thenReturn(Optional.of(new KhoanPhatSinhRepository.HopDongTrongPhamVi(88L, 1L)));
         when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(quanLy, 1L))
-                .thenReturn(new ToaNha(1L, "TN-A", "Toa A", "Dia chi", 5, 25, 7, "0123", new BigDecimal("0.15"), false));
+                .thenReturn(new ToaNha(1L, "TN-A", "Toa A", "Dia chi", 5, 25, 7, "970405", "0123", new BigDecimal("0.15"), false));
 
         assertThatThrownBy(() -> khoanPhatSinhService.tao(
                 88L,

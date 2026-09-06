@@ -15,8 +15,10 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Map;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -79,7 +81,8 @@ class DanhMucToaNhaIntegrationTest {
                             so_tang = CASE id WHEN 1 THEN 6 ELSE 5 END,
                             ngay_chot_so = CASE id WHEN 1 THEN 25 ELSE 26 END,
                             so_ngay_han_tt = 7,
-                            tk_ngan_hang = CASE id WHEN 1 THEN '9704-0000-0000-0101' ELSE '9704-0000-0000-0202' END,
+                            ma_ngan_hang = CASE id WHEN 1 THEN '970405' ELSE '970422' END,
+                            tk_ngan_hang = CASE id WHEN 1 THEN '000000000101' ELSE '000000000202' END,
                             nguong_that_thoat = CASE id WHEN 1 THEN 150000.00 ELSE 175000.00 END
                         WHERE id IN (1, 2)
                         """);
@@ -100,6 +103,7 @@ class DanhMucToaNhaIntegrationTest {
                                   "soTang": 3,
                                   "ngayChotSo": 28,
                                   "soNgayHanTt": 5,
+                                  "maNganHang": "970422",
                                   "tkNganHang": "0123456789",
                                   "nguongThatThoat": "12.35",
                                   "batBuocAnhCongTo": true
@@ -132,7 +136,8 @@ class DanhMucToaNhaIntegrationTest {
                                   "soTang": 4,
                                   "ngayChotSo": 27,
                                   "soNgayHanTt": 8,
-                                  "tkNganHang": "0123456789 — Ngân hàng Mẫu",
+                                  "maNganHang": "970436",
+                                  "tkNganHang": "0123456788",
                                   "nguongThatThoat": "12.35",
                                   "batBuocAnhCongTo": false
                                 }
@@ -157,9 +162,10 @@ class DanhMucToaNhaIntegrationTest {
                   "ten": "Toà mới",
                   "diaChi": "Địa chỉ mới",
                   "soTang": 3,
-                  "ngayChotSo": 1,
-                  "soNgayHanTt": 5,
-                  "tkNganHang": "0123",
+                                  "ngayChotSo": 1,
+                                  "soNgayHanTt": 5,
+                                  "maNganHang": "970422",
+                                  "tkNganHang": "0123",
                   "nguongThatThoat": "10.00",
                   "batBuocAnhCongTo": false
                 }
@@ -192,6 +198,7 @@ class DanhMucToaNhaIntegrationTest {
                                   "soTang": 6,
                                   "ngayChotSo": 25,
                                   "soNgayHanTt": 7,
+                                  "maNganHang": "970405",
                                   "tkNganHang": "9704",
                                   "nguongThatThoat": "150000.00",
                                   "batBuocAnhCongTo": true
@@ -207,9 +214,10 @@ class DanhMucToaNhaIntegrationTest {
                   "ten": "Toà A bị từ chối cập nhật",
                   "diaChi": "Địa chỉ A",
                   "soTang": 6,
-                  "ngayChotSo": 25,
-                  "soNgayHanTt": 7,
-                  "tkNganHang": "9704",
+                                  "ngayChotSo": 25,
+                                  "soNgayHanTt": 7,
+                                  "maNganHang": "970405",
+                                  "tkNganHang": "9704",
                   "nguongThatThoat": "150000.00"
                 }
                 """;
@@ -237,6 +245,7 @@ class DanhMucToaNhaIntegrationTest {
                                   "soTang": 5,
                                   "ngayChotSo": 26,
                                   "soNgayHanTt": 7,
+                                  "maNganHang": "970422",
                                   "tkNganHang": "9704",
                                   "nguongThatThoat": "175000.00"
                                 }
@@ -261,6 +270,81 @@ class DanhMucToaNhaIntegrationTest {
                 .andExpect(jsonPath("$.thongBao", containsString("Mã toà")));
     }
 
+    @Test
+    void FR_INV_10_buildingConfigurationReadsAndWritesBinAndAccount() throws Exception {
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(put("/api/toa-nha/1")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "maToa": "TN-A",
+                                  "ten": "Toà A",
+                                  "diaChi": "Địa chỉ A",
+                                  "soTang": 6,
+                                  "ngayChotSo": 25,
+                                  "soNgayHanTt": 7,
+                                  "maNganHang": "970436",
+                                  "tkNganHang": "1234567890123456789",
+                                  "nguongThatThoat": "150000.00",
+                                  "batBuocAnhCongTo": true
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.maNganHang").value("970436"))
+                .andExpect(jsonPath("$.tkNganHang").value("1234567890123456789"));
+
+        mockMvc.perform(get("/api/toa-nha/1")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.maNganHang").value("970436"))
+                .andExpect(jsonPath("$.tkNganHang").value("1234567890123456789"));
+    }
+
+    @Test
+    void FR_INV_10_v28BackfillsBinAndNormalizesLegacyBuildingAccount() {
+        Map<String, Object> toaA = jdbcTemplate.queryForMap(
+                "SELECT ma_ngan_hang, tk_ngan_hang FROM TOA_NHA WHERE id = 1");
+        Map<String, Object> toaB = jdbcTemplate.queryForMap(
+                "SELECT ma_ngan_hang, tk_ngan_hang FROM TOA_NHA WHERE id = 2");
+
+        assertThat(toaA).containsEntry("ma_ngan_hang", "970405")
+                .containsEntry("tk_ngan_hang", "000000000101");
+        assertThat(toaB).containsEntry("ma_ngan_hang", "970422")
+                .containsEntry("tk_ngan_hang", "000000000202");
+    }
+
+    @Test
+    void FR_INV_10_buildingConfigurationRejectsInvalidBinAndAccount() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        String invalidBin = """
+                {
+                  "maToa": "TN-A", "ten": "Toà A", "diaChi": "Địa chỉ A", "soTang": 6,
+                  "ngayChotSo": 25, "soNgayHanTt": 7, "maNganHang": "97042A", "tkNganHang": "0123",
+                  "nguongThatThoat": "150000.00", "batBuocAnhCongTo": true
+                }
+                """;
+        mockMvc.perform(put("/api/toa-nha/1")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidBin))
+                .andExpect(status().isBadRequest());
+
+        String invalidAccount = """
+                {
+                  "maToa": "TN-A", "ten": "Toà A", "diaChi": "Địa chỉ A", "soTang": 6,
+                  "ngayChotSo": 25, "soNgayHanTt": 7, "maNganHang": "970405", "tkNganHang": "0123A",
+                  "nguongThatThoat": "150000.00", "batBuocAnhCongTo": true
+                }
+                """;
+        mockMvc.perform(put("/api/toa-nha/1")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidAccount))
+                .andExpect(status().isBadRequest());
+    }
+
     private String buildingPayload(String maToa, int ngayChotSo) {
         return """
                 {
@@ -270,6 +354,7 @@ class DanhMucToaNhaIntegrationTest {
                   "soTang": 3,
                   "ngayChotSo": %d,
                   "soNgayHanTt": 5,
+                  "maNganHang": "970422",
                   "tkNganHang": "0123",
                   "nguongThatThoat": "10.00",
                   "batBuocAnhCongTo": false
