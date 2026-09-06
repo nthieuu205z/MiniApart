@@ -1,13 +1,18 @@
 // @vitest-environment jsdom
 
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { Button } from './design/core/Button'
 import { Figure } from './design/core/Figure'
 import { Glyph } from './design/core/Glyph'
+import { ConfirmDialog } from './design/feedback/ConfirmDialog'
 import { MeterInput } from './design/forms/MeterInput'
 import { MetaItem, TableCell, TableHeadCell } from './design/layout/Screen'
+
+declare global {
+  var IS_REACT_ACT_ENVIRONMENT: boolean | undefined
+}
 
 // @ts-expect-error ButtonProps intentionally omits native disabled; use blocked instead.
 const buttonWithDisabledProp = <Button disabled>Không hợp lệ</Button>
@@ -18,6 +23,7 @@ let root: Root
 
 describe('MiniApart design components', () => {
   beforeEach(() => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -131,5 +137,50 @@ describe('MiniApart design components', () => {
     expect(container.querySelector('dt')?.style.color).toBe('var(--ma-text-secondary)')
     expect(container.querySelector('dd')?.style.color).toBe('var(--ma-text-primary)')
     expect(container.querySelector('dd')?.style.fontWeight).toBe('800')
+  })
+
+  it('keeps an open confirmation modal named, focused, and isolated from the background', async () => {
+    function Harness() {
+      const [open, setOpen] = useState(false)
+      return <>
+        <button type="button" onClick={() => setOpen(true)}>Mở xác nhận</button>
+        {open ? (
+          <ConfirmDialog
+            title="Khoá tài khoản Người quản lý?"
+            consequence="Người dùng sẽ không đăng nhập được nữa."
+            confirmLabel="Khoá tài khoản"
+            onCancel={() => setOpen(false)}
+          />
+        ) : null}
+      </>
+    }
+
+    await act(async () => root.render(<Harness />))
+    const opener = container.querySelector('button') as HTMLButtonElement
+    opener.focus()
+    await act(async () => opener.click())
+
+    const dialog = container.querySelector('[role="dialog"]') as HTMLElement
+    const confirm = [...dialog.querySelectorAll('button')].find((item) => item.textContent === 'Khoá tài khoản') as HTMLButtonElement
+    const cancel = [...dialog.querySelectorAll('button')].find((item) => item.textContent === 'Để sau') as HTMLButtonElement
+    const labelledBy = dialog.getAttribute('aria-labelledby')
+
+    expect(labelledBy).toBeTruthy()
+    expect(document.getElementById(labelledBy!)?.textContent).toBe('Khoá tài khoản Người quản lý?')
+    expect(document.activeElement).toBe(confirm)
+    expect(opener.hasAttribute('inert')).toBe(true)
+
+    cancel.focus()
+    await act(async () => cancel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })))
+    expect(document.activeElement).toBe(confirm)
+
+    confirm.focus()
+    await act(async () => confirm.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true })))
+    expect(document.activeElement).toBe(cancel)
+
+    await act(async () => cancel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })))
+    expect(container.querySelector('[role="dialog"]')).toBeNull()
+    expect(opener.hasAttribute('inert')).toBe(false)
+    expect(document.activeElement).toBe(opener)
   })
 })
