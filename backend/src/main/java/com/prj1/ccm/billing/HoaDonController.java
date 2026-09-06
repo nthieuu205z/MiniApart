@@ -24,6 +24,7 @@ public class HoaDonController {
     private final PhatHanhHoaDonService phatHanhHoaDonService;
     private final HoaDonChiTietService hoaDonChiTietService;
     private final ThanhToanService thanhToanService;
+    private final MaQrChuyenKhoanService maQrChuyenKhoanService;
 
     public HoaDonController(
             TinhDuThaoHoaDonService tinhDuThaoHoaDonService,
@@ -32,7 +33,8 @@ public class HoaDonController {
             NoiDungHoaDonService noiDungHoaDonService,
             PhatHanhHoaDonService phatHanhHoaDonService,
             HoaDonChiTietService hoaDonChiTietService,
-            ThanhToanService thanhToanService
+            ThanhToanService thanhToanService,
+            MaQrChuyenKhoanService maQrChuyenKhoanService
     ) {
         this.tinhDuThaoHoaDonService = tinhDuThaoHoaDonService;
         this.taoHoaDonHangLoatService = taoHoaDonHangLoatService;
@@ -41,6 +43,7 @@ public class HoaDonController {
         this.phatHanhHoaDonService = phatHanhHoaDonService;
         this.hoaDonChiTietService = hoaDonChiTietService;
         this.thanhToanService = thanhToanService;
+        this.maQrChuyenKhoanService = maQrChuyenKhoanService;
     }
 
     /**
@@ -199,6 +202,27 @@ public class HoaDonController {
         return ResponseEntity.created(URI.create(
                 "/api/thanh-toan/" + ketQua.thanhToanId()
         )).body(ketQua);
+    }
+
+    /**
+     * FR-INV-10 generates a current PNG bank-transfer QR code whose account, amount, and payment
+     * content come from the selected invoice and its building.
+     *
+     * @param toaNhaId the building identifier
+     * @param kyId the payment-period identifier
+     * @param hoaDonId the invoice identifier
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the generated QR image without persisting it
+     */
+    @GetMapping(value = "/{hoaDonId}/ma-qr-chuyen-khoan", produces = "image/png")
+    public ResponseEntity<byte[]> maQrChuyenKhoan(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long kyId,
+            @PathVariable Long hoaDonId,
+            HttpServletRequest request
+    ) {
+        NguoiDung nguoiDung = (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
+        return ResponseEntity.ok(maQrChuyenKhoanService.tao(toaNhaId, kyId, hoaDonId, nguoiDung));
     }
 
     /**

@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Vì sao làm sớm
 
@@ -38,14 +38,17 @@ Thêm phụ thuộc là **việc đầu tiên** của ticket này.
 
 ## Hoàn thành khi
 
-- [ ] Thư viện QR thêm vào `build.gradle` **trước** khi viết mã
-- [ ] Endpoint trả mã QR cho một hoá đơn, có mã `FR-INV-10` trong Javadoc
-- [ ] Nội dung QR chứa đúng số tài khoản của **toà chứa hoá đơn đó**, không phải toà bất kỳ
-- [ ] Số tiền trong QR là **phần còn phải thu**, không phải tổng hoá đơn
-- [ ] Nội dung chuyển khoản là `ma_hoa_don`
-- [ ] Hoá đơn đã thanh toán đủ → không sinh QR, trả lời rõ lý do
-- [ ] Ảnh QR **không** lưu vào cơ sở dữ liệu
-- [ ] Test giải mã lại chuỗi trong QR và khẳng định ba trường đúng — **không chỉ khẳng định "có trả về ảnh"**
-- [ ] Test 403 cho QTHT và Quản lý sai toà
+- [x] Thư viện QR thêm vào `build.gradle` **trước** khi viết mã
+- [x] Endpoint trả mã QR cho một hoá đơn, có mã `FR-INV-10` trong Javadoc
+- [x] Nội dung QR chứa đúng số tài khoản của **toà chứa hoá đơn đó**, không phải toà bất kỳ
+- [x] Số tiền trong QR là **phần còn phải thu**, không phải tổng hoá đơn
+- [x] Nội dung chuyển khoản là `ma_hoa_don`
+- [x] Hoá đơn đã thanh toán đủ → không sinh QR, trả lời rõ lý do
+- [x] Ảnh QR **không** lưu vào cơ sở dữ liệu
+- [x] Test giải mã lại chuỗi trong QR và khẳng định ba trường đúng — **không chỉ khẳng định "có trả về ảnh"**
+- [x] Test 403 cho QTHT và Quản lý sai toà
 
 ## Comments
+
+- Added ZXing before production QR code. The endpoint renders a PNG at request time from the invoice building's account, the `BigDecimal` outstanding amount, and the invoice code; it does not add storage or a migration.
+- `MaQrChuyenKhoanIntegrationTest` decodes the PNG and uses an invoice in Toà B with a distinct account, so it catches an accidental lookup of a different building account. It also covers paid-in-full 409 and the required QTHT/out-of-scope-manager 403 cases.
