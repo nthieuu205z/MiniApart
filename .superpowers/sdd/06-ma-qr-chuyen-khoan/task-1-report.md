@@ -146,3 +146,82 @@ BUILD SUCCESSFUL in 1m 30s
 
 - The first-round dependency/implementation is in `b57650d` (`feat(billing): add transfer QR for invoices`); the amended fix-round implementation is in `e1fc7df` (`fix(billing): deliver invoice QR as signed VietQR`). The report is committed in the follow-up documentation commit named in the final handoff.
 - The approved amendment in `.scratch/slice-05-thanh-toan-cong-no/spec.md` was pre-existing user work and was intentionally left unstaged; no product or implementation concern remains.
+
+## Fix Round 2 — V28 data-safety correction (2026-09-06)
+
+### Implementation summary
+
+- Replaced surrogate `TOA_NHA.id` BIN inference with stable `ma_toa` mappings for only the two known seeded buildings: `TN-A → 970405` and `TN-B → 970422`.
+- Limited legacy account conversion to the two exact known seed values. Every other account keeps all of its digits while separators are removed, so a legitimate account beginning with `9704` remains intact.
+- Added a transactional fail-fast check before the required BIN contract is enforced. Any legacy building without an authoritative mapping aborts V28 and reports its business key; PostgreSQL rolls the migration back, so its account is not rewritten.
+- Added migration-level Testcontainers coverage that changes the seeded buildings' surrogate IDs, preserves an account legitimately beginning with `9704`, and verifies an unresolved non-seed building aborts without data/schema mutation.
+
+### TDD RED
+
+Command run with the new migration tests against the committed defective V28:
+
+```text
+cd backend && ./gradlew test --rerun-tasks --tests com.prj1.ccm.billing.MaQrChuyenKhoanMigrationTest
+```
+
+Relevant output:
+
+```text
+MaQrChuyenKhoanMigrationTest > FR_INV_10_v28PreservesLegitimateAccountBeginningWith9704() FAILED
+MaQrChuyenKhoanMigrationTest > FR_INV_10_v28FailsFastForUnresolvedNonSeedBuildingWithoutCorruptingItsAccount() FAILED
+MaQrChuyenKhoanMigrationTest > FR_INV_10_v28UsesStableBuildingBusinessKeysInsteadOfIdsForKnownSeeds() FAILED
+
+3 tests completed, 3 failed
+BUILD FAILED in 1m 21s
+4 actionable tasks: 4 executed
+```
+
+The failures directly reproduced all three unsafe behaviors: prefix removal, silent defaulting for an unknown building, and BIN selection tied to surrogate IDs.
+
+### Focused GREEN
+
+Command:
+
+```text
+cd backend && ./gradlew test --rerun-tasks --tests com.prj1.ccm.billing.MaQrChuyenKhoanMigrationTest
+```
+
+Output:
+
+```text
+BUILD SUCCESSFUL in 1m 20s
+4 actionable tasks: 4 executed
+```
+
+The focused class ran 3 migration tests with 0 failures, 0 errors, and 0 skipped tests.
+
+### Final verification
+
+Command:
+
+```text
+cd backend && ./gradlew test --rerun-tasks
+```
+
+Output:
+
+```text
+BUILD SUCCESSFUL in 3m 25s
+4 actionable tasks: 4 executed
+```
+
+JUnit XML summary:
+
+```text
+suites=51 tests=374 failures=0 errors=0 skipped=0
+```
+
+### Files changed
+
+- `backend/src/main/resources/db/migration/V28__viet_qr_bank_identifier.sql`
+- `backend/src/test/java/com/prj1/ccm/billing/MaQrChuyenKhoanMigrationTest.java`
+- `.superpowers/sdd/06-ma-qr-chuyen-khoan/task-1-report.md`
+
+### Concern
+
+- A deployment containing a legacy building whose `ma_toa` is not `TN-A` or `TN-B` will intentionally fail V28. An operator must add an authoritative business-key-to-BIN/account mapping before that deployment can migrate and issue QR codes; no fallback bank destination is inferred.
