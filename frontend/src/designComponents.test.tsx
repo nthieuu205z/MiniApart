@@ -150,6 +150,7 @@ describe('MiniApart design components', () => {
             consequence="Người dùng sẽ không đăng nhập được nữa."
             confirmLabel="Khoá tài khoản"
             onCancel={() => setOpen(false)}
+            tabIndex={0}
           />
         ) : null}
       </>
@@ -167,8 +168,11 @@ describe('MiniApart design components', () => {
 
     expect(labelledBy).toBeTruthy()
     expect(document.getElementById(labelledBy!)?.textContent).toBe('Khoá tài khoản Người quản lý?')
+    expect(dialog.tabIndex).toBe(0)
     expect(document.activeElement).toBe(confirm)
     expect(opener.hasAttribute('inert')).toBe(true)
+    expect(confirm.style.minHeight).toBe('44px')
+    expect(cancel.style.minHeight).toBe('44px')
 
     cancel.focus()
     await act(async () => cancel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })))

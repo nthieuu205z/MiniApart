@@ -14,7 +14,7 @@ export interface ConfirmDialogProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /** Hộp thoại xác nhận — chỉ dùng cho thao tác không đảo ngược được, và phải nêu hậu quả bằng con số. */
-export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 'Để sau', onConfirm, onCancel, style, 'aria-labelledby': ariaLabelledBy, ...rest }: ConfirmDialogProps): ReactElement {
+export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 'Để sau', onConfirm, onCancel, style, tabIndex = -1, 'aria-labelledby': ariaLabelledBy, ...rest }: ConfirmDialogProps): ReactElement {
   const dialogRef = useRef<HTMLDivElement>(null)
   const onCancelRef = useRef(onCancel)
   const titleId = useId()
@@ -93,7 +93,7 @@ export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 
       role="dialog"
       aria-modal="true"
       aria-labelledby={ariaLabelledBy ?? titleId}
-      tabIndex={-1}
+      tabIndex={tabIndex}
       style={{
         border: "1px solid var(--ma-ink-900)",
         background: "var(--ma-bg-card)",
