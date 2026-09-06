@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** done
+**Status:** ready-for-agent
 
 ## Vì sao làm sớm
 
@@ -52,3 +52,5 @@ Thêm phụ thuộc là **việc đầu tiên** của ticket này.
 
 - Added ZXing before production QR code. The endpoint renders a PNG at request time from the invoice building's account, the `BigDecimal` outstanding amount, and the invoice code; it does not add storage or a migration.
 - `MaQrChuyenKhoanIntegrationTest` decodes the PNG and uses an invoice in Toà B with a distinct account, so it catches an accidental lookup of a different building account. It also covers paid-in-full 409 and the required QTHT/out-of-scope-manager 403 cases.
+- Review gate reopened the ticket: the current `account=...&amount=...&content=...` payload is not a bank-scannable VietQR/EMVCo payload, and the current `TOA_NHA.tk_ngan_hang` field is free-form and lacks the BIN/acquirer identifier required by the official payment format. Resolve the data contract in the Matt planning layer before the fix round.
+- Review also requires QR image delivery through a 15-minute signed link under the project image-delivery convention; QR bytes must still be regenerated on demand and never persisted.
