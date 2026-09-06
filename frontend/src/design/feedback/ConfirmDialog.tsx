@@ -14,7 +14,7 @@ export interface ConfirmDialogProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /** Hộp thoại xác nhận — chỉ dùng cho thao tác không đảo ngược được, và phải nêu hậu quả bằng con số. */
-export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 'Để sau', onConfirm, onCancel, style, tabIndex = -1, 'aria-labelledby': ariaLabelledBy, ...rest }: ConfirmDialogProps): ReactElement {
+export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 'Để sau', onConfirm, onCancel, style, tabIndex = -1, role = 'dialog', 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy, 'aria-modal': ariaModal = true, ...rest }: ConfirmDialogProps): ReactElement {
   const dialogRef = useRef<HTMLDivElement>(null)
   const onCancelRef = useRef(onCancel)
   const titleId = useId()
@@ -42,9 +42,31 @@ export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 
 
     const focusableElements = () => [...activeDialog.querySelectorAll<HTMLElement>(
       'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    )].filter((element) => !element.hasAttribute('inert') && element.getAttribute('aria-hidden') !== 'true')
+    )].filter((element) => {
+      if (element.tabIndex < 0 || (element instanceof HTMLInputElement && element.type === 'hidden')) return false
+      for (let ancestor: HTMLElement | null = element; ancestor; ancestor = ancestor.parentElement) {
+        if (ancestor.hidden || ancestor.hasAttribute('inert') || ancestor.getAttribute('aria-hidden') === 'true') return false
+        const computedStyle = window.getComputedStyle(ancestor)
+        if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') return false
+      }
+      return true
+    })
 
-    focusableElements()[0]?.focus()
+    function focusElement(element?: HTMLElement) {
+      element?.focus()
+      if (document.activeElement !== element) activeDialog.focus()
+    }
+
+    function focusFirstElement() {
+      focusElement(focusableElements()[0])
+    }
+
+    function focusLastElement() {
+      const focusable = focusableElements()
+      focusElement(focusable[focusable.length - 1])
+    }
+
+    focusFirstElement()
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
@@ -57,7 +79,7 @@ export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 
       const focusable = focusableElements()
       if (focusable.length === 0) {
         event.preventDefault()
-        activeDialog.focus()
+        focusFirstElement()
         return
       }
 
@@ -65,15 +87,15 @@ export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 
       const last = focusable[focusable.length - 1]
       if (event.shiftKey && (document.activeElement === first || !activeDialog.contains(document.activeElement))) {
         event.preventDefault()
-        last.focus()
+        focusLastElement()
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault()
-        first.focus()
+        focusFirstElement()
       }
     }
 
     function handleFocusIn(event: FocusEvent) {
-      if (!activeDialog.contains(event.target as Node)) focusableElements()[0]?.focus()
+      if (!activeDialog.contains(event.target as Node)) focusFirstElement()
     }
 
     document.addEventListener('keydown', handleKeyDown)
@@ -90,9 +112,10 @@ export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 
     <div
       {...rest}
       ref={dialogRef}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={ariaLabelledBy ?? titleId}
+      role={role}
+      aria-modal={ariaModal}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy ?? (ariaLabel !== undefined ? undefined : titleId)}
       tabIndex={tabIndex}
       style={{
         border: "1px solid var(--ma-ink-900)",

@@ -139,7 +139,26 @@ describe('MiniApart design components', () => {
     expect(container.querySelector('dd')?.style.fontWeight).toBe('800')
   })
 
-  it('keeps an open confirmation modal named, focused, and isolated from the background', async () => {
+  it('FR-AUT-06 preserves caller-provided confirmation dialog semantics', async () => {
+    await act(async () => {
+      root.render(
+        <ConfirmDialog
+          title="Khoá tài khoản Người quản lý?"
+          consequence="Người dùng sẽ không đăng nhập được nữa."
+          confirmLabel="Khoá tài khoản"
+          role="alertdialog"
+          aria-label="Xác nhận khoá tài khoản"
+        />,
+      )
+    })
+
+    const dialog = container.querySelector('[role]') as HTMLElement
+    expect(dialog.getAttribute('role')).toBe('alertdialog')
+    expect(dialog.getAttribute('aria-label')).toBe('Xác nhận khoá tài khoản')
+    expect(dialog.getAttribute('aria-labelledby')).toBeNull()
+  })
+
+  it('FR-AUT-06 keeps an open confirmation modal named, focused, and isolated from the background', async () => {
     function Harness() {
       const [open, setOpen] = useState(false)
       return <>
@@ -147,7 +166,12 @@ describe('MiniApart design components', () => {
         {open ? (
           <ConfirmDialog
             title="Khoá tài khoản Người quản lý?"
-            consequence="Người dùng sẽ không đăng nhập được nữa."
+            consequence={<>
+              <input type="hidden" aria-label="Không thể nhận focus" />
+              <div hidden><button type="button">Nút ẩn</button></div>
+              <div inert><button type="button">Nút không hoạt động</button></div>
+              Người dùng sẽ không đăng nhập được nữa.
+            </>}
             confirmLabel="Khoá tài khoản"
             onCancel={() => setOpen(false)}
             tabIndex={0}
@@ -164,8 +188,8 @@ describe('MiniApart design components', () => {
     const dialog = container.querySelector('[role="dialog"]') as HTMLElement
     const confirm = [...dialog.querySelectorAll('button')].find((item) => item.textContent === 'Khoá tài khoản') as HTMLButtonElement
     const cancel = [...dialog.querySelectorAll('button')].find((item) => item.textContent === 'Để sau') as HTMLButtonElement
-    const labelledBy = dialog.getAttribute('aria-labelledby')
 
+    const labelledBy = dialog.getAttribute('aria-labelledby')
     expect(labelledBy).toBeTruthy()
     expect(document.getElementById(labelledBy!)?.textContent).toBe('Khoá tài khoản Người quản lý?')
     expect(dialog.tabIndex).toBe(0)
