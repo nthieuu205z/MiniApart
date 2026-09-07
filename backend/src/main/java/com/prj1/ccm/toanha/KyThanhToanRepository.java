@@ -108,6 +108,10 @@ public class KyThanhToanRepository {
         return dem != null && dem > 0;
     }
 
+    public Optional<KyThanhToan> findDangMoByToaNhaId(Long toaNhaId) {
+        return findByToaNhaId(toaNhaId).stream().filter(ky -> ky.trangThai() == TrangThaiKy.DANG_MO).findFirst();
+    }
+
     public int updateTrangThaiDaChot(Long kyId, Long toaNhaId) {
         return jdbcTemplate.update(
                 """

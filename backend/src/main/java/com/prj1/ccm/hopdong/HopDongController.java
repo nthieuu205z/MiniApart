@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.JsonNode;
+import com.prj1.ccm.billing.ThanhToanService;
+import com.prj1.ccm.billing.ThongTinThanhToan;
+import com.prj1.ccm.billing.YeuCauThanhToan;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -40,9 +43,11 @@ public class HopDongController {
     private static final Set<String> KHOA_GIA_HAN_HOP_LE = Set.of("ngayKetThuc", "giaThue");
 
     private final HopDongService hopDongService;
+    private final ThanhToanService thanhToanService;
 
-    public HopDongController(HopDongService hopDongService) {
+    public HopDongController(HopDongService hopDongService, ThanhToanService thanhToanService) {
         this.hopDongService = hopDongService;
+        this.thanhToanService = thanhToanService;
     }
 
     /**
@@ -114,15 +119,23 @@ public class HopDongController {
     }
 
     /**
-     * FR-TNT-04 and CR-012 settle one contract through a dedicated action endpoint.
+     * FR-TNT-08, FR-TNT-09 and BR-07 settle one contract after final billing and deposit reconciliation.
      *
      * @param hopDongId the contract identifier
      * @param request the current HTTP request carrying the authenticated user attribute
      * @return the updated contract
      */
     @PostMapping("/{hopDongId}/thanh-ly")
-    public ThongTinHopDong thanhLy(@PathVariable Long hopDongId, HttpServletRequest request) {
-        return hopDongService.thanhLy(hopDongId, nguoiDungHienTai(request));
+    public ThongTinHopDong thanhLy(@PathVariable Long hopDongId, @RequestBody(required = false) YeuCauThanhLy yeuCau, HttpServletRequest request) {
+        return hopDongService.thanhLy(hopDongId, yeuCau, nguoiDungHienTai(request));
+    }
+
+    /** FR-TNT-08 pays a null-period settlement invoice through the Ticket 02 payment service. */
+    @PostMapping("/{hopDongId}/hoa-don-quyet-toan/{hoaDonId}/thanh-toan")
+    public ResponseEntity<ThongTinThanhToan> thanhToanHoaDonQuyetToan(@PathVariable Long hopDongId, @PathVariable Long hoaDonId,
+                                                                       @RequestBody YeuCauThanhToan yeuCau, HttpServletRequest request) {
+        ThongTinThanhToan ketQua = thanhToanService.ghiNhanHoaDonQuyetToan(hopDongId, hoaDonId, yeuCau, nguoiDungHienTai(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ketQua);
     }
 
     /**

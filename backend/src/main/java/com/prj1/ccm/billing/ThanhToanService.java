@@ -139,6 +139,13 @@ public class ThanhToanService {
         );
     }
 
+    /** FR-TNT-08 records a settlement-invoice payment with the existing immutable payment ledger. */
+    @Transactional
+    public ThongTinThanhToan ghiNhanHoaDonQuyetToan(Long hopDongId, Long hoaDonId, YeuCauThanhToan yeuCau, NguoiDung nguoiDung) {
+        Long toaNhaId = thanhToanRepository.timToaNhaCuaHoaDonQuyetToan(hopDongId, hoaDonId);
+        return ghiNhan(toaNhaId, null, hoaDonId, yeuCau, nguoiDung);
+    }
+
     /** FR-INV-14, CR-010, and BR-18 create an immutable negative counter-entry. */
     @Transactional
     public ThongTinThanhToan ghiNhanDoiUng(Long thanhToanId, YeuCauDoiUng yeuCau, NguoiDung nguoiDung) {

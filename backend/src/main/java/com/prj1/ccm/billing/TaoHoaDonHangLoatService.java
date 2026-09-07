@@ -19,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -76,6 +77,29 @@ public class TaoHoaDonHangLoatService {
                 demPhongBoQua(cacLyDoBoQua),
                 cacLyDoBoQua
         );
+    }
+
+    /** FR-TNT-08 creates and publishes the final ordinary-period invoice before deposit settlement. */
+    @Transactional
+    public Long taoHoaDonKyCuoi(Long toaNhaId, Long hopDongId, NguoiDung nguoiDung) {
+        ToaNha toaNha = kiemTraQuyen(toaNhaId, nguoiDung);
+        KyThanhToan ky = kyThanhToanRepository.findDangMoByToaNhaId(toaNhaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Không có kỳ thanh toán đang mở để chốt hoá đơn cuối."));
+        TinhHoaDonRepository.HopDongTrongKy hopDong = tinhHoaDonRepository
+                .layHopDongHieuLucTrongKy(toaNhaId, ky.ngayBatDau(), ky.ngayKetThuc()).stream()
+                .filter(item -> item.hopDongId().equals(hopDongId)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Hợp đồng không thuộc kỳ thanh toán đang mở."));
+        DuLieuTinhHoaDon duLieu = tinhHoaDonRepository.layDuLieuTinhHoaDonDeTaoHoaDon(toaNhaId, ky.id(), hopDongId);
+        if (!duLieu.coTheTinh()) throw new ResponseStatusException(HttpStatus.CONFLICT, "Không đủ dữ liệu để tính hoá đơn kỳ cuối.");
+        KetQuaTinhHoaDon ketQua = tinhHoaDonService.tinh(toaNhaId, duLieu.boiCanh());
+        if (!ketQua.thanhCong()) throw new ResponseStatusException(HttpStatus.CONFLICT, "Không thể tính hoá đơn kỳ cuối.");
+        Long hoaDonId = tinhHoaDonRepository.taoHoaDon(taoHoaDonMoi(toaNha, ky, hopDong, ketQua), ketQua);
+        tinhHoaDonRepository.danhDauKhoanPhatSinhDaTinh(duLieu.boiCanh().khoanChoTinh().stream().map(KhoanPhatSinh::id).toList(), hoaDonId);
+        tinhHoaDonRepository.danhDauSoDuDaSuDung(hopDongId, hoaDonId, ketQua);
+        if (tinhHoaDonRepository.phatHanhHoaDonNeuDangNhapVaTongTienKhacKhong(hoaDonId) != 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Hoá đơn kỳ cuối phải có tổng tiền lớn hơn 0.");
+        }
+        return hoaDonId;
     }
 
     private ToaNha kiemTraQuyen(Long toaNhaId, NguoiDung nguoiDung) {

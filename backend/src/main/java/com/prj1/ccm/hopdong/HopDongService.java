@@ -4,6 +4,7 @@ import com.prj1.ccm.nguoidung.NguoiDung;
 import com.prj1.ccm.nguoidung.VaiTro;
 import com.prj1.ccm.nguoithue.NguoiThue;
 import com.prj1.ccm.nguoithue.NguoiThueRepository;
+import com.prj1.ccm.nguoithue.NhatKyThaoTacRepository;
 import com.prj1.ccm.toanha.BangGia;
 import com.prj1.ccm.toanha.BangGiaRepository;
 import com.prj1.ccm.toanha.DichVu;
@@ -12,9 +13,13 @@ import com.prj1.ccm.toanha.PhanQuyenToaService;
 import com.prj1.ccm.toanha.Phong;
 import com.prj1.ccm.toanha.PhongRepository;
 import com.prj1.ccm.toanha.TrangThaiPhongService;
+import com.prj1.ccm.toanha.ToaNha;
+import com.prj1.ccm.billing.GiaoDichCocService;
+import com.prj1.ccm.billing.TaoHoaDonHangLoatService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -50,8 +55,12 @@ public class HopDongService {
     private final NguoiOCungRepository nguoiOCungRepository;
     private final PhanQuyenToaService phanQuyenToaService;
     private final TrangThaiPhongService trangThaiPhongService;
+    private final TaoHoaDonHangLoatService taoHoaDonHangLoatService;
+    private final GiaoDichCocService giaoDichCocService;
+    private final NhatKyThaoTacRepository nhatKyThaoTacRepository;
     private final Clock clock;
 
+    @Autowired
     public HopDongService(
             HopDongRepository hopDongRepository,
             PhongRepository phongRepository,
@@ -60,7 +69,8 @@ public class HopDongService {
             BangGiaRepository bangGiaRepository,
             NguoiOCungRepository nguoiOCungRepository,
             PhanQuyenToaService phanQuyenToaService,
-            TrangThaiPhongService trangThaiPhongService,
+            TrangThaiPhongService trangThaiPhongService, TaoHoaDonHangLoatService taoHoaDonHangLoatService,
+            GiaoDichCocService giaoDichCocService, NhatKyThaoTacRepository nhatKyThaoTacRepository,
             Clock clock
     ) {
         this.hopDongRepository = hopDongRepository;
@@ -71,7 +81,17 @@ public class HopDongService {
         this.nguoiOCungRepository = nguoiOCungRepository;
         this.phanQuyenToaService = phanQuyenToaService;
         this.trangThaiPhongService = trangThaiPhongService;
+        this.taoHoaDonHangLoatService = taoHoaDonHangLoatService;
+        this.giaoDichCocService = giaoDichCocService;
+        this.nhatKyThaoTacRepository = nhatKyThaoTacRepository;
         this.clock = clock;
+    }
+
+    HopDongService(HopDongRepository hopDongRepository, PhongRepository phongRepository, NguoiThueRepository nguoiThueRepository,
+                   DichVuRepository dichVuRepository, BangGiaRepository bangGiaRepository, NguoiOCungRepository nguoiOCungRepository,
+                   PhanQuyenToaService phanQuyenToaService, TrangThaiPhongService trangThaiPhongService, Clock clock) {
+        this(hopDongRepository, phongRepository, nguoiThueRepository, dichVuRepository, bangGiaRepository, nguoiOCungRepository,
+                phanQuyenToaService, trangThaiPhongService, null, null, null, clock);
     }
 
     @Transactional
@@ -125,6 +145,12 @@ public class HopDongService {
 
     @Transactional
     public ThongTinHopDong thanhLy(Long hopDongId, NguoiDung nguoiDung) {
+        return thanhLy(hopDongId, new YeuCauThanhLy(null, null), nguoiDung);
+    }
+
+    /** FR-TNT-08, FR-TNT-09 and BR-07 settle final billing before changing the contract status. */
+    @Transactional
+    public ThongTinHopDong thanhLy(Long hopDongId, YeuCauThanhLy yeuCau, NguoiDung nguoiDung) {
         kiemTraVaiTro(nguoiDung);
         HopDongRepository.HopDongView hopDongView = layHopDongTrongPhamVi(hopDongId, nguoiDung);
         TrangThaiHopDong trangThaiHienTai = hopDongView.hopDong().trangThai();
@@ -133,7 +159,11 @@ public class HopDongService {
                 && trangThaiHienTai != TrangThaiHopDong.HIEU_LUC) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_CHUYEN_TRANG_THAI);
         }
+        ToaNha toaNha = phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, hopDongView.toaNhaId());
+        taoHoaDonHangLoatService.taoHoaDonKyCuoi(toaNha.id(), hopDongId, nguoiDung);
+        giaoDichCocService.quyetToan(hopDongId, yeuCau == null ? null : yeuCau.khauTruHuHong(), yeuCau == null ? null : yeuCau.lyDo(), toaNha.maToa(), toaNha.soNgayHanTt(), nguoiDung);
         hopDongRepository.updateTrangThai(hopDongId, TrangThaiHopDong.DA_THANH_LY);
+        nhatKyThaoTacRepository.ghi(nguoiDung.id(), "THANH_LY_HOP_DONG", "HOP_DONG:" + hopDongId, trangThaiHienTai.name(), TrangThaiHopDong.DA_THANH_LY.name());
         trangThaiPhongService.dongBoTheoPhongId(hopDongView.hopDong().phongId());
         return chiTiet(hopDongId, nguoiDung);
     }

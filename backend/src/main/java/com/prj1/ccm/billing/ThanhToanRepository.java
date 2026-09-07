@@ -30,9 +30,9 @@ class ThanhToanRepository {
                 JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
                 JOIN PHONG p ON p.id = hop_dong.phong_id
                 WHERE hd.id = ?
-                  AND hd.ky_id = ?
                   AND p.toa_nha_id = ?
                 """;
+        sql = sql.replace("WHERE hd.id = ?", "WHERE hd.id = ?" + (kyId == null ? " AND hd.ky_id IS NULL" : " AND hd.ky_id = ?"));
         if (khoa) {
             sql += " FOR UPDATE";
         }
@@ -45,12 +45,19 @@ class ThanhToanRepository {
                                 TrangThaiHoaDon.valueOf(resultSet.getString("trang_thai")),
                                 resultSet.getObject("han_thanh_toan", LocalDate.class)
                         ),
-                        hoaDonId,
-                        kyId,
-                        toaNhaId
+                        kyId == null ? new Object[] {hoaDonId, toaNhaId} : new Object[] {hoaDonId, kyId, toaNhaId}
                 )
                 .stream()
                 .findFirst();
+    }
+
+    Long timToaNhaCuaHoaDonQuyetToan(Long hopDongId, Long hoaDonId) {
+        return jdbcTemplate.queryForObject("SELECT p.toa_nha_id FROM HOA_DON hd JOIN HOP_DONG h ON h.id = hd.hop_dong_id JOIN PHONG p ON p.id = h.phong_id WHERE hd.id = ? AND hd.hop_dong_id = ? AND hd.ky_id IS NULL", Long.class, hoaDonId, hopDongId);
+    }
+
+    Optional<HoaDonThanhToan> timHoaDonQuyetToan(Long hopDongId, Long hoaDonId, boolean khoa) {
+        String sql = "SELECT id, hop_dong_id, tong_tien, trang_thai, han_thanh_toan FROM HOA_DON WHERE id = ? AND hop_dong_id = ? AND ky_id IS NULL" + (khoa ? " FOR UPDATE" : "");
+        return jdbcTemplate.query(sql, (rs, row) -> new HoaDonThanhToan(rs.getLong("id"), rs.getLong("hop_dong_id"), rs.getBigDecimal("tong_tien"), TrangThaiHoaDon.valueOf(rs.getString("trang_thai")), rs.getObject("han_thanh_toan", LocalDate.class)), hoaDonId, hopDongId).stream().findFirst();
     }
 
     Optional<ThanhToanCanDoiUng> timThanhToanCanDoiUng(Long thanhToanId, boolean khoaHoaDon) {
