@@ -303,6 +303,29 @@ class ThanhLyHopDongIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void FR_TNT_08_rejectsSettlementInvoiceBelongingToAnotherContractWithoutLedgerMutation() throws Exception {
+        Long phongCungToaId = themPhong(1L, "903");
+        Long nguoiThueCungToaId = themNguoiThue("0909030003", "0799030003");
+        Long hopDongCungToaId = themHopDong(phongCungToaId, nguoiThueCungToaId, null, "HIEU_LUC", "10000000.00");
+        Long hoaDonQuyetToanId = jdbcTemplate.queryForObject(
+                "INSERT INTO HOA_DON(ma_hoa_don, ky_id, hop_dong_id, ngay_phat_hanh, han_thanh_toan, tong_tien, da_thu, trang_thai) VALUES ('QT-BIND', NULL, ?, DATE '2026-09-01', DATE '2040-09-01', 100.00, 0.00, 'DA_PHAT_HANH') RETURNING id",
+                Long.class,
+                hopDongId
+        );
+
+        mockMvc.perform(post("/api/hop-dong/" + hopDongCungToaId + "/hoa-don-quyet-toan/" + hoaDonQuyetToanId + "/thanh-toan")
+                        .header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"soTien\":\"100.00\",\"hinhThuc\":\"TIEN_MAT\",\"ngayThu\":\"2026-09-07\"}"))
+                .andExpect(status().isNotFound());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM THANH_TOAN WHERE hoa_don_id = ?", Integer.class, hoaDonQuyetToanId))
+                .isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT da_thu FROM HOA_DON WHERE id = ?", BigDecimal.class, hoaDonQuyetToanId))
+                .isEqualByComparingTo("0.00");
+    }
+
     private void thuCoc(Long id, String soTien) {
         jdbcTemplate.update("INSERT INTO GIAO_DICH_COC(hop_dong_id, loai, so_tien, ngay, nguoi_thu_id) VALUES (?, 'THU_COC', ?, DATE '2026-09-01', 3)", id, new BigDecimal(soTien));
     }

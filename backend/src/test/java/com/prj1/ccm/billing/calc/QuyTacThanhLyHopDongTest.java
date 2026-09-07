@@ -27,6 +27,21 @@ class QuyTacThanhLyHopDongTest {
     }
 
     @Test
+    void FR_TNT_08_BR_06_countsMidPeriodMoveInDayUntilContractEndExclusive() {
+        HopDong hopDong = new HopDong(
+                1L, 1L, 1L,
+                LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 20),
+                BillingCalcTestFixtures.tien("3000000.00"), BillingCalcTestFixtures.tien("0.00")
+        );
+        KyThanhToan ky = new KyThanhToan(
+                1L, 1L, 2026, 9, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30)
+        );
+
+        assertThat(new QuyTacThanhLyHopDong().soNgayODeTinhHoaDonCuoi(hopDong, ky, LocalDate.of(2026, 9, 25)))
+                .isEqualTo(10);
+    }
+
+    @Test
     void FR_TNT_09_BR_07_calculatesRefundFromCollectedDepositDebtAndDeduction() {
         QuyTacThanhLyHopDong ketQua = new QuyTacThanhLyHopDong();
 

@@ -148,6 +148,8 @@ public class ThanhToanService {
         Long toaNhaId = thanhToanRepository.timToaNhaCuaHopDong(hopDongId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
+        thanhToanRepository.timHoaDonQuyetToan(hopDongId, hoaDonId, true)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         return ghiNhan(toaNhaId, null, hoaDonId, yeuCau, nguoiDung);
     }
 
