@@ -29,6 +29,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -42,6 +43,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -167,6 +169,33 @@ class MaQrChuyenKhoanIntegrationTest {
     }
 
     @Test
+    void FR_INV_10_preservesAccentedInvoiceCodeExactlyThroughUtf8TlvAndQrRendering() throws Exception {
+        String accentedInvoiceCode = "HĐ-TN-B-201-202608";
+        jdbcTemplate.update("UPDATE HOA_DON SET ma_hoa_don = ? WHERE id = ?", accentedInvoiceCode, hoaDonId);
+
+        String link = requestQrLink(3L, "0900000003");
+        MvcResult image = mockMvc.perform(get(link))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Map<String, String> fields = decodeVietQr(decodeQr(image.getResponse().getContentAsByteArray()));
+        assertThat(fields.get("content")).isEqualTo(accentedInvoiceCode);
+    }
+
+    @Test
+    void FR_INV_10_disablesCachingForSignedLinkIssuanceAndDynamicImageResponses() throws Exception {
+        MvcResult issuance = mockMvc.perform(get(qrIssueUrl())
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andReturn();
+
+        mockMvc.perform(get(linkFrom(issuance)))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store"));
+    }
+
+    @Test
     void FR_INV_10_signedImageRegeneratesPayloadFromCurrentOutstandingAmountWithoutStorage() throws Exception {
         String link = requestQrLink(3L, "0900000003");
         jdbcTemplate.update("UPDATE HOA_DON SET da_thu = 1500000.00 WHERE id = ?", hoaDonId);
@@ -280,12 +309,12 @@ class MaQrChuyenKhoanIntegrationTest {
                 .isEqualTo(crc16Ccitt(payload.substring(0, payload.length() - 4)));
 
         Map<String, String> fields = new HashMap<>();
-        String merchantAccount = tlvValue(payload.substring(6, payload.length() - 8), "38");
+        String merchantAccount = tlvValue(payload, "38");
         assertThat(tlvValue(merchantAccount, "00")).isEqualTo("A000000727");
         String beneficiary = tlvValue(merchantAccount, "01");
         fields.put("bin", tlvValue(beneficiary, "00"));
         fields.put("account", tlvValue(beneficiary, "01"));
-        assertThat(tlvValue(beneficiary, "02")).isEqualTo("QRIBFTTA");
+        assertThat(tlvValue(merchantAccount, "02")).isEqualTo("QRIBFTTA");
         assertThat(tlvValue(payload, "53")).isEqualTo("704");
         assertThat(tlvValue(payload, "58")).isEqualTo("VN");
         fields.put("amount", tlvValue(payload, "54"));
@@ -295,7 +324,7 @@ class MaQrChuyenKhoanIntegrationTest {
 
     private String crc16Ccitt(String value) {
         int crc = 0xFFFF;
-        for (byte current : value.getBytes(java.nio.charset.StandardCharsets.US_ASCII)) {
+        for (byte current : value.getBytes(StandardCharsets.UTF_8)) {
             crc ^= (current & 0xFF) << 8;
             for (int bit = 0; bit < 8; bit++) {
                 crc = (crc & 0x8000) != 0 ? (crc << 1) ^ 0x1021 : crc << 1;
@@ -306,17 +335,20 @@ class MaQrChuyenKhoanIntegrationTest {
     }
 
     private String tlvValue(String payload, String wantedTag) {
+        return new String(tlvValue(payload.getBytes(StandardCharsets.UTF_8), wantedTag), StandardCharsets.UTF_8);
+    }
+
+    private byte[] tlvValue(byte[] payload, String wantedTag) {
         int offset = 0;
-        while (offset < payload.length()) {
-            String tag = payload.substring(offset, offset + 2);
-            int length = Integer.parseInt(payload.substring(offset + 2, offset + 4));
-            String value = payload.substring(offset + 4, offset + 4 + length);
+        while (offset < payload.length) {
+            String tag = new String(payload, offset, 2, StandardCharsets.US_ASCII);
+            int length = Integer.parseInt(new String(payload, offset + 2, 2, StandardCharsets.US_ASCII));
             if (tag.equals(wantedTag)) {
-                return value;
+                return java.util.Arrays.copyOfRange(payload, offset + 4, offset + 4 + length);
             }
             offset += 4 + length;
         }
-        throw new AssertionError("Missing TLV tag " + wantedTag + " in " + payload);
+        throw new AssertionError("Missing TLV tag " + wantedTag + " in " + new String(payload, StandardCharsets.UTF_8));
     }
 
     private String login(Long nguoiDungId, String soDienThoai) throws Exception {

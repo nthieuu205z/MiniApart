@@ -225,3 +225,75 @@ suites=51 tests=374 failures=0 errors=0 skipped=0
 ### Concern
 
 - A deployment containing a legacy building whose `ma_toa` is not `TN-A` or `TN-B` will intentionally fail V28. An operator must add an authoritative business-key-to-BIN/account mapping before that deployment can migrate and issue QR codes; no fallback bank destination is inferred.
+
+## Final review fix wave (2026-09-07)
+
+### Implementation summary
+
+- Corrected the VietQR merchant-account hierarchy to `38/00=A000000727`,
+  `38/01` as the beneficiary block (`01/00` BIN, `01/01` account), and
+  `38/02=QRIBFTTA`; the integration decoder now parses byte lengths
+  independently, and `VietQrPayloadBuilderTest` checks a hand-derived golden
+  payload literal.
+- Synchronized the existing building form and TypeScript API contracts with
+  required `maNganHang`: the value is hydrated, displayed, browser-validated
+  as a six-digit BIN, and serialized by the actual create and update requests.
+- Made TLV sizing, CRC16 input, QR rendering, and integration decoding UTF-8
+  aware; the integration test round-trips the exact accented invoice code
+  `HĐ-TN-B-201-202608` through the PNG.
+- Added `Cache-Control: no-store` to both signed-link issuance and signed QR
+  image responses, with integration assertions for both endpoints.
+- `V28__viet_qr_bank_identifier.sql` was not changed. The separately approved
+  unstaged `.scratch/slice-05-thanh-toan-cong-no/spec.md` remains untouched.
+
+### Focused tests
+
+```text
+cd backend && ./gradlew test --rerun-tasks --tests com.prj1.ccm.billing.VietQrPayloadBuilderTest --tests com.prj1.ccm.billing.MaQrChuyenKhoanIntegrationTest
+BUILD SUCCESSFUL in 10s
+4 actionable tasks: 4 executed
+```
+
+The two selected backend classes reported 8 tests, 0 failures, 0 errors, and
+0 skipped tests.
+
+```text
+cd frontend && npm test -- --run src/DanhMucToaNha.test.tsx src/App.test.tsx src/DanhMucPhong.test.tsx src/QuanLyTaiKhoan.test.tsx src/api.test.ts
+Test Files  5 passed (5)
+Tests  63 passed (63)
+Duration  2.08s
+```
+
+### Final verification
+
+```text
+cd frontend && npm test -- --run
+Test Files  16 passed (16)
+Tests  112 passed (112)
+Duration  3.44s
+
+cd frontend && npm run build
+✓ 46 modules transformed.
+✓ built in 94ms
+
+cd backend && ./gradlew test --rerun-tasks
+BUILD SUCCESSFUL in 1m 48s
+4 actionable tasks: 4 executed
+```
+
+The backend JUnit XML results contain `suites=52 tests=377 failures=0
+errors=0 skipped=0`. `git diff --check` is clean.
+
+### Files changed
+
+- `backend/src/main/java/com/prj1/ccm/billing/{HoaDonController,MaQrChuyenKhoanService,VietQrPayloadBuilder}.java`
+- `backend/src/test/java/com/prj1/ccm/billing/{MaQrChuyenKhoanIntegrationTest,VietQrPayloadBuilderTest}.java`
+- `frontend/src/{api.ts,DanhMucToaNha.tsx}` and the existing affected frontend
+  fixtures/tests
+- This report file
+
+### Concern
+
+- None for this fix wave. The existing V28 unresolved-legacy-building
+  fail-fast behavior remains the intentional migration safeguard recorded
+  above.

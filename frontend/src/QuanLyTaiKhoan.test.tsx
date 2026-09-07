@@ -10,8 +10,8 @@ declare global {
 }
 
 const buildings = [
-  { id: 1, maToa: 'A', ten: 'Toà A', diaChi: '', soTang: 5, ngayChotSo: 25, soNgayHanTt: 7, tkNganHang: '', nguongThatThoat: '20.00', batBuocAnhCongTo: false },
-  { id: 2, maToa: 'B', ten: 'Toà B', diaChi: '', soTang: 5, ngayChotSo: 25, soNgayHanTt: 7, tkNganHang: '', nguongThatThoat: '20.00', batBuocAnhCongTo: false },
+  { id: 1, maToa: 'A', ten: 'Toà A', diaChi: '', soTang: 5, ngayChotSo: 25, soNgayHanTt: 7, maNganHang: '970405', tkNganHang: '000000000101', nguongThatThoat: '20.00', batBuocAnhCongTo: false },
+  { id: 2, maToa: 'B', ten: 'Toà B', diaChi: '', soTang: 5, ngayChotSo: 25, soNgayHanTt: 7, maNganHang: '970422', tkNganHang: '000000000202', nguongThatThoat: '20.00', batBuocAnhCongTo: false },
 ]
 const roles = [
   { vaiTro: 'QTHT', tenVaiTro: 'Quản trị hệ thống' },

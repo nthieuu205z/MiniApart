@@ -19,6 +19,7 @@ type Form = {
   soTang: string;
   ngayChotSo: string;
   soNgayHanTt: string;
+  maNganHang: string;
   tkNganHang: string;
   nguongThatThoat: string;
   batBuocAnhCongTo: boolean;
@@ -74,6 +75,7 @@ export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) 
             soTang: String(x.soTang),
             ngayChotSo: String(x.ngayChotSo),
             soNgayHanTt: String(x.soNgayHanTt),
+            maNganHang: x.maNganHang,
             tkNganHang: x.tkNganHang,
             nguongThatThoat: x.nguongThatThoat,
             batBuocAnhCongTo: x.batBuocAnhCongTo,
@@ -86,6 +88,7 @@ export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) 
             soTang: "1",
             ngayChotSo: "28",
             soNgayHanTt: "7",
+            maNganHang: "",
             tkNganHang: "",
             nguongThatThoat: "0.00",
             batBuocAnhCongTo: false,
@@ -273,8 +276,8 @@ export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) 
                 Mã toà {toa.maToa} · {toa.diaChi}
               </p>
               <p>
-                Hạn thanh toán {toa.soNgayHanTt} ngày · Tài khoản nhận tiền{" "}
-                {toa.tkNganHang}
+                Hạn thanh toán {toa.soNgayHanTt} ngày · BIN {toa.maNganHang} ·{" "}
+                Tài khoản nhận tiền {toa.tkNganHang}
               </p>
             </section>
           ) : (
@@ -374,10 +377,27 @@ export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) 
                   />
                 </Field>
               </div>
+              <Field label="BIN ngân hàng">
+                <input
+                  required
+                  name="maNganHang"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  title="BIN ngân hàng phải gồm đúng 6 chữ số"
+                  value={form.maNganHang}
+                  onChange={(e) => update("maNganHang", e.target.value)}
+                  style={input}
+                />
+              </Field>
               <Field label="Tài khoản ngân hàng nhận tiền">
                 <input
                   required
                   name="tkNganHang"
+                  inputMode="numeric"
+                  pattern="[0-9]{1,19}"
+                  maxLength={19}
+                  title="Số tài khoản phải gồm từ 1 đến 19 chữ số"
                   value={form.tkNganHang}
                   onChange={(e) => update("tkNganHang", e.target.value)}
                   style={input}
@@ -433,6 +453,7 @@ function payload(f: Form): YeuCauToaNha {
     soTang: Number(f.soTang),
     ngayChotSo: Number(f.ngayChotSo),
     soNgayHanTt: Number(f.soNgayHanTt),
+    maNganHang: f.maNganHang,
     tkNganHang: f.tkNganHang,
     nguongThatThoat: f.nguongThatThoat,
     batBuocAnhCongTo: f.batBuocAnhCongTo,

@@ -12,8 +12,10 @@ final class VietQrPayloadBuilder {
     }
 
     static String tao(String maNganHang, String taiKhoanNganHang, BigDecimal soTien, String maHoaDon) {
-        String thongTinTaiKhoan = tlv("00", maNganHang) + tlv("01", taiKhoanNganHang) + tlv("02", MA_DICH_VU_CHUYEN_KHOAN);
-        String thongTinTaiKhoanThuHuong = tlv("00", GUID_VIET_QR) + tlv("01", thongTinTaiKhoan);
+        String thongTinTaiKhoan = tlv("00", maNganHang) + tlv("01", taiKhoanNganHang);
+        String thongTinTaiKhoanThuHuong = tlv("00", GUID_VIET_QR)
+                + tlv("01", thongTinTaiKhoan)
+                + tlv("02", MA_DICH_VU_CHUYEN_KHOAN);
         String thongTinThem = tlv("08", maHoaDon);
         String payloadKhongCrc = tlv("00", "01")
                 + tlv("01", "12")
@@ -33,7 +35,7 @@ final class VietQrPayloadBuilder {
 
     private static String crc16Ccitt(String value) {
         int crc = 0xFFFF;
-        for (byte current : value.getBytes(StandardCharsets.US_ASCII)) {
+        for (byte current : value.getBytes(StandardCharsets.UTF_8)) {
             crc ^= (current & 0xFF) << 8;
             for (int bit = 0; bit < 8; bit++) {
                 crc = (crc & 0x8000) != 0 ? (crc << 1) ^ 0x1021 : crc << 1;

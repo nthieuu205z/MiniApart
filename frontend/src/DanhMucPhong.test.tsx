@@ -10,7 +10,7 @@ declare global { var IS_REACT_ACT_ENVIRONMENT: boolean | undefined }
 let container: HTMLDivElement
 let root: Root
 
-const toaA = { id: 1, maToa: 'A', ten: 'Toà A', diaChi: '1 Đường A', soTang: 3, ngayChotSo: 28, soNgayHanTt: 7, tkNganHang: '0123', nguongThatThoat: '1.25', batBuocAnhCongTo: false }
+const toaA = { id: 1, maToa: 'A', ten: 'Toà A', diaChi: '1 Đường A', soTang: 3, ngayChotSo: 28, soNgayHanTt: 7, maNganHang: '970405', tkNganHang: '0123', nguongThatThoat: '1.25', batBuocAnhCongTo: false }
 const toaB = { ...toaA, id: 2, maToa: 'B', ten: 'Toà B' }
 const phong101 = { id: 11, toaNhaId: 1, soPhong: '101', tang: 1, dienTich: '20.00', sucChua: 2, giaThueMacDinh: '2500000.00', loaiPhong: 'Studio', trangThai: 'DANG_THUE', tenTrangThai: 'Đang thuê' }
 const phong201 = { ...phong101, id: 12, soPhong: '201', tang: 2, trangThai: 'TRONG', tenTrangThai: 'Trống' }

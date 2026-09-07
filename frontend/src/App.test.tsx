@@ -378,6 +378,7 @@ describe('App role navigation', () => {
       setInputValue(createForm.querySelector('input[name="soTang"]') as HTMLInputElement, '3')
       setInputValue(createForm.querySelector('input[name="ngayChotSo"]') as HTMLInputElement, '28')
       setInputValue(createForm.querySelector('input[name="soNgayHanTt"]') as HTMLInputElement, '5')
+      setInputValue(createForm.querySelector('input[name="maNganHang"]') as HTMLInputElement, '970436')
       setInputValue(createForm.querySelector('input[name="tkNganHang"]') as HTMLInputElement, '0123456789')
       setInputValue(createForm.querySelector('input[name="nguongThatThoat"]') as HTMLInputElement, '12.35')
     })
@@ -405,6 +406,7 @@ describe('App role navigation', () => {
       soTang: 3,
       ngayChotSo: 28,
       soNgayHanTt: 5,
+      maNganHang: '970436',
       tkNganHang: '0123456789',
       nguongThatThoat: '12.35',
       batBuocAnhCongTo: false,
@@ -804,6 +806,7 @@ function buildFetchMock(
       soTang: 5,
       ngayChotSo: 25,
       soNgayHanTt: 7,
+      maNganHang: '970405',
       tkNganHang: '123456789',
       nguongThatThoat: '20.00',
       batBuocAnhCongTo: false,
@@ -816,6 +819,7 @@ function buildFetchMock(
       soTang: 5,
       ngayChotSo: 25,
       soNgayHanTt: 7,
+      maNganHang: '970422',
       tkNganHang: '987654321',
       nguongThatThoat: '20.00',
       batBuocAnhCongTo: false,

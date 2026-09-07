@@ -45,6 +45,7 @@ export type ThongTinToaNha = {
   soTang: number
   ngayChotSo: number
   soNgayHanTt: number
+  maNganHang: string
   tkNganHang: string
   nguongThatThoat: string
   batBuocAnhCongTo: boolean
@@ -198,6 +199,7 @@ export type YeuCauToaNha = {
   soTang: number
   ngayChotSo: number
   soNgayHanTt: number
+  maNganHang: string
   tkNganHang: string
   nguongThatThoat: string
   batBuocAnhCongTo: boolean

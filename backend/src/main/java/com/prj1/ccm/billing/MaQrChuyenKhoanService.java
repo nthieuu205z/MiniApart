@@ -1,6 +1,7 @@
 package com.prj1.ccm.billing;
 
 import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
@@ -23,6 +24,7 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.time.Clock;
 import java.util.Base64;
+import java.util.Map;
 
 @Service
 public class MaQrChuyenKhoanService {
@@ -99,7 +101,13 @@ public class MaQrChuyenKhoanService {
 
     private byte[] taoAnh(String payload) {
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            BitMatrix maQr = new QRCodeWriter().encode(payload, BarcodeFormat.QR_CODE, KICH_THUOC_MA_QR, KICH_THUOC_MA_QR);
+            BitMatrix maQr = new QRCodeWriter().encode(
+                    payload,
+                    BarcodeFormat.QR_CODE,
+                    KICH_THUOC_MA_QR,
+                    KICH_THUOC_MA_QR,
+                    Map.of(EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name())
+            );
             MatrixToImageWriter.writeToStream(maQr, "PNG", output);
             return output.toByteArray();
         } catch (WriterException | IOException exception) {

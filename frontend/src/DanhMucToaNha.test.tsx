@@ -12,7 +12,7 @@ let root: Root
 
 const toaA = {
   id: 1, maToa: 'A', ten: 'Toà A', diaChi: '1 Đường A', soTang: 5,
-  ngayChotSo: 28, soNgayHanTt: 7, tkNganHang: '0123456789', nguongThatThoat: '1.25', batBuocAnhCongTo: false,
+  ngayChotSo: 28, soNgayHanTt: 7, maNganHang: '970405', tkNganHang: '0123456789', nguongThatThoat: '1.25', batBuocAnhCongTo: false,
 }
 const toaB = { ...toaA, id: 2, maToa: 'B', ten: 'Toà B', diaChi: '2 Đường B' }
 
@@ -39,7 +39,7 @@ describe('DanhMucToaNha', () => {
     expect(container.textContent).not.toContain('Khai báo toà mới')
   })
 
-  it('FR-BLD-01 creates a building and preserves the decimal loss threshold in its request', async () => {
+  it('FR-BLD-01 FR-INV-10 creates a building with its bank BIN through the actual client contract', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       if (init?.method === 'POST') return jsonResponse({ ...toaB, nguongThatThoat: '0.75' }, 201)
       return jsonResponse([toaA])
@@ -52,13 +52,44 @@ describe('DanhMucToaNha', () => {
     await fill('maToa', 'B')
     await fill('ten', 'Toà B')
     await fill('diaChi', '2 Đường B')
+    const bankBin = container.querySelector('input[name="maNganHang"]') as HTMLInputElement | null
+    expect(bankBin).not.toBeNull()
+    expect(bankBin?.pattern).toBe('[0-9]{6}')
+    expect(bankBin?.maxLength).toBe(6)
+    const bankAccount = container.querySelector('input[name="tkNganHang"]') as HTMLInputElement
+    expect(bankAccount.pattern).toBe('[0-9]{1,19}')
+    expect(bankAccount.maxLength).toBe(19)
+    await fill('maNganHang', '970422')
+    await fill('tkNganHang', '000000000202')
     await fill('nguongThatThoat', '0.75')
     await act(async () => submitForm('building-form'))
 
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha', expect.objectContaining({
-      method: 'POST', body: JSON.stringify({ maToa: 'B', ten: 'Toà B', diaChi: '2 Đường B', soTang: 1, ngayChotSo: 28, soNgayHanTt: 7, tkNganHang: '', nguongThatThoat: '0.75', batBuocAnhCongTo: false }),
+      method: 'POST', body: JSON.stringify({ maToa: 'B', ten: 'Toà B', diaChi: '2 Đường B', soTang: 1, ngayChotSo: 28, soNgayHanTt: 7, maNganHang: '970422', tkNganHang: '000000000202', nguongThatThoat: '0.75', batBuocAnhCongTo: false }),
     })))
     expect(container.textContent).toContain('Đã khai báo toà nhà mới.')
+  })
+
+  it('FR-BLD-01 FR-INV-10 hydrates and updates the bank BIN through the actual client contract', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'PUT') return jsonResponse({ ...toaA, maNganHang: '970436' })
+      return jsonResponse([toaA])
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await renderScreen('CHU')
+    await vi.waitFor(() => expect(container.textContent).toContain('Sửa Toà A'))
+    await act(async () => clickButton('Sửa Toà A'))
+
+    const bankBin = container.querySelector('input[name="maNganHang"]') as HTMLInputElement | null
+    expect(bankBin).not.toBeNull()
+    expect(bankBin?.value).toBe('970405')
+    await fill('maNganHang', '970436')
+    await act(async () => submitForm('building-form'))
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1', expect.objectContaining({
+      method: 'PUT', body: JSON.stringify({ maToa: 'A', ten: 'Toà A', diaChi: '1 Đường A', soTang: 5, ngayChotSo: 28, soNgayHanTt: 7, maNganHang: '970436', tkNganHang: '0123456789', nguongThatThoat: '1.25', batBuocAnhCongTo: false }),
+    })))
   })
 
   it('FR-BLD-01 edits the selected building and shows duplicate-code and invalid-closing-date errors from the server', async () => {

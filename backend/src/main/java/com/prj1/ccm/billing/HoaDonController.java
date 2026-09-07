@@ -3,6 +3,7 @@ package com.prj1.ccm.billing;
 import com.prj1.ccm.auth.AuthInterceptor;
 import com.prj1.ccm.nguoidung.NguoiDung;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -217,14 +218,16 @@ public class HoaDonController {
      * @return the signed link for the generated QR image
      */
     @GetMapping("/{hoaDonId}/ma-qr-chuyen-khoan")
-    public LienKetMaQrChuyenKhoan maQrChuyenKhoan(
+    public ResponseEntity<LienKetMaQrChuyenKhoan> maQrChuyenKhoan(
             @PathVariable Long toaNhaId,
             @PathVariable Long kyId,
             @PathVariable Long hoaDonId,
             HttpServletRequest request
     ) {
         NguoiDung nguoiDung = (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
-        return maQrChuyenKhoanService.taoLienKet(toaNhaId, kyId, hoaDonId, nguoiDung);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(maQrChuyenKhoanService.taoLienKet(toaNhaId, kyId, hoaDonId, nguoiDung));
     }
 
     /**
@@ -253,6 +256,7 @@ public class HoaDonController {
                     HttpStatus.FORBIDDEN, "Liên kết mã QR không hợp lệ hoặc đã hết hạn");
         }
         return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
                 .contentType(MediaType.IMAGE_PNG)
                 .body(maQrChuyenKhoanService.taoAnh(toaNhaId, kyId, hoaDonId, hetHan, chuKy));
     }

@@ -381,6 +381,7 @@ function buildingFixture() {
     soTang: 5,
     ngayChotSo: 25,
     soNgayHanTt: 7,
+    maNganHang: '970405',
     tkNganHang: '123456789',
     nguongThatThoat: '20.00',
     batBuocAnhCongTo: false,
