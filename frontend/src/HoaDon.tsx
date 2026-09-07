@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ApiError, fetchHoaDonChiTiet, type ThongTinHoaDonChiTiet, type ThongTinDongHoaDon } from './api'
 import { Button } from './design/core/Button'
-import { dinhDangNgayIso } from './design/core/format'
+import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Figure } from './design/core/Figure'
 import { StatusTag } from './design/core/StatusTag'
 import { SysLabel } from './design/core/SysLabel'
@@ -186,14 +186,4 @@ function toneHoaDon(status: string): 'draft' | 'neutral' | 'strong' | 'urgent' |
   if (status.includes('THANH_TOAN')) return 'done'
   if (status.includes('PHAT_HANH')) return 'strong'
   return 'draft'
-}
-
-export function dinhDangTien(giaTri: string) {
-  const match = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(giaTri.trim())
-  if (!match) return giaTri
-  const dau = match[1]
-  const phanNguyen = match[2].replace(/^0+(?=\d)/, '')
-  const phanThapPhan = (match[3] ?? '').replace(/0+$/, '')
-  const nguyenDaNhom = phanNguyen.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-  return `${dau}${nguyenDaNhom}${phanThapPhan ? `,${phanThapPhan}` : ''}`
 }

@@ -3,7 +3,8 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import HoaDon, { dinhDangTien } from './HoaDon'
+import HoaDon from './HoaDon'
+import { dinhDangTien } from './design/core/format'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined

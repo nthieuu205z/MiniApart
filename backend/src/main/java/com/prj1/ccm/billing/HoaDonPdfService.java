@@ -22,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 
 @Service
 public class HoaDonPdfService {
@@ -56,12 +57,10 @@ public class HoaDonPdfService {
 
     /** FR-INV-13 exports an immutable payment receipt and explicitly labels counter-entries. */
     public byte[] xuatBienLai(Long thanhToanId, NguoiDung nguoiDung) {
-        kiemTraNhanVien(nguoiDung);
+        kiemTraVaiTroXuatBienLai(nguoiDung);
         BienLaiPdfDuLieu bienLai = thanhToanPdfRepository.find(thanhToanId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if (nguoiDung.vaiTro() == VaiTro.QUAN_LY) {
-            phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, bienLai.toaNhaId());
-        }
+        kiemTraQuyenXuatBienLai(nguoiDung, bienLai);
         return taoPdf(document -> vietBienLai(document, bienLai));
     }
 
@@ -79,10 +78,10 @@ public class HoaDonPdfService {
         }
         document.add(khoangTrang());
 
-        PdfPTable bang = new PdfPTable(6);
-        bang.setWidths(new int[]{23, 13, 13, 11, 14, 15});
+        PdfPTable bang = new PdfPTable(8);
+        bang.setWidths(new int[]{17, 9, 9, 8, 12, 13, 20, 12});
         bang.setWidthPercentage(100);
-        for (String cot : new String[]{"Khoản mục", "Chỉ số đầu", "Chỉ số cuối", "Số lượng", "Đơn giá", "Thành tiền"}) {
+        for (String cot : new String[]{"Khoản mục", "Chỉ số đầu", "Chỉ số cuối", "Số lượng", "Đơn giá", "Thành tiền", "Diễn giải", "Lý do"}) {
             bang.addCell(oTieuDe(cot));
         }
         for (ThongTinDongHoaDon dong : hoaDon.cacDong()) {
@@ -92,6 +91,8 @@ public class HoaDonPdfService {
             bang.addCell(o(dong.soLuong()));
             bang.addCell(oTien(dong.donGia()));
             bang.addCell(oTien(dong.thanhTien()));
+            bang.addCell(o(dong.dienGiai()));
+            bang.addCell(o(dong.lyDo()));
             for (ThongTinBacHoaDon bac : dong.cacBac()) {
                 PdfPCell bacCell = o("Bậc " + bac.bac()
                         + " — Từ: " + giaTri(bac.tuSoLuong())
@@ -100,7 +101,7 @@ public class HoaDonPdfService {
                         + " — Số lượng: " + giaTri(bac.soLuong())
                         + " — Đơn giá: " + dinhDang.tien(bac.donGia())
                         + " — Thành tiền: " + dinhDang.tien(bac.thanhTien()));
-                bacCell.setColspan(6);
+                bacCell.setColspan(8);
                 bang.addCell(bacCell);
             }
         }
@@ -191,8 +192,23 @@ public class HoaDonPdfService {
         };
     }
 
-    private void kiemTraNhanVien(NguoiDung nguoiDung) {
-        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
+    private void kiemTraQuyenXuatBienLai(NguoiDung nguoiDung, BienLaiPdfDuLieu bienLai) {
+        if (nguoiDung.vaiTro() == VaiTro.NGUOI_THUE) {
+            if (!Objects.equals(nguoiDung.nguoiThueId(), bienLai.nguoiThueId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+            return;
+        }
+
+        if (nguoiDung.vaiTro() == VaiTro.CHU || nguoiDung.vaiTro() == VaiTro.QUAN_LY) {
+            phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, bienLai.toaNhaId());
+        }
+    }
+
+    private void kiemTraVaiTroXuatBienLai(NguoiDung nguoiDung) {
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
+                && nguoiDung.vaiTro() != VaiTro.QUAN_LY
+                && nguoiDung.vaiTro() != VaiTro.NGUOI_THUE)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
     }

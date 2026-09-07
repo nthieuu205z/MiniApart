@@ -21,7 +21,7 @@ class ThanhToanPdfRepository {
                         """
                                 SELECT tt.id, tt.ma_bien_lai, tt.so_tien, tt.loai, tt.hinh_thuc, tt.ngay_thu,
                                        tt.thoi_diem_tao, tt.ly_do,
-                                       hd.ma_hoa_don, p.toa_nha_id, nd.ho_ten AS nguoi_thu
+                                       hd.ma_hoa_don, hop_dong.nguoi_thue_id, p.toa_nha_id, nd.ho_ten AS nguoi_thu
                                 FROM THANH_TOAN tt
                                 JOIN HOA_DON hd ON hd.id = tt.hoa_don_id
                                 JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
@@ -33,6 +33,7 @@ class ThanhToanPdfRepository {
                                 resultSet.getLong("id"),
                                 resultSet.getString("ma_bien_lai"),
                                 resultSet.getString("ma_hoa_don"),
+                                resultSet.getLong("nguoi_thue_id"),
                                 resultSet.getLong("toa_nha_id"),
                                 resultSet.getBigDecimal("so_tien"),
                                 resultSet.getString("loai"),
@@ -53,6 +54,7 @@ record BienLaiPdfDuLieu(
         Long thanhToanId,
         String maBienLai,
         String maHoaDon,
+        Long nguoiThueId,
         Long toaNhaId,
         BigDecimal soTien,
         String loai,

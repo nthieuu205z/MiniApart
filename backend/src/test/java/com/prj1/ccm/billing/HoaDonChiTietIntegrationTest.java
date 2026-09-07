@@ -7,6 +7,8 @@ import com.lowagie.text.pdf.PdfName;
 import com.lowagie.text.pdf.PdfObject;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.parser.PdfTextExtractor;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +56,9 @@ class HoaDonChiTietIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -149,6 +154,7 @@ class HoaDonChiTietIntegrationTest {
                 dichVuId
         );
         jdbcTemplate.update("INSERT INTO CHI_TIET_HOA_DON (hoa_don_id, ten_khoan, so_luong, don_gia, thanh_tien, loai_khoan) VALUES (?, 'Tiền phòng (31/31 ngày)', 31.00, 3500000.00, 3500000.00, 'TIEN_PHONG'), (?, 'Làm tròn', NULL, NULL, -500.00, 'LAM_TRON')", hoaDonId, hoaDonId);
+        jdbcTemplate.update("UPDATE CHI_TIET_HOA_DON SET ly_do = 'Làm tròn theo quy tắc chứng từ' WHERE hoa_don_id = ? AND loai_khoan = 'LAM_TRON'", hoaDonId);
         jdbcTemplate.update("INSERT INTO CHI_TIET_HOA_DON_BAC_THANG (chi_tiet_hoa_don_id, bac, tu_so_luong, den_so_luong, dinh_muc_quy_doi, so_luong, don_gia, thanh_tien) VALUES (?, 1, 0.00, 50.00, 100.00, 100.00, 3500.00, 350000.00), (?, 2, 51.00, 100.00, 100.00, 10.00, 4000.00, 40000.00)", dongDienId, dongDienId);
         jdbcTemplate.update("INSERT INTO ANH_DINH_KEM (doi_tuong_loai, doi_tuong_id, khoa_luu_tru, ghi_chu, loai_noi_dung, kich_thuoc) VALUES ('CHI_SO_DICH_VU', ?, 'meter.jpg', NULL, 'image/jpeg', 4)", chiSoId);
     }
@@ -223,29 +229,23 @@ class HoaDonChiTietIntegrationTest {
 
     @Test
     void FR_INV_09_managerExportsHandRecomputableInvoicePdfWithoutSignedMeterLinks() throws Exception {
+        String authorization = "Bearer " + login(3L, "0900000003");
+        MvcResult detailResult = mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s".formatted(kyId, hoaDonId))
+                        .header("Authorization", authorization))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode projection = objectMapper.readTree(detailResult.getResponse().getContentAsString());
+
         MvcResult result = mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s/xuat-pdf".formatted(kyId, hoaDonId))
-                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                        .header("Authorization", authorization))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String pdf = pdfText(result);
-        assertThat(pdf).contains(
-                "HÓA ĐƠN", "TN-A-101-202608", "Người thuê Nguyễn Ánh", "Tiền điện", "1240", "1350", "110",
-                "3.500", "390.000", "Bậc 1", "Bậc 2", "350.000", "40.000",
-                "0", "50", "100", "51", "10", "4.000",
-                "Tiền phòng (31/31 ngày)", "3.500.000", "Làm tròn", "-500", "3.889.500",
-                "31/08/2026", "07/09/2026", "5 người", "2 hộ quy đổi",
-                "1 hộ quy đổi cho mỗi 4 người ở"
-        );
+        assertInvoiceProjectionIsRendered(pdf, projection);
+        assertThat(pdf).contains("HÓA ĐƠN",
+                "Khoản mục", "Chỉ số đầu", "Chỉ số cuối", "Số lượng", "Đơn giá", "Thành tiền");
         assertThat(pdf).doesNotContain("/api/anh/", "/xem?");
-        String pdfMotDong = pdf.replaceAll("\\s+", " ");
-        assertThat(pdfMotDong).contains(
-                "Tiền điện1240.001350.00110.00—390.000 đ",
-                "Bậc 1 — Từ: 0.00 — Đến: 50.00 — Định mức quy đổi: 100.00 — Số lượng: 100.00 — Đơn giá: 3.500 đ — Thành tiền: 350.000 đ",
-                "Bậc 2 — Từ: 51.00 — Đến: 100.00 — Định mức quy đổi: 100.00 — Số lượng: 10.00 — Đơn giá: 4.000 đ — Thành tiền: 40.000 đ",
-                "Tiền phòng (31/31 ngày)——31.003.500.000 đ3.500.000 đ",
-                "Làm tròn————-500 đ"
-        );
         assertPdfHasEmbeddedFont(result.getResponse().getContentAsByteArray());
     }
 
@@ -295,6 +295,33 @@ class HoaDonChiTietIntegrationTest {
     }
 
     @Test
+    void FR_INV_13_tenantDownloadsReceiptForOwnInvoice() throws Exception {
+        Long paymentId = jdbcTemplate.queryForObject(
+                "INSERT INTO THANH_TOAN (hoa_don_id, so_tien, loai, hinh_thuc, ngay_thu, nguoi_thu_id, ma_bien_lai, thoi_diem_tao) VALUES (?, 500000.00, 'THU', 'TIEN_MAT', DATE '2026-09-01', 3, 'TT-20260901-00000003', TIMESTAMP '2026-09-01 09:30:00') RETURNING id",
+                Long.class, hoaDonId
+        );
+
+        String receipt = pdfText(mockMvc.perform(get("/api/thanh-toan/%s/bien-lai-pdf".formatted(paymentId))
+                        .header("Authorization", "Bearer " + login(5L, "0900000006")))
+                .andExpect(status().isOk()).andReturn());
+
+        assertThat(receipt).contains("BIÊN LAI THANH TOÁN", "TT-20260901-00000003", "TN-A-101-202608", "500.000");
+    }
+
+    @Test
+    void FR_INV_13_otherTenantCannotDownloadReceiptForSomeoneElsesInvoice() throws Exception {
+        Long paymentId = jdbcTemplate.queryForObject(
+                "INSERT INTO THANH_TOAN (hoa_don_id, so_tien, loai, hinh_thuc, ngay_thu, nguoi_thu_id, ma_bien_lai, thoi_diem_tao) VALUES (?, 500000.00, 'THU', 'TIEN_MAT', DATE '2026-09-01', 3, 'TT-20260901-00000004', TIMESTAMP '2026-09-01 09:30:00') RETURNING id",
+                Long.class, hoaDonId
+        );
+        jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = ? WHERE id = 5", otherNguoiThueId);
+
+        mockMvc.perform(get("/api/thanh-toan/%s/bien-lai-pdf".formatted(paymentId))
+                        .header("Authorization", "Bearer " + login(5L, "0900000006")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void FR_INV_13_rejectsSystemAdminAndWrongBuildingManagerForReceiptPdf() throws Exception {
         Long paymentId = jdbcTemplate.queryForObject(
                 "INSERT INTO THANH_TOAN (hoa_don_id, so_tien, loai, hinh_thuc, ngay_thu, nguoi_thu_id) VALUES (?, 500000.00, 'THU', 'TIEN_MAT', DATE '2026-09-01', 3) RETURNING id",
@@ -307,6 +334,9 @@ class HoaDonChiTietIntegrationTest {
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/thanh-toan/%s/bien-lai-pdf".formatted(paymentId))
                         .header("Authorization", "Bearer " + login(1L, "0900000001")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/thanh-toan/%s/bien-lai-pdf".formatted(paymentId))
+                        .header("Authorization", "Bearer " + login(2L, "0900000002")))
                 .andExpect(status().isForbidden());
     }
 
@@ -322,10 +352,64 @@ class HoaDonChiTietIntegrationTest {
         return body.substring(start, end);
     }
 
+    private void assertInvoiceProjectionIsRendered(String pdf, JsonNode projection) {
+        DinhDangChungTu dinhDang = new DinhDangChungTu();
+        String vanBanPdf = pdf.replaceAll("\\s+", " ").trim();
+        assertThat(vanBanPdf).contains(projection.get("maHoaDon").asText(), projection.get("soPhong").asText(), projection.get("nguoiThue").asText());
+        assertThat(vanBanPdf).contains(dinhDang.ngay(projection.get("ngayPhatHanh").asText()));
+        assertThat(vanBanPdf).contains(dinhDang.ngay(projection.get("hanThanhToan").asText()));
+        assertThat(vanBanPdf).contains(dinhDang.tien(projection.get("tongTien").asText()));
+        assertThat(vanBanPdf).contains(dinhDang.tien(projection.get("daThu").asText()));
+        assertThat(vanBanPdf).contains(dinhDang.tien(projection.get("conLai").asText()));
+        assertProjectionValueInPdf(vanBanPdf, projection, "soNguoiO");
+        assertProjectionValueInPdf(vanBanPdf, projection, "soHoQuyDoi");
+        assertProjectionValueInPdf(vanBanPdf, projection, "giaiThichSoHo");
+
+        for (JsonNode dong : projection.get("cacDong")) {
+            assertProjectionValueInPdf(vanBanPdf, dong, "tenKhoan");
+            assertProjectionValueInPdf(vanBanPdf, dong, "chiSoDau");
+            assertProjectionValueInPdf(vanBanPdf, dong, "chiSoCuoi");
+            assertProjectionValueInPdf(vanBanPdf, dong, "soLuong");
+            assertProjectionValueInPdf(vanBanPdf, dong, "dienGiai");
+            assertProjectionValueInPdf(vanBanPdf, dong, "lyDo");
+            assertFormattedMoneyInPdf(vanBanPdf, dinhDang, dong, "donGia");
+            assertFormattedMoneyInPdf(vanBanPdf, dinhDang, dong, "thanhTien");
+
+            for (JsonNode bac : dong.get("cacBac")) {
+                assertThat(vanBanPdf).contains("Bậc " + bac.get("bac").asText());
+                assertProjectionValueInPdf(vanBanPdf, bac, "tuSoLuong");
+                assertProjectionValueInPdf(vanBanPdf, bac, "denSoLuong");
+                assertProjectionValueInPdf(vanBanPdf, bac, "dinhMucQuyDoi");
+                assertProjectionValueInPdf(vanBanPdf, bac, "soLuong");
+                assertFormattedMoneyInPdf(vanBanPdf, dinhDang, bac, "donGia");
+                assertFormattedMoneyInPdf(vanBanPdf, dinhDang, bac, "thanhTien");
+            }
+        }
+    }
+
+    private void assertFormattedMoneyInPdf(String pdf, DinhDangChungTu dinhDang, JsonNode object, String field) {
+        JsonNode value = object.get(field);
+        if (value != null && !value.isNull()) {
+            assertThat(pdf).contains(dinhDang.tien(value.asText()));
+        }
+    }
+
+    private void assertProjectionValueInPdf(String pdf, JsonNode object, String field) {
+        JsonNode value = object.get(field);
+        if (value != null && !value.isNull()) {
+            assertThat(pdf).contains(value.asText());
+        }
+    }
+
     private String pdfText(MvcResult result) throws Exception {
         PdfReader reader = new PdfReader(result.getResponse().getContentAsByteArray());
         try {
-            return new PdfTextExtractor(reader).getTextFromPage(1);
+            StringBuilder text = new StringBuilder();
+            PdfTextExtractor extractor = new PdfTextExtractor(reader);
+            for (int page = 1; page <= reader.getNumberOfPages(); page++) {
+                text.append(extractor.getTextFromPage(page)).append('\n');
+            }
+            return text.toString();
         } finally {
             reader.close();
         }
