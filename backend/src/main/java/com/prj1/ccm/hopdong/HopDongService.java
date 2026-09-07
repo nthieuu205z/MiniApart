@@ -173,7 +173,7 @@ public class HopDongService {
         hopDongRepository.updateTrangThai(hopDongId, TrangThaiHopDong.DA_THANH_LY);
         nhatKyThaoTacRepository.ghi(nguoiDung.id(), "THANH_LY_HOP_DONG", "HOP_DONG:" + hopDongId, trangThaiHienTai.name(), "DA_THANH_LY;hoaDonCuoi=" + quyetToan.hoaDonCuoiId() + ";tong=" + quyetToan.tongHoaDonCuoi() + ";daThuCoc=" + quyetToan.daThuCoc() + ";congNo=" + quyetToan.congNo() + ";khauTru=" + quyetToan.khauTru() + ";hoan=" + quyetToan.hoanCoc() + ";hoaDonQT=" + quyetToan.hoaDonQuyetToanId());
         trangThaiPhongService.dongBoTheoPhongId(hopDongView.hopDong().phongId());
-        return chiTiet(hopDongId, nguoiDung);
+        return chiTiet(hopDongId, nguoiDung).voiQuyetToan(quyetToan);
     }
 
     @Transactional

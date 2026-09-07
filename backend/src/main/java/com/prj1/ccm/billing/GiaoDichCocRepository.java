@@ -62,7 +62,39 @@ class GiaoDichCocRepository {
     }
 
     java.math.BigDecimal tongCongNo(Long hopDongId) {
-        return jdbcTemplate.queryForObject("SELECT COALESCE(SUM(GREATEST(tong_tien - da_thu, 0.00)), 0.00) FROM HOA_DON WHERE hop_dong_id = ?", java.math.BigDecimal.class, hopDongId);
+        return jdbcTemplate.queryForObject(
+                """
+                        SELECT COALESCE(SUM(tong_tien - da_thu), 0.00)
+                        FROM HOA_DON
+                        WHERE hop_dong_id = ?
+                          AND ky_id IS NOT NULL
+                          AND trang_thai NOT IN ('NHAP', 'DA_HUY')
+                          AND tong_tien - da_thu > 0.00
+                        """,
+                java.math.BigDecimal.class,
+                hopDongId
+        );
+    }
+
+    List<HoaDonCongNo> layHoaDonCongNo(Long hopDongId) {
+        return jdbcTemplate.query(
+                """
+                        SELECT id, tong_tien, da_thu
+                        FROM HOA_DON
+                        WHERE hop_dong_id = ?
+                          AND ky_id IS NOT NULL
+                          AND trang_thai NOT IN ('NHAP', 'DA_HUY')
+                          AND tong_tien - da_thu > 0.00
+                        ORDER BY id
+                        FOR UPDATE
+                        """,
+                (resultSet, rowNum) -> new HoaDonCongNo(
+                        resultSet.getLong("id"),
+                        resultSet.getBigDecimal("tong_tien"),
+                        resultSet.getBigDecimal("da_thu")
+                ),
+                hopDongId
+        );
     }
 
     java.math.BigDecimal tongTienHoaDon(Long hoaDonId) {
@@ -147,5 +179,8 @@ class GiaoDichCocRepository {
             String maBienLai,
             String lyDo
     ) {
+    }
+
+    record HoaDonCongNo(Long hoaDonId, java.math.BigDecimal tongTien, java.math.BigDecimal daThu) {
     }
 }

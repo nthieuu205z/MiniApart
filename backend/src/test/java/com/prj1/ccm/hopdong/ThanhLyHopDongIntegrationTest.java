@@ -93,7 +93,14 @@ class ThanhLyHopDongIntegrationTest {
         mockMvc.perform(post(thanhLyUrl(hopDongId))
                         .header("Authorization", "Bearer " + login(3L, "0900000003")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.trangThai").value("DA_THANH_LY"));
+                .andExpect(jsonPath("$.trangThai").value("DA_THANH_LY"))
+                .andExpect(jsonPath("$.quyetToan.hoaDonCuoiId").isNumber())
+                .andExpect(jsonPath("$.quyetToan.tongHoaDonCuoi").value("307000.00"))
+                .andExpect(jsonPath("$.quyetToan.daThuCoc").value("7000000.00"))
+                .andExpect(jsonPath("$.quyetToan.congNo").value("307000.00"))
+                .andExpect(jsonPath("$.quyetToan.khauTru").value("0.00"))
+                .andExpect(jsonPath("$.quyetToan.hoanCoc").value("6693000.00"))
+                .andExpect(jsonPath("$.quyetToan.hoaDonQuyetToanId").doesNotExist());
 
         BigDecimal hoaDonKyCuoi = jdbcTemplate.queryForObject(
                 "SELECT tong_tien FROM HOA_DON WHERE hop_dong_id = ? AND ky_id IS NOT NULL", BigDecimal.class, hopDongId);
@@ -105,7 +112,7 @@ class ThanhLyHopDongIntegrationTest {
                 "SELECT COUNT(*) FROM NHAT_KY_THAO_TAC WHERE doi_tuong = ? AND hanh_dong = 'THANH_LY_HOP_DONG'",
                 Integer.class, "HOP_DONG:" + hopDongId)).isEqualTo(1);
         String audit = jdbcTemplate.queryForObject("SELECT gia_tri_sau FROM NHAT_KY_THAO_TAC WHERE doi_tuong = ? AND hanh_dong = 'THANH_LY_HOP_DONG'", String.class, "HOP_DONG:" + hopDongId);
-        assertThat(audit).contains("hoaDonCuoi=" + jdbcTemplate.queryForObject("SELECT id FROM HOA_DON WHERE hop_dong_id=? AND ky_id IS NOT NULL", Long.class, hopDongId), "tong=1100000.00", "daThuCoc=7000000.00", "congNo=1100000.00", "khauTru=0.00", "hoan=5900000.00", "hoaDonQT=null");
+        assertThat(audit).contains("hoaDonCuoi=" + jdbcTemplate.queryForObject("SELECT id FROM HOA_DON WHERE hop_dong_id=? AND ky_id IS NOT NULL", Long.class, hopDongId), "tong=307000.00", "daThuCoc=7000000.00", "congNo=307000.00", "khauTru=0.00", "hoan=6693000.00", "hoaDonQT=null");
     }
 
     @Test
@@ -126,7 +133,7 @@ class ThanhLyHopDongIntegrationTest {
 
     @Test
     void FR_TNT_09_BR_07_zeroSettlementCreatesNeitherRefundNorSettlementInvoiceAndRejectsInvalidDeductionMoney() throws Exception {
-        thuCoc(hopDongId, "1100000.00");
+        thuCoc(hopDongId, "307000.00");
         mockMvc.perform(post(thanhLyUrl(hopDongId)).header("Authorization", "Bearer " + login(3L, "0900000003"))
                         .contentType(MediaType.APPLICATION_JSON).content("{\"khauTruHuHong\":\"1.001\",\"lyDo\":\"x\"}"))
                 .andExpect(status().isBadRequest());
@@ -167,7 +174,7 @@ class ThanhLyHopDongIntegrationTest {
         assertThat(jdbcTemplate.queryForObject("SELECT ma_hoa_don FROM HOA_DON WHERE id = ?", String.class, hoaDonQuyetToanId))
                 .startsWith("QT-");
         String audit = jdbcTemplate.queryForObject("SELECT gia_tri_sau FROM NHAT_KY_THAO_TAC WHERE doi_tuong=? AND hanh_dong='THANH_LY_HOP_DONG'", String.class, "HOP_DONG:" + hopDongId);
-        assertThat(audit).contains("hoaDonCuoi=" + jdbcTemplate.queryForObject("SELECT id FROM HOA_DON WHERE hop_dong_id=? AND ky_id IS NOT NULL", Long.class, hopDongId), "tong=1100000.00", "daThuCoc=100.00", "congNo=1100000.00", "khauTru=0.00", "hoan=0.00", "hoaDonQT=" + hoaDonQuyetToanId);
+        assertThat(audit).contains("hoaDonCuoi=" + jdbcTemplate.queryForObject("SELECT id FROM HOA_DON WHERE hop_dong_id=? AND ky_id IS NOT NULL", Long.class, hopDongId), "tong=307000.00", "daThuCoc=100.00", "congNo=307000.00", "khauTru=0.00", "hoan=0.00", "hoaDonQT=" + hoaDonQuyetToanId);
         assertThat(jdbcTemplate.queryForObject("SELECT nguoi_dung_id FROM NHAT_KY_THAO_TAC WHERE doi_tuong=? AND hanh_dong='THANH_LY_HOP_DONG'", Long.class, "HOP_DONG:" + hopDongId)).isEqualTo(3L);
 
         mockMvc.perform(post("/api/hop-dong/" + hopDongId + "/hoa-don-quyet-toan/" + hoaDonQuyetToanId + "/thanh-toan")
@@ -182,6 +189,78 @@ class ThanhLyHopDongIntegrationTest {
                 .andExpect(status().isConflict());
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM HOA_DON WHERE hop_dong_id = ?", Integer.class, hopDongId))
                 .isEqualTo(2);
+    }
+
+    @Test
+    void FR_TNT_08_BR_07_settlementTransfersOrdinaryDebtIntoImmutableLedgerAndRejectsRecollection() throws Exception {
+        thuCoc(hopDongId, "307000.00");
+
+        mockMvc.perform(post(thanhLyUrl(hopDongId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isOk());
+
+        Long kyId = jdbcTemplate.queryForObject("SELECT id FROM KY_THANH_TOAN WHERE toa_nha_id = 1", Long.class);
+        Long hoaDonId = jdbcTemplate.queryForObject(
+                "SELECT id FROM HOA_DON WHERE hop_dong_id = ? AND ky_id = ?", Long.class, hopDongId, kyId);
+        assertThat(jdbcTemplate.queryForObject("SELECT da_thu FROM HOA_DON WHERE id = ?", BigDecimal.class, hoaDonId))
+                .isEqualByComparingTo("307000.00");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM THANH_TOAN WHERE hoa_don_id = ? AND loai = 'QUYET_TOAN' AND so_tien = 307000.00",
+                Integer.class, hoaDonId)).isEqualTo(1);
+
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/" + kyId + "/hoa-don/" + hoaDonId + "/thanh-toan")
+                        .header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"soTien\":\"1.00\",\"hinhThuc\":\"TIEN_MAT\",\"ngayThu\":\"2026-09-07\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void FR_TNT_08_reusesExistingDraftOrdinaryInvoiceAndPublishesZeroTotalForSettlement() throws Exception {
+        Long kyId = jdbcTemplate.queryForObject("SELECT id FROM KY_THANH_TOAN WHERE toa_nha_id = 1", Long.class);
+        jdbcTemplate.update("INSERT INTO HOA_DON(ma_hoa_don, ky_id, hop_dong_id, ngay_phat_hanh, han_thanh_toan, tong_tien, da_thu, trang_thai) VALUES ('HD-DRAFT', ?, ?, DATE '2026-09-07', DATE '2026-10-07', 0.00, 0.00, 'NHAP')", kyId, hopDongId);
+
+        mockMvc.perform(post(thanhLyUrl(hopDongId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isOk());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM HOA_DON WHERE hop_dong_id = ? AND ky_id = ?", Integer.class, hopDongId, kyId)).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOA_DON WHERE hop_dong_id = ? AND ky_id = ?", String.class, hopDongId, kyId)).isEqualTo("DA_PHAT_HANH");
+    }
+
+    @Test
+    void FR_TNT_08_BR_07_rollsBackInvoiceDepositLedgerAndContractWhenSettlementFailsAfterAllocation() throws Exception {
+        thuCoc(hopDongId, "7000000.00");
+        jdbcTemplate.execute("CREATE FUNCTION fail_contract_settlement() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced settlement failure'; END; $$");
+        jdbcTemplate.execute("CREATE TRIGGER fail_contract_settlement BEFORE UPDATE OF trang_thai ON HOP_DONG FOR EACH ROW WHEN (NEW.trang_thai = 'DA_THANH_LY') EXECUTE FUNCTION fail_contract_settlement()");
+
+        try {
+            assertThatThrownBy(() -> mockMvc.perform(post(thanhLyUrl(hopDongId))
+                    .header("Authorization", "Bearer " + login(3L, "0900000003"))))
+                    .isInstanceOf(Exception.class);
+        } finally {
+            jdbcTemplate.execute("DROP TRIGGER IF EXISTS fail_contract_settlement ON HOP_DONG");
+            jdbcTemplate.execute("DROP FUNCTION IF EXISTS fail_contract_settlement()");
+        }
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM HOA_DON WHERE hop_dong_id = ?", Integer.class, hopDongId)).isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM THANH_TOAN", Integer.class)).isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM GIAO_DICH_COC WHERE hop_dong_id = ?", Integer.class, hopDongId)).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOP_DONG WHERE id = ?", String.class, hopDongId)).isEqualTo("HIEU_LUC");
+    }
+
+    @Test
+    void BR_07_excludesDraftAndCancelledInvoicesFromSettlementDebt() throws Exception {
+        thuCoc(hopDongId, "7000000.00");
+        Long kyNhap = jdbcTemplate.queryForObject("INSERT INTO KY_THANH_TOAN(toa_nha_id, nam, thang, ngay_bat_dau, ngay_ket_thuc, trang_thai) VALUES (1, 2026, 8, DATE '2026-08-01', DATE '2026-08-30', 'DA_CHOT') RETURNING id", Long.class);
+        Long kyHuy = jdbcTemplate.queryForObject("INSERT INTO KY_THANH_TOAN(toa_nha_id, nam, thang, ngay_bat_dau, ngay_ket_thuc, trang_thai) VALUES (1, 2026, 7, DATE '2026-07-01', DATE '2026-07-30', 'DA_CHOT') RETURNING id", Long.class);
+        jdbcTemplate.update("INSERT INTO HOA_DON(ma_hoa_don, ky_id, hop_dong_id, ngay_phat_hanh, han_thanh_toan, tong_tien, da_thu, trang_thai) VALUES ('HD-NHAP', ?, ?, DATE '2026-08-01', DATE '2026-08-31', 999.00, 0.00, 'NHAP')", kyNhap, hopDongId);
+        jdbcTemplate.update("INSERT INTO HOA_DON(ma_hoa_don, ky_id, hop_dong_id, ngay_phat_hanh, han_thanh_toan, tong_tien, da_thu, trang_thai) VALUES ('HD-HUY', ?, ?, DATE '2026-07-01', DATE '2026-07-31', 888.00, 0.00, 'DA_HUY')", kyHuy, hopDongId);
+
+        mockMvc.perform(post(thanhLyUrl(hopDongId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.quyetToan.congNo").value("307000.00"));
     }
 
     @Test
@@ -212,6 +291,15 @@ class ThanhLyHopDongIntegrationTest {
         mockMvc.perform(post(thanhLyUrl(hopDongId)).header("Authorization", "Bearer " + login(1L, "0900000001")))
                 .andExpect(status().isForbidden());
         mockMvc.perform(post(thanhLyUrl(hopDongNgoaiToaId)).header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_TNT_08_wrongRoleIsRejectedBeforeSettlementInvoiceLookup() throws Exception {
+        mockMvc.perform(post("/api/hop-dong/999999/hoa-don-quyet-toan/999999/thanh-toan")
+                        .header("Authorization", "Bearer " + login(1L, "0900000001"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"soTien\":\"1.00\",\"hinhThuc\":\"TIEN_MAT\",\"ngayThu\":\"2026-09-07\"}"))
                 .andExpect(status().isForbidden());
     }
 

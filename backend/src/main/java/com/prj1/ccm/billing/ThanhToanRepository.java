@@ -51,8 +51,14 @@ class ThanhToanRepository {
                 .findFirst();
     }
 
-    Long timToaNhaCuaHoaDonQuyetToan(Long hopDongId, Long hoaDonId) {
-        return jdbcTemplate.queryForObject("SELECT p.toa_nha_id FROM HOA_DON hd JOIN HOP_DONG h ON h.id = hd.hop_dong_id JOIN PHONG p ON p.id = h.phong_id WHERE hd.id = ? AND hd.hop_dong_id = ? AND hd.ky_id IS NULL", Long.class, hoaDonId, hopDongId);
+    Optional<Long> timToaNhaCuaHopDong(Long hopDongId) {
+        return jdbcTemplate.queryForList(
+                        "SELECT p.toa_nha_id FROM HOP_DONG h JOIN PHONG p ON p.id = h.phong_id WHERE h.id = ?",
+                        Long.class,
+                        hopDongId
+                )
+                .stream()
+                .findFirst();
     }
 
     Optional<HoaDonThanhToan> timHoaDonQuyetToan(Long hopDongId, Long hoaDonId, boolean khoa) {
@@ -138,6 +144,26 @@ class ThanhToanRepository {
                 thanhToan.lyDo(),
                 thanhToan.nguoiThuId()
         );
+    }
+
+    void ghiNhanQuyetToan(Long hoaDonId, BigDecimal soTien, Long nguoiThucHienId) {
+        jdbcTemplate.update(
+                """
+                        INSERT INTO THANH_TOAN (hoa_don_id, so_tien, loai, nguoi_thu_id)
+                        VALUES (?, ?, 'QUYET_TOAN', ?)
+                        """,
+                hoaDonId,
+                soTien,
+                nguoiThucHienId
+        );
+    }
+
+    boolean coThanhToanQuyetToan(Long hoaDonId) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                "SELECT EXISTS(SELECT 1 FROM THANH_TOAN WHERE hoa_don_id = ? AND loai = 'QUYET_TOAN')",
+                Boolean.class,
+                hoaDonId
+        ));
     }
 
     void capNhatDaThu(Long hoaDonId, BigDecimal daThu) {
