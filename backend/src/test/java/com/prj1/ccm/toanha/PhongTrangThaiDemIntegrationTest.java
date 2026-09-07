@@ -73,6 +73,15 @@ class PhongTrangThaiDemIntegrationTest {
     @BeforeEach
     void resetDatabase() {
         mutableClock.dat(TEST_NOW);
+        jdbcTemplate.update("DELETE FROM GIAO_DICH_COC");
+        jdbcTemplate.update("DELETE FROM SO_DU_KHA_DUNG");
+        jdbcTemplate.update("DELETE FROM THANH_TOAN");
+        jdbcTemplate.update("DELETE FROM CHI_TIET_HOA_DON_BAC_THANG");
+        jdbcTemplate.update("DELETE FROM CHI_TIET_HOA_DON");
+        jdbcTemplate.update("DELETE FROM HOA_DON");
+        jdbcTemplate.update("DELETE FROM NHAN_KHAU_KY");
+        jdbcTemplate.update("DELETE FROM CHI_SO_DICH_VU");
+        jdbcTemplate.update("DELETE FROM KY_THANH_TOAN");
         jdbcTemplate.update("DELETE FROM NGUOI_O_CUNG");
         jdbcTemplate.update("DELETE FROM HOP_DONG_DICH_VU");
         jdbcTemplate.update("DELETE FROM HOP_DONG");
@@ -99,6 +108,7 @@ class PhongTrangThaiDemIntegrationTest {
         );
         jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (2, 1) ON CONFLICT DO NOTHING");
         jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (3, 1) ON CONFLICT DO NOTHING");
+        jdbcTemplate.update("INSERT INTO KY_THANH_TOAN(toa_nha_id, nam, thang, ngay_bat_dau, ngay_ket_thuc, trang_thai) VALUES (1, 2040, 8, DATE '2040-01-01', DATE '2040-12-31', 'DANG_MO')");
     }
 
     @Test

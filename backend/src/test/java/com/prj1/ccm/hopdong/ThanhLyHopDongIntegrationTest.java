@@ -19,6 +19,8 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.springframework.dao.DataIntegrityViolationException;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -103,7 +105,7 @@ class ThanhLyHopDongIntegrationTest {
                 "SELECT COUNT(*) FROM NHAT_KY_THAO_TAC WHERE doi_tuong = ? AND hanh_dong = 'THANH_LY_HOP_DONG'",
                 Integer.class, "HOP_DONG:" + hopDongId)).isEqualTo(1);
         String audit = jdbcTemplate.queryForObject("SELECT gia_tri_sau FROM NHAT_KY_THAO_TAC WHERE doi_tuong = ? AND hanh_dong = 'THANH_LY_HOP_DONG'", String.class, "HOP_DONG:" + hopDongId);
-        assertThat(audit).contains("hoaDonCuoi=", "daThuCoc=7000000.00", "congNo=", "khauTru=0.00", "hoan=");
+        assertThat(audit).contains("hoaDonCuoi=" + jdbcTemplate.queryForObject("SELECT id FROM HOA_DON WHERE hop_dong_id=? AND ky_id IS NOT NULL", Long.class, hopDongId), "tong=1100000.00", "daThuCoc=7000000.00", "congNo=1100000.00", "khauTru=0.00", "hoan=5900000.00", "hoaDonQT=null");
     }
 
     @Test
@@ -128,10 +130,24 @@ class ThanhLyHopDongIntegrationTest {
         mockMvc.perform(post(thanhLyUrl(hopDongId)).header("Authorization", "Bearer " + login(3L, "0900000003"))
                         .contentType(MediaType.APPLICATION_JSON).content("{\"khauTruHuHong\":\"1.001\",\"lyDo\":\"x\"}"))
                 .andExpect(status().isBadRequest());
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM HOP_DONG WHERE id=?", String.class, hopDongId)).isEqualTo("HIEU_LUC");
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM HOA_DON WHERE hop_dong_id=?", Integer.class, hopDongId)).isZero();
         mockMvc.perform(post(thanhLyUrl(hopDongId)).header("Authorization", "Bearer " + login(3L, "0900000003")))
                 .andExpect(status().isOk());
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM GIAO_DICH_COC WHERE hop_dong_id=? AND loai='HOAN_COC'", Integer.class, hopDongId)).isZero();
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM HOA_DON WHERE hop_dong_id=? AND ky_id IS NULL", Integer.class, hopDongId)).isZero();
+    }
+
+    @Test
+    void FR_TNT_08_BR_08_V30_preservesOrdinaryInvoiceUniquenessAndAllowsDistinctSettlementInvoices() {
+        Long kyId = jdbcTemplate.queryForObject("SELECT id FROM KY_THANH_TOAN WHERE toa_nha_id=1", Long.class);
+        String ordinary = "INSERT INTO HOA_DON(ma_hoa_don, ky_id, hop_dong_id, ngay_phat_hanh, han_thanh_toan, tong_tien, da_thu, trang_thai) VALUES (?, ?, ?, DATE '2040-08-01', DATE '2040-09-01', 100.00, 0.00, 'DA_PHAT_HANH')";
+        jdbcTemplate.update(ordinary, "ORD-1", kyId, hopDongId);
+        assertThatThrownBy(() -> jdbcTemplate.update(ordinary, "ORD-2", kyId, hopDongId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        jdbcTemplate.update(ordinary.replace("?, ?,", "?, NULL,"), "SETTLE-1", hopDongId);
+        jdbcTemplate.update(ordinary.replace("?, ?,", "?, NULL,"), "SETTLE-2", hopDongId);
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM HOA_DON WHERE hop_dong_id=? AND ky_id IS NULL", Integer.class, hopDongId)).isEqualTo(2);
     }
 
     @Test
@@ -150,6 +166,9 @@ class ThanhLyHopDongIntegrationTest {
                 .isEqualByComparingTo(tongHoaDonKyCuoi.subtract(new BigDecimal("100.00")));
         assertThat(jdbcTemplate.queryForObject("SELECT ma_hoa_don FROM HOA_DON WHERE id = ?", String.class, hoaDonQuyetToanId))
                 .startsWith("QT-");
+        String audit = jdbcTemplate.queryForObject("SELECT gia_tri_sau FROM NHAT_KY_THAO_TAC WHERE doi_tuong=? AND hanh_dong='THANH_LY_HOP_DONG'", String.class, "HOP_DONG:" + hopDongId);
+        assertThat(audit).contains("hoaDonCuoi=" + jdbcTemplate.queryForObject("SELECT id FROM HOA_DON WHERE hop_dong_id=? AND ky_id IS NOT NULL", Long.class, hopDongId), "tong=1100000.00", "daThuCoc=100.00", "congNo=1100000.00", "khauTru=0.00", "hoan=0.00", "hoaDonQT=" + hoaDonQuyetToanId);
+        assertThat(jdbcTemplate.queryForObject("SELECT nguoi_dung_id FROM NHAT_KY_THAO_TAC WHERE doi_tuong=? AND hanh_dong='THANH_LY_HOP_DONG'", Long.class, "HOP_DONG:" + hopDongId)).isEqualTo(3L);
 
         mockMvc.perform(post("/api/hop-dong/" + hopDongId + "/hoa-don-quyet-toan/" + hoaDonQuyetToanId + "/thanh-toan")
                         .header("Authorization", "Bearer " + login(3L, "0900000003"))
