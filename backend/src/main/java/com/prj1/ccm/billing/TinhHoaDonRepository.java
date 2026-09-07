@@ -268,6 +268,15 @@ class TinhHoaDonRepository {
         return hoaDonId;
     }
 
+    java.util.Optional<HoaDonKy> timHoaDonKy(Long hopDongId, Long kyId) {
+        return jdbcTemplate.query(
+                        "SELECT id, trang_thai FROM HOA_DON WHERE hop_dong_id = ? AND ky_id = ? FOR UPDATE",
+                        (resultSet, rowNum) -> new HoaDonKy(resultSet.getLong("id"),
+                                TrangThaiHoaDon.valueOf(resultSet.getString("trang_thai"))),
+                        hopDongId, kyId
+                ).stream().findFirst();
+    }
+
     void danhDauKhoanPhatSinhDaTinh(List<Long> khoanPhatSinhIds, Long hoaDonId) {
         for (Long khoanPhatSinhId : khoanPhatSinhIds) {
             int soDongCapNhat = jdbcTemplate.update(
@@ -466,6 +475,10 @@ class TinhHoaDonRepository {
         );
     }
 
+    void phatHanhHoaDonThanhLy(Long hoaDonId) {
+        jdbcTemplate.update("UPDATE HOA_DON SET trang_thai = 'DA_PHAT_HANH' WHERE id = ? AND trang_thai = 'NHAP'", hoaDonId);
+    }
+
     java.util.Optional<HoaDonCanPhatHanh> timHoaDonCanPhatHanh(Long hoaDonId) {
         return jdbcTemplate.query(
                         """
@@ -647,5 +660,8 @@ class TinhHoaDonRepository {
     }
 
     record HoaDonCanPhatHanh(Long hoaDonId, Long phongId, TrangThaiHoaDon trangThai, BigDecimal tongTien) {
+    }
+
+    record HoaDonKy(Long hoaDonId, TrangThaiHoaDon trangThai) {
     }
 }

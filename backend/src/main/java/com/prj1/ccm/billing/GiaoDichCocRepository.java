@@ -61,6 +61,50 @@ class GiaoDichCocRepository {
         );
     }
 
+    java.math.BigDecimal tongCongNo(Long hopDongId) {
+        return jdbcTemplate.queryForObject(
+                """
+                        SELECT COALESCE(SUM(tong_tien - da_thu), 0.00)
+                        FROM HOA_DON
+                        WHERE hop_dong_id = ?
+                          AND ky_id IS NOT NULL
+                          AND trang_thai NOT IN ('NHAP', 'DA_HUY')
+                          AND tong_tien - da_thu > 0.00
+                        """,
+                java.math.BigDecimal.class,
+                hopDongId
+        );
+    }
+
+    List<HoaDonCongNo> layHoaDonCongNo(Long hopDongId) {
+        return jdbcTemplate.query(
+                """
+                        SELECT id, tong_tien, da_thu
+                        FROM HOA_DON
+                        WHERE hop_dong_id = ?
+                          AND ky_id IS NOT NULL
+                          AND trang_thai NOT IN ('NHAP', 'DA_HUY')
+                          AND tong_tien - da_thu > 0.00
+                        ORDER BY id
+                        FOR UPDATE
+                        """,
+                (resultSet, rowNum) -> new HoaDonCongNo(
+                        resultSet.getLong("id"),
+                        resultSet.getBigDecimal("tong_tien"),
+                        resultSet.getBigDecimal("da_thu")
+                ),
+                hopDongId
+        );
+    }
+
+    java.math.BigDecimal tongTienHoaDon(Long hoaDonId) {
+        return jdbcTemplate.queryForObject("SELECT tong_tien FROM HOA_DON WHERE id = ?", java.math.BigDecimal.class, hoaDonId);
+    }
+
+    Long taoHoaDonQuyetToan(Long hopDongId, String maHoaDon, LocalDate ngay, LocalDate han, java.math.BigDecimal soTien) {
+        return jdbcTemplate.queryForObject("INSERT INTO HOA_DON(ma_hoa_don, ky_id, hop_dong_id, ngay_phat_hanh, han_thanh_toan, tong_tien, da_thu, trang_thai) VALUES (?, NULL, ?, ?, ?, ?, 0.00, 'DA_PHAT_HANH') RETURNING id", Long.class, maHoaDon, hopDongId, Date.valueOf(ngay), Date.valueOf(han), soTien);
+    }
+
     GiaoDichCocDaGhi ghi(GiaoDichCocMoi giaoDichMoi) {
         return jdbcTemplate.queryForObject(
                 """
@@ -135,5 +179,8 @@ class GiaoDichCocRepository {
             String maBienLai,
             String lyDo
     ) {
+    }
+
+    record HoaDonCongNo(Long hoaDonId, java.math.BigDecimal tongTien, java.math.BigDecimal daThu) {
     }
 }

@@ -78,7 +78,9 @@ public class ThanhToanService {
         if (trangThaiTruoc == TrangThaiHoaDon.DA_HUY) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_HOA_DON_DA_HUY);
         }
-        if (trangThaiTruoc == TrangThaiHoaDon.DA_THANH_TOAN && !Boolean.TRUE.equals(hopLe.xacNhanThuThem())) {
+        if (trangThaiTruoc == TrangThaiHoaDon.DA_THANH_TOAN
+                && (thanhToanRepository.coThanhToanQuyetToan(hoaDon.hoaDonId())
+                || !Boolean.TRUE.equals(hopLe.xacNhanThuThem()))) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_HOA_DON_DA_THANH_TOAN);
         }
 
@@ -137,6 +139,18 @@ public class ThanhToanService {
                 soTienThanhSoDu.toPlainString(),
                 trangThaiMoi.name()
         );
+    }
+
+    /** FR-TNT-08 records a settlement-invoice payment with the existing immutable payment ledger. */
+    @Transactional
+    public ThongTinThanhToan ghiNhanHoaDonQuyetToan(Long hopDongId, Long hoaDonId, YeuCauThanhToan yeuCau, NguoiDung nguoiDung) {
+        kiemTraVaiTro(nguoiDung);
+        Long toaNhaId = thanhToanRepository.timToaNhaCuaHopDong(hopDongId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
+        thanhToanRepository.timHoaDonQuyetToan(hopDongId, hoaDonId, true)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return ghiNhan(toaNhaId, null, hoaDonId, yeuCau, nguoiDung);
     }
 
     /** FR-INV-14, CR-010, and BR-18 create an immutable negative counter-entry. */

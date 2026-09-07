@@ -1,5 +1,7 @@
 package com.prj1.ccm.hopdong;
 
+import com.prj1.ccm.billing.ThongTinQuyetToan;
+
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
@@ -19,7 +21,8 @@ public record ThongTinHopDong(
         String tenTrangThai,
         boolean sapHetHan,
         long soNgayConLai,
-        List<ThongTinHopDongDichVu> dichVuApDung
+        List<ThongTinHopDongDichVu> dichVuApDung,
+        ThongTinQuyetToan quyetToan
 ) {
     public static ThongTinHopDong tao(
             HopDong hopDong,
@@ -44,7 +47,16 @@ public record ThongTinHopDong(
                 hopDong.trangThai().tenHienThi(),
                 sapHetHan,
                 soNgayConLai,
-                dichVuApDung
+                dichVuApDung,
+                null
+        );
+    }
+
+    public ThongTinHopDong voiQuyetToan(ThongTinQuyetToan quyetToan) {
+        return new ThongTinHopDong(
+                id, phongId, soPhong, nguoiThueId, hoTenNguoiThue, ngayBatDau, ngayKetThuc,
+                giaThue, tienCoc, soNgayBaoTruoc, trangThai, tenTrangThai, sapHetHan,
+                soNgayConLai, dichVuApDung, quyetToan
         );
     }
 }

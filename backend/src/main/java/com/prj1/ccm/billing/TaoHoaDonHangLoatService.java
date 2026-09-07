@@ -3,6 +3,9 @@ package com.prj1.ccm.billing;
 import com.prj1.ccm.billing.calc.KetQuaTinhHoaDon;
 import com.prj1.ccm.billing.calc.KhoanPhatSinh;
 import com.prj1.ccm.billing.calc.LyDoBoQua;
+import com.prj1.ccm.billing.calc.BoiCanhTinh;
+import com.prj1.ccm.billing.calc.QuyTacThanhLyHopDong;
+import com.prj1.ccm.billing.calc.TrangThaiHoaDon;
 import com.prj1.ccm.nguoidung.NguoiDung;
 import com.prj1.ccm.nguoidung.VaiTro;
 import com.prj1.ccm.toanha.KyThanhToan;
@@ -19,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -32,6 +36,7 @@ public class TaoHoaDonHangLoatService {
     private final TinhHoaDonService tinhHoaDonService;
     private final Clock clock;
     private final TransactionTemplate giaoDichMoi;
+    private final QuyTacThanhLyHopDong quyTacThanhLyHopDong = new QuyTacThanhLyHopDong();
 
     public TaoHoaDonHangLoatService(
             PhanQuyenToaService phanQuyenToaService,
@@ -76,6 +81,51 @@ public class TaoHoaDonHangLoatService {
                 demPhongBoQua(cacLyDoBoQua),
                 cacLyDoBoQua
         );
+    }
+
+    /** FR-TNT-08 creates and publishes the final ordinary-period invoice before deposit settlement. */
+    @Transactional
+    public Long taoHoaDonKyCuoi(Long toaNhaId, Long hopDongId, NguoiDung nguoiDung) {
+        ToaNha toaNha = kiemTraQuyen(toaNhaId, nguoiDung);
+        KyThanhToan ky = kyThanhToanRepository.findDangMoByToaNhaId(toaNhaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Không có kỳ thanh toán đang mở để chốt hoá đơn cuối."));
+        java.util.Optional<TinhHoaDonRepository.HoaDonKy> hoaDonDaCo = tinhHoaDonRepository.timHoaDonKy(hopDongId, ky.id());
+        if (hoaDonDaCo.isPresent()) {
+            TinhHoaDonRepository.HoaDonKy hoaDon = hoaDonDaCo.get();
+            if (hoaDon.trangThai() == TrangThaiHoaDon.DA_HUY) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Hoá đơn kỳ cuối đã huỷ không thể quyết toán.");
+            }
+            tinhHoaDonRepository.phatHanhHoaDonThanhLy(hoaDon.hoaDonId());
+            return hoaDon.hoaDonId();
+        }
+        TinhHoaDonRepository.HopDongTrongKy hopDong = tinhHoaDonRepository
+                .layHopDongHieuLucTrongKy(toaNhaId, ky.ngayBatDau(), ky.ngayKetThuc()).stream()
+                .filter(item -> item.hopDongId().equals(hopDongId)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Hợp đồng không thuộc kỳ thanh toán đang mở."));
+        DuLieuTinhHoaDon duLieu = tinhHoaDonRepository.layDuLieuTinhHoaDonDeTaoHoaDon(toaNhaId, ky.id(), hopDongId);
+        if (!duLieu.coTheTinh()) throw new ResponseStatusException(HttpStatus.CONFLICT, "Không đủ dữ liệu để tính hoá đơn kỳ cuối.");
+        BoiCanhTinh boiCanhCuoi = boiCanhHoaDonCuoi(duLieu.boiCanh());
+        KetQuaTinhHoaDon ketQua = tinhHoaDonService.tinh(toaNhaId, boiCanhCuoi);
+        if (!ketQua.thanhCong()) throw new ResponseStatusException(HttpStatus.CONFLICT, "Không thể tính hoá đơn kỳ cuối.");
+        Long hoaDonId = tinhHoaDonRepository.taoHoaDon(taoHoaDonMoi(toaNha, ky, hopDong, ketQua), ketQua);
+        tinhHoaDonRepository.danhDauKhoanPhatSinhDaTinh(boiCanhCuoi.khoanChoTinh().stream().map(KhoanPhatSinh::id).toList(), hoaDonId);
+        tinhHoaDonRepository.danhDauSoDuDaSuDung(hopDongId, hoaDonId, ketQua);
+        tinhHoaDonRepository.phatHanhHoaDonThanhLy(hoaDonId);
+        return hoaDonId;
+    }
+
+    private BoiCanhTinh boiCanhHoaDonCuoi(BoiCanhTinh boiCanh) {
+        return new BoiCanhTinh(
+                boiCanh.ky(), boiCanh.hopDong(),
+                quyTacThanhLyHopDong.soNgayODeTinhHoaDonCuoi(boiCanh.hopDong(), boiCanh.ky(), LocalDate.now(clock)),
+                boiCanh.soNguoiOTrongKy(), boiCanh.cacChiSo(), boiCanh.cacBangGia(),
+                boiCanh.cacSoLuongDichVu(), boiCanh.khoanChoTinh(), boiCanh.soDuKhaDung()
+        );
+    }
+
+    public KyThanhToan layKyDangMo(Long toaNhaId) {
+        return kyThanhToanRepository.findDangMoByToaNhaId(toaNhaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Không có kỳ thanh toán đang mở để chốt chỉ số cuối."));
     }
 
     private ToaNha kiemTraQuyen(Long toaNhaId, NguoiDung nguoiDung) {

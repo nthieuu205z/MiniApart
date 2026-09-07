@@ -4,7 +4,7 @@
 
 **Blocked by:** 02, 08
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Công thức — BR-07
 
@@ -70,3 +70,7 @@ Chốt trong ticket: hợp đồng chuyển `DA_THANH_LY` **sau khi** quyết to
 - [ ] Tên test mang mã `FR-TNT-08`, `FR-TNT-09`, `BR-07`
 
 ## Comments
+
+- Implemented `V30__settlement_invoices.sql`: `ky_id` is nullable for settlement invoices, while a partial unique index preserves ordinary `(hop_dong_id, ky_id)` uniqueness when `ky_id IS NOT NULL`.
+- The existing invoice calculator is reused to create and publish the final ordinary-period invoice before BR-07 is calculated. Settlement invoices are `DA_PHAT_HANH`, have `ky_id = NULL`, and are paid through `ThanhToanService` using a dedicated null-period entry point.
+- Concern: the ticket endpoint assumes final meter readings have already been recorded in the open period; the approved request shape only supplies damage deduction and reason.
