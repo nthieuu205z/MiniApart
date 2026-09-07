@@ -27,3 +27,11 @@ The full suite was started twice but did not complete within the available bound
 ## Commit
 
 Implementation commit: `6324113b408d8e9a436f6c137867353b34bd750d`.
+
+## Review round 1 fixes
+
+Changed files: `YeuCauThanhLy`, `HopDongService`, `TaoHoaDonHangLoatService`, `GiaoDichCocService`, `ThongTinQuyetToan`, and `ThanhLyHopDongIntegrationTest`.
+
+The settlement request now accepts `chiSoCuoi` entries and writes them via `ChiSoDichVuService` in the open period before invoking the existing final-invoice calculator. The settlement audit now includes final invoice id/amount, collected deposit, debt, deduction, refund, and settlement invoice id. Deduction validation now rejects scale/precision violations as HTTP 400 before scale normalization.
+
+Focused verification: `./gradlew test --tests com.prj1.ccm.hopdong.ThanhLyHopDongIntegrationTest` completed `BUILD SUCCESSFUL` (6 tests). `./gradlew clean test` was launched in the background for full verification; its result was not available at the time this report update was written.

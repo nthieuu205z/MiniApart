@@ -102,6 +102,11 @@ public class TaoHoaDonHangLoatService {
         return hoaDonId;
     }
 
+    public KyThanhToan layKyDangMo(Long toaNhaId) {
+        return kyThanhToanRepository.findDangMoByToaNhaId(toaNhaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Không có kỳ thanh toán đang mở để chốt chỉ số cuối."));
+    }
+
     private ToaNha kiemTraQuyen(Long toaNhaId, NguoiDung nguoiDung) {
         if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {

@@ -14,6 +14,8 @@ import com.prj1.ccm.toanha.Phong;
 import com.prj1.ccm.toanha.PhongRepository;
 import com.prj1.ccm.toanha.TrangThaiPhongService;
 import com.prj1.ccm.toanha.ToaNha;
+import com.prj1.ccm.toanha.ChiSoDichVuService;
+import com.prj1.ccm.toanha.KyThanhToan;
 import com.prj1.ccm.billing.GiaoDichCocService;
 import com.prj1.ccm.billing.TaoHoaDonHangLoatService;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -58,6 +60,7 @@ public class HopDongService {
     private final TaoHoaDonHangLoatService taoHoaDonHangLoatService;
     private final GiaoDichCocService giaoDichCocService;
     private final NhatKyThaoTacRepository nhatKyThaoTacRepository;
+    private final ChiSoDichVuService chiSoDichVuService;
     private final Clock clock;
 
     @Autowired
@@ -70,7 +73,7 @@ public class HopDongService {
             NguoiOCungRepository nguoiOCungRepository,
             PhanQuyenToaService phanQuyenToaService,
             TrangThaiPhongService trangThaiPhongService, TaoHoaDonHangLoatService taoHoaDonHangLoatService,
-            GiaoDichCocService giaoDichCocService, NhatKyThaoTacRepository nhatKyThaoTacRepository,
+            GiaoDichCocService giaoDichCocService, NhatKyThaoTacRepository nhatKyThaoTacRepository, ChiSoDichVuService chiSoDichVuService,
             Clock clock
     ) {
         this.hopDongRepository = hopDongRepository;
@@ -84,6 +87,7 @@ public class HopDongService {
         this.taoHoaDonHangLoatService = taoHoaDonHangLoatService;
         this.giaoDichCocService = giaoDichCocService;
         this.nhatKyThaoTacRepository = nhatKyThaoTacRepository;
+        this.chiSoDichVuService = chiSoDichVuService;
         this.clock = clock;
     }
 
@@ -91,7 +95,7 @@ public class HopDongService {
                    DichVuRepository dichVuRepository, BangGiaRepository bangGiaRepository, NguoiOCungRepository nguoiOCungRepository,
                    PhanQuyenToaService phanQuyenToaService, TrangThaiPhongService trangThaiPhongService, Clock clock) {
         this(hopDongRepository, phongRepository, nguoiThueRepository, dichVuRepository, bangGiaRepository, nguoiOCungRepository,
-                phanQuyenToaService, trangThaiPhongService, null, null, null, clock);
+                phanQuyenToaService, trangThaiPhongService, null, null, null, null, clock);
     }
 
     @Transactional
@@ -145,7 +149,7 @@ public class HopDongService {
 
     @Transactional
     public ThongTinHopDong thanhLy(Long hopDongId, NguoiDung nguoiDung) {
-        return thanhLy(hopDongId, new YeuCauThanhLy(null, null), nguoiDung);
+        return thanhLy(hopDongId, new YeuCauThanhLy(null, null, List.of()), nguoiDung);
     }
 
     /** FR-TNT-08, FR-TNT-09 and BR-07 settle final billing before changing the contract status. */
@@ -160,10 +164,14 @@ public class HopDongService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_CHUYEN_TRANG_THAI);
         }
         ToaNha toaNha = phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, hopDongView.toaNhaId());
-        taoHoaDonHangLoatService.taoHoaDonKyCuoi(toaNha.id(), hopDongId, nguoiDung);
-        giaoDichCocService.quyetToan(hopDongId, yeuCau == null ? null : yeuCau.khauTruHuHong(), yeuCau == null ? null : yeuCau.lyDo(), toaNha.maToa(), toaNha.soNgayHanTt(), nguoiDung);
+        KyThanhToan ky = taoHoaDonHangLoatService.layKyDangMo(toaNha.id());
+        if (yeuCau != null && yeuCau.chiSoCuoi() != null) {
+            yeuCau.chiSoCuoi().forEach(chiSo -> chiSoDichVuService.ghiChiSo(toaNha.id(), ky.id(), chiSo, nguoiDung));
+        }
+        Long hoaDonCuoiId = taoHoaDonHangLoatService.taoHoaDonKyCuoi(toaNha.id(), hopDongId, nguoiDung);
+        com.prj1.ccm.billing.ThongTinQuyetToan quyetToan = giaoDichCocService.quyetToan(hopDongId, hoaDonCuoiId, yeuCau == null ? null : yeuCau.khauTruHuHong(), yeuCau == null ? null : yeuCau.lyDo(), toaNha.maToa(), toaNha.soNgayHanTt(), nguoiDung);
         hopDongRepository.updateTrangThai(hopDongId, TrangThaiHopDong.DA_THANH_LY);
-        nhatKyThaoTacRepository.ghi(nguoiDung.id(), "THANH_LY_HOP_DONG", "HOP_DONG:" + hopDongId, trangThaiHienTai.name(), TrangThaiHopDong.DA_THANH_LY.name());
+        nhatKyThaoTacRepository.ghi(nguoiDung.id(), "THANH_LY_HOP_DONG", "HOP_DONG:" + hopDongId, trangThaiHienTai.name(), "DA_THANH_LY;hoaDonCuoi=" + quyetToan.hoaDonCuoiId() + ";tong=" + quyetToan.tongHoaDonCuoi() + ";daThuCoc=" + quyetToan.daThuCoc() + ";congNo=" + quyetToan.congNo() + ";khauTru=" + quyetToan.khauTru() + ";hoan=" + quyetToan.hoanCoc() + ";hoaDonQT=" + quyetToan.hoaDonQuyetToanId());
         trangThaiPhongService.dongBoTheoPhongId(hopDongView.hopDong().phongId());
         return chiTiet(hopDongId, nguoiDung);
     }

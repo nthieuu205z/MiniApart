@@ -41,8 +41,9 @@ public class GiaoDichCocService {
 
     /** FR-TNT-08, FR-TNT-09 and BR-07 settle the collected deposit after the final invoice is issued. */
     @Transactional
-    public void quyetToan(Long hopDongId, BigDecimal khauTru, String lyDo, String maToa, int soNgayHan, NguoiDung nguoiDung) {
-        BigDecimal khauTruHopLe = khauTru == null ? BigDecimal.ZERO : khauTru.setScale(MONEY_SCALE);
+    public ThongTinQuyetToan quyetToan(Long hopDongId, Long hoaDonCuoiId, BigDecimal khauTru, String lyDo, String maToa, int soNgayHan, NguoiDung nguoiDung) {
+        if (khauTru != null && (khauTru.scale() > MONEY_SCALE || khauTru.precision() - khauTru.scale() > MONEY_PRECISION - MONEY_SCALE)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_KHONG_HOP_LE);
+        BigDecimal khauTruHopLe = khauTru == null ? BigDecimal.ZERO.setScale(MONEY_SCALE) : khauTru.setScale(MONEY_SCALE);
         if (khauTruHopLe.signum() < 0 || (khauTruHopLe.signum() > 0 && (lyDo == null || lyDo.isBlank()))) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Khấu trừ hư hỏng cần số tiền không âm và lý do không rỗng.");
         BigDecimal daThu = giaoDichCocRepository.tongThuCoc(hopDongId).setScale(MONEY_SCALE);
         BigDecimal congNo = giaoDichCocRepository.tongCongNo(hopDongId).setScale(MONEY_SCALE);
@@ -50,7 +51,8 @@ public class GiaoDichCocService {
         if (khauTruHopLe.signum() > 0) giaoDichCocRepository.ghi(new GiaoDichCocRepository.GiaoDichCocMoi(hopDongId, LoaiGiaoDichCoc.KHAU_TRU_COC, khauTruHopLe, ngay, nguoiDung.id(), lyDo.trim()));
         BigDecimal ketQua = daThu.subtract(congNo).subtract(khauTruHopLe);
         if (ketQua.signum() > 0) giaoDichCocRepository.ghi(new GiaoDichCocRepository.GiaoDichCocMoi(hopDongId, LoaiGiaoDichCoc.HOAN_COC, ketQua, ngay, nguoiDung.id(), null));
-        if (ketQua.signum() < 0) giaoDichCocRepository.taoHoaDonQuyetToan(hopDongId, "QT-" + maToa + "-" + hopDongId, ngay, ngay.plusDays(soNgayHan), ketQua.negate());
+        Long hoaDonQuyetToanId = ketQua.signum() < 0 ? giaoDichCocRepository.taoHoaDonQuyetToan(hopDongId, "QT-" + maToa + "-" + hopDongId, ngay, ngay.plusDays(soNgayHan), ketQua.negate()) : null;
+        return new ThongTinQuyetToan(hoaDonCuoiId, congNo, daThu, congNo, khauTruHopLe, ketQua.signum() > 0 ? ketQua : BigDecimal.ZERO, hoaDonQuyetToanId);
     }
 
     /** FR-TNT-04, CR-009, BR-07, and US-09 record one immutable deposit receipt outside the invoice ledger. */

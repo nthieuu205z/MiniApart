@@ -102,6 +102,36 @@ class ThanhLyHopDongIntegrationTest {
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM NHAT_KY_THAO_TAC WHERE doi_tuong = ? AND hanh_dong = 'THANH_LY_HOP_DONG'",
                 Integer.class, "HOP_DONG:" + hopDongId)).isEqualTo(1);
+        String audit = jdbcTemplate.queryForObject("SELECT gia_tri_sau FROM NHAT_KY_THAO_TAC WHERE doi_tuong = ? AND hanh_dong = 'THANH_LY_HOP_DONG'", String.class, "HOP_DONG:" + hopDongId);
+        assertThat(audit).contains("hoaDonCuoi=", "daThuCoc=7000000.00", "congNo=", "khauTru=0.00", "hoan=");
+    }
+
+    @Test
+    void FR_TNT_08_recordsFinalMeterReadingBeforeCalculatingFinalInvoice() throws Exception {
+        Long phongId = jdbcTemplate.queryForObject("SELECT phong_id FROM HOP_DONG WHERE id = ?", Long.class, hopDongId);
+        Long dichVuId = jdbcTemplate.queryForObject("INSERT INTO DICH_VU(toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung) VALUES (1, 'Điện', 'THEO_CHI_SO', 'CO_DINH', 'kWh', TRUE, TRUE) RETURNING id", Long.class);
+        jdbcTemplate.update("INSERT INTO BANG_GIA(dich_vu_id, don_gia, ngay_hieu_luc) VALUES (?, 3000.00, DATE '2026-01-01')", dichVuId);
+        jdbcTemplate.update("INSERT INTO HOP_DONG_DICH_VU(hop_dong_id, dich_vu_id, don_gia_ap_dung) VALUES (?, ?, 3000.00)", hopDongId, dichVuId);
+        thuCoc(hopDongId, "7000000.00");
+
+        mockMvc.perform(post(thanhLyUrl(hopDongId)).header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"chiSoCuoi\":[{\"phongId\":" + phongId + ",\"dichVuId\":" + dichVuId + ",\"chiSoCuoi\":\"50.00\",\"coThayCongTo\":false}]}"))
+                .andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject("SELECT chi_so_cuoi FROM CHI_SO_DICH_VU WHERE phong_id = ? AND dich_vu_id = ?", BigDecimal.class, phongId, dichVuId)).isEqualByComparingTo("50.00");
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM CHI_TIET_HOA_DON c JOIN HOA_DON h ON h.id=c.hoa_don_id WHERE h.hop_dong_id=? AND c.dich_vu_id=? AND c.chi_so_cuoi=50.00", Integer.class, hopDongId, dichVuId)).isEqualTo(1);
+    }
+
+    @Test
+    void FR_TNT_09_BR_07_zeroSettlementCreatesNeitherRefundNorSettlementInvoiceAndRejectsInvalidDeductionMoney() throws Exception {
+        thuCoc(hopDongId, "1100000.00");
+        mockMvc.perform(post(thanhLyUrl(hopDongId)).header("Authorization", "Bearer " + login(3L, "0900000003"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"khauTruHuHong\":\"1.001\",\"lyDo\":\"x\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post(thanhLyUrl(hopDongId)).header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM GIAO_DICH_COC WHERE hop_dong_id=? AND loai='HOAN_COC'", Integer.class, hopDongId)).isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM HOA_DON WHERE hop_dong_id=? AND ky_id IS NULL", Integer.class, hopDongId)).isZero();
     }
 
     @Test
