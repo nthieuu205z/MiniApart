@@ -23,3 +23,7 @@ The contract entry point preserves role/building authorization through `PhanQuye
 ## Concerns
 
 The full suite was started twice but did not complete within the available bounded command window; only the focused integration suite has fresh successful output. Final meter values must be recorded in the open payment period before settlement because the approved endpoint request contains no meter inputs.
+
+## Commit
+
+Implementation commit: `6324113b408d8e9a436f6c137867353b34bd750d`.
