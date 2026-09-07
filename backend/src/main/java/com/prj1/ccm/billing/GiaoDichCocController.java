@@ -32,7 +32,7 @@ public class GiaoDichCocController {
         this.giaoDichCocService = giaoDichCocService;
     }
 
-    /** CR-009, BR-07, and US-09 record a deposit separately from recurring invoice lines. */
+    /** FR-TNT-04, CR-009, BR-07, and US-09 record a deposit separately from recurring invoice lines. */
     @PostMapping
     public ResponseEntity<ThongTinGiaoDichCoc> thuCoc(
             @PathVariable Long hopDongId,
@@ -50,7 +50,7 @@ public class GiaoDichCocController {
                 .body(ketQua);
     }
 
-    /** CR-009 and BR-07 return the agreed deposit, collected total, balance, and receipt history. */
+    /** FR-TNT-04, CR-009, and BR-07 return the agreed deposit, collected total, balance, and receipt history. */
     @GetMapping
     public ThongTinTienCoc xem(@PathVariable Long hopDongId, HttpServletRequest request) {
         return giaoDichCocService.xem(hopDongId, nguoiDungHienTai(request));

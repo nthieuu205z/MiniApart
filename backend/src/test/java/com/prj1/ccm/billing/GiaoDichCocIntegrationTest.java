@@ -1,24 +1,40 @@
 package com.prj1.ccm.billing;
 
 import com.prj1.ccm.auth.PasswordHasher;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.mockito.Mockito;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -30,6 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@Import(GiaoDichCocIntegrationTest.TestDoubles.class)
 class GiaoDichCocIntegrationTest {
 
     @Container
@@ -44,8 +61,19 @@ class GiaoDichCocIntegrationTest {
     @Autowired
     private PasswordHasher passwordHasher;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private GiaoDichCocRepository giaoDichCocRepository;
+
     private Long hopDongId;
     private Long hopDongNgoaiPhamViId;
+
+    @AfterEach
+    void resetTestDoubles() {
+        Mockito.reset(giaoDichCocRepository);
+    }
 
     @DynamicPropertySource
     static void configureDataSource(DynamicPropertyRegistry registry) {
@@ -58,6 +86,9 @@ class GiaoDichCocIntegrationTest {
     void resetDatabase() {
         xoaNeuBangTonTai("GIAO_DICH_COC");
         xoaNeuBangTonTai("HOP_DONG_DICH_VU");
+        xoaNeuBangTonTai("CHI_TIET_HOA_DON_BAC_THANG");
+        xoaNeuBangTonTai("CHI_TIET_HOA_DON");
+        xoaNeuBangTonTai("HOA_DON");
         xoaNeuBangTonTai("HOP_DONG");
         jdbcTemplate.update("DELETE FROM NHAT_KY_THAO_TAC");
         jdbcTemplate.update("DELETE FROM NGUOI_THUE");
@@ -87,8 +118,19 @@ class GiaoDichCocIntegrationTest {
     }
 
     @Test
-    void CR_009_BR_07_thuCocNhieuLanXemDuocTongVaKhongTaoDongHoaDon() throws Exception {
+    void FR_TNT_04_CR_009_BR_07_thuCocNhieuLanXemDuocTongVaKhongTaoDongHoaDon() throws Exception {
         String managerToken = login(3L, "0900000003");
+        themHoaDonVaDong(hopDongId);
+        int soHoaDonTruoc = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM HOA_DON WHERE hop_dong_id = ?",
+                Integer.class,
+                hopDongId
+        );
+        int soDongHoaDonTruoc = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM CHI_TIET_HOA_DON ct JOIN HOA_DON hd ON hd.id = ct.hoa_don_id WHERE hd.hop_dong_id = ?",
+                Integer.class,
+                hopDongId
+        );
 
         mockMvc.perform(post(giaoDichCocUrl())
                         .header("Authorization", "Bearer " + managerToken)
@@ -124,6 +166,18 @@ class GiaoDichCocIntegrationTest {
                 Integer.class,
                 hopDongId
         )).isEqualTo(2);
+        assertThat(soHoaDonTruoc).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM HOA_DON WHERE hop_dong_id = ?",
+                Integer.class,
+                hopDongId
+        )).isEqualTo(soHoaDonTruoc);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM CHI_TIET_HOA_DON ct JOIN HOA_DON hd ON hd.id = ct.hoa_don_id WHERE hd.hop_dong_id = ?",
+                Integer.class,
+                hopDongId
+        )).isEqualTo(soDongHoaDonTruoc);
+        assertThat(soDongHoaDonTruoc).isEqualTo(1);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(DISTINCT ma_bien_lai) FROM GIAO_DICH_COC WHERE hop_dong_id = ?",
                 Integer.class,
@@ -134,20 +188,10 @@ class GiaoDichCocIntegrationTest {
                 Integer.class,
                 3L
         )).isEqualTo(2);
-        assertThat(jdbcTemplate.queryForObject(
-                """
-                        SELECT COUNT(*)
-                        FROM CHI_TIET_HOA_DON ct
-                        JOIN HOA_DON hd ON hd.id = ct.hoa_don_id
-                        WHERE hd.hop_dong_id = ?
-                        """,
-                Integer.class,
-                hopDongId
-        )).isZero();
     }
 
     @Test
-    void CR_009_BR_07_chanTongThuCocVuotMucThoaThuanVaNoiRoHaiSoTien() throws Exception {
+    void FR_TNT_04_CR_009_BR_07_chanTongThuCocVuotMucThoaThuanVaNoiRoHaiSoTien() throws Exception {
         String managerToken = login(3L, "0900000003");
 
         mockMvc.perform(post(giaoDichCocUrl())
@@ -172,7 +216,7 @@ class GiaoDichCocIntegrationTest {
     }
 
     @Test
-    void CR_009_BR_07_QTHTVaQuanLySaiToaNhan403ChoCaGhiVaXem() throws Exception {
+    void FR_TNT_04_CR_009_BR_07_QTHTVaQuanLySaiToaNhan403ChoCaGhiVaXem() throws Exception {
         String systemAdminToken = login(1L, "0900000001");
         String managerToken = login(3L, "0900000003");
 
@@ -196,7 +240,7 @@ class GiaoDichCocIntegrationTest {
     }
 
     @Test
-    void CR_009_BR_07_migrationTaoDungBangVaRangBuocSoTien() {
+    void FR_TNT_04_CR_009_BR_07_migrationTaoDungBangVaRangBuocSoTien() {
         assertThat(jdbcTemplate.queryForObject(
                 """
                         SELECT EXISTS (
@@ -207,16 +251,46 @@ class GiaoDichCocIntegrationTest {
                         """,
                 Boolean.class
         )).isTrue();
-        assertThat(jdbcTemplate.queryForObject(
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO GIAO_DICH_COC(hop_dong_id, loai, so_tien, ngay, nguoi_thu_id) VALUES (?, 'THU_COC', 0.00, DATE '2040-01-10', 3)",
+                hopDongId
+        )).hasMessageContaining("ck_giao_dich_coc_so_tien_duong");
+        var moneyColumn = jdbcTemplate.queryForMap(
                 """
-                        SELECT data_type
+                        SELECT data_type, numeric_precision, numeric_scale
                         FROM information_schema.columns
                         WHERE table_schema = 'public'
                           AND table_name = 'giao_dich_coc'
                           AND column_name = 'so_tien'
+                        """
+        );
+        assertThat(moneyColumn).containsEntry("data_type", "numeric")
+                .containsEntry("numeric_precision", 15)
+                .containsEntry("numeric_scale", 2);
+        List<String> foreignKeyDefinitions = jdbcTemplate.queryForList(
+                """
+                        SELECT pg_get_constraintdef(c.oid)
+                        FROM pg_constraint c
+                        WHERE c.conrelid = 'giao_dich_coc'::regclass
+                          AND c.contype = 'f'
+                        ORDER BY c.conname
                         """,
                 String.class
-        )).isEqualTo("numeric");
+        );
+        assertThat(foreignKeyDefinitions).hasSize(2)
+                .anyMatch(definition -> definition.contains("hop_dong_id") && definition.contains("hop_dong(id)"))
+                .anyMatch(definition -> definition.contains("nguoi_thu_id") && definition.contains("nguoi_dung(id)"));
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        SELECT EXISTS (
+                            SELECT 1
+                            FROM pg_constraint
+                            WHERE conrelid = 'giao_dich_coc'::regclass
+                              AND conname = 'ck_giao_dich_coc_so_tien_duong'
+                        )
+                        """,
+                Boolean.class
+        )).isTrue();
 
         String checkDefinition = jdbcTemplate.queryForObject(
                 """
@@ -239,6 +313,50 @@ class GiaoDichCocIntegrationTest {
                         """,
                 Integer.class
         )).isEqualTo(1);
+    }
+
+    @Test
+    void FR_TNT_04_CR_009_BR_07_xemTongVaDanhSachCungMotSnapshotKhiCoGiaoDichDongThoi() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        mockMvc.perform(post(giaoDichCocUrl())
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(thuCocPayload("1000000.00", "2040-01-10", "Giao dich dau tien")))
+                .andExpect(status().isCreated());
+
+        CountDownLatch tongDaDoc = new CountDownLatch(1);
+        CountDownLatch choPhepDocDanhSach = new CountDownLatch(1);
+        Mockito.doAnswer(invocation -> {
+            BigDecimal tong = (BigDecimal) invocation.callRealMethod();
+            tongDaDoc.countDown();
+            assertThat(choPhepDocDanhSach.await(5, TimeUnit.SECONDS)).isTrue();
+            return tong;
+        }).when(giaoDichCocRepository).tongThuCoc(hopDongId);
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<MvcResult> ketQua = executor.submit(() -> mockMvc.perform(get(giaoDichCocUrl())
+                            .header("Authorization", "Bearer " + managerToken))
+                    .andReturn());
+
+            assertThat(tongDaDoc.await(5, TimeUnit.SECONDS)).isTrue();
+            jdbcTemplate.update(
+                    "INSERT INTO GIAO_DICH_COC(hop_dong_id, loai, so_tien, ngay, nguoi_thu_id, ly_do) VALUES (?, 'THU_COC', 1000000.00, DATE '2040-01-11', 3, 'concurrent snapshot insert')",
+                    hopDongId
+            );
+            choPhepDocDanhSach.countDown();
+
+            MvcResult response = ketQua.get(10, TimeUnit.SECONDS);
+            assertThat(response.getResponse().getStatus()).isEqualTo(200);
+            JsonNode responseBody = objectMapper.readTree(response.getResponse().getContentAsString());
+            assertThat(responseBody.path("tongDaThu").asText()).isEqualTo("1000000.00");
+            assertThat(responseBody.path("giaoDich").size()).isEqualTo(1);
+            assertThat(responseBody.path("giaoDich").get(0).path("lyDo").asText())
+                    .isEqualTo("Giao dich dau tien");
+        } finally {
+            choPhepDocDanhSach.countDown();
+            executor.shutdownNow();
+        }
     }
 
     private String giaoDichCocUrl() {
@@ -300,6 +418,31 @@ class GiaoDichCocIntegrationTest {
         );
     }
 
+    private void themHoaDonVaDong(Long hopDongId) {
+        Long kyId = jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO KY_THANH_TOAN(toa_nha_id, nam, thang, ngay_bat_dau, ngay_ket_thuc, trang_thai)
+                        VALUES (1, 2040, 1, DATE '2040-01-01', DATE '2040-01-31', 'DA_CHOT')
+                        RETURNING id
+                        """,
+                Long.class
+        );
+        Long hoaDonId = jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO HOA_DON(ma_hoa_don, ky_id, hop_dong_id, ngay_phat_hanh, han_thanh_toan, tong_tien, da_thu, trang_thai)
+                        VALUES ('BR07-NO-DEPOSIT-LINE', ?, ?, DATE '2040-01-31', DATE '2040-02-07', 3500000.00, 0.00, 'DA_PHAT_HANH')
+                        RETURNING id
+                        """,
+                Long.class,
+                kyId,
+                hopDongId
+        );
+        jdbcTemplate.update(
+                "INSERT INTO CHI_TIET_HOA_DON(hoa_don_id, ten_khoan, thanh_tien, loai_khoan) VALUES (?, 'Tiền phòng', 3500000.00, 'TIEN_PHONG')",
+                hoaDonId
+        );
+    }
+
     private String login(Long nguoiDungId, String soDienThoai) throws Exception {
         String runtimePassword = "runtime-" + UUID.randomUUID();
         jdbcTemplate.update(
@@ -332,6 +475,15 @@ class GiaoDichCocIntegrationTest {
                 tenBang.toLowerCase()
         ))) {
             jdbcTemplate.update("DELETE FROM " + tenBang);
+        }
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class TestDoubles {
+        @Bean
+        @Primary
+        GiaoDichCocRepository giaoDichCocRepositorySpy(JdbcTemplate jdbcTemplate) {
+            return Mockito.spy(new GiaoDichCocRepository(jdbcTemplate));
         }
     }
 }

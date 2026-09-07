@@ -6,6 +6,7 @@ import com.prj1.ccm.nguoithue.NhatKyThaoTacRepository;
 import com.prj1.ccm.toanha.PhanQuyenToaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -34,7 +35,7 @@ public class GiaoDichCocService {
         this.nhatKyThaoTacRepository = nhatKyThaoTacRepository;
     }
 
-    /** CR-009, BR-07, and US-09 record one immutable deposit receipt outside the invoice ledger. */
+    /** FR-TNT-04, CR-009, BR-07, and US-09 record one immutable deposit receipt outside the invoice ledger. */
     @Transactional
     public ThongTinGiaoDichCoc thuCoc(Long hopDongId, YeuCauThuCoc yeuCau, NguoiDung nguoiDung) {
         kiemTraVaiTro(nguoiDung);
@@ -78,8 +79,8 @@ public class GiaoDichCocService {
         return ThongTinGiaoDichCoc.tao(giaoDich);
     }
 
-    /** CR-009 and BR-07 expose the agreed deposit, the collected total, and its independent transactions. */
-    @Transactional(readOnly = true)
+    /** FR-TNT-04, CR-009, and BR-07 expose the agreed deposit, the collected total, and its independent transactions. */
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public ThongTinTienCoc xem(Long hopDongId, NguoiDung nguoiDung) {
         kiemTraVaiTro(nguoiDung);
         GiaoDichCocRepository.HopDongTrongPhamVi hopDong = giaoDichCocRepository
