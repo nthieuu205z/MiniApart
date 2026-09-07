@@ -28,6 +28,7 @@ public class HoaDonController {
     private final HoaDonChiTietService hoaDonChiTietService;
     private final ThanhToanService thanhToanService;
     private final MaQrChuyenKhoanService maQrChuyenKhoanService;
+    private final HoaDonPdfService hoaDonPdfService;
 
     public HoaDonController(
             TinhDuThaoHoaDonService tinhDuThaoHoaDonService,
@@ -37,7 +38,8 @@ public class HoaDonController {
             PhatHanhHoaDonService phatHanhHoaDonService,
             HoaDonChiTietService hoaDonChiTietService,
             ThanhToanService thanhToanService,
-            MaQrChuyenKhoanService maQrChuyenKhoanService
+            MaQrChuyenKhoanService maQrChuyenKhoanService,
+            HoaDonPdfService hoaDonPdfService
     ) {
         this.tinhDuThaoHoaDonService = tinhDuThaoHoaDonService;
         this.taoHoaDonHangLoatService = taoHoaDonHangLoatService;
@@ -47,6 +49,7 @@ public class HoaDonController {
         this.hoaDonChiTietService = hoaDonChiTietService;
         this.thanhToanService = thanhToanService;
         this.maQrChuyenKhoanService = maQrChuyenKhoanService;
+        this.hoaDonPdfService = hoaDonPdfService;
     }
 
     /**
@@ -285,5 +288,28 @@ public class HoaDonController {
     ) {
         NguoiDung nguoiDung = (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
         return hoaDonChiTietService.chiTiet(toaNhaId, kyId, hoaDonId, nguoiDung);
+    }
+
+    /**
+     * FR-INV-09 exports one issued invoice as a Vietnamese PDF with every hand-recomputable line and tier row.
+     *
+     * @param toaNhaId the building identifier
+     * @param kyId the payment-period identifier
+     * @param hoaDonId the invoice identifier
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the generated PDF invoice
+     */
+    @GetMapping(value = "/{hoaDonId}/xuat-pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> xuatPdf(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long kyId,
+            @PathVariable Long hoaDonId,
+            HttpServletRequest request
+    ) {
+        NguoiDung nguoiDung = (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=hoa-don-" + hoaDonId + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(hoaDonPdfService.xuatHoaDon(toaNhaId, kyId, hoaDonId, nguoiDung));
     }
 }

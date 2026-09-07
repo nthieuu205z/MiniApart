@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Thiếu thư viện — thêm trước khi viết mã
 
@@ -44,15 +44,22 @@ Biên lai của một bút toán **đối ứng** phải nói rõ đó là đi�
 
 ## Hoàn thành khi
 
-- [ ] Thư viện PDF thêm vào `build.gradle` trước khi viết mã
-- [ ] PDF hoá đơn chở **đủ** số liệu như màn hình: từng dòng, từng bậc thang, dòng làm tròn kể cả âm
-- [ ] Định dạng tiền và ngày **dùng lại đường đã có**, không viết hàm thứ hai
-- [ ] **Test đối chiếu:** với cùng một hoá đơn, mọi con số trong PDF khớp đúng con số của `HoaDonChiTietService`
-- [ ] PDF **không nhúng liên kết ảnh ký hạn**; chọn nhúng ảnh hoặc bỏ ảnh, ghi lý do
-- [ ] Biên lai in được cho một bản ghi `THANH_TOAN`
-- [ ] Biên lai của bút toán đối ứng **nói rõ là điều chỉnh và hiện lý do**
-- [ ] Hoá đơn `NHAP` **không** xuất PDF được — chỉ hoá đơn đã phát hành mới là chứng từ
-- [ ] Test 403 cho QTHT và Quản lý sai toà
-- [ ] Tiếng Việt có dấu hiển thị đúng trong PDF — phông nhúng, không rơi về phông thiếu chữ
+- [x] Thư viện PDF thêm vào `build.gradle` trước khi viết mã
+- [x] PDF hoá đơn chở **đủ** số liệu như màn hình: từng dòng, từng bậc thang, dòng làm tròn kể cả âm
+- [x] Định dạng tiền và ngày **dùng lại đường đã có**, không viết hàm thứ hai
+- [x] **Test đối chiếu:** với cùng một hoá đơn, mọi con số trong PDF khớp đúng con số của `HoaDonChiTietService`
+- [x] PDF **không nhúng liên kết ảnh ký hạn**; chọn nhúng ảnh hoặc bỏ ảnh, ghi lý do
+- [x] Biên lai in được cho một bản ghi `THANH_TOAN`
+- [x] Biên lai của bút toán đối ứng **nói rõ là điều chỉnh và hiện lý do**
+- [x] Hoá đơn `NHAP` **không** xuất PDF được — chỉ hoá đơn đã phát hành mới là chứng từ
+- [x] Test 403 cho QTHT và Quản lý sai toà
+- [x] Tiếng Việt có dấu hiển thị đúng trong PDF — phông nhúng, không rơi về phông thiếu chữ
 
 ## Comments
+
+- Đã thêm OpenPDF 2.0.3 và bộ font OpenPDF Extra; font Liberation Sans được nhúng bằng `IDENTITY_H` để giữ tiếng Việt có dấu.
+- PDF hoá đơn dùng lại projection `HoaDonChiTietService` nhưng gọi biến thể không tạo signed link; vì PDF có thể sống lâu hơn 15 phút nên **bỏ ảnh công tơ**, không nhúng URL ký hạn và ghi rõ trong test.
+- `DinhDangChungTu` là điểm định dạng dùng chung cho hoá đơn và biên lai, giữ đúng quy ước màn hình `dd/MM/yyyy`, phân nhóm hàng nghìn bằng dấu chấm và phần thập phân bằng dấu phẩy.
+- Bảng PDF giữ đủ cột chi tiết, từng bậc, định mức quy đổi, dòng làm tròn âm, tổng/đã thu/còn lại; test đọc lại text PDF và kiểm tra font được embed.
+- Biên lai thường hiển thị mã biên lai, hoá đơn, số tiền, hình thức, ngày thu, người thu; biên lai `DOI_UNG` hiển thị tiêu đề điều chỉnh, số âm, ngày tạo và lý do.
+- Chạy `./gradlew test --no-daemon --max-workers=1 --rerun-tasks`: `BUILD SUCCESSFUL` (4 tasks). Lần chạy mặc định có race của Gradle binary test report (`NoSuchFileException`), nên dùng cấu hình tuần tự làm bằng chứng full suite ổn định.

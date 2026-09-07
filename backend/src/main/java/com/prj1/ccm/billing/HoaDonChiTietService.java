@@ -34,6 +34,18 @@ public class HoaDonChiTietService {
     /** FR-INV-02 loads every hand-recomputable invoice line, tier snapshot, resident context, and signed meter-photo link. */
     @Transactional(readOnly = true)
     public ThongTinHoaDonChiTiet chiTiet(Long toaNhaId, Long kyId, Long hoaDonId, NguoiDung nguoiDung) {
+        return chiTiet(toaNhaId, kyId, hoaDonId, nguoiDung, true);
+    }
+
+    /** FR-INV-09 reuses invoice detail without generating signed meter-photo links for persistent PDFs. */
+    @Transactional(readOnly = true)
+    public ThongTinHoaDonChiTiet chiTietKhongAnhKy(Long toaNhaId, Long kyId, Long hoaDonId, NguoiDung nguoiDung) {
+        return chiTiet(toaNhaId, kyId, hoaDonId, nguoiDung, false);
+    }
+
+    private ThongTinHoaDonChiTiet chiTiet(
+            Long toaNhaId, Long kyId, Long hoaDonId, NguoiDung nguoiDung, boolean kemLienKetAnhKy
+    ) {
         if (nguoiDung == null || !coQuyenXemHoaDon(nguoiDung)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
@@ -51,7 +63,7 @@ public class HoaDonChiTietService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         List<ThongTinDongHoaDon> cacDong = hoaDon.cacDong().stream()
                 .map(dong -> {
-                    String lienKet = dong.anhCongToId() == null
+                    String lienKet = !kemLienKetAnhKy || dong.anhCongToId() == null
                             ? null
                             : anhDinhKemService.taoLienKet(dong.anhCongToId(), nguoiDung).url();
                     return new ThongTinDongHoaDon(

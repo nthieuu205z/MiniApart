@@ -1,6 +1,12 @@
 package com.prj1.ccm.billing;
 
 import com.prj1.ccm.auth.PasswordHasher;
+import com.lowagie.text.pdf.PdfArray;
+import com.lowagie.text.pdf.PdfDictionary;
+import com.lowagie.text.pdf.PdfName;
+import com.lowagie.text.pdf.PdfObject;
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.parser.PdfTextExtractor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +21,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -28,6 +35,7 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -68,6 +76,7 @@ class HoaDonChiTietIntegrationTest {
 
     @BeforeEach
     void resetDatabase() {
+        xoaNeuBangTonTai("THANH_TOAN");
         xoaNeuBangTonTai("ANH_DINH_KEM");
         xoaNeuBangTonTai("CHI_TIET_HOA_DON_BAC_THANG");
         xoaNeuBangTonTai("CHI_TIET_HOA_DON");
@@ -86,11 +95,12 @@ class HoaDonChiTietIntegrationTest {
         jdbcTemplate.update("DELETE FROM LAN_DANG_NHAP_SAI");
         jdbcTemplate.update("DELETE FROM THEO_DOI_DANG_NHAP");
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = NULL WHERE id = 5");
+        jdbcTemplate.update("UPDATE NGUOI_DUNG SET vai_tro = CASE id WHEN 1 THEN 'QTHT' WHEN 2 THEN 'CHU' WHEN 3 THEN 'QUAN_LY' WHEN 4 THEN 'THO' WHEN 5 THEN 'NGUOI_THUE' END WHERE id IN (1, 2, 3, 4, 5)");
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET phien_ban_token = 0, so_lan_sai = 0, lan_sai_dau_tien = NULL, khoa_den = NULL, trang_thai = 'HOAT_DONG' WHERE id IN (1, 2, 3, 4, 5)");
         jdbcTemplate.update("UPDATE TOA_NHA SET so_ngay_han_tt = 7 WHERE id = 1");
 
         nguoiThueId = jdbcTemplate.queryForObject(
-                "INSERT INTO NGUOI_THUE (ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan) VALUES ('Nguoi thue 101', DATE '1990-01-01', '0901000101', 'CC101', 'Ha Noi') RETURNING id",
+                "INSERT INTO NGUOI_THUE (ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan) VALUES ('Người thuê Nguyễn Ánh', DATE '1990-01-01', '0901000101', 'CC101', 'Hà Nội') RETURNING id",
                 Long.class
         );
         otherNguoiThueId = jdbcTemplate.queryForObject(
@@ -114,7 +124,7 @@ class HoaDonChiTietIntegrationTest {
         );
         jdbcTemplate.update("INSERT INTO NHAN_KHAU_KY (ky_id, phong_id, so_nguoi, thoi_diem_chot) VALUES (?, ?, 5, TIMESTAMP '2026-08-28 23:00:00')", kyId, phongId);
         Long dichVuId = jdbcTemplate.queryForObject(
-                "INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung) VALUES (1, 'Dien', 'THEO_CHI_SO', 'BAC_THANG', 'kWh', TRUE, TRUE) RETURNING id",
+                "INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung) VALUES (1, 'Điện', 'THEO_CHI_SO', 'BAC_THANG', 'kWh', TRUE, TRUE) RETURNING id",
                 Long.class
         );
         jdbcTemplate.update("INSERT INTO HOP_DONG_DICH_VU (hop_dong_id, dich_vu_id, don_gia_ap_dung) VALUES (?, ?, 3500.00)", hopDongId, dichVuId);
@@ -127,18 +137,18 @@ class HoaDonChiTietIntegrationTest {
                 dichVuId
         );
         hoaDonId = jdbcTemplate.queryForObject(
-                "INSERT INTO HOA_DON (ma_hoa_don, ky_id, hop_dong_id, ngay_phat_hanh, han_thanh_toan, tong_tien, da_thu, trang_thai, so_nguoi_o, so_ho_quy_doi, giai_thich_so_ho) VALUES ('TN-A-101-202608', ?, ?, DATE '2026-08-31', DATE '2026-09-07', 3889500.00, 0.00, 'DA_PHAT_HANH', 5, 2, '1 ho quy doi cho moi 4 nguoi o') RETURNING id",
+                "INSERT INTO HOA_DON (ma_hoa_don, ky_id, hop_dong_id, ngay_phat_hanh, han_thanh_toan, tong_tien, da_thu, trang_thai, so_nguoi_o, so_ho_quy_doi, giai_thich_so_ho) VALUES ('TN-A-101-202608', ?, ?, DATE '2026-08-31', DATE '2026-09-07', 3889500.00, 0.00, 'DA_PHAT_HANH', 5, 2, '1 hộ quy đổi cho mỗi 4 người ở') RETURNING id",
                 Long.class,
                 kyId,
                 hopDongId
         );
         Long dongDienId = jdbcTemplate.queryForObject(
-                "INSERT INTO CHI_TIET_HOA_DON (hoa_don_id, dich_vu_id, ten_khoan, chi_so_dau, chi_so_cuoi, so_luong, don_gia, thanh_tien, loai_khoan) VALUES (?, ?, 'Tien dien', 1240.00, 1350.00, 110.00, NULL, 390000.00, 'DICH_VU') RETURNING id",
+                "INSERT INTO CHI_TIET_HOA_DON (hoa_don_id, dich_vu_id, ten_khoan, chi_so_dau, chi_so_cuoi, so_luong, don_gia, thanh_tien, loai_khoan) VALUES (?, ?, 'Tiền điện', 1240.00, 1350.00, 110.00, NULL, 390000.00, 'DICH_VU') RETURNING id",
                 Long.class,
                 hoaDonId,
                 dichVuId
         );
-        jdbcTemplate.update("INSERT INTO CHI_TIET_HOA_DON (hoa_don_id, ten_khoan, so_luong, don_gia, thanh_tien, loai_khoan) VALUES (?, 'Tien phong (31/31 ngay)', 31.00, 3500000.00, 3500000.00, 'TIEN_PHONG'), (?, 'Lam tron', NULL, NULL, -500.00, 'LAM_TRON')", hoaDonId, hoaDonId);
+        jdbcTemplate.update("INSERT INTO CHI_TIET_HOA_DON (hoa_don_id, ten_khoan, so_luong, don_gia, thanh_tien, loai_khoan) VALUES (?, 'Tiền phòng (31/31 ngày)', 31.00, 3500000.00, 3500000.00, 'TIEN_PHONG'), (?, 'Làm tròn', NULL, NULL, -500.00, 'LAM_TRON')", hoaDonId, hoaDonId);
         jdbcTemplate.update("INSERT INTO CHI_TIET_HOA_DON_BAC_THANG (chi_tiet_hoa_don_id, bac, tu_so_luong, den_so_luong, dinh_muc_quy_doi, so_luong, don_gia, thanh_tien) VALUES (?, 1, 0.00, 50.00, 100.00, 100.00, 3500.00, 350000.00), (?, 2, 51.00, 100.00, 100.00, 10.00, 4000.00, 40000.00)", dongDienId, dongDienId);
         jdbcTemplate.update("INSERT INTO ANH_DINH_KEM (doi_tuong_loai, doi_tuong_id, khoa_luu_tru, ghi_chu, loai_noi_dung, kich_thuoc) VALUES ('CHI_SO_DICH_VU', ?, 'meter.jpg', NULL, 'image/jpeg', 4)", chiSoId);
     }
@@ -151,7 +161,7 @@ class HoaDonChiTietIntegrationTest {
                 .andExpect(jsonPath("$.maHoaDon").value("TN-A-101-202608"))
                 .andExpect(jsonPath("$.soNguoiO").value(5))
                 .andExpect(jsonPath("$.soHoQuyDoi").value(2))
-                .andExpect(jsonPath("$.giaiThichSoHo", containsString("4 nguoi")))
+                .andExpect(jsonPath("$.giaiThichSoHo", containsString("4 người")))
                 .andExpect(jsonPath("$.cacDong", hasSize(3)))
                 .andExpect(jsonPath("$.cacDong[0].cacBac", hasSize(2)))
                 .andExpect(jsonPath("$.cacDong[0].cacBac[0].tuSoLuong").value("0.00"))
@@ -211,6 +221,95 @@ class HoaDonChiTietIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void FR_INV_09_managerExportsHandRecomputableInvoicePdfWithoutSignedMeterLinks() throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s/xuat-pdf".formatted(kyId, hoaDonId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String pdf = pdfText(result);
+        assertThat(pdf).contains(
+                "HÓA ĐƠN", "TN-A-101-202608", "Người thuê Nguyễn Ánh", "Tiền điện", "1240", "1350", "110",
+                "3.500", "390.000", "Bậc 1", "Bậc 2", "350.000", "40.000",
+                "0", "50", "100", "51", "10", "4.000",
+                "Tiền phòng (31/31 ngày)", "3.500.000", "Làm tròn", "-500", "3.889.500",
+                "31/08/2026", "07/09/2026", "5 người", "2 hộ quy đổi",
+                "1 hộ quy đổi cho mỗi 4 người ở"
+        );
+        assertThat(pdf).doesNotContain("/api/anh/", "/xem?");
+        String pdfMotDong = pdf.replaceAll("\\s+", " ");
+        assertThat(pdfMotDong).contains(
+                "Tiền điện1240.001350.00110.00—390.000 đ",
+                "Bậc 1 — Từ: 0.00 — Đến: 50.00 — Định mức quy đổi: 100.00 — Số lượng: 100.00 — Đơn giá: 3.500 đ — Thành tiền: 350.000 đ",
+                "Bậc 2 — Từ: 51.00 — Đến: 100.00 — Định mức quy đổi: 100.00 — Số lượng: 10.00 — Đơn giá: 4.000 đ — Thành tiền: 40.000 đ",
+                "Tiền phòng (31/31 ngày)——31.003.500.000 đ3.500.000 đ",
+                "Làm tròn————-500 đ"
+        );
+        assertPdfHasEmbeddedFont(result.getResponse().getContentAsByteArray());
+    }
+
+    @Test
+    void FR_INV_09_rejectsDraftInvoiceAndUnauthorizedRolesForPdfExport() throws Exception {
+        jdbcTemplate.update("UPDATE HOA_DON SET trang_thai = 'NHAP' WHERE id = ?", hoaDonId);
+        mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s/xuat-pdf".formatted(kyId, hoaDonId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isConflict());
+
+        jdbcTemplate.update("UPDATE HOA_DON SET trang_thai = 'DA_PHAT_HANH' WHERE id = ?", hoaDonId);
+        jdbcTemplate.update("UPDATE NGUOI_DUNG SET vai_tro = 'QUAN_LY' WHERE id = 4");
+        mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s/xuat-pdf".formatted(kyId, hoaDonId))
+                        .header("Authorization", "Bearer " + login(4L, "0900000004")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s/xuat-pdf".formatted(kyId, hoaDonId))
+                        .header("Authorization", "Bearer " + login(1L, "0900000001")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_INV_13_exportsReceiptAndMarksCounterEntryAsAdjustmentWithReason() throws Exception {
+        Long originalPaymentId = jdbcTemplate.queryForObject(
+                "INSERT INTO THANH_TOAN (hoa_don_id, so_tien, loai, hinh_thuc, ngay_thu, nguoi_thu_id, ma_bien_lai, thoi_diem_tao) VALUES (?, 500000.00, 'THU', 'TIEN_MAT', DATE '2026-09-01', 3, 'TT-20260901-00000001', TIMESTAMP '2026-09-01 09:30:00') RETURNING id",
+                Long.class, hoaDonId
+        );
+        Long counterEntryId = jdbcTemplate.queryForObject(
+                "INSERT INTO THANH_TOAN (hoa_don_id, so_tien, loai, dieu_chinh_cho_id, ly_do, nguoi_thu_id, ma_bien_lai, thoi_diem_tao) VALUES (?, -500000.00, 'DOI_UNG', ?, 'Nhập nhầm số tiền', 3, 'TT-20260902-00000002', TIMESTAMP '2026-09-02 10:45:00') RETURNING id",
+                Long.class, hoaDonId, originalPaymentId
+        );
+
+        String normalReceipt = pdfText(mockMvc.perform(get("/api/thanh-toan/%s/bien-lai-pdf".formatted(originalPaymentId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isOk()).andReturn());
+        assertThat(normalReceipt).contains(
+                "BIÊN LAI THANH TOÁN", "TT-20260901-00000001", "TN-A-101-202608",
+                "500.000", "Tiền mặt", "01/09/2026", "Quản lý Toà A"
+        );
+
+        String adjustmentReceipt = pdfText(mockMvc.perform(get("/api/thanh-toan/%s/bien-lai-pdf".formatted(counterEntryId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isOk()).andReturn());
+        assertThat(adjustmentReceipt).contains(
+                "BIÊN LAI ĐIỀU CHỈNH", "TT-20260902-00000002", "TN-A-101-202608",
+                "-500.000", "Điều chỉnh đối ứng", "02/09/2026", "Quản lý Toà A", "Nhập nhầm số tiền"
+        );
+    }
+
+    @Test
+    void FR_INV_13_rejectsSystemAdminAndWrongBuildingManagerForReceiptPdf() throws Exception {
+        Long paymentId = jdbcTemplate.queryForObject(
+                "INSERT INTO THANH_TOAN (hoa_don_id, so_tien, loai, hinh_thuc, ngay_thu, nguoi_thu_id) VALUES (?, 500000.00, 'THU', 'TIEN_MAT', DATE '2026-09-01', 3) RETURNING id",
+                Long.class, hoaDonId
+        );
+        jdbcTemplate.update("UPDATE NGUOI_DUNG SET vai_tro = 'QUAN_LY' WHERE id = 4");
+
+        mockMvc.perform(get("/api/thanh-toan/%s/bien-lai-pdf".formatted(paymentId))
+                        .header("Authorization", "Bearer " + login(4L, "0900000004")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/thanh-toan/%s/bien-lai-pdf".formatted(paymentId))
+                        .header("Authorization", "Bearer " + login(1L, "0900000001")))
+                .andExpect(status().isForbidden());
+    }
+
     private String login(Long nguoiDungId, String soDienThoai) throws Exception {
         String runtimePassword = "runtime-" + UUID.randomUUID();
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET mat_khau_hash = ? WHERE id = ?", passwordHasher.hash(runtimePassword), nguoiDungId);
@@ -221,6 +320,46 @@ class HoaDonChiTietIntegrationTest {
         int start = body.indexOf("\"token\":\"") + 9;
         int end = body.indexOf('"', start);
         return body.substring(start, end);
+    }
+
+    private String pdfText(MvcResult result) throws Exception {
+        PdfReader reader = new PdfReader(result.getResponse().getContentAsByteArray());
+        try {
+            return new PdfTextExtractor(reader).getTextFromPage(1);
+        } finally {
+            reader.close();
+        }
+    }
+
+    private void assertPdfHasEmbeddedFont(byte[] pdfBytes) throws Exception {
+        PdfReader reader = new PdfReader(pdfBytes);
+        try {
+            PdfDictionary resources = reader.getPageN(1).getAsDict(PdfName.RESOURCES);
+            PdfDictionary fonts = resources.getAsDict(PdfName.FONT);
+            boolean embedded = false;
+            for (PdfName key : fonts.getKeys()) {
+                PdfDictionary font = fonts.getAsDict(key);
+                PdfDictionary descriptor = font.getAsDict(PdfName.FONTDESCRIPTOR);
+                if (descriptor == null && font.get(PdfName.DESCENDANTFONTS) != null) {
+                    PdfObject descendant = PdfReader.getPdfObject(font.get(PdfName.DESCENDANTFONTS));
+                    if (descendant instanceof PdfArray array && array.size() > 0) {
+                        PdfObject child = PdfReader.getPdfObject(array.getPdfObject(0));
+                        if (child instanceof PdfDictionary childFont) {
+                            descriptor = childFont.getAsDict(PdfName.FONTDESCRIPTOR);
+                        }
+                    }
+                }
+                if (descriptor != null && (descriptor.get(PdfName.FONTFILE) != null
+                        || descriptor.get(PdfName.FONTFILE2) != null
+                        || descriptor.get(PdfName.FONTFILE3) != null)) {
+                    embedded = true;
+                    break;
+                }
+            }
+            assertThat(embedded).as("PDF embeds a Vietnamese-capable font").isTrue();
+        } finally {
+            reader.close();
+        }
     }
 
     private void xoaNeuBangTonTai(String tenBang) {
