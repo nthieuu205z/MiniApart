@@ -4,7 +4,7 @@
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Vì sao cần bảng riêng, không dùng `HOP_DONG.tien_coc`
 
@@ -42,14 +42,22 @@ Thay vào đó dùng **tổng**: tổng `THU_COC` của một hợp đồng khô
 
 ## Hoàn thành khi
 
-- [ ] Migration tạo `GIAO_DICH_COC` đúng ERD, `CHECK` có **đủ ba** giá trị `loai`, `so_tien` là `NUMERIC(15,2)`
-- [ ] Ghi nhận thu cọc cho một hợp đồng, sinh `ma_bien_lai` có ràng buộc duy nhất
-- [ ] Thu cọc **nhiều lần** trên một hợp đồng được phép
-- [ ] Tổng `THU_COC` vượt `HOP_DONG.tien_coc` → **bị chặn**, thông báo nêu rõ đã thu bao nhiêu và thoả thuận bao nhiêu
-- [ ] Giao dịch cọc **không** xuất hiện trong bất kỳ dòng hoá đơn nào — test khẳng định, vì đây là vi phạm BR-07 dễ xảy ra nhất
-- [ ] Xem được tổng đã thu cọc của một hợp đồng
-- [ ] Ghi `NHAT_KY_THAO_TAC`
-- [ ] Test 403: QTHT chặn hoàn toàn; Quản lý sai toà chặn
-- [ ] Tên test mang mã `CR-009` và `BR-07`
+- [x] Migration tạo `GIAO_DICH_COC` đúng ERD, `CHECK` có **đủ ba** giá trị `loai`, `so_tien` là `NUMERIC(15,2)`
+- [x] Ghi nhận thu cọc cho một hợp đồng, sinh `ma_bien_lai` có ràng buộc duy nhất
+- [x] Thu cọc **nhiều lần** trên một hợp đồng được phép
+- [x] Tổng `THU_COC` vượt `HOP_DONG.tien_coc` → **bị chặn**, thông báo nêu rõ đã thu bao nhiêu và thoả thuận bao nhiêu
+- [x] Giao dịch cọc **không** xuất hiện trong bất kỳ dòng hoá đơn nào — test khẳng định, vì đây là vi phạm BR-07 dễ xảy ra nhất
+- [x] Xem được tổng đã thu cọc của một hợp đồng
+- [x] Ghi `NHAT_KY_THAO_TAC`
+- [x] Test 403: QTHT chặn hoàn toàn; Quản lý sai toà chặn
+- [x] Tên test mang mã `CR-009` và `BR-07`
 
 ## Comments
+
+- Added `V29__deposit_transactions.sql` with `GIAO_DICH_COC`, the three approved transaction types, positive `NUMERIC(15,2)` amounts, an automatically generated unique receipt code, and the contract/user foreign keys.
+- Added `POST /api/hop-dong/{hopDongId}/giao-dich-coc` for `THU_COC` and `GET` on the same resource for the agreed amount, collected total, remaining amount, and receipt history. The existing `/nhan-coc` contract-state action remains unchanged for Slice 02 compatibility; it does not replace the immutable deposit ledger.
+- The write path locks the contract row before summing `THU_COC`, so two concurrent partial receipts cannot pass the agreed-deposit ceiling together. The aggregate is kept separate from invoice data as required by BR-07.
+- Every accepted receipt writes `NHAT_KY_THAO_TAC` with the actor, contract, before/after collected totals, and optional reason. QTHT and managers outside their assigned building are rejected with 403.
+- Verification: `./gradlew test --no-daemon --max-workers=1 --rerun-tasks` — `BUILD SUCCESSFUL`.
+- Review fix: the read endpoint now uses PostgreSQL `REPEATABLE_READ`, so the collected total and receipt history come from one consistent snapshot even when another receipt is committed between the two queries; a concurrent integration test reproduces and guards this case.
+- Review fix: endpoint Javadocs and test names carry `FR-TNT-04`; the migration test now verifies `NUMERIC(15,2)`, both foreign keys and their targets, the positive-amount check, and unchanged existing invoice/invoice-line counts after deposit collection. The concurrent read test also asserts that the original receipt remains the only visible receipt in its snapshot.
