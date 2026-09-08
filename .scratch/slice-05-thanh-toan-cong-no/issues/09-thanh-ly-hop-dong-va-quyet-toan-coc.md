@@ -74,3 +74,4 @@ Chốt trong ticket: hợp đồng chuyển `DA_THANH_LY` **sau khi** quyết to
 - Implemented `V30__settlement_invoices.sql`: `ky_id` is nullable for settlement invoices, while a partial unique index preserves ordinary `(hop_dong_id, ky_id)` uniqueness when `ky_id IS NOT NULL`.
 - The existing invoice calculator is reused to create and publish the final ordinary-period invoice before BR-07 is calculated. Settlement invoices are `DA_PHAT_HANH`, have `ky_id = NULL`, and are paid through `ThanhToanService` using a dedicated null-period entry point.
 - Concern: the ticket endpoint assumes final meter readings have already been recorded in the open period; the approved request shape only supplies damage deduction and reason.
+- Added a fixed `Clock` to `ThanhLyHopDongIntegrationTest` so final-invoice proration is deterministic at `2026-09-07`; this removes date-dependent failures without changing production settlement logic.

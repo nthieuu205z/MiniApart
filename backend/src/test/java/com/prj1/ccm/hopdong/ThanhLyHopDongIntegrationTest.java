@@ -5,7 +5,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -16,6 +20,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@Import(ThanhLyHopDongIntegrationTest.FixedClockConfiguration.class)
 class ThanhLyHopDongIntegrationTest {
 
     @Container
@@ -365,5 +373,14 @@ class ThanhLyHopDongIntegrationTest {
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET mat_khau_hash = ?, trang_thai = 'HOAT_DONG' WHERE id = ?", passwordHasher.hash(matKhau), nguoiDungId);
         return mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content("{\"soDienThoai\":\"" + soDienThoai + "\",\"matKhau\":\"" + matKhau + "\"}"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString().replaceAll(".*\\\"token\\\":\\\"([^\\\"]+)\\\".*", "$1");
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class FixedClockConfiguration {
+        @Bean
+        @Primary
+        Clock thanhLyHopDongTestClock() {
+            return Clock.fixed(Instant.parse("2026-09-07T00:00:00Z"), ZoneId.of("Asia/Ho_Chi_Minh"));
+        }
     }
 }
