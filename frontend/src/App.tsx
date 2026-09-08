@@ -14,6 +14,7 @@ import DanhMucPhong from './DanhMucPhong'
 import GhiChiSo from './GhiChiSo'
 import HoaDon from './HoaDon'
 import LichSuHoaDon from './LichSuHoaDon'
+import BieuDoTieuThu from './BieuDoTieuThu'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { BlockedNotice } from './design/building/BlockedNotice'
 import { Button } from './design/core/Button'
@@ -322,38 +323,48 @@ function App() {
     && nguoiDung.vaiTro === 'NGUOI_THUE'
     && duongDanHienTai === '/lich-su'
   )
+  const hienThiBieuDoTieuThuNguoiThue = Boolean(
+    token
+    && nguoiDung
+    && nguoiDung.vaiTro === 'NGUOI_THUE'
+    && duongDanHienTai === '/tieu-thu'
+  )
   const hienThiHoaDon = Boolean(
     token
     && nguoiDung
     && ['/hoa-don', '/hoa-don-cua-toi'].includes(duongDanHienTai)
     && ['QTHT', 'CHU', 'QUAN_LY', 'NGUOI_THUE'].includes(nguoiDung.vaiTro),
   )
-  const tieuDeTheChinh = hienThiHoaDonNguoiThue && duongDanHienTai !== '/'
-    ? 'Hoá đơn của tôi'
+  const tieuDeTheChinh = hienThiBieuDoTieuThuNguoiThue
+    ? 'Tiêu thụ điện và nước'
+    : hienThiHoaDonNguoiThue && duongDanHienTai !== '/'
+      ? 'Hoá đơn của tôi'
     : hienThiLichSuHoaDonNguoiThue
-    ? 'Lịch sử hoá đơn'
-    : hienThiDanhMucToaNha
-    ? 'Toà nhà'
-    : hienThiDanhMucPhong
-      ? 'Phòng'
-      : hienThiGhiChiSo
-        ? 'Ghi chỉ số'
-        : hienThiHoaDon
-          ? 'Hoá đơn'
-          : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
-  const maTruyVetTheChinh = hienThiHoaDonNguoiThue
-    ? 'FR-POR-01'
+      ? 'Lịch sử hoá đơn'
+      : hienThiDanhMucToaNha
+        ? 'Toà nhà'
+        : hienThiDanhMucPhong
+          ? 'Phòng'
+          : hienThiGhiChiSo
+            ? 'Ghi chỉ số'
+            : hienThiHoaDon
+              ? 'Hoá đơn'
+              : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
+  const maTruyVetTheChinh = hienThiBieuDoTieuThuNguoiThue
+    ? 'FR-POR-05'
+    : hienThiHoaDonNguoiThue
+      ? 'FR-POR-01'
     : hienThiLichSuHoaDonNguoiThue
-    ? 'FR-POR-03'
-    : hienThiDanhMucToaNha
-    ? 'FR-BLD-01'
-    : hienThiDanhMucPhong
-      ? 'FR-BLD-02'
-      : hienThiGhiChiSo
-        ? 'FR-MTR-01'
-        : hienThiHoaDon
-          ? 'FR-INV-02'
-          : nguoiDung ? 'FR-AUT-04' : 'FR-AUT-01'
+      ? 'FR-POR-03'
+      : hienThiDanhMucToaNha
+        ? 'FR-BLD-01'
+        : hienThiDanhMucPhong
+          ? 'FR-BLD-02'
+          : hienThiGhiChiSo
+            ? 'FR-MTR-01'
+            : hienThiHoaDon
+              ? 'FR-INV-02'
+              : nguoiDung ? 'FR-AUT-04' : 'FR-AUT-01'
 
   if (!nguoiDung) {
     return (
@@ -510,6 +521,8 @@ function App() {
             <DanhMucPhong token={token} mobile={laManHinhHep} />
           ) : hienThiGhiChiSo && token ? (
             <GhiChiSo token={token} mobile={laManHinhHep} />
+          ) : hienThiBieuDoTieuThuNguoiThue && token ? (
+            <BieuDoTieuThu token={token} mobile={laManHinhHep} />
           ) : hienThiLichSuHoaDonNguoiThue && token ? (
             <LichSuHoaDon token={token} mobile={laManHinhHep} />
           ) : (hienThiHoaDon || hienThiHoaDonNguoiThue) && token ? (
@@ -831,6 +844,7 @@ const GLYPH_THEO_DUONG_DAN: Record<string, GlyphName> = {
   '/viec-cua-toi': 'cho-tho',
   '/hoa-don-cua-toi': 'hoa-don',
   '/lich-su': 'lich-su-ky',
+  '/tieu-thu': 'cong-to',
   '/bao-hong': 'cho-tho',
 }
 
@@ -853,6 +867,6 @@ const NHOM_DIEU_HUONG_THEO_VAI_TRO: Record<string, Array<{ label: string, duongD
     { label: 'Công việc', duongDan: ['/viec-cua-toi'] },
   ],
   NGUOI_THUE: [
-    { label: 'Cá nhân', duongDan: ['/hoa-don-cua-toi', '/lich-su', '/hop-dong', '/bao-hong'] },
+    { label: 'Cá nhân', duongDan: ['/hoa-don-cua-toi', '/lich-su', '/tieu-thu', '/hop-dong', '/bao-hong'] },
   ],
 }

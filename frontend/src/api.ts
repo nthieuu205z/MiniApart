@@ -221,6 +221,26 @@ export type ThongTinHoaDonLichSu = {
   conLai: string
 }
 
+export type ThongTinTieuThu = {
+  kyId: number
+  hoaDonId: number
+  nam: number
+  thang: number
+  hopDongId: number
+  soPhong: string
+  dichVuId: number
+  tenDichVu: string
+  donVi: string
+  chiSoDau: string | null
+  chiSoCuoi: string | null
+  mucTieuThu: string | null
+}
+
+export type ThongTinBieuDoTieuThu = {
+  dien: ThongTinTieuThu[]
+  nuoc: ThongTinTieuThu[]
+}
+
 export type LienKetAnhKy = {
   url: string
 }
@@ -480,6 +500,19 @@ export async function fetchLichSuHoaDonCuaNguoiThue(token: string): Promise<Thon
   }
 
   return response.json() as Promise<ThongTinHoaDonLichSu[]>
+}
+
+/** FR-POR-05 returns the tenant's own electricity and water consumption for up to twelve periods. */
+export async function fetchTieuThuCuaNguoiThue(token: string, soKy = 12): Promise<ThongTinBieuDoTieuThu> {
+  const response = await fetch(`/api/cong/tieu-thu?soKy=${soKy}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải dữ liệu tiêu thụ.')
+  }
+
+  return response.json() as Promise<ThongTinBieuDoTieuThu>
 }
 
 /** FR-POR-03/FR-POR-04 opens one history row through the tenant-scoped endpoint. */

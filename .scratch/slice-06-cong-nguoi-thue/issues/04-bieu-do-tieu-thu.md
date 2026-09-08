@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Hai quy tắc từ đặc tả UX, cả hai đều dễ làm sai
 
@@ -34,15 +34,19 @@ Nếu sau này muốn cho người thuê thấy cảnh báo thì **dùng lại l
 
 ## Hoàn thành khi
 
-- [ ] Biểu đồ 12 kỳ gần nhất, **điện và nước tách riêng**, không chung trục
-- [ ] Có **cả bảng số**, không chỉ biểu đồ
-- [ ] Chạm/di vào một cột → hiện số chính xác của kỳ đó
-- [ ] Ít hơn 12 kỳ → hiện đúng số có, **không cột rỗng độn thêm**
-- [ ] Không kỳ nào → màn rỗng nói rõ vì sao
-- [ ] **Không tự sinh cảnh báo hay so sánh phần trăm**
-- [ ] Đơn vị hiện rõ trên mỗi biểu đồ (kWh, m³)
-- [ ] Chạy được ở **360 px** (`NFR-USA-01`), không cuộn ngang
-- [ ] Chỉ dữ liệu của chính mình → kế thừa ticket 01
-- [ ] Tên test mang mã `FR-POR-05`
+- [x] Biểu đồ 12 kỳ gần nhất, **điện và nước tách riêng**, không chung trục
+- [x] Có **cả bảng số**, không chỉ biểu đồ
+- [x] Chạm/di vào một cột → hiện số chính xác của kỳ đó
+- [x] Ít hơn 12 kỳ → hiện đúng số có, **không cột rỗng độn thêm**
+- [x] Không kỳ nào → màn rỗng nói rõ vì sao
+- [x] **Không tự sinh cảnh báo hay so sánh phần trăm**
+- [x] Đơn vị hiện rõ trên mỗi biểu đồ (kWh, m³)
+- [x] Chạy được ở **360 px** (`NFR-USA-01`), không cuộn ngang
+- [x] Chỉ dữ liệu của chính mình → kế thừa ticket 01
+- [x] Tên test mang mã `FR-POR-05`
 
 ## Comments
+
+- Đã thêm `GET /api/cong/tieu-thu?soKy=12`; máy chủ giới hạn tối đa 12 kỳ, lấy hóa đơn đã phát hành trong phạm vi `nguoiThueId` từ token, và trả hai dãy `dien`/`nuoc` riêng. Không thêm migration.
+- Frontend thêm route `/tieu-thu` cho `NGUOI_THUE`, hai biểu đồ thanh ngang CSS không thêm thư viện, bảng số liệu accessible, trạng thái loading/lỗi/rỗng, và nút 44px hỗ trợ focus/hover/click để hiện số chính xác. Dữ liệu gốc vẫn giữ dạng chuỗi để không làm tròn sai; phần trăm chỉ dùng nội bộ để tính chiều rộng thanh, không hiển thị cho người dùng.
+- Verification: `npm test` (16 files, 130 tests), `npm run build`, `./gradlew test --rerun-tasks` (BUILD SUCCESSFUL), `git diff --check`.

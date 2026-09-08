@@ -68,7 +68,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'NGUOI_THUE',
       tenVaiTro: 'Người thuê',
     },
-    menuLabels: ['Hoá đơn của tôi', 'Lịch sử', 'Hợp đồng', 'Báo hỏng'],
+    menuLabels: ['Hoá đơn của tôi', 'Lịch sử', 'Tiêu thụ', 'Hợp đồng', 'Báo hỏng'],
   },
 ]
 
@@ -786,6 +786,7 @@ function buildFetchMock(
     invoiceResponse?: Record<string, unknown>
     latestTenantInvoiceResponse?: Record<string, unknown>
     historyResponse?: Record<string, unknown>[]
+    consumptionResponse?: Record<string, unknown>
   },
 ) {
   const accounts: ThongTinQuanLyNguoiDung[] = [
@@ -927,6 +928,13 @@ function buildFetchMock(
 
     if (url === '/api/cong/hoa-don' && method === 'GET') {
       return new Response(JSON.stringify(options?.historyResponse ?? []), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (url.startsWith('/api/cong/tieu-thu') && method === 'GET') {
+      return new Response(JSON.stringify(options?.consumptionResponse ?? { dien: [], nuoc: [] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -1447,6 +1455,71 @@ describe('invoice navigation', () => {
       expect(mountedApp!.container.querySelector('[data-history-list="mobile"]')).not.toBeNull()
     })
     expect(mountedApp.container.textContent).toContain('Quyết toán hợp đồng')
+  })
+
+  it('FR-POR-05 renders separate electricity and water charts with an accessible table and touch detail', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
+    const nguoiThue = MENU_BY_ROLE[4].nguoiDung
+    const fetchMock = buildFetchMock(nguoiThue, {
+      consumptionResponse: {
+        dien: [{
+          kyId: 8,
+          hoaDonId: 12,
+          nam: 2026,
+          thang: 8,
+          soPhong: '101',
+          dichVuId: 21,
+          tenDichVu: 'Điện cổng người thuê',
+          donVi: 'kWh',
+          chiSoDau: '100.00',
+          chiSoCuoi: '125.00',
+          mucTieuThu: '25.00',
+        }],
+        nuoc: [{
+          kyId: 8,
+          hoaDonId: 12,
+          nam: 2026,
+          thang: 8,
+          soPhong: '101',
+          dichVuId: 22,
+          tenDichVu: 'Nước cổng người thuê',
+          donVi: 'm3',
+          chiSoDau: '40.00',
+          chiSoCuoi: '46.25',
+          mucTieuThu: '6.25',
+        }],
+      },
+    })
+    mountedApp = await mountAppAndLogin(nguoiThue, '/tieu-thu', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="consumption-screen"]')).not.toBeNull()
+    })
+    expect(mountedApp.container.querySelector('[data-layout-variant="mobile"]')).not.toBeNull()
+    expect(mountedApp.container.querySelector('[data-consumption-chart="electricity"]')).not.toBeNull()
+    expect(mountedApp.container.querySelector('[data-consumption-chart="water"]')).not.toBeNull()
+    expect(mountedApp.container.querySelectorAll('[data-consumption-table]')).toHaveLength(2)
+    expect(mountedApp.container.textContent).toContain('25.00 kWh')
+    expect(mountedApp.container.textContent).toContain('6.25 m3')
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/cong/tieu-thu?soKy=12',
+      expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }),
+    )
+
+    const electricityBar = mountedApp.container.querySelector('[data-consumption-bar="electricity-8"]') as HTMLButtonElement
+    expect(electricityBar).not.toBeNull()
+    await act(async () => electricityBar.click())
+    expect(mountedApp.container.textContent).toContain('Kỳ 08/2026 · Phòng 101: 25.00 kWh')
+  })
+
+  it('FR-POR-05 shows a clear first-use empty state when no meter history exists', async () => {
+    const nguoiThue = MENU_BY_ROLE[4].nguoiDung
+    const fetchMock = buildFetchMock(nguoiThue, { consumptionResponse: { dien: [], nuoc: [] } })
+    mountedApp = await mountAppAndLogin(nguoiThue, '/tieu-thu', fetchMock)
+
+    await vi.waitFor(() => expect(mountedApp!.container.querySelector('[data-consumption-empty]')).not.toBeNull())
+    expect(mountedApp.container.textContent).toContain('Chưa có dữ liệu tiêu thụ')
+    expect(mountedApp.container.querySelector('[role="alert"]')).toBeNull()
   })
 
   it('FR-INV-02 reads all invoice identifiers from the detail query link', () => {

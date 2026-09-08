@@ -30,6 +30,19 @@ p {
   margin-top: 0;
 }
 
+.ma-consumption-bar {
+  transition: background-color var(--ma-dur-press) linear, border-color var(--ma-dur-press) linear;
+}
+
+.ma-consumption-bar:hover {
+  background: var(--ma-bg-sunken) !important;
+}
+
+.ma-consumption-bar:focus-visible {
+  outline: 3px solid var(--ma-focus-ring);
+  outline-offset: 2px;
+}
+
 dl,
 dt,
 dd {

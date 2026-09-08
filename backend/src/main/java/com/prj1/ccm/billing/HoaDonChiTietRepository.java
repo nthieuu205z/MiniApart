@@ -159,6 +159,62 @@ class HoaDonChiTietRepository {
         );
     }
 
+    List<TieuThuDuLieu> findTieuThuCuaNguoiThue(Long nguoiThueId, int soKy) {
+        return jdbcTemplate.query(
+                """
+                        WITH ky_gan_nhat AS (
+                            SELECT ky.id, ky.ngay_ket_thuc
+                            FROM HOA_DON hd
+                            JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
+                            JOIN KY_THANH_TOAN ky ON ky.id = hd.ky_id
+                            WHERE hop_dong.nguoi_thue_id = ?
+                              AND hd.trang_thai NOT IN ('NHAP', 'DA_HUY')
+                            GROUP BY ky.id, ky.ngay_ket_thuc
+                            ORDER BY ky.ngay_ket_thuc DESC, ky.id DESC
+                            LIMIT ?
+                        )
+                        SELECT ky.id AS ky_id, ky.nam, ky.thang,
+                               hd.id AS hoa_don_id, hop_dong.id AS hop_dong_id,
+                               p.so_phong, ct.dich_vu_id, dv.ten AS ten_dich_vu,
+                               dv.don_vi, dv.la_dien,
+                               ct.chi_so_dau, ct.chi_so_cuoi, ct.so_luong
+                        FROM ky_gan_nhat gan
+                        JOIN KY_THANH_TOAN ky ON ky.id = gan.id
+                        JOIN HOA_DON hd ON hd.ky_id = ky.id
+                        JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
+                        JOIN PHONG p ON p.id = hop_dong.phong_id
+                        JOIN CHI_TIET_HOA_DON ct ON ct.hoa_don_id = hd.id
+                        JOIN DICH_VU dv ON dv.id = ct.dich_vu_id
+                        WHERE hop_dong.nguoi_thue_id = ?
+                          AND hd.trang_thai NOT IN ('NHAP', 'DA_HUY')
+                          AND ct.loai_khoan = 'DICH_VU'
+                          AND ct.so_luong IS NOT NULL
+                          AND dv.cach_tinh = 'THEO_CHI_SO'
+                        ORDER BY ky.ngay_ket_thuc DESC, ky.id DESC,
+                                 CASE WHEN dv.la_dien THEN 0 ELSE 1 END,
+                                 dv.id, hd.id, ct.id
+                        """,
+                (resultSet, rowNum) -> new TieuThuDuLieu(
+                        resultSet.getLong("ky_id"),
+                        resultSet.getLong("hoa_don_id"),
+                        resultSet.getInt("nam"),
+                        resultSet.getInt("thang"),
+                        resultSet.getLong("hop_dong_id"),
+                        resultSet.getString("so_phong"),
+                        resultSet.getLong("dich_vu_id"),
+                        resultSet.getString("ten_dich_vu"),
+                        resultSet.getString("don_vi"),
+                        resultSet.getBigDecimal("chi_so_dau"),
+                        resultSet.getBigDecimal("chi_so_cuoi"),
+                        resultSet.getBigDecimal("so_luong"),
+                        resultSet.getBoolean("la_dien")
+                ),
+                nguoiThueId,
+                soKy,
+                nguoiThueId
+        );
+    }
+
     private List<DongHoaDonDuLieu> findLines(Long hoaDonId) {
         return jdbcTemplate.query(
                 """
@@ -298,5 +354,22 @@ record HoaDonLichSuDuLieu(
         LocalDate hanThanhToan,
         BigDecimal tongTien,
         BigDecimal daThu
+) {
+}
+
+record TieuThuDuLieu(
+        Long kyId,
+        Long hoaDonId,
+        Integer nam,
+        Integer thang,
+        Long hopDongId,
+        String soPhong,
+        Long dichVuId,
+        String tenDichVu,
+        String donVi,
+        BigDecimal chiSoDau,
+        BigDecimal chiSoCuoi,
+        BigDecimal mucTieuThu,
+        boolean laDien
 ) {
 }

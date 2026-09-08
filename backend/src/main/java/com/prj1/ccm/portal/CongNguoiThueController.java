@@ -4,6 +4,7 @@ import com.prj1.ccm.auth.AuthInterceptor;
 import com.prj1.ccm.billing.HoaDonChiTietService;
 import com.prj1.ccm.billing.ThongTinHoaDonChiTiet;
 import com.prj1.ccm.billing.ThongTinHoaDonLichSu;
+import com.prj1.ccm.billing.ThongTinBieuDoTieuThu;
 import com.prj1.ccm.hopdong.HopDongService;
 import com.prj1.ccm.hopdong.ThongTinHopDong;
 import com.prj1.ccm.nguoidung.NguoiDung;
@@ -11,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -51,6 +53,22 @@ public class CongNguoiThueController {
     @GetMapping("/hoa-don")
     public List<ThongTinHoaDonLichSu> lichSuHoaDon(HttpServletRequest request) {
         return hoaDonChiTietService.lichSuCuaNguoiThue(nguoiDungHienTai(request));
+    }
+
+    /**
+     * FR-POR-05 returns the latest meter-consumption periods as separate electricity and water series.
+     * FR-POR-04 derives the scope from the authenticated tenant and never accepts a room id from the client.
+     *
+     * @param soKy the requested number of periods, limited to the ticket's maximum of twelve
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return own electricity and water readings for the requested periods
+     */
+    @GetMapping("/tieu-thu")
+    public ThongTinBieuDoTieuThu tieuThu(
+            @RequestParam(defaultValue = "12") int soKy,
+            HttpServletRequest request
+    ) {
+        return hoaDonChiTietService.tieuThuCuaNguoiThue(nguoiDungHienTai(request), soKy);
     }
 
     /**

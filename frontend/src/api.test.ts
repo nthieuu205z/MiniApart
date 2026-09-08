@@ -6,6 +6,7 @@ import {
   fetchCurrentUser,
   fetchHoaDonCuaNguoiThue,
   fetchLichSuHoaDonCuaNguoiThue,
+  fetchTieuThuCuaNguoiThue,
   fetchHoaDonMoiNhatCuaNguoiThue,
   fetchNguoiDungQuanLy,
   fetchHealth,
@@ -179,6 +180,20 @@ describe('fetchHealth', () => {
       headers: { Authorization: 'Bearer tenant-token' },
     })
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/cong/hoa-don/10', {
+      headers: { Authorization: 'Bearer tenant-token' },
+    })
+  })
+
+  it('FR-POR-05 fetches twelve tenant consumption periods through the relative portal endpoint', async () => {
+    const response = {
+      dien: [{ kyId: 8, hoaDonId: 10, nam: 2026, thang: 8, soPhong: '101', donVi: 'kWh', mucTieuThu: '25.00' }],
+      nuoc: [{ kyId: 8, hoaDonId: 10, nam: 2026, thang: 8, soPhong: '101', donVi: 'm3', mucTieuThu: '6.25' }],
+    }
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(response))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchTieuThuCuaNguoiThue('tenant-token')).resolves.toEqual(response)
+    expect(fetchMock).toHaveBeenCalledWith('/api/cong/tieu-thu?soKy=12', {
       headers: { Authorization: 'Bearer tenant-token' },
     })
   })

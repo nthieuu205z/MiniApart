@@ -28,6 +28,7 @@ import java.util.UUID;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -252,6 +253,69 @@ class CongNguoiThueAuthorizationIntegrationTest {
     }
 
     @Test
+    void FR_POR_05_tenantReadsTwelvePeriodsWithElectricityAndWaterSeparatedAndOwnScope() throws Exception {
+        Long oldInvoiceId = jdbcTemplate.queryForObject(
+                "SELECT id FROM HOA_DON WHERE ma_hoa_don = 'PORTAL-A-202607'", Long.class);
+        Long waterId = jdbcTemplate.queryForObject(
+                "INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung) VALUES (1, 'Nước cổng người thuê', 'THEO_CHI_SO', 'CO_DINH', 'm3', FALSE, TRUE) RETURNING id",
+                Long.class
+        );
+        jdbcTemplate.update(
+                "INSERT INTO HOP_DONG_DICH_VU(hop_dong_id, dich_vu_id, don_gia_ap_dung) VALUES (?, ?, 18000.00)",
+                ownContractId,
+                waterId
+        );
+
+        themDongDichVu(oldInvoiceId, dichVuId, "90.00", "100.00", "10.00");
+        themDongDichVu(latestInvoiceId, dichVuId, "100.00", "125.00", "25.00");
+        themDongDichVu(latestInvoiceId, waterId, "40.00", "46.25", "6.25");
+        themDongDichVu(otherInvoiceId, dichVuId, "1.00", "999.00", "998.00");
+
+        for (int thang = 1; thang <= 11; thang++) {
+            Long kyId = themKy(2025, thang, "2025-%02d-01".formatted(thang), "2025-%02d-28".formatted(thang));
+            Long hoaDonId = themHoaDon(ownContractId, kyId, "PORTAL-A-101-2025%02d-CHART".formatted(thang));
+            themDongDichVu(
+                    hoaDonId,
+                    dichVuId,
+                    new java.math.BigDecimal(thang).setScale(2).toPlainString(),
+                    new java.math.BigDecimal(thang + 10).setScale(2).toPlainString(),
+                    "10.00"
+            );
+        }
+
+        String tenantToken = login(5L, "0900000006");
+
+        mockMvc.perform(get("/api/cong/tieu-thu")
+                        .param("soKy", "12")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dien.length()").value(12))
+                .andExpect(jsonPath("$.dien[0].hoaDonId").value(latestInvoiceId))
+                .andExpect(jsonPath("$.dien[0].soPhong").value("101"))
+                .andExpect(jsonPath("$.dien[0].donVi").value("kWh"))
+                .andExpect(jsonPath("$.dien[0].chiSoDau").value("100.00"))
+                .andExpect(jsonPath("$.dien[0].chiSoCuoi").value("125.00"))
+                .andExpect(jsonPath("$.dien[0].mucTieuThu").value("25.00"))
+                .andExpect(jsonPath("$.dien[*].soPhong").value(not(hasItem("202"))))
+                .andExpect(jsonPath("$.nuoc.length()").value(1))
+                .andExpect(jsonPath("$.nuoc[0].tenDichVu").value("Nước cổng người thuê"))
+                .andExpect(jsonPath("$.nuoc[0].donVi").value("m3"))
+                .andExpect(jsonPath("$.nuoc[0].mucTieuThu").value("6.25"));
+    }
+
+    @Test
+    void FR_POR_05_tenantWithoutMeterInvoicesGetsTwoEmptySeries() throws Exception {
+        jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = ? WHERE id = 5", emptyTenantId);
+        String tenantToken = login(5L, "0900000006");
+
+        mockMvc.perform(get("/api/cong/tieu-thu")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dien.length()").value(0))
+                .andExpect(jsonPath("$.nuoc.length()").value(0));
+    }
+
+    @Test
     void FR_POR_04_tenantCannotReadGuessableForeignInvoicePhotoOrContract() throws Exception {
         String tenantToken = login(5L, "0900000006");
 
@@ -320,6 +384,9 @@ class CongNguoiThueAuthorizationIntegrationTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/cong/hoa-don")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/cong/tieu-thu")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/cong/hoa-don/" + latestInvoiceId)
@@ -413,6 +480,17 @@ class CongNguoiThueAuthorizationIntegrationTest {
                 Long.class,
                 chiSoId,
                 khoaLuuTru
+        );
+    }
+
+    private void themDongDichVu(Long hoaDonId, Long dichVuId, String chiSoDau, String chiSoCuoi, String soLuong) {
+        jdbcTemplate.update(
+                "INSERT INTO CHI_TIET_HOA_DON (hoa_don_id, dich_vu_id, ten_khoan, chi_so_dau, chi_so_cuoi, so_luong, don_gia, thanh_tien, loai_khoan) VALUES (?, ?, 'Dịch vụ đo chỉ số', ?, ?, ?, 3500.00, 35000.00, 'DICH_VU')",
+                hoaDonId,
+                dichVuId,
+                new java.math.BigDecimal(chiSoDau),
+                new java.math.BigDecimal(chiSoCuoi),
+                new java.math.BigDecimal(soLuong)
         );
     }
 

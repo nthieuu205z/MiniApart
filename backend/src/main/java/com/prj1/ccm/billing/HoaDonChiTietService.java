@@ -70,6 +70,18 @@ public class HoaDonChiTietService {
                 .toList();
     }
 
+    /** FR-POR-05 returns up to twelve own payment periods split into electricity and water series. */
+    @Transactional(readOnly = true)
+    public ThongTinBieuDoTieuThu tieuThuCuaNguoiThue(NguoiDung nguoiDung, int soKy) {
+        kiemTraNguoiThue(nguoiDung);
+        if (soKy < 1 || soKy > 12) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Số kỳ phải từ 1 đến 12.");
+        }
+        return ThongTinBieuDoTieuThu.tu(
+                hoaDonChiTietRepository.findTieuThuCuaNguoiThue(nguoiDung.nguoiThueId(), soKy)
+        );
+    }
+
     /** FR-POR-04 resolves a guessable invoice identifier only after binding it to the tenant in the token. */
     @Transactional(readOnly = true)
     public ThongTinHoaDonChiTiet chiTietCuaNguoiThue(Long hoaDonId, NguoiDung nguoiDung) {
