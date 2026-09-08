@@ -4,7 +4,7 @@
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Vì sao đi trước mọi ticket có migration
 
@@ -46,14 +46,18 @@ Dùng lại **khuôn** của `QuyTacTrangThaiHoaDon` — bảng chuyển hợp l
 
 ## Hoàn thành khi
 
-- [ ] Sáu trạng thái của BR-16, tên tiếng Việt không dấu theo quy ước đặt tên
-- [ ] Mọi cạnh của sơ đồ hợp lệ; cạnh ngoài sơ đồ ném lỗi
-- [ ] **Cả năm cạnh huỷ** hợp lệ, mỗi cạnh một test
-- [ ] Huỷ **bắt buộc có lý do**, chuỗi rỗng hoặc toàn khoảng trắng bị từ chối
-- [ ] `Đã đóng` là trạng thái cuối — không cạnh nào đi ra
-- [ ] Một test tham số hoá phủ **toàn bộ** cặp (nguồn, đích) và khẳng định đúng tập hợp lệ, không chỉ vài cặp mẫu
-- [ ] Không phụ thuộc Spring, JPA, hay cơ sở dữ liệu — chạy trong mili giây
-- [ ] Không đặt trong `billing.calc`
-- [ ] Toàn bộ test hiện có vẫn xanh
+- [x] Sáu trạng thái tuyến chính và trạng thái huỷ của BR-16, tên tiếng Việt không dấu theo quy ước đặt tên
+- [x] Mọi cạnh của sơ đồ hợp lệ; cạnh ngoài sơ đồ ném lỗi
+- [x] **Cả năm cạnh huỷ** hợp lệ, mỗi cạnh một test
+- [x] Huỷ **bắt buộc có lý do**, chuỗi rỗng hoặc toàn khoảng trắng bị từ chối
+- [x] `Đã đóng` là trạng thái cuối — không cạnh nào đi ra
+- [x] Một test tham số hoá phủ **toàn bộ** cặp (nguồn, đích) và khẳng định đúng tập hợp lệ, không chỉ vài cặp mẫu
+- [x] Không phụ thuộc Spring, JPA, hay cơ sở dữ liệu — chạy trong mili giây
+- [x] Không đặt trong `billing.calc`
+- [x] Toàn bộ test hiện có vẫn xanh
 
 ## Comments
+
+- Đã thêm `TrangThaiYeuCau` và `QuyTacTrangThaiYeuCau` trong gói `com.prj1.ccm.suachua`. Bảng chuyển là nguồn luật duy nhất; các action `tiepNhan`, `phanCong`, `batDauXuLy`, `baoDaSuaXong`, `xacNhanDong` và `huy` đều đi qua bảng này.
+- BR-16 trong sơ đồ và UX có sáu trạng thái tuyến chính cộng một trạng thái kết thúc `DA_HUY` (tổng cộng bảy giá trị enum); implementation theo đồ thị đầy đủ và phủ đủ năm cạnh huỷ. Đây là cách xử lý chỗ ticket ghi ngắn là “sáu trạng thái”.
+- TDD: focused test đỏ do thiếu hai lớp production, sau đó xanh. Verification cuối: `./gradlew test --rerun-tasks` xanh; frontend giữ 17 test files / 134 tests pass và build xanh.
