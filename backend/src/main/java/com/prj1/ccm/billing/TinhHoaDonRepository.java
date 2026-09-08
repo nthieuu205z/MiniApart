@@ -359,7 +359,7 @@ class TinhHoaDonRepository {
                                 JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
                                 JOIN PHONG p ON p.id = hop_dong.phong_id
                                 WHERE hd.id = ?
-                                  AND hd.ky_id = ?
+                                  AND hd.ky_id IS NOT DISTINCT FROM ?
                                   AND p.toa_nha_id = ?
                                 """,
                         (resultSet, rowNum) -> new HoaDonTrongPhamVi(

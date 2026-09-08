@@ -773,6 +773,7 @@ function buildFetchMock(
   options?: {
     roomsByBuilding?: Map<number, ThongTinPhong[]>
     invoiceResponse?: Record<string, unknown>
+    latestTenantInvoiceResponse?: Record<string, unknown>
   },
 ) {
   const accounts: ThongTinQuanLyNguoiDung[] = [
@@ -900,6 +901,16 @@ function buildFetchMock(
           headers: { 'Content-Type': 'application/json' },
         },
       )
+    }
+
+    if (url === '/api/cong/hoa-don-moi-nhat' && method === 'GET') {
+      const body = options?.latestTenantInvoiceResponse
+        ? { coHoaDon: true, hoaDon: options.latestTenantInvoiceResponse }
+        : { coHoaDon: false, thongBao: 'Chưa có hoá đơn nào cho tài khoản này.' }
+      return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
     }
 
     if (url === '/api/nguoi-dung/vai-tro') {
@@ -1221,6 +1232,51 @@ describe('invoice navigation', () => {
       '/api/toa-nha/1/ky-thanh-toan/8/hoa-don/10',
       expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }),
     )
+  })
+
+  it('FR-POR-01 shows the tenant latest invoice immediately after login', async () => {
+    const nguoiThue = MENU_BY_ROLE[4].nguoiDung
+    const fetchMock = buildFetchMock(nguoiThue, {
+      latestTenantInvoiceResponse: {
+        hoaDonId: 10,
+        maHoaDon: 'TN-A-101-202608',
+        kyId: 8,
+        hopDongId: 11,
+        soPhong: '101',
+        nguoiThue: 'Người thuê 101',
+        ngayPhatHanh: '2026-08-31',
+        hanThanhToan: '2026-09-07',
+        trangThai: 'DA_PHAT_HANH',
+        tongTien: '3889500.00',
+        daThu: '0.00',
+        conLai: '3889500.00',
+        cacDong: [],
+      },
+    })
+
+    mountedApp = await mountAppAndLogin(nguoiThue, '/', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="invoice-detail"]')).not.toBeNull()
+      expect(mountedApp!.container.textContent).toContain('TN-A-101-202608')
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/cong/hoa-don-moi-nhat',
+      expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }),
+    )
+  })
+
+  it('FR-POR-01 renders the tenant portal empty state when no invoice exists', async () => {
+    const nguoiThue = MENU_BY_ROLE[4].nguoiDung
+    const fetchMock = buildFetchMock(nguoiThue)
+
+    mountedApp = await mountAppAndLogin(nguoiThue, '/', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.textContent).toContain('Chưa có hoá đơn nào cho tài khoản này.')
+    })
+    expect(mountedApp.container.querySelector('[data-testid="invoice-detail"]')).toBeNull()
   })
 
   it('FR-INV-02 reads all invoice identifiers from the detail query link', () => {

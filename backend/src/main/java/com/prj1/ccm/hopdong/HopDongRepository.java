@@ -113,6 +113,22 @@ class HopDongRepository {
                 .findFirst();
     }
 
+    public List<HopDongView> findByNguoiThueId(Long nguoiThueId) {
+        return jdbcTemplate.query(
+                """
+                        SELECT hd.id, hd.phong_id, p.toa_nha_id, p.so_phong, hd.nguoi_thue_id, nt.ho_ten,
+                               hd.ngay_bat_dau, hd.ngay_ket_thuc, hd.gia_thue, hd.tien_coc, hd.so_ngay_bao_truoc, hd.trang_thai
+                        FROM HOP_DONG hd
+                        JOIN PHONG p ON p.id = hd.phong_id
+                        JOIN NGUOI_THUE nt ON nt.id = hd.nguoi_thue_id
+                        WHERE hd.nguoi_thue_id = ?
+                        ORDER BY hd.ngay_ket_thuc DESC, hd.id DESC
+                        """,
+                (resultSet, rowNum) -> mapHopDongView(resultSet),
+                nguoiThueId
+        );
+    }
+
     public List<ThongTinHopDongDichVu> findDichVuApDungByHopDongId(Long hopDongId) {
         return jdbcTemplate.query(
                 """

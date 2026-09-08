@@ -135,6 +135,29 @@ public class HopDongService {
         return taoThongTinHopDong(hopDongView, LocalDate.now(clock));
     }
 
+    /** FR-POR-07 lists current and historical contracts belonging to the authenticated tenant. */
+    @Transactional(readOnly = true)
+    public List<ThongTinHopDong> danhSachCuaNguoiThue(NguoiDung nguoiDung) {
+        kiemTraNguoiThue(nguoiDung);
+        LocalDate homNay = LocalDate.now(clock);
+        return hopDongRepository.findByNguoiThueId(nguoiDung.nguoiThueId())
+                .stream()
+                .map(item -> taoThongTinHopDong(item, homNay))
+                .toList();
+    }
+
+    /** FR-POR-04 returns a historical contract only when its tenant matches the authenticated tenant. */
+    @Transactional(readOnly = true)
+    public ThongTinHopDong chiTietCuaNguoiThue(Long hopDongId, NguoiDung nguoiDung) {
+        kiemTraNguoiThue(nguoiDung);
+        HopDongRepository.HopDongView hopDongView = hopDongRepository.findViewById(hopDongId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (!nguoiDung.nguoiThueId().equals(hopDongView.hopDong().nguoiThueId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return taoThongTinHopDong(hopDongView, LocalDate.now(clock));
+    }
+
     @Transactional
     public ThongTinHopDong nhanCoc(Long hopDongId, NguoiDung nguoiDung) {
         kiemTraVaiTro(nguoiDung);
@@ -363,6 +386,12 @@ public class HopDongService {
     private void kiemTraVaiTro(NguoiDung nguoiDung) {
         if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU
                 && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    private void kiemTraNguoiThue(NguoiDung nguoiDung) {
+        if (nguoiDung == null || nguoiDung.vaiTro() != VaiTro.NGUOI_THUE || nguoiDung.nguoiThueId() == null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
     }
