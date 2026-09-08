@@ -39,7 +39,7 @@ class HoaDonChiTietRepository {
                             HoaDonDuLieu hoaDon = new HoaDonDuLieu(
                                     resultSet.getLong("id"),
                                     resultSet.getString("ma_hoa_don"),
-                                    resultSet.getLong("ky_id"),
+                                    getLongOrNull(resultSet, "ky_id"),
                                     resultSet.getLong("hop_dong_id"),
                                     resultSet.getLong("nguoi_thue_id"),
                                     resultSet.getObject("ngay_phat_hanh", LocalDate.class),

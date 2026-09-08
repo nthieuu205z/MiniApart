@@ -19,6 +19,7 @@ import java.sql.Date;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -206,7 +207,8 @@ class CongNguoiThueAuthorizationIntegrationTest {
         mockMvc.perform(get("/api/cong/hoa-don/" + settlementInvoiceId)
                         .header("Authorization", "Bearer " + tenantToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.hoaDonId").value(settlementInvoiceId));
+                .andExpect(jsonPath("$.hoaDonId").value(settlementInvoiceId))
+                .andExpect(jsonPath("$.kyId").value(nullValue()));
 
         assert403OnPortalEndpoints(login(1L, "0900000001"));
         assert403OnPortalEndpoints(login(4L, "0900000004"));
