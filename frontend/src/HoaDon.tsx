@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ApiError, fetchHoaDonChiTiet, type ThongTinHoaDonChiTiet, type ThongTinDongHoaDon } from './api'
+import { ApiError, fetchHoaDonChiTiet, fetchHoaDonMoiNhatCuaNguoiThue, type ThongTinHoaDonChiTiet, type ThongTinDongHoaDon } from './api'
 import { Button } from './design/core/Button'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Figure } from './design/core/Figure'
@@ -8,27 +8,40 @@ import { SysLabel } from './design/core/SysLabel'
 import { EmptyState } from './design/feedback/EmptyState'
 import { HighlightNotice, MetaGrid, MetaItem, MeterImage, ScreenHeader, ScreenSurface, TableCell, TableFrame, TableHeadCell, TotalLine } from './design/layout/Screen'
 
-type Props = { token: string; toaNhaId?: number; kyId?: number; hoaDonId?: number; mobile?: boolean }
+type Props = { token: string; toaNhaId?: number; kyId?: number; hoaDonId?: number; mobile?: boolean; cheDoNguoiThue?: boolean }
 
-export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false }: Props) {
+export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false, cheDoNguoiThue = false }: Props) {
   const [hoaDon, setHoaDon] = useState<ThongTinHoaDonChiTiet | null>(null)
   const [dangTai, setDangTai] = useState(true)
   const [loi, setLoi] = useState<string | null>(null)
+  const [thongBaoRong, setThongBaoRong] = useState<string | null>(null)
   const variant = mobile ? 'mobile' : 'desktop'
 
   useEffect(() => {
-    if (toaNhaId === undefined || kyId === undefined || hoaDonId === undefined) {
-      setDangTai(false)
-      return
-    }
-
     let mounted = true
     setDangTai(true)
     setLoi(null)
-    fetchHoaDonChiTiet(token, toaNhaId, kyId, hoaDonId)
-      .then((data) => {
-        if (mounted) setHoaDon(data)
-      })
+    setHoaDon(null)
+    setThongBaoRong(null)
+
+    const request = cheDoNguoiThue
+      ? fetchHoaDonMoiNhatCuaNguoiThue(token).then((data) => {
+          if (!mounted) return
+          if (data.coHoaDon && data.hoaDon) {
+            setHoaDon(data.hoaDon)
+            setThongBaoRong(null)
+          } else {
+            setHoaDon(null)
+            setThongBaoRong(data.thongBao ?? 'Chưa có hoá đơn nào cho tài khoản này.')
+          }
+        })
+      : toaNhaId !== undefined && kyId !== undefined && hoaDonId !== undefined
+        ? fetchHoaDonChiTiet(token, toaNhaId, kyId, hoaDonId).then((data) => {
+            if (mounted) setHoaDon(data)
+          })
+        : Promise.resolve()
+
+    request
       .catch((reason: unknown) => {
         if (mounted) setLoi(reason instanceof ApiError ? reason.message : 'Không thể tải chi tiết hoá đơn.')
       })
@@ -39,16 +52,16 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
     return () => {
       mounted = false
     }
-  }, [hoaDonId, kyId, token, toaNhaId])
+  }, [cheDoNguoiThue, hoaDonId, kyId, token, toaNhaId])
 
-  if (dangTai) return <ScreenSurface data-layout-variant={variant}>Đang tải hoá đơn…</ScreenSurface>
+  if (dangTai) return <ScreenSurface data-layout-variant={variant} aria-busy="true" aria-live="polite">Đang tải hoá đơn…</ScreenSurface>
   if (loi) return <ScreenSurface data-layout-variant={variant} role="alert">{loi}</ScreenSurface>
   if (!hoaDon) {
     return (
       <ScreenSurface data-testid="invoice-screen" data-layout-variant={variant}>
         <SysLabel>FR-INV-02</SysLabel>
         <h3>Hoá đơn</h3>
-        <EmptyState title="Chọn một hoá đơn để xem đầy đủ từng khoản mục." />
+        <EmptyState title={thongBaoRong ?? 'Chọn một hoá đơn để xem đầy đủ từng khoản mục.'} />
       </ScreenSurface>
     )
   }

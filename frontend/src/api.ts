@@ -176,7 +176,7 @@ export type ThongTinDongHoaDon = {
 export type ThongTinHoaDonChiTiet = {
   hoaDonId: number
   maHoaDon: string
-  kyId: number
+  kyId: number | null
   hopDongId: number
   soPhong: string
   nguoiThue: string
@@ -190,6 +190,12 @@ export type ThongTinHoaDonChiTiet = {
   soHoQuyDoi?: number | null
   giaiThichSoHo?: string | null
   cacDong: ThongTinDongHoaDon[]
+}
+
+export type ThongTinHoaDonMoiNhat = {
+  coHoaDon: boolean
+  thongBao?: string
+  hoaDon?: ThongTinHoaDonChiTiet
 }
 
 export type YeuCauToaNha = {
@@ -422,6 +428,18 @@ export async function fetchHoaDonChiTiet(
   }
 
   return response.json() as Promise<ThongTinHoaDonChiTiet>
+}
+
+export async function fetchHoaDonMoiNhatCuaNguoiThue(token: string): Promise<ThongTinHoaDonMoiNhat> {
+  const response = await fetch('/api/cong/hoa-don-moi-nhat', {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải hoá đơn mới nhất.')
+  }
+
+  return response.json() as Promise<ThongTinHoaDonMoiNhat>
 }
 
 export async function chotKyThanhToan(

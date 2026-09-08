@@ -4,6 +4,7 @@ import {
   capNhatNguoiDungQuanLy,
   chotKyThanhToan,
   fetchCurrentUser,
+  fetchHoaDonMoiNhatCuaNguoiThue,
   fetchNguoiDungQuanLy,
   fetchHealth,
   fetchPhongChuaGhiChiSo,
@@ -116,6 +117,34 @@ describe('fetchHealth', () => {
     })
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/auth/me', {
       headers: { Authorization: 'Bearer expired-token' },
+    })
+  })
+
+  it('FR-POR-01 fetches the tenant latest-invoice portal envelope', async () => {
+    const response = {
+      coHoaDon: true,
+      hoaDon: {
+        hoaDonId: 10,
+        maHoaDon: 'TN-A-101-202608',
+        kyId: 8,
+        hopDongId: 11,
+        soPhong: '101',
+        nguoiThue: 'Người thuê 101',
+        ngayPhatHanh: '2026-08-31',
+        hanThanhToan: '2026-09-07',
+        trangThai: 'DA_PHAT_HANH',
+        tongTien: '3889500.00',
+        daThu: '0.00',
+        conLai: '3889500.00',
+        cacDong: [],
+      },
+    }
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(response))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchHoaDonMoiNhatCuaNguoiThue('tenant-token')).resolves.toEqual(response)
+    expect(fetchMock).toHaveBeenCalledWith('/api/cong/hoa-don-moi-nhat', {
+      headers: { Authorization: 'Bearer tenant-token' },
     })
   })
 
