@@ -15,6 +15,8 @@ import {
   ghiChiSoDichVu,
   fetchToaNha,
   fetchVaiTro,
+  fetchThongBao,
+  danhDauThongBaoDaDoc,
   khoaNguoiDungQuanLy,
   login,
   taoNguoiDungQuanLy,
@@ -487,6 +489,46 @@ describe('fetchHealth', () => {
     await expect(fetchViecCuaToi('worker-token')).resolves.toEqual(work)
     expect(fetchMock).toHaveBeenCalledWith('/api/tho/viec-cua-toi', {
       headers: { Authorization: 'Bearer worker-token' },
+    })
+  })
+
+  it('FR-MNT-02 FR-MNT-04 FR-INV-08 fetches the authenticated notification inbox and unread count', async () => {
+    const inbox = {
+      thongBao: [{
+        maThamChieu: '11111111-1111-4111-8111-111111111111',
+        tieuDe: 'Yêu cầu sửa chữa mới',
+        noiDung: 'Phòng 302 báo hỏng: vòi nước bị rỉ — Gấp',
+        daDoc: false,
+        docLuc: null,
+        taoLuc: '2026-09-08T12:00:00Z',
+      }],
+      soChuaDoc: 1,
+    }
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(inbox))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchThongBao('manager-token')).resolves.toEqual(inbox)
+    expect(fetchMock).toHaveBeenCalledWith('/api/thong-bao', {
+      headers: { Authorization: 'Bearer manager-token' },
+    })
+  })
+
+  it('FR-MNT-02 marks an owned notification as read through the notification endpoint', async () => {
+    const notification = {
+      maThamChieu: '11111111-1111-4111-8111-111111111111',
+      tieuDe: 'Yêu cầu sửa chữa mới',
+      noiDung: 'Phòng 302 báo hỏng: vòi nước bị rỉ — Gấp',
+      daDoc: true,
+      docLuc: '2026-09-08T12:05:00Z',
+      taoLuc: '2026-09-08T12:00:00Z',
+    }
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(notification))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(danhDauThongBaoDaDoc('manager-token', '11111111-1111-4111-8111-111111111111')).resolves.toEqual(notification)
+    expect(fetchMock).toHaveBeenCalledWith('/api/thong-bao/11111111-1111-4111-8111-111111111111/da-doc', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer manager-token' },
     })
   })
 

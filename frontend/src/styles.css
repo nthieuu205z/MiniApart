@@ -43,6 +43,11 @@ p {
   outline-offset: 2px;
 }
 
+.ma-topbar-notification:focus-visible {
+  outline: 3px solid var(--ma-focus-ring);
+  outline-offset: 2px;
+}
+
 dl,
 dt,
 dd {

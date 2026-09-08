@@ -11,10 +11,11 @@ export interface TopBarProps extends React.HTMLAttributes<HTMLDivElement> {
   periodStatus?: string
   search?: string
   notifications?: number
+  notificationHref?: string
 }
 
 /** Thanh đầu: bộ chọn toà và kỳ luôn ở đây, mọi vai trò, mọi màn. */
-export function TopBar({ building, period, periodStatus, search = 'Tìm nhanh', notifications, style, ...rest }: TopBarProps): React.ReactElement {
+export function TopBar({ building, period, periodStatus, search = 'Tìm nhanh', notifications, notificationHref, style, ...rest }: TopBarProps): React.ReactElement {
   const pick = (glyph: GlyphName | null, text: string) => (
     <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14.5, fontWeight: 700, letterSpacing: "-0.01em", minHeight: "var(--ma-hit-desktop)" }}>
       {glyph ? <Glyph name={glyph} size={14} color="var(--ma-text-secondary)" strokeWidth={1.5} /> : null}
@@ -52,15 +53,33 @@ export function TopBar({ building, period, periodStatus, search = 'Tìm nhanh', 
           {search}
           <span style={{ fontFamily: "var(--ma-font-mono)", fontSize: 11, border: "1px solid var(--ma-border-default)", padding: "1px 5px" }}>/</span>
         </span>
-        <span style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 600, color: "var(--ma-text-primary)" }}>
-          <Glyph name="thong-bao" size={15} strokeWidth={1.5} />
-          Thông báo
-          {notifications ? (
-            <span style={{ fontFamily: "var(--ma-font-mono)", fontSize: 11.5, fontWeight: 700, color: "var(--ma-text-on-inverse)", background: "var(--ma-urgent)", padding: "1px 6px" }}>
-              {notifications}
-            </span>
-          ) : null}
-        </span>
+        {notificationHref ? (
+          <a
+            className="ma-topbar-notification"
+            data-testid="topbar-notifications"
+            href={notificationHref}
+            aria-label={notifications ? `Thông báo, ${notifications} chưa đọc` : 'Thông báo'}
+            style={{ display: "flex", alignItems: "center", gap: 7, minHeight: "var(--ma-hit-mobile)", padding: "0 4px", fontWeight: 600, color: "var(--ma-text-primary)", textDecoration: "none" }}
+          >
+            <Glyph name="thong-bao" size={15} strokeWidth={1.5} />
+            <span>Thông báo</span>
+            {notifications ? (
+              <span data-testid="topbar-unread-count" style={{ fontFamily: "var(--ma-font-mono)", fontSize: 11.5, fontWeight: 700, color: "var(--ma-text-on-inverse)", background: "var(--ma-urgent)", padding: "1px 6px" }}>
+                {notifications}
+              </span>
+            ) : null}
+          </a>
+        ) : (
+          <span data-testid="topbar-notifications" style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 600, color: "var(--ma-text-primary)" }}>
+            <Glyph name="thong-bao" size={15} strokeWidth={1.5} />
+            Thông báo
+            {notifications ? (
+              <span data-testid="topbar-unread-count" style={{ fontFamily: "var(--ma-font-mono)", fontSize: 11.5, fontWeight: 700, color: "var(--ma-text-on-inverse)", background: "var(--ma-urgent)", padding: "1px 6px" }}>
+                {notifications}
+              </span>
+            ) : null}
+          </span>
+        )}
       </div>
     </div>
   )

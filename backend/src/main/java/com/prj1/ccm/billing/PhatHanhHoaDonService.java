@@ -4,6 +4,7 @@ import com.prj1.ccm.billing.calc.QuyTacTrangThaiHoaDon;
 import com.prj1.ccm.billing.calc.TrangThaiHoaDon;
 import com.prj1.ccm.nguoidung.NguoiDung;
 import com.prj1.ccm.nguoidung.VaiTro;
+import com.prj1.ccm.thongbao.ThongBaoService;
 import com.prj1.ccm.toanha.KyThanhToanRepository;
 import com.prj1.ccm.toanha.PhanQuyenToaService;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,7 @@ public class PhatHanhHoaDonService {
     private final PhanQuyenToaService phanQuyenToaService;
     private final KyThanhToanRepository kyThanhToanRepository;
     private final TinhHoaDonRepository tinhHoaDonRepository;
+    private final ThongBaoService thongBaoService;
     private final TransactionTemplate giaoDichMoi;
     private final QuyTacTrangThaiHoaDon quyTacTrangThaiHoaDon = new QuyTacTrangThaiHoaDon();
 
@@ -37,11 +39,13 @@ public class PhatHanhHoaDonService {
             PhanQuyenToaService phanQuyenToaService,
             KyThanhToanRepository kyThanhToanRepository,
             TinhHoaDonRepository tinhHoaDonRepository,
+            ThongBaoService thongBaoService,
             PlatformTransactionManager transactionManager
     ) {
         this.phanQuyenToaService = phanQuyenToaService;
         this.kyThanhToanRepository = kyThanhToanRepository;
         this.tinhHoaDonRepository = tinhHoaDonRepository;
+        this.thongBaoService = thongBaoService;
         this.giaoDichMoi = new TransactionTemplate(transactionManager);
         this.giaoDichMoi.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
@@ -98,8 +102,13 @@ public class PhatHanhHoaDonService {
             List<ThongTinLyDoBoQua> lyDoBoQua
     ) {
         try {
-            int soDongCapNhat = giaoDichMoi.execute(status -> tinhHoaDonRepository
-                    .phatHanhHoaDonNeuDangNhapVaTongTienKhacKhong(hoaDon.hoaDonId()));
+            int soDongCapNhat = giaoDichMoi.execute(status -> {
+                int soDong = tinhHoaDonRepository.phatHanhHoaDonNeuDangNhapVaTongTienKhacKhong(hoaDon.hoaDonId());
+                if (soDong == 1) {
+                    thongBaoService.taoKhiPhatHanhHoaDon(hoaDon.hoaDonId());
+                }
+                return soDong;
+            });
             if (soDongCapNhat == 1) {
                 return KetQuaPhatHanh.DA_PHAT_HANH;
             }

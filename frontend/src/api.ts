@@ -283,6 +283,20 @@ export type ThongTinViecCuaToi = {
   anh: Array<{ id: number }>
 }
 
+export type ThongTinThongBao = {
+  maThamChieu: string
+  tieuDe: string
+  noiDung: string
+  daDoc: boolean
+  docLuc: string | null
+  taoLuc: string
+}
+
+export type ThongTinHopThongBao = {
+  thongBao: ThongTinThongBao[]
+  soChuaDoc: number
+}
+
 export type LienKetAnhKy = {
   url: string
 }
@@ -608,6 +622,33 @@ export async function fetchViecCuaToi(token: string): Promise<ThongTinViecCuaToi
   }
 
   return response.json() as Promise<ThongTinViecCuaToi[]>
+}
+
+/** FR-MNT-02/FR-MNT-04/FR-INV-08 returns the authenticated user's notification inbox. */
+export async function fetchThongBao(token: string): Promise<ThongTinHopThongBao> {
+  const response = await fetch('/api/thong-bao', {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải hộp thông báo.')
+  }
+
+  return response.json() as Promise<ThongTinHopThongBao>
+}
+
+/** FR-MNT-02/FR-MNT-04/FR-INV-08 marks one notification owned by the user as read. */
+export async function danhDauThongBaoDaDoc(token: string, maThamChieu: string): Promise<ThongTinThongBao> {
+  const response = await fetch(`/api/thong-bao/${encodeURIComponent(maThamChieu)}/da-doc`, {
+    method: 'POST',
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể đánh dấu thông báo đã đọc.')
+  }
+
+  return response.json() as Promise<ThongTinThongBao>
 }
 
 /** FR-MNT-04 moves one assigned repair from allocated to in-progress. */

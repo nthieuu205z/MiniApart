@@ -58,7 +58,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'THO',
       tenVaiTro: 'Thợ sửa chữa',
     },
-    menuLabels: ['Việc của tôi'],
+    menuLabels: ['Việc của tôi', 'Thông báo'],
   },
   {
     nguoiDung: {
@@ -124,6 +124,63 @@ describe('App role navigation', () => {
 
     expect(mountedApp.container.textContent).toContain('Quản lý toà nhà')
     expect(mountedApp.container.textContent).toContain('Kỳ')
+  })
+
+  it('FR-MNT-02 shows the shared notification route and unread badge in the application shell', async () => {
+    const quanLyToaNha = MENU_BY_ROLE[2]
+    const fetchMock = buildFetchMock(quanLyToaNha.nguoiDung, {
+      notificationsResponse: {
+        thongBao: [{
+          maThamChieu: '11111111-1111-4111-8111-111111111111',
+          tieuDe: 'Yêu cầu sửa chữa mới',
+          noiDung: 'Phòng 302 báo hỏng: vòi nước bị rỉ — Gấp',
+          daDoc: false,
+          docLuc: null,
+          taoLuc: '2026-09-08T12:00:00Z',
+        }],
+        soChuaDoc: 1,
+      },
+    })
+    mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung, '/thong-bao', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="notification-screen"]')).not.toBeNull()
+    })
+
+    expect(mountedApp.container.textContent).toContain('Thông báo')
+    expect(mountedApp.container.textContent).toContain('Phòng 302 báo hỏng')
+    expect(mountedApp.container.querySelector('[data-testid="topbar-notifications"]')?.textContent).toContain('1')
+    expect(mountedApp.container.querySelector('[data-testid="topbar-notifications"]')?.getAttribute('href')).toBe('/thong-bao')
+  })
+
+  it('FR-MNT-02 removes the shell unread badge after the notification is marked as read', async () => {
+    const quanLyToaNha = MENU_BY_ROLE[2]
+    const notification = {
+      maThamChieu: '11111111-1111-4111-8111-111111111111',
+      tieuDe: 'Yêu cầu sửa chữa mới',
+      noiDung: 'Phòng 302 báo hỏng: vòi nước bị rỉ — Gấp',
+      daDoc: false,
+      docLuc: null,
+      taoLuc: '2026-09-08T12:00:00Z',
+    }
+    const fetchMock = buildFetchMock(quanLyToaNha.nguoiDung, {
+      notificationsResponse: { thongBao: [notification], soChuaDoc: 1 },
+      notificationReadResponse: { ...notification, daDoc: true, docLuc: '2026-09-08T12:05:00Z' },
+    })
+    mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung, '/thong-bao', fetchMock)
+
+    const markRead = await vi.waitFor(() => {
+      const button = mountedApp!.container.querySelector('[data-testid="mark-read"]')
+      expect(button).not.toBeNull()
+      return button as HTMLButtonElement
+    })
+    expect(mountedApp.container.querySelector('[data-testid="topbar-unread-count"]')?.textContent).toBe('1')
+
+    await act(async () => markRead.click())
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="topbar-unread-count"]')).toBeNull()
+    })
   })
 
   it('FR-INV-02 isolates application chrome from the invoice A4 print surface', async () => {
@@ -788,6 +845,8 @@ function buildFetchMock(
     historyResponse?: Record<string, unknown>[]
     consumptionResponse?: Record<string, unknown>
     contractResponse?: Record<string, unknown>[]
+    notificationsResponse?: { thongBao: Record<string, unknown>[]; soChuaDoc: number }
+    notificationReadResponse?: Record<string, unknown>
   },
 ) {
   const accounts: ThongTinQuanLyNguoiDung[] = [
@@ -922,6 +981,20 @@ function buildFetchMock(
         ? { coHoaDon: true, hoaDon: options.latestTenantInvoiceResponse }
         : { coHoaDon: false, thongBao: 'Chưa có hoá đơn nào cho tài khoản này.' }
       return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (url === '/api/thong-bao' && method === 'GET') {
+      return new Response(JSON.stringify(options?.notificationsResponse ?? { thongBao: [], soChuaDoc: 0 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (url.match(/^\/api\/thong-bao\/[^/]+\/da-doc$/) && method === 'POST') {
+      return new Response(JSON.stringify(options?.notificationReadResponse ?? { ...(options?.notificationsResponse?.thongBao[0] ?? {}), daDoc: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })

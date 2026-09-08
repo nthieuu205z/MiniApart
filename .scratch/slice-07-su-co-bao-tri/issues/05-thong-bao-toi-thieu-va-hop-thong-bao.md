@@ -4,7 +4,7 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Migration:** `V37` — xem `.scratch/dai-so-hieu-migration.md`.
 
@@ -70,16 +70,22 @@ Ví dụ đúng: *"Phòng 302 báo hỏng: vòi nước bồn rửa bị rỉ �
 
 ## Hoàn thành khi
 
-- [ ] `V37` tạo `THONG_BAO` với `doi_tuong_loai` + `doi_tuong_id` **đa hình**, không gắn cứng vào sửa chữa
-- [ ] Ba sự kiện ở bảng trên sinh thông báo đúng người nhận
-- [ ] Thông báo về yêu cầu sửa chữa tới **đúng quản lý của toà chứa phòng đó**, không phải mọi quản lý
-- [ ] Thông báo phân công tới **đúng thợ được phân công**
-- [ ] Màn `#44` đọc được, đánh dấu đã đọc, đếm chưa đọc
-- [ ] **Mỗi người chỉ thấy thông báo của mình** — gọi API thông báo của người khác nhận **403**
-- [ ] Nội dung **không có mã kỹ thuật** (`NFR-USA-04`)
-- [ ] Kiểm cặp `doi_tuong_loai`/`doi_tuong_id` ở tầng ứng dụng, **có test riêng** — đánh đổi CR-008
-- [ ] **Không** làm `FR-NTF-02`, `FR-NTF-04`, `FR-NTF-06`
-- [ ] QTHT → 403
-- [ ] Tên test mang mã `FR-MNT-02`, `FR-MNT-04`, `FR-INV-08`
+- [x] `V37` tạo `THONG_BAO` với `doi_tuong_loai` + `doi_tuong_id` **đa hình**, không gắn cứng vào sửa chữa
+- [x] Ba sự kiện ở bảng trên sinh thông báo đúng người nhận
+- [x] Thông báo về yêu cầu sửa chữa tới **đúng quản lý của toà chứa phòng đó**, không phải mọi quản lý
+- [x] Thông báo phân công tới **đúng thợ được phân công**
+- [x] Màn `#44` đọc được, đánh dấu đã đọc, đếm chưa đọc
+- [x] **Mỗi người chỉ thấy thông báo của mình** — gọi API thông báo của người khác nhận **403**
+- [x] Nội dung **không có mã kỹ thuật** (`NFR-USA-04`)
+- [x] Kiểm cặp `doi_tuong_loai`/`doi_tuong_id` ở tầng ứng dụng, **có test riêng** — đánh đổi CR-008
+- [x] **Không** làm `FR-NTF-02`, `FR-NTF-04`, `FR-NTF-06`
+- [x] QTHT → 403
+- [x] Tên test mang mã `FR-MNT-02`, `FR-MNT-04`, `FR-INV-08`
 
 ## Comments
+
+- Đã thêm migration `V37` và mô hình `THONG_BAO` đa hình; API chỉ trả `maThamChieu` dạng UUID, không lộ khoá số hay mã kỹ thuật.
+- Đã nối ba sự kiện: yêu cầu sửa chữa mới tới đúng quản lý của toà, phân công tới đúng thợ, và phát hành hoá đơn tới người thuê tương ứng. Kiểm tra cặp đối tượng được thực hiện ở tầng ứng dụng và có kiểm thử riêng.
+- Đã dựng hộp thông báo dùng chung `#44`: danh sách, chi tiết, đánh dấu đã đọc, số chưa đọc; thêm badge ở shell và xử lý race khi cập nhật đồng thời. QTHT và người dùng khác nhận 403.
+- Đã giữ ngoài phạm vi các chức năng `FR-NTF-02`, `FR-NTF-04`, `FR-NTF-06`.
+- Xác minh: frontend 20 file / 156 test, build frontend thành công; backend toàn bộ 508 test không lỗi; kiểm thử tích hợp thông báo và kiểm tra `git diff --check` đều đạt.

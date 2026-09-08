@@ -127,7 +127,7 @@ export function ViecCuaToi({ token }: ViecCuaToiProps): React.ReactElement {
   }
 
   return (
-    <main className="ma-worker-screen" data-testid="worker-screen" aria-busy={dangTai || undefined}>
+    <div className="ma-worker-screen" data-testid="worker-screen" aria-busy={dangTai || undefined}>
       <div className="ma-worker-content">
         <header className="ma-worker-header">
           <SysLabel tone="primary">THỢ SỬA CHỮA</SysLabel>
@@ -208,7 +208,7 @@ export function ViecCuaToi({ token }: ViecCuaToiProps): React.ReactElement {
           Đã báo xong —{' '}
         </Toast>
       ))}
-    </main>
+    </div>
   )
 }
 

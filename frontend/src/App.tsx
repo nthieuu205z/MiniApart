@@ -1,8 +1,9 @@
-import { FormEvent, useEffect, useState, type CSSProperties, type MouseEvent } from 'react'
+import { FormEvent, useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import {
   ApiError,
   fetchCurrentUser,
   fetchHealth,
+  fetchThongBao,
   login,
   type DangNhapRequest,
   type HealthStatus,
@@ -18,6 +19,7 @@ import BieuDoTieuThu from './BieuDoTieuThu'
 import HopDongNguoiThue from './HopDongNguoiThue'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { ViecCuaToi } from './ViecCuaToi'
+import { ThongBao } from './ThongBao'
 import { BlockedNotice } from './design/building/BlockedNotice'
 import { Button } from './design/core/Button'
 import { SysLabel } from './design/core/SysLabel'
@@ -172,6 +174,8 @@ function App() {
   const [dangDangNhap, setDangDangNhap] = useState(false)
   const [nguoiDung, setNguoiDung] = useState<ThongTinNguoiDung | null>(null)
   const [token, setToken] = useState<string | null>(null)
+  const [soThongBaoChuaDoc, setSoThongBaoChuaDoc] = useState<number | null>(null)
+  const phienBanTaiThongBao = useRef(0)
   const [duongDanHienTai, setDuongDanHienTai] = useState(() => layDuongDanHienTai())
   const [laManHinhHep, setLaManHinhHep] = useState(() => kiemTraManHinhHep())
   const [form, setForm] = useState<DangNhapRequest>({
@@ -246,7 +250,38 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (nguoiDung?.vaiTro === 'THO' && duongDanHienTai !== '/viec-cua-toi') {
+    const phienBan = phienBanTaiThongBao.current + 1
+    phienBanTaiThongBao.current = phienBan
+    const vaiTro = nguoiDung?.vaiTro
+    if (!token || !vaiTro || !['CHU', 'QUAN_LY', 'THO', 'NGUOI_THUE'].includes(vaiTro)) {
+      setSoThongBaoChuaDoc(null)
+      return undefined
+    }
+
+    if (duongDanHienTai === '/thong-bao') {
+      return undefined
+    }
+
+    let mounted = true
+    void fetchThongBao(token)
+      .then((hopThongBao) => {
+        if (mounted && phienBanTaiThongBao.current === phienBan) {
+          setSoThongBaoChuaDoc(hopThongBao.soChuaDoc)
+        }
+      })
+      .catch(() => {
+        if (mounted && phienBanTaiThongBao.current === phienBan) {
+          setSoThongBaoChuaDoc(null)
+        }
+      })
+
+    return () => {
+      mounted = false
+    }
+  }, [duongDanHienTai, nguoiDung?.vaiTro, token])
+
+  useEffect(() => {
+    if (nguoiDung?.vaiTro === 'THO' && !['/viec-cua-toi', '/thong-bao'].includes(duongDanHienTai)) {
       thayTheDuongDan('/viec-cua-toi')
     }
   }, [nguoiDung, duongDanHienTai])
@@ -347,6 +382,18 @@ function App() {
     && nguoiDung.vaiTro === 'NGUOI_THUE'
     && duongDanHienTai === '/hop-dong'
   )
+  const hienThiThongBao = Boolean(
+    token
+    && nguoiDung
+    && duongDanHienTai === '/thong-bao'
+    && ['CHU', 'QUAN_LY', 'THO', 'NGUOI_THUE'].includes(nguoiDung.vaiTro),
+  )
+  const hienThiViecCuaToi = Boolean(
+    token
+    && nguoiDung
+    && nguoiDung.vaiTro === 'THO'
+    && duongDanHienTai === '/viec-cua-toi',
+  )
   const hienThiHoaDon = Boolean(
     token
     && nguoiDung
@@ -357,6 +404,8 @@ function App() {
     ? 'Tiêu thụ điện và nước'
     : hienThiHopDongNguoiThue
       ? 'Hợp đồng của tôi'
+    : hienThiThongBao
+      ? 'Thông báo'
     : hienThiHoaDonNguoiThue && duongDanHienTai !== '/'
       ? 'Hoá đơn của tôi'
     : hienThiLichSuHoaDonNguoiThue
@@ -374,6 +423,8 @@ function App() {
     ? 'FR-POR-05'
     : hienThiHopDongNguoiThue
       ? 'FR-POR-07'
+    : hienThiThongBao
+      ? 'FR-MNT-02'
     : hienThiHoaDonNguoiThue
       ? 'FR-POR-01'
     : hienThiLichSuHoaDonNguoiThue
@@ -490,10 +541,6 @@ function App() {
     )
   }
 
-  if (nguoiDung.vaiTro === 'THO' && token) {
-    return <ViecCuaToi token={token} />
-  }
-
   const nhomDieuHuong = taoNhomDieuHuong(nguoiDung.vaiTro, duongDanHienTai)
   const thongTinTopBar = taoThongTinTopBar(nguoiDung.vaiTro)
   const canDungTopBarToanCuc = !hienThiGhiChiSo
@@ -528,6 +575,9 @@ function App() {
               building={thongTinTopBar.building}
               period={thongTinTopBar.period}
               periodStatus={thongTinTopBar.periodStatus}
+              notifications={soThongBaoChuaDoc ?? undefined}
+              notificationHref={['CHU', 'QUAN_LY', 'THO', 'NGUOI_THUE'].includes(nguoiDung.vaiTro) ? '/thong-bao' : undefined}
+              onClick={handleNavClick}
               style={{
                 padding: laManHinhHep ? '10px 16px' : undefined,
                 gap: laManHinhHep ? 10 : undefined,
@@ -551,6 +601,10 @@ function App() {
             <BieuDoTieuThu token={token} mobile={laManHinhHep} />
           ) : hienThiHopDongNguoiThue && token ? (
             <HopDongNguoiThue token={token} mobile={laManHinhHep} />
+          ) : hienThiViecCuaToi && token ? (
+            <ViecCuaToi token={token} />
+          ) : hienThiThongBao && token ? (
+            <ThongBao token={token} mobile={laManHinhHep} onUnreadCountChange={setSoThongBaoChuaDoc} />
           ) : hienThiLichSuHoaDonNguoiThue && token ? (
             <LichSuHoaDon token={token} mobile={laManHinhHep} />
           ) : (hienThiHoaDon || hienThiHoaDonNguoiThue) && token ? (
@@ -901,7 +955,7 @@ const NHOM_DIEU_HUONG_THEO_VAI_TRO: Record<string, Array<{ label: string, duongD
     { label: 'Toà nhà', duongDan: ['/phong', '/hop-dong', '/su-co', '/thong-bao'] },
   ],
   THO: [
-    { label: 'Công việc', duongDan: ['/viec-cua-toi'] },
+    { label: 'Công việc', duongDan: ['/viec-cua-toi', '/thong-bao'] },
   ],
   NGUOI_THUE: [
     { label: 'Cá nhân', duongDan: ['/hoa-don-cua-toi', '/lich-su', '/tieu-thu', '/hop-dong', '/bao-hong'] },

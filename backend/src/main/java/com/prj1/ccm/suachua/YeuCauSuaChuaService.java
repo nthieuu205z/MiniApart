@@ -5,6 +5,7 @@ import com.prj1.ccm.nguoithue.NhatKyThaoTacRepository;
 import com.prj1.ccm.nguoidung.NguoiDung;
 import com.prj1.ccm.auth.NguoiDungRepository;
 import com.prj1.ccm.nguoidung.VaiTro;
+import com.prj1.ccm.thongbao.ThongBaoService;
 import com.prj1.ccm.toanha.PhanQuyenToaService;
 import com.prj1.ccm.toanha.Phong;
 import com.prj1.ccm.toanha.PhongRepository;
@@ -36,6 +37,7 @@ public class YeuCauSuaChuaService {
     private final NguoiDungRepository nguoiDungRepository;
     private final AnhDinhKemService anhDinhKemService;
     private final NhatKyThaoTacRepository nhatKyThaoTacRepository;
+    private final ThongBaoService thongBaoService;
     private final Clock clock;
 
     public YeuCauSuaChuaService(
@@ -45,6 +47,7 @@ public class YeuCauSuaChuaService {
             NguoiDungRepository nguoiDungRepository,
             AnhDinhKemService anhDinhKemService,
             NhatKyThaoTacRepository nhatKyThaoTacRepository,
+            ThongBaoService thongBaoService,
             Clock clock
     ) {
         this.yeuCauSuaChuaRepository = yeuCauSuaChuaRepository;
@@ -53,6 +56,7 @@ public class YeuCauSuaChuaService {
         this.nguoiDungRepository = nguoiDungRepository;
         this.anhDinhKemService = anhDinhKemService;
         this.nhatKyThaoTacRepository = nhatKyThaoTacRepository;
+        this.thongBaoService = thongBaoService;
         this.clock = clock;
     }
 
@@ -101,6 +105,7 @@ public class YeuCauSuaChuaService {
 
         YeuCauSuaChuaRepository.YeuCauSuaChuaView daLuu = yeuCauSuaChuaRepository.findById(yeuCauId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        thongBaoService.taoKhiTaoYeuCau(yeuCauId);
         return ThongTinYeuCauSuaChua.tu(daLuu, anhIds);
     }
 
@@ -159,6 +164,7 @@ public class YeuCauSuaChuaService {
         kiemTraCapNhat(yeuCauSuaChuaRepository.capNhatPhanCong(
                 yeuCauId, thoId, clock.instant(), view.yeuCau().trangThai()
         ));
+        thongBaoService.taoKhiPhanCong(yeuCauId);
         ghiNhatKy(nguoiDung, "PHAN_CONG_YEU_CAU_SUA_CHUA", view.yeuCau().trangThai(), trangThaiMoi, null, yeuCauId);
         return thongTin(timYeuCau(yeuCauId));
     }

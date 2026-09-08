@@ -95,7 +95,8 @@ public class HoaDonController {
 
     /**
      * FR-INV-08 publishes every eligible draft invoice in one payment period and returns a summary
-     * for published, already-transitioned, and skipped invoices. Tenant notification is deferred to Slice 08.
+     * for published, already-transitioned, and skipped invoices. Publishing also emits the tenant notification
+     * when the invoice belongs to an active tenant account.
      *
      * @param toaNhaId the building identifier
      * @param kyId the payment-period identifier
