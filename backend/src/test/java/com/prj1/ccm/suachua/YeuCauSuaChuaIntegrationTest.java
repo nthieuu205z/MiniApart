@@ -29,13 +29,20 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -63,6 +70,9 @@ class YeuCauSuaChuaIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private javax.sql.DataSource dataSource;
 
     @Autowired
     private PasswordHasher passwordHasher;
@@ -361,6 +371,454 @@ class YeuCauSuaChuaIntegrationTest {
         )).isEqualTo(1);
     }
 
+    @Test
+    void FR_MNT_03_FR_MNT_04_quanLyTiepNhanPhanCongVaThoHoanThanhViecCuaMinh() throws Exception {
+        Long nguoiThueId = themNguoiThue("Người thuê phân công", "0907000110");
+        Long phongId = themPhong(1L, "911");
+        themHopDongHieuLuc(phongId, nguoiThueId);
+        ganTaiKhoanNguoiThue(nguoiThueId);
+        String tenantToken = login(5L, "0900000006");
+
+        JsonNode taoResponse = objectMapper.readTree(mockMvc.perform(multipart("/api/yeu-cau-sua-chua")
+                        .file(anh("phan-cong.png"))
+                        .param("phongId", phongId.toString())
+                        .param("hangMuc", "Điện nước")
+                        .param("moTa", "Vòi nước nhà tắm bị rỉ")
+                        .param("mucDo", "GAP")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString());
+        long yeuCauId = taoResponse.path("id").longValue();
+
+        String managerToken = login(3L, "0900000003");
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/tiep-nhan")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DA_TIEP_NHAN"))
+                .andExpect(jsonPath("$.nguoiTiepNhanId").value(3));
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/phan-cong")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"thoId\":4}")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DA_PHAN_CONG"))
+                .andExpect(jsonPath("$.nguoiXuLyId").value(4));
+
+        assertThat(jdbcTemplate.queryForMap(
+                "SELECT nguoi_tiep_nhan_id, nguoi_xu_ly_id, tiep_nhan_luc, phan_cong_luc FROM YEU_CAU_SUA_CHUA WHERE id = ?",
+                yeuCauId
+        )).containsEntry("nguoi_tiep_nhan_id", 3L).containsEntry("nguoi_xu_ly_id", 4L);
+
+        String workerToken = login(4L, "0900000004");
+        mockMvc.perform(get("/api/tho/viec-cua-toi")
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].soPhong").value("911"))
+                .andExpect(jsonPath("$[0].moTa").value("Vòi nước nhà tắm bị rỉ"))
+                .andExpect(jsonPath("$[0].mucDo").value("GAP"))
+                .andExpect(jsonPath("$[0].soDienThoaiLienHe").value("0907000110"))
+                .andExpect(jsonPath("$[0].anh[0].id").isNumber());
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/bat-dau-xu-ly")
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DANG_XU_LY"));
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/hoan-thanh")
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("CHO_XAC_NHAN"));
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/xac-nhan-dong")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DA_DONG"));
+
+        assertThat(jdbcTemplate.queryForMap(
+                "SELECT hanh_dong, gia_tri_truoc, gia_tri_sau FROM NHAT_KY_THAO_TAC WHERE doi_tuong = ? AND hanh_dong = 'XAC_NHAN_DONG_YEU_CAU_SUA_CHUA'",
+                "YEU_CAU_SUA_CHUA:" + yeuCauId
+        )).containsEntry("gia_tri_truoc", "CHO_XAC_NHAN")
+                .containsEntry("gia_tri_sau", "DA_DONG");
+    }
+
+    @Test
+    void FR_MNT_03_quanLyVaChuXemDuocDanhSachYeuCauTheoPhamViToa() throws Exception {
+        Long phongId = themPhong(1L, "915");
+        String managerToken = login(3L, "0900000003");
+
+        long yeuCauId = objectMapper.readTree(mockMvc.perform(multipart("/api/yeu-cau-sua-chua")
+                        .param("phongId", phongId.toString())
+                        .param("hangMuc", "Điện")
+                        .param("moTa", "Danh sách chờ tiếp nhận")
+                        .param("mucDo", "THUONG")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).path("id").longValue();
+
+        mockMvc.perform(get("/api/yeu-cau-sua-chua")
+                        .param("toaNhaId", "1")
+                        .param("trangThai", "MOI_TIEP_NHAN")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == %d)].moTa".formatted(yeuCauId)).value("Danh sách chờ tiếp nhận"));
+
+        String ownerToken = login(2L, "0900000002");
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/" + yeuCauId)
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(yeuCauId))
+                .andExpect(jsonPath("$.trangThai").value("MOI_TIEP_NHAN"));
+    }
+
+    @Test
+    void FR_MNT_03_quanLyDuocDongYeuCauSauKhiThoBaoDaSuaXong() throws Exception {
+        Long phongId = themPhong(1L, "916");
+        String managerToken = login(3L, "0900000003");
+        long yeuCauId = objectMapper.readTree(mockMvc.perform(multipart("/api/yeu-cau-sua-chua")
+                        .param("phongId", phongId.toString())
+                        .param("hangMuc", "Nước")
+                        .param("moTa", "Quản lý xác nhận hoàn tất")
+                        .param("mucDo", "GAP")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).path("id").longValue();
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/tiep-nhan")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/phan-cong")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"thoId\":4}")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+
+        String workerToken = login(4L, "0900000004");
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/bat-dau-xu-ly")
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/hoan-thanh")
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/xac-nhan-dong")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DA_DONG"));
+    }
+
+    @Test
+    void FR_MNT_03_nguoiThueKhongDuocDongYeuCauKhongPhaiCuaMinh() throws Exception {
+        Long phongId = themPhong(1L, "917");
+        String managerToken = login(3L, "0900000003");
+        long yeuCauId = objectMapper.readTree(mockMvc.perform(multipart("/api/yeu-cau-sua-chua")
+                        .param("phongId", phongId.toString())
+                        .param("hangMuc", "Điện")
+                        .param("moTa", "Không thuộc người thuê hiện tại")
+                        .param("mucDo", "THUONG")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).path("id").longValue();
+        jdbcTemplate.update("UPDATE YEU_CAU_SUA_CHUA SET trang_thai = 'CHO_XAC_NHAN' WHERE id = ?", yeuCauId);
+
+        String tenantToken = login(5L, "0900000006");
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/xac-nhan-dong")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_MNT_03_FR_MNT_04_thoKhongDuocChamVaoViecCuaThoKhacVaKhongVaoPhanQuyenToa() throws Exception {
+        Long nguoiThueId = themNguoiThue("Người thuê kiểm quyền thợ", "0907000111");
+        Long phongId = themPhong(1L, "912");
+        themHopDongHieuLuc(phongId, nguoiThueId);
+        ganTaiKhoanNguoiThue(nguoiThueId);
+        String tenantToken = login(5L, "0900000006");
+        long yeuCauId = objectMapper.readTree(mockMvc.perform(multipart("/api/yeu-cau-sua-chua")
+                        .param("phongId", phongId.toString())
+                        .param("hangMuc", "Nước")
+                        .param("moTa", "Yêu cầu của thợ khác")
+                        .param("mucDo", "THUONG")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).path("id").longValue();
+
+        Long thoKhacId = themTho("Thợ khác", "0907000112");
+        String managerToken = login(3L, "0900000003");
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/tiep-nhan")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/phan-cong")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"thoId\":%d}".formatted(thoKhacId))
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+
+        String workerToken = login(4L, "0900000004");
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/" + yeuCauId)
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/bat-dau-xu-ly")
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isForbidden());
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM PHAN_QUYEN_TOA p JOIN NGUOI_DUNG nd ON nd.id = p.nguoi_dung_id WHERE nd.vai_tro = 'THO'",
+                Integer.class
+        )).isZero();
+    }
+
+    @Test
+    void FR_MNT_03_FR_MNT_04_saiVaiTroVaSaiTrangThaiKhongTraVeLoiMayChu() throws Exception {
+        Long phongId = themPhong(1L, "913");
+        String managerToken = login(3L, "0900000003");
+        JsonNode taoResponse = objectMapper.readTree(mockMvc.perform(multipart("/api/yeu-cau-sua-chua")
+                        .param("phongId", phongId.toString())
+                        .param("hangMuc", "Điện")
+                        .param("moTa", "Kiểm tra chuyển trạng thái")
+                        .param("mucDo", "THUONG")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString());
+        long yeuCauId = taoResponse.path("id").longValue();
+
+        String systemAdminToken = login(1L, "0900000001");
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/tiep-nhan")
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/tiep-nhan")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/tiep-nhan")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.thongBao").value("Không thể chuyển trạng thái yêu cầu sửa chữa"));
+    }
+
+    @Test
+    void FR_MNT_03_FR_MNT_04_huyYeuCauBatBuocLyDoVaGhiNhatKy() throws Exception {
+        Long phongId = themPhong(1L, "914");
+        String managerToken = login(3L, "0900000003");
+        JsonNode taoResponse = objectMapper.readTree(mockMvc.perform(multipart("/api/yeu-cau-sua-chua")
+                        .param("phongId", phongId.toString())
+                        .param("hangMuc", "Nước")
+                        .param("moTa", "Huỷ yêu cầu kiểm thử")
+                        .param("mucDo", "THUONG")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString());
+        long yeuCauId = taoResponse.path("id").longValue();
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/huy")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lyDo\":\"Khách báo nhầm\"}")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DA_HUY"))
+                .andExpect(jsonPath("$.lyDoHuy").value("Khách báo nhầm"));
+
+        assertThat(jdbcTemplate.queryForMap(
+                "SELECT hanh_dong, gia_tri_truoc, gia_tri_sau, ly_do FROM NHAT_KY_THAO_TAC WHERE doi_tuong = ? AND hanh_dong = 'HUY_YEU_CAU_SUA_CHUA'",
+                "YEU_CAU_SUA_CHUA:" + yeuCauId
+        )).containsEntry("gia_tri_truoc", "MOI_TIEP_NHAN")
+                .containsEntry("gia_tri_sau", "DA_HUY")
+                .containsEntry("ly_do", "Khách báo nhầm");
+    }
+
+    @Test
+    void FR_MNT_03_haiLanTiepNhanDongThoiChiMotLanThanhCongVaGhiMotNhatKy() throws Exception {
+        Long phongId = themPhong(1L, "918");
+        String managerToken = login(3L, "0900000003");
+        long yeuCauId = objectMapper.readTree(mockMvc.perform(multipart("/api/yeu-cau-sua-chua")
+                        .param("phongId", phongId.toString())
+                        .param("hangMuc", "Điện")
+                        .param("moTa", "Kiểm tra chuyển tiếp đồng thời")
+                        .param("mucDo", "THUONG")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).path("id").longValue();
+
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        List<Future<Integer>> futures = new ArrayList<>();
+        try (Connection lockConnection = dataSource.getConnection()) {
+            lockConnection.setAutoCommit(false);
+            try (var statement = lockConnection.prepareStatement(
+                    "SELECT id FROM YEU_CAU_SUA_CHUA WHERE id = ? FOR UPDATE")) {
+                statement.setLong(1, yeuCauId);
+                statement.executeQuery().close();
+            }
+
+            for (int index = 0; index < 2; index += 1) {
+                futures.add(executor.submit(() -> {
+                    start.await();
+                    return mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/tiep-nhan")
+                                    .header("Authorization", "Bearer " + managerToken))
+                            .andReturn()
+                            .getResponse()
+                            .getStatus();
+                }));
+            }
+            start.countDown();
+            doiHaiPhienCapNhatBiKhoa(yeuCauId);
+            lockConnection.commit();
+
+            assertThat(futures.get(0).get(10, TimeUnit.SECONDS)).isIn(200, 409);
+            assertThat(futures.get(1).get(10, TimeUnit.SECONDS)).isIn(200, 409);
+        } finally {
+            executor.shutdownNow();
+        }
+
+        List<Integer> statuses = futures.stream()
+                .map(future -> layKetQua(future))
+                .toList();
+        assertThat(statuses).containsExactlyInAnyOrder(200, 409);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT trang_thai FROM YEU_CAU_SUA_CHUA WHERE id = ?",
+                String.class,
+                yeuCauId
+        )).isEqualTo("DA_TIEP_NHAN");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM NHAT_KY_THAO_TAC WHERE hanh_dong = 'TIEP_NHAN_YEU_CAU_SUA_CHUA' AND doi_tuong = ?",
+                Integer.class,
+                "YEU_CAU_SUA_CHUA:" + yeuCauId
+        )).isEqualTo(1);
+    }
+
+    @Test
+    void FR_MNT_03_chiTaiKhoanTaoYeuCauDuocDongSauKhiLienKetHoSoBiChuyen() throws Exception {
+        Long nguoiThueId = themNguoiThue("Người thuê chuyển tài khoản", "0907000191");
+        Long phongId = themPhong(1L, "919");
+        themHopDongHieuLuc(phongId, nguoiThueId);
+        ganTaiKhoanNguoiThue(nguoiThueId);
+        String creatorToken = login(5L, "0900000006");
+        JsonNode taoResponse = objectMapper.readTree(mockMvc.perform(multipart("/api/yeu-cau-sua-chua")
+                        .file(anh("relink.png"))
+                        .param("phongId", phongId.toString())
+                        .param("hangMuc", "Điện")
+                        .param("moTa", "Tài khoản tạo yêu cầu")
+                        .param("mucDo", "THUONG")
+                        .header("Authorization", "Bearer " + creatorToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString());
+        long yeuCauId = taoResponse.path("id").longValue();
+        long anhId = taoResponse.path("anh").get(0).path("id").longValue();
+        jdbcTemplate.update("UPDATE YEU_CAU_SUA_CHUA SET trang_thai = 'CHO_XAC_NHAN' WHERE id = ?", yeuCauId);
+
+        jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = NULL WHERE id = 5");
+        Long replacementAccountId = themTaiKhoanNguoiThue(
+                nguoiThueId,
+                "Tài khoản mới của người thuê",
+                "0907000192"
+        );
+        Long unrelatedAccountId = themTaiKhoanNguoiThue(
+                null,
+                "Tài khoản thuê chưa liên kết",
+                "0907000194"
+        );
+        assertThat(jdbcTemplate.queryForMap("SELECT nguoi_thue_id FROM NGUOI_DUNG WHERE id = 5").get("nguoi_thue_id"))
+                .isNull();
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT nguoi_thue_id FROM NGUOI_DUNG WHERE id = ?",
+                Long.class,
+                replacementAccountId
+        )).isEqualTo(nguoiThueId);
+        try {
+            String replacementToken = login(replacementAccountId, "0907000192");
+            mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/xac-nhan-dong")
+                            .header("Authorization", "Bearer " + replacementToken))
+                    .andExpect(status().isForbidden());
+
+            String creatorAfterRelinkToken = login(5L, "0900000006");
+            mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/xac-nhan-dong")
+                            .header("Authorization", "Bearer " + creatorAfterRelinkToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.trangThai").value("DA_DONG"));
+            mockMvc.perform(get("/api/anh/" + anhId + "/lien-ket")
+                            .header("Authorization", "Bearer " + replacementToken))
+                    .andExpect(status().isForbidden());
+            String unrelatedToken = login(unrelatedAccountId, "0907000194");
+            mockMvc.perform(get("/api/anh/" + anhId + "/lien-ket")
+                            .header("Authorization", "Bearer " + unrelatedToken))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/anh/" + anhId + "/lien-ket")
+                            .header("Authorization", "Bearer " + creatorAfterRelinkToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.url").isNotEmpty());
+        } finally {
+            jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = NULL WHERE id = ?", replacementAccountId);
+            jdbcTemplate.update("DELETE FROM NGUOI_DUNG WHERE id = ?", replacementAccountId);
+            jdbcTemplate.update("DELETE FROM NGUOI_DUNG WHERE id = ?", unrelatedAccountId);
+        }
+    }
+
+    @Test
+    void FR_MNT_03_FR_MNT_04_qthtBiTuChoiMoiEndpointVaThoChiThayViecDuocPhanCong() throws Exception {
+        Long phongCuaTho = themPhong(1L, "920");
+        Long phongCuaThoKhac = themPhong(1L, "921");
+        String managerToken = login(3L, "0900000003");
+        long viecCuaTho = taoYeuCauKhongAnh(phongCuaTho, "Việc của thợ hiện tại", managerToken);
+        long viecCuaThoKhac = taoYeuCauKhongAnh(phongCuaThoKhac, "Việc của thợ khác", managerToken);
+        Long thoKhacId = themTho("Thợ khác trong danh sách", "0907000193");
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET nguoi_xu_ly_id = ?, trang_thai = 'DA_PHAN_CONG' WHERE id = ?",
+                4L,
+                viecCuaTho
+        );
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET nguoi_xu_ly_id = ?, trang_thai = 'DA_PHAN_CONG' WHERE id = ?",
+                thoKhacId,
+                viecCuaThoKhac
+        );
+
+        String systemAdminToken = login(1L, "0900000001");
+        mockMvc.perform(get("/api/yeu-cau-sua-chua").header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/" + viecCuaTho)
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + viecCuaTho + "/tiep-nhan")
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + viecCuaTho + "/phan-cong")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"thoId\":4}")
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + viecCuaTho + "/bat-dau-xu-ly")
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + viecCuaTho + "/hoan-thanh")
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + viecCuaTho + "/xac-nhan-dong")
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + viecCuaTho + "/huy")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lyDo\":\"Không cần sửa nữa\"}")
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/tho/viec-cua-toi")
+                        .header("Authorization", "Bearer " + systemAdminToken))
+                .andExpect(status().isForbidden());
+
+        String workerToken = login(4L, "0900000004");
+        JsonNode danhSach = objectMapper.readTree(mockMvc.perform(get("/api/tho/viec-cua-toi")
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        assertThat(danhSach).hasSize(1);
+        assertThat(danhSach.get(0).path("id").longValue()).isEqualTo(viecCuaTho);
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/" + viecCuaThoKhac)
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + viecCuaThoKhac + "/hoan-thanh")
+                        .header("Authorization", "Bearer " + workerToken))
+                .andExpect(status().isForbidden());
+    }
+
     private MockMultipartFile anh(String ten) {
         return new MockMultipartFile("anh", ten, MediaType.IMAGE_PNG_VALUE, PNG_1X1);
     }
@@ -407,6 +865,78 @@ class YeuCauSuaChuaIntegrationTest {
 
     private void ganTaiKhoanNguoiThue(Long nguoiThueId) {
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = ? WHERE id = 5", nguoiThueId);
+    }
+
+    private Long themTaiKhoanNguoiThue(Long nguoiThueId, String hoTen, String soDienThoai) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO NGUOI_DUNG(
+                            ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai,
+                            phien_ban_token, so_lan_sai, lan_sai_dau_tien, khoa_den, nguoi_thue_id
+                        ) VALUES (?, ?, ?, 'NGUOI_THUE', 'HOAT_DONG', 0, 0, NULL, NULL, ?)
+                        RETURNING id
+                        """,
+                Long.class,
+                hoTen,
+                soDienThoai,
+                passwordHasher.hash("tenant-seed-password"),
+                nguoiThueId
+        );
+    }
+
+    private Long themTho(String hoTen, String soDienThoai) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO NGUOI_DUNG(
+                            ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai,
+                            phien_ban_token, so_lan_sai, lan_sai_dau_tien, khoa_den, nguoi_thue_id
+                        ) VALUES (?, ?, ?, 'THO', 'HOAT_DONG', 0, 0, NULL, NULL, NULL)
+                        RETURNING id
+                        """,
+                Long.class,
+                hoTen,
+                soDienThoai,
+                passwordHasher.hash("worker-seed-password")
+        );
+    }
+
+    private long taoYeuCauKhongAnh(Long phongId, String moTa, String token) throws Exception {
+        return objectMapper.readTree(mockMvc.perform(multipart("/api/yeu-cau-sua-chua")
+                        .param("phongId", phongId.toString())
+                        .param("hangMuc", "Điện")
+                        .param("moTa", moTa)
+                        .param("mucDo", "THUONG")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).path("id").longValue();
+    }
+
+    private void doiHaiPhienCapNhatBiKhoa(long yeuCauId) throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (System.nanoTime() < deadline) {
+            Integer soPhien = jdbcTemplate.queryForObject(
+                    """
+                            SELECT COUNT(*)
+                            FROM pg_stat_activity
+                            WHERE wait_event_type = 'Lock'
+                              AND query ILIKE '%UPDATE YEU_CAU_SUA_CHUA%'
+                            """,
+                    Integer.class
+            );
+            if (soPhien != null && soPhien >= 2) {
+                return;
+            }
+            Thread.sleep(20);
+        }
+        throw new AssertionError("Không quan sát được hai phiên cập nhật cùng chờ khoá yêu cầu " + yeuCauId);
+    }
+
+    private int layKetQua(Future<Integer> future) {
+        try {
+            return future.get(10, TimeUnit.SECONDS);
+        } catch (Exception exception) {
+            throw new AssertionError("Lời gọi đồng thời không hoàn tất", exception);
+        }
     }
 
     private String login(Long nguoiDungId, String soDienThoai) throws Exception {

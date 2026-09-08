@@ -19,6 +19,7 @@ import java.util.List;
 public class QuanLyNguoiDungService {
     private static final String THONG_BAO_NGUOI_THUE_BAT_BUOC = "Tài khoản người thuê phải gắn với hồ sơ người thuê";
     private static final String THONG_BAO_NGUOI_THUE_DA_GAN = "Hồ sơ người thuê đã được gắn với tài khoản khác";
+    private static final String THONG_BAO_THO_KHONG_GAN_TOA_NHA = "Thợ sửa chữa không được gán vào toà nhà";
 
     private final NguoiDungRepository nguoiDungRepository;
     private final ToaNhaRepository toaNhaRepository;
@@ -69,6 +70,7 @@ public class QuanLyNguoiDungService {
         }
 
         List<Long> toaNhaIds = chuanHoaToaNhaIds(yeuCau.toaNhaIds());
+        kiemTraPhanQuyenToaTheoVaiTro(yeuCau.vaiTro(), toaNhaIds);
         Long nguoiThueId = chuanHoaNguoiThueId(yeuCau, null);
         NguoiDung moi = new NguoiDung(
                 null,
@@ -105,6 +107,7 @@ public class QuanLyNguoiDungService {
         }
 
         List<Long> toaNhaIds = chuanHoaToaNhaIds(yeuCau.toaNhaIds());
+        kiemTraPhanQuyenToaTheoVaiTro(yeuCau.vaiTro(), toaNhaIds);
         Long nguoiThueId = chuanHoaNguoiThueId(yeuCau, nguoiDungId);
         if (!hienTai.soDienThoai().equals(soDienThoai)) {
             nguoiDungRepository.capNhatSoDienThoaiDangNhap(
@@ -181,6 +184,12 @@ public class QuanLyNguoiDungService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_NGUOI_THUE_DA_GAN);
         }
         return yeuCau.nguoiThueId();
+    }
+
+    private void kiemTraPhanQuyenToaTheoVaiTro(VaiTro vaiTro, List<Long> toaNhaIds) {
+        if (vaiTro == VaiTro.THO && !toaNhaIds.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_THO_KHONG_GAN_TOA_NHA);
+        }
     }
 
     private ThongTinQuanLyNguoiDung toThongTinQuanLyNguoiDung(NguoiDung nguoiDung) {

@@ -228,7 +228,7 @@ public class AnhDinhKemService {
                 return anh;
             }
             if (nguoiDung.vaiTro() == VaiTro.NGUOI_THUE
-                    && Objects.equals(nguoiDung.nguoiThueId(), phamVi.nguoiTaoNguoiThueId())) {
+                    && Objects.equals(nguoiDung.id(), phamVi.nguoiTaoId())) {
                 return anh;
             }
             if (nguoiDung.vaiTro() == VaiTro.THO

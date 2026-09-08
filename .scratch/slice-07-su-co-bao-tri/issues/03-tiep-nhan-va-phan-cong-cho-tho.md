@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Vai trò `THO` phá vỡ khuôn phân quyền hiện có — đọc kỹ
 
@@ -41,15 +41,21 @@ Nhưng API phải hợp với màn đó: thợ cần **một lời gọi** trả
 
 ## Hoàn thành khi
 
-- [ ] Quản lý tiếp nhận và phân công cho thợ; lưu ai phân công, lúc nào
-- [ ] Thợ chuyển được *Đang xử lý* và *Chờ xác nhận* — **chỉ việc được phân công cho mình**
-- [ ] **Thợ gọi API của việc thợ khác → 403.** Ca kiểm thử bắt buộc, đây là lý do tồn tại của phần phân quyền ticket này
-- [ ] Thợ **không** đọc được hoá đơn, hợp đồng, ảnh giấy tờ, danh mục phòng — 403 ở tất cả
-- [ ] **Không tài khoản `THO` nào xuất hiện trong `PHAN_QUYEN_TOA`** — test khẳng định
-- [ ] Một lời gọi trả đủ dữ liệu cho màn `#40`, gồm số điện thoại người thuê
-- [ ] Mọi chuyển trạng thái đi qua máy trạng thái ticket 01
-- [ ] Chuyển sai vai trò → 403; chuyển sai trạng thái → lỗi nghiệp vụ, **không phải 500**
-- [ ] QTHT → 403
-- [ ] Ghi `NHAT_KY_THAO_TAC` cho tiếp nhận, phân công, huỷ
+- [x] Quản lý tiếp nhận và phân công cho thợ; lưu ai phân công, lúc nào
+- [x] Thợ chuyển được *Đang xử lý* và *Chờ xác nhận* — **chỉ việc được phân công cho mình**
+- [x] **Thợ gọi API của việc thợ khác → 403.** Ca kiểm thử bắt buộc, đây là lý do tồn tại của phần phân quyền ticket này
+- [x] Thợ **không** đọc được hoá đơn, hợp đồng, ảnh giấy tờ, danh mục phòng — 403 ở tất cả
+- [x] **Không tài khoản `THO` nào xuất hiện trong `PHAN_QUYEN_TOA`** — test khẳng định
+- [x] Một lời gọi trả đủ dữ liệu cho màn `#40`, gồm số điện thoại người thuê
+- [x] Mọi chuyển trạng thái đi qua máy trạng thái ticket 01
+- [x] Chuyển sai vai trò → 403; chuyển sai trạng thái → lỗi nghiệp vụ, **không phải 500**
+- [x] QTHT → 403
+- [x] Ghi `NHAT_KY_THAO_TAC` cho tiếp nhận, phân công, huỷ
 
 ## Comments
+
+- Đã triển khai toàn bộ lifecycle API FR-MNT-03/04: danh sách, chi tiết, tiếp nhận, phân công, danh sách việc của thợ, bắt đầu xử lý, hoàn thành, xác nhận đóng và huỷ.
+- Mọi update trạng thái dùng compare-and-set `WHERE id = ? AND trang_thai = ?`; nếu cạnh tranh làm cập nhật 0 dòng thì trả 409 và rollback audit trong cùng transaction. Test concurrent khẳng định chỉ có một 200, một 409 và đúng một audit.
+- Quyền của người thuê và ảnh yêu cầu sửa chữa dùng `nguoiTaoId` bất biến của tài khoản, không dùng liên kết hồ sơ thuê có thể bị đổi. Có regression test khi chuyển liên kết hồ sơ.
+- Có test QTHT 403 cho toàn bộ endpoint mới, test thợ chỉ thấy việc của mình/không hoàn thành việc của thợ khác, và khẳng định THO không nằm trong `PHAN_QUYEN_TOA`.
+- Xác minh: suite liên quan `YeuCauSuaChuaIntegrationTest`, `NguoiDungQuanLyIntegrationTest`, `KichHoatTaiKhoanKhongCoKenhIntegrationTest` xanh. Full backend chạy hết 495 test nghiệp vụ nhưng Gradle kết thúc lỗi harness `NoSuchFileException` với `build/test-results/test/binary/in-progress-results-generic.bin` khi dọn nhiều context; không có failure/error trong XML kết quả đã sinh.

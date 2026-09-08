@@ -76,7 +76,7 @@ class KichHoatTaiKhoanKhongCoKenhIntegrationTest {
                                   "hoTen": "Không có kênh kích hoạt",
                                   "soDienThoai": "%s",
                                   "vaiTro": "THO",
-                                  "toaNhaIds": [1]
+                                  "toaNhaIds": []
                                 }
                                 """.formatted(soDienThoai)))
                 .andExpect(status().isServiceUnavailable());

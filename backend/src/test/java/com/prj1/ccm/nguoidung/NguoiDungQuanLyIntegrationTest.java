@@ -76,7 +76,7 @@ class NguoiDungQuanLyIntegrationTest {
     }
 
     @Test
-    void FR_AUT_06_taoTaiKhoanGanVaiTroVaToaNhaVaKhongTraVeMatKhau() throws Exception {
+    void FR_AUT_06_taoTaiKhoanThoKhongGanToaNhaVaKhongTraVeMatKhau() throws Exception {
         String adminToken = tokenCuaNguoiDung(1L, "0900000001");
         String soDienThoai = uniquePhone();
 
@@ -91,31 +91,33 @@ class NguoiDungQuanLyIntegrationTest {
                                   "toaNhaIds": [1, 2]
                                 }
                                 """.formatted(soDienThoai)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber())
-                .andExpect(jsonPath("$.hoTen").value("Thợ sửa chữa mới"))
-                .andExpect(jsonPath("$.soDienThoai").value(soDienThoai))
-                .andExpect(jsonPath("$.vaiTro").value("THO"))
-                .andExpect(jsonPath("$.trangThai").value("HOAT_DONG"))
-                .andExpect(jsonPath("$.tenTrangThai").value("Hoạt động"))
-                .andExpect(jsonPath("$.toaNhaIds[0]").value(1))
-                .andExpect(jsonPath("$.toaNhaIds[1]").value(2))
-                .andExpect(jsonPath("$.matKhau").doesNotExist())
-                .andExpect(jsonPath("$.matKhauHash").doesNotExist())
-                .andExpect(jsonPath("$.maKichHoat").doesNotExist());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.thongBao").value("Thợ sửa chữa không được gán vào toà nhà"));
 
-        Long nguoiDungId = jdbcTemplate.queryForObject(
-                "SELECT id FROM NGUOI_DUNG WHERE so_dien_thoai = ?",
-                Long.class,
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM NGUOI_DUNG WHERE so_dien_thoai = ?",
+                Integer.class,
                 soDienThoai
-        );
+        )).isZero();
 
-        assertThat(nguoiDungId).isNotNull();
-        assertThat(jdbcTemplate.queryForList(
-                "SELECT toa_nha_id FROM PHAN_QUYEN_TOA WHERE nguoi_dung_id = ? ORDER BY toa_nha_id",
-                Long.class,
-                nguoiDungId
-        )).containsExactly(1L, 2L);
+        mockMvc.perform(put("/api/nguoi-dung/4")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "hoTen": "Thợ sửa chữa mẫu",
+                                  "soDienThoai": "0900000004",
+                                  "vaiTro": "THO",
+                                  "toaNhaIds": [1]
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.thongBao").value("Thợ sửa chữa không được gán vào toà nhà"));
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM PHAN_QUYEN_TOA p JOIN NGUOI_DUNG nd ON nd.id = p.nguoi_dung_id WHERE nd.vai_tro = 'THO'",
+                Integer.class
+        )).isZero();
     }
 
     @Test
@@ -220,7 +222,7 @@ class NguoiDungQuanLyIntegrationTest {
                                   "hoTen": "Thợ không gắn hồ sơ thuê",
                                   "soDienThoai": "%s",
                                   "vaiTro": "THO",
-                                  "toaNhaIds": [1]
+                                  "toaNhaIds": []
                                 }
                                 """.formatted(soDienThoai)))
                 .andExpect(status().isCreated())
@@ -304,7 +306,7 @@ class NguoiDungQuanLyIntegrationTest {
                                   "hoTen": "Tài khoản có số điện thoại có khoảng trắng",
                                   "soDienThoai": "%s",
                                   "vaiTro": "THO",
-                                  "toaNhaIds": [1]
+                                  "toaNhaIds": []
                                 }
                                 """.formatted(soDienThoaiNhapVao)))
                 .andExpect(status().isCreated())
@@ -530,7 +532,7 @@ class NguoiDungQuanLyIntegrationTest {
                                   "hoTen": "Người dùng cần kích hoạt",
                                   "soDienThoai": "%s",
                                   "vaiTro": "THO",
-                                  "toaNhaIds": [1]
+                                  "toaNhaIds": []
                                 }
                                 """.formatted(soDienThoai)))
                 .andExpect(status().isCreated());
@@ -583,7 +585,7 @@ class NguoiDungQuanLyIntegrationTest {
                                   "hoTen": "Người dùng có mã hết hạn",
                                   "soDienThoai": "%s",
                                   "vaiTro": "THO",
-                                  "toaNhaIds": [1]
+                                  "toaNhaIds": []
                                 }
                                 """.formatted(soDienThoai)))
                 .andExpect(status().isCreated());
