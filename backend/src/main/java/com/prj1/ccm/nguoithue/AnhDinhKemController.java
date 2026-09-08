@@ -18,7 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class AnhDinhKemController {
     private final AnhDinhKemService anhDinhKemService;
     public AnhDinhKemController(AnhDinhKemService anhDinhKemService) { this.anhDinhKemService = anhDinhKemService; }
-    /** FR-TNT-01 and CR-013 issue a checked signed link only after management authorization. NFR-SEC-04 fixes the link lifetime at 15 minutes. */
+    /** FR-TNT-01, FR-POR-06 and CR-013 issue a checked signed link for the matching meter period. NFR-SEC-04 fixes the link lifetime at 15 minutes. */
     @GetMapping("/{anhId}/lien-ket")
     public LienKetAnhKy lienKet(@PathVariable Long anhId, HttpServletRequest request) { return anhDinhKemService.taoLienKet(anhId, (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE)); }
     /** FR-TNT-01 and CR-013 serve a stored image only after checking its signature and expiry. NFR-SEC-04 refuses links after 15 minutes. */

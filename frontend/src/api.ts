@@ -198,6 +198,10 @@ export type ThongTinHoaDonMoiNhat = {
   hoaDon?: ThongTinHoaDonChiTiet
 }
 
+export type LienKetAnhKy = {
+  url: string
+}
+
 export type YeuCauToaNha = {
   maToa: string
   ten: string
@@ -440,6 +444,20 @@ export async function fetchHoaDonMoiNhatCuaNguoiThue(token: string): Promise<Tho
   }
 
   return response.json() as Promise<ThongTinHoaDonMoiNhat>
+}
+
+/** FR-POR-06 asks for a fresh 15-minute signed meter-photo link without reloading the invoice. */
+export async function fetchLienKetAnh(token: string, anhId: number): Promise<string> {
+  const response = await fetch(`/api/anh/${anhId}/lien-ket`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể lấy lại liên kết ảnh công tơ.')
+  }
+
+  const lienKet = await response.json() as LienKetAnhKy
+  return lienKet.url
 }
 
 export async function chotKyThanhToan(

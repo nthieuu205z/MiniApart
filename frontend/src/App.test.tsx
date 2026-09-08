@@ -126,6 +126,17 @@ describe('App role navigation', () => {
     expect(mountedApp.container.textContent).toContain('Kỳ')
   })
 
+  it('FR-INV-02 isolates application chrome from the invoice A4 print surface', async () => {
+    mountedApp = await mountAppAndLogin(MENU_BY_ROLE[2].nguoiDung, '/hoa-don')
+
+    const appShell = mountedApp.container.querySelector('main') as HTMLElement
+    const nav = await vi.waitFor(() => mountedApp!.container.querySelector('nav') as HTMLElement)
+
+    expect(appShell.classList.contains('ma-app-shell')).toBe(true)
+    expect(nav.classList.contains('ma-no-print')).toBe(true)
+    expect(appShell.querySelectorAll('.ma-no-print')).toHaveLength(3)
+  })
+
   it('NFR-USA-01 stacks the login panels at 360px so the form remains within the viewport', async () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
     const fetchMock = buildFetchMock(MENU_BY_ROLE[2].nguoiDung)

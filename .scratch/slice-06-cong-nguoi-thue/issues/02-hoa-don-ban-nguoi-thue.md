@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Đây là màn quyết định niềm tin
 
@@ -53,14 +53,20 @@ Dùng CSS in. Không dựng màn thứ hai, không sinh PDF ở đây — PDF l�
 
 ## Hoàn thành khi
 
-- [ ] Mỗi khoản hiện đủ: tên, chỉ số đầu, chỉ số cuối, mức tiêu thụ, đơn giá, thành tiền
-- [ ] **Từng bậc thang hiện riêng** — cộng tay ra đúng tổng
-- [ ] **Dòng làm tròn hiện, giữ nguyên dấu kể cả âm**, kèm câu giải thích ngắn
-- [ ] **Test đối chiếu:** mọi con số ở màn người thuê **khớp đúng** con số `HoaDonChiTietService` trả cho quản lý
-- [ ] Ảnh công tơ đúng kỳ, qua liên kết ký 15 phút; hết hạn thì xin lại được tại chỗ
-- [ ] Định dạng tiền và ngày dùng lại đường đã có, **không viết hàm thứ hai**
-- [ ] In A4 bằng chế độ in của chính màn này, **không màn riêng, không PDF**
-- [ ] Hoá đơn của người khác → 403 (kế thừa ticket 01)
-- [ ] Tên test mang mã `FR-POR-02`, `FR-POR-06`, `BR-15`
+- [x] Mỗi khoản hiện đủ: tên, chỉ số đầu, chỉ số cuối, mức tiêu thụ, đơn giá, thành tiền
+- [x] **Từng bậc thang hiện riêng** — cộng tay ra đúng tổng
+- [x] **Dòng làm tròn hiện, giữ nguyên dấu kể cả âm**, kèm câu giải thích ngắn
+- [x] **Test đối chiếu:** mọi con số ở màn người thuê **khớp đúng** con số `HoaDonChiTietService` trả cho quản lý
+- [x] Ảnh công tơ đúng kỳ, qua liên kết ký 15 phút; hết hạn thì xin lại được tại chỗ
+- [x] Định dạng tiền và ngày dùng lại đường đã có, **không viết hàm thứ hai**
+- [x] In A4 bằng chế độ in của chính màn này, **không màn riêng, không PDF**
+- [x] Hoá đơn của người khác → 403 (kế thừa ticket 01)
+- [x] Tên test mang mã `FR-POR-02`, `FR-POR-06`, `BR-15`
 
 ## Comments
+
+- 2026-09-08: Hoàn thiện màn chi tiết người thuê trên cả desktop và mobile: hiển thị đủ chỉ số, tiêu thụ, đơn giá, thành tiền, từng bậc thang và dòng làm tròn âm có giải thích; dùng chung projection và formatter hiện có.
+- 2026-09-08: Ảnh công tơ dùng signed link đúng kỳ; có trạng thái đang lấy/hết hạn, tự nhận biết `hetHan`, mở ảnh đầy đủ và xin lại link tại chỗ qua `/api/anh/{id}/lien-ket` mà không tải lại hóa đơn.
+- 2026-09-08: Chế độ in là CSS A4 của chính màn hóa đơn, loại shell điều hướng khỏi bản in; không tạo màn riêng hoặc PDF.
+- 2026-09-08: Thêm parity integration test đối chiếu projection quản lý/người thuê, gồm identity, dòng hóa đơn, bậc thang, ảnh và làm tròn; giữ nguyên kiểm thử 403 kế thừa từ ticket 01.
+- 2026-09-08: Frontend `npm test` pass 122/122, build pass; backend focused `HoaDonChiTietIntegrationTest` và `CongNguoiThueAuthorizationIntegrationTest` pass với `--rerun-tasks`; Compose build lại, PostgreSQL/backend/frontend healthy. Full backend còn 5 lỗi baseline trong `ThanhLyHopDongIntegrationTest` ở mã chưa chạm tới ticket này (410 tests, 5 failed).

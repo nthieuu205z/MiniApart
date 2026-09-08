@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ApiError, fetchHoaDonChiTiet, fetchHoaDonMoiNhatCuaNguoiThue, type ThongTinHoaDonChiTiet, type ThongTinDongHoaDon } from './api'
+import { ApiError, fetchHoaDonChiTiet, fetchHoaDonMoiNhatCuaNguoiThue, fetchLienKetAnh, type ThongTinHoaDonChiTiet, type ThongTinDongHoaDon } from './api'
 import { Button } from './design/core/Button'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Figure } from './design/core/Figure'
@@ -15,7 +15,9 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
   const [dangTai, setDangTai] = useState(true)
   const [loi, setLoi] = useState<string | null>(null)
   const [thongBaoRong, setThongBaoRong] = useState<string | null>(null)
+  const [soLanTaiLai, setSoLanTaiLai] = useState(0)
   const variant = mobile ? 'mobile' : 'desktop'
+  const maTruyVet = cheDoNguoiThue ? 'FR-POR-02' : 'FR-INV-02'
 
   useEffect(() => {
     let mounted = true
@@ -52,14 +54,21 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
     return () => {
       mounted = false
     }
-  }, [cheDoNguoiThue, hoaDonId, kyId, token, toaNhaId])
+  }, [cheDoNguoiThue, hoaDonId, kyId, soLanTaiLai, token, toaNhaId])
 
   if (dangTai) return <ScreenSurface data-layout-variant={variant} aria-busy="true" aria-live="polite">Đang tải hoá đơn…</ScreenSurface>
-  if (loi) return <ScreenSurface data-layout-variant={variant} role="alert">{loi}</ScreenSurface>
+  if (loi) {
+    return (
+      <ScreenSurface data-layout-variant={variant} role="alert">
+        <p style={{ margin: 0, lineHeight: 1.55 }}>{loi}</p>
+        <Button data-retry-invoice variant="secondary" onClick={() => setSoLanTaiLai((count) => count + 1)}>Thử lại</Button>
+      </ScreenSurface>
+    )
+  }
   if (!hoaDon) {
     return (
       <ScreenSurface data-testid="invoice-screen" data-layout-variant={variant}>
-        <SysLabel>FR-INV-02</SysLabel>
+        <SysLabel>{maTruyVet}</SysLabel>
         <h3>Hoá đơn</h3>
         <EmptyState title={thongBaoRong ?? 'Chọn một hoá đơn để xem đầy đủ từng khoản mục.'} />
       </ScreenSurface>
@@ -84,7 +93,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
       aria-labelledby="invoice-title"
     >
       <ScreenHeader action={<Button className="ma-no-print" data-print-invoice variant="secondary" onClick={() => window.print()}>In A4</Button>}>
-        <SysLabel>FR-INV-02</SysLabel>
+        <SysLabel>{maTruyVet}</SysLabel>
         <h3 id="invoice-title">Hoá đơn {hoaDon.maHoaDon}</h3>
       </ScreenHeader>
 
@@ -102,7 +111,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
       ) : null}
 
       {mobile ? (
-        <MobileInvoiceLines lines={hoaDon.cacDong} total={hoaDon.tongTien} />
+        <MobileInvoiceLines token={token} lines={hoaDon.cacDong} total={hoaDon.tongTien} />
       ) : (
         <TableFrame>
           <thead>
@@ -112,7 +121,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
               <TableHeadCell align="right">Thành tiền</TableHeadCell>
             </tr>
           </thead>
-          <tbody>{hoaDon.cacDong.map((dong, index) => <DongHoaDon key={`${dong.tenKhoan}-${index}`} dong={dong} />)}</tbody>
+          <tbody>{hoaDon.cacDong.map((dong, index) => <DongHoaDon key={`${dong.tenKhoan}-${index}`} token={token} dong={dong} />)}</tbody>
           <tfoot>
             <tr>
               <TableHeadCell colSpan={2}>Tổng cộng</TableHeadCell>
@@ -130,18 +139,20 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
   )
 }
 
-function MobileInvoiceLines({ lines, total }: { lines: ThongTinDongHoaDon[]; total: string }) {
+function MobileInvoiceLines({ token, lines, total }: { token: string; lines: ThongTinDongHoaDon[]; total: string }) {
   return (
     <div data-mobile-invoice-lines style={{ display: 'grid', gap: 10, minWidth: 0 }}>
       {lines.length === 0 ? <EmptyState title="Hoá đơn chưa có khoản mục." /> : null}
       {lines.map((dong, index) => (
-        <article key={`${dong.tenKhoan}-${index}`} data-mobile-invoice-line style={{ display: 'grid', gap: 10, minWidth: 0, padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }}>
+        <article key={`${dong.tenKhoan}-${index}`} data-mobile-invoice-line={dong.tenKhoan} data-invoice-rounding={laDongLamTron(dong) ? true : undefined} style={{ display: 'grid', gap: 10, minWidth: 0, padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }}>
           <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, minWidth: 0 }}>
             <strong style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{dong.tenKhoan}</strong>
             <Figure value={dinhDangTien(dong.thanhTien)} unit="₫" tone={dong.thanhTien.startsWith('-') ? 'urgent' : 'primary'} />
           </header>
+          <InvoiceLineDetails dong={dong} />
           <div style={{ minWidth: 0, overflowWrap: 'anywhere', color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>{dong.dienGiai}</div>
-          {dong.anhCongToUrl ? <MeterImage src={dong.anhCongToUrl} alt={`Ảnh công tơ ${dong.tenKhoan}`} /> : null}
+          {laDongLamTron(dong) ? <RoundingExplanation /> : null}
+          {dong.anhCongToUrl ? <MeterImage imageId={dong.anhCongToId} onRefresh={dong.anhCongToId == null ? undefined : () => fetchLienKetAnh(token, dong.anhCongToId!)} src={dong.anhCongToUrl} alt={`Ảnh công tơ ${dong.tenKhoan}`} /> : null}
           {dong.cacBac.length > 0 ? (
             <div data-mobile-invoice-tiers style={{ display: 'grid', gap: 8, paddingTop: 10, borderTop: '1px solid var(--ma-border-subtle)' }}>
               {dong.cacBac.map((bac) => (
@@ -150,7 +161,9 @@ function MobileInvoiceLines({ lines, total }: { lines: ThongTinDongHoaDon[]; tot
                     <strong style={{ color: 'var(--ma-text-primary)' }}>Bậc {bac.bac}</strong>
                     <div>Khoảng {bac.tuSoLuong} – {bac.denSoLuong ?? 'không giới hạn'}</div>
                     <div>Định mức sau quy đổi: {bac.dinhMucQuyDoi ?? 'không giới hạn'}</div>
-                    <div>{bac.soLuong} × {bac.donGia} = {bac.thanhTien}</div>
+                    <div>Mức tiêu thụ: {bac.soLuong}</div>
+                    <div>Đơn giá: {dinhDangTien(bac.donGia)} ₫</div>
+                    <div>Thành tiền: {dinhDangTien(bac.thanhTien)} ₫</div>
                   </div>
                   <Figure value={dinhDangTien(bac.thanhTien)} unit="₫" size="sm" />
                 </div>
@@ -167,14 +180,16 @@ function MobileInvoiceLines({ lines, total }: { lines: ThongTinDongHoaDon[]; tot
   )
 }
 
-function DongHoaDon({ dong }: { dong: ThongTinDongHoaDon }) {
+function DongHoaDon({ token, dong }: { token: string; dong: ThongTinDongHoaDon }) {
   return (
     <>
-      <tr>
+      <tr data-invoice-line={dong.tenKhoan} data-invoice-rounding={laDongLamTron(dong) ? true : undefined}>
         <TableCell header>{dong.tenKhoan}</TableCell>
         <TableCell>
-          <div>{dong.dienGiai}</div>
-          {dong.anhCongToUrl ? <MeterImage src={dong.anhCongToUrl} alt={`Ảnh công tơ ${dong.tenKhoan}`} /> : null}
+          <InvoiceLineDetails dong={dong} showAmount={false} />
+          <div style={{ marginTop: 10 }}>{dong.dienGiai}</div>
+          {laDongLamTron(dong) ? <RoundingExplanation /> : null}
+          {dong.anhCongToUrl ? <MeterImage imageId={dong.anhCongToId} onRefresh={dong.anhCongToId == null ? undefined : () => fetchLienKetAnh(token, dong.anhCongToId!)} src={dong.anhCongToUrl} alt={`Ảnh công tơ ${dong.tenKhoan}`} /> : null}
         </TableCell>
         <TableCell align="right"><Figure value={dinhDangTien(dong.thanhTien)} unit="₫" tone={dong.thanhTien.startsWith('-') ? 'urgent' : 'primary'} /></TableCell>
       </tr>
@@ -184,13 +199,39 @@ function DongHoaDon({ dong }: { dong: ThongTinDongHoaDon }) {
           <TableCell muted>
             <div>Khoảng {bac.tuSoLuong} – {bac.denSoLuong ?? 'không giới hạn'}</div>
             <div>Định mức sau quy đổi: {bac.dinhMucQuyDoi ?? 'không giới hạn'}</div>
-            <div>{bac.soLuong} × {bac.donGia} = {bac.thanhTien}</div>
+            <div>Mức tiêu thụ: {bac.soLuong}</div>
+            <div>Đơn giá: {dinhDangTien(bac.donGia)} ₫</div>
+            <div>Thành tiền: {dinhDangTien(bac.thanhTien)} ₫</div>
           </TableCell>
           <TableCell align="right"><Figure value={dinhDangTien(bac.thanhTien)} unit="₫" size="sm" /></TableCell>
         </tr>
       ))}
     </>
   )
+}
+
+function InvoiceLineDetails({ dong, showAmount = true }: { dong: ThongTinDongHoaDon; showAmount?: boolean }) {
+  const donGia = dong.donGia != null
+    ? `${dinhDangTien(dong.donGia)} ₫`
+    : dong.cacBac.length > 0 ? 'Theo bậc thang' : '—'
+
+  return (
+    <dl data-invoice-line-details style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '6px 12px', margin: 0, color: 'var(--ma-text-secondary)', fontSize: 13, lineHeight: 1.5 }}>
+      <div><dt>Chỉ số đầu:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 700 }}>{dong.chiSoDau ?? '—'}</dd></div>
+      <div><dt>Chỉ số cuối:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 700 }}>{dong.chiSoCuoi ?? '—'}</dd></div>
+      <div><dt>Mức tiêu thụ:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 700 }}>{dong.soLuong ?? '—'}</dd></div>
+      <div><dt>Đơn giá:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 700 }}>{donGia}</dd></div>
+      {showAmount ? <div><dt>Thành tiền:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 700 }}>{dinhDangTien(dong.thanhTien)} ₫</dd></div> : null}
+    </dl>
+  )
+}
+
+function RoundingExplanation() {
+  return <p data-invoice-rounding-explanation style={{ margin: '10px 0 0', color: 'var(--ma-text-secondary)', fontSize: 13, lineHeight: 1.55 }}>Quy tắc: làm tròn nửa lên đến 1.000 đồng. Số âm là phần điều chỉnh giảm sau khi làm tròn.</p>
+}
+
+function laDongLamTron(dong: ThongTinDongHoaDon) {
+  return dong.loaiKhoan === 'LAM_TRON'
 }
 
 function toneHoaDon(status: string): 'draft' | 'neutral' | 'strong' | 'urgent' | 'waiting' | 'done' | 'closed' {

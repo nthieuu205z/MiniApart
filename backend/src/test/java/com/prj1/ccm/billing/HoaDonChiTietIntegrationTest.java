@@ -218,6 +218,41 @@ class HoaDonChiTietIntegrationTest {
     }
 
     @Test
+    void FR_POR_02_FR_POR_06_BR_15_tenantProjectionMatchesManagerForEveryInvoiceNumber() throws Exception {
+        MvcResult managerResult = mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/%s/hoa-don/%s".formatted(kyId, hoaDonId))
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isOk())
+                .andReturn();
+        MvcResult tenantResult = mockMvc.perform(get("/api/cong/hoa-don/" + hoaDonId)
+                        .header("Authorization", "Bearer " + login(5L, "0900000006")))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode manager = objectMapper.readTree(managerResult.getResponse().getContentAsString());
+        JsonNode tenant = objectMapper.readTree(tenantResult.getResponse().getContentAsString());
+        for (String field : new String[]{"hoaDonId", "maHoaDon", "kyId", "hopDongId", "soPhong", "nguoiThue", "ngayPhatHanh", "hanThanhToan", "trangThai", "tongTien", "daThu", "conLai", "soNguoiO", "soHoQuyDoi", "giaiThichSoHo"}) {
+            assertThat(tenant.get(field)).as("invoice field %s", field).isEqualTo(manager.get(field));
+        }
+        assertThat(tenant.get("cacDong").size()).isEqualTo(manager.get("cacDong").size());
+
+        for (int index = 0; index < manager.get("cacDong").size(); index++) {
+            JsonNode managerLine = manager.get("cacDong").get(index);
+            JsonNode tenantLine = tenant.get("cacDong").get(index);
+            for (String field : new String[]{"tenKhoan", "chiSoDau", "chiSoCuoi", "soLuong", "donGia", "thanhTien", "loaiKhoan", "dienGiai", "anhCongToId", "cacBac", "lyDo"}) {
+                assertThat(tenantLine.get(field)).as("line %s field %s", index, field).isEqualTo(managerLine.get(field));
+            }
+            if (managerLine.get("anhCongToUrl") == null) {
+                assertThat(tenantLine.get("anhCongToUrl")).as("line %s signed meter link", index).isNull();
+            } else {
+                assertThat(tenantLine.get("anhCongToUrl").asText()).as("line %s signed meter link", index).contains("/api/anh/", "/xem?");
+            }
+        }
+        assertThat(tenant.get("cacDong").get(0).get("anhCongToUrl").asText()).contains("/api/anh/", "/xem?");
+        assertThat(tenant.get("cacDong").get(2).get("loaiKhoan").asText()).isEqualTo("LAM_TRON");
+        assertThat(tenant.get("cacDong").get(2).get("thanhTien").asText()).isEqualTo("-500.00");
+    }
+
+    @Test
     void FR_INV_02_otherTenantReceives403OnInvoiceDetailEndpoint() throws Exception {
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = ? WHERE id = 5", otherNguoiThueId);
         String otherTenantToken = login(5L, "0900000006");

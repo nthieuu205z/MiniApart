@@ -452,8 +452,9 @@ function App() {
   const duongDanPhanCap = taoDuongDanPhanCap(nguoiDung.tenVaiTro, tieuDeTheChinh)
 
   return (
-    <main style={laManHinhHep ? styleKhungUngDungMobile : styleKhungUngDungDesktop}>
+    <main className="ma-app-shell" style={laManHinhHep ? styleKhungUngDungMobile : styleKhungUngDungDesktop}>
       <NavPanel
+        className="ma-no-print"
         mobile={laManHinhHep}
         aria-label="Điều hướng theo vai trò"
         groups={nhomDieuHuong}
@@ -475,6 +476,7 @@ function App() {
         {canDungTopBarToanCuc ? (
           <>
             <TopBar
+              className="ma-no-print"
               building={thongTinTopBar.building}
               period={thongTinTopBar.period}
               periodStatus={thongTinTopBar.periodStatus}
@@ -486,7 +488,7 @@ function App() {
                 minHeight: 'var(--ma-topbar-height)',
               }}
             />
-            <Breadcrumb items={duongDanPhanCap} style={{ padding: laManHinhHep ? '7px 16px' : undefined }} />
+            <Breadcrumb className="ma-no-print" items={duongDanPhanCap} style={{ padding: laManHinhHep ? '7px 16px' : undefined }} />
           </>
         ) : null}
 
