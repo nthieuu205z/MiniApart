@@ -8,6 +8,7 @@ import {
   fetchLichSuHoaDonCuaNguoiThue,
   fetchTieuThuCuaNguoiThue,
   fetchHoaDonMoiNhatCuaNguoiThue,
+  fetchHopDongCuaNguoiThue,
   fetchNguoiDungQuanLy,
   fetchHealth,
   fetchPhongChuaGhiChiSo,
@@ -194,6 +195,34 @@ describe('fetchHealth', () => {
 
     await expect(fetchTieuThuCuaNguoiThue('tenant-token')).resolves.toEqual(response)
     expect(fetchMock).toHaveBeenCalledWith('/api/cong/tieu-thu?soKy=12', {
+      headers: { Authorization: 'Bearer tenant-token' },
+    })
+  })
+
+  it('FR-POR-07 BR-14 fetches the tenant-owned contract list through the portal endpoint', async () => {
+    const response = [{
+      id: 11,
+      phongId: 101,
+      soPhong: '101',
+      nguoiThueId: 10,
+      hoTenNguoiThue: 'Người thuê 101',
+      ngayBatDau: '2026-01-01',
+      ngayKetThuc: '2026-12-31',
+      giaThue: '3500000.00',
+      tienCoc: '3500000.00',
+      soNgayBaoTruoc: 30,
+      trangThai: 'HIEU_LUC',
+      tenTrangThai: 'Hiệu lực',
+      sapHetHan: false,
+      soNgayConLai: 114,
+      dichVuApDung: [],
+      quyetToan: null,
+    }]
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(response))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchHopDongCuaNguoiThue('tenant-token')).resolves.toEqual(response)
+    expect(fetchMock).toHaveBeenCalledWith('/api/cong/hop-dong', {
       headers: { Authorization: 'Bearer tenant-token' },
     })
   })

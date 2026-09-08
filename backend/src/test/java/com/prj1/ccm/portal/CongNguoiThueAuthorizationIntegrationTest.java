@@ -39,6 +39,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(CongNguoiThueAuthorizationIntegrationTest.PortalClockTestConfiguration.class)
 class CongNguoiThueAuthorizationIntegrationTest {
 
+    private static final Instant PORTAL_NOW = Instant.parse("2026-09-02T00:00:00Z");
+
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:17-alpine");
 
@@ -50,6 +52,9 @@ class CongNguoiThueAuthorizationIntegrationTest {
 
     @Autowired
     private PasswordHasher passwordHasher;
+
+    @Autowired
+    private MutablePortalClock mutableClock;
 
     private Long ownContractId;
     private Long otherContractId;
@@ -74,6 +79,7 @@ class CongNguoiThueAuthorizationIntegrationTest {
 
     @BeforeEach
     void resetDatabase() {
+        mutableClock.dat(PORTAL_NOW);
         xoaNeuBangTonTai("THANH_TOAN");
         xoaNeuBangTonTai("SO_DU_KHA_DUNG");
         xoaNeuBangTonTai("KHOAN_PHAT_SINH");
@@ -316,6 +322,48 @@ class CongNguoiThueAuthorizationIntegrationTest {
     }
 
     @Test
+    void FR_POR_07_BR_14_contractExpiryUsesQueryTimeClockAtThirtyAndThirtyOneDaysWithoutTask() throws Exception {
+        jdbcTemplate.update(
+                "UPDATE HOP_DONG SET ngay_ket_thuc = DATE '2026-10-02', trang_thai = 'HIEU_LUC' WHERE id = ?",
+                ownContractId
+        );
+
+        mutableClock.dat(Instant.parse("2026-09-01T00:00:00Z"));
+        String tenantToken = login(5L, "0900000006");
+
+        mockMvc.perform(get("/api/cong/hop-dong")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(ownContractId))
+                .andExpect(jsonPath("$[0].sapHetHan").value(false))
+                .andExpect(jsonPath("$[0].soNgayConLai").value(31));
+
+        mutableClock.dat(Instant.parse("2026-09-02T00:00:00Z"));
+        tenantToken = login(5L, "0900000006");
+
+        mockMvc.perform(get("/api/cong/hop-dong")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].sapHetHan").value(true))
+                .andExpect(jsonPath("$[0].soNgayConLai").value(30));
+
+        mutableClock.dat(Instant.parse("2026-10-03T00:00:00Z"));
+        tenantToken = login(5L, "0900000006");
+
+        mockMvc.perform(get("/api/cong/hop-dong")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].sapHetHan").value(false))
+                .andExpect(jsonPath("$[0].soNgayConLai").value(-1));
+
+        org.assertj.core.api.Assertions.assertThat(jdbcTemplate.queryForObject(
+                "SELECT trang_thai FROM HOP_DONG WHERE id = ?",
+                String.class,
+                ownContractId
+        )).isEqualTo("HIEU_LUC");
+    }
+
+    @Test
     void FR_POR_04_tenantCannotReadGuessableForeignInvoicePhotoOrContract() throws Exception {
         String tenantToken = login(5L, "0900000006");
 
@@ -537,9 +585,43 @@ class CongNguoiThueAuthorizationIntegrationTest {
     @TestConfiguration(proxyBeanMethods = false)
     static class PortalClockTestConfiguration {
         @Bean
+        MutablePortalClock mutablePortalClock() {
+            return new MutablePortalClock(PORTAL_NOW, ZoneId.of("Asia/Ho_Chi_Minh"));
+        }
+
+        @Bean
         @Primary
-        Clock portalClock() {
-            return Clock.fixed(Instant.parse("2026-09-02T00:00:00Z"), ZoneId.of("Asia/Ho_Chi_Minh"));
+        Clock portalClock(MutablePortalClock mutableClock) {
+            return mutableClock;
+        }
+    }
+
+    static final class MutablePortalClock extends Clock {
+        private volatile Instant instant;
+        private final ZoneId zoneId;
+
+        private MutablePortalClock(Instant instant, ZoneId zoneId) {
+            this.instant = instant;
+            this.zoneId = zoneId;
+        }
+
+        void dat(Instant instantMoi) {
+            this.instant = instantMoi;
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return zoneId;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return new MutablePortalClock(instant, zone);
+        }
+
+        @Override
+        public Instant instant() {
+            return instant;
         }
     }
 }

@@ -787,6 +787,7 @@ function buildFetchMock(
     latestTenantInvoiceResponse?: Record<string, unknown>
     historyResponse?: Record<string, unknown>[]
     consumptionResponse?: Record<string, unknown>
+    contractResponse?: Record<string, unknown>[]
   },
 ) {
   const accounts: ThongTinQuanLyNguoiDung[] = [
@@ -935,6 +936,13 @@ function buildFetchMock(
 
     if (url.startsWith('/api/cong/tieu-thu') && method === 'GET') {
       return new Response(JSON.stringify(options?.consumptionResponse ?? { dien: [], nuoc: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (url === '/api/cong/hop-dong' && method === 'GET') {
+      return new Response(JSON.stringify(options?.contractResponse ?? []), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -1520,6 +1528,43 @@ describe('invoice navigation', () => {
     await vi.waitFor(() => expect(mountedApp!.container.querySelector('[data-consumption-empty]')).not.toBeNull())
     expect(mountedApp.container.textContent).toContain('Chưa có dữ liệu tiêu thụ')
     expect(mountedApp.container.querySelector('[role="alert"]')).toBeNull()
+  })
+
+  it('FR-POR-07 BR-14 opens the tenant contract screen from the role menu', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
+    const nguoiThue = MENU_BY_ROLE[4].nguoiDung
+    const fetchMock = buildFetchMock(nguoiThue, {
+      contractResponse: [{
+        id: 21,
+        phongId: 101,
+        soPhong: '101',
+        nguoiThueId: 10,
+        hoTenNguoiThue: 'Người thuê 101',
+        ngayBatDau: '2026-01-01',
+        ngayKetThuc: '2026-09-10',
+        giaThue: '3500000.00',
+        tienCoc: '3500000.00',
+        soNgayBaoTruoc: 30,
+        trangThai: 'HIEU_LUC',
+        tenTrangThai: 'Hiệu lực',
+        sapHetHan: true,
+        soNgayConLai: 12,
+        dichVuApDung: [{ dichVuId: 7, tenDichVu: 'Điện', donGiaApDung: '3500.00' }],
+        quyetToan: null,
+      }],
+    })
+    mountedApp = await mountAppAndLogin(nguoiThue, '/hop-dong', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="tenant-contract-screen"]')).not.toBeNull()
+    })
+
+    expect(mountedApp.container.textContent).toContain('Hợp đồng còn 12 ngày (hết hạn 10/09/2026).')
+    expect(mountedApp.container.textContent).toContain('Tiền cọc thoả thuận')
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/cong/hop-dong',
+      expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }),
+    )
   })
 
   it('FR-INV-02 reads all invoice identifiers from the detail query link', () => {
