@@ -4,7 +4,7 @@
 
 **Blocked by:** None *(nên bắt đầu sau ticket `slice-05 · 02` — xem dưới)*
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Migration:** không cần. **Slice này không được đẻ migration nào.**
 
@@ -55,14 +55,19 @@ Không sai mã. Hỏng hẳn khi demo. **Không phải đợi hết Slice 05**, 
 
 ## Hoàn thành khi
 
-- [ ] Người thuê đăng nhập **thấy ngay** hoá đơn kỳ gần nhất, không qua màn trung gian
-- [ ] Chưa có hoá đơn nào → màn rỗng nói rõ vì sao, **không để trắng và không báo lỗi**
-- [ ] **Ba ca tấn công đều nhận 403** ở tầng máy chủ: hoá đơn, ảnh công tơ, hợp đồng của người khác
-- [ ] Mã định danh **đoán được** vẫn bị chặn — không dựa vào việc giấu id
-- [ ] Người thuê đã thanh lý **vẫn xem được** hợp đồng cũ của mình
-- [ ] Tài khoản bị khoá → mất quyền ngay
-- [ ] QTHT và Thợ → 403
-- [ ] **Không thêm migration nào**
-- [ ] Tên test mang mã `FR-POR-01` và `FR-POR-04`
+- [x] Người thuê đăng nhập **thấy ngay** hoá đơn kỳ gần nhất, không qua màn trung gian
+- [x] Chưa có hoá đơn nào → màn rỗng nói rõ vì sao, **không để trắng và không báo lỗi**
+- [x] **Ba ca tấn công đều nhận 403** ở tầng máy chủ: hoá đơn, ảnh công tơ, hợp đồng của người khác
+- [x] Mã định danh **đoán được** vẫn bị chặn — không dựa vào việc giấu id
+- [x] Người thuê đã thanh lý **vẫn xem được** hợp đồng cũ của mình
+- [x] Tài khoản bị khoá → mất quyền ngay
+- [x] QTHT và Thợ → 403
+- [x] **Không thêm migration nào**
+- [x] Tên test mang mã `FR-POR-01` và `FR-POR-04`
 
 ## Comments
+
+- 2026-09-08: Đã triển khai API cổng người thuê và nối frontend: đăng nhập ở `/` gọi `/api/cong/hoa-don-moi-nhat`, hiển thị ngay hoá đơn hoặc empty state có thông báo rõ ràng; luồng hoá đơn query-parameter cũ vẫn được giữ cho các vai trò hiện có.
+- 2026-09-08: Phân quyền được ràng buộc theo `NguoiDung.nguoiThueId` cho hoá đơn, ảnh công tơ và hợp đồng; tài khoản bị khoá trả 401, vai trò QTHT/Thợ và dữ liệu người thuê khác trả 403.
+- 2026-09-08: Sửa mapper JDBC dùng `getLongOrNull` để hoá đơn quyết toán giữ `kyId: null` thay vì biến `NULL` thành `0`; thêm regression test cho trường hợp này.
+- 2026-09-08: Không thêm migration. Focused backend và toàn bộ frontend pass; full backend hiện còn 5 lỗi baseline trong `ThanhLyHopDongIntegrationTest` (mong đợi `307000.00`, thực tế `341000.00`), đã tái hiện trên base trước ticket.
