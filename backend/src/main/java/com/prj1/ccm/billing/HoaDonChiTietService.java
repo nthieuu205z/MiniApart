@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class HoaDonChiTietService {
@@ -41,6 +42,23 @@ public class HoaDonChiTietService {
     @Transactional(readOnly = true)
     public ThongTinHoaDonChiTiet chiTietKhongAnhKy(Long toaNhaId, Long kyId, Long hoaDonId, NguoiDung nguoiDung) {
         return chiTiet(toaNhaId, kyId, hoaDonId, nguoiDung, false);
+    }
+
+    /** FR-POR-01 finds the latest issued invoice owned by the authenticated tenant, or an empty result. */
+    @Transactional(readOnly = true)
+    public Optional<ThongTinHoaDonChiTiet> hoaDonMoiNhatCuaNguoiThue(NguoiDung nguoiDung) {
+        kiemTraNguoiThue(nguoiDung);
+        return hoaDonChiTietRepository.findHoaDonMoiNhatCuaNguoiThue(nguoiDung.nguoiThueId())
+                .map(phamVi -> chiTiet(phamVi.toaNhaId(), phamVi.kyId(), phamVi.hoaDonId(), nguoiDung));
+    }
+
+    /** FR-POR-04 resolves a guessable invoice identifier only after binding it to the tenant in the token. */
+    @Transactional(readOnly = true)
+    public ThongTinHoaDonChiTiet chiTietCuaNguoiThue(Long hoaDonId, NguoiDung nguoiDung) {
+        kiemTraNguoiThue(nguoiDung);
+        HoaDonPhamVi phamVi = hoaDonChiTietRepository.findPhamViByHoaDonId(hoaDonId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return chiTiet(phamVi.toaNhaId(), phamVi.kyId(), phamVi.hoaDonId(), nguoiDung);
     }
 
     private ThongTinHoaDonChiTiet chiTiet(
@@ -88,6 +106,12 @@ public class HoaDonChiTietService {
 
     private boolean coQuyenXemHoaDon(NguoiDung nguoiDung) {
         return laNhanVien(nguoiDung) || nguoiDung.vaiTro() == VaiTro.NGUOI_THUE;
+    }
+
+    private void kiemTraNguoiThue(NguoiDung nguoiDung) {
+        if (nguoiDung == null || nguoiDung.vaiTro() != VaiTro.NGUOI_THUE || nguoiDung.nguoiThueId() == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
     }
 
     private boolean laNhanVien(NguoiDung nguoiDung) {

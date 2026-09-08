@@ -32,7 +32,7 @@ class HoaDonChiTietRepository {
                                 JOIN PHONG p ON p.id = hop_dong.phong_id
                                 JOIN NGUOI_THUE nt ON nt.id = hop_dong.nguoi_thue_id
                                 WHERE hd.id = ?
-                                  AND hd.ky_id = ?
+                                  AND hd.ky_id IS NOT DISTINCT FROM ?
                                   AND p.toa_nha_id = ?
                                 """,
                         (resultSet, rowNum) -> {
@@ -64,6 +64,50 @@ class HoaDonChiTietRepository {
                         hoaDonId,
                         kyId,
                         toaNhaId
+                )
+                .stream()
+                .findFirst();
+    }
+
+    Optional<HoaDonPhamVi> findPhamViByHoaDonId(Long hoaDonId) {
+        return jdbcTemplate.query(
+                        """
+                                SELECT hd.id, hd.ky_id, p.toa_nha_id
+                                FROM HOA_DON hd
+                                JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
+                                JOIN PHONG p ON p.id = hop_dong.phong_id
+                                WHERE hd.id = ?
+                                """,
+                        (resultSet, rowNum) -> new HoaDonPhamVi(
+                                resultSet.getLong("id"),
+                                getLongOrNull(resultSet, "ky_id"),
+                                resultSet.getLong("toa_nha_id")
+                        ),
+                        hoaDonId
+                )
+                .stream()
+                .findFirst();
+    }
+
+    Optional<HoaDonPhamVi> findHoaDonMoiNhatCuaNguoiThue(Long nguoiThueId) {
+        return jdbcTemplate.query(
+                        """
+                                SELECT hd.id, hd.ky_id, p.toa_nha_id
+                                FROM HOA_DON hd
+                                JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
+                                JOIN PHONG p ON p.id = hop_dong.phong_id
+                                JOIN KY_THANH_TOAN ky ON ky.id = hd.ky_id
+                                WHERE hop_dong.nguoi_thue_id = ?
+                                  AND hd.trang_thai NOT IN ('NHAP', 'DA_HUY')
+                                ORDER BY ky.ngay_ket_thuc DESC, hd.id DESC
+                                LIMIT 1
+                                """,
+                        (resultSet, rowNum) -> new HoaDonPhamVi(
+                                resultSet.getLong("id"),
+                                getLongOrNull(resultSet, "ky_id"),
+                                resultSet.getLong("toa_nha_id")
+                        ),
+                        nguoiThueId
                 )
                 .stream()
                 .findFirst();
@@ -184,4 +228,7 @@ record BacHoaDonDuLieu(
         BigDecimal donGia,
         BigDecimal thanhTien
 ) {
+}
+
+record HoaDonPhamVi(Long hoaDonId, Long kyId, Long toaNhaId) {
 }
