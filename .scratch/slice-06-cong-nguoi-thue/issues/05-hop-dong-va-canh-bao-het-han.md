@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## `BR-14` và ghi chú `CR-012` — đừng lưu thành trạng thái
 
@@ -43,14 +43,18 @@ Nếu màn này hiện tiền cọc thì hiện như **thông tin hợp đồng*
 
 ## Hoàn thành khi
 
-- [ ] Hiện thông tin hợp đồng: phòng, ngày bắt đầu, ngày kết thúc, giá thuê, dịch vụ áp dụng
-- [ ] **Cảnh báo khi còn dưới 30 ngày, kèm số ngày cụ thể**
-- [ ] Bốn ca ở bảng trên là **bốn câu khác nhau**
-- [ ] Cảnh báo tính bằng **điều kiện truy vấn**, dùng lại `sapHetHan()`/`soNgayConLai()` — **không cột trạng thái, không tác vụ nền**
-- [ ] Test bằng **đồng hồ đẩy được**: đẩy tới ngày thứ 30 và 31, cảnh báo bật/tắt đúng, **không chạy tác vụ nào**
-- [ ] Hợp đồng **đã thanh lý vẫn mở được** (ruling 3A)
-- [ ] Tiền cọc — nếu hiện — tách khỏi số hoá đơn, ghi rõ là thoả thuận hay đã thu
-- [ ] Hợp đồng của người khác → 403 (kế thừa ticket 01)
-- [ ] Tên test mang mã `FR-POR-07` và `BR-14`
+- [x] Hiện thông tin hợp đồng: phòng, ngày bắt đầu, ngày kết thúc, giá thuê, dịch vụ áp dụng
+- [x] **Cảnh báo khi còn dưới 30 ngày, kèm số ngày cụ thể**
+- [x] Bốn ca ở bảng trên là **bốn câu khác nhau**
+- [x] Cảnh báo tính bằng **điều kiện truy vấn**, dùng lại `sapHetHan()`/`soNgayConLai()` — **không cột trạng thái, không tác vụ nền**
+- [x] Test bằng **đồng hồ đẩy được**: đẩy tới ngày thứ 30 và 31, cảnh báo bật/tắt đúng, **không chạy tác vụ nào**
+- [x] Hợp đồng **đã thanh lý vẫn mở được** (ruling 3A)
+- [x] Tiền cọc — nếu hiện — tách khỏi số hoá đơn, ghi rõ là thoả thuận hay đã thu
+- [x] Hợp đồng của người khác → 403 (kế thừa ticket 01)
+- [x] Tên test mang mã `FR-POR-07` và `BR-14`
 
 ## Comments
+
+- Đã mở màn `Hợp đồng của tôi` cho cổng người thuê, hiển thị responsive dạng card trên mobile và bảng trên desktop; thông tin tiền cọc được ghi rõ là `Tiền cọc thoả thuận`, tách khỏi hoá đơn.
+- Endpoint `/api/cong/hop-dong` dùng lại `HopDong.sapHetHan()` và `soNgayConLai()` theo clock của service; hợp đồng đã thanh lý vẫn nằm trong danh sách của chính người thuê, còn truy cập hợp đồng người khác tiếp tục trả `403`.
+- Cập nhật biên BR-14 từ `< 30` thành `<= 30`; test integration đẩy clock qua 31 ngày, 30 ngày và quá hạn, đồng thời kiểm tra trạng thái lưu trữ không bị biến đổi. Frontend có test API, route và bốn thông báo trạng thái với mã `FR-POR-07`/`BR-14`.

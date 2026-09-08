@@ -241,6 +241,31 @@ export type ThongTinBieuDoTieuThu = {
   nuoc: ThongTinTieuThu[]
 }
 
+export type ThongTinHopDongDichVu = {
+  dichVuId: number
+  tenDichVu: string
+  donGiaApDung: string
+}
+
+export type ThongTinHopDong = {
+  id: number
+  phongId: number
+  soPhong: string
+  nguoiThueId: number
+  hoTenNguoiThue: string
+  ngayBatDau: string
+  ngayKetThuc: string
+  giaThue: string
+  tienCoc: string
+  soNgayBaoTruoc: number
+  trangThai: string
+  tenTrangThai: string
+  sapHetHan: boolean
+  soNgayConLai: number
+  dichVuApDung: ThongTinHopDongDichVu[]
+  quyetToan: unknown | null
+}
+
 export type LienKetAnhKy = {
   url: string
 }
@@ -513,6 +538,19 @@ export async function fetchTieuThuCuaNguoiThue(token: string, soKy = 12): Promis
   }
 
   return response.json() as Promise<ThongTinBieuDoTieuThu>
+}
+
+/** FR-POR-07/FR-POR-04 returns the authenticated tenant's current and historical contracts. */
+export async function fetchHopDongCuaNguoiThue(token: string): Promise<ThongTinHopDong[]> {
+  const response = await fetch('/api/cong/hop-dong', {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải thông tin hợp đồng.')
+  }
+
+  return response.json() as Promise<ThongTinHopDong[]>
 }
 
 /** FR-POR-03/FR-POR-04 opens one history row through the tenant-scoped endpoint. */

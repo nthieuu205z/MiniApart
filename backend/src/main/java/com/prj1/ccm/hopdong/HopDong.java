@@ -17,7 +17,7 @@ public record HopDong(
 ) {
     public boolean sapHetHan(LocalDate tai) {
         long soNgayConLai = soNgayConLai(tai);
-        return trangThai == TrangThaiHopDong.HIEU_LUC && soNgayConLai >= 0 && soNgayConLai < 30;
+        return trangThai == TrangThaiHopDong.HIEU_LUC && soNgayConLai >= 0 && soNgayConLai <= 30;
     }
 
     public long soNgayConLai(LocalDate tai) {

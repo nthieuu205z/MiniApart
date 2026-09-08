@@ -15,6 +15,7 @@ import GhiChiSo from './GhiChiSo'
 import HoaDon from './HoaDon'
 import LichSuHoaDon from './LichSuHoaDon'
 import BieuDoTieuThu from './BieuDoTieuThu'
+import HopDongNguoiThue from './HopDongNguoiThue'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { BlockedNotice } from './design/building/BlockedNotice'
 import { Button } from './design/core/Button'
@@ -329,6 +330,12 @@ function App() {
     && nguoiDung.vaiTro === 'NGUOI_THUE'
     && duongDanHienTai === '/tieu-thu'
   )
+  const hienThiHopDongNguoiThue = Boolean(
+    token
+    && nguoiDung
+    && nguoiDung.vaiTro === 'NGUOI_THUE'
+    && duongDanHienTai === '/hop-dong'
+  )
   const hienThiHoaDon = Boolean(
     token
     && nguoiDung
@@ -337,6 +344,8 @@ function App() {
   )
   const tieuDeTheChinh = hienThiBieuDoTieuThuNguoiThue
     ? 'Tiêu thụ điện và nước'
+    : hienThiHopDongNguoiThue
+      ? 'Hợp đồng của tôi'
     : hienThiHoaDonNguoiThue && duongDanHienTai !== '/'
       ? 'Hoá đơn của tôi'
     : hienThiLichSuHoaDonNguoiThue
@@ -352,6 +361,8 @@ function App() {
               : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
   const maTruyVetTheChinh = hienThiBieuDoTieuThuNguoiThue
     ? 'FR-POR-05'
+    : hienThiHopDongNguoiThue
+      ? 'FR-POR-07'
     : hienThiHoaDonNguoiThue
       ? 'FR-POR-01'
     : hienThiLichSuHoaDonNguoiThue
@@ -523,6 +534,8 @@ function App() {
             <GhiChiSo token={token} mobile={laManHinhHep} />
           ) : hienThiBieuDoTieuThuNguoiThue && token ? (
             <BieuDoTieuThu token={token} mobile={laManHinhHep} />
+          ) : hienThiHopDongNguoiThue && token ? (
+            <HopDongNguoiThue token={token} mobile={laManHinhHep} />
           ) : hienThiLichSuHoaDonNguoiThue && token ? (
             <LichSuHoaDon token={token} mobile={laManHinhHep} />
           ) : (hienThiHoaDon || hienThiHoaDonNguoiThue) && token ? (
