@@ -113,6 +113,52 @@ class HoaDonChiTietRepository {
                 .findFirst();
     }
 
+    List<HoaDonLichSuDuLieu> findLichSuCuaNguoiThue(Long nguoiThueId) {
+        return jdbcTemplate.query(
+                """
+                        SELECT hd.id, hd.ma_hoa_don, hd.ky_id, hd.hop_dong_id,
+                               hd.ngay_phat_hanh, hd.han_thanh_toan, hd.tong_tien,
+                               COALESCE(
+                                   (SELECT SUM(tt.so_tien) FROM THANH_TOAN tt WHERE tt.hoa_don_id = hd.id),
+                                   0.00
+                               ) AS da_thu,
+                               hd.trang_thai, hop_dong.trang_thai AS hop_dong_trang_thai,
+                               p.toa_nha_id, toa.ma_toa, toa.ten AS ten_toa_nha,
+                               p.so_phong, ky.nam, ky.thang, ky.ngay_bat_dau, ky.ngay_ket_thuc
+                        FROM HOA_DON hd
+                        JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
+                        JOIN PHONG p ON p.id = hop_dong.phong_id
+                        JOIN TOA_NHA toa ON toa.id = p.toa_nha_id
+                        LEFT JOIN KY_THANH_TOAN ky ON ky.id = hd.ky_id
+                        WHERE hop_dong.nguoi_thue_id = ?
+                          AND hd.trang_thai NOT IN ('NHAP', 'DA_HUY')
+                        ORDER BY CASE WHEN ky.id IS NULL THEN 1 ELSE 0 END,
+                                 ky.ngay_ket_thuc DESC, hd.ngay_phat_hanh DESC, hd.id DESC
+                        """,
+                (resultSet, rowNum) -> new HoaDonLichSuDuLieu(
+                        resultSet.getLong("id"),
+                        resultSet.getString("ma_hoa_don"),
+                        resultSet.getLong("toa_nha_id"),
+                        getLongOrNull(resultSet, "ky_id"),
+                        resultSet.getLong("hop_dong_id"),
+                        resultSet.getObject("nam", Integer.class),
+                        resultSet.getObject("thang", Integer.class),
+                        resultSet.getObject("ngay_bat_dau", LocalDate.class),
+                        resultSet.getObject("ngay_ket_thuc", LocalDate.class),
+                        resultSet.getString("so_phong"),
+                        resultSet.getString("trang_thai"),
+                        resultSet.getString("hop_dong_trang_thai"),
+                        resultSet.getString("ma_toa"),
+                        resultSet.getString("ten_toa_nha"),
+                        resultSet.getObject("ngay_phat_hanh", LocalDate.class),
+                        resultSet.getObject("han_thanh_toan", LocalDate.class),
+                        resultSet.getBigDecimal("tong_tien"),
+                        resultSet.getBigDecimal("da_thu")
+                ),
+                nguoiThueId
+        );
+    }
+
     private List<DongHoaDonDuLieu> findLines(Long hoaDonId) {
         return jdbcTemplate.query(
                 """
@@ -231,4 +277,26 @@ record BacHoaDonDuLieu(
 }
 
 record HoaDonPhamVi(Long hoaDonId, Long kyId, Long toaNhaId) {
+}
+
+record HoaDonLichSuDuLieu(
+        Long hoaDonId,
+        String maHoaDon,
+        Long toaNhaId,
+        Long kyId,
+        Long hopDongId,
+        Integer nam,
+        Integer thang,
+        LocalDate ngayBatDau,
+        LocalDate ngayKetThuc,
+        String soPhong,
+        String trangThai,
+        String hopDongTrangThai,
+        String maToa,
+        String tenToaNha,
+        LocalDate ngayPhatHanh,
+        LocalDate hanThanhToan,
+        BigDecimal tongTien,
+        BigDecimal daThu
+) {
 }

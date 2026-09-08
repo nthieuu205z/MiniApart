@@ -5,7 +5,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -16,9 +20,13 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.Date;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -27,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@Import(CongNguoiThueAuthorizationIntegrationTest.PortalClockTestConfiguration.class)
 class CongNguoiThueAuthorizationIntegrationTest {
 
     @Container
@@ -43,6 +52,9 @@ class CongNguoiThueAuthorizationIntegrationTest {
 
     private Long ownContractId;
     private Long otherContractId;
+    private Long ownTenantId;
+    private Long ownRoomId;
+    private Long dichVuId;
     private Long latestInvoiceId;
     private Long settlementInvoiceId;
     private Long otherInvoiceId;
@@ -102,14 +114,14 @@ class CongNguoiThueAuthorizationIntegrationTest {
                         """
         );
 
-        Long ownTenantId = themNguoiThue("Người thuê cổng A", "0906000101", "CC-PORTAL-101");
+        ownTenantId = themNguoiThue("Người thuê cổng A", "0906000101", "CC-PORTAL-101");
         Long otherTenantId = themNguoiThue("Người thuê cổng B", "0906000202", "CC-PORTAL-202");
         emptyTenantId = themNguoiThue("Người thuê chưa có hoá đơn", "0906000303", "CC-PORTAL-303");
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = ? WHERE id = 5", ownTenantId);
 
-        Long ownRoomId = themPhong("101");
+        ownRoomId = themPhong("101");
         Long otherRoomId = themPhong("202");
-        Long dichVuId = themDichVu();
+        dichVuId = themDichVu();
         ownContractId = themHopDong(ownRoomId, ownTenantId, "HIEU_LUC");
         otherContractId = themHopDong(otherRoomId, otherTenantId, "HIEU_LUC");
         jdbcTemplate.update(
@@ -158,6 +170,85 @@ class CongNguoiThueAuthorizationIntegrationTest {
                 .andExpect(jsonPath("$.coHoaDon").value(false))
                 .andExpect(jsonPath("$.hoaDon").doesNotExist())
                 .andExpect(jsonPath("$.thongBao", containsString("Chưa có hoá đơn")));
+    }
+
+    @Test
+    void FR_POR_03_tenantReadsAtLeastTwelveOwnPeriodsNewestFirstWithRoomAmountsAndPaymentStatus() throws Exception {
+        for (int thang = 1; thang <= 10; thang++) {
+            Long kyId = themKy(2025, thang, "2025-%02d-01".formatted(thang), "2025-%02d-28".formatted(thang));
+            themHoaDon(ownContractId, kyId, "PORTAL-A-101-2025%02d".formatted(thang));
+        }
+
+        Long phongDaThanhLyId = themPhong("303");
+        Long hopDongDaThanhLyId = themHopDong(phongDaThanhLyId, ownTenantId, "DA_THANH_LY");
+        Long kyDaThanhLyId = themKy(2024, 12, "2024-12-01", "2024-12-31");
+        Long settledContractInvoiceId = themHoaDon(hopDongDaThanhLyId, kyDaThanhLyId, "PORTAL-A-303-202412");
+
+        String tenantToken = login(5L, "0900000006");
+
+        mockMvc.perform(get("/api/cong/hoa-don")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(14))
+                .andExpect(jsonPath("$[0].hoaDonId").value(latestInvoiceId))
+                .andExpect(jsonPath("$[0].nam").value(2026))
+                .andExpect(jsonPath("$[0].thang").value(8))
+                .andExpect(jsonPath("$[0].soPhong").value("101"))
+                .andExpect(jsonPath("$[0].tongTien").value("3889500.00"))
+                .andExpect(jsonPath("$[0].daThu").value("0.00"))
+                .andExpect(jsonPath("$[0].conLai").value("3889500.00"))
+                .andExpect(jsonPath("$[0].trangThai").value("DA_PHAT_HANH"))
+                .andExpect(jsonPath("$[0].trangThaiThanhToan").value("CHUA_THANH_TOAN"))
+                .andExpect(jsonPath("$[12].hoaDonId").value(settledContractInvoiceId))
+                .andExpect(jsonPath("$[12].hopDongId").value(hopDongDaThanhLyId))
+                .andExpect(jsonPath("$[12].soPhong").value("303"))
+                .andExpect(jsonPath("$[12].hopDongTrangThai").value("DA_THANH_LY"))
+                .andExpect(jsonPath("$[?(@.hoaDonId == %d)].kyId".formatted(settlementInvoiceId)).value(hasItem(nullValue())));
+    }
+
+    @Test
+    void FR_POR_03_historyUsesEffectiveOverdueStateForUnpaidAndPartialInvoices() throws Exception {
+        Long unpaidKyId = themKy(2026, 5, "2026-05-01", "2026-05-31");
+        Long unpaidInvoiceId = themHoaDon(ownContractId, unpaidKyId, "PORTAL-A-101-OVERDUE");
+        jdbcTemplate.update("UPDATE HOA_DON SET han_thanh_toan = DATE '2026-08-01' WHERE id = ?", unpaidInvoiceId);
+
+        Long partialKyId = themKy(2026, 6, "2026-06-01", "2026-06-30");
+        Long partialInvoiceId = themHoaDon(ownContractId, partialKyId, "PORTAL-A-101-PARTIAL-OVERDUE");
+        jdbcTemplate.update("UPDATE HOA_DON SET han_thanh_toan = DATE '2026-08-01' WHERE id = ?", partialInvoiceId);
+        jdbcTemplate.update(
+                "INSERT INTO THANH_TOAN (hoa_don_id, so_tien, loai, hinh_thuc, ngay_thu, nguoi_thu_id) VALUES (?, 100000.00, 'THU', 'TIEN_MAT', DATE '2026-08-01', 3)",
+                partialInvoiceId
+        );
+
+        String tenantToken = login(5L, "0900000006");
+
+        mockMvc.perform(get("/api/cong/hoa-don")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.hoaDonId == %d)].trangThai".formatted(unpaidInvoiceId)).value(hasItem("QUA_HAN")))
+                .andExpect(jsonPath("$[?(@.hoaDonId == %d)].trangThaiThanhToan".formatted(unpaidInvoiceId)).value(hasItem("QUA_HAN")))
+                .andExpect(jsonPath("$[?(@.hoaDonId == %d)].trangThai".formatted(partialInvoiceId)).value(hasItem("QUA_HAN")))
+                .andExpect(jsonPath("$[?(@.hoaDonId == %d)].trangThaiThanhToan".formatted(partialInvoiceId)).value(hasItem("QUA_HAN")));
+    }
+
+    @Test
+    void FR_POR_03_tenantGetsExactlyAvailablePeriodsAndARealEmptyState() throws Exception {
+        String tenantToken = login(5L, "0900000006");
+
+        mockMvc.perform(get("/api/cong/hoa-don")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[2].hoaDonId").value(settlementInvoiceId))
+                .andExpect(jsonPath("$[2].kyId").value(nullValue()));
+
+        jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = ? WHERE id = 5", emptyTenantId);
+        String emptyTenantToken = login(5L, "0900000006");
+
+        mockMvc.perform(get("/api/cong/hoa-don")
+                        .header("Authorization", "Bearer " + emptyTenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test
@@ -226,6 +317,9 @@ class CongNguoiThueAuthorizationIntegrationTest {
 
     private void assert403OnPortalEndpoints(String token) throws Exception {
         mockMvc.perform(get("/api/cong/hoa-don-moi-nhat")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/cong/hoa-don")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/cong/hoa-don/" + latestInvoiceId)
@@ -359,6 +453,15 @@ class CongNguoiThueAuthorizationIntegrationTest {
         );
         if (Boolean.TRUE.equals(tonTai)) {
             jdbcTemplate.update("DELETE FROM " + tenBang);
+        }
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class PortalClockTestConfiguration {
+        @Bean
+        @Primary
+        Clock portalClock() {
+            return Clock.fixed(Instant.parse("2026-09-02T00:00:00Z"), ZoneId.of("Asia/Ho_Chi_Minh"));
         }
     }
 }

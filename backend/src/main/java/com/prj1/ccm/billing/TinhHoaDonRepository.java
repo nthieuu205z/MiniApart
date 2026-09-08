@@ -379,6 +379,20 @@ class TinhHoaDonRepository {
                 .findFirst();
     }
 
+    TrangThaiHoaDon tinhTrangThaiHieuLuc(
+            String trangThaiLuu,
+            BigDecimal tongTien,
+            BigDecimal daThu,
+            LocalDate hanThanhToan
+    ) {
+        return tinhTrangThai(
+                TrangThaiHoaDon.valueOf(trangThaiLuu),
+                tongTien,
+                daThu,
+                hanThanhToan
+        );
+    }
+
     List<HoaDonCanPhatHanh> layHoaDonCanPhatHanh(Long toaNhaId, Long kyId) {
         return jdbcTemplate.query(
                 """

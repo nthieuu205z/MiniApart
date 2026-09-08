@@ -785,6 +785,7 @@ function buildFetchMock(
     roomsByBuilding?: Map<number, ThongTinPhong[]>
     invoiceResponse?: Record<string, unknown>
     latestTenantInvoiceResponse?: Record<string, unknown>
+    historyResponse?: Record<string, unknown>[]
   },
 ) {
   const accounts: ThongTinQuanLyNguoiDung[] = [
@@ -919,6 +920,21 @@ function buildFetchMock(
         ? { coHoaDon: true, hoaDon: options.latestTenantInvoiceResponse }
         : { coHoaDon: false, thongBao: 'Chưa có hoá đơn nào cho tài khoản này.' }
       return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (url === '/api/cong/hoa-don' && method === 'GET') {
+      return new Response(JSON.stringify(options?.historyResponse ?? []), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const tenantInvoiceMatch = url.match(/^\/api\/cong\/hoa-don\/(\d+)$/)
+    if (tenantInvoiceMatch && method === 'GET' && options?.invoiceResponse) {
+      return new Response(JSON.stringify(options.invoiceResponse), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -1240,7 +1256,7 @@ describe('invoice navigation', () => {
     })
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/toa-nha/1/ky-thanh-toan/8/hoa-don/10',
+      '/api/cong/hoa-don/10',
       expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }),
     )
   })
@@ -1288,6 +1304,149 @@ describe('invoice navigation', () => {
       expect(mountedApp!.container.textContent).toContain('Chưa có hoá đơn nào cho tài khoản này.')
     })
     expect(mountedApp.container.querySelector('[data-testid="invoice-detail"]')).toBeNull()
+  })
+
+  it('FR-POR-03 renders the tenant invoice history newest first and opens the selected invoice', async () => {
+    const nguoiThue = MENU_BY_ROLE[4].nguoiDung
+    const historyResponse = [
+      {
+        hoaDonId: 12,
+        maHoaDon: 'TN-A-101-202608',
+        toaNhaId: 1,
+        kyId: 8,
+        hopDongId: 11,
+        nam: 2026,
+        thang: 8,
+        ngayBatDau: '2026-08-01',
+        ngayKetThuc: '2026-08-31',
+        soPhong: '101',
+        trangThai: 'DA_PHAT_HANH',
+        trangThaiThanhToan: 'CHUA_THANH_TOAN',
+        tongTien: '3889500.00',
+        daThu: '0.00',
+        conLai: '3889500.00',
+        hopDongTrangThai: 'HIEU_LUC',
+      },
+      {
+        hoaDonId: 11,
+        maHoaDon: 'TN-B-202-202607',
+        toaNhaId: 2,
+        kyId: 7,
+        hopDongId: 19,
+        nam: 2026,
+        thang: 7,
+        ngayBatDau: '2026-07-01',
+        ngayKetThuc: '2026-07-31',
+        soPhong: '202',
+        trangThai: 'DA_THANH_TOAN',
+        trangThaiThanhToan: 'DA_THANH_TOAN',
+        tongTien: '1500000.00',
+        daThu: '1500000.00',
+        conLai: '0.00',
+        hopDongTrangThai: 'DA_THANH_LY',
+      },
+      {
+        hoaDonId: 13,
+        maHoaDon: 'QT-A-11',
+        toaNhaId: 1,
+        kyId: null,
+        hopDongId: 20,
+        nam: null,
+        thang: null,
+        ngayBatDau: null,
+        ngayKetThuc: null,
+        soPhong: '303',
+        trangThai: 'DA_PHAT_HANH',
+        trangThaiThanhToan: 'CHUA_THANH_TOAN',
+        tongTien: '120000.00',
+        daThu: '0.00',
+        conLai: '120000.00',
+        hopDongTrangThai: 'DA_THANH_LY',
+      },
+    ]
+    const detailResponse = {
+      hoaDonId: 12,
+      maHoaDon: 'TN-A-101-202608',
+      kyId: 8,
+      hopDongId: 11,
+      soPhong: '101',
+      nguoiThue: 'Người thuê mẫu',
+      ngayPhatHanh: '2026-08-31',
+      hanThanhToan: '2026-09-07',
+      trangThai: 'DA_PHAT_HANH',
+      tongTien: '3889500.00',
+      daThu: '0.00',
+      conLai: '3889500.00',
+      cacDong: [],
+    }
+    const fetchMock = buildFetchMock(nguoiThue, { historyResponse, invoiceResponse: detailResponse })
+    mountedApp = await mountAppAndLogin(nguoiThue, '/lich-su', fetchMock)
+
+    const rows = await vi.waitFor(() => {
+      const elements = [...mountedApp!.container.querySelectorAll('[data-history-invoice]')]
+      expect(elements).toHaveLength(3)
+      return elements
+    })
+    expect(rows[0].textContent).toContain('08/2026')
+    expect(rows[0].textContent).toContain('Phòng 101')
+    expect(rows[0].textContent).toContain('3.889.500')
+    expect(rows[1].textContent).toContain('Đã thanh toán')
+    expect(rows[2].textContent).toContain('Quyết toán hợp đồng')
+    expect(mountedApp.container.querySelector('[data-history-empty]')).toBeNull()
+
+    const firstRow = rows[0] as HTMLElement
+    const openButton = firstRow.matches('button') ? firstRow : firstRow.querySelector('button')
+    expect(openButton).not.toBeNull()
+    await act(async () => (openButton as HTMLButtonElement).click())
+
+    expect(window.location.pathname).toBe('/hoa-don-cua-toi')
+    expect(window.location.search).toBe('?hoaDonId=12')
+    await vi.waitFor(() => expect(mountedApp!.container.textContent).toContain('TN-A-101-202608'))
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/cong/hoa-don/12',
+      expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }),
+    )
+  })
+
+  it('FR-POR-03 shows a first-use empty state instead of an error when history has no periods', async () => {
+    const nguoiThue = MENU_BY_ROLE[4].nguoiDung
+    const fetchMock = buildFetchMock(nguoiThue, { historyResponse: [] })
+    mountedApp = await mountAppAndLogin(nguoiThue, '/lich-su', fetchMock)
+
+    await vi.waitFor(() => expect(mountedApp!.container.querySelector('[data-history-empty]')).not.toBeNull())
+    expect(mountedApp.container.textContent).toContain('Chưa có kỳ hoá đơn nào')
+    expect(mountedApp.container.querySelector('[role="alert"]')).toBeNull()
+  })
+
+  it('FR-POR-03 renders the settlement history card on a narrow screen', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
+    const nguoiThue = MENU_BY_ROLE[4].nguoiDung
+    const fetchMock = buildFetchMock(nguoiThue, {
+      historyResponse: [{
+        hoaDonId: 13,
+        maHoaDon: 'QT-A-11',
+        toaNhaId: 1,
+        kyId: null,
+        hopDongId: 20,
+        nam: null,
+        thang: null,
+        ngayBatDau: null,
+        ngayKetThuc: null,
+        soPhong: '303',
+        trangThai: 'DA_PHAT_HANH',
+        trangThaiThanhToan: 'CHUA_THANH_TOAN',
+        tongTien: '120000.00',
+        daThu: '0.00',
+        conLai: '120000.00',
+        hopDongTrangThai: 'DA_THANH_LY',
+      }],
+    })
+    mountedApp = await mountAppAndLogin(nguoiThue, '/lich-su', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-history-list="mobile"]')).not.toBeNull()
+    })
+    expect(mountedApp.container.textContent).toContain('Quyết toán hợp đồng')
   })
 
   it('FR-INV-02 reads all invoice identifiers from the detail query link', () => {

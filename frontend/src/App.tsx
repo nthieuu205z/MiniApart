@@ -13,6 +13,7 @@ import DanhMucToaNha from './DanhMucToaNha'
 import DanhMucPhong from './DanhMucPhong'
 import GhiChiSo from './GhiChiSo'
 import HoaDon from './HoaDon'
+import LichSuHoaDon from './LichSuHoaDon'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { BlockedNotice } from './design/building/BlockedNotice'
 import { Button } from './design/core/Button'
@@ -315,6 +316,12 @@ function App() {
     && nguoiDung.vaiTro === 'NGUOI_THUE'
     && ['/', '/hoa-don-cua-toi'].includes(duongDanHienTai)
   )
+  const hienThiLichSuHoaDonNguoiThue = Boolean(
+    token
+    && nguoiDung
+    && nguoiDung.vaiTro === 'NGUOI_THUE'
+    && duongDanHienTai === '/lich-su'
+  )
   const hienThiHoaDon = Boolean(
     token
     && nguoiDung
@@ -323,6 +330,8 @@ function App() {
   )
   const tieuDeTheChinh = hienThiHoaDonNguoiThue && duongDanHienTai !== '/'
     ? 'Hoá đơn của tôi'
+    : hienThiLichSuHoaDonNguoiThue
+    ? 'Lịch sử hoá đơn'
     : hienThiDanhMucToaNha
     ? 'Toà nhà'
     : hienThiDanhMucPhong
@@ -334,6 +343,8 @@ function App() {
           : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
   const maTruyVetTheChinh = hienThiHoaDonNguoiThue
     ? 'FR-POR-01'
+    : hienThiLichSuHoaDonNguoiThue
+    ? 'FR-POR-03'
     : hienThiDanhMucToaNha
     ? 'FR-BLD-01'
     : hienThiDanhMucPhong
@@ -499,12 +510,14 @@ function App() {
             <DanhMucPhong token={token} mobile={laManHinhHep} />
           ) : hienThiGhiChiSo && token ? (
             <GhiChiSo token={token} mobile={laManHinhHep} />
+          ) : hienThiLichSuHoaDonNguoiThue && token ? (
+            <LichSuHoaDon token={token} mobile={laManHinhHep} />
           ) : (hienThiHoaDon || hienThiHoaDonNguoiThue) && token ? (
             <HoaDon
               token={token}
               {...dinhDanhHoaDon}
               mobile={laManHinhHep}
-              cheDoNguoiThue={hienThiHoaDonNguoiThue && dinhDanhHoaDon.hoaDonId === undefined}
+              cheDoNguoiThue={nguoiDung.vaiTro === 'NGUOI_THUE'}
             />
           ) : nguoiDung.vaiTro === 'QTHT' && duongDanHienTai === '/tai-khoan' && token ? (
             <QuanLyTaiKhoan token={token} mobile={laManHinhHep} />
@@ -676,8 +689,11 @@ export function layDinhDanhHoaDonTuUrl(url: string | URL) {
   const toaNhaId = soNguyenDuong(searchParams.get('toaNhaId'))
   const kyId = soNguyenDuong(searchParams.get('kyId'))
   const hoaDonId = soNguyenDuong(searchParams.get('hoaDonId'))
-  if (toaNhaId === undefined || kyId === undefined || hoaDonId === undefined) {
+  if (hoaDonId === undefined) {
     return {}
+  }
+  if (toaNhaId === undefined || kyId === undefined) {
+    return { hoaDonId }
   }
   return { toaNhaId, kyId, hoaDonId }
 }

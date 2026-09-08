@@ -213,6 +213,37 @@ describe('HoaDon detail and print view', () => {
     expect(invoice?.textContent).toContain('Bậc 1')
   })
 
+  it('FR-POR-03 opens a selected tenant history invoice through the tenant-scoped detail endpoint', async () => {
+    const response = {
+      hoaDonId: 10,
+      maHoaDon: 'PORTAL-A-101-202608',
+      kyId: 8,
+      hopDongId: 11,
+      soPhong: '101',
+      nguoiThue: 'Người thuê 101',
+      ngayPhatHanh: '2026-08-31',
+      hanThanhToan: '2026-09-07',
+      trangThai: 'DA_PHAT_HANH',
+      tongTien: '1000.00',
+      daThu: '0.00',
+      conLai: '1000.00',
+      cacDong: [],
+    }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    root = createRoot(container)
+    await act(async () => root.render(<HoaDon token="tenant-token" hoaDonId={10} cheDoNguoiThue />))
+
+    await vi.waitFor(() => expect(container.textContent).toContain('PORTAL-A-101-202608'))
+    expect(fetchMock).toHaveBeenCalledWith('/api/cong/hoa-don/10', {
+      headers: { Authorization: 'Bearer tenant-token' },
+    })
+  })
+
   it('FR-POR-02_BR-15 keeps negative rounding visible and explains the half-up rule', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
       coHoaDon: true,

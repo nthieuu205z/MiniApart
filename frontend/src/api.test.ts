@@ -4,6 +4,8 @@ import {
   capNhatNguoiDungQuanLy,
   chotKyThanhToan,
   fetchCurrentUser,
+  fetchHoaDonCuaNguoiThue,
+  fetchLichSuHoaDonCuaNguoiThue,
   fetchHoaDonMoiNhatCuaNguoiThue,
   fetchNguoiDungQuanLy,
   fetchHealth,
@@ -144,6 +146,39 @@ describe('fetchHealth', () => {
 
     await expect(fetchHoaDonMoiNhatCuaNguoiThue('tenant-token')).resolves.toEqual(response)
     expect(fetchMock).toHaveBeenCalledWith('/api/cong/hoa-don-moi-nhat', {
+      headers: { Authorization: 'Bearer tenant-token' },
+    })
+  })
+
+  it('FR-POR-03 fetches the tenant invoice history and a tenant-owned invoice detail', async () => {
+    const history = [{
+      hoaDonId: 10,
+      maHoaDon: 'TN-A-101-202608',
+      toaNhaId: 1,
+      kyId: 8,
+      hopDongId: 11,
+      nam: 2026,
+      thang: 8,
+      soPhong: '101',
+      trangThai: 'DA_PHAT_HANH',
+      trangThaiThanhToan: 'CHUA_THANH_TOAN',
+      tongTien: '3889500.00',
+      daThu: '0.00',
+      conLai: '3889500.00',
+      hopDongTrangThai: 'HIEU_LUC',
+    }]
+    const detail = { hoaDonId: 10, maHoaDon: 'TN-A-101-202608' }
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse(history))
+      .mockResolvedValueOnce(jsonResponse(detail))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchLichSuHoaDonCuaNguoiThue('tenant-token')).resolves.toEqual(history)
+    await expect(fetchHoaDonCuaNguoiThue('tenant-token', 10)).resolves.toEqual(detail)
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/cong/hoa-don', {
+      headers: { Authorization: 'Bearer tenant-token' },
+    })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/cong/hoa-don/10', {
       headers: { Authorization: 'Bearer tenant-token' },
     })
   })

@@ -198,6 +198,29 @@ export type ThongTinHoaDonMoiNhat = {
   hoaDon?: ThongTinHoaDonChiTiet
 }
 
+export type ThongTinHoaDonLichSu = {
+  hoaDonId: number
+  maHoaDon: string
+  toaNhaId: number
+  kyId: number | null
+  hopDongId: number
+  nam: number | null
+  thang: number | null
+  ngayBatDau: string | null
+  ngayKetThuc: string | null
+  soPhong: string
+  maToa: string
+  tenToaNha: string
+  ngayPhatHanh: string
+  hanThanhToan: string
+  trangThai: string
+  trangThaiThanhToan: string
+  hopDongTrangThai: string
+  tongTien: string
+  daThu: string
+  conLai: string
+}
+
 export type LienKetAnhKy = {
   url: string
 }
@@ -444,6 +467,32 @@ export async function fetchHoaDonMoiNhatCuaNguoiThue(token: string): Promise<Tho
   }
 
   return response.json() as Promise<ThongTinHoaDonMoiNhat>
+}
+
+/** FR-POR-03 returns the tenant's own invoice periods in newest-first order. */
+export async function fetchLichSuHoaDonCuaNguoiThue(token: string): Promise<ThongTinHoaDonLichSu[]> {
+  const response = await fetch('/api/cong/hoa-don', {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải lịch sử hoá đơn.')
+  }
+
+  return response.json() as Promise<ThongTinHoaDonLichSu[]>
+}
+
+/** FR-POR-03/FR-POR-04 opens one history row through the tenant-scoped endpoint. */
+export async function fetchHoaDonCuaNguoiThue(token: string, hoaDonId: number): Promise<ThongTinHoaDonChiTiet> {
+  const response = await fetch(`/api/cong/hoa-don/${hoaDonId}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải chi tiết hoá đơn.')
+  }
+
+  return response.json() as Promise<ThongTinHoaDonChiTiet>
 }
 
 /** FR-POR-06 asks for a fresh 15-minute signed meter-photo link without reloading the invoice. */

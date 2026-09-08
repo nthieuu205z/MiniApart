@@ -52,6 +52,24 @@ public class HoaDonChiTietService {
                 .map(phamVi -> chiTiet(phamVi.toaNhaId(), phamVi.kyId(), phamVi.hoaDonId(), nguoiDung));
     }
 
+    /** FR-POR-03 returns the signed-in tenant's issued invoice periods newest first, including historical rooms. */
+    @Transactional(readOnly = true)
+    public List<ThongTinHoaDonLichSu> lichSuCuaNguoiThue(NguoiDung nguoiDung) {
+        kiemTraNguoiThue(nguoiDung);
+        return hoaDonChiTietRepository.findLichSuCuaNguoiThue(nguoiDung.nguoiThueId())
+                .stream()
+                .map(hoaDon -> ThongTinHoaDonLichSu.tu(
+                        hoaDon,
+                        tinhHoaDonRepository.tinhTrangThaiHieuLuc(
+                                hoaDon.trangThai(),
+                                hoaDon.tongTien(),
+                                hoaDon.daThu(),
+                                hoaDon.hanThanhToan()
+                        )
+                ))
+                .toList();
+    }
+
     /** FR-POR-04 resolves a guessable invoice identifier only after binding it to the tenant in the token. */
     @Transactional(readOnly = true)
     public ThongTinHoaDonChiTiet chiTietCuaNguoiThue(Long hoaDonId, NguoiDung nguoiDung) {

@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Yêu cầu
 
@@ -32,14 +32,20 @@ Hệ quả hiển thị: khi có nhiều hợp đồng, mỗi dòng phải cho b
 
 ## Hoàn thành khi
 
-- [ ] Hiện tối thiểu 12 kỳ gần nhất, mới nhất lên đầu
-- [ ] **Ít hơn 12 kỳ → hiện đúng số có**, không lỗi, không dòng trống
-- [ ] **Không kỳ nào → màn rỗng-lần-đầu** nói rõ vì sao, khác màn lỗi
-- [ ] Bấm một kỳ → mở `#33` của đúng kỳ đó
-- [ ] Nhiều hợp đồng → mỗi dòng cho biết **kỳ và phòng**
-- [ ] Hợp đồng **đã thanh lý vẫn hiện** (ruling 3A)
-- [ ] Mỗi dòng hiện tổng tiền và tình trạng thanh toán
-- [ ] Chỉ hoá đơn của chính mình → ca tấn công kế thừa ticket 01
-- [ ] Tên test mang mã `FR-POR-03`
+- [x] Hiện tối thiểu 12 kỳ gần nhất, mới nhất lên đầu
+- [x] **Ít hơn 12 kỳ → hiện đúng số có**, không lỗi, không dòng trống
+- [x] **Không kỳ nào → màn rỗng-lần-đầu** nói rõ vì sao, khác màn lỗi
+- [x] Bấm một kỳ → mở `#33` của đúng kỳ đó
+- [x] Nhiều hợp đồng → mỗi dòng cho biết **kỳ và phòng**
+- [x] Hợp đồng **đã thanh lý vẫn hiện** (ruling 3A)
+- [x] Mỗi dòng hiện tổng tiền và tình trạng thanh toán
+- [x] Chỉ hoá đơn của chính mình → ca tấn công kế thừa ticket 01
+- [x] Tên test mang mã `FR-POR-03`
 
 ## Comments
+
+- API `GET /api/cong/hoa-don` lấy phạm vi từ `nguoiThueId` trong token, giữ thứ tự kỳ mới nhất trước và bao phủ nhiều hợp đồng/phòng.
+- Dùng `LEFT JOIN KY_THANH_TOAN` để hoá đơn quyết toán sau thanh lý (`ky_id IS NULL`) vẫn xuất hiện; các trường kỳ và ngày kỳ được trả `null`, frontend hiển thị `Quyết toán hợp đồng`.
+- Trạng thái lịch sử dùng chung luật trạng thái hiệu lực với chi tiết hoá đơn, nên hoá đơn quá hạn và đã thu một phần không bị lệch nhãn.
+- Không thêm migration. Bổ sung test FR-POR-03 cho 12+ kỳ, ít hơn 12 kỳ, trạng thái quá hạn, nhiều hợp đồng, thanh lý, quyết toán, mobile, empty state và phân quyền.
+- Xác minh: targeted backend `CongNguoiThueAuthorizationIntegrationTest` 7/7; `ThanhLyHopDongIntegrationTest` 13/13 sau khi cố định `Clock` trong test; full backend 413/413; frontend 127/127; frontend build thành công.

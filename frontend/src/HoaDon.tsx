@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ApiError, fetchHoaDonChiTiet, fetchHoaDonMoiNhatCuaNguoiThue, fetchLienKetAnh, type ThongTinHoaDonChiTiet, type ThongTinDongHoaDon } from './api'
+import { ApiError, fetchHoaDonChiTiet, fetchHoaDonCuaNguoiThue, fetchHoaDonMoiNhatCuaNguoiThue, fetchLienKetAnh, type ThongTinHoaDonChiTiet, type ThongTinDongHoaDon } from './api'
 import { Button } from './design/core/Button'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Figure } from './design/core/Figure'
@@ -26,7 +26,11 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
     setHoaDon(null)
     setThongBaoRong(null)
 
-    const request = cheDoNguoiThue
+    const request = cheDoNguoiThue && hoaDonId !== undefined
+      ? fetchHoaDonCuaNguoiThue(token, hoaDonId).then((data) => {
+          if (mounted) setHoaDon(data)
+        })
+      : cheDoNguoiThue
       ? fetchHoaDonMoiNhatCuaNguoiThue(token).then((data) => {
           if (!mounted) return
           if (data.coHoaDon && data.hoaDon) {
@@ -92,7 +96,12 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
       className={`invoice-screen invoice-screen--${variant}`}
       aria-labelledby="invoice-title"
     >
-      <ScreenHeader action={<Button className="ma-no-print" data-print-invoice variant="secondary" onClick={() => window.print()}>In A4</Button>}>
+      <ScreenHeader action={
+        <div className="ma-no-print" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {cheDoNguoiThue ? <Button data-view-invoice-history variant="text" onClick={moLichSu}>Xem lịch sử</Button> : null}
+          <Button data-print-invoice variant="secondary" onClick={() => window.print()}>In A4</Button>
+        </div>
+      }>
         <SysLabel>{maTruyVet}</SysLabel>
         <h3 id="invoice-title">Hoá đơn {hoaDon.maHoaDon}</h3>
       </ScreenHeader>
@@ -232,6 +241,12 @@ function RoundingExplanation() {
 
 function laDongLamTron(dong: ThongTinDongHoaDon) {
   return dong.loaiKhoan === 'LAM_TRON'
+}
+
+function moLichSu() {
+  if (typeof window === 'undefined') return
+  window.history.pushState({}, '', '/lich-su')
+  window.dispatchEvent(new PopStateEvent('popstate'))
 }
 
 function toneHoaDon(status: string): 'draft' | 'neutral' | 'strong' | 'urgent' | 'waiting' | 'done' | 'closed' {

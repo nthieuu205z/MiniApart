@@ -3,6 +3,7 @@ package com.prj1.ccm.portal;
 import com.prj1.ccm.auth.AuthInterceptor;
 import com.prj1.ccm.billing.HoaDonChiTietService;
 import com.prj1.ccm.billing.ThongTinHoaDonChiTiet;
+import com.prj1.ccm.billing.ThongTinHoaDonLichSu;
 import com.prj1.ccm.hopdong.HopDongService;
 import com.prj1.ccm.hopdong.ThongTinHopDong;
 import com.prj1.ccm.nguoidung.NguoiDung;
@@ -38,6 +39,18 @@ public class CongNguoiThueController {
         return hoaDonChiTietService.hoaDonMoiNhatCuaNguoiThue(nguoiDung)
                 .map(ThongTinHoaDonMoiNhat::coHoaDon)
                 .orElseGet(ThongTinHoaDonMoiNhat::rong);
+    }
+
+    /**
+     * FR-POR-03 lists all available invoice periods for the authenticated tenant, newest period first.
+     * FR-POR-04 derives the scope from the authenticated tenant relationship and never from a client id.
+     *
+     * @param request the current HTTP request carrying the authenticated user attribute
+     * @return the tenant's own invoice history, or an empty list when no period exists yet
+     */
+    @GetMapping("/hoa-don")
+    public List<ThongTinHoaDonLichSu> lichSuHoaDon(HttpServletRequest request) {
+        return hoaDonChiTietService.lichSuCuaNguoiThue(nguoiDungHienTai(request));
     }
 
     /**
