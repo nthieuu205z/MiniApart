@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Migration:** `V36` — xem `.scratch/dai-so-hieu-migration.md`.
 
@@ -67,15 +67,22 @@ Người thuê tạo yêu cầu cho phòng khác → **403**, kiểm ở tầng 
 
 ## Hoàn thành khi
 
-- [ ] `V36` tạo `YEU_CAU_SUA_CHUA` đủ cột cho cả ticket 03 và 06; `CHECK` trạng thái có **sáu** giá trị BR-16; `muc_do` có *Khẩn cấp*; cột tiền là `NUMERIC(15,2)`
-- [ ] Người thuê gửi được yêu cầu kèm **tối đa 5 ảnh**; ảnh thứ sáu bị từ chối có thông báo rõ
-- [ ] Ảnh dùng lại `ANH_DINH_KEM` với `doi_tuong_loai = 'YEU_CAU_SUA_CHUA'` — **không bảng ảnh mới**
-- [ ] Ảnh chỉ xem được qua **liên kết ký hạn 15 phút**; không có đường dẫn tĩnh nào — quy ước 5
-- [ ] Mã yêu cầu sinh tự động, **ràng buộc duy nhất ở cơ sở dữ liệu**
-- [ ] Yêu cầu mới ở trạng thái *Mới tiếp nhận*, đặt bởi hệ thống, **không nhận trạng thái từ client**
-- [ ] Người thuê tạo cho phòng khác → **403**
-- [ ] QTHT và Thợ → 403
-- [ ] Ghi `NHAT_KY_THAO_TAC`
-- [ ] Tên test mang mã `FR-MNT-01` và `BR-17`
+- [x] `V36` tạo `YEU_CAU_SUA_CHUA` đủ cột cho cả ticket 03 và 06; `CHECK` trạng thái có **bảy** giá trị lưu trữ của BR-16 (sáu trạng thái vòng đời và `DA_HUY`); `muc_do` có *Khẩn cấp*; cột tiền là `NUMERIC(15,2)`
+- [x] Người thuê gửi được yêu cầu kèm **tối đa 5 ảnh**; ảnh thứ sáu bị từ chối có thông báo rõ
+- [x] Ảnh dùng lại `ANH_DINH_KEM` với `doi_tuong_loai = 'YEU_CAU_SUA_CHUA'` — **không bảng ảnh mới**
+- [x] Ảnh chỉ xem được qua **liên kết ký hạn 15 phút**; không có đường dẫn tĩnh nào — quy ước 5
+- [x] Mã yêu cầu sinh tự động, **ràng buộc duy nhất ở cơ sở dữ liệu**
+- [x] Yêu cầu mới ở trạng thái *Mới tiếp nhận*, đặt bởi hệ thống, **không nhận trạng thái từ client**
+- [x] Người thuê tạo cho phòng khác → **403**
+- [x] QTHT và Thợ → 403 khi tạo; thợ chỉ xem được ảnh khi đã được phân công
+- [x] Ghi `NHAT_KY_THAO_TAC`
+- [x] Tên test mang mã `FR-MNT-01` và `BR-17`
 
 ## Comments
+
+- `V36` tạo sẵn cột phân công và chi phí để ticket 03/06 dùng lại, không cần `ALTER TABLE` về sau.
+- BR-16 mô tả sáu trạng thái vòng đời chính nhưng có thêm nhánh huỷ từ mọi trạng thái trước `DA_DONG`; vì vậy `CHECK` lưu bảy giá trị, bao gồm `DA_HUY`.
+- Mức độ API dùng `THUONG` / `GAP` / `KHAN_CAP` theo `Doc/PRJ1_Thiet-ke-giao-dien_Brief.md` mục 10 và ví dụ API mục 13; ERD v2 còn giữ tên cũ `BINH_THUONG` / `CHO_DUOC`.
+- Ảnh yêu cầu dùng chung cơ chế ký hạn của ảnh giấy tờ; quyền xem được kiểm riêng theo người tạo, phạm vi chủ/quản lý và thợ được phân công. Khi thêm nhánh thợ, nhánh ảnh giấy tờ vẫn giữ chặn `THO` để không mở rộng quyền ngoài ý muốn.
+- Đã xác minh: backend full suite 484 tests pass; frontend 17 test files / 134 tests pass; `npm run build` pass. Reviewer độc lập không còn finding Critical/Important.
+- Follow-up không chặn ticket: nếu một ảnh sau trong cùng multipart lỗi, file đã ghi trước đó có thể còn orphan trên filesystem; cần dọn bù ở một hardening task của storage transaction.

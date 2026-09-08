@@ -2,6 +2,7 @@ package com.prj1.ccm.nguoithue;
 
 import com.prj1.ccm.nguoidung.NguoiDung;
 import com.prj1.ccm.nguoidung.VaiTro;
+import com.prj1.ccm.suachua.YeuCauSuaChuaRepository;
 import com.prj1.ccm.toanha.ChiSoDichVuRepository;
 import com.prj1.ccm.toanha.PhanQuyenToaService;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,7 @@ import java.security.MessageDigest;
 import java.time.Clock;
 import java.util.Base64;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
@@ -35,6 +37,7 @@ import java.util.UUID;
 public class AnhDinhKemService {
     private static final String DOI_TUONG_NGUOI_THUE = "NGUOI_THUE";
     private static final String DOI_TUONG_CHI_SO_DICH_VU = "CHI_SO_DICH_VU";
+    private static final String DOI_TUONG_YEU_CAU_SUA_CHUA = "YEU_CAU_SUA_CHUA";
     private static final String HANH_DONG_XEM_ANH_GIAY_TO = "XEM_ANH_GIAY_TO";
     private static final long KICH_THUOC_TOI_DA = 5L * 1024 * 1024;
     private static final String THONG_BAO_TEP_KHONG_HOP_LE = "Tệp tải lên phải là ảnh PNG hoặc JPEG hợp lệ";
@@ -45,6 +48,7 @@ public class AnhDinhKemService {
     private final NhatKyThaoTacRepository nhatKyThaoTacRepository;
     private final PhanQuyenToaService phanQuyenToaService;
     private final ChiSoDichVuRepository chiSoDichVuRepository;
+    private final YeuCauSuaChuaRepository yeuCauSuaChuaRepository;
     private final Clock clock;
     private final Path thuMucLuuTru;
     private final byte[] khoaKy;
@@ -52,7 +56,8 @@ public class AnhDinhKemService {
 
     public AnhDinhKemService(AnhDinhKemRepository anhDinhKemRepository, NguoiThueRepository nguoiThueRepository,
                               NhatKyThaoTacRepository nhatKyThaoTacRepository, PhanQuyenToaService phanQuyenToaService,
-                              ChiSoDichVuRepository chiSoDichVuRepository, Clock clock,
+                              ChiSoDichVuRepository chiSoDichVuRepository, YeuCauSuaChuaRepository yeuCauSuaChuaRepository,
+                              Clock clock,
                               @Value("${app.anh.storage-root:${ANH_STORAGE_ROOT:/var/lib/miniapart/private-attachments}}") String thuMucLuuTru,
                               @Value("${app.anh.link-secret:${ANH_LINK_SECRET:dev-only-image-link-secret-not-for-production}}") String khoaKy,
                               @Value("${app.anh.link-ttl-seconds:900}") long thoiHanLienKetGiay) {
@@ -61,6 +66,7 @@ public class AnhDinhKemService {
         this.nhatKyThaoTacRepository = nhatKyThaoTacRepository;
         this.phanQuyenToaService = phanQuyenToaService;
         this.chiSoDichVuRepository = chiSoDichVuRepository;
+        this.yeuCauSuaChuaRepository = yeuCauSuaChuaRepository;
         this.clock = clock;
         this.thuMucLuuTru = Path.of(thuMucLuuTru).toAbsolutePath().normalize();
         this.khoaKy = khoaKy.getBytes(StandardCharsets.UTF_8);
@@ -81,9 +87,6 @@ public class AnhDinhKemService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public LienKetAnhKy taoLienKet(Long anhId, NguoiDung nguoiDung) {
-        if (nguoiDung == null || nguoiDung.vaiTro() != VaiTro.NGUOI_THUE) {
-            kiemTraQuyen(nguoiDung);
-        }
         AnhDinhKem anh = kiemTraQuyenXemAnh(anhId, nguoiDung);
         if (DOI_TUONG_NGUOI_THUE.equals(anh.doiTuongLoai())) {
             nhatKyThaoTacRepository.ghi(
@@ -125,6 +128,19 @@ public class AnhDinhKemService {
     @Transactional(readOnly = true)
     public Long layAnhMoiNhatIdChoChiSoDichVu(Long chiSoId) {
         return anhDinhKemRepository.findIdMoiNhatByDoiTuong(DOI_TUONG_CHI_SO_DICH_VU, chiSoId).orElse(null);
+    }
+
+    @Transactional
+    public List<Long> taiLenAnhYeuCauSuaChua(Long yeuCauId, List<MultipartFile> tep) {
+        if (tep == null || tep.isEmpty()) {
+            return List.of();
+        }
+        if (tep.size() > 5) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mỗi yêu cầu chỉ được đính kèm tối đa 5 ảnh");
+        }
+        return tep.stream()
+                .map(item -> luuAnh(DOI_TUONG_YEU_CAU_SUA_CHUA, yeuCauId, null, item).id())
+                .toList();
     }
 
     private byte[] docVaKiemTra(MultipartFile tep) {
@@ -176,7 +192,8 @@ public class AnhDinhKemService {
     private AnhDinhKem kiemTraQuyenXemAnh(Long anhId, NguoiDung nguoiDung) {
         AnhDinhKem anh = anhDinhKemRepository.findById(anhId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (DOI_TUONG_NGUOI_THUE.equals(anh.doiTuongLoai())) {
-            if (nguoiDung != null && nguoiDung.vaiTro() == VaiTro.NGUOI_THUE) {
+            if (nguoiDung == null
+                    || (nguoiDung.vaiTro() != VaiTro.CHU && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN);
             }
             // A historical contract still establishes the manager's legitimate audit scope.
@@ -199,6 +216,26 @@ public class AnhDinhKemService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
             phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
             return anh;
+        }
+        if (DOI_TUONG_YEU_CAU_SUA_CHUA.equals(anh.doiTuongLoai())) {
+            YeuCauSuaChuaRepository.PhamViAnh phamVi = yeuCauSuaChuaRepository.findPhamViAnh(anh.doiTuongId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            if (nguoiDung == null || nguoiDung.vaiTro() == VaiTro.QTHT) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+            if (nguoiDung.vaiTro() == VaiTro.CHU || nguoiDung.vaiTro() == VaiTro.QUAN_LY) {
+                phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, phamVi.toaNhaId());
+                return anh;
+            }
+            if (nguoiDung.vaiTro() == VaiTro.NGUOI_THUE
+                    && Objects.equals(nguoiDung.nguoiThueId(), phamVi.nguoiTaoNguoiThueId())) {
+                return anh;
+            }
+            if (nguoiDung.vaiTro() == VaiTro.THO
+                    && Objects.equals(nguoiDung.id(), phamVi.nguoiXuLyId())) {
+                return anh;
+            }
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         throw new ResponseStatusException(HttpStatus.FORBIDDEN);
     }
