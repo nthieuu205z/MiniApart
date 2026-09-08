@@ -266,6 +266,23 @@ export type ThongTinHopDong = {
   quyetToan: unknown | null
 }
 
+export type ThongTinViecCuaToi = {
+  id: number
+  maYeuCau?: string
+  phongId?: number
+  soPhong: string
+  tang: number
+  toaNha: string
+  hangMuc?: string
+  moTa: string
+  mucDo: string
+  tenMucDo: string
+  trangThai: string
+  tenTrangThai?: string
+  soDienThoaiLienHe: string | null
+  anh: Array<{ id: number }>
+}
+
 export type LienKetAnhKy = {
   url: string
 }
@@ -578,6 +595,72 @@ export async function fetchLienKetAnh(token: string, anhId: number): Promise<str
 
   const lienKet = await response.json() as LienKetAnhKy
   return lienKet.url
+}
+
+/** FR-MNT-04 returns the active repair work assigned to the authenticated worker. */
+export async function fetchViecCuaToi(token: string): Promise<ThongTinViecCuaToi[]> {
+  const response = await fetch('/api/tho/viec-cua-toi', {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải danh sách việc.')
+  }
+
+  return response.json() as Promise<ThongTinViecCuaToi[]>
+}
+
+/** FR-MNT-04 moves one assigned repair from allocated to in-progress. */
+export async function batDauXuLyViec(token: string, yeuCauId: number): Promise<ThongTinViecCuaToi> {
+  const response = await fetch(`/api/yeu-cau-sua-chua/${yeuCauId}/bat-dau-xu-ly`, {
+    method: 'POST',
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể bắt đầu xử lý việc.')
+  }
+
+  return response.json() as Promise<ThongTinViecCuaToi>
+}
+
+/** FR-MNT-04 moves one assigned repair from in-progress to awaiting confirmation. */
+export async function hoanThanhViec(token: string, yeuCauId: number): Promise<ThongTinViecCuaToi> {
+  const response = await fetch(`/api/yeu-cau-sua-chua/${yeuCauId}/hoan-thanh`, {
+    method: 'POST',
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể báo đã sửa xong.')
+  }
+
+  return response.json() as Promise<ThongTinViecCuaToi>
+}
+
+/** FR-MNT-04 keeps the worker's single completion action as an ordered two-step API call. */
+export async function hoanThanhViecCuaToi(token: string, yeuCauId: number): Promise<ThongTinViecCuaToi> {
+  try {
+    await batDauXuLyViec(token, yeuCauId)
+  } catch (reason) {
+    if (!(reason instanceof ApiError) || reason.status !== 409) {
+      throw reason
+    }
+  }
+  try {
+    return await hoanThanhViec(token, yeuCauId)
+  } catch (reason) {
+    if (!(reason instanceof ApiError) || reason.status !== 409) {
+      throw reason
+    }
+
+    const danhSach = await fetchViecCuaToi(token)
+    const viec = danhSach.find((item) => item.id === yeuCauId)
+    if (viec && ['CHO_XAC_NHAN', 'DA_DONG', 'DA_HUY'].includes(viec.trangThai)) {
+      return viec
+    }
+    throw reason
+  }
 }
 
 export async function chotKyThanhToan(

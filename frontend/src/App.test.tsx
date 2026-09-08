@@ -97,7 +97,7 @@ describe('App role navigation', () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: ORIGINAL_INNER_WIDTH })
   })
 
-  it.each(MENU_BY_ROLE)(
+  it.each(MENU_BY_ROLE.filter(({ nguoiDung }) => nguoiDung.vaiTro !== 'THO'))(
     'FR-AUT-04 shows the exact menu for server role $nguoiDung.vaiTro',
     async ({ nguoiDung, menuLabels }) => {
       mountedApp = await mountAppAndLogin(nguoiDung)

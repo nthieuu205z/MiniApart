@@ -12,6 +12,7 @@ export function Toast({ children, undoLabel = 'Hoàn tác', onUndo, style, ...re
   return (
     <div
       role="status"
+      aria-live="polite"
       style={{
         background: "var(--ma-bg-inverse)",
         color: "var(--ma-text-on-inverse)",
@@ -38,7 +39,8 @@ export function Toast({ children, undoLabel = 'Hoàn tác', onUndo, style, ...re
             color: "inherit",
             background: "none",
             border: 0,
-            padding: 0,
+            minHeight: "var(--ma-hit-mobile)",
+            padding: "0 4px",
             cursor: "pointer",
             textDecoration: "underline",
             textUnderlineOffset: 3,

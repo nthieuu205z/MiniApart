@@ -18,6 +18,8 @@ import {
   khoaNguoiDungQuanLy,
   login,
   taoNguoiDungQuanLy,
+  fetchViecCuaToi,
+  hoanThanhViecCuaToi,
   type ThongTinQuanLyNguoiDung,
 } from './api'
 
@@ -463,6 +465,74 @@ describe('fetchHealth', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(2, `/api/nguoi-dung/${account.id}/khoa`, {
       method: 'POST',
       headers: { Authorization: 'Bearer admin-token' },
+    })
+  })
+
+  it('FR-MNT-04 fetches only the authenticated worker work list', async () => {
+    const work = [{
+      id: 42,
+      soPhong: '302',
+      tang: 3,
+      toaNha: 'Toà A',
+      moTa: 'Vòi nước bồn rửa bị rỉ',
+      mucDo: 'KHAN_CAP',
+      tenMucDo: 'Khẩn cấp',
+      soDienThoaiLienHe: '0907000110',
+      anh: [{ id: 501 }],
+      trangThai: 'DA_PHAN_CONG',
+    }]
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(work))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchViecCuaToi('worker-token')).resolves.toEqual(work)
+    expect(fetchMock).toHaveBeenCalledWith('/api/tho/viec-cua-toi', {
+      headers: { Authorization: 'Bearer worker-token' },
+    })
+  })
+
+  it('FR-MNT-04 completes a repair work item through start then finish in order', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ trangThai: 'DANG_XU_LY' }))
+      .mockResolvedValueOnce(jsonResponse({ trangThai: 'CHO_XAC_NHAN' }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(hoanThanhViecCuaToi('worker-token', 42)).resolves.toEqual({ trangThai: 'CHO_XAC_NHAN' })
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/yeu-cau-sua-chua/42/bat-dau-xu-ly', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer worker-token' },
+    })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/yeu-cau-sua-chua/42/hoan-thanh', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer worker-token' },
+    })
+  })
+
+  it('FR-MNT-04 resumes completion when the start step was already committed', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new ApiError(409, 'Yêu cầu đã bắt đầu xử lý'))
+      .mockResolvedValueOnce(jsonResponse({ trangThai: 'CHO_XAC_NHAN' }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(hoanThanhViecCuaToi('worker-token', 42)).resolves.toEqual({ trangThai: 'CHO_XAC_NHAN' })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/yeu-cau-sua-chua/42/hoan-thanh', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer worker-token' },
+    })
+  })
+
+  it('FR-MNT-04 reconciles a lost finish response when the server already moved the work to confirmation', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ trangThai: 'DANG_XU_LY' }))
+      .mockRejectedValueOnce(new ApiError(409, 'Yêu cầu đã hoàn tất'))
+      .mockResolvedValueOnce(jsonResponse([{ id: 42, trangThai: 'CHO_XAC_NHAN' }]))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(hoanThanhViecCuaToi('worker-token', 42)).resolves.toEqual({ id: 42, trangThai: 'CHO_XAC_NHAN' })
+    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/tho/viec-cua-toi', {
+      headers: { Authorization: 'Bearer worker-token' },
     })
   })
 })

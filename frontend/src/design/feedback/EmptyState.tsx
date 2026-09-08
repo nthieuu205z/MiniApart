@@ -7,6 +7,8 @@ export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
   body?: React.ReactNode
   actionLabel?: string
   onAction?: () => void
+  /** Cỡ vùng bấm của hành động khôi phục; mặc định sm cho các danh sách bàn giấy. */
+  actionSize?: 'sm' | 'md'
   /** Các <FilterChip> đang bật — chỉ dùng với kind="filtered". */
   filters?: React.ReactNode
   /** Mã tra cứu ngắn cho người hỗ trợ, ví dụ "8F3C". Không bao giờ hiện stack trace. */
@@ -14,7 +16,7 @@ export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /** Trạng thái rỗng. Rỗng-lần-đầu, rỗng-do-lọc và lỗi là BA màn khác nhau — không gộp. */
-export function EmptyState({ kind = 'first', title, body, actionLabel, onAction, filters, errorCode, style, ...rest }: EmptyStateProps): React.ReactElement {
+export function EmptyState({ kind = 'first', title, body, actionLabel, actionSize = 'sm', onAction, filters, errorCode, style, ...rest }: EmptyStateProps): React.ReactElement {
   return (
     <div
       style={{
@@ -34,7 +36,7 @@ export function EmptyState({ kind = 'first', title, body, actionLabel, onAction,
       {body ? <div style={{ fontSize: 13, color: "var(--ma-text-secondary)", lineHeight: 1.55 }}>{body}</div> : null}
       <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
         {actionLabel ? (
-          <Button variant={kind === "filtered" ? "secondary" : "primary"} size="sm" onClick={onAction}>
+          <Button variant={kind === "filtered" ? "secondary" : "primary"} size={actionSize} onClick={onAction}>
             {actionLabel}
           </Button>
         ) : null}

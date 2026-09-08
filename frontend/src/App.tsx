@@ -17,6 +17,7 @@ import LichSuHoaDon from './LichSuHoaDon'
 import BieuDoTieuThu from './BieuDoTieuThu'
 import HopDongNguoiThue from './HopDongNguoiThue'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
+import { ViecCuaToi } from './ViecCuaToi'
 import { BlockedNotice } from './design/building/BlockedNotice'
 import { Button } from './design/core/Button'
 import { SysLabel } from './design/core/SysLabel'
@@ -245,6 +246,12 @@ function App() {
   }, [])
 
   useEffect(() => {
+    if (nguoiDung?.vaiTro === 'THO' && duongDanHienTai !== '/viec-cua-toi') {
+      thayTheDuongDan('/viec-cua-toi')
+    }
+  }, [nguoiDung, duongDanHienTai])
+
+  useEffect(() => {
     if (typeof window === 'undefined') {
       return undefined
     }
@@ -269,7 +276,11 @@ function App() {
       storeToken(response.token)
       setToken(response.token)
       setNguoiDung(response.nguoiDung)
-      dieuHuongToi('/')
+      if (response.nguoiDung.vaiTro === 'THO') {
+        thayTheDuongDan('/viec-cua-toi')
+      } else {
+        dieuHuongToi('/')
+      }
       setForm({ soDienThoai: '', matKhau: '' })
     } catch (reason) {
       setAuthError(reason instanceof Error ? reason.message : 'Đăng nhập không thành công.')
@@ -477,6 +488,10 @@ function App() {
         </section>
       </main>
     )
+  }
+
+  if (nguoiDung.vaiTro === 'THO' && token) {
+    return <ViecCuaToi token={token} />
   }
 
   const nhomDieuHuong = taoNhomDieuHuong(nguoiDung.vaiTro, duongDanHienTai)
@@ -738,6 +753,15 @@ function dieuHuongToi(duongDan: string) {
   }
 
   window.history.pushState({}, '', duongDan)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
+function thayTheDuongDan(duongDan: string) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.history.replaceState({}, '', duongDan)
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
 

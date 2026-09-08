@@ -4,7 +4,7 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Đây là phân hệ dễ bị "cải tiến" thành hỏng nhất
 
@@ -63,14 +63,14 @@ Có thể thêm ô ghi chú ngắn khi báo xong (*"đã thay gioăng"*), nhưng
 
 ## Hoàn thành khi
 
-- [ ] Đúng **một màn**. Không màn thứ hai, không menu
-- [ ] Bảy yêu cầu ở bảng trên đều đạt
-- [ ] Vùng bấm của nút chính **≥ 44×44 px** — đo thật, không ước lượng
-- [ ] Ba trạng thái đều có, rỗng và lỗi là hai câu khác nhau
-- [ ] Báo xong dùng **hoàn tác 10 giây**, không hộp thoại
-- [ ] Chạy được ở **360 px** (`NFR-USA-01`), không cuộn ngang
-- [ ] Không có thứ nào trong **danh sách bảy điều cấm**
-- [ ] Chữ hiển thị tiếng Việt, **không mã lỗi kỹ thuật** (`NFR-USA-04`)
+- [x] Đúng **một màn**. Không màn thứ hai, không menu
+- [x] Bảy yêu cầu ở bảng trên đều đạt
+- [x] Vùng bấm của nút chính **≥ 44×44 px** — đo thật, không ước lượng
+- [x] Ba trạng thái đều có, rỗng và lỗi là hai câu khác nhau
+- [x] Báo xong dùng **hoàn tác 10 giây**, không hộp thoại
+- [x] Chạy được ở **360 px** (`NFR-USA-01`), không cuộn ngang
+- [x] Không có thứ nào trong **danh sách bảy điều cấm**
+- [x] Chữ hiển thị tiếng Việt, **không mã lỗi kỹ thuật** (`NFR-USA-04`)
 
 ## Tiêu chí nghiệm thu riêng
 
@@ -84,3 +84,8 @@ Từ `Doc/UX/04-tho-sua-chua.md` mục 6 — đo được, dùng khi kiểm th�
 | Số lần cần hướng dẫn để dùng được | **0** — người thử phải hỏi thì thiết kế sai |
 
 ## Comments
+
+- 2026-09-08: Thêm màn `ViecCuaToi` riêng cho `THO`; sau đăng nhập hoặc khôi phục phiên, vai trò này được đưa thẳng tới `/viec-cua-toi` bằng `replaceState`, không render app shell, menu hoặc top bar.
+- 2026-09-08: Danh sách lọc các trạng thái đã xong, sắp xếp ổn định `KHAN_CAP → GAP → THUONG`, lấy liên kết ký hạn qua `/api/anh/{id}/lien-ket`, và dùng `tel:` cho số liên hệ.
+- 2026-09-08: Vì backend hiện có hai endpoint chuyển trạng thái nhưng chưa có endpoint đảo ngược, cửa sổ hoàn tác 10 giây được xử lý trước khi gọi API. Hết cửa sổ, frontend gọi tuần tự `bat-dau-xu-ly` rồi `hoan-thanh`; nếu bước đầu đã ghi thành công thì lần retry tiếp tục từ bước hoàn thành.
+- 2026-09-08: Đã kiểm thử empty/error/loading, retry ảnh, nhiều undo đồng thời, touch target, reduced motion và không cuộn ngang ở viewport điện thoại.
