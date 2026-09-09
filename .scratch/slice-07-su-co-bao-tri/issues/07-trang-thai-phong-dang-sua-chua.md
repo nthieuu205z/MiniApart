@@ -4,9 +4,9 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
-**Migration:** không cần — `PHONG.trang_thai` đã có từ `V7`.
+**Migration:** `V39__room_stop_rent_marker.sql` — tách cờ ngừng cho thuê bền vững khỏi cache `PHONG.trang_thai`.
 
 ## Slice này làm một nhánh của BR-11 khả thi lần đầu
 
@@ -45,13 +45,19 @@ Chú ý cụm *"và yêu cầu sửa chữa"* — CR-012 đã tính trước t�
 
 ## Hoàn thành khi
 
-- [ ] Yêu cầu Khẩn cấp đang mở **cộng** cờ ngừng cho thuê → phòng *Đang sửa chữa*
-- [ ] **Chỉ một trong hai vế → phòng KHÔNG chuyển** *Đang sửa chữa*. Hai test riêng cho hai nửa
-- [ ] Yêu cầu đóng hoặc huỷ, hoặc gỡ cờ → phòng quay về trạng thái suy từ hợp đồng
-- [ ] Phòng đang có hợp đồng hiệu lực **mà** đang sửa chữa → chốt thứ tự ưu tiên giữa *Đang thuê* và *Đang sửa chữa*, ghi lý do vào `## Comments`
-- [ ] **Test đối chiếu CR-012:** sau mọi dãy thao tác, `PHONG.trang_thai` khớp giá trị tính lại từ hợp đồng và yêu cầu sửa chữa
-- [ ] Người dùng **không sửa tay được** `trang_thai` — client gửi lên thì bị bỏ qua
-- [ ] Dùng lại đường tính hiện có, **không viết công thức suy trạng thái thứ hai**
-- [ ] Tên test mang mã `BR-11` và `CR-012`
+- [x] Yêu cầu Khẩn cấp đang mở **cộng** cờ ngừng cho thuê → phòng *Đang sửa chữa*
+- [x] **Chỉ một trong hai vế → phòng KHÔNG chuyển** *Đang sửa chữa*. Hai test riêng cho hai nửa
+- [x] Yêu cầu đóng hoặc huỷ, hoặc gỡ cờ → phòng quay về trạng thái suy từ hợp đồng
+- [x] Phòng đang có hợp đồng hiệu lực **mà** đang sửa chữa → chốt thứ tự ưu tiên giữa *Đang thuê* và *Đang sửa chữa*, ghi lý do vào `## Comments`
+- [x] **Test đối chiếu CR-012:** sau mọi dãy thao tác, `PHONG.trang_thai` khớp giá trị tính lại từ hợp đồng và yêu cầu sửa chữa
+- [x] Người dùng **không sửa tay được** `trang_thai` — client gửi lên thì bị bỏ qua
+- [x] Dùng lại đường tính hiện có, **không viết công thức suy trạng thái thứ hai**
+- [x] Tên test mang mã `BR-11` và `CR-012`
 
 ## Comments
+
+- Review đã chỉ ra `PHONG.trang_thai` không thể vừa là cache vừa là cờ bền vững: khi hợp đồng hiệu lực thắng ưu tiên, cờ sẽ bị mất. Vì vậy `V39` thêm `PHONG.ngung_cho_thue`, backfill các bản ghi cũ có `NGUNG`/`DANG_SUA`, còn `trang_thai` chỉ giữ giá trị đệm.
+- Quản lý/Chủ trong phạm vi toà đặt hoặc gỡ cờ qua `PUT /api/toa-nha/{toaNhaId}/phong/{phongId}/ngung-cho-thue`; người thuê bị từ chối 403. Hợp đồng `HIEU_LUC` vẫn được ưu tiên trước `DANG_SUA`, nhưng cờ được giữ để sau khi hợp đồng kết thúc phòng suy ra đúng trạng thái.
+- Khi yêu cầu được xác nhận đóng hoặc huỷ, hệ thống tự gỡ cờ ngừng cho thuê rồi đồng bộ lại, nên phòng quay về trạng thái suy từ hợp đồng. `PhongRepository.coYeuCauKhanCapDangMo` là nguồn kiểm tra duy nhất cho yêu cầu mở; `TrangThaiPhongService` tái sử dụng `Phong.tinhLaiTrangThai(...)`.
+- Bổ sung kiểm thử cho API đặt/gỡ cờ, phân quyền 403, cờ sống qua hợp đồng hiệu lực, hai vế BR-11, đóng/huỷ, lifecycle tạo-huỷ và đối chiếu cache với dữ liệu nguồn. Test tạo yêu cầu vẫn gửi `trangThai` từ client để khẳng định giá trị này bị bỏ qua.
+- Verification: `./gradlew clean test --no-parallel` — `BUILD SUCCESSFUL`.

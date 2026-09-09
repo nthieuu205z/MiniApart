@@ -17,6 +17,7 @@ public record Phong(
         BigDecimal giaThueMacDinh,
         String loaiPhong,
         TrangThaiPhong trangThaiDem,
+        boolean ngungChoThue,
         List<HopDong> hopDong
 ) {
     public Phong(
@@ -30,7 +31,22 @@ public record Phong(
             String loaiPhong,
             TrangThaiPhong trangThaiDem
     ) {
-        this(id, toaNhaId, soPhong, tang, dienTich, sucChua, giaThueMacDinh, loaiPhong, trangThaiDem, List.of());
+        this(id, toaNhaId, soPhong, tang, dienTich, sucChua, giaThueMacDinh, loaiPhong, trangThaiDem, false, List.of());
+    }
+
+    public Phong(
+            Long id,
+            Long toaNhaId,
+            String soPhong,
+            int tang,
+            BigDecimal dienTich,
+            int sucChua,
+            BigDecimal giaThueMacDinh,
+            String loaiPhong,
+            TrangThaiPhong trangThaiDem,
+            List<HopDong> hopDong
+    ) {
+        this(id, toaNhaId, soPhong, tang, dienTich, sucChua, giaThueMacDinh, loaiPhong, trangThaiDem, false, hopDong);
     }
 
     public Phong {
@@ -38,6 +54,10 @@ public record Phong(
     }
 
     public TrangThaiPhong tinhLaiTrangThai(LocalDate tai) {
+        return tinhLaiTrangThai(tai, false);
+    }
+
+    public TrangThaiPhong tinhLaiTrangThai(LocalDate tai, boolean coYeuCauKhanCapDangMo) {
         boolean coHopDongHieuLuc = hopDong.stream()
                 .anyMatch(item -> item.trangThai() == TrangThaiHopDong.HIEU_LUC
                         && !tai.isBefore(item.ngayBatDau())
@@ -53,9 +73,10 @@ public record Phong(
             return TrangThaiPhong.DA_COC;
         }
 
-        return switch (trangThaiDem) {
-            case DANG_SUA, NGUNG -> trangThaiDem;
-            default -> TrangThaiPhong.TRONG;
-        };
+        if (coYeuCauKhanCapDangMo && ngungChoThue) {
+            return TrangThaiPhong.DANG_SUA;
+        }
+
+        return ngungChoThue ? TrangThaiPhong.NGUNG : TrangThaiPhong.TRONG;
     }
 }

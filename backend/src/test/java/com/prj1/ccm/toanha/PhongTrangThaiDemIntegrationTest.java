@@ -2,6 +2,8 @@ package com.prj1.ccm.toanha;
 
 import com.prj1.ccm.auth.PasswordHasher;
 import com.prj1.ccm.hopdong.HopDong;
+import com.prj1.ccm.suachua.QuyTacTrangThaiYeuCau;
+import com.prj1.ccm.suachua.TrangThaiYeuCau;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -85,6 +88,7 @@ class PhongTrangThaiDemIntegrationTest {
         jdbcTemplate.update("DELETE FROM NGUOI_O_CUNG");
         jdbcTemplate.update("DELETE FROM HOP_DONG_DICH_VU");
         jdbcTemplate.update("DELETE FROM HOP_DONG");
+        jdbcTemplate.update("DELETE FROM YEU_CAU_SUA_CHUA");
         jdbcTemplate.update("DELETE FROM NHAT_KY_THAO_TAC");
         jdbcTemplate.update("DELETE FROM NGUOI_THUE");
         jdbcTemplate.update("DELETE FROM BANG_GIA_BAC_THANG");
@@ -156,7 +160,7 @@ class PhongTrangThaiDemIntegrationTest {
         Long phongDaCocQuaNgayBatDau = themPhong(1L, "714", "DA_COC");
         Long phongDangThue = themPhong(1L, "715", "TRONG");
         Long phongDaThanhLy = themPhong(1L, "716", "DA_COC");
-        Long phongDangSuaKhongHopDong = themPhong(1L, "717", "DANG_SUA");
+        Long phongNgungChoThueKhongHopDong = themPhong(1L, "717", "NGUNG");
 
         Long nguoiThueChoKy = themNguoiThue("Người thuê chờ ký", "0900003011", "079123456911");
         Long nguoiThueDaCoc = themNguoiThue("Người thuê đã cọc", "0900003012", "079123456912");
@@ -172,8 +176,8 @@ class PhongTrangThaiDemIntegrationTest {
 
         assertThat(taiPhongTuDuLieuGoc(phongKhongHopDong).tinhLaiTrangThai(HOM_NAY))
                 .isEqualTo(TrangThaiPhong.NGUNG);
-        assertThat(taiPhongTuDuLieuGoc(phongDangSuaKhongHopDong).tinhLaiTrangThai(HOM_NAY))
-                .isEqualTo(TrangThaiPhong.DANG_SUA);
+        assertThat(taiPhongTuDuLieuGoc(phongNgungChoThueKhongHopDong).tinhLaiTrangThai(HOM_NAY))
+                .isEqualTo(TrangThaiPhong.NGUNG);
 
         mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
                         .header("Authorization", "Bearer " + managerToken))
@@ -185,7 +189,7 @@ class PhongTrangThaiDemIntegrationTest {
         assertThat(trangThaiPhong(phongDaCocQuaNgayBatDau)).isEqualTo("TRONG");
         assertThat(trangThaiPhong(phongDangThue)).isEqualTo("DANG_THUE");
         assertThat(trangThaiPhong(phongDaThanhLy)).isEqualTo("TRONG");
-        assertThat(trangThaiPhong(phongDangSuaKhongHopDong)).isEqualTo("DANG_SUA");
+        assertThat(trangThaiPhong(phongNgungChoThueKhongHopDong)).isEqualTo("NGUNG");
 
         for (Long phongId : List.of(
                 phongKhongHopDong,
@@ -194,7 +198,7 @@ class PhongTrangThaiDemIntegrationTest {
                 phongDaCocQuaNgayBatDau,
                 phongDangThue,
                 phongDaThanhLy,
-                phongDangSuaKhongHopDong
+                phongNgungChoThueKhongHopDong
         )) {
             Phong phong = taiPhongTuDuLieuGoc(phongId);
             assertThat(phong.trangThaiDem().name()).isEqualTo(phong.tinhLaiTrangThai(HOM_NAY).name());
@@ -210,7 +214,7 @@ class PhongTrangThaiDemIntegrationTest {
                 .andExpect(jsonPath("$[3].trangThai").value("TRONG"))
                 .andExpect(jsonPath("$[4].trangThai").value("DANG_THUE"))
                 .andExpect(jsonPath("$[5].trangThai").value("TRONG"))
-                .andExpect(jsonPath("$[6].trangThai").value("DANG_SUA"));
+                .andExpect(jsonPath("$[6].trangThai").value("NGUNG"));
     }
 
     @Test
@@ -230,6 +234,215 @@ class PhongTrangThaiDemIntegrationTest {
         assertThat(phong.trangThaiDem()).isEqualTo(phong.tinhLaiTrangThai(LocalDate.of(2040, 8, 20)));
     }
 
+    @Test
+    void FR_BLD_04_BR_11_CR_012_yeuCauKhanCapDangMoVaPhongDaNgungChoThueThiPhongDangSua() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "719", "NGUNG");
+        themYeuCauSuaChua(phongId, "KHAN_CAP", "MOI_TIEP_NHAN");
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isNoContent());
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("DANG_SUA");
+        assertCacheKhớpNguồn(phongId);
+    }
+
+    @Test
+    void FR_BLD_04_BR_11_CR_012_yeuCauChoXacNhanQua72GioKhongConLaYeuCauDangMo() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "719A", "NGUNG");
+        Long yeuCauId = themYeuCauSuaChua(phongId, "KHAN_CAP", "CHO_XAC_NHAN");
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET cho_xac_nhan_luc = ? WHERE id = ?",
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72))),
+                yeuCauId
+        );
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isNoContent());
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("NGUNG");
+        assertCacheKhớpNguồn(phongId);
+    }
+
+    @Test
+    void FR_BLD_04_BR_11_CR_012_danhSachPhongKhongTraCacheDangSuaSauKhiYeuCauHetHan() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "719B", "NGUNG");
+        Long yeuCauId = themYeuCauSuaChua(phongId, "KHAN_CAP", "CHO_XAC_NHAN");
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET cho_xac_nhan_luc = ? WHERE id = ?",
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72))),
+                yeuCauId
+        );
+        jdbcTemplate.update("UPDATE PHONG SET trang_thai = 'DANG_SUA' WHERE id = ?", phongId);
+
+        mockMvc.perform(get("/api/toa-nha/1/phong")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].trangThai").value("NGUNG"));
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("NGUNG");
+        assertCacheKhớpNguồn(phongId);
+    }
+
+    @Test
+    void FR_BLD_04_BR_11_CR_012_chiYeuCauKhanCapKhongDuocTuDongChuyenPhongSangDangSua() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "720", "TRONG");
+        themYeuCauSuaChua(phongId, "KHAN_CAP", "MOI_TIEP_NHAN");
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isNoContent());
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("TRONG");
+        assertCacheKhớpNguồn(phongId);
+    }
+
+    @Test
+    void FR_BLD_04_BR_11_CR_012_chiCoCoNgungChoThueKhongDuocChuyenPhongSangDangSua() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "721", "NGUNG");
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isNoContent());
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("NGUNG");
+        assertCacheKhớpNguồn(phongId);
+    }
+
+    @Test
+    void FR_MNT_03_FR_BLD_04_BR_11_CR_012_dongHoacHuyYeuCauThiPhongQuayVeTrangThaiSuyTuHopDong() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "722", "NGUNG");
+        Long yeuCauId = themYeuCauSuaChua(phongId, "KHAN_CAP", "MOI_TIEP_NHAN");
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isNoContent());
+        assertThat(trangThaiPhong(phongId)).isEqualTo("DANG_SUA");
+        assertCacheKhớpNguồn(phongId);
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/huy")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lyDo\":\"Không còn cần sửa\"}")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DA_HUY"));
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isNoContent());
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("TRONG");
+        assertCacheKhớpNguồn(phongId);
+    }
+
+    @Test
+    void FR_MNT_03_FR_BLD_04_BR_11_CR_012_xacNhanDongYeuCauCungGoCoNgungChoThue() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "722A", "NGUNG");
+        Long yeuCauId = themYeuCauSuaChua(phongId, "KHAN_CAP", "CHO_XAC_NHAN");
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET cho_xac_nhan_luc = ? WHERE id = ?",
+                java.sql.Timestamp.from(TEST_NOW),
+                yeuCauId
+        );
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isNoContent());
+        assertThat(trangThaiPhong(phongId)).isEqualTo("DANG_SUA");
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/xac-nhan-dong")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DA_DONG"));
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("TRONG");
+        assertCacheKhớpNguồn(phongId);
+    }
+
+    @Test
+    void FR_BLD_04_BR_11_CR_012_hopDongHieuLucUuTienHonTrangThaiDangSua() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "723", "NGUNG");
+        Long nguoiThueId = themNguoiThue("Người thuê đang ở", "0900003023", "079123456923");
+        themHopDong(phongId, nguoiThueId, "2040-07-01", "2041-06-30", "HIEU_LUC");
+        themYeuCauSuaChua(phongId, "KHAN_CAP", "MOI_TIEP_NHAN");
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isNoContent());
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("DANG_THUE");
+        assertCacheKhớpNguồn(phongId);
+    }
+
+    @Test
+    void FR_BLD_04_BR_11_CR_012_quanLyDatVaGoCoNgungChoThueQuaApi() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "724", "TRONG");
+
+        mockMvc.perform(put("/api/toa-nha/1/phong/" + phongId + "/ngung-cho-thue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ngungChoThue\":true}")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("NGUNG"));
+
+        mockMvc.perform(put("/api/toa-nha/1/phong/" + phongId + "/ngung-cho-thue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ngungChoThue\":false}")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("TRONG"));
+    }
+
+    @Test
+    void FR_BLD_04_BR_11_CR_012_nguoiThueKhongDuocDatCoNgungChoThue() throws Exception {
+        String tenantToken = login(5L, "0900000006");
+        Long phongId = themPhong(1L, "724A", "TRONG");
+
+        mockMvc.perform(put("/api/toa-nha/1/phong/" + phongId + "/ngung-cho-thue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ngungChoThue\":true}")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_BLD_04_BR_11_CR_012_coNgungChoThueDuocBaoLuuQuaGiaiDoanHopDongHieuLuc() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        Long phongId = themPhong(1L, "725", "TRONG");
+        mockMvc.perform(put("/api/toa-nha/1/phong/" + phongId + "/ngung-cho-thue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ngungChoThue\":true}")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+
+        Long nguoiThueId = themNguoiThue("Người thuê kết thúc hợp đồng", "0900003025", "079123456925");
+        Long hopDongId = themHopDong(phongId, nguoiThueId, "2040-07-01", "2041-06-30", "HIEU_LUC");
+        themYeuCauSuaChua(phongId, "KHAN_CAP", "MOI_TIEP_NHAN");
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isNoContent());
+        assertThat(trangThaiPhong(phongId)).isEqualTo("DANG_THUE");
+
+        jdbcTemplate.update("UPDATE HOP_DONG SET trang_thai = 'DA_THANH_LY' WHERE id = ?", hopDongId);
+
+        mockMvc.perform(post("/api/toa-nha/1/phong/tinh-lai-trang-thai")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isNoContent());
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("DANG_SUA");
+    }
+
     private void assertTrangThaiPhongTrongCoSoDuLieu(Long phongId, String trangThai) {
         assertThat(trangThaiPhong(phongId)).isEqualTo(trangThai);
     }
@@ -242,6 +455,38 @@ class PhongTrangThaiDemIntegrationTest {
         );
     }
 
+    private void assertCacheKhớpNguồn(Long phongId) {
+        Phong phong = taiPhongTuDuLieuGoc(phongId);
+        QuyTacTrangThaiYeuCau quyTacTrangThaiYeuCau = new QuyTacTrangThaiYeuCau();
+        boolean coYeuCauKhanCapDangMo = jdbcTemplate.query(
+                """
+                        SELECT trang_thai, cho_xac_nhan_luc
+                        FROM YEU_CAU_SUA_CHUA
+                        WHERE phong_id = ? AND muc_do = 'KHAN_CAP'
+                        """,
+                (resultSet, rowNum) -> new YeuCauKhanCapNguon(
+                        TrangThaiYeuCau.valueOf(resultSet.getString("trang_thai")),
+                        resultSet.getTimestamp("cho_xac_nhan_luc") == null
+                                ? null
+                                : resultSet.getTimestamp("cho_xac_nhan_luc").toInstant()
+                ),
+                phongId
+        ).stream().anyMatch(item -> {
+            TrangThaiYeuCau trangThaiHieuLuc = quyTacTrangThaiYeuCau.trangThaiHieuLuc(
+                    item.trangThai(),
+                    item.choXacNhanLuc(),
+                    mutableClock.instant()
+            );
+            return trangThaiHieuLuc != TrangThaiYeuCau.DA_DONG
+                    && trangThaiHieuLuc != TrangThaiYeuCau.DA_HUY;
+        });
+        assertThat(phong.trangThaiDem())
+                .isEqualTo(phong.tinhLaiTrangThai(HOM_NAY, coYeuCauKhanCapDangMo));
+    }
+
+    private record YeuCauKhanCapNguon(TrangThaiYeuCau trangThai, Instant choXacNhanLuc) {
+    }
+
     private void assertTrangThaiPhongTrongDanhSach(String token, Long phongId, String trangThai) throws Exception {
         mockMvc.perform(get("/api/toa-nha/1/phong")
                         .header("Authorization", "Bearer " + token))
@@ -252,7 +497,7 @@ class PhongTrangThaiDemIntegrationTest {
     private Phong taiPhongTuDuLieuGoc(Long phongId) {
         Map<String, Object> dongPhong = jdbcTemplate.queryForMap(
                 """
-                        SELECT id, toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai
+                        SELECT id, toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai, ngung_cho_thue
                         FROM PHONG
                         WHERE id = ?
                         """,
@@ -288,6 +533,7 @@ class PhongTrangThaiDemIntegrationTest {
                 (BigDecimal) dongPhong.get("gia_thue_mac_dinh"),
                 String.valueOf(dongPhong.get("loai_phong")),
                 TrangThaiPhong.valueOf(String.valueOf(dongPhong.get("trang_thai"))),
+                Boolean.TRUE.equals(dongPhong.get("ngung_cho_thue")),
                 hopDong
         );
     }
@@ -323,13 +569,30 @@ class PhongTrangThaiDemIntegrationTest {
     private Long themPhong(Long toaNhaId, String soPhong, String trangThai) {
         return jdbcTemplate.queryForObject(
                 """
-                        INSERT INTO PHONG(toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai)
-                        VALUES (?, ?, 7, 22.50, 4, 3500000.00, 'Studio', ?)
+                        INSERT INTO PHONG(toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai, ngung_cho_thue)
+                        VALUES (?, ?, 7, 22.50, 4, 3500000.00, 'Studio', ?, ?)
                         RETURNING id
                         """,
                 Long.class,
                 toaNhaId,
                 soPhong,
+                trangThai,
+                "NGUNG".equals(trangThai)
+        );
+    }
+
+    private Long themYeuCauSuaChua(Long phongId, String mucDo, String trangThai) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO YEU_CAU_SUA_CHUA(
+                            phong_id, nguoi_tao_id, hang_muc, mo_ta, muc_do, trang_thai
+                        )
+                        VALUES (?, 3, 'Điện nước', 'Rò rỉ vòi nước', ?, ?)
+                        RETURNING id
+                        """,
+                Long.class,
+                phongId,
+                mucDo,
                 trangThai
         );
     }
@@ -371,14 +634,16 @@ class PhongTrangThaiDemIntegrationTest {
         return dichVuId;
     }
 
-    private void themHopDong(Long phongId, Long nguoiThueId, String ngayBatDau, String ngayKetThuc, String trangThai) {
-        jdbcTemplate.update(
+    private Long themHopDong(Long phongId, Long nguoiThueId, String ngayBatDau, String ngayKetThuc, String trangThai) {
+        return jdbcTemplate.queryForObject(
                 """
                         INSERT INTO HOP_DONG(
                             phong_id, nguoi_thue_id, ngay_bat_dau, ngay_ket_thuc, gia_thue, tien_coc, so_ngay_bao_truoc, trang_thai
                         )
                         VALUES (?, ?, ?, ?, 3500000.00, 3500000.00, 30, ?)
+                        RETURNING id
                         """,
+                Long.class,
                 phongId,
                 nguoiThueId,
                 Date.valueOf(ngayBatDau),

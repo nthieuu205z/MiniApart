@@ -13,6 +13,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class DanhMucPhongService {
@@ -39,6 +40,7 @@ public class DanhMucPhongService {
 
     public List<ThongTinPhong> danhSachPhong(Long toaNhaId, Integer tang, NguoiDung nguoiDung) {
         kiemTraQuyenPhong(nguoiDung, toaNhaId);
+        trangThaiPhongService.dongBoTheoToaNhaId(toaNhaId, null);
         return phongRepository.findByToaNhaId(toaNhaId, tang)
                 .stream()
                 .map(ThongTinPhong::tuPhong)
@@ -84,6 +86,28 @@ public class DanhMucPhongService {
     public void tinhLaiTrangThaiPhong(Long toaNhaId, LocalDate ngay, NguoiDung nguoiDung) {
         kiemTraQuyenPhong(nguoiDung, toaNhaId);
         trangThaiPhongService.dongBoTheoToaNhaId(toaNhaId, ngay);
+    }
+
+    @Transactional
+    public ThongTinPhong capNhatNgungChoThue(
+            Long toaNhaId,
+            Long phongId,
+            Boolean ngungChoThue,
+            NguoiDung nguoiDung
+    ) {
+        kiemTraQuyenPhong(nguoiDung, toaNhaId);
+        if (ngungChoThue == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cờ ngừng cho thuê là bắt buộc.");
+        }
+
+        Phong phong = phongRepository.findById(phongId)
+                .filter(item -> Objects.equals(item.toaNhaId(), toaNhaId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        phongRepository.updateNgungChoThue(phong.id(), ngungChoThue);
+        trangThaiPhongService.dongBoTheoPhongId(phong.id());
+        return phongRepository.findById(phong.id())
+                .map(ThongTinPhong::tuPhong)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     private void kiemTraQuyenPhong(NguoiDung nguoiDung, Long toaNhaId) {

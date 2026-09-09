@@ -10,6 +10,7 @@ import com.prj1.ccm.thongbao.ThongBaoService;
 import com.prj1.ccm.toanha.PhanQuyenToaService;
 import com.prj1.ccm.toanha.Phong;
 import com.prj1.ccm.toanha.PhongRepository;
+import com.prj1.ccm.toanha.TrangThaiPhongService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,7 @@ public class YeuCauSuaChuaService {
 
     private final YeuCauSuaChuaRepository yeuCauSuaChuaRepository;
     private final PhongRepository phongRepository;
+    private final TrangThaiPhongService trangThaiPhongService;
     private final PhanQuyenToaService phanQuyenToaService;
     private final NguoiDungRepository nguoiDungRepository;
     private final AnhDinhKemService anhDinhKemService;
@@ -50,6 +52,7 @@ public class YeuCauSuaChuaService {
     public YeuCauSuaChuaService(
             YeuCauSuaChuaRepository yeuCauSuaChuaRepository,
             PhongRepository phongRepository,
+            TrangThaiPhongService trangThaiPhongService,
             PhanQuyenToaService phanQuyenToaService,
             NguoiDungRepository nguoiDungRepository,
             AnhDinhKemService anhDinhKemService,
@@ -60,6 +63,7 @@ public class YeuCauSuaChuaService {
     ) {
         this.yeuCauSuaChuaRepository = yeuCauSuaChuaRepository;
         this.phongRepository = phongRepository;
+        this.trangThaiPhongService = trangThaiPhongService;
         this.phanQuyenToaService = phanQuyenToaService;
         this.nguoiDungRepository = nguoiDungRepository;
         this.anhDinhKemService = anhDinhKemService;
@@ -106,6 +110,7 @@ public class YeuCauSuaChuaService {
         ));
 
         List<Long> anhIds = anhDinhKemService.taiLenAnhYeuCauSuaChua(yeuCauId, danhSachAnh);
+        dongBoTrangThaiPhong(phong.id());
         nhatKyThaoTacRepository.ghi(
                 nguoiDung.id(),
                 "TAO_YEU_CAU_SUA_CHUA",
@@ -160,6 +165,7 @@ public class YeuCauSuaChuaService {
         kiemTraCapNhat(yeuCauSuaChuaRepository.capNhatTiepNhan(
                 yeuCauId, nguoiDung.id(), clock.instant(), view.yeuCau().trangThai()
         ));
+        dongBoTrangThaiPhong(view.yeuCau().phongId());
         ghiNhatKy(nguoiDung, "TIEP_NHAN_YEU_CAU_SUA_CHUA", view.yeuCau().trangThai(), trangThaiMoi, null, yeuCauId);
         return thongTin(timYeuCau(yeuCauId));
     }
@@ -180,6 +186,7 @@ public class YeuCauSuaChuaService {
         kiemTraCapNhat(yeuCauSuaChuaRepository.capNhatPhanCong(
                 yeuCauId, thoId, clock.instant(), view.yeuCau().trangThai()
         ));
+        dongBoTrangThaiPhong(view.yeuCau().phongId());
         thongBaoService.taoKhiPhanCong(yeuCauId);
         ghiNhatKy(nguoiDung, "PHAN_CONG_YEU_CAU_SUA_CHUA", view.yeuCau().trangThai(), trangThaiMoi, null, yeuCauId);
         return thongTin(timYeuCau(yeuCauId));
@@ -194,6 +201,7 @@ public class YeuCauSuaChuaService {
         kiemTraCapNhat(yeuCauSuaChuaRepository.capNhatTrangThai(
                 yeuCauId, trangThaiMoi, view.yeuCau().trangThai()
         ));
+        dongBoTrangThaiPhong(view.yeuCau().phongId());
         ghiNhatKy(nguoiDung, "BAT_DAU_XU_LY_YEU_CAU_SUA_CHUA", view.yeuCau().trangThai(), trangThaiMoi, null, yeuCauId);
         return thongTin(timYeuCau(yeuCauId));
     }
@@ -207,6 +215,7 @@ public class YeuCauSuaChuaService {
         kiemTraCapNhat(yeuCauSuaChuaRepository.capNhatChoXacNhan(
                 yeuCauId, clock.instant(), view.yeuCau().trangThai()
         ));
+        dongBoTrangThaiPhong(view.yeuCau().phongId());
         ghiNhatKy(nguoiDung, "HOAN_THANH_YEU_CAU_SUA_CHUA", view.yeuCau().trangThai(), trangThaiMoi, null, yeuCauId);
         return thongTin(timYeuCau(yeuCauId));
     }
@@ -225,6 +234,7 @@ public class YeuCauSuaChuaService {
         kiemTraCapNhat(yeuCauSuaChuaRepository.capNhatTrangThai(
                 yeuCauId, trangThaiMoi, trangThaiHieuLuc
         ));
+        goDanhDauNgungChoThueVaDongBo(view.yeuCau().phongId());
         ghiNhatKy(nguoiDung, "XAC_NHAN_DONG_YEU_CAU_SUA_CHUA", trangThaiHieuLuc, trangThaiMoi, null, yeuCauId);
         return thongTin(timYeuCau(yeuCauId));
     }
@@ -247,6 +257,7 @@ public class YeuCauSuaChuaService {
         kiemTraCapNhat(yeuCauSuaChuaRepository.capNhatHuy(
                 yeuCauId, lyDoDaChuanHoa, view.yeuCau().trangThai()
         ));
+        goDanhDauNgungChoThueVaDongBo(view.yeuCau().phongId());
         ghiNhatKy(nguoiDung, "HUY_YEU_CAU_SUA_CHUA", view.yeuCau().trangThai(), trangThaiMoi, lyDoDaChuanHoa, yeuCauId);
         return thongTin(timYeuCau(yeuCauId));
     }
@@ -301,6 +312,15 @@ public class YeuCauSuaChuaService {
                 && nguoiDung.vaiTro() != VaiTro.NGUOI_THUE)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+    }
+
+    private void dongBoTrangThaiPhong(Long phongId) {
+        trangThaiPhongService.dongBoTheoPhongId(phongId);
+    }
+
+    private void goDanhDauNgungChoThueVaDongBo(Long phongId) {
+        phongRepository.updateNgungChoThue(phongId, false);
+        dongBoTrangThaiPhong(phongId);
     }
 
     private List<YeuCauSuaChuaRepository.YeuCauSuaChuaView> timTrongToa(

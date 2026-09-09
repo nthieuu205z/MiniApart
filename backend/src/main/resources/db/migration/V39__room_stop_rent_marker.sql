@@ -1,0 +1,6 @@
+ALTER TABLE PHONG
+    ADD COLUMN ngung_cho_thue BOOLEAN NOT NULL DEFAULT FALSE;
+
+UPDATE PHONG
+SET ngung_cho_thue = TRUE
+WHERE trang_thai IN ('NGUNG', 'DANG_SUA');

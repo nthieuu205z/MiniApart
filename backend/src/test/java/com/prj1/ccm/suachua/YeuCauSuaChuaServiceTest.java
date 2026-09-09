@@ -10,6 +10,7 @@ import com.prj1.ccm.auth.NguoiDungRepository;
 import com.prj1.ccm.thongbao.ThongBaoService;
 import com.prj1.ccm.toanha.PhanQuyenToaService;
 import com.prj1.ccm.toanha.PhongRepository;
+import com.prj1.ccm.toanha.TrangThaiPhongService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,9 @@ class YeuCauSuaChuaServiceTest {
 
     @Mock
     private PhongRepository phongRepository;
+
+    @Mock
+    private TrangThaiPhongService trangThaiPhongService;
 
     @Mock
     private PhanQuyenToaService phanQuyenToaService;
@@ -59,6 +63,7 @@ class YeuCauSuaChuaServiceTest {
         service = new YeuCauSuaChuaService(
                 yeuCauSuaChuaRepository,
                 phongRepository,
+                trangThaiPhongService,
                 phanQuyenToaService,
                 nguoiDungRepository,
                 anhDinhKemService,

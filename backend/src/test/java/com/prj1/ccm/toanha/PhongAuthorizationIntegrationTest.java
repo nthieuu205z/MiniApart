@@ -19,6 +19,8 @@ import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Testcontainers
@@ -103,6 +105,27 @@ class PhongAuthorizationIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(hangLoatPayload()))
                 .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/api/toa-nha/2/phong/999/ngung-cho-thue")
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ngungChoThue\":true}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_BLD_04_CR_012_ownerInScopeCanSetStopRentMarker() throws Exception {
+        jdbcTemplate.update(
+                "INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (2, 1)"
+        );
+        Long phongId = themPhong(1L);
+
+        mockMvc.perform(put("/api/toa-nha/1/phong/" + phongId + "/ngung-cho-thue")
+                        .header("Authorization", "Bearer " + login(2L, "0900000002"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ngungChoThue\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("NGUNG"));
     }
 
     @Test
@@ -150,6 +173,27 @@ class PhongAuthorizationIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(hangLoatPayload()))
                 .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/api/toa-nha/1/phong/999/ngung-cho-thue")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ngungChoThue\":true}"))
+                .andExpect(status().isForbidden());
+    }
+
+    private Long themPhong(Long toaNhaId) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO PHONG(
+                            toa_nha_id, so_phong, tang, dien_tich, suc_chua,
+                            gia_thue_mac_dinh, loai_phong, trang_thai, ngung_cho_thue
+                        )
+                        VALUES (?, '901', 1, 20.00, 2, 100000.00, 'Studio', 'TRONG', FALSE)
+                        RETURNING id
+                        """,
+                Long.class,
+                toaNhaId
+        );
     }
 
     private String phongPayload() {

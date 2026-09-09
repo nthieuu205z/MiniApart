@@ -1,7 +1,7 @@
 # Vertical Slice 7 — Sự cố và bảo trì
 
 **Nguồn:** `Doc/PRJ1_Ke-hoach-trien-khai.md`, mục 6, Vertical Slice 7.
-**Dải migration:** `V36`–`V45` — xem `.scratch/dai-so-hieu-migration.md`. Dự kiến dùng **2 tệp**: `V36` (`YEU_CAU_SUA_CHUA`), `V37` (`THONG_BAO`).
+**Dải migration:** `V36`–`V45` — xem `.scratch/dai-so-hieu-migration.md`. Triển khai hiện tại dùng `V36` (`YEU_CAU_SUA_CHUA`), `V37` (`THONG_BAO`), `V38` (vòng đời chi phí) và `V39` (cờ ngừng cho thuê tách khỏi cache trạng thái phòng).
 
 **Trạng thái spec:** ✅ **Đã duyệt 01/09/2026.** Ticket đã chẻ ở `issues/`, 9 ticket.
 **Ruling nền:** `.scratch/quyet-dinh-truoc-slice-06-07/quyet-dinh-can-chot.md` — ba ruling chốt 01/09/2026. **Đọc trước tệp này.**

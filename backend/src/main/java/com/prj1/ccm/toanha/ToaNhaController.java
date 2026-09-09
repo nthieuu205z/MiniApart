@@ -198,6 +198,22 @@ public class ToaNhaController {
         return ResponseEntity.noContent().build();
     }
 
+    /** FR-BLD-04, BR-11 and CR-012 let an in-scope owner or manager set the persisted stop-rent marker. */
+    @PutMapping("/{toaNhaId}/phong/{phongId}/ngung-cho-thue")
+    public ThongTinPhong capNhatNgungChoThue(
+            @PathVariable Long toaNhaId,
+            @PathVariable Long phongId,
+            @RequestBody(required = false) YeuCauNgungChoThue yeuCau,
+            HttpServletRequest request
+    ) {
+        return danhMucPhongService.capNhatNgungChoThue(
+                toaNhaId,
+                phongId,
+                yeuCau == null ? null : yeuCau.ngungChoThue(),
+                nguoiDungHienTai(request)
+        );
+    }
+
     /**
      * FR-BLD-05 lists services for one visible building with their calculation mode, unit, and active state.
      *

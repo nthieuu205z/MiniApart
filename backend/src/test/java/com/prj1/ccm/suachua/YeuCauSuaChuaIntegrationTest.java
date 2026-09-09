@@ -189,6 +189,35 @@ class YeuCauSuaChuaIntegrationTest {
     }
 
     @Test
+    void FR_MNT_01_FR_MNT_03_BR_11_CR_012_taoVaHuyYeuCauCapNhatTrangThaiDemCuaPhong() throws Exception {
+        Long phongId = themPhong(1L, "900");
+        jdbcTemplate.update("UPDATE PHONG SET trang_thai = 'NGUNG', ngung_cho_thue = TRUE WHERE id = ?", phongId);
+        String managerToken = login(3L, "0900000003");
+
+        JsonNode response = objectMapper.readTree(mockMvc.perform(multipart("/api/yeu-cau-sua-chua")
+                        .param("phongId", phongId.toString())
+                        .param("hangMuc", "Điện nước")
+                        .param("moTa", "Vòi nước rò rỉ")
+                        .param("mucDo", "KHAN_CAP")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.trangThai").value("MOI_TIEP_NHAN"))
+                .andReturn().getResponse().getContentAsString());
+        long yeuCauId = response.path("id").longValue();
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("DANG_SUA");
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + yeuCauId + "/huy")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lyDo\":\"Không cần sửa\"}")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DA_HUY"));
+
+        assertThat(trangThaiPhong(phongId)).isEqualTo("TRONG");
+    }
+
+    @Test
     void FR_MNT_01_BR_17_thoChiXemAnhYeuCauKhiDuocPhanCong() throws Exception {
         Long nguoiThueId = themNguoiThue("Người thuê kiểm quyền thợ", "0907000104");
         Long phongId = themPhong(1L, "910");
@@ -1037,6 +1066,14 @@ class YeuCauSuaChuaIntegrationTest {
                 Long.class,
                 toaNhaId,
                 soPhong
+        );
+    }
+
+    private String trangThaiPhong(Long phongId) {
+        return jdbcTemplate.queryForObject(
+                "SELECT trang_thai FROM PHONG WHERE id = ?",
+                String.class,
+                phongId
         );
     }
 

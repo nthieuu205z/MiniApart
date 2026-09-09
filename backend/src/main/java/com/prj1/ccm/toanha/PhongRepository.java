@@ -2,20 +2,27 @@ package com.prj1.ccm.toanha;
 
 import com.prj1.ccm.hopdong.HopDong;
 import com.prj1.ccm.hopdong.TrangThaiHopDong;
+import com.prj1.ccm.suachua.QuyTacTrangThaiYeuCau;
+import com.prj1.ccm.suachua.TrangThaiYeuCau;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
 public class PhongRepository {
+    private static final QuyTacTrangThaiYeuCau QUY_TAC_TRANG_THAI_YEU_CAU = new QuyTacTrangThaiYeuCau();
+
     private final JdbcTemplate jdbcTemplate;
 
     public PhongRepository(JdbcTemplate jdbcTemplate) {
@@ -100,9 +107,9 @@ public class PhongRepository {
         return jdbcTemplate.queryForObject(
                 """
                         INSERT INTO PHONG (
-                            toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai
+                            toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai, ngung_cho_thue
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                         RETURNING id
                         """,
                 Long.class,
@@ -113,7 +120,8 @@ public class PhongRepository {
                 phong.sucChua(),
                 phong.giaThueMacDinh(),
                 phong.loaiPhong(),
-                phong.trangThaiDem().name()
+                phong.trangThaiDem().name(),
+                phong.ngungChoThue()
         );
     }
 
@@ -127,6 +135,47 @@ public class PhongRepository {
                 trangThai.name(),
                 phongId
         );
+    }
+
+    public void updateNgungChoThue(Long phongId, boolean ngungChoThue) {
+        jdbcTemplate.update(
+                """
+                        UPDATE PHONG
+                        SET ngung_cho_thue = ?
+                        WHERE id = ?
+                        """,
+                ngungChoThue,
+                phongId
+        );
+    }
+
+    public boolean coYeuCauKhanCapDangMo(Long phongId, Instant hienTai) {
+        return phongIdsCoYeuCauKhanCapDangMo(List.of(phongId), hienTai).contains(phongId);
+    }
+
+    public Set<Long> phongIdsCoYeuCauKhanCapDangMo(List<Long> phongIds, Instant hienTai) {
+        if (phongIds.isEmpty()) {
+            return Set.of();
+        }
+
+        String placeholders = phongIds.stream().map(ignore -> "?").collect(Collectors.joining(", "));
+        return jdbcTemplate.query(
+                """
+                        SELECT phong_id, trang_thai, cho_xac_nhan_luc
+                        FROM YEU_CAU_SUA_CHUA
+                        WHERE muc_do = 'KHAN_CAP'
+                          AND phong_id IN (%s)
+                        """.formatted(placeholders),
+                (resultSet, rowNum) -> new YeuCauKhanCapNguon(
+                        resultSet.getLong("phong_id"),
+                        TrangThaiYeuCau.valueOf(resultSet.getString("trang_thai")),
+                        layInstantNullable(resultSet, "cho_xac_nhan_luc")
+                ),
+                phongIds.toArray()
+        ).stream()
+                .filter(item -> yeuCauDangMo(item, hienTai))
+                .map(YeuCauKhanCapNguon::phongId)
+                .collect(Collectors.toSet());
     }
 
     private List<Phong> ganHopDong(List<Phong> phong) {
@@ -149,6 +198,7 @@ public class PhongRepository {
                         item.giaThueMacDinh(),
                         item.loaiPhong(),
                         item.trangThaiDem(),
+                        item.ngungChoThue(),
                         hopDongTheoPhong.getOrDefault(item.id(), List.of())
                 ))
                 .toList();
@@ -175,7 +225,7 @@ public class PhongRepository {
 
     private String cauLenhPhongCoBan() {
         return """
-                SELECT id, toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai
+                SELECT id, toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai, ngung_cho_thue
                 FROM PHONG
                 """;
     }
@@ -190,8 +240,32 @@ public class PhongRepository {
                 resultSet.getInt("suc_chua"),
                 resultSet.getBigDecimal("gia_thue_mac_dinh"),
                 resultSet.getString("loai_phong"),
-                TrangThaiPhong.valueOf(resultSet.getString("trang_thai"))
+                TrangThaiPhong.valueOf(resultSet.getString("trang_thai")),
+                resultSet.getBoolean("ngung_cho_thue"),
+                List.of()
         );
+    }
+
+    private Instant layInstantNullable(ResultSet resultSet, String column) throws SQLException {
+        Timestamp value = resultSet.getTimestamp(column);
+        return value == null ? null : value.toInstant();
+    }
+
+    private boolean yeuCauDangMo(YeuCauKhanCapNguon yeuCau, Instant hienTai) {
+        TrangThaiYeuCau trangThaiHieuLuc = QUY_TAC_TRANG_THAI_YEU_CAU.trangThaiHieuLuc(
+                yeuCau.trangThaiLuu(),
+                yeuCau.choXacNhanLuc(),
+                hienTai
+        );
+        return trangThaiHieuLuc != TrangThaiYeuCau.DA_DONG
+                && trangThaiHieuLuc != TrangThaiYeuCau.DA_HUY;
+    }
+
+    private record YeuCauKhanCapNguon(
+            Long phongId,
+            TrangThaiYeuCau trangThaiLuu,
+            Instant choXacNhanLuc
+    ) {
     }
 
     private HopDong mapHopDong(ResultSet resultSet) throws SQLException {
