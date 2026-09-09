@@ -1058,6 +1058,60 @@ class YeuCauSuaChuaIntegrationTest {
         cost(empty, token,"1","CHU_NHA").andExpect(status().isOk());
     }
 
+    @Test
+    void FR_MNT_08_traLichSuTheoToaVaHangMucTinhTongChinhXacVaTachYeuCauDaHuy() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        long chuNhaTra = repairWithContract(managerToken);
+        cost(chuNhaTra, managerToken, "150000.50", "CHU_NHA").andExpect(status().isOk());
+
+        long phongNguoiThueTra = themPhong(1L, "996");
+        themHopDongHieuLuc(phongNguoiThueTra, themNguoiThue("Người thuê lịch sử", "0907000993"));
+        long nguoiThueTra = taoYeuCauKhongAnh(phongNguoiThueTra, "Sửa quạt", managerToken);
+        jdbcTemplate.update("UPDATE YEU_CAU_SUA_CHUA SET trang_thai='DANG_XU_LY', hang_muc='Điện' WHERE id=?", nguoiThueTra);
+        cost(nguoiThueTra, managerToken, "200000.25", "NGUOI_THUE").andExpect(status().isOk());
+
+        long daHuy = taoYeuCauKhongAnh(themPhong(1L, "995"), "Sửa ổ cắm", managerToken);
+        jdbcTemplate.update("UPDATE YEU_CAU_SUA_CHUA SET trang_thai='DANG_XU_LY', hang_muc='Điện' WHERE id=?", daHuy);
+        cost(daHuy, managerToken, "900000.00", "CHU_NHA").andExpect(status().isOk());
+        cancelRepair(daHuy, managerToken).andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/lich-su")
+                        .param("toaNhaId", "1")
+                        .param("hangMuc", "Điện")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.yeuCau.length()").value(2))
+                .andExpect(jsonPath("$.tongChiPhiChuNha").value("150000.50"))
+                .andExpect(jsonPath("$.tongChiPhiNguoiThue").value("200000.25"));
+
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/lich-su")
+                        .param("toaNhaId", "1")
+                        .param("hangMuc", "Điện")
+                        .param("hienThiDaHuy", "true")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.yeuCau.length()").value(3))
+                .andExpect(jsonPath("$.yeuCau[0].chiPhi").isString())
+                .andExpect(jsonPath("$.tongChiPhiChuNha").value("150000.50"))
+                .andExpect(jsonPath("$.tongChiPhiNguoiThue").value("200000.25"));
+    }
+
+    @Test
+    void FR_MNT_08_tuChoiThoQthtVaQuanLyNgoaiPhamViKhiTraLichSu() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        repairWithContract(managerToken);
+        for (String wrongRoleToken : List.of(login(1L, "0900000001"), login(4L, "0900000004"), login(5L, "0900000006"))) {
+            mockMvc.perform(get("/api/yeu-cau-sua-chua/lich-su")
+                            .param("toaNhaId", "1")
+                            .header("Authorization", "Bearer " + wrongRoleToken))
+                    .andExpect(status().isForbidden());
+        }
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/lich-su")
+                        .param("toaNhaId", "2")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+    }
+
     private long repairWithContract(String token) throws Exception {
         long room = themPhong(1L,"997");
         themHopDongHieuLuc(room,themNguoiThue("Người thuê chi phí","0907000991"));

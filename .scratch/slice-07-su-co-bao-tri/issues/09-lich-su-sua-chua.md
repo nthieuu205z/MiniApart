@@ -4,7 +4,7 @@
 
 **Blocked by:** 06
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Migration:** không cần — chỉ đọc.
 
@@ -50,3 +50,5 @@ Tổng chi phí là phép cộng tiền. `BigDecimal`, không `double`. ArchUnit
 - [ ] Tên test mang mã `FR-MNT-08`
 
 ## Comments
+
+- Nên mở rộng luật ArchUnit cấm `double`/`float` sang gói `suachua` trong một ticket kiến trúc riêng: FR-MNT-08 là phép cộng tiền đầu tiên ngoài `billing`. Ticket này chỉ dùng `BigDecimal`, không tự mở rộng luật kiến trúc.

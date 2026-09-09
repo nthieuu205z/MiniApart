@@ -20,6 +20,7 @@ import HopDongNguoiThue from './HopDongNguoiThue'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { ViecCuaToi } from './ViecCuaToi'
 import { ThongBao } from './ThongBao'
+import { LichSuSuaChua } from './LichSuSuaChua'
 import { BlockedNotice } from './design/building/BlockedNotice'
 import { Button } from './design/core/Button'
 import { SysLabel } from './design/core/SysLabel'
@@ -394,6 +395,12 @@ function App() {
     && nguoiDung.vaiTro === 'THO'
     && duongDanHienTai === '/viec-cua-toi',
   )
+  const hienThiLichSuSuaChua = Boolean(
+    token
+    && nguoiDung
+    && duongDanHienTai === '/su-co'
+    && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro),
+  )
   const hienThiHoaDon = Boolean(
     token
     && nguoiDung
@@ -406,6 +413,8 @@ function App() {
       ? 'Hợp đồng của tôi'
     : hienThiThongBao
       ? 'Thông báo'
+      : hienThiLichSuSuaChua
+        ? 'Lịch sử sửa chữa'
     : hienThiHoaDonNguoiThue && duongDanHienTai !== '/'
       ? 'Hoá đơn của tôi'
     : hienThiLichSuHoaDonNguoiThue
@@ -425,6 +434,8 @@ function App() {
       ? 'FR-POR-07'
     : hienThiThongBao
       ? 'FR-MNT-02'
+      : hienThiLichSuSuaChua
+        ? 'FR-MNT-08'
     : hienThiHoaDonNguoiThue
       ? 'FR-POR-01'
     : hienThiLichSuHoaDonNguoiThue
@@ -603,6 +614,8 @@ function App() {
             <HopDongNguoiThue token={token} mobile={laManHinhHep} />
           ) : hienThiViecCuaToi && token ? (
             <ViecCuaToi token={token} />
+          ) : hienThiLichSuSuaChua && token ? (
+            <LichSuSuaChua token={token} mobile={laManHinhHep} />
           ) : hienThiThongBao && token ? (
             <ThongBao token={token} mobile={laManHinhHep} onUnreadCountChange={setSoThongBaoChuaDoc} />
           ) : hienThiLichSuHoaDonNguoiThue && token ? (

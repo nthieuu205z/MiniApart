@@ -283,6 +283,32 @@ export type ThongTinViecCuaToi = {
   anh: Array<{ id: number }>
 }
 
+export type ThongTinLichSuSuaChua = {
+  yeuCau: Array<{
+    id: number
+    toaNhaId: number
+    toaNha: string
+    phongId: number
+    soPhong: string
+    hangMuc: string
+    moTa: string
+    trangThai: string
+    tenTrangThai: string
+    chiPhi: string | null
+    benChiuChiPhi: string | null
+    taoLuc: string
+  }>
+  tongChiPhiChuNha: string
+  tongChiPhiNguoiThue: string
+}
+
+export type BoLocLichSuSuaChua = {
+  toaNhaId?: number
+  phongId?: number
+  hangMuc?: string
+  hienThiDaHuy?: boolean
+}
+
 export type ThongTinThongBao = {
   maThamChieu: string
   tieuDe: string
@@ -622,6 +648,27 @@ export async function fetchViecCuaToi(token: string): Promise<ThongTinViecCuaToi
   }
 
   return response.json() as Promise<ThongTinViecCuaToi[]>
+}
+
+/** FR-MNT-08 reads operational repair history with exact numeric money strings. */
+export async function fetchLichSuSuaChua(
+  token: string,
+  boLoc: BoLocLichSuSuaChua,
+): Promise<ThongTinLichSuSuaChua> {
+  const query = new URLSearchParams()
+  if (boLoc.toaNhaId !== undefined) query.set('toaNhaId', String(boLoc.toaNhaId))
+  if (boLoc.phongId !== undefined) query.set('phongId', String(boLoc.phongId))
+  if (boLoc.hangMuc?.trim()) query.set('hangMuc', boLoc.hangMuc.trim())
+  if (boLoc.hienThiDaHuy) query.set('hienThiDaHuy', 'true')
+  const response = await fetch(`/api/yeu-cau-sua-chua/lich-su?${query.toString()}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải lịch sử sửa chữa.')
+  }
+
+  return response.json() as Promise<ThongTinLichSuSuaChua>
 }
 
 /** FR-MNT-02/FR-MNT-04/FR-INV-08 returns the authenticated user's notification inbox. */

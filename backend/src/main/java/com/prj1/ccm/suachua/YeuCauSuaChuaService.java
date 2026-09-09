@@ -138,6 +138,34 @@ public class YeuCauSuaChuaService {
                 .toList();
     }
 
+    /** FR-MNT-08 reads repair history and cost totals only within the owner's or manager's assigned buildings. */
+    @Transactional(readOnly = true)
+    public ThongTinLichSuSuaChua lichSu(
+            Long toaNhaId,
+            Long phongId,
+            String hangMuc,
+            boolean hienThiDaHuy,
+            NguoiDung nguoiDung
+    ) {
+        kiemTraVaiTroQuanLy(nguoiDung);
+        if (toaNhaId != null) {
+            phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
+        }
+        if (phongId != null) {
+            Phong phong = phongRepository.findById(phongId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, phong.toaNhaId());
+        }
+        String hangMucDaChuanHoa = hangMuc == null || hangMuc.isBlank() ? null : hangMuc.trim();
+        List<ThongTinLichSuSuaChua.MucLichSuSuaChua> yeuCau = yeuCauSuaChuaRepository
+                .findLichSuByNguoiQuanLy(nguoiDung.id(), toaNhaId, phongId, hangMucDaChuanHoa)
+                .stream()
+                .map(view -> ThongTinLichSuSuaChua.MucLichSuSuaChua.tu(view, trangThaiHieuLuc(view)))
+                .filter(item -> hienThiDaHuy || item.trangThai() != TrangThaiYeuCau.DA_HUY)
+                .toList();
+        return ThongTinLichSuSuaChua.tu(yeuCau);
+    }
+
     /** FR-MNT-03 returns one request only when the authenticated actor owns its scope. */
     @Transactional(readOnly = true)
     public ThongTinYeuCauSuaChua chiTiet(Long yeuCauId, NguoiDung nguoiDung) {
@@ -356,15 +384,17 @@ public class YeuCauSuaChuaService {
     }
 
     private ThongTinYeuCauSuaChua thongTin(YeuCauSuaChuaRepository.YeuCauSuaChuaView view) {
-        TrangThaiYeuCau trangThaiHienLuc = QUY_TAC_TRANG_THAI.trangThaiHieuLuc(
-                view.yeuCau().trangThai(),
-                view.yeuCau().choXacNhanLuc(),
-                clock.instant()
-        );
+        TrangThaiYeuCau trangThaiHienLuc = trangThaiHieuLuc(view);
         return ThongTinYeuCauSuaChua.tu(
                 view,
                 yeuCauSuaChuaRepository.findAnhIds(view.yeuCau().id()),
                 trangThaiHienLuc
+        );
+    }
+
+    private TrangThaiYeuCau trangThaiHieuLuc(YeuCauSuaChuaRepository.YeuCauSuaChuaView view) {
+        return QUY_TAC_TRANG_THAI.trangThaiHieuLuc(
+                view.yeuCau().trangThai(), view.yeuCau().choXacNhanLuc(), clock.instant()
         );
     }
 

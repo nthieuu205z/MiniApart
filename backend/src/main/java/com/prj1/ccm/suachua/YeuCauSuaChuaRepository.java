@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -80,6 +81,35 @@ public class YeuCauSuaChuaRepository {
         return trangThai == null
                 ? jdbcTemplate.query(sql, (resultSet, rowNum) -> mapView(resultSet), nguoiDungId)
                 : jdbcTemplate.query(sql, (resultSet, rowNum) -> mapView(resultSet), nguoiDungId, trangThai.name());
+    }
+
+    public List<YeuCauSuaChuaView> findLichSuByNguoiQuanLy(
+            Long nguoiDungId,
+            Long toaNhaId,
+            Long phongId,
+            String hangMuc
+    ) {
+        StringBuilder sql = new StringBuilder(cauLenhView() + """
+                JOIN PHAN_QUYEN_TOA pqt
+                  ON pqt.toa_nha_id = p.toa_nha_id
+                 AND pqt.nguoi_dung_id = ?
+                WHERE 1 = 1
+                """);
+        List<Object> thamSo = new ArrayList<>(List.of(nguoiDungId));
+        if (toaNhaId != null) {
+            sql.append(" AND p.toa_nha_id = ?");
+            thamSo.add(toaNhaId);
+        }
+        if (phongId != null) {
+            sql.append(" AND yc.phong_id = ?");
+            thamSo.add(phongId);
+        }
+        if (hangMuc != null) {
+            sql.append(" AND yc.hang_muc = ?");
+            thamSo.add(hangMuc);
+        }
+        sql.append(" ORDER BY yc.tao_luc DESC, yc.id DESC");
+        return jdbcTemplate.query(sql.toString(), (resultSet, rowNum) -> mapView(resultSet), thamSo.toArray());
     }
 
     public List<YeuCauSuaChuaView> findByNguoiXuLy(Long nguoiXuLyId) {

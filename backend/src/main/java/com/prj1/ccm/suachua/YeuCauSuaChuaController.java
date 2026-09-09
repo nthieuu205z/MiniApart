@@ -44,6 +44,20 @@ public class YeuCauSuaChuaController {
         );
     }
 
+    /** FR-MNT-08 reads repair history by room, building, or category without time-range reporting. */
+    @GetMapping("/lich-su")
+    public ThongTinLichSuSuaChua lichSu(
+            @RequestParam(required = false) Long toaNhaId,
+            @RequestParam(required = false) Long phongId,
+            @RequestParam(required = false) String hangMuc,
+            @RequestParam(defaultValue = "false") boolean hienThiDaHuy,
+            HttpServletRequest request
+    ) {
+        return yeuCauSuaChuaService.lichSu(
+                toaNhaId, phongId, hangMuc, hienThiDaHuy, nguoiDungHienTai(request)
+        );
+    }
+
     /** FR-MNT-03 returns one repair request within the authenticated actor's scope. */
     @GetMapping("/{yeuCauId}")
     public ThongTinYeuCauSuaChua chiTiet(@PathVariable Long yeuCauId, HttpServletRequest request) {
