@@ -87,15 +87,20 @@ public class YeuCauSuaChuaRepository {
             Long nguoiDungId,
             Long toaNhaId,
             Long phongId,
-            String hangMuc
+            String hangMuc,
+            boolean gioiHanTheoPhanQuyenToa
     ) {
-        StringBuilder sql = new StringBuilder(cauLenhView() + """
-                JOIN PHAN_QUYEN_TOA pqt
-                  ON pqt.toa_nha_id = p.toa_nha_id
-                 AND pqt.nguoi_dung_id = ?
-                WHERE 1 = 1
-                """);
-        List<Object> thamSo = new ArrayList<>(List.of(nguoiDungId));
+        StringBuilder sql = new StringBuilder(cauLenhView());
+        List<Object> thamSo = new ArrayList<>();
+        if (gioiHanTheoPhanQuyenToa) {
+            sql.append("""
+                    JOIN PHAN_QUYEN_TOA pqt
+                      ON pqt.toa_nha_id = p.toa_nha_id
+                     AND pqt.nguoi_dung_id = ?
+                    """);
+            thamSo.add(nguoiDungId);
+        }
+        sql.append(" WHERE 1 = 1");
         if (toaNhaId != null) {
             sql.append(" AND p.toa_nha_id = ?");
             thamSo.add(toaNhaId);

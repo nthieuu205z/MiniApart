@@ -1112,6 +1112,21 @@ class YeuCauSuaChuaIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void FR_MNT_08_chuKhongCoPhanQuyenToaVanDocDuocLichSuCuaMinh() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        long yeuCauId = repairWithContract(managerToken);
+        jdbcTemplate.update("DELETE FROM PHAN_QUYEN_TOA WHERE nguoi_dung_id = 2");
+        String ownerToken = login(2L, "0900000002");
+
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/lich-su")
+                        .param("toaNhaId", "1")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.yeuCau.length()").value(1))
+                .andExpect(jsonPath("$.yeuCau[0].id").value(yeuCauId));
+    }
+
     private long repairWithContract(String token) throws Exception {
         long room = themPhong(1L,"997");
         themHopDongHieuLuc(room,themNguoiThue("Người thuê chi phí","0907000991"));
