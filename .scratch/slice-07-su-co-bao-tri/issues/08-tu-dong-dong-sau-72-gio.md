@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Migration:** không cần.
 
@@ -34,15 +34,15 @@ Phải biết yêu cầu vào *Chờ xác nhận* **lúc nào**. Cột đó đã
 
 ## Hoàn thành khi
 
-- [ ] Luật 72 giờ nằm ở **đúng một chỗ**, trong tầng thuần, không phụ thuộc Spring hay cơ sở dữ liệu
-- [ ] **Không có `INTERVAL` hay phép tính 72 giờ nào trong SQL** — kiểm bằng `grep`
-- [ ] Yêu cầu *Chờ xác nhận* quá 72 giờ hiện là *Đã đóng* ở **mọi** đường đọc: danh sách quản lý, chi tiết, danh sách thợ, lịch sử
-- [ ] Đúng 72 giờ (không hơn) thì **vẫn** *Chờ xác nhận* — test biên
-- [ ] Người thuê xác nhận **trước** 72 giờ → *Đã đóng* thật, ghi vào cơ sở dữ liệu
-- [ ] Người thuê phản hồi **sau** 72 giờ → chốt hành vi (đã đóng thì thôi, hay mở lại) và ghi lý do vào `## Comments`
-- [ ] Test dùng **đồng hồ đẩy được** — khuôn `MutableClock` đã có ở bốn bộ test tích hợp, dùng lại, **không chờ thật**
-- [ ] Thời điểm vào *Chờ xác nhận* lưu riêng, **không dùng cột cập nhật chung**
-- [ ] Tên test mang mã `FR-MNT-07` và `BR-16`
+- [x] Luật 72 giờ nằm ở **đúng một chỗ**, trong tầng thuần, không phụ thuộc Spring hay cơ sở dữ liệu
+- [x] **Không có `INTERVAL` hay phép tính 72 giờ nào trong SQL** — kiểm bằng `grep`
+- [x] Yêu cầu *Chờ xác nhận* quá 72 giờ hiện là *Đã đóng* ở **mọi** đường đọc: danh sách quản lý, chi tiết, danh sách thợ, lịch sử
+- [x] Đúng 72 giờ (không hơn) thì **vẫn** *Chờ xác nhận* — test biên
+- [x] Người thuê xác nhận **trước** 72 giờ → *Đã đóng* thật, ghi vào cơ sở dữ liệu
+- [x] Người thuê phản hồi **sau** 72 giờ → chốt hành vi (đã đóng thì thôi, hay mở lại) và ghi lý do vào `## Comments`
+- [x] Test dùng **đồng hồ đẩy được** — khuôn `MutableClock` đã có ở bốn bộ test tích hợp, dùng lại, **không chờ thật**
+- [x] Thời điểm vào *Chờ xác nhận* lưu riêng, **không dùng cột cập nhật chung**
+- [x] Tên test mang mã `FR-MNT-07` và `BR-16`
 
 ## Comments
 
@@ -54,3 +54,5 @@ Phải biết yêu cầu vào *Chờ xác nhận* **lúc nào**. Cột đó đã
 - Bổ sung kiểm thử endpoint MockMvc `FR_MNT_07_BR_16` với đồng hồ đẩy được ở
   đúng mốc 72 giờ: chi tiết vẫn trả `CHO_XAC_NHAN` và trạng thái trong cơ sở
   dữ liệu vẫn `CHO_XAC_NHAN`.
+- Verification: `./gradlew clean test --no-parallel` — `BUILD SUCCESSFUL`; review
+  fix round 1 đã xác nhận cả hai finding được xử lý.
