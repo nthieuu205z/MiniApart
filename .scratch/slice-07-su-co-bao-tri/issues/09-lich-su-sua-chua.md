@@ -38,16 +38,16 @@ Tổng chi phí là phép cộng tiền. `BigDecimal`, không `double`. ArchUnit
 
 ## Hoàn thành khi
 
-- [ ] Tra được lịch sử theo **phòng**, theo **toà**, theo **hạng mục**
-- [ ] Hiện tổng chi phí, tách rõ **phần chủ nhà chịu** và **phần người thuê chịu**
-- [ ] Yêu cầu đã huỷ **không** tính vào tổng chi phí; hiện riêng hoặc lọc ra
-- [ ] Tiền dùng `BigDecimal`, **không `double`** ở bất kỳ khâu nào kể cả định dạng
-- [ ] Định dạng tiền dùng lại đường đã có (`NFR-USA-06`: `1.888.000 đ`), **không viết hàm thứ hai**
-- [ ] Rỗng-lần-đầu và rỗng-do-lọc là **hai câu khác nhau** (`00-nen-tang-ux.md` mục 5)
-- [ ] Bộ lọc nằm trong URL — chia sẻ được kết quả tra cứu
-- [ ] Quản lý chỉ thấy toà được phân công; **Thợ → 403**; QTHT → 403
-- [ ] **Không** làm phần báo cáo theo khoảng thời gian và **không** xuất Excel — đó là `FR-RPT-08`, Slice 09
-- [ ] Tên test mang mã `FR-MNT-08`
+- [x] Tra được lịch sử theo **phòng**, theo **toà**, theo **hạng mục**
+- [x] Hiện tổng chi phí, tách rõ **phần chủ nhà chịu** và **phần người thuê chịu**
+- [x] Yêu cầu đã huỷ **không** tính vào tổng chi phí; hiện riêng hoặc lọc ra
+- [x] Tiền dùng `BigDecimal`, **không `double`** ở bất kỳ khâu nào kể cả định dạng
+- [x] Định dạng tiền dùng lại đường đã có (`NFR-USA-06`: `1.888.000 đ`), **không viết hàm thứ hai**
+- [x] Rỗng-lần-đầu và rỗng-do-lọc là **hai câu khác nhau** (`00-nen-tang-ux.md` mục 5)
+- [x] Bộ lọc nằm trong URL — chia sẻ được kết quả tra cứu
+- [x] Quản lý chỉ thấy toà được phân công; **Thợ → 403**; QTHT → 403
+- [x] **Không** làm phần báo cáo theo khoảng thời gian và **không** xuất Excel — đó là `FR-RPT-08`, Slice 09
+- [x] Tên test mang mã `FR-MNT-08`
 
 ## Comments
 
