@@ -929,7 +929,7 @@ class YeuCauSuaChuaIntegrationTest {
         long id = repairWithContract(token);
         jdbcTemplate.update("UPDATE YEU_CAU_SUA_CHUA SET trang_thai='CHO_XAC_NHAN', cho_xac_nhan_luc=? WHERE id=?", java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72)).plusSeconds(1)), id);
         cost(id, token, "1", "CHU_NHA").andExpect(status().isOk());
-        mutableClock.cong(Duration.ofSeconds(1));
+        mutableClock.cong(Duration.ofSeconds(2));
         cost(id, token, "2", "CHU_NHA").andExpect(status().isConflict());
         mockMvc.perform(post("/api/yeu-cau-sua-chua/" + id + "/xac-nhan-dong")
                         .header("Authorization", "Bearer " + token))
@@ -944,7 +944,7 @@ class YeuCauSuaChuaIntegrationTest {
         long id = repairWithContract(token);
         jdbcTemplate.update(
                 "UPDATE YEU_CAU_SUA_CHUA SET trang_thai='CHO_XAC_NHAN', cho_xac_nhan_luc=? WHERE id=?",
-                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72))),
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72)).minusSeconds(1)),
                 id
         );
 
@@ -966,7 +966,7 @@ class YeuCauSuaChuaIntegrationTest {
         long id = repairWithContract(managerToken);
         jdbcTemplate.update(
                 "UPDATE YEU_CAU_SUA_CHUA SET nguoi_xu_ly_id=4, trang_thai='CHO_XAC_NHAN', cho_xac_nhan_luc=? WHERE id=?",
-                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72))),
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72)).minusSeconds(1)),
                 id
         );
 

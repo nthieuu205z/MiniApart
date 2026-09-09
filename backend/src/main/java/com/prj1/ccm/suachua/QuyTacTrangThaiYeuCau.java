@@ -23,7 +23,7 @@ public final class QuyTacTrangThaiYeuCau {
         }
         if (trangThaiLuu == TrangThaiYeuCau.CHO_XAC_NHAN
                 && choXacNhanLuc != null
-                && !hienTai.isBefore(choXacNhanLuc.plus(THOI_HAN_CHO_XAC_NHAN))) {
+                && hienTai.isAfter(choXacNhanLuc.plus(THOI_HAN_CHO_XAC_NHAN))) {
             return TrangThaiYeuCau.DA_DONG;
         }
         return trangThaiLuu;

@@ -255,7 +255,7 @@ class PhongTrangThaiDemIntegrationTest {
         Long yeuCauId = themYeuCauSuaChua(phongId, "KHAN_CAP", "CHO_XAC_NHAN");
         jdbcTemplate.update(
                 "UPDATE YEU_CAU_SUA_CHUA SET cho_xac_nhan_luc = ? WHERE id = ?",
-                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72))),
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72)).minusSeconds(1)),
                 yeuCauId
         );
 
@@ -274,7 +274,7 @@ class PhongTrangThaiDemIntegrationTest {
         Long yeuCauId = themYeuCauSuaChua(phongId, "KHAN_CAP", "CHO_XAC_NHAN");
         jdbcTemplate.update(
                 "UPDATE YEU_CAU_SUA_CHUA SET cho_xac_nhan_luc = ? WHERE id = ?",
-                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72))),
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72)).minusSeconds(1)),
                 yeuCauId
         );
         jdbcTemplate.update("UPDATE PHONG SET trang_thai = 'DANG_SUA' WHERE id = ?", phongId);

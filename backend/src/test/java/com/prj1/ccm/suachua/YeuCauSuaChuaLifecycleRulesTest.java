@@ -88,7 +88,7 @@ class YeuCauSuaChuaLifecycleRulesTest {
     }
 
     @Test
-    void FR_MNT_07_BR_16_derivesClosedAtExactly72HoursWithoutMutatingStoredState() {
+    void FR_MNT_07_BR_16_keepsConfirmationAtExactly72HoursAndClosesOnlyAfterward() {
         QuyTacTrangThaiYeuCau quyTac = new QuyTacTrangThaiYeuCau();
         Instant choXacNhanLuc = Instant.parse("2040-08-15T03:00:00Z");
 
@@ -101,6 +101,11 @@ class YeuCauSuaChuaLifecycleRulesTest {
                 TrangThaiYeuCau.CHO_XAC_NHAN,
                 choXacNhanLuc,
                 choXacNhanLuc.plus(Duration.ofHours(72))
+        )).isEqualTo(TrangThaiYeuCau.CHO_XAC_NHAN);
+        assertThat(quyTac.trangThaiHieuLuc(
+                TrangThaiYeuCau.CHO_XAC_NHAN,
+                choXacNhanLuc,
+                choXacNhanLuc.plus(Duration.ofHours(72)).plusSeconds(1)
         )).isEqualTo(TrangThaiYeuCau.DA_DONG);
         assertThat(quyTac.trangThaiHieuLuc(
                 TrangThaiYeuCau.DANG_XU_LY,
