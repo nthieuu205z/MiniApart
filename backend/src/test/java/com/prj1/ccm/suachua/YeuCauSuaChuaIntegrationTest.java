@@ -985,6 +985,30 @@ class YeuCauSuaChuaIntegrationTest {
     }
 
     @Test
+    void FR_MNT_07_BR_16_tenantConfirmationAfter72HoursIsRejectedWithoutMutatingStoredState() throws Exception {
+        Long nguoiThueId = themNguoiThue("Người thuê phản hồi muộn", "0907000195");
+        Long phongId = themPhong(1L, "922");
+        themHopDongHieuLuc(phongId, nguoiThueId);
+        ganTaiKhoanNguoiThue(nguoiThueId);
+        String tenantToken = login(5L, "0900000006");
+        long id = taoYeuCauKhongAnh(phongId, "Xác nhận sau hạn", tenantToken);
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET trang_thai='CHO_XAC_NHAN', cho_xac_nhan_luc=? WHERE id=?",
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72)).minusSeconds(1)),
+                id
+        );
+
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + id + "/xac-nhan-dong")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isConflict());
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT trang_thai FROM YEU_CAU_SUA_CHUA WHERE id=?",
+                String.class,
+                id
+        )).isEqualTo("CHO_XAC_NHAN");
+    }
+
+    @Test
     void FR_MNT_07_BR_16_effectiveStatusFiltersManagerAndWorkerLists() throws Exception {
         String managerToken = login(3L, "0900000003");
         long id = repairWithContract(managerToken);

@@ -36,7 +36,7 @@ Phải biết yêu cầu vào *Chờ xác nhận* **lúc nào**. Cột đó đã
 
 - [x] Luật 72 giờ nằm ở **đúng một chỗ**, trong tầng thuần, không phụ thuộc Spring hay cơ sở dữ liệu
 - [x] **Không có `INTERVAL` hay phép tính 72 giờ nào trong SQL** — kiểm bằng `grep`
-- [x] Yêu cầu *Chờ xác nhận* quá 72 giờ hiện là *Đã đóng* ở **mọi** đường đọc: danh sách quản lý, chi tiết, danh sách thợ, lịch sử
+- [x] Yêu cầu *Chờ xác nhận* quá 72 giờ hiện là *Đã đóng* ở **mọi đường đọc hiện có**: danh sách quản lý, chi tiết, danh sách thợ và trạng thái phòng; đường đọc lịch sử sẽ tái sử dụng luật này ở ticket 09
 - [x] Đúng 72 giờ (không hơn) thì **vẫn** *Chờ xác nhận* — test biên
 - [x] Người thuê xác nhận **trước** 72 giờ → *Đã đóng* thật, ghi vào cơ sở dữ liệu
 - [x] Người thuê phản hồi **sau** 72 giờ → chốt hành vi (đã đóng thì thôi, hay mở lại) và ghi lý do vào `## Comments`
@@ -56,3 +56,5 @@ Phải biết yêu cầu vào *Chờ xác nhận* **lúc nào**. Cột đó đã
   dữ liệu vẫn `CHO_XAC_NHAN`.
 - Verification: `./gradlew clean test --no-parallel` — `BUILD SUCCESSFUL`; review
   fix round 1 đã xác nhận cả hai finding được xử lý.
+- Final review follow-up: thêm regression test tài khoản người thuê phản hồi sau
+  hạn (`FR_MNT_07_BR_16`) và ghi rõ đường đọc lịch sử thuộc ticket 09.
