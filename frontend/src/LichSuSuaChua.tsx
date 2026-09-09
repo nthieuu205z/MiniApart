@@ -124,14 +124,29 @@ function KetQuaLichSu({ ketQua, mobile }: { ketQua: ThongTinLichSuSuaChua; mobil
       <strong>Người thuê chịu: {dinhDangTien(ketQua.tongChiPhiNguoiThue)} ₫</strong>
     </div>
     <div style={mobile ? { display: 'grid', gap: 10 } : styleBang}>
-      {ketQua.yeuCau.map((item) => <article key={item.id} data-repair-history-item={item.id} style={styleDong}>
-        <strong>Phòng {item.soPhong} · {item.hangMuc}</strong>
-        <span>{item.toaNha} · {dinhDangNgayIso(item.taoLuc.slice(0, 10))}</span>
+      {ketQua.yeuCau.map((item) => <article key={item.id} data-repair-history-item={item.id} style={mobile ? styleDongMobile : styleDong}>
+        <div style={styleDongChinh}>
+          <strong>Phòng {item.soPhong} · {item.hangMuc}</strong>
+          <span>{item.moTa}</span>
+        </div>
+        <span>{item.toaNha} · {dinhDangNgayIso(ngayDiaPhuongTuInstant(item.taoLuc))}</span>
         <span>{item.tenTrangThai}</span>
         <span>{item.chiPhi === null ? 'Chưa ghi chi phí' : `${dinhDangTien(item.chiPhi)} ₫`}{item.benChiuChiPhi ? ` · ${item.benChiuChiPhi === 'CHU_NHA' ? 'Chủ nhà chịu' : 'Người thuê chịu'}` : ''}</span>
       </article>)}
     </div>
   </section>
+}
+
+function ngayDiaPhuongTuInstant(value: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(value))
+  const theoTen = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  if (!theoTen.year || !theoTen.month || !theoTen.day) return value.slice(0, 10)
+  return `${theoTen.year}-${theoTen.month}-${theoTen.day}`
 }
 
 function docBoLocTuUrl(): BoLocTrang {
@@ -164,4 +179,6 @@ const styleInput: CSSProperties = { minHeight: 'var(--ma-hit-mobile)', padding: 
 const styleCheckbox: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, minHeight: 'var(--ma-hit-mobile)', font: 'var(--ma-text-body)' }
 const styleTong: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 16, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)' }
 const styleBang: CSSProperties = { display: 'grid', gap: 1, border: '1px solid var(--ma-border-default)' }
-const styleDong: CSSProperties = { display: 'grid', gridTemplateColumns: 'minmax(12rem, 1fr) repeat(3, minmax(8rem, auto))', gap: 12, padding: 14, background: 'var(--ma-bg-card)', borderBottom: '1px solid var(--ma-border-subtle)', alignItems: 'center' }
+const styleDong: CSSProperties = { display: 'grid', gridTemplateColumns: 'minmax(12rem, 1fr) repeat(3, minmax(8rem, auto))', gap: 12, padding: 14, background: 'var(--ma-bg-card)', borderBottom: '1px solid var(--ma-border-subtle)', alignItems: 'center', minWidth: 0 }
+const styleDongMobile: CSSProperties = { ...styleDong, gridTemplateColumns: 'minmax(0, 1fr)', gap: 8, overflowWrap: 'anywhere' }
+const styleDongChinh: CSSProperties = { display: 'grid', gap: 4, minWidth: 0, overflowWrap: 'anywhere' }

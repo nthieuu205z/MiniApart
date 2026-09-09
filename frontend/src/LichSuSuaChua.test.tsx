@@ -53,6 +53,7 @@ describe('LichSuSuaChua', () => {
   })
 
   it('FR-MNT-08 renders string money totals and includes cancelled repairs only when requested', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
     window.history.replaceState({}, '', '/su-co?toaNhaId=1&hienThiDaHuy=true')
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input)
@@ -68,10 +69,38 @@ describe('LichSuSuaChua', () => {
     }))
 
     await act(async () => root.render(<LichSuSuaChua token="test-token" mobile />))
-    await vi.waitFor(() => expect(container.querySelector('[data-repair-history-item="8"]')).not.toBeNull())
+    const row = await vi.waitFor(() => {
+      const item = container.querySelector('[data-repair-history-item="8"]')
+      expect(item).not.toBeNull()
+      return item as HTMLElement
+    })
+    expect(row.style.gridTemplateColumns).toBe('minmax(0, 1fr)')
+    expect(row.textContent).toContain('Phòng 301')
+    expect(row.textContent).toContain('Điện')
+    expect(row.textContent).toContain('Đã huỷ')
+    expect(row.textContent).toContain('Thay aptomat')
     expect(container.textContent).toContain('125.000,5 ₫')
-    expect(container.textContent).toContain('Đã huỷ')
     expect(container.querySelector('[data-layout-variant="mobile"]')).not.toBeNull()
+  })
+
+  it('FR-MNT-08 converts repair Instants to the Ho Chi Minh calendar date before formatting', async () => {
+    window.history.replaceState({}, '', '/su-co?toaNhaId=1')
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/toa-nha') return jsonResponse([{ id: 1, maToa: 'A', ten: 'Toà A' }])
+      if (url.startsWith('/api/yeu-cau-sua-chua/lich-su?')) {
+        return jsonResponse({
+          yeuCau: [{ id: 9, toaNha: 'Toà A', phongId: 22, soPhong: '302', hangMuc: 'Nước', moTa: 'Thay van', trangThai: 'DA_DONG', tenTrangThai: 'Đã đóng', chiPhi: null, benChiuChiPhi: null, taoLuc: '2026-09-08T18:30:00Z' }],
+          tongChiPhiChuNha: '0',
+          tongChiPhiNguoiThue: '0',
+        })
+      }
+      return jsonResponse([])
+    }))
+
+    await act(async () => root.render(<LichSuSuaChua token="test-token" />))
+    await vi.waitFor(() => expect(container.querySelector('[data-repair-history-item="9"]')).not.toBeNull())
+    expect(container.querySelector('[data-repair-history-item="9"]')?.textContent).toContain('09/09/2026')
   })
 })
 
