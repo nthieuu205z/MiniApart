@@ -3,6 +3,7 @@ package com.prj1.ccm.suachua;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -23,13 +24,14 @@ public class YeuCauSuaChuaRepository {
         return jdbcTemplate.queryForObject(
                 """
                         INSERT INTO YEU_CAU_SUA_CHUA(
-                            phong_id, nguoi_tao_id, hang_muc, mo_ta, muc_do, trang_thai, tao_luc
+                            phong_id, hop_dong_id, nguoi_tao_id, hang_muc, mo_ta, muc_do, trang_thai, tao_luc
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                         RETURNING id
                         """,
                 Long.class,
                 yeuCau.phongId(),
+                yeuCau.hopDongId(),
                 yeuCau.nguoiTaoId(),
                 yeuCau.hangMuc(),
                 yeuCau.moTa(),
@@ -41,6 +43,13 @@ public class YeuCauSuaChuaRepository {
 
     public Optional<YeuCauSuaChuaView> findById(Long id) {
         return jdbcTemplate.query(cauLenhView() + " WHERE yc.id = ?",
+                        (resultSet, rowNum) -> mapView(resultSet), id)
+                .stream()
+                .findFirst();
+    }
+
+    public Optional<YeuCauSuaChuaView> findByIdForUpdate(Long id) {
+        return jdbcTemplate.query(cauLenhView() + " WHERE yc.id = ? FOR UPDATE OF yc",
                         (resultSet, rowNum) -> mapView(resultSet), id)
                 .stream()
                 .findFirst();
@@ -154,26 +163,67 @@ public class YeuCauSuaChuaRepository {
         );
     }
 
-    public boolean coHopDongHieuLucCuaNguoiThue(Long phongId, Long nguoiThueId, LocalDate ngay) {
-        Boolean tonTai = jdbcTemplate.queryForObject(
+    public int capNhatChiPhi(
+            Long yeuCauId,
+            BigDecimal chiPhi,
+            BenChiuChiPhi benChiuChiPhi,
+            TrangThaiYeuCau trangThaiCu
+    ) {
+        return jdbcTemplate.update(
                 """
-                        SELECT EXISTS(
-                            SELECT 1
-                            FROM HOP_DONG
-                            WHERE phong_id = ?
-                              AND nguoi_thue_id = ?
-                              AND trang_thai = 'HIEU_LUC'
-                              AND ngay_bat_dau <= ?
-                              AND ngay_ket_thuc >= ?
-                        )
+                        UPDATE YEU_CAU_SUA_CHUA
+                        SET chi_phi = ?, ben_chiu_chi_phi = ?
+                        WHERE id = ? AND trang_thai = ?
                         """,
-                Boolean.class,
+                chiPhi,
+                benChiuChiPhi.name(),
+                yeuCauId,
+                trangThaiCu.name()
+        );
+    }
+
+    public boolean coHopDongHieuLucCuaNguoiThue(Long phongId, Long nguoiThueId, LocalDate ngay) {
+        return timHopDongHieuLucCuaNguoiThue(phongId, nguoiThueId, ngay).isPresent();
+    }
+
+    public Optional<Long> timHopDongHieuLucCuaNguoiThue(Long phongId, Long nguoiThueId, LocalDate ngay) {
+        return jdbcTemplate.query(
+                """
+                        SELECT id
+                        FROM HOP_DONG
+                        WHERE phong_id = ?
+                          AND nguoi_thue_id = ?
+                          AND trang_thai = 'HIEU_LUC'
+                          AND ngay_bat_dau <= ?
+                          AND ngay_ket_thuc >= ?
+                        ORDER BY ngay_bat_dau DESC, id DESC
+                        LIMIT 1
+                        """,
+                (resultSet, rowNum) -> resultSet.getLong("id"),
                 phongId,
                 nguoiThueId,
                 java.sql.Date.valueOf(ngay),
                 java.sql.Date.valueOf(ngay)
-        );
-        return Boolean.TRUE.equals(tonTai);
+        ).stream().findFirst();
+    }
+
+    public Optional<Long> timHopDongHieuLucCuaPhong(Long phongId, LocalDate ngay) {
+        return jdbcTemplate.query(
+                """
+                        SELECT id
+                        FROM HOP_DONG
+                        WHERE phong_id = ?
+                          AND trang_thai = 'HIEU_LUC'
+                          AND ngay_bat_dau <= ?
+                          AND ngay_ket_thuc >= ?
+                        ORDER BY ngay_bat_dau DESC, id DESC
+                        LIMIT 1
+                        """,
+                (resultSet, rowNum) -> resultSet.getLong("id"),
+                phongId,
+                java.sql.Date.valueOf(ngay),
+                java.sql.Date.valueOf(ngay)
+        ).stream().findFirst();
     }
 
     public Optional<PhamViAnh> findPhamViAnh(Long yeuCauId) {
@@ -203,6 +253,7 @@ public class YeuCauSuaChuaRepository {
                         resultSet.getLong("id"),
                         resultSet.getString("ma_yeu_cau"),
                         resultSet.getLong("phong_id"),
+                        layLongNullable(resultSet, "hop_dong_id"),
                         resultSet.getLong("nguoi_tao_id"),
                         resultSet.getString("hang_muc"),
                         resultSet.getString("mo_ta"),
@@ -228,7 +279,7 @@ public class YeuCauSuaChuaRepository {
 
     private String cauLenhView() {
         return """
-                SELECT yc.id, yc.ma_yeu_cau, yc.phong_id, yc.nguoi_tao_id,
+                SELECT yc.id, yc.ma_yeu_cau, yc.phong_id, yc.hop_dong_id, yc.nguoi_tao_id,
                        yc.hang_muc, yc.mo_ta, yc.muc_do, yc.trang_thai,
                        yc.nguoi_tiep_nhan_id, yc.tiep_nhan_luc,
                        yc.nguoi_xu_ly_id, yc.phan_cong_luc, yc.chi_phi,

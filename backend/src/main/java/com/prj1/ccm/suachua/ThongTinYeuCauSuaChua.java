@@ -31,6 +31,15 @@ public record ThongTinYeuCauSuaChua(
 ) {
     static ThongTinYeuCauSuaChua tu(YeuCauSuaChuaRepository.YeuCauSuaChuaView view, List<Long> anhIds) {
         YeuCauSuaChua yeuCau = view.yeuCau();
+        return tu(view, anhIds, yeuCau.trangThai());
+    }
+
+    static ThongTinYeuCauSuaChua tu(
+            YeuCauSuaChuaRepository.YeuCauSuaChuaView view,
+            List<Long> anhIds,
+            TrangThaiYeuCau trangThaiHienThi
+    ) {
+        YeuCauSuaChua yeuCau = view.yeuCau();
         return new ThongTinYeuCauSuaChua(
                 yeuCau.id(),
                 yeuCau.maYeuCau(),
@@ -42,8 +51,8 @@ public record ThongTinYeuCauSuaChua(
                 yeuCau.moTa(),
                 yeuCau.mucDo(),
                 yeuCau.mucDo().tenHienThi(),
-                yeuCau.trangThai(),
-                yeuCau.trangThai().tenHienThi(),
+                trangThaiHienThi,
+                trangThaiHienThi.tenHienThi(),
                 yeuCau.nguoiTiepNhanId(),
                 yeuCau.tiepNhanLuc(),
                 yeuCau.nguoiXuLyId(),

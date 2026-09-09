@@ -48,6 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -100,6 +101,11 @@ class YeuCauSuaChuaIntegrationTest {
         mutableClock.dat(TEST_NOW);
         jdbcTemplate.update("DELETE FROM ANH_DINH_KEM");
         jdbcTemplate.update("DELETE FROM NHAT_KY_THAO_TAC");
+        jdbcTemplate.update("DELETE FROM KHOAN_PHAT_SINH");
+        jdbcTemplate.update("DELETE FROM CHI_TIET_HOA_DON");
+        jdbcTemplate.update("DELETE FROM HOA_DON");
+        jdbcTemplate.update("DELETE FROM NHAN_KHAU_KY");
+        jdbcTemplate.update("DELETE FROM KY_THANH_TOAN");
         xoaNeuBangTonTai("YEU_CAU_SUA_CHUA");
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = NULL WHERE id IN (1, 2, 3, 4, 5)");
         jdbcTemplate.update("DELETE FROM HOP_DONG_DICH_VU");
@@ -817,6 +823,190 @@ class YeuCauSuaChuaIntegrationTest {
         mockMvc.perform(post("/api/yeu-cau-sua-chua/" + viecCuaThoKhac + "/hoan-thanh")
                         .header("Authorization", "Bearer " + workerToken))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_MNT_06_CR_008_costCreatesOnePendingExtraAndUpdatesItWithAudit() throws Exception {
+        String token = login(3L, "0900000003");
+        long id = repairWithContract(token);
+        cost(id, token, "125000.25", "NGUOI_THUE").andExpect(status().isOk())
+                .andExpect(jsonPath("$.chiPhi").value("125000.25"));
+        cost(id, token, "150000.50", "NGUOI_THUE").andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM KHOAN_PHAT_SINH WHERE nguon_loai='SUA_CHUA' AND nguon_id=?", Integer.class, id)).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject("SELECT so_tien FROM KHOAN_PHAT_SINH WHERE nguon_id=?", java.math.BigDecimal.class, id)).isEqualByComparingTo("150000.50");
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM NHAT_KY_THAO_TAC WHERE hanh_dong='GHI_CHI_PHI_SUA_CHUA'", Integer.class)).isEqualTo(2);
+    }
+
+    @Test
+    void FR_MNT_06_CR_008_ownerSwitchAndCancellationRetainVoidHistory() throws Exception {
+        String token = login(2L, "0900000002");
+        long id = repairWithContract(token);
+        cost(id, token, "0", "CHU_NHA").andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM KHOAN_PHAT_SINH", Integer.class)).isZero();
+        cost(id, token, "125000", "NGUOI_THUE").andExpect(status().isOk());
+        cost(id, token, "125000", "CHU_NHA").andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForList("SELECT trang_thai FROM KHOAN_PHAT_SINH", String.class)).containsExactly("VO_HIEU");
+        cost(id, token, "200000", "NGUOI_THUE").andExpect(status().isOk());
+        cancelRepair(id, token).andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForList("SELECT trang_thai FROM KHOAN_PHAT_SINH", String.class)).containsExactly("VO_HIEU", "VO_HIEU");
+        generate(period(8), token);
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM CHI_TIET_HOA_DON WHERE loai_khoan='KHOAN_PHAT_SINH'", Integer.class)).isZero();
+    }
+
+    @Test
+    void FR_MNT_06_CR_008_twoPeriodsConsumeExactlyOnceAndDraftRestoreAllowsChanges() throws Exception {
+        String token = login(3L, "0900000003");
+        long id = repairWithContract(token);
+        cost(id, token, "125000", "NGUOI_THUE").andExpect(status().isOk());
+        long first = period(8);
+        generate(first, token);
+        cost(id, token, "200000", "NGUOI_THUE").andExpect(status().isConflict())
+                .andExpect(jsonPath("$.thongBao").value(org.hamcrest.Matchers.containsString("hoá đơn")));
+        cancelRepair(id, token).andExpect(status().isConflict());
+        generate(period(9), token);
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM CHI_TIET_HOA_DON WHERE loai_khoan='KHOAN_PHAT_SINH'", Integer.class)).isEqualTo(1);
+        long invoice = jdbcTemplate.queryForObject("SELECT id FROM HOA_DON WHERE ky_id=?", Long.class, first);
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/" + first + "/hoa-don/" + invoice + "/huy")
+                .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content("{\"lyDo\":\"Sai dữ liệu\"}"))
+                .andExpect(status().isNoContent());
+        cost(id, token, "200000", "NGUOI_THUE").andExpect(status().isOk());
+        cancelRepair(id, token).andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM KHOAN_PHAT_SINH", String.class)).isEqualTo("VO_HIEU");
+    }
+
+    @Test
+    void FR_MNT_06_CR_008_rejectsWrongRolesScopeInvalidAmountsAndLifecycle() throws Exception {
+        String token = login(3L, "0900000003");
+        long id = repairWithContract(token);
+        for (String wrong : List.of(login(1L,"0900000001"), login(4L,"0900000004"), login(5L,"0900000006"))) {
+            cost(id, wrong, "1", "CHU_NHA").andExpect(status().isForbidden());
+        }
+        for (String amount : List.of("-1", "10000000000000", "1.001", "NaN", "", "1e2")) {
+            cost(id, token, amount, "NGUOI_THUE").andExpect(status().isBadRequest());
+        }
+        cost(id, token, "1", "KHAC").andExpect(status().isBadRequest());
+        jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (2, 2)");
+        long outside = taoYeuCauKhongAnh(themPhong(2L,"999"), "Ngoài phạm vi", login(2L,"0900000002"));
+        cost(outside, token, "1", "CHU_NHA").andExpect(status().isForbidden());
+        for (String state : List.of("MOI_TIEP_NHAN", "DA_TIEP_NHAN", "DA_PHAN_CONG", "DA_DONG", "DA_HUY")) {
+            jdbcTemplate.update("UPDATE YEU_CAU_SUA_CHUA SET trang_thai=? WHERE id=?", state, id);
+            cost(id, token, "1", "CHU_NHA").andExpect(status().isConflict());
+        }
+    }
+
+    @Test
+    void FR_MNT_06_CR_008_effective72HoursBlocksEditAndCancelWithoutWritingState() throws Exception {
+        String token = login(3L, "0900000003");
+        long id = repairWithContract(token);
+        jdbcTemplate.update("UPDATE YEU_CAU_SUA_CHUA SET trang_thai='CHO_XAC_NHAN', cho_xac_nhan_luc=? WHERE id=?", java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72)).plusSeconds(1)), id);
+        cost(id, token, "1", "CHU_NHA").andExpect(status().isOk());
+        mutableClock.cong(Duration.ofSeconds(1));
+        cost(id, token, "2", "CHU_NHA").andExpect(status().isConflict());
+        mockMvc.perform(post("/api/yeu-cau-sua-chua/" + id + "/xac-nhan-dong")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isConflict());
+        cancelRepair(id, token).andExpect(status().isConflict());
+        assertThat(jdbcTemplate.queryForObject("SELECT trang_thai FROM YEU_CAU_SUA_CHUA WHERE id=?", String.class,id)).isEqualTo("CHO_XAC_NHAN");
+    }
+
+    @Test
+    void FR_MNT_07_BR_16_expiredConfirmationIsReportedAsClosedOnReadWithoutPersistingIt() throws Exception {
+        String token = login(3L, "0900000003");
+        long id = repairWithContract(token);
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET trang_thai='CHO_XAC_NHAN', cho_xac_nhan_luc=? WHERE id=?",
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72))),
+                id
+        );
+
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/" + id)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("DA_DONG"))
+                .andExpect(jsonPath("$.tenTrangThai").value("Đã đóng"));
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT trang_thai FROM YEU_CAU_SUA_CHUA WHERE id=?",
+                String.class,
+                id
+        )).isEqualTo("CHO_XAC_NHAN");
+    }
+
+    @Test
+    void FR_MNT_07_BR_16_effectiveStatusFiltersManagerAndWorkerLists() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        long id = repairWithContract(managerToken);
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET nguoi_xu_ly_id=4, trang_thai='CHO_XAC_NHAN', cho_xac_nhan_luc=? WHERE id=?",
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(72))),
+                id
+        );
+
+        JsonNode closed = objectMapper.readTree(mockMvc.perform(get("/api/yeu-cau-sua-chua")
+                        .param("trangThai", "DA_DONG")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        assertThat(closed).hasSize(1);
+        assertThat(closed.get(0).path("id").longValue()).isEqualTo(id);
+
+        JsonNode awaiting = objectMapper.readTree(mockMvc.perform(get("/api/yeu-cau-sua-chua")
+                        .param("trangThai", "CHO_XAC_NHAN")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        assertThat(awaiting).isEmpty();
+
+        JsonNode workerList = objectMapper.readTree(mockMvc.perform(get("/api/tho/viec-cua-toi")
+                        .header("Authorization", "Bearer " + login(4L, "0900000004")))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        assertThat(workerList).isEmpty();
+    }
+
+    @Test
+    void FR_MNT_06_CR_008_keepsOriginalContractAfterRoomChangesOccupant() throws Exception {
+        String token = login(3L,"0900000003");
+        long id = repairWithContract(token);
+        long original = jdbcTemplate.queryForObject("SELECT id FROM HOP_DONG", Long.class);
+        long room = jdbcTemplate.queryForObject("SELECT phong_id FROM HOP_DONG WHERE id=?", Long.class, original);
+        jdbcTemplate.update("UPDATE HOP_DONG SET trang_thai='DA_THANH_LY', ngay_ket_thuc=DATE '2040-08-15' WHERE id=?", original);
+        jdbcTemplate.update("INSERT INTO HOP_DONG(phong_id,nguoi_thue_id,ngay_bat_dau,ngay_ket_thuc,gia_thue,tien_coc,so_ngay_bao_truoc,trang_thai) VALUES (?,?,DATE '2040-08-16',DATE '2041-08-15',3000000,3000000,30,'HIEU_LUC')",room,themNguoiThue("Người mới","0907000992"));
+        mutableClock.cong(Duration.ofDays(2));
+        token = login(3L,"0900000003");
+        cost(id, token, "125000", "NGUOI_THUE").andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject("SELECT hop_dong_id FROM KHOAN_PHAT_SINH",Long.class)).isEqualTo(original);
+        long empty = taoYeuCauKhongAnh(themPhong(1L,"998"),"Phòng trống",token);
+        jdbcTemplate.update("UPDATE YEU_CAU_SUA_CHUA SET trang_thai='DANG_XU_LY' WHERE id=?",empty);
+        cost(empty, token,"1","NGUOI_THUE").andExpect(status().isConflict());
+        cost(empty, token,"1","CHU_NHA").andExpect(status().isOk());
+    }
+
+    private long repairWithContract(String token) throws Exception {
+        long room = themPhong(1L,"997");
+        themHopDongHieuLuc(room,themNguoiThue("Người thuê chi phí","0907000991"));
+        long id = taoYeuCauKhongAnh(room,"Sửa vòi nước",token);
+        jdbcTemplate.update("UPDATE YEU_CAU_SUA_CHUA SET trang_thai='DANG_XU_LY' WHERE id=?",id);
+        return id;
+    }
+
+    private org.springframework.test.web.servlet.ResultActions cost(long id,String token,String amount,String payer) throws Exception {
+        return mockMvc.perform(put("/api/yeu-cau-sua-chua/"+id+"/chi-phi").header("Authorization","Bearer "+token)
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(java.util.Map.of("chiPhi",amount,"benChiuChiPhi",payer))));
+    }
+
+    private org.springframework.test.web.servlet.ResultActions cancelRepair(long id,String token) throws Exception {
+        return mockMvc.perform(post("/api/yeu-cau-sua-chua/"+id+"/huy").header("Authorization","Bearer "+token)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"lyDo\":\"Không cần sửa\"}"));
+    }
+
+    private long period(int month) {
+        LocalDate start = LocalDate.of(2040,month,1);
+        return jdbcTemplate.queryForObject("INSERT INTO KY_THANH_TOAN(toa_nha_id,nam,thang,ngay_bat_dau,ngay_ket_thuc,trang_thai) VALUES (1,2040,?,?,?,'DA_CHOT') RETURNING id",Long.class,month,start,start.plusMonths(1).minusDays(1));
+    }
+
+    private void generate(long period,String token) throws Exception {
+        mockMvc.perform(post("/api/toa-nha/1/ky-thanh-toan/"+period+"/hoa-don/tao-hang-loat").header("Authorization","Bearer "+token))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.soHoaDonTaoMoi").value(1));
     }
 
     private MockMultipartFile anh(String ten) {

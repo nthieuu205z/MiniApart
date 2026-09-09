@@ -7,6 +7,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
@@ -83,6 +85,28 @@ class YeuCauSuaChuaLifecycleRulesTest {
         assertThat(quyTac.batDauXuLy(TrangThaiYeuCau.DA_PHAN_CONG)).isEqualTo(TrangThaiYeuCau.DANG_XU_LY);
         assertThat(quyTac.baoDaSuaXong(TrangThaiYeuCau.DANG_XU_LY)).isEqualTo(TrangThaiYeuCau.CHO_XAC_NHAN);
         assertThat(quyTac.xacNhanDong(TrangThaiYeuCau.CHO_XAC_NHAN)).isEqualTo(TrangThaiYeuCau.DA_DONG);
+    }
+
+    @Test
+    void FR_MNT_07_BR_16_derivesClosedAtExactly72HoursWithoutMutatingStoredState() {
+        QuyTacTrangThaiYeuCau quyTac = new QuyTacTrangThaiYeuCau();
+        Instant choXacNhanLuc = Instant.parse("2040-08-15T03:00:00Z");
+
+        assertThat(quyTac.trangThaiHieuLuc(
+                TrangThaiYeuCau.CHO_XAC_NHAN,
+                choXacNhanLuc,
+                choXacNhanLuc.plus(Duration.ofHours(72)).minusSeconds(1)
+        )).isEqualTo(TrangThaiYeuCau.CHO_XAC_NHAN);
+        assertThat(quyTac.trangThaiHieuLuc(
+                TrangThaiYeuCau.CHO_XAC_NHAN,
+                choXacNhanLuc,
+                choXacNhanLuc.plus(Duration.ofHours(72))
+        )).isEqualTo(TrangThaiYeuCau.DA_DONG);
+        assertThat(quyTac.trangThaiHieuLuc(
+                TrangThaiYeuCau.DANG_XU_LY,
+                choXacNhanLuc,
+                choXacNhanLuc.plus(Duration.ofDays(10))
+        )).isEqualTo(TrangThaiYeuCau.DANG_XU_LY);
     }
 
     static Stream<Arguments> cacCapChuyenHopLe() {

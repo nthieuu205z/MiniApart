@@ -4,9 +4,9 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
-**Migration:** không cần — cột chi phí đã tạo sẵn ở `V36` (ticket 02).
+**Migration:** `V38__repair_cost_lifecycle.sql` — snapshot hợp đồng, mở rộng vòng đời khoản phát sinh và backfill an toàn request cũ.
 
 ## CR-008 tồn tại vì một lỗi có hậu quả tiền bạc
 
@@ -43,15 +43,22 @@ Chia đôi hay chia tỷ lệ **không có yêu cầu nào đòi** — đừng t
 
 ## Hoàn thành khi
 
-- [ ] Ghi được chi phí và bên chịu chi phí; tiền là `NUMERIC(15,2)` và `BigDecimal`
-- [ ] Bên chịu là **người thuê** → sinh `KHOAN_PHAT_SINH` `nguon_loai = 'SUA_CHUA'`, `nguon_id` trỏ đúng yêu cầu, `trang_thai = CHO_TINH`
-- [ ] Bên chịu là **chủ nhà** → **không** sinh khoản nào
-- [ ] **Ca kiểm thử trung tâm:** ghi chi phí, chạy tạo hoá đơn **hai kỳ liên tiếp**, khẳng định khoản đó vào hoá đơn **đúng một lần**
-- [ ] Sửa chi phí khi khoản còn `CHO_TINH` → cập nhật được; khi đã `DA_TINH` → **bị chặn** kèm lý do rõ
-- [ ] Huỷ yêu cầu có khoản `CHO_TINH` → khoản trả về hàng chờ hoặc bị vô hiệu; chốt một cách và ghi lý do
-- [ ] **Không sửa `MayTinhHoaDon`** — test hiện có của `billing/calc` vẫn xanh không đổi
-- [ ] Kiểm cặp `nguon_loai`/`nguon_id` ở tầng ứng dụng, **có test riêng** — đánh đổi CR-008
-- [ ] Người thuê và Thợ **không** ghi được chi phí → 403. QTHT → 403
-- [ ] Tên test mang mã `FR-MNT-06` và `CR-008`
+- [x] Ghi được chi phí và bên chịu chi phí; tiền là `NUMERIC(15,2)` và `BigDecimal`
+- [x] Bên chịu là **người thuê** → sinh `KHOAN_PHAT_SINH` `nguon_loai = 'SUA_CHUA'`, `nguon_id` trỏ đúng yêu cầu, `trang_thai = CHO_TINH`
+- [x] Bên chịu là **chủ nhà** → **không** sinh khoản nào
+- [x] **Ca kiểm thử trung tâm:** ghi chi phí, chạy tạo hoá đơn **hai kỳ liên tiếp**, khẳng định khoản đó vào hoá đơn **đúng một lần**
+- [x] Sửa chi phí khi khoản còn `CHO_TINH` → cập nhật được; khi đã `DA_TINH` → **bị chặn** kèm lý do rõ
+- [x] Huỷ yêu cầu có khoản `CHO_TINH` → khoản bị vô hiệu có lưu lịch sử
+- [x] **Không sửa `MayTinhHoaDon`** — test hiện có của `billing/calc` vẫn xanh không đổi
+- [x] Kiểm cặp `nguon_loai`/`nguon_id` ở tầng ứng dụng, **có test riêng** — đánh đổi CR-008
+- [x] Người thuê và Thợ **không** ghi được chi phí → 403. QTHT → 403
+- [x] Tên test mang mã `FR-MNT-06` và `CR-008`
 
 ## Comments
+
+- Chốt lưu `hop_dong_id` snapshot trên yêu cầu; `V38` mở rộng trạng thái khoản phát sinh thêm `VO_HIEU` và backfill các yêu cầu cũ chỉ khi có đúng một hợp đồng phủ ngày tạo. Trường hợp mơ hồ giữ `NULL` để không gán nhầm công nợ.
+- `PUT /api/yeu-cau-sua-chua/{id}/chi-phi` dùng `BigDecimal`/`NUMERIC(15,2)`, từ chối exponent, âm, quá 2 chữ số thập phân và quá giới hạn. Người thuê sinh/cập nhật đúng một khoản `SUA_CHUA`; chủ nhà không sinh khoản; khoản đã `DA_TINH` chặn sửa và huỷ.
+- Huỷ và ghi chi phí khóa `YEU_CAU_SUA_CHUA` trước `KHOAN_PHAT_SINH`; kiểm cặp nguồn/hợp đồng ở tầng ứng dụng, kể cả lịch sử `VO_HIEU` và cập nhật 0 đồng. Lịch sử void được giữ lại.
+- Trạng thái `CHO_XAC_NHAN` quá 72 giờ được suy ra là `DA_DONG` ở đọc/lọc danh sách và không ghi ngược trạng thái nền; xác nhận đóng sau hạn bị chặn.
+- Đã có audit `GHI_CHI_PHI_SUA_CHUA`, test phân quyền 403, test hai kỳ hoá đơn không tính lặp và test hồi quy concurrency/nguồn đa hình.
+- Verification: `./gradlew test --no-parallel` — `BUILD SUCCESSFUL`.

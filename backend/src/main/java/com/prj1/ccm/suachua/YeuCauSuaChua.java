@@ -7,6 +7,7 @@ record YeuCauSuaChua(
         Long id,
         String maYeuCau,
         Long phongId,
+        Long hopDongId,
         Long nguoiTaoId,
         String hangMuc,
         String moTa,

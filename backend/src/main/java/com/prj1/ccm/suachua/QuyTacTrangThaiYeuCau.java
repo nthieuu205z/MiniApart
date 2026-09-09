@@ -1,5 +1,7 @@
 package com.prj1.ccm.suachua;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
@@ -7,7 +9,25 @@ import java.util.Set;
 
 /** BR-16/FR-MNT-03 keeps the repair-request lifecycle independent from infrastructure. */
 public final class QuyTacTrangThaiYeuCau {
+    private static final Duration THOI_HAN_CHO_XAC_NHAN = Duration.ofHours(72);
     private static final Map<TrangThaiYeuCau, Set<TrangThaiYeuCau>> CAC_BUOC_CHUYEN_HOP_LE = taoBangChuyenHopLe();
+
+    /** BR-16/FR-MNT-07 derives closure after 72 hours without writing a background transition. */
+    public TrangThaiYeuCau trangThaiHieuLuc(
+            TrangThaiYeuCau trangThaiLuu,
+            Instant choXacNhanLuc,
+            Instant hienTai
+    ) {
+        if (trangThaiLuu == null || hienTai == null) {
+            throw new IllegalArgumentException("Trang thai va thoi diem hien tai khong duoc null");
+        }
+        if (trangThaiLuu == TrangThaiYeuCau.CHO_XAC_NHAN
+                && choXacNhanLuc != null
+                && !hienTai.isBefore(choXacNhanLuc.plus(THOI_HAN_CHO_XAC_NHAN))) {
+            return TrangThaiYeuCau.DA_DONG;
+        }
+        return trangThaiLuu;
+    }
 
     public TrangThaiYeuCau chuyen(TrangThaiYeuCau hienTai, TrangThaiYeuCau mongMuon, String lyDo) {
         if (hienTai == null || mongMuon == null) {

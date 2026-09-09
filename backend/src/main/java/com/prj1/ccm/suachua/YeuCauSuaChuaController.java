@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -115,6 +116,20 @@ public class YeuCauSuaChuaController {
         return yeuCauSuaChuaService.huy(
                 yeuCauId,
                 yeuCau == null ? null : yeuCau.lyDo(),
+                nguoiDungHienTai(request)
+        );
+    }
+
+    /** FR-MNT-05 and FR-MNT-06 let an in-scope owner or manager record or revise repair cost. */
+    @PutMapping("/{yeuCauId}/chi-phi")
+    public ThongTinYeuCauSuaChua ghiChiPhi(
+            @PathVariable Long yeuCauId,
+            @RequestBody(required = false) YeuCauChiPhiSuaChua yeuCau,
+            HttpServletRequest request
+    ) {
+        return yeuCauSuaChuaService.ghiChiPhi(
+                yeuCauId,
+                yeuCau,
                 nguoiDungHienTai(request)
         );
     }

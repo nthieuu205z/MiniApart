@@ -1,5 +1,6 @@
 package com.prj1.ccm.suachua;
 
+import com.prj1.ccm.billing.KhoanPhatSinhSuaChuaService;
 import com.prj1.ccm.nguoithue.AnhDinhKemService;
 import com.prj1.ccm.nguoithue.NhatKyThaoTacRepository;
 import com.prj1.ccm.nguoidung.NguoiDung;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
@@ -29,6 +31,10 @@ public class YeuCauSuaChuaService {
             "Không thể chuyển trạng thái yêu cầu sửa chữa";
     private static final String THONG_BAO_LY_DO_HUY_BAT_BUOC = "Lý do huỷ yêu cầu sửa chữa là bắt buộc";
     private static final String THONG_BAO_THO_KHONG_HOP_LE = "Thợ sửa chữa không hợp lệ";
+    private static final String THONG_BAO_CHI_PHI_KHONG_HOP_LE = "Chi phí sửa chữa không hợp lệ";
+    private static final String THONG_BAO_CHI_PHI_CHI_DUOC_GHI_KHI_DANG_XU_LY =
+            "Chỉ được ghi chi phí khi yêu cầu đang xử lý hoặc chờ xác nhận";
+    private static final BigDecimal CHI_PHI_TOI_DA = new BigDecimal("9999999999999.99");
     private static final QuyTacTrangThaiYeuCau QUY_TAC_TRANG_THAI = new QuyTacTrangThaiYeuCau();
 
     private final YeuCauSuaChuaRepository yeuCauSuaChuaRepository;
@@ -38,6 +44,7 @@ public class YeuCauSuaChuaService {
     private final AnhDinhKemService anhDinhKemService;
     private final NhatKyThaoTacRepository nhatKyThaoTacRepository;
     private final ThongBaoService thongBaoService;
+    private final KhoanPhatSinhSuaChuaService khoanPhatSinhSuaChuaService;
     private final Clock clock;
 
     public YeuCauSuaChuaService(
@@ -48,6 +55,7 @@ public class YeuCauSuaChuaService {
             AnhDinhKemService anhDinhKemService,
             NhatKyThaoTacRepository nhatKyThaoTacRepository,
             ThongBaoService thongBaoService,
+            KhoanPhatSinhSuaChuaService khoanPhatSinhSuaChuaService,
             Clock clock
     ) {
         this.yeuCauSuaChuaRepository = yeuCauSuaChuaRepository;
@@ -57,6 +65,7 @@ public class YeuCauSuaChuaService {
         this.anhDinhKemService = anhDinhKemService;
         this.nhatKyThaoTacRepository = nhatKyThaoTacRepository;
         this.thongBaoService = thongBaoService;
+        this.khoanPhatSinhSuaChuaService = khoanPhatSinhSuaChuaService;
         this.clock = clock;
     }
 
@@ -73,11 +82,13 @@ public class YeuCauSuaChuaService {
         Phong phong = phongRepository.findById(yeuCau.phongId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         kiemTraPhamVi(phong, nguoiDung);
+        Long hopDongId = timHopDongGoc(phong.id(), nguoiDung);
 
         Long yeuCauId = yeuCauSuaChuaRepository.insert(new YeuCauSuaChua(
                 null,
                 null,
                 phong.id(),
+                hopDongId,
                 nguoiDung.id(),
                 yeuCau.hangMuc().trim(),
                 yeuCau.moTa().trim(),
@@ -114,9 +125,12 @@ public class YeuCauSuaChuaService {
     public List<ThongTinYeuCauSuaChua> danhSach(Long toaNhaId, TrangThaiYeuCau trangThai, NguoiDung nguoiDung) {
         kiemTraVaiTroQuanLy(nguoiDung);
         List<YeuCauSuaChuaRepository.YeuCauSuaChuaView> danhSach = toaNhaId == null
-                ? yeuCauSuaChuaRepository.findByNguoiQuanLy(nguoiDung.id(), trangThai)
-                : timTrongToa(toaNhaId, trangThai, nguoiDung);
-        return danhSach.stream().map(this::thongTin).toList();
+                ? yeuCauSuaChuaRepository.findByNguoiQuanLy(nguoiDung.id(), null)
+                : timTrongToa(toaNhaId, null, nguoiDung);
+        return danhSach.stream()
+                .map(this::thongTin)
+                .filter(item -> trangThai == null || item.trangThai() == trangThai)
+                .toList();
     }
 
     /** FR-MNT-03 returns one request only when the authenticated actor owns its scope. */
@@ -133,6 +147,8 @@ public class YeuCauSuaChuaService {
         kiemTraVaiTroTho(nguoiDung);
         return yeuCauSuaChuaRepository.findByNguoiXuLy(nguoiDung.id()).stream()
                 .map(this::thongTin)
+                .filter(item -> item.trangThai() != TrangThaiYeuCau.DA_DONG
+                        && item.trangThai() != TrangThaiYeuCau.DA_HUY)
                 .toList();
     }
 
@@ -200,27 +216,81 @@ public class YeuCauSuaChuaService {
     public ThongTinYeuCauSuaChua xacNhanDong(Long yeuCauId, NguoiDung nguoiDung) {
         YeuCauSuaChuaRepository.YeuCauSuaChuaView view = timYeuCau(yeuCauId);
         kiemTraQuyenDong(view, nguoiDung);
-        TrangThaiYeuCau trangThaiMoi = chuyenXacNhanDong(view.yeuCau().trangThai());
+        TrangThaiYeuCau trangThaiHieuLuc = QUY_TAC_TRANG_THAI.trangThaiHieuLuc(
+                view.yeuCau().trangThai(),
+                view.yeuCau().choXacNhanLuc(),
+                clock.instant()
+        );
+        TrangThaiYeuCau trangThaiMoi = chuyenXacNhanDong(trangThaiHieuLuc);
         kiemTraCapNhat(yeuCauSuaChuaRepository.capNhatTrangThai(
-                yeuCauId, trangThaiMoi, view.yeuCau().trangThai()
+                yeuCauId, trangThaiMoi, trangThaiHieuLuc
         ));
-        ghiNhatKy(nguoiDung, "XAC_NHAN_DONG_YEU_CAU_SUA_CHUA", view.yeuCau().trangThai(), trangThaiMoi, null, yeuCauId);
+        ghiNhatKy(nguoiDung, "XAC_NHAN_DONG_YEU_CAU_SUA_CHUA", trangThaiHieuLuc, trangThaiMoi, null, yeuCauId);
         return thongTin(timYeuCau(yeuCauId));
     }
 
     /** FR-MNT-03 cancels an open request with a mandatory reason and an audit row. */
     @Transactional
     public ThongTinYeuCauSuaChua huy(Long yeuCauId, String lyDo, NguoiDung nguoiDung) {
-        YeuCauSuaChuaRepository.YeuCauSuaChuaView view = timTrongPhamViQuanLy(yeuCauId, nguoiDung);
+        YeuCauSuaChuaRepository.YeuCauSuaChuaView view = timTrongPhamViQuanLyDeCapNhat(yeuCauId, nguoiDung);
         if (lyDo == null || lyDo.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_LY_DO_HUY_BAT_BUOC);
         }
-        TrangThaiYeuCau trangThaiMoi = chuyenHuy(view.yeuCau().trangThai(), lyDo);
+        TrangThaiYeuCau trangThaiHieuLuc = QUY_TAC_TRANG_THAI.trangThaiHieuLuc(
+                view.yeuCau().trangThai(),
+                view.yeuCau().choXacNhanLuc(),
+                clock.instant()
+        );
+        TrangThaiYeuCau trangThaiMoi = chuyenHuy(trangThaiHieuLuc, lyDo);
         String lyDoDaChuanHoa = lyDo.trim();
+        khoanPhatSinhSuaChuaService.voHieu(yeuCauId);
         kiemTraCapNhat(yeuCauSuaChuaRepository.capNhatHuy(
                 yeuCauId, lyDoDaChuanHoa, view.yeuCau().trangThai()
         ));
         ghiNhatKy(nguoiDung, "HUY_YEU_CAU_SUA_CHUA", view.yeuCau().trangThai(), trangThaiMoi, lyDoDaChuanHoa, yeuCauId);
+        return thongTin(timYeuCau(yeuCauId));
+    }
+
+    /** FR-MNT-05 and FR-MNT-06 record repair cost, preserve its audit trail, and attach tenant cost once to billing. */
+    @Transactional
+    public ThongTinYeuCauSuaChua ghiChiPhi(
+            Long yeuCauId,
+            YeuCauChiPhiSuaChua yeuCau,
+            NguoiDung nguoiDung
+    ) {
+        YeuCauSuaChuaRepository.YeuCauSuaChuaView view = timTrongPhamViQuanLyDeCapNhat(yeuCauId, nguoiDung);
+        BigDecimal chiPhi = chuanHoaChiPhi(yeuCau);
+        BenChiuChiPhi benChiuChiPhi = yeuCau.benChiuChiPhi();
+        TrangThaiYeuCau trangThaiHieuLuc = QUY_TAC_TRANG_THAI.trangThaiHieuLuc(
+                view.yeuCau().trangThai(),
+                view.yeuCau().choXacNhanLuc(),
+                clock.instant()
+        );
+        if (trangThaiHieuLuc != TrangThaiYeuCau.DANG_XU_LY
+                && trangThaiHieuLuc != TrangThaiYeuCau.CHO_XAC_NHAN) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_CHI_PHI_CHI_DUOC_GHI_KHI_DANG_XU_LY);
+        }
+
+        if (benChiuChiPhi == BenChiuChiPhi.NGUOI_THUE) {
+            khoanPhatSinhSuaChuaService.ghiChiPhi(view.yeuCau().hopDongId(), yeuCauId, chiPhi);
+        } else {
+            khoanPhatSinhSuaChuaService.voHieu(yeuCauId);
+        }
+        if (yeuCauSuaChuaRepository.capNhatChiPhi(
+                yeuCauId,
+                chiPhi,
+                benChiuChiPhi,
+                view.yeuCau().trangThai()
+        ) != 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_CHI_PHI_CHI_DUOC_GHI_KHI_DANG_XU_LY);
+        }
+        nhatKyThaoTacRepository.ghi(
+                nguoiDung.id(),
+                "GHI_CHI_PHI_SUA_CHUA",
+                "YEU_CAU_SUA_CHUA:" + yeuCauId,
+                dinhDangChiPhi(view.yeuCau().chiPhi(), view.yeuCau().benChiuChiPhi()),
+                dinhDangChiPhi(chiPhi, benChiuChiPhi)
+        );
         return thongTin(timYeuCau(yeuCauId));
     }
 
@@ -249,13 +319,33 @@ public class YeuCauSuaChuaService {
         return view;
     }
 
+    private YeuCauSuaChuaRepository.YeuCauSuaChuaView timTrongPhamViQuanLyDeCapNhat(
+            Long yeuCauId,
+            NguoiDung nguoiDung
+    ) {
+        kiemTraVaiTroQuanLy(nguoiDung);
+        YeuCauSuaChuaRepository.YeuCauSuaChuaView view = yeuCauSuaChuaRepository.findByIdForUpdate(yeuCauId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, view.toaNhaId());
+        return view;
+    }
+
     private YeuCauSuaChuaRepository.YeuCauSuaChuaView timYeuCau(Long yeuCauId) {
         return yeuCauSuaChuaRepository.findById(yeuCauId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     private ThongTinYeuCauSuaChua thongTin(YeuCauSuaChuaRepository.YeuCauSuaChuaView view) {
-        return ThongTinYeuCauSuaChua.tu(view, yeuCauSuaChuaRepository.findAnhIds(view.yeuCau().id()));
+        TrangThaiYeuCau trangThaiHienLuc = QUY_TAC_TRANG_THAI.trangThaiHieuLuc(
+                view.yeuCau().trangThai(),
+                view.yeuCau().choXacNhanLuc(),
+                clock.instant()
+        );
+        return ThongTinYeuCauSuaChua.tu(
+                view,
+                yeuCauSuaChuaRepository.findAnhIds(view.yeuCau().id()),
+                trangThaiHienLuc
+        );
     }
 
     private void kiemTraQuyenXem(YeuCauSuaChuaRepository.YeuCauSuaChuaView view, NguoiDung nguoiDung) {
@@ -417,5 +507,35 @@ public class YeuCauSuaChuaService {
         )) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+    }
+
+    private Long timHopDongGoc(Long phongId, NguoiDung nguoiDung) {
+        if (nguoiDung.vaiTro() == VaiTro.NGUOI_THUE) {
+            return yeuCauSuaChuaRepository.timHopDongHieuLucCuaNguoiThue(
+                    phongId,
+                    nguoiDung.nguoiThueId(),
+                    LocalDate.now(clock)
+            ).orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+        }
+        return yeuCauSuaChuaRepository.timHopDongHieuLucCuaPhong(phongId, LocalDate.now(clock)).orElse(null);
+    }
+
+    private BigDecimal chuanHoaChiPhi(YeuCauChiPhiSuaChua yeuCau) {
+        if (yeuCau == null || yeuCau.benChiuChiPhi() == null || yeuCau.chiPhi() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_CHI_PHI_KHONG_HOP_LE);
+        }
+        String giaTri = yeuCau.chiPhi().trim();
+        if (!giaTri.matches("[0-9]+(?:\\.[0-9]{1,2})?")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_CHI_PHI_KHONG_HOP_LE);
+        }
+        BigDecimal chiPhi = new BigDecimal(giaTri);
+        if (chiPhi.compareTo(CHI_PHI_TOI_DA) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_CHI_PHI_KHONG_HOP_LE);
+        }
+        return chiPhi;
+    }
+
+    private String dinhDangChiPhi(BigDecimal chiPhi, BenChiuChiPhi benChiuChiPhi) {
+        return "chiPhi=" + chiPhi + ";benChiuChiPhi=" + benChiuChiPhi;
     }
 }
