@@ -961,6 +961,30 @@ class YeuCauSuaChuaIntegrationTest {
     }
 
     @Test
+    void FR_MNT_07_BR_16_exactly72HoursKeepsConfirmationOnDetailWithoutMutatingStoredState() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        long id = repairWithContract(managerToken);
+        mutableClock.dat(TEST_NOW);
+        Instant choXacNhanLuc = mutableClock.instant().minus(Duration.ofHours(72));
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET trang_thai='CHO_XAC_NHAN', cho_xac_nhan_luc=? WHERE id=?",
+                java.sql.Timestamp.from(choXacNhanLuc),
+                id
+        );
+
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/" + id)
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trangThai").value("CHO_XAC_NHAN"))
+                .andExpect(jsonPath("$.tenTrangThai").value("Chờ xác nhận"));
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT trang_thai FROM YEU_CAU_SUA_CHUA WHERE id=?",
+                String.class,
+                id
+        )).isEqualTo("CHO_XAC_NHAN");
+    }
+
+    @Test
     void FR_MNT_07_BR_16_effectiveStatusFiltersManagerAndWorkerLists() throws Exception {
         String managerToken = login(3L, "0900000003");
         long id = repairWithContract(managerToken);

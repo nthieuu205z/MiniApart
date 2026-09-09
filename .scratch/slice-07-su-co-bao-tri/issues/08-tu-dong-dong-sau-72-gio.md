@@ -45,3 +45,12 @@ Phải biết yêu cầu vào *Chờ xác nhận* **lúc nào**. Cột đó đã
 - [ ] Tên test mang mã `FR-MNT-07` và `BR-16`
 
 ## Comments
+
+- Sau khi quá 72 giờ, trạng thái hiệu lực là `DA_DONG`. Người thuê xác nhận
+  muộn bị từ chối (`409`), không mở lại yêu cầu và không làm thay đổi trạng
+  thái lưu trong `YEU_CAU_SUA_CHUA` (vẫn là `CHO_XAC_NHAN`). Lý do: `DA_DONG`
+  là trạng thái kết thúc của BR-16, nên không có cạnh chuyển ngược hay thao
+  tác phản hồi muộn nào được phép làm biến đổi dữ liệu.
+- Bổ sung kiểm thử endpoint MockMvc `FR_MNT_07_BR_16` với đồng hồ đẩy được ở
+  đúng mốc 72 giờ: chi tiết vẫn trả `CHO_XAC_NHAN` và trạng thái trong cơ sở
+  dữ liệu vẫn `CHO_XAC_NHAN`.
