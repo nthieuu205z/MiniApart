@@ -1113,10 +1113,9 @@ class YeuCauSuaChuaIntegrationTest {
     }
 
     @Test
-    void FR_MNT_08_chuKhongCoPhanQuyenToaVanDocDuocLichSuCuaMinh() throws Exception {
+    void FR_MNT_08_chuDocDuocLichSuToaDuocGanVaBiTuChoiToaNgoaiPhamVi() throws Exception {
         String managerToken = login(3L, "0900000003");
         long yeuCauId = repairWithContract(managerToken);
-        jdbcTemplate.update("DELETE FROM PHAN_QUYEN_TOA WHERE nguoi_dung_id = 2");
         String ownerToken = login(2L, "0900000002");
 
         mockMvc.perform(get("/api/yeu-cau-sua-chua/lich-su")
@@ -1125,6 +1124,11 @@ class YeuCauSuaChuaIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.yeuCau.length()").value(1))
                 .andExpect(jsonPath("$.yeuCau[0].id").value(yeuCauId));
+
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/lich-su")
+                        .param("toaNhaId", "2")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isForbidden());
     }
 
     private long repairWithContract(String token) throws Exception {

@@ -148,18 +148,17 @@ public class YeuCauSuaChuaService {
             NguoiDung nguoiDung
     ) {
         kiemTraVaiTroQuanLy(nguoiDung);
-        boolean laQuanLy = nguoiDung.vaiTro() == VaiTro.QUAN_LY;
-        if (laQuanLy && toaNhaId != null) {
+        if (toaNhaId != null) {
             phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
         }
-        if (laQuanLy && phongId != null) {
+        if (phongId != null) {
             Phong phong = phongRepository.findById(phongId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
             phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, phong.toaNhaId());
         }
         String hangMucDaChuanHoa = hangMuc == null || hangMuc.isBlank() ? null : hangMuc.trim();
         List<ThongTinLichSuSuaChua.MucLichSuSuaChua> yeuCau = yeuCauSuaChuaRepository
-                .findLichSuByNguoiQuanLy(nguoiDung.id(), toaNhaId, phongId, hangMucDaChuanHoa, laQuanLy)
+                .findLichSuByNguoiQuanLy(nguoiDung.id(), toaNhaId, phongId, hangMucDaChuanHoa)
                 .stream()
                 .map(view -> ThongTinLichSuSuaChua.MucLichSuSuaChua.tu(view, trangThaiHieuLuc(view)))
                 .filter(item -> hienThiDaHuy || item.trangThai() != TrangThaiYeuCau.DA_HUY)
