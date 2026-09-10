@@ -100,7 +100,13 @@ class NhacTienIntegrationTest {
     void FR_NTF_04_FR_NTF_05_FR_NTF_07_sendsExactMilestonesAndManagersAtPlusFive() {
         Long hoaDonId = taoHoaDon("TN-A-101-202609", LocalDate.of(2026, 9, 10), "DA_PHAT_HANH");
         Long quanLyThuHaiId = taoQuanLyThuHai();
+        Long quanLyBiKhoaId = jdbcTemplate.queryForObject(
+                "INSERT INTO NGUOI_DUNG (ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai) VALUES ('Quan ly bi khoa', '0900000098', 'test', 'QUAN_LY', 'BI_KHOA') RETURNING id",
+                Long.class
+        );
+        Long quanLyNgoaiToaId = taoQuanLyThuHai("0900000097");
         jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (?, 1)", quanLyThuHaiId);
+        jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (?, 1), (?, 2)", quanLyBiKhoaId, quanLyNgoaiToaId);
 
         xuLyKhongThamSo();
         assertThat(mocDaGui(hoaDonId)).containsExactly(-3);
@@ -112,6 +118,9 @@ class NhacTienIntegrationTest {
         xuLy(LocalDate.of(2026, 9, 15));
         assertThat(mocDaGuiCuaNguoiNhan(hoaDonId, 5L)).containsExactly(-3, 1, 5);
         assertThat(mocDaGuiCuaNguoiNhan(hoaDonId, quanLyThuHaiId)).containsExactly(5);
+        assertThat(mocDaGuiCuaNguoiNhan(hoaDonId, quanLyBiKhoaId)).isEmpty();
+        assertThat(mocDaGuiCuaNguoiNhan(hoaDonId, quanLyNgoaiToaId)).isEmpty();
+        assertThat(nguoiNhanKhongLapCuaThongBao(hoaDonId)).containsExactlyInAnyOrder(3L, 5L, quanLyThuHaiId);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM THONG_BAO WHERE doi_tuong_loai = 'HOA_DON' AND doi_tuong_id = ?",
                 Integer.class,
@@ -136,6 +145,40 @@ class NhacTienIntegrationTest {
         assertThat(soThongBao(nhapId)).isZero();
         assertThat(soThongBao(huyId)).isZero();
         assertThat(soThongBao(daThanhToanId)).isZero();
+    }
+
+    @Test
+    void FR_NTF_05_quyetToanSettlementEntrySkipsFullySettledInvoice() {
+        Long hoaDonId = taoHoaDon("TN-A-101-202610", LocalDate.of(2026, 10, 10), "DA_PHAT_HANH");
+        jdbcTemplate.update(
+                "INSERT INTO THANH_TOAN (hoa_don_id, so_tien, loai, nguoi_thu_id) VALUES (?, ?, 'QUYET_TOAN', 3)",
+                hoaDonId,
+                new BigDecimal("100.00")
+        );
+        jdbcTemplate.update(
+                "UPDATE HOA_DON SET da_thu = 100.00, trang_thai = 'DA_THANH_TOAN' WHERE id = ?",
+                hoaDonId
+        );
+
+        xuLy(LocalDate.of(2026, 10, 7));
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COALESCE(SUM(so_tien), 0.00) FROM THANH_TOAN WHERE hoa_don_id = ? AND loai = 'QUYET_TOAN'",
+                BigDecimal.class,
+                hoaDonId
+        )).isEqualByComparingTo("100.00");
+        assertThat(soThongBao(hoaDonId)).isZero();
+    }
+
+    @Test
+    void FR_NTF_07_milestoneStateUsesOnlyTheUniqueConstraintIndex() {
+        List<String> indexes = jdbcTemplate.queryForList(
+                "SELECT indexname FROM pg_indexes WHERE tablename = 'nhac_tien_moc'",
+                String.class
+        );
+
+        assertThat(indexes).contains("uq_nhac_tien_moc");
+        assertThat(indexes).doesNotContain("ix_nhac_tien_moc_hoa_don_nguoi_nhan");
     }
 
     @Test
@@ -176,14 +219,13 @@ class NhacTienIntegrationTest {
         Long quanLyThuHaiId = taoQuanLyThuHai();
         jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (?, 1)", quanLyThuHaiId);
 
-        xuLy(LocalDate.of(2026, 9, 15));
-        xuLy(LocalDate.of(2026, 9, 15));
-
         ExecutorService workers = Executors.newFixedThreadPool(2);
+        CountDownLatch workersReady = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
         try {
-            Future<?> first = workers.submit(() -> xuLySauTinHieu(start, LocalDate.of(2026, 9, 15)));
-            Future<?> second = workers.submit(() -> xuLySauTinHieu(start, LocalDate.of(2026, 9, 15)));
+            Future<?> first = workers.submit(() -> xuLySauTinHieu(workersReady, start, LocalDate.of(2026, 9, 15)));
+            Future<?> second = workers.submit(() -> xuLySauTinHieu(workersReady, start, LocalDate.of(2026, 9, 15)));
+            assertThat(workersReady.await(10, TimeUnit.SECONDS)).isTrue();
             start.countDown();
             first.get(20, TimeUnit.SECONDS);
             second.get(20, TimeUnit.SECONDS);
@@ -202,6 +244,9 @@ class NhacTienIntegrationTest {
                 hoaDonId
         )).isEqualTo(3);
         assertThat(mocDaGuiCuaNguoiNhan(hoaDonId, quanLyThuHaiId)).containsExactly(5);
+        assertThat(mocDaGuiCuaNguoiNhan(hoaDonId, 3L)).containsExactly(5);
+        assertThat(mocDaGuiCuaNguoiNhan(hoaDonId, 5L)).containsExactly(5);
+        assertThat(nguoiNhanCuaThongBao(hoaDonId)).containsExactlyInAnyOrder(3L, 5L, quanLyThuHaiId);
     }
 
     @Test
@@ -317,9 +362,12 @@ class NhacTienIntegrationTest {
         invoke("xuLy", new Class<?>[0]);
     }
 
-    private void xuLySauTinHieu(CountDownLatch start, LocalDate ngayNghiepVu) {
+    private void xuLySauTinHieu(CountDownLatch workersReady, CountDownLatch start, LocalDate ngayNghiepVu) {
         try {
-            start.await();
+            workersReady.countDown();
+            if (!start.await(10, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Timed out waiting for concurrent reminder workers to start");
+            }
             xuLy(ngayNghiepVu);
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
@@ -398,9 +446,14 @@ class NhacTienIntegrationTest {
     }
 
     private Long taoQuanLyThuHai() {
+        return taoQuanLyThuHai("0900000099");
+    }
+
+    private Long taoQuanLyThuHai(String soDienThoai) {
         return jdbcTemplate.queryForObject(
-                "INSERT INTO NGUOI_DUNG (ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai) VALUES ('Quan ly Toa A hai', '0900000099', 'test', 'QUAN_LY', 'HOAT_DONG') RETURNING id",
-                Long.class
+                "INSERT INTO NGUOI_DUNG (ho_ten, so_dien_thoai, mat_khau_hash, vai_tro, trang_thai) VALUES ('Quan ly Toa A hai', ?, 'test', 'QUAN_LY', 'HOAT_DONG') RETURNING id",
+                Long.class,
+                soDienThoai
         );
     }
 
@@ -432,6 +485,14 @@ class NhacTienIntegrationTest {
     private List<Long> nguoiNhanCuaThongBao(Long hoaDonId) {
         return jdbcTemplate.queryForList(
                 "SELECT nguoi_nhan_id FROM THONG_BAO WHERE doi_tuong_loai = 'HOA_DON' AND doi_tuong_id = ? ORDER BY nguoi_nhan_id",
+                Long.class,
+                hoaDonId
+        );
+    }
+
+    private List<Long> nguoiNhanKhongLapCuaThongBao(Long hoaDonId) {
+        return jdbcTemplate.queryForList(
+                "SELECT DISTINCT nguoi_nhan_id FROM THONG_BAO WHERE doi_tuong_loai = 'HOA_DON' AND doi_tuong_id = ? ORDER BY nguoi_nhan_id",
                 Long.class,
                 hoaDonId
         );
