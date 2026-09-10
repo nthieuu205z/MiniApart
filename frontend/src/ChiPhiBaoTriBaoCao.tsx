@@ -400,5 +400,5 @@ const styleBarTrack: CSSProperties = { minWidth: 0, height: 10, background: 'var
 const styleBarValue: CSSProperties = { minWidth: 90, textAlign: 'right', fontFamily: 'var(--ma-font-mono)', fontSize: 12, whiteSpace: 'nowrap' }
 const styleLegend: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 14, color: 'var(--ma-text-secondary)', fontSize: 12 }
 const styleLegendDot: CSSProperties = { display: 'inline-block', width: 10, height: 10, marginRight: 5 }
-const styleLink: CSSProperties = { color: 'var(--ma-text-primary)', fontWeight: 800, textDecoration: 'underline', textUnderlineOffset: 3 }
+const styleLink: CSSProperties = { display: 'inline-flex', alignItems: 'center', minHeight: 'var(--ma-hit-mobile)', color: 'var(--ma-text-primary)', fontWeight: 800, textDecoration: 'underline', textUnderlineOffset: 3 }
 const styleMissing: CSSProperties = { color: 'var(--ma-urgent-text)' }

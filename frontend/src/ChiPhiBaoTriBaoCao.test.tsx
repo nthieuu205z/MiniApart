@@ -59,7 +59,11 @@ describe('ChiPhiBaoTriBaoCao', () => {
     expect(container!.querySelector('[data-maintenance-cost-groups]')).not.toBeNull()
     expect(container!.textContent).toContain('Tổng hợp theo hạng mục và phòng')
     expect(container!.textContent).toContain('1.500,5 ₫')
-    expect(container!.querySelector('[data-maintenance-cost-row="41"] a')?.getAttribute('href')).toBe('/su-co?yeuCauId=41')
+    const sourceLink = container!.querySelector('[data-maintenance-cost-row="41"] a') as HTMLAnchorElement
+    expect(sourceLink.getAttribute('href')).toBe('/su-co?yeuCauId=41')
+    expect(sourceLink.style.display).toBe('inline-flex')
+    expect(sourceLink.style.alignItems).toBe('center')
+    expect(sourceLink.style.minHeight).toBe('var(--ma-hit-mobile)')
     expect(container!.textContent).toContain('1.000 ₫')
     expect(container!.textContent).toContain('300,25 ₫')
     expect(container!.textContent).toContain('Chưa ghi nhận')
@@ -97,7 +101,7 @@ describe('ChiPhiBaoTriBaoCao', () => {
     ))
   })
 
-  it('FR-RPT-02/FR-RPT-08 distinguishes loading, API error, and empty snapshot states', async () => {
+  it('FR-RPT-02/FR-RPT-08 distinguishes loading and API error states', async () => {
     let rejectReport: ((reason: Error) => void) | null = null
     const fetchMock = vi.fn((input: RequestInfo | URL) => {
       const url = String(input)
@@ -115,6 +119,27 @@ describe('ChiPhiBaoTriBaoCao', () => {
     await act(async () => rejectReport?.(new Error('mất kết nối')))
     await vi.waitFor(() => expect(container!.querySelector('[role="alert"]')).not.toBeNull())
     expect(container!.textContent).toContain('Không thể tải báo cáo chi phí bảo trì.')
+  })
+
+  it('FR-RPT-02/FR-RPT-08 renders a successful empty snapshot state', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/toa-nha') return jsonResponse([])
+      if (url === '/api/toa-nha/1/phong') return jsonResponse([])
+      if (url.startsWith('/api/bao-cao/chi-phi-bao-tri?')) return jsonResponse(baoCaoRong())
+      throw new Error(`Unexpected fetch: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await act(async () => {
+      root = createRoot(container!)
+      root.render(<ChiPhiBaoTriBaoCao token="report-token" />)
+    })
+
+    await vi.waitFor(() => expect(container!.textContent).toContain('Không có chi phí bảo trì phù hợp bộ lọc.'))
+    expect(container!.querySelector('[data-maintenance-cost-table]')).toBeNull()
+    expect(container!.querySelector('[data-maintenance-cost-chart]')).toBeNull()
+    expect(container!.querySelector('[data-maintenance-cost-groups]')).toBeNull()
   })
 
   it('FR-RPT-02/FR-RPT-08 asks the API for explicit inclusive date and room filters', async () => {
@@ -212,6 +237,21 @@ function baoCaoKhongDuLieuNguoiThue() {
     ],
     cacNhom: [],
     bieuDo: [{ thang: '2040-08', nhan: '08/2040', chiPhiChuNha: '0.00', chiPhiNguoiThue: null, soDong: 3, soDongCoChiPhi: 1, soDongThieuChiPhi: 1, soDongThieuBenChiuChiPhi: 1 }],
+  }
+}
+
+function baoCaoRong() {
+  return {
+    ...baoCao(),
+    tongChiPhiChuNha: null,
+    tongChiPhiNguoiThue: null,
+    soDong: 0,
+    soDongCoChiPhi: 0,
+    soDongThieuChiPhi: 0,
+    soDongThieuBenChiuChiPhi: 0,
+    cacDong: [],
+    cacNhom: [],
+    bieuDo: [],
   }
 }
 
