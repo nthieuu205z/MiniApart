@@ -219,17 +219,31 @@ class NhacTienIntegrationTest {
         Long quanLyThuHaiId = taoQuanLyThuHai();
         jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (?, 1)", quanLyThuHaiId);
 
-        ExecutorService workers = Executors.newFixedThreadPool(2);
+        TransactionTemplate claimBlocker = new TransactionTemplate(transactionManager);
+        CountDownLatch invoiceLocked = new CountDownLatch(1);
+        CountDownLatch releaseInvoice = new CountDownLatch(1);
+        ExecutorService workers = Executors.newFixedThreadPool(3);
         CountDownLatch workersReady = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
         try {
+            Future<?> blocker = workers.submit(() -> claimBlocker.executeWithoutResult(status -> {
+                jdbcTemplate.queryForObject("SELECT id FROM HOA_DON WHERE id = ? FOR UPDATE", Long.class, hoaDonId);
+                invoiceLocked.countDown();
+                await(releaseInvoice);
+            }));
+            assertThat(invoiceLocked.await(10, TimeUnit.SECONDS)).isTrue();
+
             Future<?> first = workers.submit(() -> xuLySauTinHieu(workersReady, start, LocalDate.of(2026, 9, 15)));
             Future<?> second = workers.submit(() -> xuLySauTinHieu(workersReady, start, LocalDate.of(2026, 9, 15)));
             assertThat(workersReady.await(10, TimeUnit.SECONDS)).isTrue();
             start.countDown();
+            awaitReminderClaimWaiters(2);
+            releaseInvoice.countDown();
             first.get(20, TimeUnit.SECONDS);
             second.get(20, TimeUnit.SECONDS);
+            blocker.get(20, TimeUnit.SECONDS);
         } finally {
+            releaseInvoice.countDown();
             workers.shutdownNow();
         }
 
@@ -306,6 +320,20 @@ class NhacTienIntegrationTest {
     }
 
     @Test
+    void FR_NTF_04_cancelledAfterEarlierMilestonePreventsLaterMilestone() {
+        Long hoaDonId = taoHoaDon("TN-A-101-202609", LocalDate.of(2026, 9, 10), "DA_PHAT_HANH");
+
+        xuLy(LocalDate.of(2026, 9, 7));
+        assertThat(mocDaGuiCuaNguoiNhan(hoaDonId, 5L)).containsExactly(-3);
+
+        jdbcTemplate.update("UPDATE HOA_DON SET trang_thai = 'DA_HUY' WHERE id = ?", hoaDonId);
+        xuLy(LocalDate.of(2026, 9, 11));
+
+        assertThat(mocDaGuiCuaNguoiNhan(hoaDonId, 5L)).containsExactly(-3);
+        assertThat(soThongBao(hoaDonId)).isEqualTo(1);
+    }
+
+    @Test
     void FR_NTF_04_withoutActiveTenantAccountDoesNotInventTenantNotification() {
         Long hoaDonId = taoHoaDon("TN-A-101-202609", LocalDate.of(2026, 9, 10), "DA_PHAT_HANH");
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = NULL WHERE id = 5");
@@ -318,7 +346,7 @@ class NhacTienIntegrationTest {
     }
 
     @Test
-    void FR_NTF_07_recordsFailureAndRetriesThroughTheRealProcessorEntryPoint() {
+    void FR_NTF_07_recordsDurableFailureForRestartSafeRetryThroughTheRealProcessorEntryPoint() {
         Long hoaDonId = taoHoaDon("TN-A-101-202609", LocalDate.of(2026, 9, 10), "DA_PHAT_HANH");
         jdbcTemplate.execute("""
                 CREATE OR REPLACE FUNCTION fail_nhac_tien_insert() RETURNS trigger
@@ -340,6 +368,16 @@ class NhacTienIntegrationTest {
                 Integer.class,
                 hoaDonId
         )).isEqualTo(1);
+        String loiThatBai = jdbcTemplate.queryForObject(
+                "SELECT loi FROM NHAT_KY_NHAC_TIEN WHERE hoa_don_id = ? AND trang_thai = 'THAT_BAI'",
+                String.class,
+                hoaDonId
+        );
+        assertThat(loiThatBai)
+                .matches("[A-Za-z0-9$]+: Reminder processing failed")
+                .doesNotContain("forced reminder failure")
+                .hasSizeLessThanOrEqualTo(128);
+        // Read the durable failure from PostgreSQL before retrying; a fresh processor instance would see this same row.
         assertThat(soThongBao(hoaDonId)).isZero();
 
         jdbcTemplate.execute("DROP TRIGGER trg_fail_nhac_tien ON THONG_BAO");
@@ -384,6 +422,26 @@ class NhacTienIntegrationTest {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(exception);
         }
+    }
+
+    private void awaitReminderClaimWaiters(int expectedWaiters) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (System.nanoTime() < deadline) {
+            Integer waiters = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query ILIKE '%FOR UPDATE OF hd%'",
+                    Integer.class
+            );
+            if (waiters != null && waiters >= expectedWaiters) {
+                return;
+            }
+            try {
+                Thread.sleep(25L);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(exception);
+            }
+        }
+        throw new IllegalStateException("Timed out waiting for reminder workers at the PostgreSQL invoice claim");
     }
 
     private void invoke(String methodName, Class<?>[] parameterTypes, Object... arguments) {

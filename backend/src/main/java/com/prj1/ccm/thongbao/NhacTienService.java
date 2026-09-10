@@ -24,6 +24,8 @@ public class NhacTienService {
     private static final ZoneId ZONE_KINH_DOANH = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final List<Integer> MOC_NGUOI_THUE = List.of(-3, 1, 5);
     private static final int MOC_QUAN_LY = 5;
+    private static final int DO_DAI_LOI_TOI_DA = 128;
+    private static final String THONG_BAO_LOI_AN_TOAN = "Reminder processing failed";
 
     private final NhacTienRepository nhacTienRepository;
     private final ThongBaoRepository thongBaoRepository;
@@ -154,7 +156,10 @@ public class NhacTienService {
     }
 
     private void ghiNhatKyThatBai(Long hoaDonId, LocalDate ngayNghiepVu, RuntimeException exception) {
-        String loi = exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage();
+        String loiDayDu = exception.getClass().getSimpleName() + ": " + THONG_BAO_LOI_AN_TOAN;
+        String loi = loiDayDu.length() > DO_DAI_LOI_TOI_DA
+                ? loiDayDu.substring(0, DO_DAI_LOI_TOI_DA)
+                : loiDayDu;
         giaoDichGhiLoi.executeWithoutResult(status -> nhacTienRepository.ghiNhatKyThatBai(
                 hoaDonId,
                 ngayNghiepVu,
