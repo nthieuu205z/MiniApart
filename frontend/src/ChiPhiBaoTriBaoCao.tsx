@@ -19,7 +19,7 @@ import { SysLabel } from './design/core/SysLabel'
 
 type Props = { token: string; mobile?: boolean }
 
-/** FR-RPT-04 renders one owner-scoped maintenance-cost snapshot with source-request drill-down. */
+/** FR-RPT-02/FR-RPT-08 renders one owner-scoped maintenance-cost snapshot with source-request drill-down. */
 export default function ChiPhiBaoTriBaoCao({ token, mobile = false }: Props): React.ReactElement {
   const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
   const [phong, setPhong] = useState<ThongTinPhong[]>([])
@@ -113,7 +113,7 @@ export default function ChiPhiBaoTriBaoCao({ token, mobile = false }: Props): Re
   if (loi && !baoCao) {
     return (
       <ScreenSurface data-testid="maintenance-cost-report-screen" data-layout-variant={variant} role="alert">
-        <SysLabel>FR-RPT-04</SysLabel>
+        <SysLabel>FR-RPT-02 · FR-RPT-08</SysLabel>
         <ScreenNotice tone="urgent">{loi}</ScreenNotice>
       </ScreenSurface>
     )
@@ -125,7 +125,7 @@ export default function ChiPhiBaoTriBaoCao({ token, mobile = false }: Props): Re
   return (
     <ScreenSurface data-testid="maintenance-cost-report-screen" data-layout-variant={variant} aria-labelledby="maintenance-cost-report-title">
       <ScreenHeader>
-        <SysLabel>FR-RPT-04</SysLabel>
+        <SysLabel>FR-RPT-02 · FR-RPT-08</SysLabel>
         <h3 id="maintenance-cost-report-title" style={{ margin: '8px 0 0' }}>Chi phí bảo trì</h3>
         <p style={styleMuted}>Chi phí lấy từ yêu cầu sửa chữa, tách theo bên chịu chi phí và không cộng lại khoản phát sinh hoá đơn.</p>
       </ScreenHeader>
@@ -138,12 +138,12 @@ export default function ChiPhiBaoTriBaoCao({ token, mobile = false }: Props): Re
       <section aria-label="Tổng hợp chi phí bảo trì" style={styleSummary}>
         <article data-maintenance-cost-summary="owner" style={styleSummaryCard}>
           <SysLabel>Chủ nhà</SysLabel>
-          <strong style={styleSummaryValue}>{dinhDangTien(baoCao.tongChiPhiChuNha)} ₫</strong>
+          <strong style={styleSummaryValue}>{hienThiTongTien(baoCao.tongChiPhiChuNha)}</strong>
           <span style={styleMuted}>Chi phí đã ghi nhận</span>
         </article>
         <article data-maintenance-cost-summary="tenant" style={styleSummaryCard}>
           <SysLabel>Người thuê</SysLabel>
-          <strong style={styleSummaryValue}>{dinhDangTien(baoCao.tongChiPhiNguoiThue)} ₫</strong>
+          <strong style={styleSummaryValue}>{hienThiTongTien(baoCao.tongChiPhiNguoiThue)}</strong>
           <span style={styleMuted}>Nguồn sửa chữa, tính một lần</span>
         </article>
         <article data-maintenance-cost-summary="missing" style={styleSummaryCard}>
@@ -246,7 +246,7 @@ function BieuDoChiPhi({ points }: { points: ThongTinDiemChiPhiBaoTriBaoCao[] }):
 
 function DiemBieuDo({ point, max }: { point: ThongTinDiemChiPhiBaoTriBaoCao; max: bigint }): React.ReactElement {
   return (
-    <div data-maintenance-cost-chart-point={point.thang} role="listitem" aria-label={`${point.nhan}: ${point.soDongThieuChiPhi} dòng chưa ghi nhận`} style={styleChartRow}>
+    <div data-maintenance-cost-chart-point={point.thang} role="listitem" aria-label={`${point.nhan}: ${point.soDongThieuChiPhi} dòng thiếu chi phí, ${point.soDongThieuBenChiuChiPhi} dòng thiếu bên chịu chi phí`} style={styleChartRow}>
       <span style={styleChartLabel}>{point.nhan}</span>
       <div style={{ display: 'grid', gap: 5, minWidth: 0 }}>
         <ThanhBieuDo label="Chủ nhà" value={point.chiPhiChuNha} max={max} color="var(--ma-ink-screen-title)" />
@@ -294,16 +294,20 @@ function BangChiPhi({ rows, mobile }: { rows: ThongTinDongChiPhiBaoTriBaoCao[]; 
 
 function DongChiPhi({ row }: { row: ThongTinDongChiPhiBaoTriBaoCao }): React.ReactElement {
   const coChiPhi = row.chiPhi !== null && row.coChiPhi
+  const coChiPhiNhungThieuBen = row.chiPhi !== null && !row.coChiPhi
   const hienThiChuNha = coChiPhi && row.benChiuChiPhi === 'CHU_NHA' ? `${dinhDangTien(row.chiPhi!)} ₫` : '—'
   const hienThiNguoiThue = coChiPhi && row.benChiuChiPhi === 'NGUOI_THUE' ? `${dinhDangTien(row.chiPhi!)} ₫` : '—'
   return (
     <tr data-maintenance-cost-row={row.yeuCauId}>
       <TableCell header><span style={{ display: 'block' }}>{row.tenToaNha}</span><span style={styleMuted}>Phòng {row.soPhong}</span></TableCell>
       <TableCell><strong>{row.hangMuc}</strong><span style={{ display: 'block', color: 'var(--ma-text-secondary)', fontSize: 12, marginTop: 3 }}>{row.nhanThang}</span></TableCell>
-      <TableCell><a href={row.lienKet} style={styleLink}>Yêu cầu #{row.yeuCauId}</a><span style={{ display: 'block', color: 'var(--ma-text-secondary)', fontSize: 12, marginTop: 3 }}>{row.tenTrangThai}</span></TableCell>
+      <TableCell><a href={row.lienKet} onClick={dieuHuongLienKet} style={styleLink}>Yêu cầu #{row.yeuCauId}</a><span style={{ display: 'block', color: 'var(--ma-text-secondary)', fontSize: 12, marginTop: 3 }}>{row.tenTrangThai}</span></TableCell>
       <TableCell align="right">{hienThiChuNha}</TableCell>
       <TableCell align="right">{hienThiNguoiThue}</TableCell>
-      <TableCell><span style={row.chiPhi === null ? styleMissing : undefined}>{row.tenTrangThaiChiPhi}</span></TableCell>
+      <TableCell>
+        <span style={row.chiPhi === null ? styleMissing : undefined}>{row.tenTrangThaiChiPhi}</span>
+        {coChiPhiNhungThieuBen ? <span style={{ display: 'block', color: 'var(--ma-text-secondary)', fontSize: 12, marginTop: 3 }}>Nguồn: {dinhDangTien(row.chiPhi!)} ₫</span> : null}
+      </TableCell>
     </tr>
   )
 }
@@ -317,7 +321,7 @@ function BangNhom({ groups, mobile }: { groups: ThongTinNhomChiPhiBaoTriBaoCao[]
       </div>
       <TableFrame minWidth={mobile ? 920 : 960}>
         <thead><tr><TableHeadCell>Toà / phòng</TableHeadCell><TableHeadCell>Tháng / hạng mục</TableHeadCell><TableHeadCell align="right">Chủ nhà</TableHeadCell><TableHeadCell align="right">Người thuê</TableHeadCell><TableHeadCell align="right">Dòng</TableHeadCell></tr></thead>
-        <tbody>{groups.map((group) => <tr key={`${group.toaNhaId}-${group.phongId}-${group.hangMuc}-${group.thang}`}><TableCell header>{group.tenToaNha} · {group.soPhong}</TableCell><TableCell>{group.nhan} · {group.hangMuc}</TableCell><TableCell align="right">{group.chiPhiChuNha === null ? 'Chưa ghi nhận' : `${dinhDangTien(group.chiPhiChuNha)} ₫`}</TableCell><TableCell align="right">{group.chiPhiNguoiThue === null ? 'Chưa ghi nhận' : `${dinhDangTien(group.chiPhiNguoiThue)} ₫`}</TableCell><TableCell align="right">{group.soDong}</TableCell></tr>)}</tbody>
+        <tbody>{groups.map((group) => <tr data-maintenance-cost-group-row={group.thang} key={`${group.toaNhaId}-${group.phongId}-${group.hangMuc}-${group.thang}`}><TableCell header>{group.tenToaNha} · {group.soPhong}</TableCell><TableCell>{group.nhan} · {group.hangMuc}</TableCell><TableCell align="right">{group.chiPhiChuNha === null ? 'Chưa ghi nhận' : `${dinhDangTien(group.chiPhiChuNha)} ₫`}</TableCell><TableCell align="right">{group.chiPhiNguoiThue === null ? 'Chưa ghi nhận' : `${dinhDangTien(group.chiPhiNguoiThue)} ₫`}</TableCell><TableCell align="right">{group.soDong}<span style={{ display: 'block', color: 'var(--ma-text-secondary)', fontSize: 12 }}>{group.soDongThieuChiPhi} thiếu chi phí · {group.soDongThieuBenChiuChiPhi} thiếu bên</span></TableCell></tr>)}</tbody>
       </TableFrame>
     </section>
   )
@@ -332,6 +336,19 @@ export function layBoLocChiPhiBaoTriTuUrl(url: string | URL): BoLocChiPhiBaoTriB
     tuNgay: ngayHopLe(searchParams.get('tuNgay')) ? searchParams.get('tuNgay')! : `${homNay.slice(0, 8)}01`,
     denNgay: ngayHopLe(searchParams.get('denNgay')) ? searchParams.get('denNgay')! : homNay,
   }
+}
+
+function hienThiTongTien(giaTri: string | null): string {
+  return giaTri === null ? 'Chưa ghi nhận' : `${dinhDangTien(giaTri)} ₫`
+}
+
+function dieuHuongLienKet(event: React.MouseEvent<HTMLAnchorElement>) {
+  if (typeof window === 'undefined') return
+  const href = event.currentTarget.getAttribute('href')
+  if (!href || href.startsWith('http')) return
+  event.preventDefault()
+  window.history.pushState({}, '', href)
+  window.dispatchEvent(new PopStateEvent('popstate'))
 }
 
 function boLocMacDinh(): BoLocChiPhiBaoTriBaoCao {

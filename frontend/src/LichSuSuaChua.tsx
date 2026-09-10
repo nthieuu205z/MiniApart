@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import {
   ApiError,
+  fetchChiTietSuaChua,
   fetchLichSuSuaChua,
   fetchPhong,
   fetchToaNha,
   type BoLocLichSuSuaChua,
   type ThongTinLichSuSuaChua,
+  type ThongTinYeuCauSuaChua,
   type ThongTinPhong,
   type ThongTinToaNha,
 } from './api'
@@ -32,11 +34,15 @@ export function LichSuSuaChua({ token, mobile = false }: Props): React.ReactElem
   const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
   const [phong, setPhong] = useState<ThongTinPhong[]>([])
   const [ketQua, setKetQua] = useState<ThongTinLichSuSuaChua | null>(null)
+  const [chiTiet, setChiTiet] = useState<ThongTinYeuCauSuaChua | null>(null)
   const [dangTai, setDangTai] = useState(false)
+  const [dangTaiChiTiet, setDangTaiChiTiet] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
+  const [loiChiTiet, setLoiChiTiet] = useState<string | null>(null)
 
   const coBoLoc = Boolean(boLoc.toaNhaId || boLoc.phongId || boLoc.hangMuc.trim() || boLoc.hienThiDaHuy || boLoc.boLocVanHanh)
   const boLocApi = useMemo(() => taoBoLocApi(boLoc), [boLoc])
+  const yeuCauId = docYeuCauIdTuUrl()
 
   useEffect(() => {
     let mounted = true
@@ -77,6 +83,29 @@ export function LichSuSuaChua({ token, mobile = false }: Props): React.ReactElem
       .finally(() => { if (mounted) setDangTai(false) })
     return () => { mounted = false }
   }, [boLoc, boLocApi, coBoLoc, token])
+
+  useEffect(() => {
+    if (yeuCauId === undefined) {
+      setChiTiet(null)
+      setLoiChiTiet(null)
+      setDangTaiChiTiet(false)
+      return undefined
+    }
+
+    let mounted = true
+    setDangTaiChiTiet(true)
+    setLoiChiTiet(null)
+    fetchChiTietSuaChua(token, yeuCauId)
+      .then((data) => { if (mounted) setChiTiet(data) })
+      .catch((reason: unknown) => {
+        if (mounted) {
+          setChiTiet(null)
+          setLoiChiTiet(reason instanceof ApiError ? reason.message : 'Không thể tải chi tiết yêu cầu sửa chữa.')
+        }
+      })
+      .finally(() => { if (mounted) setDangTaiChiTiet(false) })
+    return () => { mounted = false }
+  }, [token, yeuCauId])
 
   function capNhatBoLoc(thayDoi: Partial<BoLocTrang>) {
     setBoLoc((hienTai) => ({ ...hienTai, ...thayDoi }))
@@ -122,11 +151,15 @@ export function LichSuSuaChua({ token, mobile = false }: Props): React.ReactElem
         <p data-active-repair-filter style={styleActiveFilter}>Đang lọc: Tồn đọng quá 48 giờ</p>
       ) : null}
 
-      {!coBoLoc ? <EmptyState data-repair-history-first-empty title="Chọn ít nhất một bộ lọc để tra cứu lịch sử sửa chữa." body="Kết quả sẽ chỉ hiển thị trong phạm vi toà nhà bạn được phân quyền." />
+      {yeuCauId !== undefined
+        ? dangTaiChiTiet ? <p aria-live="polite">Đang tải chi tiết yêu cầu sửa chữa…</p>
+          : loiChiTiet ? <div role="alert"><ScreenNotice tone="urgent">{loiChiTiet}</ScreenNotice></div>
+            : chiTiet ? <ChiTietSuaChua yeuCau={chiTiet} mobile={mobile} /> : null
+        : !coBoLoc ? <EmptyState data-repair-history-first-empty title="Chọn ít nhất một bộ lọc để tra cứu lịch sử sửa chữa." body="Kết quả sẽ chỉ hiển thị trong phạm vi toà nhà bạn được phân quyền." />
         : dangTai ? <p aria-live="polite">Đang tải lịch sử sửa chữa…</p>
           : loi ? <div role="alert"><ScreenNotice tone="urgent">{loi}</ScreenNotice></div>
-            : ketQua?.yeuCau.length === 0 ? <EmptyState data-repair-history-filter-empty title="Không có yêu cầu sửa chữa phù hợp bộ lọc." body="Hãy đổi toà, phòng hoặc hạng mục để tra cứu lại." />
-              : ketQua ? <KetQuaLichSu ketQua={ketQua} mobile={mobile} /> : null}
+              : ketQua?.yeuCau.length === 0 ? <EmptyState data-repair-history-filter-empty title="Không có yêu cầu sửa chữa phù hợp bộ lọc." body="Hãy đổi toà, phòng hoặc hạng mục để tra cứu lại." />
+                : ketQua ? <KetQuaLichSu ketQua={ketQua} mobile={mobile} /> : null}
     </ScreenSurface>
   )
 }
@@ -149,6 +182,23 @@ function KetQuaLichSu({ ketQua, mobile }: { ketQua: ThongTinLichSuSuaChua; mobil
       </article>)}
     </div>
   </section>
+}
+
+function ChiTietSuaChua({ yeuCau, mobile }: { yeuCau: ThongTinYeuCauSuaChua; mobile: boolean }): React.ReactElement {
+  return (
+    <section data-repair-detail={yeuCau.id} aria-label={`Chi tiết yêu cầu sửa chữa ${yeuCau.id}`} style={{ ...styleTong, display: 'grid', gap: 10, gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))' }}>
+      <div style={{ display: 'grid', gap: 5 }}>
+        <SysLabel>FR-MNT-03</SysLabel>
+        <h4 style={{ margin: 0 }}>Yêu cầu #{yeuCau.id} · {yeuCau.hangMuc}</h4>
+        <strong>{yeuCau.moTa}</strong>
+      </div>
+      <div style={{ display: 'grid', gap: 5 }}>
+        <span>{yeuCau.toaNha} · Phòng {yeuCau.soPhong}</span>
+        <span>{yeuCau.tenTrangThai}</span>
+        <span>{yeuCau.chiPhi === null ? 'Chưa ghi chi phí' : `Chi phí: ${dinhDangTien(String(yeuCau.chiPhi))} ₫`}</span>
+      </div>
+    </section>
+  )
 }
 
 function ngayDiaPhuongTuInstant(value: string): string {
@@ -175,6 +225,14 @@ function docBoLocTuUrl(): BoLocTrang {
   }
 }
 
+function docYeuCauIdTuUrl(): number | undefined {
+  if (typeof window === 'undefined') return undefined
+  const value = new URLSearchParams(window.location.search).get('yeuCauId')
+  if (value === null || !/^[1-9]\d*$/.test(value)) return undefined
+  const parsed = Number(value)
+  return Number.isSafeInteger(parsed) ? parsed : undefined
+}
+
 function taoBoLocApi(boLoc: BoLocTrang): BoLocLichSuSuaChua {
   return {
     toaNhaId: soNguyen(boLoc.toaNhaId),
@@ -197,6 +255,8 @@ function dongBoBoLocVaoUrl(boLoc: BoLocTrang) {
   if (boLoc.hangMuc.trim()) query.set('hangMuc', boLoc.hangMuc.trim())
   if (boLoc.hienThiDaHuy) query.set('hienThiDaHuy', 'true')
   if (boLoc.boLocVanHanh) query.set('boLoc', boLoc.boLocVanHanh)
+  const yeuCauId = docYeuCauIdTuUrl()
+  if (yeuCauId !== undefined) query.set('yeuCauId', String(yeuCauId))
   window.history.replaceState({}, '', `/su-co${query.toString() ? `?${query}` : ''}`)
 }
 

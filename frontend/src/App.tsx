@@ -510,7 +510,7 @@ function App() {
       : hienThiBaoCaoTieuThu
         ? 'FR-RPT-02 · FR-RPT-05'
       : hienThiBaoCaoChiPhiBaoTri
-        ? 'FR-RPT-04'
+        ? 'FR-RPT-02 · FR-RPT-08'
       : hienThiBaoCaoCongNo
         ? 'FR-RPT-02 · FR-RPT-03'
       : hienThiBangViec

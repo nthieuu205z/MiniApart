@@ -2,7 +2,7 @@ package com.prj1.ccm.report;
 
 import java.util.List;
 
-/** FR-RPT-04 groups repair rows by building, category, calendar month, and room for reconciliation. */
+/** FR-RPT-02/FR-RPT-08 groups repair rows by building, category, calendar month, and room for reconciliation. */
 public record ThongTinNhomChiPhiBaoTriBaoCao(
         Long toaNhaId,
         String maToa,
@@ -17,6 +17,7 @@ public record ThongTinNhomChiPhiBaoTriBaoCao(
         int soDong,
         int soDongCoChiPhi,
         int soDongThieuChiPhi,
+        int soDongThieuBenChiuChiPhi,
         List<Long> yeuCauIds
 ) {
     public ThongTinNhomChiPhiBaoTriBaoCao {

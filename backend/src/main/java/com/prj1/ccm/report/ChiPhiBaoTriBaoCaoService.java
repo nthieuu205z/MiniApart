@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -25,10 +24,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** FR-RPT-04 builds the CHU-only maintenance-cost report from one repeatable-read snapshot. */
+/** FR-RPT-02/FR-RPT-08 builds the CHU-only maintenance-cost report from one repeatable-read snapshot. */
 @Service
 public class ChiPhiBaoTriBaoCaoService {
-    private static final BigDecimal KHONG = BigDecimal.ZERO.setScale(2);
     private static final QuyTacTrangThaiYeuCau QUY_TAC_TRANG_THAI = new QuyTacTrangThaiYeuCau();
 
     private final ChiPhiBaoTriBaoCaoRepository repository;
@@ -45,7 +43,7 @@ public class ChiPhiBaoTriBaoCaoService {
         this.clock = clock;
     }
 
-    /** FR-RPT-04 returns one permission-filtered repair-cost snapshot with null missing costs. */
+    /** FR-RPT-02/FR-RPT-08 returns one permission-filtered repair-cost snapshot with null missing costs. */
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public ThongTinChiPhiBaoTriBaoCao layChiPhi(
             Long toaNhaId,
@@ -72,11 +70,12 @@ public class ChiPhiBaoTriBaoCaoService {
                 khoangNgay.tuNgay().toString(),
                 khoangNgay.denNgay().toString(),
                 OffsetDateTime.ofInstant(tinhLuc, clock.getZone()).toString(),
-                dinhDangTien(tongTheoBen(cacKhoan, BenChiuChiPhi.CHU_NHA)),
-                dinhDangTien(tongTheoBen(cacKhoan, BenChiuChiPhi.NGUOI_THUE)),
+                dinhDangTienOrNull(tongTheoBen(cacKhoan, BenChiuChiPhi.CHU_NHA)),
+                dinhDangTienOrNull(tongTheoBen(cacKhoan, BenChiuChiPhi.NGUOI_THUE)),
                 cacKhoan.size(),
                 (int) cacKhoan.stream().filter(this::coChiPhi).count(),
-                (int) cacKhoan.stream().filter(khoan -> !coChiPhi(khoan)).count(),
+                (int) cacKhoan.stream().filter(khoan -> khoan.chiPhi() == null).count(),
+                (int) cacKhoan.stream().filter(khoan -> khoan.chiPhi() != null && khoan.benChiuChiPhi() == null).count(),
                 cacDong,
                 taoNhom(cacKhoan),
                 taoBieuDo(cacKhoan)
@@ -111,7 +110,8 @@ public class ChiPhiBaoTriBaoCaoService {
                 .filter(this::coChiPhi)
                 .filter(khoan -> khoan.benChiuChiPhi() == benChiuChiPhi)
                 .map(KhoanChiPhiBaoTriBaoCao::chiPhi)
-                .reduce(KHONG, BigDecimal::add);
+                .reduce(BigDecimal::add)
+                .orElse(null);
     }
 
     private boolean coChiPhi(KhoanChiPhiBaoTriBaoCao khoan) {
@@ -164,10 +164,6 @@ public class ChiPhiBaoTriBaoCaoService {
         }
     }
 
-    private String dinhDangTien(BigDecimal giaTri) {
-        return giaTri.setScale(2, RoundingMode.UNNECESSARY).toPlainString();
-    }
-
     private record KhoangNgay(LocalDate tuNgay, LocalDate denNgay) {
     }
 
@@ -180,6 +176,8 @@ public class ChiPhiBaoTriBaoCaoService {
         private BigDecimal chiPhiNguoiThue;
         private int soDong;
         private int soDongCoChiPhi;
+        private int soDongThieuChiPhi;
+        private int soDongThieuBenChiuChiPhi;
         private final List<Long> yeuCauIds = new ArrayList<>();
 
         private Nhom(KhoanChiPhiBaoTriBaoCao dauTien) {
@@ -189,7 +187,12 @@ public class ChiPhiBaoTriBaoCaoService {
         private void them(KhoanChiPhiBaoTriBaoCao khoan) {
             soDong++;
             yeuCauIds.add(khoan.yeuCauId());
-            if (khoan.chiPhi() == null || khoan.benChiuChiPhi() == null) {
+            if (khoan.chiPhi() == null) {
+                soDongThieuChiPhi++;
+                return;
+            }
+            if (khoan.benChiuChiPhi() == null) {
+                soDongThieuBenChiuChiPhi++;
                 return;
             }
             soDongCoChiPhi++;
@@ -214,7 +217,8 @@ public class ChiPhiBaoTriBaoCaoService {
                     dinhDangTienOrNull(chiPhiNguoiThue),
                     soDong,
                     soDongCoChiPhi,
-                    soDong - soDongCoChiPhi,
+                    soDongThieuChiPhi,
+                    soDongThieuBenChiuChiPhi,
                     yeuCauIds
             );
         }
@@ -226,6 +230,8 @@ public class ChiPhiBaoTriBaoCaoService {
         private BigDecimal chiPhiNguoiThue;
         private int soDong;
         private int soDongCoChiPhi;
+        private int soDongThieuChiPhi;
+        private int soDongThieuBenChiuChiPhi;
 
         private NhomTheoThang(LocalDate ngayDauTien) {
             this.ngayDauTien = ngayDauTien;
@@ -233,7 +239,12 @@ public class ChiPhiBaoTriBaoCaoService {
 
         private void them(KhoanChiPhiBaoTriBaoCao khoan) {
             soDong++;
-            if (khoan.chiPhi() == null || khoan.benChiuChiPhi() == null) {
+            if (khoan.chiPhi() == null) {
+                soDongThieuChiPhi++;
+                return;
+            }
+            if (khoan.benChiuChiPhi() == null) {
+                soDongThieuBenChiuChiPhi++;
                 return;
             }
             soDongCoChiPhi++;
@@ -252,7 +263,8 @@ public class ChiPhiBaoTriBaoCaoService {
                     dinhDangTienOrNull(chiPhiNguoiThue),
                     soDong,
                     soDongCoChiPhi,
-                    soDong - soDongCoChiPhi
+                    soDongThieuChiPhi,
+                    soDongThieuBenChiuChiPhi
             );
         }
     }

@@ -217,6 +217,7 @@ export type ThongTinNhomChiPhiBaoTriBaoCao = {
   soDong: number
   soDongCoChiPhi: number
   soDongThieuChiPhi: number
+  soDongThieuBenChiuChiPhi: number
   yeuCauIds: number[]
 }
 
@@ -228,6 +229,7 @@ export type ThongTinDiemChiPhiBaoTriBaoCao = {
   soDong: number
   soDongCoChiPhi: number
   soDongThieuChiPhi: number
+  soDongThieuBenChiuChiPhi: number
 }
 
 export type ThongTinChiPhiBaoTriBaoCao = {
@@ -236,11 +238,12 @@ export type ThongTinChiPhiBaoTriBaoCao = {
   tuNgay: string
   denNgay: string
   tinhLuc: string
-  tongChiPhiChuNha: string
-  tongChiPhiNguoiThue: string
+  tongChiPhiChuNha: string | null
+  tongChiPhiNguoiThue: string | null
   soDong: number
   soDongCoChiPhi: number
   soDongThieuChiPhi: number
+  soDongThieuBenChiuChiPhi: number
   cacDong: ThongTinDongChiPhiBaoTriBaoCao[]
   cacNhom: ThongTinNhomChiPhiBaoTriBaoCao[]
   bieuDo: ThongTinDiemChiPhiBaoTriBaoCao[]
@@ -499,6 +502,32 @@ export type ThongTinViecCuaToi = {
   anh: Array<{ id: number }>
 }
 
+export type ThongTinYeuCauSuaChua = {
+  id: number
+  maYeuCau: string
+  phongId: number
+  toaNha: string
+  soPhong: string
+  tang: number
+  hangMuc: string
+  moTa: string
+  mucDo: string
+  tenMucDo: string
+  trangThai: string
+  tenTrangThai: string
+  nguoiTiepNhanId: number | null
+  tiepNhanLuc: string | null
+  nguoiXuLyId: number | null
+  phanCongLuc: string | null
+  choXacNhanLuc: string | null
+  lyDoHuy: string | null
+  soDienThoaiLienHe: string | null
+  anh: Array<{ id: number }>
+  chiPhi: string | number | null
+  benChiuChiPhi: 'CHU_NHA' | 'NGUOI_THUE' | null
+  taoLuc: string
+}
+
 export type ThongTinLichSuSuaChua = {
   yeuCau: Array<{
     id: number
@@ -728,7 +757,7 @@ export async function fetchTieuThuBaoCao(
   return response.json() as Promise<ThongTinTieuThuBaoCao>
 }
 
-/** FR-RPT-04 reads one owner-scoped maintenance-cost snapshot with exact decimal strings. */
+/** FR-RPT-02/FR-RPT-08 reads one owner-scoped maintenance-cost snapshot with exact decimal strings. */
 export async function fetchChiPhiBaoTriBaoCao(
   token: string,
   boLoc: BoLocChiPhiBaoTriBaoCao,
@@ -747,6 +776,19 @@ export async function fetchChiPhiBaoTriBaoCao(
   }
 
   return response.json() as Promise<ThongTinChiPhiBaoTriBaoCao>
+}
+
+/** FR-MNT-03 loads one repair request through the existing server-scoped detail endpoint for report drill-down. */
+export async function fetchChiTietSuaChua(token: string, yeuCauId: number): Promise<ThongTinYeuCauSuaChua> {
+  const response = await fetch(`/api/yeu-cau-sua-chua/${yeuCauId}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải chi tiết yêu cầu sửa chữa.')
+  }
+
+  return response.json() as Promise<ThongTinYeuCauSuaChua>
 }
 
 /** FR-NTF-01 reads the server-scoped operational dashboard for one building. */

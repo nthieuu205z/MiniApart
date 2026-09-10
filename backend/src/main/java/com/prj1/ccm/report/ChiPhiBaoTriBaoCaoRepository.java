@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/** FR-RPT-04 reads repair costs from the repair request source and keeps invoice extras out of the amount. */
+/** FR-RPT-02/FR-RPT-08 reads repair costs from the repair request source and keeps invoice extras out of the amount. */
 @Repository
 public class ChiPhiBaoTriBaoCaoRepository {
     private final JdbcTemplate jdbcTemplate;
@@ -23,7 +23,7 @@ public class ChiPhiBaoTriBaoCaoRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    /** FR-RPT-04 filters by the project's local calendar date and embeds PHAN_QUYEN_TOA in the read query. */
+    /** FR-RPT-02/FR-RPT-08 filters by the project's local calendar date and embeds PHAN_QUYEN_TOA in the read query. */
     public List<KhoanChiPhiBaoTriBaoCao> findChiPhi(
             Long nguoiDungId,
             Long toaNhaId,
@@ -105,7 +105,7 @@ public class ChiPhiBaoTriBaoCaoRepository {
                 .findFirst();
     }
 
-    /** FR-RPT-04 reasserts a selected building permission in the same report transaction. */
+    /** FR-RPT-02/FR-RPT-08 reasserts a selected building permission in the same report transaction. */
     public boolean xacNhanPhanQuyenToa(Long nguoiDungId, Long toaNhaId) {
         return !jdbcTemplate.query(
                 """

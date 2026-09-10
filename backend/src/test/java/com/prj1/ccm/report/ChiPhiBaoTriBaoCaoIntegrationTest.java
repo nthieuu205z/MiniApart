@@ -26,6 +26,7 @@ import java.time.ZoneId;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -89,7 +90,7 @@ class ChiPhiBaoTriBaoCaoIntegrationTest {
     }
 
     @Test
-    void FR_RPT_04_keepsLocalMonthRowsAndChartAmountsSeparateWithoutDoubleCountingRepairExtras() throws Exception {
+    void FR_RPT_02_08_keepsLocalMonthRowsAndChartAmountsSeparateWithoutDoubleCountingRepairExtras() throws Exception {
         Long room = themPhong(1L, "901", false);
         Long tenantId = themNguoiThue("Nguoi thue bao tri", "0909000401");
         Long contractId = themHopDong(room, tenantId, TODAY.minusDays(30), TODAY.plusDays(30), "HIEU_LUC");
@@ -152,7 +153,7 @@ class ChiPhiBaoTriBaoCaoIntegrationTest {
     }
 
     @Test
-    void FR_RPT_04_filtersRoomAndDateAndDeniesForeignScopeWrongRolesAndMissingAuthentication() throws Exception {
+    void FR_RPT_02_08_filtersRoomAndDateAndDeniesForeignScopeWrongRolesAndMissingAuthentication() throws Exception {
         Long roomA = themPhong(1L, "902", false);
         Long roomB = themPhong(1L, "903", false);
         Long foreignRoom = themPhong(2L, "B-902", false);
@@ -233,6 +234,99 @@ class ChiPhiBaoTriBaoCaoIntegrationTest {
                         .param("tuNgay", "2040-08-01")
                         .param("denNgay", "2040-08-31"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void FR_RPT_02_08_groupsManyRowsAcrossTwoMonthsAndExcludesUnassignedBuildingFromUnfilteredScope() throws Exception {
+        Long roomA = themPhong(1L, "904", false);
+        Long roomB = themPhong(1L, "905", false);
+        Long foreignRoom = themPhong(2L, "B-904", false);
+        Long tenantId = themNguoiThue("Nguoi thue nhieu thang", "0909000403");
+        Long contractA = themHopDong(roomA, tenantId, TODAY.minusDays(60), TODAY.plusDays(60), "HIEU_LUC");
+        Long contractB = themHopDong(roomB, tenantId, TODAY.minusDays(60), TODAY.plusDays(60), "HIEU_LUC");
+        Long foreignContract = themHopDong(foreignRoom, tenantId, TODAY.minusDays(60), TODAY.plusDays(60), "HIEU_LUC");
+
+        themYeuCau(roomA, contractA, "DANG_XU_LY", "CHU_NHA", "100.00", "Dien", instantAtLocal("2040-08-03T10:00:00"));
+        themYeuCau(roomA, contractA, "DA_DONG", "CHU_NHA", "50.00", "Dien", instantAtLocal("2040-08-04T10:00:00"));
+        themYeuCau(roomA, contractA, "DA_DONG", "NGUOI_THUE", "20.25", "Ong nuoc", instantAtLocal("2040-08-05T10:00:00"));
+        Long septemberOwner = themYeuCau(roomA, contractA, "DANG_XU_LY", "CHU_NHA", "75.00", "Dien", instantAtLocal("2040-09-03T10:00:00"));
+        themYeuCau(roomB, contractB, "DANG_XU_LY", "NGUOI_THUE", "30.00", "Son", instantAtLocal("2040-09-04T10:00:00"));
+        Long foreignRepair = themYeuCau(foreignRoom, foreignContract, "DANG_XU_LY", "CHU_NHA", "900.00", "Dien", instantAtLocal("2040-08-06T10:00:00"));
+
+        String ownerToken = login(2L, "0900000002");
+
+        mockMvc.perform(get("/api/bao-cao/chi-phi-bao-tri")
+                        .param("tuNgay", "2040-08-01")
+                        .param("denNgay", "2040-09-30")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toaNhaId").value(nullValue()))
+                .andExpect(jsonPath("$.cacDong", hasSize(5)))
+                .andExpect(jsonPath("$.cacDong[*].toaNhaId", contains(1, 1, 1, 1, 1)))
+                .andExpect(jsonPath("$.tongChiPhiChuNha").value("225.00"))
+                .andExpect(jsonPath("$.tongChiPhiNguoiThue").value("50.25"))
+                .andExpect(jsonPath("$.bieuDo", hasSize(2)))
+                .andExpect(jsonPath("$.bieuDo[0].thang").value("2040-08"))
+                .andExpect(jsonPath("$.bieuDo[0].chiPhiChuNha").value("150.00"))
+                .andExpect(jsonPath("$.bieuDo[0].chiPhiNguoiThue").value("20.25"))
+                .andExpect(jsonPath("$.bieuDo[1].thang").value("2040-09"))
+                .andExpect(jsonPath("$.bieuDo[1].chiPhiChuNha").value("75.00"))
+                .andExpect(jsonPath("$.bieuDo[1].chiPhiNguoiThue").value("30.00"))
+                .andExpect(jsonPath("$.cacNhom", hasSize(4)))
+                .andExpect(jsonPath("$.cacNhom[0].toaNhaId").value(1))
+                .andExpect(jsonPath("$.cacNhom[0].phongId").value(roomA))
+                .andExpect(jsonPath("$.cacNhom[0].hangMuc").value("Dien"))
+                .andExpect(jsonPath("$.cacNhom[0].thang").value("2040-08"))
+                .andExpect(jsonPath("$.cacNhom[0].chiPhiChuNha").value("150.00"))
+                .andExpect(jsonPath("$.cacNhom[0].chiPhiNguoiThue").value(nullValue()))
+                .andExpect(jsonPath("$.cacNhom[0].soDong").value(2))
+                .andExpect(jsonPath("$.cacNhom[1].hangMuc").value("Ong nuoc"))
+                .andExpect(jsonPath("$.cacNhom[1].chiPhiChuNha").value(nullValue()))
+                .andExpect(jsonPath("$.cacNhom[1].chiPhiNguoiThue").value("20.25"))
+                .andExpect(jsonPath("$.cacNhom[2].thang").value("2040-09"))
+                .andExpect(jsonPath("$.cacNhom[2].chiPhiChuNha").value("75.00"))
+                .andExpect(jsonPath("$.cacNhom[3].phongId").value(roomB))
+                .andExpect(jsonPath("$.cacNhom[3].chiPhiNguoiThue").value("30.00"));
+
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/" + septemberOwner)
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(septemberOwner));
+
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/" + foreignRepair)
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_RPT_02_08_distinguishesRecordedZeroMissingAmountAndMissingPayerInTotalsAndStatuses() throws Exception {
+        Long room = themPhong(1L, "906", false);
+        Long tenantId = themNguoiThue("Nguoi thue trang thai chi phi", "0909000404");
+        Long contractId = themHopDong(room, tenantId, TODAY.minusDays(30), TODAY.plusDays(30), "HIEU_LUC");
+        themYeuCau(room, contractId, "DA_DONG", "CHU_NHA", "0.00", "A-zero", instantAtLocal("2040-08-07T10:00:00"));
+        themYeuCau(room, contractId, "DA_DONG", "NGUOI_THUE", null, "B-missing", instantAtLocal("2040-08-08T10:00:00"));
+        themYeuCau(room, contractId, "DA_DONG", null, "125.00", "C-payer", instantAtLocal("2040-08-09T10:00:00"));
+
+        String ownerToken = login(2L, "0900000002");
+
+        mockMvc.perform(get("/api/bao-cao/chi-phi-bao-tri")
+                        .param("tuNgay", "2040-08-01")
+                        .param("denNgay", "2040-08-31")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tongChiPhiChuNha").value("0.00"))
+                .andExpect(jsonPath("$.tongChiPhiNguoiThue").value(nullValue()))
+                .andExpect(jsonPath("$.soDong").value(3))
+                .andExpect(jsonPath("$.soDongCoChiPhi").value(1))
+                .andExpect(jsonPath("$.soDongThieuChiPhi").value(1))
+                .andExpect(jsonPath("$.soDongThieuBenChiuChiPhi").value(1))
+                .andExpect(jsonPath("$.cacDong[0].chiPhi").value("0.00"))
+                .andExpect(jsonPath("$.cacDong[0].trangThaiChiPhi").value("DA_GHI_NHAN"))
+                .andExpect(jsonPath("$.cacDong[1].chiPhi").value(nullValue()))
+                .andExpect(jsonPath("$.cacDong[1].trangThaiChiPhi").value("CHUA_GHI_NHAN"))
+                .andExpect(jsonPath("$.cacDong[2].chiPhi").value("125.00"))
+                .andExpect(jsonPath("$.cacDong[2].coChiPhi").value(false))
+                .andExpect(jsonPath("$.cacDong[2].trangThaiChiPhi").value("THIEU_BEN_CHIU_CHI_PHI"));
     }
 
     @TestConfiguration

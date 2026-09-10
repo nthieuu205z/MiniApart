@@ -2,7 +2,7 @@ package com.prj1.ccm.report;
 
 import java.util.List;
 
-/** FR-RPT-04 is one owner-scoped, timestamped maintenance-cost snapshot for table and chart consumers. */
+/** FR-RPT-02/FR-RPT-08 is one owner-scoped, timestamped maintenance-cost snapshot for table and chart consumers. */
 public record ThongTinChiPhiBaoTriBaoCao(
         Long toaNhaId,
         Long phongId,
@@ -14,6 +14,7 @@ public record ThongTinChiPhiBaoTriBaoCao(
         int soDong,
         int soDongCoChiPhi,
         int soDongThieuChiPhi,
+        int soDongThieuBenChiuChiPhi,
         List<ThongTinDongChiPhiBaoTriBaoCao> cacDong,
         List<ThongTinNhomChiPhiBaoTriBaoCao> cacNhom,
         List<ThongTinDiemChiPhiBaoTriBaoCao> bieuDo

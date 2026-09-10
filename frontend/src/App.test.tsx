@@ -336,7 +336,7 @@ describe('App role navigation', () => {
     })
   })
 
-  it('FR-RPT-04 routes CHU to the maintenance-cost report and keeps the route out of manager navigation', async () => {
+  it('FR-RPT-02/FR-RPT-08 routes CHU to the maintenance-cost report and keeps the route out of manager navigation', async () => {
     const chuSoHuu = MENU_BY_ROLE[1]
     const fetchMock = buildFetchMock(chuSoHuu.nguoiDung, {
       maintenanceCostResponse: maintenanceCostFixture(),
@@ -353,6 +353,34 @@ describe('App role navigation', () => {
     await vi.waitFor(() => expect(managerApp.container.textContent).toContain('Không có quyền'))
     expect(readMenuLabels(managerApp.container)).not.toContain('Chi phí bảo trì')
     await act(async () => managerApp.root.unmount())
+  })
+
+  it('FR-RPT-02/FR-RPT-08 follows a maintenance-cost source link into the scoped repair detail loader', async () => {
+    const chuSoHuu = MENU_BY_ROLE[1]
+    const fetchMock = buildFetchMock(chuSoHuu.nguoiDung, {
+      maintenanceCostResponse: maintenanceCostDrillDownFixture(),
+      repairDetailResponse: repairDetailFixture(),
+    })
+    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/bao-cao/chi-phi-bao-tri', fetchMock)
+
+    const sourceLink = await vi.waitFor(() => {
+      const link = mountedApp!.container.querySelector('[data-maintenance-cost-row="41"] a')
+      expect(link).not.toBeNull()
+      return link as HTMLAnchorElement
+    })
+
+    await act(async () => sourceLink.click())
+
+    await vi.waitFor(() => {
+      expect(window.location.pathname).toBe('/su-co')
+      expect(window.location.search).toBe('?yeuCauId=41')
+      expect(mountedApp!.container.querySelector('[data-repair-detail="41"]')).not.toBeNull()
+    })
+    expect(mountedApp.container.querySelector('[data-repair-detail="41"]')?.textContent).toContain('Thay aptomat')
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/yeu-cau-sua-chua/41',
+      expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }),
+    )
   })
 
   it('FR-RPT-03 opens a debt invoice with only its invoice id, including a settlement invoice', async () => {
@@ -924,6 +952,7 @@ function buildFetchMock(
     managerInvoiceResponse?: Record<string, unknown>[]
     debtResponse?: Record<string, unknown>
     maintenanceCostResponse?: Record<string, unknown>
+    repairDetailResponse?: Record<string, unknown>
     debtInvoiceResponse?: Record<string, unknown>
     notificationsResponse?: { thongBao: Record<string, unknown>[]; soChuaDoc: number }
     notificationReadResponse?: Record<string, unknown>
@@ -1136,6 +1165,14 @@ function buildFetchMock(
       })
     }
 
+    const repairDetailMatch = url.match(/^\/api\/yeu-cau-sua-chua\/(\d+)$/)
+    if (repairDetailMatch && method === 'GET' && options?.repairDetailResponse) {
+      return new Response(JSON.stringify(options.repairDetailResponse), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
     const tenantInvoiceMatch = url.match(/^\/api\/cong\/hoa-don\/(\d+)$/)
     if (tenantInvoiceMatch && method === 'GET' && options?.invoiceResponse) {
       return new Response(JSON.stringify(options.invoiceResponse), {
@@ -1336,9 +1373,67 @@ function maintenanceCostFixture() {
     soDong: 0,
     soDongCoChiPhi: 0,
     soDongThieuChiPhi: 0,
+    soDongThieuBenChiuChiPhi: 0,
     cacDong: [],
     cacNhom: [],
     bieuDo: [],
+  }
+}
+
+function maintenanceCostDrillDownFixture() {
+  return {
+    ...maintenanceCostFixture(),
+    cacDong: [{
+      id: 41,
+      yeuCauId: 41,
+      toaNhaId: 1,
+      maToa: 'A',
+      tenToaNha: 'Toà A',
+      phongId: 11,
+      soPhong: '101',
+      hangMuc: 'Điện',
+      thang: '2040-08',
+      nhanThang: '08/2040',
+      trangThai: 'DANG_XU_LY',
+      tenTrangThai: 'Đang xử lý',
+      chiPhi: '125.00',
+      benChiuChiPhi: 'CHU_NHA',
+      coChiPhi: true,
+      trangThaiChiPhi: 'DA_GHI_NHAN',
+      tenTrangThaiChiPhi: 'Đã ghi nhận',
+      taoLuc: '2040-08-01T00:00:00Z',
+      lienKet: '/su-co?yeuCauId=41',
+    }],
+    tongChiPhiChuNha: '125.00',
+    bieuDo: [{ thang: '2040-08', nhan: '08/2040', chiPhiChuNha: '125.00', chiPhiNguoiThue: null, soDong: 1, soDongCoChiPhi: 1, soDongThieuChiPhi: 0, soDongThieuBenChiuChiPhi: 0 }],
+  }
+}
+
+function repairDetailFixture() {
+  return {
+    id: 41,
+    maYeuCau: 'SC-204008-0041',
+    phongId: 11,
+    toaNha: 'Toà A',
+    soPhong: '101',
+    tang: 1,
+    hangMuc: 'Điện',
+    moTa: 'Thay aptomat',
+    mucDo: 'KHAN_CAP',
+    tenMucDo: 'Khẩn cấp',
+    trangThai: 'DANG_XU_LY',
+    tenTrangThai: 'Đang xử lý',
+    nguoiTiepNhanId: 3,
+    tiepNhanLuc: '2040-08-01T01:00:00Z',
+    nguoiXuLyId: 4,
+    phanCongLuc: '2040-08-01T02:00:00Z',
+    choXacNhanLuc: null,
+    lyDoHuy: null,
+    soDienThoaiLienHe: '0909000000',
+    anh: [],
+    chiPhi: '125.00',
+    benChiuChiPhi: 'CHU_NHA',
+    taoLuc: '2040-08-01T00:00:00Z',
   }
 }
 

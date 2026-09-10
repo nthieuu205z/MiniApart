@@ -6,7 +6,7 @@ import com.prj1.ccm.suachua.TrangThaiYeuCau;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/** FR-RPT-04 is the exact-decimal repair row with a source-request drill-down id. */
+/** FR-RPT-02/FR-RPT-08 is the exact-decimal repair row with a source-request drill-down id. */
 public record ThongTinDongChiPhiBaoTriBaoCao(
         Long id,
         Long yeuCauId,
@@ -51,7 +51,7 @@ public record ThongTinDongChiPhiBaoTriBaoCao(
                 "%02d/%d".formatted(khoan.ngayTao().getMonthValue(), khoan.ngayTao().getYear()),
                 trangThaiHieuLuc,
                 trangThaiHieuLuc.tenHienThi(),
-                coChiPhi ? dinhDangTien(khoan.chiPhi()) : null,
+                khoan.chiPhi() == null ? null : dinhDangTien(khoan.chiPhi()),
                 khoan.benChiuChiPhi(),
                 coChiPhi,
                 trangThaiChiPhi,
@@ -76,7 +76,7 @@ public record ThongTinDongChiPhiBaoTriBaoCao(
         return switch (trangThai) {
             case DA_GHI_NHAN -> "Đã ghi nhận";
             case THIEU_BEN_CHIU_CHI_PHI -> "Thiếu bên chịu chi phí";
-            default -> "Chưa ghi nhận";
+            default -> "Chưa ghi nhận chi phí";
         };
     }
 }

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** FR-RPT-04 exposes the owner-only maintenance-cost report. */
+/** FR-RPT-02/FR-RPT-08 exposes the owner-only maintenance-cost report. */
 @RestController
 @RequestMapping("/api/bao-cao")
 public class ChiPhiBaoTriBaoCaoController {
@@ -18,7 +18,7 @@ public class ChiPhiBaoTriBaoCaoController {
         this.service = service;
     }
 
-    /** FR-RPT-04 filters repairs by assigned building, room, and inclusive local calendar dates. */
+    /** FR-RPT-02/FR-RPT-08 filters repairs by assigned building, room, and inclusive local calendar dates. */
     @GetMapping("/chi-phi-bao-tri")
     public ThongTinChiPhiBaoTriBaoCao chiPhi(
             @RequestParam(required = false) Long toaNhaId,
