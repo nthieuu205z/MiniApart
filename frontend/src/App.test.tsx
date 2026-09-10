@@ -315,6 +315,15 @@ describe('App role navigation', () => {
     expect(mountedApp.container.textContent).toContain('Ghi chỉ số')
   })
 
+  it('FR-RPT-01 routes CHU to the financial and operational overview screen', async () => {
+    const chuSoHuu = MENU_BY_ROLE[1]
+    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/bao-cao')
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="report-overview-screen"]')).not.toBeNull()
+    })
+  })
+
   it('FR-AUT-04 shows a friendly no-permission state for a typed route outside the role menu', async () => {
     const chuSoHuu = MENU_BY_ROLE[1]
     mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/tai-khoan')

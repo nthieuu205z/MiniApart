@@ -67,6 +67,42 @@ export type ThongTinBangViecVanHanh = {
   nhomViec: ThongTinNhomViecVanHanh[]
 }
 
+export type ThongTinKpiTongQuan = {
+  doanhThuPhatHanh: string
+  daThu: string
+  congNo: string
+  tyLeLapDay: string
+  tongSoPhong: number
+  soPhongDangThue: number
+  soPhongTrong: number
+  soSuCoDangMo: number
+}
+
+export type ThongTinBaoCaoTheoThang = {
+  thang: string
+  nhan: string
+  doanhThuPhatHanh: string
+  daThu: string
+  congNo: string
+}
+
+export type ThongTinTongQuanBaoCao = {
+  toaNhaId: number | null
+  tenToaNha: string
+  tuNgay: string
+  denNgay: string
+  tinhLuc: string
+  coDuLieuTaiChinh: boolean
+  kpi: ThongTinKpiTongQuan
+  theoThang: ThongTinBaoCaoTheoThang[]
+}
+
+export type BoLocTongQuanBaoCao = {
+  toaNhaId: number | null
+  tuNgay: string
+  denNgay: string
+}
+
 export type ThongTinPhong = {
   id: number | null
   toaNhaId: number
@@ -485,6 +521,26 @@ export async function fetchToaNha(token: string): Promise<ThongTinToaNha[]> {
   }
 
   return response.json() as Promise<ThongTinToaNha[]>
+}
+
+/** FR-RPT-01/FR-RPT-02 reads the owner-only overview with explicit date and building filters. */
+export async function fetchBaoCaoTongQuan(
+  token: string,
+  boLoc: BoLocTongQuanBaoCao,
+): Promise<ThongTinTongQuanBaoCao> {
+  const params = new URLSearchParams({ tuNgay: boLoc.tuNgay, denNgay: boLoc.denNgay })
+  if (boLoc.toaNhaId !== null) {
+    params.set('toaNhaId', String(boLoc.toaNhaId))
+  }
+  const response = await fetch(`/api/bao-cao/tong-quan?${params.toString()}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải báo cáo tổng quan.')
+  }
+
+  return response.json() as Promise<ThongTinTongQuanBaoCao>
 }
 
 /** FR-NTF-01 reads the server-scoped operational dashboard for one building. */
