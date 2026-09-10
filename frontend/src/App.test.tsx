@@ -38,7 +38,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'CHU',
       tenVaiTro: 'Chủ sở hữu',
     },
-    menuLabels: ['Tổng quan', 'Toà nhà', 'Hoá đơn', 'Công nợ', 'Báo cáo', 'Sự cố', 'An toàn'],
+    menuLabels: ['Tổng quan', 'Toà nhà', 'Hoá đơn', 'Công nợ', 'Báo cáo', 'Tiêu thụ điện nước', 'Sự cố', 'An toàn'],
   },
   {
     nguoiDung: {

@@ -212,6 +212,107 @@ class TongQuanTaiChinhVanHanhIntegrationTest {
     }
 
     @Test
+    void FR_RPT_02_FR_RPT_05_listsConsumptionByRoomAndClosedPeriodWithReplacementAndMissingData() throws Exception {
+        Long dienId = themDichVu(1L, "Dien", "kWh", true);
+        Long nuocId = themDichVu(1L, "Nuoc", "m3", false);
+        Long phongCoDuLieu = themPhong(1L, "911", false);
+        Long phongThieuDuLieu = themPhong(1L, "912", false);
+        Long nguoiThueMot = themNguoiThue("Nguoi thue tieu thu mot", "0909000301");
+        Long nguoiThueHai = themNguoiThue("Nguoi thue tieu thu hai", "0909000302");
+        Long hopDongMot = themHopDong(phongCoDuLieu, nguoiThueMot, TODAY.minusDays(60), TODAY.plusDays(60), "HIEU_LUC");
+        Long hopDongHai = themHopDong(phongThieuDuLieu, nguoiThueHai, TODAY.minusDays(60), TODAY.plusDays(60), "HIEU_LUC");
+        themHopDongDichVu(hopDongMot, dienId);
+        themHopDongDichVu(hopDongMot, nuocId);
+        themHopDongDichVu(hopDongHai, dienId);
+        themHopDongDichVu(hopDongHai, nuocId);
+        Long kyDaChot = themKy(1L, TODAY.minusDays(30), TODAY.minusDays(1), "DA_CHOT");
+        themChiSo(kyDaChot, phongCoDuLieu, dienId, "100.00", "150.00", false, null, null);
+        themChiSo(kyDaChot, phongCoDuLieu, nuocId, "100.00", "30.00", true, "140.00", "10.00");
+
+        String ownerToken = login(2L, "0900000002");
+
+        mockMvc.perform(get("/api/bao-cao/tieu-thu")
+                        .param("toaNhaId", "1")
+                        .param("kyId", kyDaChot.toString())
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toaNhaId").value(1))
+                .andExpect(jsonPath("$.kyId").value(kyDaChot))
+                .andExpect(jsonPath("$.tinhLuc").value("2040-08-15T10:00+07:00"))
+                .andExpect(jsonPath("$.cacDong", hasSize(4)))
+                .andExpect(jsonPath("$.cacDong[0].soPhong").value("911"))
+                .andExpect(jsonPath("$.cacDong[0].donVi").value("kWh"))
+                .andExpect(jsonPath("$.cacDong[0].mucTieuThu").value("50.00"))
+                .andExpect(jsonPath("$.cacDong[0].coDuLieu").value(true))
+                .andExpect(jsonPath("$.cacDong[1].soPhong").value("911"))
+                .andExpect(jsonPath("$.cacDong[1].donVi").value("m3"))
+                .andExpect(jsonPath("$.cacDong[1].coThayCongTo").value(true))
+                .andExpect(jsonPath("$.cacDong[1].chiSoCuoiCongToCu").value("140.00"))
+                .andExpect(jsonPath("$.cacDong[1].chiSoDauCongToMoi").value("10.00"))
+                .andExpect(jsonPath("$.cacDong[1].mucTieuThu").value("60.00"))
+                .andExpect(jsonPath("$.cacDong[2].soPhong").value("912"))
+                .andExpect(jsonPath("$.cacDong[2].mucTieuThu").value(nullValue()))
+                .andExpect(jsonPath("$.cacDong[2].coDuLieu").value(false))
+                .andExpect(jsonPath("$.cacDong[3].soPhong").value("912"))
+                .andExpect(jsonPath("$.cacDong[3].mucTieuThu").value(nullValue()))
+                .andExpect(jsonPath("$.bieuDo", hasSize(2)))
+                .andExpect(jsonPath("$.bieuDo[0].donVi").value("kWh"))
+                .andExpect(jsonPath("$.bieuDo[0].mucTieuThu").value("50.00"))
+                .andExpect(jsonPath("$.bieuDo[0].soDong").value(2))
+                .andExpect(jsonPath("$.bieuDo[0].soDongCoDuLieu").value(1))
+                .andExpect(jsonPath("$.bieuDo[1].donVi").value("m3"))
+                .andExpect(jsonPath("$.bieuDo[1].mucTieuThu").value("60.00"))
+                .andExpect(jsonPath("$.bieuDo[1].soDong").value(2))
+                .andExpect(jsonPath("$.bieuDo[1].soDongCoDuLieu").value(1));
+    }
+
+    @Test
+    void FR_RPT_02_FR_RPT_05_filtersRoomAndPeriodAndDeniesWrongRolesAndForeignBuildings() throws Exception {
+        Long dienId = themDichVu(1L, "Dien", "kWh", true);
+        Long phong = themPhong(1L, "913", false);
+        Long tenantId = themNguoiThue("Nguoi thue loc tieu thu", "0909000303");
+        Long contractId = themHopDong(phong, tenantId, TODAY.minusDays(120), TODAY.plusDays(120), "HIEU_LUC");
+        themHopDongDichVu(contractId, dienId);
+        Long kyCu = themKy(1L, TODAY.minusDays(60), TODAY.minusDays(31), "DA_CHOT");
+        Long kyMoi = themKy(1L, TODAY.minusDays(30), TODAY.minusDays(1), "DA_CHOT");
+        themChiSo(kyCu, phong, dienId, "10.00", "20.00", false, null, null);
+        themChiSo(kyMoi, phong, dienId, "20.00", "35.00", false, null, null);
+        Long toaNhaNgoaiPhamVi = themToaNha("RPT-CONSUMPTION-FOREIGN");
+        Long phongNgoaiPhamVi = themPhong(toaNhaNgoaiPhamVi, "914", false);
+        Long tenantNgoaiPhamVi = themNguoiThue("Nguoi thue toa ngoai", "0909000304");
+        Long contractNgoaiPhamVi = themHopDong(phongNgoaiPhamVi, tenantNgoaiPhamVi, TODAY.minusDays(30), TODAY.plusDays(30), "HIEU_LUC");
+        themHopDongDichVu(contractNgoaiPhamVi, dienId);
+
+        String ownerToken = login(2L, "0900000002");
+        mockMvc.perform(get("/api/bao-cao/tieu-thu")
+                        .param("toaNhaId", "1")
+                        .param("phongId", phong.toString())
+                        .param("kyId", kyCu.toString())
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cacDong", hasSize(1)))
+                .andExpect(jsonPath("$.cacDong[0].kyId").value(kyCu))
+                .andExpect(jsonPath("$.cacDong[0].mucTieuThu").value("10.00"));
+
+        mockMvc.perform(get("/api/bao-cao/tieu-thu")
+                        .param("toaNhaId", toaNhaNgoaiPhamVi.toString())
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/bao-cao/tieu-thu")
+                        .param("toaNhaId", "1")
+                        .header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/bao-cao/tieu-thu")
+                        .param("toaNhaId", "1")
+                        .header("Authorization", "Bearer " + login(1L, "0900000001")))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/bao-cao/tieu-thu")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void NFR_USA_02_measuresFiveBuildingsFiftyRoomsTwentyFourPeriodsWithinThreeSeconds() throws Exception {
         Long tenantId = themNguoiThue("Nguoi thue perf bao cao", "0909000100");
         List<Long> toaNhaIds = new ArrayList<>();
@@ -430,6 +531,57 @@ class TongQuanTaiChinhVanHanhIntegrationTest {
                 java.sql.Date.valueOf(ngayBatDau),
                 java.sql.Date.valueOf(ngayKetThuc),
                 trangThai
+        );
+    }
+
+    private Long themDichVu(Long toaNhaId, String ten, String donVi, boolean laDien) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO DICH_VU(toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
+                        VALUES (?, ?, 'THEO_CHI_SO', 'CO_DINH', ?, ?, TRUE)
+                        RETURNING id
+                        """,
+                Long.class,
+                toaNhaId,
+                ten,
+                donVi,
+                laDien
+        );
+    }
+
+    private void themHopDongDichVu(Long hopDongId, Long dichVuId) {
+        jdbcTemplate.update(
+                "INSERT INTO HOP_DONG_DICH_VU(hop_dong_id, dich_vu_id, don_gia_ap_dung) VALUES (?, ?, 1.00)",
+                hopDongId,
+                dichVuId
+        );
+    }
+
+    private void themChiSo(
+            Long kyId,
+            Long phongId,
+            Long dichVuId,
+            String chiSoDau,
+            String chiSoCuoi,
+            boolean thayCongTo,
+            String chiSoCuoiCongToCu,
+            String chiSoDauCongToMoi
+    ) {
+        jdbcTemplate.update(
+                """
+                        INSERT INTO CHI_SO_DICH_VU(
+                            ky_id, phong_id, dich_vu_id, chi_so_dau, chi_so_cuoi,
+                            co_thay_cong_to, chi_so_cuoi_cong_to_cu, chi_so_dau_cong_to_moi, nguoi_ghi_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 3)
+                        """,
+                kyId,
+                phongId,
+                dichVuId,
+                new BigDecimal(chiSoDau),
+                new BigDecimal(chiSoCuoi),
+                thayCongTo,
+                chiSoCuoiCongToCu == null ? null : new BigDecimal(chiSoCuoiCongToCu),
+                chiSoDauCongToMoi == null ? null : new BigDecimal(chiSoDauCongToMoi)
         );
     }
 

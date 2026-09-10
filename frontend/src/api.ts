@@ -127,6 +127,60 @@ export type ThongTinCongNoBaoCao = {
   congNo: ThongTinKhoanNoBaoCao[]
 }
 
+export type ThongTinDongTieuThuBaoCao = {
+  kyId: number
+  nam: number
+  thang: number
+  nhanKy: string
+  tuNgay: string
+  denNgay: string
+  toaNhaId: number
+  maToa: string
+  tenToaNha: string
+  phongId: number
+  soPhong: string
+  tang: number
+  hopDongId: number
+  dichVuId: number
+  tenDichVu: string
+  donVi: string
+  laDien: boolean
+  chiSoDau: string | null
+  chiSoCuoi: string | null
+  coThayCongTo: boolean
+  chiSoCuoiCongToCu: string | null
+  chiSoDauCongToMoi: string | null
+  mucTieuThu: string | null
+  coDuLieu: boolean
+}
+
+export type ThongTinDiemTieuThuBaoCao = {
+  kyId: number
+  nam: number
+  thang: number
+  nhanKy: string
+  donVi: string
+  laDien: boolean
+  mucTieuThu: string | null
+  soDong: number
+  soDongCoDuLieu: number
+}
+
+export type ThongTinTieuThuBaoCao = {
+  toaNhaId: number | null
+  phongId: number | null
+  kyId: number | null
+  tinhLuc: string
+  cacDong: ThongTinDongTieuThuBaoCao[]
+  bieuDo: ThongTinDiemTieuThuBaoCao[]
+}
+
+export type BoLocTieuThuBaoCao = {
+  toaNhaId: number | null
+  phongId: number | null
+  kyId: number | null
+}
+
 export type ThongTinPhong = {
   id: number | null
   toaNhaId: number
@@ -579,6 +633,27 @@ export async function fetchCongNoBaoCao(token: string, toaNhaId: number | null):
   }
 
   return response.json() as Promise<ThongTinCongNoBaoCao>
+}
+
+/** FR-RPT-02/FR-RPT-05 reads one permission-filtered electricity and water snapshot. */
+export async function fetchTieuThuBaoCao(
+  token: string,
+  boLoc: BoLocTieuThuBaoCao,
+): Promise<ThongTinTieuThuBaoCao> {
+  const params = new URLSearchParams()
+  if (boLoc.toaNhaId !== null) params.set('toaNhaId', String(boLoc.toaNhaId))
+  if (boLoc.phongId !== null) params.set('phongId', String(boLoc.phongId))
+  if (boLoc.kyId !== null) params.set('kyId', String(boLoc.kyId))
+  const query = params.toString()
+  const response = await fetch(`/api/bao-cao/tieu-thu${query ? `?${query}` : ''}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải báo cáo tiêu thụ.')
+  }
+
+  return response.json() as Promise<ThongTinTieuThuBaoCao>
 }
 
 /** FR-NTF-01 reads the server-scoped operational dashboard for one building. */
