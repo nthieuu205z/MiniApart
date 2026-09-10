@@ -237,21 +237,27 @@ class ChiPhiBaoTriBaoCaoIntegrationTest {
     }
 
     @Test
-    void FR_RPT_02_08_groupsManyRowsAcrossTwoMonthsAndExcludesUnassignedBuildingFromUnfilteredScope() throws Exception {
+    void FR_RPT_02_08_groupsAuthorizedBuildingsAcrossTwoMonthsAndExcludesUnauthorizedBuildingFromUnfilteredScope() throws Exception {
         Long roomA = themPhong(1L, "904", false);
         Long roomB = themPhong(1L, "905", false);
-        Long foreignRoom = themPhong(2L, "B-904", false);
+        Long authorizedRoom = themPhong(2L, "B-904", false);
+        Long unauthorizedBuildingId = themToaNha("TN-C-" + UUID.randomUUID());
+        Long unauthorizedRoom = themPhong(unauthorizedBuildingId, "C-904", false);
         Long tenantId = themNguoiThue("Nguoi thue nhieu thang", "0909000403");
         Long contractA = themHopDong(roomA, tenantId, TODAY.minusDays(60), TODAY.plusDays(60), "HIEU_LUC");
         Long contractB = themHopDong(roomB, tenantId, TODAY.minusDays(60), TODAY.plusDays(60), "HIEU_LUC");
-        Long foreignContract = themHopDong(foreignRoom, tenantId, TODAY.minusDays(60), TODAY.plusDays(60), "HIEU_LUC");
+        Long authorizedContract = themHopDong(authorizedRoom, tenantId, TODAY.minusDays(60), TODAY.plusDays(60), "HIEU_LUC");
+        Long unauthorizedContract = themHopDong(unauthorizedRoom, tenantId, TODAY.minusDays(60), TODAY.plusDays(60), "HIEU_LUC");
 
         themYeuCau(roomA, contractA, "DANG_XU_LY", "CHU_NHA", "100.00", "Dien", instantAtLocal("2040-08-03T10:00:00"));
         themYeuCau(roomA, contractA, "DA_DONG", "CHU_NHA", "50.00", "Dien", instantAtLocal("2040-08-04T10:00:00"));
         themYeuCau(roomA, contractA, "DA_DONG", "NGUOI_THUE", "20.25", "Ong nuoc", instantAtLocal("2040-08-05T10:00:00"));
         Long septemberOwner = themYeuCau(roomA, contractA, "DANG_XU_LY", "CHU_NHA", "75.00", "Dien", instantAtLocal("2040-09-03T10:00:00"));
         themYeuCau(roomB, contractB, "DANG_XU_LY", "NGUOI_THUE", "30.00", "Son", instantAtLocal("2040-09-04T10:00:00"));
-        Long foreignRepair = themYeuCau(foreignRoom, foreignContract, "DANG_XU_LY", "CHU_NHA", "900.00", "Dien", instantAtLocal("2040-08-06T10:00:00"));
+        themYeuCau(authorizedRoom, authorizedContract, "DANG_XU_LY", "CHU_NHA", "40.00", "Dien", instantAtLocal("2040-08-07T10:00:00"));
+        Long unauthorizedRepair = themYeuCau(unauthorizedRoom, unauthorizedContract, "DANG_XU_LY", "CHU_NHA", "900.00", "Dien", instantAtLocal("2040-08-06T10:00:00"));
+
+        jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (2, 2)");
 
         String ownerToken = login(2L, "0900000002");
 
@@ -261,18 +267,18 @@ class ChiPhiBaoTriBaoCaoIntegrationTest {
                         .header("Authorization", "Bearer " + ownerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.toaNhaId").value(nullValue()))
-                .andExpect(jsonPath("$.cacDong", hasSize(5)))
-                .andExpect(jsonPath("$.cacDong[*].toaNhaId", contains(1, 1, 1, 1, 1)))
-                .andExpect(jsonPath("$.tongChiPhiChuNha").value("225.00"))
+                .andExpect(jsonPath("$.cacDong", hasSize(6)))
+                .andExpect(jsonPath("$.cacDong[*].toaNhaId", contains(1, 1, 1, 2, 1, 1)))
+                .andExpect(jsonPath("$.tongChiPhiChuNha").value("265.00"))
                 .andExpect(jsonPath("$.tongChiPhiNguoiThue").value("50.25"))
                 .andExpect(jsonPath("$.bieuDo", hasSize(2)))
                 .andExpect(jsonPath("$.bieuDo[0].thang").value("2040-08"))
-                .andExpect(jsonPath("$.bieuDo[0].chiPhiChuNha").value("150.00"))
+                .andExpect(jsonPath("$.bieuDo[0].chiPhiChuNha").value("190.00"))
                 .andExpect(jsonPath("$.bieuDo[0].chiPhiNguoiThue").value("20.25"))
                 .andExpect(jsonPath("$.bieuDo[1].thang").value("2040-09"))
                 .andExpect(jsonPath("$.bieuDo[1].chiPhiChuNha").value("75.00"))
                 .andExpect(jsonPath("$.bieuDo[1].chiPhiNguoiThue").value("30.00"))
-                .andExpect(jsonPath("$.cacNhom", hasSize(4)))
+                .andExpect(jsonPath("$.cacNhom", hasSize(5)))
                 .andExpect(jsonPath("$.cacNhom[0].toaNhaId").value(1))
                 .andExpect(jsonPath("$.cacNhom[0].phongId").value(roomA))
                 .andExpect(jsonPath("$.cacNhom[0].hangMuc").value("Dien"))
@@ -283,17 +289,28 @@ class ChiPhiBaoTriBaoCaoIntegrationTest {
                 .andExpect(jsonPath("$.cacNhom[1].hangMuc").value("Ong nuoc"))
                 .andExpect(jsonPath("$.cacNhom[1].chiPhiChuNha").value(nullValue()))
                 .andExpect(jsonPath("$.cacNhom[1].chiPhiNguoiThue").value("20.25"))
-                .andExpect(jsonPath("$.cacNhom[2].thang").value("2040-09"))
-                .andExpect(jsonPath("$.cacNhom[2].chiPhiChuNha").value("75.00"))
-                .andExpect(jsonPath("$.cacNhom[3].phongId").value(roomB))
-                .andExpect(jsonPath("$.cacNhom[3].chiPhiNguoiThue").value("30.00"));
+                .andExpect(jsonPath("$.cacNhom[2].toaNhaId").value(2))
+                .andExpect(jsonPath("$.cacNhom[2].hangMuc").value("Dien"))
+                .andExpect(jsonPath("$.cacNhom[2].thang").value("2040-08"))
+                .andExpect(jsonPath("$.cacNhom[2].chiPhiChuNha").value("40.00"))
+                .andExpect(jsonPath("$.cacNhom[3].thang").value("2040-09"))
+                .andExpect(jsonPath("$.cacNhom[3].chiPhiChuNha").value("75.00"))
+                .andExpect(jsonPath("$.cacNhom[4].phongId").value(roomB))
+                .andExpect(jsonPath("$.cacNhom[4].chiPhiNguoiThue").value("30.00"));
+
+        mockMvc.perform(get("/api/bao-cao/chi-phi-bao-tri")
+                        .param("toaNhaId", unauthorizedBuildingId.toString())
+                        .param("tuNgay", "2040-08-01")
+                        .param("denNgay", "2040-09-30")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isForbidden());
 
         mockMvc.perform(get("/api/yeu-cau-sua-chua/" + septemberOwner)
                         .header("Authorization", "Bearer " + ownerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(septemberOwner));
 
-        mockMvc.perform(get("/api/yeu-cau-sua-chua/" + foreignRepair)
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/" + unauthorizedRepair)
                         .header("Authorization", "Bearer " + ownerToken))
                 .andExpect(status().isForbidden());
     }
@@ -336,6 +353,20 @@ class ChiPhiBaoTriBaoCaoIntegrationTest {
         Clock reportClock() {
             return Clock.fixed(NOW, ZONE);
         }
+    }
+
+    private Long themToaNha(String maToa) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO TOA_NHA(
+                            ma_toa, ten, dia_chi, so_tang, ngay_chot_so, so_ngay_han_tt, ma_ngan_hang, tk_ngan_hang, nguong_that_thoat
+                        ) VALUES (?, 'Toà C — Fixture', 'Địa chỉ fixture', 5, 25, 7, '123456', ?, 175000.00)
+                        RETURNING id
+                """,
+                Long.class,
+                maToa,
+                "9704000000000303"
+        );
     }
 
     private Long themPhong(Long toaNhaId, String soPhong, boolean ngungChoThue) {
