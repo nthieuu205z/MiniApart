@@ -181,6 +181,78 @@ export type BoLocTieuThuBaoCao = {
   kyId: number | null
 }
 
+export type ThongTinDongChiPhiBaoTriBaoCao = {
+  id: number
+  yeuCauId: number
+  toaNhaId: number
+  maToa: string
+  tenToaNha: string
+  phongId: number
+  soPhong: string
+  hangMuc: string
+  thang: string
+  nhanThang: string
+  trangThai: string
+  tenTrangThai: string
+  chiPhi: string | null
+  benChiuChiPhi: 'CHU_NHA' | 'NGUOI_THUE' | null
+  coChiPhi: boolean
+  trangThaiChiPhi: string
+  tenTrangThaiChiPhi: string
+  taoLuc: string
+  lienKet: string
+}
+
+export type ThongTinNhomChiPhiBaoTriBaoCao = {
+  toaNhaId: number
+  maToa: string
+  tenToaNha: string
+  phongId: number
+  soPhong: string
+  hangMuc: string
+  thang: string
+  nhan: string
+  chiPhiChuNha: string | null
+  chiPhiNguoiThue: string | null
+  soDong: number
+  soDongCoChiPhi: number
+  soDongThieuChiPhi: number
+  yeuCauIds: number[]
+}
+
+export type ThongTinDiemChiPhiBaoTriBaoCao = {
+  thang: string
+  nhan: string
+  chiPhiChuNha: string | null
+  chiPhiNguoiThue: string | null
+  soDong: number
+  soDongCoChiPhi: number
+  soDongThieuChiPhi: number
+}
+
+export type ThongTinChiPhiBaoTriBaoCao = {
+  toaNhaId: number | null
+  phongId: number | null
+  tuNgay: string
+  denNgay: string
+  tinhLuc: string
+  tongChiPhiChuNha: string
+  tongChiPhiNguoiThue: string
+  soDong: number
+  soDongCoChiPhi: number
+  soDongThieuChiPhi: number
+  cacDong: ThongTinDongChiPhiBaoTriBaoCao[]
+  cacNhom: ThongTinNhomChiPhiBaoTriBaoCao[]
+  bieuDo: ThongTinDiemChiPhiBaoTriBaoCao[]
+}
+
+export type BoLocChiPhiBaoTriBaoCao = {
+  toaNhaId: number | null
+  phongId: number | null
+  tuNgay: string
+  denNgay: string
+}
+
 export type ThongTinPhong = {
   id: number | null
   toaNhaId: number
@@ -654,6 +726,27 @@ export async function fetchTieuThuBaoCao(
   }
 
   return response.json() as Promise<ThongTinTieuThuBaoCao>
+}
+
+/** FR-RPT-04 reads one owner-scoped maintenance-cost snapshot with exact decimal strings. */
+export async function fetchChiPhiBaoTriBaoCao(
+  token: string,
+  boLoc: BoLocChiPhiBaoTriBaoCao,
+): Promise<ThongTinChiPhiBaoTriBaoCao> {
+  const params = new URLSearchParams()
+  if (boLoc.toaNhaId !== null) params.set('toaNhaId', String(boLoc.toaNhaId))
+  if (boLoc.phongId !== null) params.set('phongId', String(boLoc.phongId))
+  params.set('tuNgay', boLoc.tuNgay)
+  params.set('denNgay', boLoc.denNgay)
+  const response = await fetch(`/api/bao-cao/chi-phi-bao-tri?${params.toString()}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải báo cáo chi phí bảo trì.')
+  }
+
+  return response.json() as Promise<ThongTinChiPhiBaoTriBaoCao>
 }
 
 /** FR-NTF-01 reads the server-scoped operational dashboard for one building. */

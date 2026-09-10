@@ -35,6 +35,7 @@ const DIEU_HUONG_THEO_VAI_TRO: Record<VaiTroDieuHuong, MucDieuHuong[]> = {
     { duongDan: '/cong-no', nhan: 'Công nợ' },
     { duongDan: '/bao-cao', nhan: 'Báo cáo' },
     { duongDan: '/bao-cao/tieu-thu', nhan: 'Tiêu thụ điện nước' },
+    { duongDan: '/bao-cao/chi-phi-bao-tri', nhan: 'Chi phí bảo trì' },
     { duongDan: '/su-co', nhan: 'Sự cố' },
     { duongDan: '/an-toan', nhan: 'An toàn' },
   ],

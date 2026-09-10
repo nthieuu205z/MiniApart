@@ -27,6 +27,7 @@ import { BangViecVanHanh } from './BangViecVanHanh'
 import BaoCaoTongQuan from './BaoCaoTongQuan'
 import CongNoBaoCao from './CongNoBaoCao'
 import TieuThuBaoCao from './TieuThuBaoCao'
+import ChiPhiBaoTriBaoCao from './ChiPhiBaoTriBaoCao'
 import { BlockedNotice } from './design/building/BlockedNotice'
 import { Button } from './design/core/Button'
 import { SysLabel } from './design/core/SysLabel'
@@ -431,6 +432,12 @@ function App() {
     && nguoiDung.vaiTro === 'CHU'
     && duongDanHienTai === '/bao-cao/tieu-thu',
   )
+  const hienThiBaoCaoChiPhiBaoTri = Boolean(
+    token
+    && nguoiDung
+    && nguoiDung.vaiTro === 'CHU'
+    && duongDanHienTai === '/bao-cao/chi-phi-bao-tri',
+  )
   const hienThiBaoCaoCongNo = Boolean(
     token
     && nguoiDung
@@ -471,6 +478,8 @@ function App() {
         ? 'Báo cáo tổng quan'
       : hienThiBaoCaoTieuThu
         ? 'Báo cáo tiêu thụ điện nước'
+      : hienThiBaoCaoChiPhiBaoTri
+        ? 'Báo cáo chi phí bảo trì'
       : hienThiBaoCaoCongNo
         ? 'Báo cáo công nợ'
       : hienThiBangViec
@@ -500,6 +509,8 @@ function App() {
         ? 'FR-RPT-01 · FR-RPT-02'
       : hienThiBaoCaoTieuThu
         ? 'FR-RPT-02 · FR-RPT-05'
+      : hienThiBaoCaoChiPhiBaoTri
+        ? 'FR-RPT-04'
       : hienThiBaoCaoCongNo
         ? 'FR-RPT-02 · FR-RPT-03'
       : hienThiBangViec
@@ -690,6 +701,8 @@ function App() {
             <BaoCaoTongQuan token={token} mobile={laManHinhHep} />
           ) : hienThiBaoCaoTieuThu && token ? (
             <TieuThuBaoCao token={token} mobile={laManHinhHep} />
+          ) : hienThiBaoCaoChiPhiBaoTri && token ? (
+            <ChiPhiBaoTriBaoCao token={token} mobile={laManHinhHep} />
           ) : hienThiBaoCaoCongNo && token ? (
             <CongNoBaoCao token={token} mobile={laManHinhHep} />
           ) : hienThiBangViec && token ? (
@@ -1021,6 +1034,7 @@ const GLYPH_THEO_DUONG_DAN: Record<string, GlyphName> = {
   '/cong-no': 'con-no',
   '/bao-cao': 'bang-gia',
   '/bao-cao/tieu-thu': 'cong-to',
+  '/bao-cao/chi-phi-bao-tri': 'cho-tho',
   '/su-co': 'cho-tho',
   '/an-toan': 'bi-chan',
   '/nhac-viec': 'nhac-viec',
@@ -1043,7 +1057,7 @@ const NHOM_DIEU_HUONG_THEO_VAI_TRO: Record<string, Array<{ label: string, duongD
   ],
   CHU: [
     { label: 'Tổng quan', duongDan: ['/tong-quan', '/toa-nha'] },
-    { label: 'Tiền', duongDan: ['/hoa-don', '/cong-no', '/bao-cao', '/bao-cao/tieu-thu'] },
+    { label: 'Tiền', duongDan: ['/hoa-don', '/cong-no', '/bao-cao', '/bao-cao/tieu-thu', '/bao-cao/chi-phi-bao-tri'] },
     { label: 'Vận hành', duongDan: ['/su-co', '/an-toan'] },
   ],
   QUAN_LY: [

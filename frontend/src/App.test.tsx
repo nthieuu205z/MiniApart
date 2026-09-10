@@ -38,7 +38,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'CHU',
       tenVaiTro: 'Chủ sở hữu',
     },
-    menuLabels: ['Tổng quan', 'Toà nhà', 'Hoá đơn', 'Công nợ', 'Báo cáo', 'Tiêu thụ điện nước', 'Sự cố', 'An toàn'],
+    menuLabels: ['Tổng quan', 'Toà nhà', 'Hoá đơn', 'Công nợ', 'Báo cáo', 'Tiêu thụ điện nước', 'Chi phí bảo trì', 'Sự cố', 'An toàn'],
   },
   {
     nguoiDung: {
@@ -334,6 +334,25 @@ describe('App role navigation', () => {
     await vi.waitFor(() => {
       expect(mountedApp!.container.querySelector('[data-testid="debt-report-screen"]')).not.toBeNull()
     })
+  })
+
+  it('FR-RPT-04 routes CHU to the maintenance-cost report and keeps the route out of manager navigation', async () => {
+    const chuSoHuu = MENU_BY_ROLE[1]
+    const fetchMock = buildFetchMock(chuSoHuu.nguoiDung, {
+      maintenanceCostResponse: maintenanceCostFixture(),
+    })
+    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/bao-cao/chi-phi-bao-tri', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="maintenance-cost-report-screen"]')).not.toBeNull()
+    })
+    expect(readMenuLabels(mountedApp.container)).toContain('Chi phí bảo trì')
+
+    const quanLy = MENU_BY_ROLE[2]
+    const managerApp = await mountAppAndLogin(quanLy.nguoiDung, '/bao-cao/chi-phi-bao-tri')
+    await vi.waitFor(() => expect(managerApp.container.textContent).toContain('Không có quyền'))
+    expect(readMenuLabels(managerApp.container)).not.toContain('Chi phí bảo trì')
+    await act(async () => managerApp.root.unmount())
   })
 
   it('FR-RPT-03 opens a debt invoice with only its invoice id, including a settlement invoice', async () => {
@@ -904,6 +923,7 @@ function buildFetchMock(
     contractResponse?: Record<string, unknown>[]
     managerInvoiceResponse?: Record<string, unknown>[]
     debtResponse?: Record<string, unknown>
+    maintenanceCostResponse?: Record<string, unknown>
     debtInvoiceResponse?: Record<string, unknown>
     notificationsResponse?: { thongBao: Record<string, unknown>[]; soChuaDoc: number }
     notificationReadResponse?: Record<string, unknown>
@@ -1109,6 +1129,13 @@ function buildFetchMock(
       })
     }
 
+    if (url.startsWith('/api/bao-cao/chi-phi-bao-tri?') && method === 'GET') {
+      return new Response(JSON.stringify(options?.maintenanceCostResponse ?? maintenanceCostFixture()), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
     const tenantInvoiceMatch = url.match(/^\/api\/cong\/hoa-don\/(\d+)$/)
     if (tenantInvoiceMatch && method === 'GET' && options?.invoiceResponse) {
       return new Response(JSON.stringify(options.invoiceResponse), {
@@ -1295,6 +1322,24 @@ function buildFetchMock(
 
     throw new Error(`Unexpected fetch: ${url}`)
   })
+}
+
+function maintenanceCostFixture() {
+  return {
+    toaNhaId: null,
+    phongId: null,
+    tuNgay: '2026-09-01',
+    denNgay: '2026-09-10',
+    tinhLuc: '2040-08-15T10:00+07:00',
+    tongChiPhiChuNha: '0.00',
+    tongChiPhiNguoiThue: '0.00',
+    soDong: 0,
+    soDongCoChiPhi: 0,
+    soDongThieuChiPhi: 0,
+    cacDong: [],
+    cacNhom: [],
+    bieuDo: [],
+  }
 }
 
 function buildFloorMapRooms(buildingId: number): ThongTinPhong[] {
