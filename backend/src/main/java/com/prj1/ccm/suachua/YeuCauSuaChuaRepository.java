@@ -67,24 +67,6 @@ public class YeuCauSuaChuaRepository {
                 : jdbcTemplate.query(sql, (resultSet, rowNum) -> mapView(resultSet), toaNhaId, trangThai.name());
     }
 
-    /** FR-NTF-01 reads only the lifecycle timestamps needed to count the operational dashboard. */
-    public List<ThongTinTrangThaiBangViec> findTrangThaiChoBangViec(Long toaNhaId) {
-        return jdbcTemplate.query(
-                """
-                        SELECT yc.trang_thai, yc.cho_xac_nhan_luc, yc.tao_luc
-                        FROM YEU_CAU_SUA_CHUA yc
-                        JOIN PHONG p ON p.id = yc.phong_id
-                        WHERE p.toa_nha_id = ?
-                        """,
-                (resultSet, rowNum) -> new ThongTinTrangThaiBangViec(
-                        TrangThaiYeuCau.valueOf(resultSet.getString("trang_thai")),
-                        layInstantNullable(resultSet, "cho_xac_nhan_luc"),
-                        resultSet.getTimestamp("tao_luc").toInstant()
-                ),
-                toaNhaId
-        );
-    }
-
     public List<YeuCauSuaChuaView> findByNguoiQuanLy(Long nguoiDungId, TrangThaiYeuCau trangThai) {
         String sql = cauLenhView() + """
                 JOIN PHAN_QUYEN_TOA pqt
@@ -105,7 +87,9 @@ public class YeuCauSuaChuaRepository {
             Long nguoiDungId,
             Long toaNhaId,
             Long phongId,
-            String hangMuc
+            String hangMuc,
+            String boLoc,
+            Instant hienTai
     ) {
         StringBuilder sql = new StringBuilder(cauLenhView() + """
                 JOIN PHAN_QUYEN_TOA pqt
@@ -125,6 +109,20 @@ public class YeuCauSuaChuaRepository {
         if (hangMuc != null) {
             sql.append(" AND yc.hang_muc = ?");
             thamSo.add(hangMuc);
+        }
+        if ("TON_DONG_QUA_48_GIO".equals(boLoc)) {
+            sql.append(" ");
+            sql.append("""
+                    AND yc.trang_thai NOT IN ('DA_DONG', 'DA_HUY')
+                    AND yc.tao_luc < CAST(? AS TIMESTAMPTZ) - INTERVAL '48 hours'
+                    AND NOT (
+                        yc.trang_thai = 'CHO_XAC_NHAN'
+                        AND yc.cho_xac_nhan_luc IS NOT NULL
+                        AND yc.cho_xac_nhan_luc < CAST(? AS TIMESTAMPTZ) - INTERVAL '72 hours'
+                    )
+                    """);
+            thamSo.add(Timestamp.from(hienTai));
+            thamSo.add(Timestamp.from(hienTai));
         }
         sql.append(" ORDER BY yc.tao_luc DESC, yc.id DESC");
         return jdbcTemplate.query(sql.toString(), (resultSet, rowNum) -> mapView(resultSet), thamSo.toArray());
@@ -381,10 +379,4 @@ public class YeuCauSuaChuaRepository {
     ) {
     }
 
-    public record ThongTinTrangThaiBangViec(
-            TrangThaiYeuCau trangThai,
-            Instant choXacNhanLuc,
-            Instant taoLuc
-    ) {
-    }
 }

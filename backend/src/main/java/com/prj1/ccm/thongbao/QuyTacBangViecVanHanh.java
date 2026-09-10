@@ -33,7 +33,6 @@ public final class QuyTacBangViecVanHanh {
     ) {
         return trangThai != TrangThaiHoaDon.NHAP
                 && trangThai != TrangThaiHoaDon.DA_HUY
-                && trangThai != TrangThaiHoaDon.DA_THANH_TOAN
                 && homNay.isAfter(hanThanhToan)
                 && daThu.compareTo(tongTien) < 0;
     }

@@ -35,7 +35,7 @@ describe('BangViecVanHanh', () => {
           group('THIEU_CHI_SO', 'Thiếu chỉ số sau ngày chốt', 0, 'DA_XONG', '/ghi-chi-so?toaNhaId=1'),
           group('HOP_DONG_SAP_HET_HAN', 'Hợp đồng sắp hết hạn', 1, 'CAN_XU_LY', '/hop-dong?toaNhaId=1&sapHetHan=true'),
           group('SU_CO_TON_DONG', 'Sự cố tồn đọng trên 48 giờ', 0, 'DA_XONG', '/su-co?toaNhaId=1&boLoc=TON_DONG_QUA_48_GIO'),
-          { ma: 'PCCC', tieuDe: 'Kiểm tra PCCC', soLuong: null, trangThai: 'CHUA_SAN_SANG', tenTrangThai: 'Chưa triển khai nguồn kiểm tra PCCC', khanCap: false, lienKet: '/an-toan?toaNhaId=1' },
+          { ma: 'PCCC', tieuDe: 'Kiểm tra PCCC', soLuong: null, trangThai: 'CHUA_SAN_SANG', tenTrangThai: 'Chưa triển khai nguồn kiểm tra PCCC', khanCap: false, lienKet: null },
         ],
       })
       throw new Error(`Unexpected request ${url}`)
@@ -49,7 +49,9 @@ describe('BangViecVanHanh', () => {
     expect(container.querySelector('[data-dashboard-group="NO_QUA_HAN"]')?.textContent).toContain('Cần xử lý')
     expect(container.querySelector('[data-dashboard-group="THIEU_CHI_SO"]')?.textContent).toContain('Đã xong')
     expect(container.querySelector('[data-dashboard-group="PCCC"]')?.textContent).toContain('Chưa triển khai nguồn kiểm tra PCCC')
-    expect(container.querySelector('[data-dashboard-group="PCCC"] [data-dashboard-link]')?.getAttribute('href')).toBe('/an-toan?toaNhaId=1')
+    expect(container.querySelector('[data-dashboard-group="PCCC"] [data-dashboard-link]')).toBeNull()
+    expect(container.querySelector('[data-dashboard-group="PCCC"]')?.textContent).not.toContain('Mở khu vực an toàn')
+    expect(container.querySelector('[data-dashboard-group="NO_QUA_HAN"] [data-dashboard-link]')?.getAttribute('href')).toBe('/hoa-don?toaNhaId=1&trangThai=NO_QUA_HAN')
     expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/bang-viec', { headers: { Authorization: 'Bearer test-token' } })
   })
 })

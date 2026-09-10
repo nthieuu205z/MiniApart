@@ -71,15 +71,20 @@ export function BangViecVanHanh({ token, mobile = false }: Props): React.ReactEl
         : loi ? <div role="alert"><ScreenNotice tone="urgent">{loi}</ScreenNotice></div>
           : !bangViec ? <EmptyState title="Chưa có toà nhà được phân quyền." body="Bảng việc chỉ hiển thị trong phạm vi được máy chủ cấp quyền." />
             : <section aria-label="Các nhóm việc vận hành" style={styleGrid}>
-              {bangViec.nhomViec.map((group) => <NhomViec key={group.ma} group={group} />)}
+              {bangViec.nhomViec.map((group) => <NhomViec key={group.ma} group={group} toaNhaId={bangViec.toaNhaId} />)}
             </section>}
     </ScreenSurface>
   )
 }
 
-function NhomViec({ group }: { group: BangViecData['nhomViec'][number] }): React.ReactElement {
+function NhomViec({ group, toaNhaId }: { group: BangViecData['nhomViec'][number]; toaNhaId: number }): React.ReactElement {
   const daXong = group.trangThai === 'DA_XONG'
   const chuaSanSang = group.trangThai === 'CHUA_SAN_SANG'
+  const lienKet = chuaSanSang
+    ? null
+    : group.ma === 'NO_QUA_HAN'
+      ? `/hoa-don?toaNhaId=${toaNhaId}&trangThai=NO_QUA_HAN`
+      : group.lienKet
   return (
     <article data-dashboard-group={group.ma} style={styleCard} aria-label={`${group.tieuDe}: ${group.tenTrangThai}`}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'start' }}>
@@ -93,7 +98,7 @@ function NhomViec({ group }: { group: BangViecData['nhomViec'][number] }): React
       </div>
       <StatusTag tone={chuaSanSang ? 'waiting' : daXong ? 'done' : 'urgent'}>{group.tenTrangThai}</StatusTag>
       {group.khanCap && !daXong ? <p style={styleUrgentText}>Ưu tiên xử lý ngay.</p> : null}
-      {group.lienKet ? <a data-dashboard-link href={group.lienKet} style={styleLink}>{chuaSanSang ? 'Mở khu vực an toàn' : daXong ? 'Xem lại bộ lọc' : 'Mở danh sách đã lọc'}</a> : null}
+      {lienKet ? <a data-dashboard-link href={lienKet} style={styleLink}>{daXong ? 'Xem lại bộ lọc' : 'Mở danh sách đã lọc'}</a> : null}
     </article>
   )
 }

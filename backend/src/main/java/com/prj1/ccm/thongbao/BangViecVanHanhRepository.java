@@ -3,6 +3,8 @@ package com.prj1.ccm.thongbao;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 
 @Repository
@@ -13,35 +15,30 @@ class BangViecVanHanhRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    int demHoaDonQuaHanChuaThanhToan(Long toaNhaId, LocalDate homNay) {
-        Integer dem = jdbcTemplate.queryForObject(
+    /** FR-NTF-01 reasserts the permission inside the dashboard read transaction. */
+    boolean xacNhanPhanQuyenToa(Long nguoiDungId, Long toaNhaId) {
+        return !jdbcTemplate.query(
                 """
-                        SELECT COUNT(*)
-                        FROM HOA_DON hd
-                        JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
-                        JOIN PHONG p ON p.id = hop_dong.phong_id
-                        WHERE p.toa_nha_id = ?
-                          AND hd.trang_thai IN ('DA_PHAT_HANH', 'DA_THU_MOT_PHAN', 'QUA_HAN')
-                          AND hd.han_thanh_toan < ?
-                          AND COALESCE((
-                              SELECT SUM(tt.so_tien)
-                              FROM THANH_TOAN tt
-                              WHERE tt.hoa_don_id = hd.id
-                          ), hd.da_thu) < hd.tong_tien
+                        SELECT 1
+                        FROM PHAN_QUYEN_TOA
+                        WHERE nguoi_dung_id = ? AND toa_nha_id = ?
                         """,
-                Integer.class,
-                toaNhaId,
-                homNay
-        );
-        return dem == null ? 0 : dem;
+                (resultSet, rowNum) -> resultSet.getInt(1),
+                nguoiDungId,
+                toaNhaId
+        ).isEmpty();
     }
 
-    int demPhongThieuChiSoSauNgayChot(Long toaNhaId, LocalDate homNay) {
+    /** FR-NTF-01 counts missing readings only through the authenticated user's building permission. */
+    int demPhongThieuChiSoSauNgayChot(Long nguoiDungId, Long toaNhaId, LocalDate homNay) {
         Integer dem = jdbcTemplate.queryForObject(
                 """
                         SELECT COUNT(DISTINCT p.id)
                         FROM KY_THANH_TOAN kt
                         JOIN PHONG p ON p.toa_nha_id = kt.toa_nha_id
+                        JOIN PHAN_QUYEN_TOA pqt
+                          ON pqt.toa_nha_id = p.toa_nha_id
+                         AND pqt.nguoi_dung_id = ?
                         JOIN HOP_DONG hd ON hd.phong_id = p.id
                         JOIN HOP_DONG_DICH_VU hddv ON hddv.hop_dong_id = hd.id
                         JOIN DICH_VU dv ON dv.id = hddv.dich_vu_id
@@ -58,28 +55,62 @@ class BangViecVanHanhRepository {
                           AND daterange(hd.ngay_bat_dau, hd.ngay_ket_thuc, '[]')
                               && daterange(kt.ngay_bat_dau, kt.ngay_ket_thuc, '[]')
                           AND cs.id IS NULL
-                        """,
+                """,
                 Integer.class,
+                nguoiDungId,
                 toaNhaId,
                 homNay
         );
         return dem == null ? 0 : dem;
     }
 
-    int demHopDongSapHetHan(Long toaNhaId, LocalDate homNay) {
+    /** FR-NTF-01 counts near-expiry contracts only through the authenticated user's building permission. */
+    int demHopDongSapHetHan(Long nguoiDungId, Long toaNhaId, LocalDate homNay) {
         Integer dem = jdbcTemplate.queryForObject(
                 """
                         SELECT COUNT(*)
                         FROM HOP_DONG hd
                         JOIN PHONG p ON p.id = hd.phong_id
+                        JOIN PHAN_QUYEN_TOA pqt
+                          ON pqt.toa_nha_id = p.toa_nha_id
+                         AND pqt.nguoi_dung_id = ?
                         WHERE p.toa_nha_id = ?
                           AND hd.trang_thai = 'HIEU_LUC'
                           AND hd.ngay_ket_thuc BETWEEN ? AND ?
-                        """,
+                """,
                 Integer.class,
+                nguoiDungId,
                 toaNhaId,
                 homNay,
                 homNay.plusDays(30)
+        );
+        return dem == null ? 0 : dem;
+    }
+
+    /** FR-NTF-01 counts repairs strictly older than 48 hours in SQL and derives 72-hour closure in the predicate. */
+    int demSuCoTonDongQuaHaiMuoiTamGio(Long nguoiDungId, Long toaNhaId, Instant hienTai) {
+        Integer dem = jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM YEU_CAU_SUA_CHUA yc
+                        JOIN PHONG p ON p.id = yc.phong_id
+                        JOIN PHAN_QUYEN_TOA pqt
+                          ON pqt.toa_nha_id = p.toa_nha_id
+                         AND pqt.nguoi_dung_id = ?
+                        WHERE p.toa_nha_id = ?
+                          AND yc.trang_thai NOT IN ('DA_DONG', 'DA_HUY')
+                          AND yc.tao_luc < CAST(? AS TIMESTAMPTZ) - INTERVAL '48 hours'
+                          AND NOT (
+                              yc.trang_thai = 'CHO_XAC_NHAN'
+                              AND yc.cho_xac_nhan_luc IS NOT NULL
+                              AND yc.cho_xac_nhan_luc < CAST(? AS TIMESTAMPTZ) - INTERVAL '72 hours'
+                          )
+                        """,
+                Integer.class,
+                nguoiDungId,
+                toaNhaId,
+                Timestamp.from(hienTai),
+                Timestamp.from(hienTai)
         );
         return dem == null ? 0 : dem;
     }

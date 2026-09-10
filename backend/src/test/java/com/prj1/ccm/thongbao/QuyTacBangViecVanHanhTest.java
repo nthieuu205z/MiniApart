@@ -39,6 +39,12 @@ class QuyTacBangViecVanHanhTest {
         assertThat(quyTac.hoaDonQuaHanChuaThanhToan(
                 HOM_NAY, HOM_NAY.minusDays(1), new BigDecimal("100.00"), BigDecimal.ZERO, TrangThaiHoaDon.DA_HUY
         )).isFalse();
+        assertThat(quyTac.hoaDonQuaHanChuaThanhToan(
+                HOM_NAY, HOM_NAY.minusDays(1), new BigDecimal("100.00"), new BigDecimal("40.00"), TrangThaiHoaDon.DA_THANH_TOAN
+        )).isTrue();
+        assertThat(quyTac.hoaDonQuaHanChuaThanhToan(
+                HOM_NAY, HOM_NAY.minusDays(1), new BigDecimal("100.00"), new BigDecimal("125.00"), TrangThaiHoaDon.DA_THANH_TOAN
+        )).isFalse();
     }
 
     @Test

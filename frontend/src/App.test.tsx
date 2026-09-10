@@ -305,6 +305,16 @@ describe('App role navigation', () => {
     })
   })
 
+  it('FR-MTR-01 routes CHU to the scoped meter-reading screen from dashboard links', async () => {
+    const chuSoHuu = MENU_BY_ROLE[1]
+    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/ghi-chi-so?toaNhaId=1')
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="meter-screen"]')).not.toBeNull()
+    })
+    expect(mountedApp.container.textContent).toContain('Ghi chỉ số')
+  })
+
   it('FR-AUT-04 shows a friendly no-permission state for a typed route outside the role menu', async () => {
     const chuSoHuu = MENU_BY_ROLE[1]
     mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/tai-khoan')
@@ -845,6 +855,7 @@ function buildFetchMock(
     historyResponse?: Record<string, unknown>[]
     consumptionResponse?: Record<string, unknown>
     contractResponse?: Record<string, unknown>[]
+    managerInvoiceResponse?: Record<string, unknown>[]
     notificationsResponse?: { thongBao: Record<string, unknown>[]; soChuaDoc: number }
     notificationReadResponse?: Record<string, unknown>
   },
@@ -1016,6 +1027,20 @@ function buildFetchMock(
 
     if (url === '/api/cong/hop-dong' && method === 'GET') {
       return new Response(JSON.stringify(options?.contractResponse ?? []), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (url.startsWith('/api/hop-dong?') && method === 'GET') {
+      return new Response(JSON.stringify(options?.contractResponse ?? []), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (url.startsWith('/api/hoa-don?') && method === 'GET') {
+      return new Response(JSON.stringify(options?.managerInvoiceResponse ?? []), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -1638,6 +1663,78 @@ describe('invoice navigation', () => {
       '/api/cong/hop-dong',
       expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }),
     )
+  })
+
+  it('FR-BLD-06 routes CHU/QUAN_LY to the scoped contract list and applies sapHetHan=true locally', async () => {
+    const quanLy = MENU_BY_ROLE[2].nguoiDung
+    const fetchMock = buildFetchMock(quanLy, {
+      contractResponse: [
+        {
+          id: 21, phongId: 101, soPhong: '101', nguoiThueId: 10, hoTenNguoiThue: 'Người thuê 101',
+          ngayBatDau: '2026-01-01', ngayKetThuc: '2026-09-20', giaThue: '3500000.00', tienCoc: '3500000.00',
+          soNgayBaoTruoc: 30, trangThai: 'HIEU_LUC', tenTrangThai: 'Hiệu lực', sapHetHan: true, soNgayConLai: 10,
+          dichVuApDung: [], quyetToan: null,
+        },
+        {
+          id: 22, phongId: 102, soPhong: '102', nguoiThueId: 11, hoTenNguoiThue: 'Người thuê 102',
+          ngayBatDau: '2026-01-01', ngayKetThuc: '2027-01-01', giaThue: '3600000.00', tienCoc: '3600000.00',
+          soNgayBaoTruoc: 30, trangThai: 'HIEU_LUC', tenTrangThai: 'Hiệu lực', sapHetHan: false, soNgayConLai: 113,
+          dichVuApDung: [], quyetToan: null,
+        },
+      ],
+    })
+    mountedApp = await mountAppAndLogin(quanLy, '/hop-dong?toaNhaId=1&sapHetHan=true', fetchMock)
+
+    await vi.waitFor(() => expect(mountedApp!.container.querySelector('[data-testid="manager-contract-screen"]')).not.toBeNull())
+    expect(mountedApp.container.querySelector('[data-contract-row="21"]')).not.toBeNull()
+    expect(mountedApp.container.querySelector('[data-contract-row="22"]')).toBeNull()
+    expect(fetchMock).toHaveBeenCalledWith('/api/hop-dong?toaNhaId=1', expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }))
+    expect(mountedApp.container.textContent).toContain('Đang lọc hợp đồng sắp hết hạn')
+  })
+
+  it('FR-INV-02 routes manager invoice worklists and keeps each row linked to HoaDon detail identifiers', async () => {
+    const quanLy = MENU_BY_ROLE[2].nguoiDung
+    const fetchMock = buildFetchMock(quanLy, {
+      managerInvoiceResponse: [{
+        hoaDonId: 10, maHoaDon: 'TN-A-101-202608', kyId: 8, hopDongId: 11, soPhong: '101', nguoiThue: 'Người thuê 101',
+        hanThanhToan: '2026-09-07', trangThai: 'DA_PHAT_HANH', tongTien: '3889500.00', daThu: '0.00', conLai: '3889500.00',
+      }],
+    })
+    mountedApp = await mountAppAndLogin(quanLy, '/hoa-don?toaNhaId=1&trangThai=NO_QUA_HAN', fetchMock)
+
+    await vi.waitFor(() => expect(mountedApp!.container.querySelector('[data-testid="manager-invoice-screen"]')).not.toBeNull())
+    expect(mountedApp.container.querySelector('[data-invoice-row="10"]')?.textContent).toContain('TN-A-101-202608')
+    expect(mountedApp.container.querySelector('[data-invoice-row="10"] a')?.getAttribute('href')).toBe('/hoa-don?toaNhaId=1&kyId=8&hoaDonId=10')
+    expect(fetchMock).toHaveBeenCalledWith('/api/hoa-don?toaNhaId=1&trangThai=NO_QUA_HAN', expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }))
+  })
+
+  it('FR-INV-02 does not create a broken detail link for a settlement invoice without a payment period', async () => {
+    const quanLy = MENU_BY_ROLE[2].nguoiDung
+    const fetchMock = buildFetchMock(quanLy, {
+      managerInvoiceResponse: [{
+        hoaDonId: 11, maHoaDon: 'QT-11', kyId: null, hopDongId: 12, soPhong: '102', nguoiThue: 'Người thuê 102',
+        ngayPhatHanh: '2026-09-01', hanThanhToan: '2026-09-08', trangThai: 'DA_PHAT_HANH', tongTien: '1000.00', daThu: '0.00', conLai: '1000.00',
+      }],
+    })
+    mountedApp = await mountAppAndLogin(quanLy, '/hoa-don?toaNhaId=1&trangThai=NO_QUA_HAN', fetchMock)
+
+    await vi.waitFor(() => expect(mountedApp!.container.querySelector('[data-invoice-row="11"]')).not.toBeNull())
+    expect(mountedApp.container.querySelector('[data-invoice-row="11"] [data-invoice-detail-link]')).toBeNull()
+    expect(mountedApp.container.querySelector('[data-invoice-without-period]')?.textContent).toBe('QT-11')
+    expect(mountedApp.container.textContent).toContain('không thuộc kỳ thanh toán')
+  })
+
+  it('FR-INV-02 opens manager HoaDon detail only when all three identifiers are present', async () => {
+    const quanLy = MENU_BY_ROLE[2].nguoiDung
+    const invoiceResponse = {
+      hoaDonId: 10, maHoaDon: 'TN-A-101-202608', kyId: 8, hopDongId: 11, soPhong: '101', nguoiThue: 'Người thuê 101',
+      ngayPhatHanh: '2026-08-31', hanThanhToan: '2026-09-07', trangThai: 'DA_PHAT_HANH', tongTien: '1000.00', daThu: '0.00', conLai: '1000.00', cacDong: [],
+    }
+    const fetchMock = buildFetchMock(quanLy, { invoiceResponse })
+    mountedApp = await mountAppAndLogin(quanLy, '/hoa-don?toaNhaId=1&kyId=8&hoaDonId=10', fetchMock)
+
+    await vi.waitFor(() => expect(mountedApp!.container.querySelector('[data-testid="invoice-detail"]')).not.toBeNull())
+    expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/ky-thanh-toan/8/hoa-don/10', expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }))
   })
 
   it('FR-INV-02 reads all invoice identifiers from the detail query link', () => {

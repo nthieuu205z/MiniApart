@@ -17,6 +17,8 @@ import HoaDon from './HoaDon'
 import LichSuHoaDon from './LichSuHoaDon'
 import BieuDoTieuThu from './BieuDoTieuThu'
 import HopDongNguoiThue from './HopDongNguoiThue'
+import HopDongQuanLy from './HopDongQuanLy'
+import HoaDonQuanLy from './HoaDonQuanLy'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { ViecCuaToi } from './ViecCuaToi'
 import { ThongBao } from './ThongBao'
@@ -358,7 +360,7 @@ function App() {
     token
     && nguoiDung
     && duongDanHienTai === '/ghi-chi-so'
-    && nguoiDung.vaiTro === 'QUAN_LY',
+    && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro),
   )
   const hienThiHoaDonNguoiThue = Boolean(
     token
@@ -383,6 +385,12 @@ function App() {
     && nguoiDung
     && nguoiDung.vaiTro === 'NGUOI_THUE'
     && duongDanHienTai === '/hop-dong'
+  )
+  const hienThiHopDongQuanLy = Boolean(
+    token
+    && nguoiDung
+    && duongDanHienTai === '/hop-dong'
+    && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro)
   )
   const hienThiThongBao = Boolean(
     token
@@ -412,12 +420,23 @@ function App() {
     token
     && nguoiDung
     && ['/hoa-don', '/hoa-don-cua-toi'].includes(duongDanHienTai)
-    && ['QTHT', 'CHU', 'QUAN_LY', 'NGUOI_THUE'].includes(nguoiDung.vaiTro),
+    && ['QTHT', 'CHU', 'QUAN_LY', 'NGUOI_THUE'].includes(nguoiDung.vaiTro)
+    && (!['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro)
+      || (dinhDanhHoaDon.toaNhaId !== undefined && dinhDanhHoaDon.kyId !== undefined && dinhDanhHoaDon.hoaDonId !== undefined)),
+  )
+  const hienThiHoaDonQuanLy = Boolean(
+    token
+    && nguoiDung
+    && duongDanHienTai === '/hoa-don'
+    && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro)
+    && !(dinhDanhHoaDon.toaNhaId !== undefined && dinhDanhHoaDon.kyId !== undefined && dinhDanhHoaDon.hoaDonId !== undefined),
   )
   const tieuDeTheChinh = hienThiBieuDoTieuThuNguoiThue
     ? 'Tiêu thụ điện và nước'
     : hienThiHopDongNguoiThue
       ? 'Hợp đồng của tôi'
+      : hienThiHopDongQuanLy
+        ? 'Hợp đồng theo toà nhà'
       : hienThiThongBao
         ? 'Thông báo'
       : hienThiBangViec
@@ -432,9 +451,9 @@ function App() {
         ? 'Toà nhà'
         : hienThiDanhMucPhong
           ? 'Phòng'
-          : hienThiGhiChiSo
+      : hienThiGhiChiSo
             ? 'Ghi chỉ số'
-            : hienThiHoaDon
+            : hienThiHoaDonQuanLy || hienThiHoaDon
               ? 'Hoá đơn'
               : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
   const maTruyVetTheChinh = hienThiBieuDoTieuThuNguoiThue
@@ -623,6 +642,8 @@ function App() {
             <BieuDoTieuThu token={token} mobile={laManHinhHep} />
           ) : hienThiHopDongNguoiThue && token ? (
             <HopDongNguoiThue token={token} mobile={laManHinhHep} />
+          ) : hienThiHopDongQuanLy && token ? (
+            <HopDongQuanLy token={token} mobile={laManHinhHep} />
           ) : hienThiViecCuaToi && token ? (
             <ViecCuaToi token={token} />
           ) : hienThiBangViec && token ? (
@@ -631,6 +652,8 @@ function App() {
             <LichSuSuaChua token={token} mobile={laManHinhHep} />
           ) : hienThiThongBao && token ? (
             <ThongBao token={token} mobile={laManHinhHep} vaiTro={nguoiDung.vaiTro} onUnreadCountChange={setSoThongBaoChuaDoc} />
+          ) : hienThiHoaDonQuanLy && token ? (
+            <HoaDonQuanLy token={token} mobile={laManHinhHep} />
           ) : hienThiLichSuHoaDonNguoiThue && token ? (
             <LichSuHoaDon token={token} mobile={laManHinhHep} />
           ) : (hienThiHoaDon || hienThiHoaDonNguoiThue) && token ? (

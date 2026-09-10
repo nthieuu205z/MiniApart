@@ -98,7 +98,7 @@ class BangViecVanHanhIntegrationTest {
                 .andExpect(jsonPath("$.nhomViec[0].ma").value("NO_QUA_HAN"))
                 .andExpect(jsonPath("$.nhomViec[0].soLuong").value(1))
                 .andExpect(jsonPath("$.nhomViec[0].trangThai").value("CAN_XU_LY"))
-                .andExpect(jsonPath("$.nhomViec[0].lienKet").value("/hoa-don?toaNhaId=1&trangThai=QUA_HAN"))
+                .andExpect(jsonPath("$.nhomViec[0].lienKet").value("/hoa-don?toaNhaId=1&trangThai=NO_QUA_HAN"))
                 .andExpect(jsonPath("$.nhomViec[1].ma").value("THIEU_CHI_SO"))
                 .andExpect(jsonPath("$.nhomViec[1].soLuong").value(1))
                 .andExpect(jsonPath("$.nhomViec[1].lienKet").value("/ghi-chi-so?toaNhaId=1"))
@@ -111,7 +111,8 @@ class BangViecVanHanhIntegrationTest {
                 .andExpect(jsonPath("$.nhomViec[4].ma").value("PCCC"))
                 .andExpect(jsonPath("$.nhomViec[4].soLuong").value(nullValue()))
                 .andExpect(jsonPath("$.nhomViec[4].trangThai").value("CHUA_SAN_SANG"))
-                .andExpect(jsonPath("$.nhomViec[4].tenTrangThai").value(containsString("Chưa triển khai nguồn kiểm tra PCCC")));
+                .andExpect(jsonPath("$.nhomViec[4].tenTrangThai").value(containsString("Chưa triển khai nguồn kiểm tra PCCC")))
+                .andExpect(jsonPath("$.nhomViec[4].lienKet").value(nullValue()));
     }
 
     @Test
@@ -128,6 +129,10 @@ class BangViecVanHanhIntegrationTest {
         themHoaDon(period31, contract31, TODAY, "DA_PHAT_HANH", "100000.00", "0.00");
         themRepair(room30, NOW.minusSeconds(48 * 60 * 60), "MOI_TIEP_NHAN", null);
         themRepair(room31, NOW.minusSeconds(48 * 60 * 60 + 1), "DA_DONG", null);
+        Long roomAwaitingAt72 = themPhong(1L, "804");
+        Long roomAwaitingAfter72 = themPhong(1L, "805");
+        themRepair(roomAwaitingAt72, NOW.minusSeconds(96 * 60 * 60), "CHO_XAC_NHAN", NOW.minusSeconds(72 * 60 * 60));
+        themRepair(roomAwaitingAfter72, NOW.minusSeconds(96 * 60 * 60), "CHO_XAC_NHAN", NOW.minusSeconds(73 * 60 * 60));
 
         String ownerToken = login(2L, "0900000002");
 
@@ -137,8 +142,8 @@ class BangViecVanHanhIntegrationTest {
                 .andExpect(jsonPath("$.nhomViec[0].soLuong").value(0))
                 .andExpect(jsonPath("$.nhomViec[0].trangThai").value("DA_XONG"))
                 .andExpect(jsonPath("$.nhomViec[2].soLuong").value(1))
-                .andExpect(jsonPath("$.nhomViec[3].soLuong").value(0))
-                .andExpect(jsonPath("$.nhomViec[3].trangThai").value("DA_XONG"));
+                .andExpect(jsonPath("$.nhomViec[3].soLuong").value(1))
+                .andExpect(jsonPath("$.nhomViec[3].trangThai").value("CAN_XU_LY"));
     }
 
     @Test
@@ -158,6 +163,88 @@ class BangViecVanHanhIntegrationTest {
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/toa-nha/1/bang-viec"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void FR_NTF_01_dashboardUsesPaymentLedgerForPartialOverpaymentAndCounterEntry() throws Exception {
+        Long partialRoom = themPhong(1L, "804");
+        Long partialTenant = themNguoiThue("Nguoi thue partial", "0908000004");
+        Long partialContract = themHopDong(partialRoom, partialTenant, TODAY.minusDays(30), TODAY.plusDays(10), "HIEU_LUC");
+        Long partialPeriod = themKy(1L, TODAY.minusDays(60), TODAY.minusDays(30), "DA_CHOT");
+        Long partialInvoice = themHoaDon(partialPeriod, partialContract, TODAY.minusDays(1), "DA_THU_MOT_PHAN", "100.00", "999.00");
+        themThanhToan(partialInvoice, new BigDecimal("40.00"), "THU", null, null, "TT-DASHBOARD-PARTIAL");
+
+        Long counterRoom = themPhong(1L, "805");
+        Long counterTenant = themNguoiThue("Nguoi thue counter", "0908000005");
+        Long counterContract = themHopDong(counterRoom, counterTenant, TODAY.minusDays(30), TODAY.plusDays(10), "HIEU_LUC");
+        Long counterPeriod = themKy(1L, TODAY.minusDays(90), TODAY.minusDays(60), "DA_CHOT");
+        Long counterInvoice = themHoaDon(counterPeriod, counterContract, TODAY.minusDays(1), "DA_THANH_TOAN", "100.00", "100.00");
+        Long originalPaymentId = themThanhToan(counterInvoice, new BigDecimal("100.00"), "THU", null, null, "TT-DASHBOARD-COUNTER-THU");
+        themThanhToan(counterInvoice, new BigDecimal("-100.00"), "DOI_UNG", originalPaymentId, "Hoan but toan", "TT-DASHBOARD-COUNTER-DOI-UNG");
+
+        Long overpaidRoom = themPhong(1L, "806");
+        Long overpaidTenant = themNguoiThue("Nguoi thue overpaid", "0908000006");
+        Long overpaidContract = themHopDong(overpaidRoom, overpaidTenant, TODAY.minusDays(30), TODAY.plusDays(10), "HIEU_LUC");
+        Long overpaidPeriod = themKy(1L, TODAY.minusDays(120), TODAY.minusDays(90), "DA_CHOT");
+        Long overpaidInvoice = themHoaDon(overpaidPeriod, overpaidContract, TODAY.minusDays(1), "DA_THANH_TOAN", "100.00", "0.00");
+        themThanhToan(overpaidInvoice, new BigDecimal("125.00"), "THU", null, null, "TT-DASHBOARD-OVERPAID");
+
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(get("/api/toa-nha/1/bang-viec")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nhomViec[0].soLuong").value(2));
+    }
+
+    @Test
+    void FR_NTF_01_hoaDonDanhSachNoQuaHanReturnsScopedLedgerAmountsAndRejectsOutOfScope() throws Exception {
+        Long roomId = themPhong(1L, "807");
+        Long tenantId = themNguoiThue("Nguoi thue danh sach", "0908000007");
+        Long contractId = themHopDong(roomId, tenantId, TODAY.minusDays(30), TODAY.plusDays(10), "HIEU_LUC");
+        Long periodId = themKy(1L, TODAY.minusDays(60), TODAY.minusDays(30), "DA_CHOT");
+        Long invoiceId = themHoaDon(periodId, contractId, TODAY.minusDays(1), "DA_PHAT_HANH", "100.00", "0.00");
+        themThanhToan(invoiceId, new BigDecimal("40.00"), "THU", null, null, "TT-DASHBOARD-LIST");
+
+        String managerToken = login(3L, "0900000003");
+
+        mockMvc.perform(get("/api/hoa-don")
+                        .param("toaNhaId", "1")
+                        .param("trangThai", "NO_QUA_HAN")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].hoaDonId").value(invoiceId.intValue()))
+                .andExpect(jsonPath("$[0].kyId").value(periodId.intValue()))
+                .andExpect(jsonPath("$[0].maHoaDon").value("HD-" + periodId + "-" + contractId))
+                .andExpect(jsonPath("$[0].soPhong").value("807"))
+                .andExpect(jsonPath("$[0].nguoiThue").value("Nguoi thue danh sach"))
+                .andExpect(jsonPath("$[0].ngayPhatHanh").value(TODAY.minusDays(11).toString()))
+                .andExpect(jsonPath("$[0].hanThanhToan").value(TODAY.minusDays(1).toString()))
+                .andExpect(jsonPath("$[0].trangThai").value("DA_PHAT_HANH"))
+                .andExpect(jsonPath("$[0].tongTien").value("100.00"))
+                .andExpect(jsonPath("$[0].daThu").value("40.00"))
+                .andExpect(jsonPath("$[0].conLai").value("60.00"))
+                .andExpect(jsonPath("$[0].toaNhaId").value(1));
+
+        mockMvc.perform(get("/api/hoa-don")
+                        .param("toaNhaId", "2")
+                        .param("trangThai", "NO_QUA_HAN")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+
+        String tenantToken = login(5L, "0900000006");
+        String adminToken = login(1L, "0900000001");
+        mockMvc.perform(get("/api/hoa-don")
+                        .param("toaNhaId", "1")
+                        .param("trangThai", "NO_QUA_HAN")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/hoa-don")
+                        .param("toaNhaId", "1")
+                        .param("trangThai", "NO_QUA_HAN")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isForbidden());
     }
 
     @TestConfiguration
@@ -224,5 +311,18 @@ class BangViecVanHanhIntegrationTest {
         return jdbcTemplate.queryForObject(
                 "INSERT INTO YEU_CAU_SUA_CHUA(phong_id, nguoi_tao_id, hang_muc, mo_ta, muc_do, trang_thai, cho_xac_nhan_luc, tao_luc) VALUES (?, 3, 'Dien', 'Kiem tra', 'GAP', ?, ?, ?) RETURNING id",
                 Long.class, roomId, status, confirmationAt == null ? null : java.sql.Timestamp.from(confirmationAt), java.sql.Timestamp.from(createdAt));
+    }
+
+    private Long themThanhToan(
+            Long invoiceId,
+            BigDecimal amount,
+            String type,
+            Long adjustmentFor,
+            String reason,
+            String receipt
+    ) {
+        return jdbcTemplate.queryForObject(
+                "INSERT INTO THANH_TOAN(hoa_don_id, so_tien, loai, dieu_chinh_cho_id, ly_do, nguoi_thu_id, ma_bien_lai) VALUES (?, ?, ?, ?, ?, 3, ?) RETURNING id",
+                Long.class, invoiceId, amount, type, adjustmentFor, reason, receipt);
     }
 }

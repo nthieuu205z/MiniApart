@@ -50,11 +50,12 @@ public class YeuCauSuaChuaController {
             @RequestParam(required = false) Long toaNhaId,
             @RequestParam(required = false) Long phongId,
             @RequestParam(required = false) String hangMuc,
+            @RequestParam(required = false) String boLoc,
             @RequestParam(defaultValue = "false") boolean hienThiDaHuy,
             HttpServletRequest request
     ) {
         return yeuCauSuaChuaService.lichSu(
-                toaNhaId, phongId, hangMuc, hienThiDaHuy, nguoiDungHienTai(request)
+                toaNhaId, phongId, hangMuc, boLoc, hienThiDaHuy, nguoiDungHienTai(request)
         );
     }
 

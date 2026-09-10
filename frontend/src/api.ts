@@ -208,6 +208,20 @@ export type ThongTinHoaDonChiTiet = {
   cacDong: ThongTinDongHoaDon[]
 }
 
+export type ThongTinHoaDonQuanLy = {
+  hoaDonId: number
+  maHoaDon: string
+  kyId: number | null
+  hopDongId: number
+  soPhong: string
+  nguoiThue: string
+  hanThanhToan: string
+  trangThai: string
+  tongTien: string
+  daThu: string
+  conLai: string
+}
+
 export type ThongTinHoaDonMoiNhat = {
   coHoaDon: boolean
   thongBao?: string
@@ -323,6 +337,7 @@ export type BoLocLichSuSuaChua = {
   phongId?: number
   hangMuc?: string
   hienThiDaHuy?: boolean
+  boLoc?: 'TON_DONG_QUA_48_GIO'
 }
 
 export type ThongTinThongBao = {
@@ -662,6 +677,19 @@ export async function fetchHopDongCuaNguoiThue(token: string): Promise<ThongTinH
   return response.json() as Promise<ThongTinHopDong[]>
 }
 
+/** FR-BLD-06 returns contracts visible to an owner or manager for one building. */
+export async function fetchHopDongQuanLy(token: string, toaNhaId: number): Promise<ThongTinHopDong[]> {
+  const response = await fetch(`/api/hop-dong?toaNhaId=${toaNhaId}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải danh sách hợp đồng.')
+  }
+
+  return response.json() as Promise<ThongTinHopDong[]>
+}
+
 /** FR-POR-03/FR-POR-04 opens one history row through the tenant-scoped endpoint. */
 export async function fetchHoaDonCuaNguoiThue(token: string, hoaDonId: number): Promise<ThongTinHoaDonChiTiet> {
   const response = await fetch(`/api/cong/hoa-don/${hoaDonId}`, {
@@ -673,6 +701,24 @@ export async function fetchHoaDonCuaNguoiThue(token: string, hoaDonId: number): 
   }
 
   return response.json() as Promise<ThongTinHoaDonChiTiet>
+}
+
+/** FR-INV-02 returns the manager worklist for one building and operational status. */
+export async function fetchHoaDonQuanLy(
+  token: string,
+  toaNhaId: number,
+  trangThai = 'NO_QUA_HAN',
+): Promise<ThongTinHoaDonQuanLy[]> {
+  const query = new URLSearchParams({ toaNhaId: String(toaNhaId), trangThai })
+  const response = await fetch(`/api/hoa-don?${query.toString()}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải danh sách hoá đơn.')
+  }
+
+  return response.json() as Promise<ThongTinHoaDonQuanLy[]>
 }
 
 /** FR-POR-06 asks for a fresh 15-minute signed meter-photo link without reloading the invoice. */
@@ -722,6 +768,7 @@ export async function fetchLichSuSuaChua(
   if (boLoc.phongId !== undefined) query.set('phongId', String(boLoc.phongId))
   if (boLoc.hangMuc?.trim()) query.set('hangMuc', boLoc.hangMuc.trim())
   if (boLoc.hienThiDaHuy) query.set('hienThiDaHuy', 'true')
+  if (boLoc.boLoc) query.set('boLoc', boLoc.boLoc)
   const response = await fetch(`/api/yeu-cau-sua-chua/lich-su?${query.toString()}`, {
     headers: authorizationHeaders(token),
   })

@@ -24,6 +24,7 @@ import {
   hoanThanhViecCuaToi,
   type ThongTinQuanLyNguoiDung,
 } from './api'
+import * as api from './api'
 
 describe('fetchHealth', () => {
   afterEach(() => {
@@ -228,6 +229,36 @@ describe('fetchHealth', () => {
     await expect(fetchHopDongCuaNguoiThue('tenant-token')).resolves.toEqual(response)
     expect(fetchMock).toHaveBeenCalledWith('/api/cong/hop-dong', {
       headers: { Authorization: 'Bearer tenant-token' },
+    })
+  })
+
+  it('FR-BLD-06 exposes the scoped manager contract endpoint with the building query', async () => {
+    const response = [{ id: 21, soPhong: '101', sapHetHan: true }]
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(response))
+    vi.stubGlobal('fetch', fetchMock)
+    const fetchHopDongQuanLy = (api as unknown as {
+      fetchHopDongQuanLy?: (token: string, toaNhaId: number) => Promise<unknown>
+    }).fetchHopDongQuanLy
+
+    expect(typeof fetchHopDongQuanLy).toBe('function')
+    await expect(fetchHopDongQuanLy?.('manager-token', 1)).resolves.toEqual(response)
+    expect(fetchMock).toHaveBeenCalledWith('/api/hop-dong?toaNhaId=1', {
+      headers: { Authorization: 'Bearer manager-token' },
+    })
+  })
+
+  it('FR-INV-02 exposes the manager invoice list endpoint with the operational status query', async () => {
+    const response = [{ hoaDonId: 10, kyId: 8, maHoaDon: 'TN-A-101-202608' }]
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(response))
+    vi.stubGlobal('fetch', fetchMock)
+    const fetchHoaDonQuanLy = (api as unknown as {
+      fetchHoaDonQuanLy?: (token: string, toaNhaId: number, trangThai: string) => Promise<unknown>
+    }).fetchHoaDonQuanLy
+
+    expect(typeof fetchHoaDonQuanLy).toBe('function')
+    await expect(fetchHoaDonQuanLy?.('manager-token', 1, 'NO_QUA_HAN')).resolves.toEqual(response)
+    expect(fetchMock).toHaveBeenCalledWith('/api/hoa-don?toaNhaId=1&trangThai=NO_QUA_HAN', {
+      headers: { Authorization: 'Bearer manager-token' },
     })
   })
 

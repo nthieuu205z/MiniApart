@@ -25,6 +25,7 @@ import java.util.Objects;
 
 @Service
 public class YeuCauSuaChuaService {
+    static final String BO_LOC_TON_DONG_QUA_48_GIO = "TON_DONG_QUA_48_GIO";
     private static final int SO_ANH_TOI_DA = 5;
     private static final String THONG_BAO_YEU_CAU_KHONG_HOP_LE = "Yêu cầu sửa chữa không hợp lệ";
     private static final String THONG_BAO_QUA_NAM_ANH = "Mỗi yêu cầu chỉ được đính kèm tối đa 5 ảnh";
@@ -144,10 +145,12 @@ public class YeuCauSuaChuaService {
             Long toaNhaId,
             Long phongId,
             String hangMuc,
+            String boLoc,
             boolean hienThiDaHuy,
             NguoiDung nguoiDung
     ) {
         kiemTraVaiTroQuanLy(nguoiDung);
+        String boLocDaChuanHoa = chuanHoaBoLoc(boLoc);
         if (toaNhaId != null) {
             phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
         }
@@ -158,13 +161,26 @@ public class YeuCauSuaChuaService {
         }
         String hangMucDaChuanHoa = hangMuc == null || hangMuc.isBlank() ? null : hangMuc.trim();
         List<ThongTinLichSuSuaChua.MucLichSuSuaChua> yeuCau = yeuCauSuaChuaRepository
-                .findLichSuByNguoiQuanLy(nguoiDung.id(), toaNhaId, phongId, hangMucDaChuanHoa)
+                .findLichSuByNguoiQuanLy(
+                        nguoiDung.id(), toaNhaId, phongId, hangMucDaChuanHoa, boLocDaChuanHoa, clock.instant()
+                )
                 .stream()
                 .map(view -> ThongTinLichSuSuaChua.MucLichSuSuaChua.tu(view, trangThaiHieuLuc(view)))
                 .filter(item -> hienThiDaHuy || item.trangThai() != TrangThaiYeuCau.DA_HUY)
                 .toList();
         return ThongTinLichSuSuaChua.tu(yeuCau);
     }
+
+    private String chuanHoaBoLoc(String boLoc) {
+        if (boLoc == null || boLoc.isBlank()) {
+            return null;
+        }
+        if (!BO_LOC_TON_DONG_QUA_48_GIO.equals(boLoc)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bộ lọc lịch sử sửa chữa không hợp lệ");
+        }
+        return boLoc;
+    }
+
 
     /** FR-MNT-03 returns one request only when the authenticated actor owns its scope. */
     @Transactional(readOnly = true)

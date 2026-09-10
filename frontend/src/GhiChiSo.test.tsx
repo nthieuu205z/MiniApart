@@ -23,6 +23,28 @@ describe('GhiChiSo mobile screen', () => {
     await act(async () => root?.unmount())
     container.remove()
     vi.restoreAllMocks()
+    window.history.replaceState({}, '', '/')
+  })
+
+  it('FR-MTR-01 keeps the building from toaNhaId in the URL instead of falling back to the first building', async () => {
+    window.history.replaceState({}, '', '/ghi-chi-so?toaNhaId=2')
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/toa-nha') return jsonResponse([{ id: 1, ten: 'Toà A' }, { id: 2, ten: 'Toà B' }])
+      if (url === '/api/toa-nha/2/ky-thanh-toan') return jsonResponse([{ id: 8, nam: 2026, thang: 8, trangThai: 'DANG_MO' }])
+      if (url === '/api/toa-nha/2/ky-thanh-toan/8/thieu-chi-so') return jsonResponse([])
+      if (url === '/api/toa-nha/2/ky-thanh-toan/8/chi-so') return jsonResponse({ tongPhong: 0, daGhi: 0, phong: [] })
+      throw new Error(`Unexpected request ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await renderScreen()
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      '/api/toa-nha/2/ky-thanh-toan',
+      expect.objectContaining({ headers: { Authorization: 'Bearer meter-token' } }),
+    ))
+    expect(fetchMock.mock.calls.some(([input]) => String(input).includes('/api/toa-nha/1/'))).toBe(false)
   })
 
   it('FR-MTR-01 lists only eligible rooms with previous closing readings in floor-room order', async () => {

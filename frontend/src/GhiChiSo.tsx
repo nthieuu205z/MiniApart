@@ -74,7 +74,7 @@ const styleThongBao = {
 export default function GhiChiSo({ token, mobile = false }: Props) {
   const [danhSachToaNha, setDanhSachToaNha] = useState<ThongTinToaNha[]>([])
   const [danhSachKy, setDanhSachKy] = useState<ThongTinKyThanhToan[]>([])
-  const [toaNhaId, setToaNhaId] = useState<number | null>(null)
+  const [toaNhaId, setToaNhaId] = useState<number | null>(() => docToaNhaIdTuUrl())
   const [kyId, setKyId] = useState<number | null>(null)
   const [duLieu, setDuLieu] = useState<ThongTinGhiChiSo | null>(null)
   const [danhSachPhongChuaGhiChiSo, setDanhSachPhongChuaGhiChiSo] = useState<ThongTinPhongChuaGhiChiSo[]>([])
@@ -841,6 +841,14 @@ export default function GhiChiSo({ token, mobile = false }: Props) {
       </main>
     </section>
   )
+}
+
+function docToaNhaIdTuUrl(): number | null {
+  if (typeof window === 'undefined') return null
+  const value = new URLSearchParams(window.location.search).get('toaNhaId')
+  if (!value || !/^\d+$/.test(value)) return null
+  const parsed = Number(value)
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
 }
 
 function khoa(phongId: number, dichVuId: number) {

@@ -1097,6 +1097,38 @@ class YeuCauSuaChuaIntegrationTest {
     }
 
     @Test
+    void FR_MNT_08_locTonDongQua48GioDungTheoTuoiVaTrangThaiHieuLuc() throws Exception {
+        String managerToken = login(3L, "0900000003");
+        long oldOpen = repairWithContract(managerToken, "0907000991", "997");
+        long exactly48Hours = repairWithContract(managerToken, "0907000994", "994");
+        long effectivelyClosed = repairWithContract(managerToken, "0907000995", "993");
+        long cancelled = repairWithContract(managerToken, "0907000996", "992");
+
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET tao_luc = ?, trang_thai = 'DANG_XU_LY' WHERE id = ?",
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(48)).minusSeconds(1)), oldOpen);
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET tao_luc = ?, trang_thai = 'DANG_XU_LY' WHERE id = ?",
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(48))), exactly48Hours);
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET tao_luc = ?, trang_thai = 'CHO_XAC_NHAN', cho_xac_nhan_luc = ? WHERE id = ?",
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(96))),
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(73))),
+                effectivelyClosed);
+        jdbcTemplate.update(
+                "UPDATE YEU_CAU_SUA_CHUA SET tao_luc = ?, trang_thai = 'DA_HUY' WHERE id = ?",
+                java.sql.Timestamp.from(TEST_NOW.minus(Duration.ofHours(96))), cancelled);
+
+        mockMvc.perform(get("/api/yeu-cau-sua-chua/lich-su")
+                        .param("toaNhaId", "1")
+                        .param("boLoc", "TON_DONG_QUA_48_GIO")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.yeuCau.length()").value(1))
+                .andExpect(jsonPath("$.yeuCau[0].id").value(oldOpen));
+    }
+
+    @Test
     void FR_MNT_08_tuChoiThoQthtVaQuanLyNgoaiPhamViKhiTraLichSu() throws Exception {
         String managerToken = login(3L, "0900000003");
         repairWithContract(managerToken);
@@ -1132,8 +1164,12 @@ class YeuCauSuaChuaIntegrationTest {
     }
 
     private long repairWithContract(String token) throws Exception {
-        long room = themPhong(1L,"997");
-        themHopDongHieuLuc(room,themNguoiThue("Người thuê chi phí","0907000991"));
+        return repairWithContract(token, "0907000991", "997");
+    }
+
+    private long repairWithContract(String token, String phone, String roomNumber) throws Exception {
+        long room = themPhong(1L, roomNumber);
+        themHopDongHieuLuc(room, themNguoiThue("Người thuê chi phí " + roomNumber, phone));
         long id = taoYeuCauKhongAnh(room,"Sửa vòi nước",token);
         jdbcTemplate.update("UPDATE YEU_CAU_SUA_CHUA SET trang_thai='DANG_XU_LY' WHERE id=?",id);
         return id;

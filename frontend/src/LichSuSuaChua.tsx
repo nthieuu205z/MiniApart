@@ -21,9 +21,10 @@ type BoLocTrang = {
   phongId: string
   hangMuc: string
   hienThiDaHuy: boolean
+  boLocVanHanh: '' | 'TON_DONG_QUA_48_GIO'
 }
 
-const BO_LOC_TRONG: BoLocTrang = { toaNhaId: '', phongId: '', hangMuc: '', hienThiDaHuy: false }
+const BO_LOC_TRONG: BoLocTrang = { toaNhaId: '', phongId: '', hangMuc: '', hienThiDaHuy: false, boLocVanHanh: '' }
 
 /** FR-MNT-08: owner and manager operational repair lookup, separate from Slice 09 reporting. */
 export function LichSuSuaChua({ token, mobile = false }: Props): React.ReactElement {
@@ -34,7 +35,7 @@ export function LichSuSuaChua({ token, mobile = false }: Props): React.ReactElem
   const [dangTai, setDangTai] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
 
-  const coBoLoc = Boolean(boLoc.toaNhaId || boLoc.phongId || boLoc.hangMuc.trim() || boLoc.hienThiDaHuy)
+  const coBoLoc = Boolean(boLoc.toaNhaId || boLoc.phongId || boLoc.hangMuc.trim() || boLoc.hienThiDaHuy || boLoc.boLocVanHanh)
   const boLocApi = useMemo(() => taoBoLocApi(boLoc), [boLoc])
 
   useEffect(() => {
@@ -106,7 +107,20 @@ export function LichSuSuaChua({ token, mobile = false }: Props): React.ReactElem
           <input name="hangMuc" value={boLoc.hangMuc} onChange={(event) => capNhatBoLoc({ hangMuc: event.target.value })} placeholder="Ví dụ: Điện" style={styleInput} />
         </label>
         <label style={styleCheckbox}><input type="checkbox" checked={boLoc.hienThiDaHuy} onChange={(event) => capNhatBoLoc({ hienThiDaHuy: event.target.checked })} /> Hiện yêu cầu đã huỷ</label>
+        <label style={styleCheckbox}>
+          <input
+            data-repair-filter-over-48-hours
+            type="checkbox"
+            checked={boLoc.boLocVanHanh === 'TON_DONG_QUA_48_GIO'}
+            onChange={(event) => capNhatBoLoc({ boLocVanHanh: event.target.checked ? 'TON_DONG_QUA_48_GIO' : '' })}
+          />
+          Chỉ hiện tồn đọng quá 48 giờ
+        </label>
       </section>
+
+      {boLoc.boLocVanHanh === 'TON_DONG_QUA_48_GIO' ? (
+        <p data-active-repair-filter style={styleActiveFilter}>Đang lọc: Tồn đọng quá 48 giờ</p>
+      ) : null}
 
       {!coBoLoc ? <EmptyState data-repair-history-first-empty title="Chọn ít nhất một bộ lọc để tra cứu lịch sử sửa chữa." body="Kết quả sẽ chỉ hiển thị trong phạm vi toà nhà bạn được phân quyền." />
         : dangTai ? <p aria-live="polite">Đang tải lịch sử sửa chữa…</p>
@@ -152,11 +166,23 @@ function ngayDiaPhuongTuInstant(value: string): string {
 function docBoLocTuUrl(): BoLocTrang {
   if (typeof window === 'undefined') return BO_LOC_TRONG
   const query = new URLSearchParams(window.location.search)
-  return { toaNhaId: query.get('toaNhaId') ?? '', phongId: query.get('phongId') ?? '', hangMuc: query.get('hangMuc') ?? '', hienThiDaHuy: query.get('hienThiDaHuy') === 'true' }
+  return {
+    toaNhaId: query.get('toaNhaId') ?? '',
+    phongId: query.get('phongId') ?? '',
+    hangMuc: query.get('hangMuc') ?? '',
+    hienThiDaHuy: query.get('hienThiDaHuy') === 'true',
+    boLocVanHanh: query.get('boLoc') === 'TON_DONG_QUA_48_GIO' ? 'TON_DONG_QUA_48_GIO' : '',
+  }
 }
 
 function taoBoLocApi(boLoc: BoLocTrang): BoLocLichSuSuaChua {
-  return { toaNhaId: soNguyen(boLoc.toaNhaId), phongId: soNguyen(boLoc.phongId), hangMuc: boLoc.hangMuc, hienThiDaHuy: boLoc.hienThiDaHuy }
+  return {
+    toaNhaId: soNguyen(boLoc.toaNhaId),
+    phongId: soNguyen(boLoc.phongId),
+    hangMuc: boLoc.hangMuc,
+    hienThiDaHuy: boLoc.hienThiDaHuy,
+    boLoc: boLoc.boLocVanHanh || undefined,
+  }
 }
 
 function soNguyen(value: string): number | undefined {
@@ -170,6 +196,7 @@ function dongBoBoLocVaoUrl(boLoc: BoLocTrang) {
   if (boLoc.phongId) query.set('phongId', boLoc.phongId)
   if (boLoc.hangMuc.trim()) query.set('hangMuc', boLoc.hangMuc.trim())
   if (boLoc.hienThiDaHuy) query.set('hienThiDaHuy', 'true')
+  if (boLoc.boLocVanHanh) query.set('boLoc', boLoc.boLocVanHanh)
   window.history.replaceState({}, '', `/su-co${query.toString() ? `?${query}` : ''}`)
 }
 
@@ -177,6 +204,7 @@ const styleBoLoc: CSSProperties = { display: 'grid', gridTemplateColumns: 'repea
 const styleNhan: CSSProperties = { display: 'grid', gap: 6, font: 'var(--ma-text-body)' }
 const styleInput: CSSProperties = { minHeight: 'var(--ma-hit-mobile)', padding: '8px 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 'var(--ma-radius)', background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'inherit' }
 const styleCheckbox: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, minHeight: 'var(--ma-hit-mobile)', font: 'var(--ma-text-body)' }
+const styleActiveFilter: CSSProperties = { margin: 0, padding: '10px 12px', borderLeft: '4px solid var(--ma-ink-900)', background: 'var(--ma-bg-sunken)', fontWeight: 700 }
 const styleTong: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 16, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)' }
 const styleBang: CSSProperties = { display: 'grid', gap: 1, border: '1px solid var(--ma-border-default)' }
 const styleDong: CSSProperties = { display: 'grid', gridTemplateColumns: 'minmax(12rem, 1fr) repeat(3, minmax(8rem, auto))', gap: 12, padding: 14, background: 'var(--ma-bg-card)', borderBottom: '1px solid var(--ma-border-subtle)', alignItems: 'center', minWidth: 0 }

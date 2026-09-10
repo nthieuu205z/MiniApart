@@ -21,6 +21,30 @@ describe('LichSuSuaChua', () => {
     await act(async () => root.unmount())
     document.body.innerHTML = ''
     vi.restoreAllMocks()
+    window.history.replaceState({}, '', '/')
+  })
+
+  it('FR-MNT-08 reads the operational 48-hour filter from the URL and sends it to the API', async () => {
+    window.history.replaceState({}, '', '/su-co?toaNhaId=1&boLoc=TON_DONG_QUA_48_GIO')
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/toa-nha') return jsonResponse([{ id: 1, maToa: 'A', ten: 'Toà A' }])
+      if (url === '/api/toa-nha/1/phong') return jsonResponse([])
+      if (url === '/api/yeu-cau-sua-chua/lich-su?toaNhaId=1&boLoc=TON_DONG_QUA_48_GIO') {
+        return jsonResponse({ yeuCau: [], tongChiPhiChuNha: '0', tongChiPhiNguoiThue: '0' })
+      }
+      throw new Error(`Unexpected request ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await act(async () => root.render(<LichSuSuaChua token="test-token" />))
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      '/api/yeu-cau-sua-chua/lich-su?toaNhaId=1&boLoc=TON_DONG_QUA_48_GIO',
+      expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } }),
+    ))
+    expect(container.querySelector('[data-active-repair-filter]')?.textContent).toContain('Tồn đọng quá 48 giờ')
+    expect(container.querySelector('[data-repair-filter-over-48-hours]')).not.toBeNull()
   })
 
   it('FR-MNT-08 distinguishes first load from an empty filtered repair history and keeps filters in the URL', async () => {
