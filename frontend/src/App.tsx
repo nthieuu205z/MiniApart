@@ -25,6 +25,7 @@ import { ThongBao } from './ThongBao'
 import { LichSuSuaChua } from './LichSuSuaChua'
 import { BangViecVanHanh } from './BangViecVanHanh'
 import BaoCaoTongQuan from './BaoCaoTongQuan'
+import CongNoBaoCao from './CongNoBaoCao'
 import { BlockedNotice } from './design/building/BlockedNotice'
 import { Button } from './design/core/Button'
 import { SysLabel } from './design/core/SysLabel'
@@ -423,20 +424,33 @@ function App() {
     && nguoiDung.vaiTro === 'CHU'
     && duongDanHienTai === '/bao-cao',
   )
+  const hienThiBaoCaoCongNo = Boolean(
+    token
+    && nguoiDung
+    && nguoiDung.vaiTro === 'CHU'
+    && duongDanHienTai === '/cong-no',
+  )
+  const laDrillDownCongNo = Boolean(
+    nguoiDung?.vaiTro === 'CHU'
+    && duongDanHienTai === '/hoa-don'
+    && dinhDanhHoaDon.hoaDonId !== undefined
+    && (dinhDanhHoaDon.toaNhaId === undefined || dinhDanhHoaDon.kyId === undefined),
+  )
   const hienThiHoaDon = Boolean(
     token
     && nguoiDung
     && ['/hoa-don', '/hoa-don-cua-toi'].includes(duongDanHienTai)
     && ['QTHT', 'CHU', 'QUAN_LY', 'NGUOI_THUE'].includes(nguoiDung.vaiTro)
     && (!['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro)
-      || (dinhDanhHoaDon.toaNhaId !== undefined && dinhDanhHoaDon.kyId !== undefined && dinhDanhHoaDon.hoaDonId !== undefined)),
+      || (dinhDanhHoaDon.toaNhaId !== undefined && dinhDanhHoaDon.kyId !== undefined && dinhDanhHoaDon.hoaDonId !== undefined)
+      || laDrillDownCongNo),
   )
   const hienThiHoaDonQuanLy = Boolean(
     token
     && nguoiDung
     && duongDanHienTai === '/hoa-don'
     && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro)
-    && !(dinhDanhHoaDon.toaNhaId !== undefined && dinhDanhHoaDon.kyId !== undefined && dinhDanhHoaDon.hoaDonId !== undefined),
+    && dinhDanhHoaDon.hoaDonId === undefined,
   )
   const tieuDeTheChinh = hienThiBieuDoTieuThuNguoiThue
     ? 'Tiêu thụ điện và nước'
@@ -448,6 +462,8 @@ function App() {
         ? 'Thông báo'
       : hienThiBaoCaoTongQuan
         ? 'Báo cáo tổng quan'
+      : hienThiBaoCaoCongNo
+        ? 'Báo cáo công nợ'
       : hienThiBangViec
         ? 'Bảng việc vận hành'
       : hienThiLichSuSuaChua
@@ -473,6 +489,8 @@ function App() {
       ? 'FR-MNT-02'
       : hienThiBaoCaoTongQuan
         ? 'FR-RPT-01 · FR-RPT-02'
+      : hienThiBaoCaoCongNo
+        ? 'FR-RPT-02 · FR-RPT-03'
       : hienThiBangViec
         ? 'FR-NTF-01'
       : hienThiLichSuSuaChua
@@ -659,6 +677,8 @@ function App() {
             <ViecCuaToi token={token} />
           ) : hienThiBaoCaoTongQuan && token ? (
             <BaoCaoTongQuan token={token} mobile={laManHinhHep} />
+          ) : hienThiBaoCaoCongNo && token ? (
+            <CongNoBaoCao token={token} mobile={laManHinhHep} />
           ) : hienThiBangViec && token ? (
             <BangViecVanHanh token={token} mobile={laManHinhHep} />
           ) : hienThiLichSuSuaChua && token ? (
@@ -675,6 +695,7 @@ function App() {
               {...dinhDanhHoaDon}
               mobile={laManHinhHep}
               cheDoNguoiThue={nguoiDung.vaiTro === 'NGUOI_THUE'}
+              cheDoCongNo={laDrillDownCongNo}
             />
           ) : nguoiDung.vaiTro === 'QTHT' && duongDanHienTai === '/tai-khoan' && token ? (
             <QuanLyTaiKhoan token={token} mobile={laManHinhHep} />

@@ -324,6 +324,44 @@ describe('App role navigation', () => {
     })
   })
 
+  it('FR-RPT-02 routes CHU to the debt report screen', async () => {
+    const chuSoHuu = MENU_BY_ROLE[1]
+    const fetchMock = buildFetchMock(chuSoHuu.nguoiDung, {
+      debtResponse: { toaNhaId: null, tinhLuc: '2040-08-15T10:00+07:00', congNo: [] },
+    })
+    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/cong-no', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="debt-report-screen"]')).not.toBeNull()
+    })
+  })
+
+  it('FR-RPT-03 opens a debt invoice with only its invoice id, including a settlement invoice', async () => {
+    const chuSoHuu = MENU_BY_ROLE[1]
+    const debtInvoiceResponse = {
+      hoaDonId: 12,
+      maHoaDon: 'QUYET-12',
+      kyId: null,
+      hopDongId: 21,
+      soPhong: '102',
+      nguoiThue: 'Người thuê quyết toán',
+      ngayPhatHanh: '2040-08-10',
+      hanThanhToan: '2040-08-17',
+      trangThai: 'DA_PHAT_HANH',
+      tongTien: '1250000.00',
+      daThu: '0.00',
+      conLai: '1250000.00',
+      cacDong: [],
+    }
+    const fetchMock = buildFetchMock(chuSoHuu.nguoiDung, { debtInvoiceResponse })
+    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/hoa-don?hoaDonId=12', fetchMock)
+
+    await vi.waitFor(() => {
+      expect(mountedApp!.container.querySelector('[data-testid="invoice-detail"]')).not.toBeNull()
+    })
+    expect(fetchMock).toHaveBeenCalledWith('/api/bao-cao/cong-no/hoa-don/12', expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }))
+  })
+
   it('FR-AUT-04 shows a friendly no-permission state for a typed route outside the role menu', async () => {
     const chuSoHuu = MENU_BY_ROLE[1]
     mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/tai-khoan')
@@ -865,6 +903,8 @@ function buildFetchMock(
     consumptionResponse?: Record<string, unknown>
     contractResponse?: Record<string, unknown>[]
     managerInvoiceResponse?: Record<string, unknown>[]
+    debtResponse?: Record<string, unknown>
+    debtInvoiceResponse?: Record<string, unknown>
     notificationsResponse?: { thongBao: Record<string, unknown>[]; soChuaDoc: number }
     notificationReadResponse?: Record<string, unknown>
   },
@@ -1050,6 +1090,20 @@ function buildFetchMock(
 
     if (url.startsWith('/api/hoa-don?') && method === 'GET') {
       return new Response(JSON.stringify(options?.managerInvoiceResponse ?? []), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (url.startsWith('/api/bao-cao/cong-no') && method === 'GET') {
+      const debtInvoiceMatch = url.match(/^\/api\/bao-cao\/cong-no\/hoa-don\/(\d+)$/)
+      if (debtInvoiceMatch && options?.debtInvoiceResponse) {
+        return new Response(JSON.stringify(options.debtInvoiceResponse), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      return new Response(JSON.stringify(options?.debtResponse ?? { toaNhaId: null, tinhLuc: '2040-08-15T10:00+07:00', congNo: [] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })

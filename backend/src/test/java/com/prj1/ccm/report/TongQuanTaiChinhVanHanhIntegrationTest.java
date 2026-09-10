@@ -274,6 +274,97 @@ class TongQuanTaiChinhVanHanhIntegrationTest {
         assertTrue(toaNhaIds.size() == 5, "fixture phải có đủ năm toà");
     }
 
+    @Test
+    void FR_RPT_02_FR_RPT_03_listsScopedUnpaidInvoicesInOverdueOrderWithoutMixingContracts() throws Exception {
+        Long room = themPhong(1L, "907", false);
+        Long oldTenant = themNguoiThue("Nguoi thue cu", "0909000201");
+        Long newTenant = themNguoiThue("Nguoi thue moi", "0909000202");
+        Long oldContract = themHopDong(room, oldTenant, TODAY.minusDays(90), TODAY.minusDays(30), "DA_THANH_LY");
+        Long newContract = themHopDong(room, newTenant, TODAY.minusDays(20), TODAY.plusDays(20), "HIEU_LUC");
+        Long period = themKy(1L, TODAY.withDayOfMonth(1), TODAY.withDayOfMonth(1).plusMonths(1).minusDays(1), "DA_CHOT");
+        Long overdueInvoice = themHoaDon(period, oldContract, TODAY.minusDays(30), "QUA_HAN", "1000000.00", "0.00");
+        themChiTiet(overdueInvoice, "Tien phong", "600000.00");
+        themChiTiet(overdueInvoice, "Dich vu", "400000.00");
+        Long paymentId = themThanhToan(overdueInvoice, new BigDecimal("600000.00"), "THU", null, null, "RPT-NO-THU");
+        themThanhToan(overdueInvoice, new BigDecimal("-100000.00"), "DOI_UNG", paymentId, "Sua so tien", "RPT-NO-DOI-UNG");
+        Long dueTodayInvoice = themHoaDon(period, newContract, TODAY.minusDays(7), "DA_PHAT_HANH", "2000000.00", "0.00");
+        Long boundaryRoom = themPhong(1L, "910", false);
+        Long boundaryTenant = themNguoiThue("Nguoi thue bien han", "0909000206");
+        Long boundaryContract = themHopDong(boundaryRoom, boundaryTenant, TODAY.minusDays(10), TODAY.plusDays(20), "HIEU_LUC");
+        Long dueYesterdayInvoice = themHoaDon(period, boundaryContract, TODAY.minusDays(8), "QUA_HAN", "750000.00", "0.00");
+
+        Long paidRoom = themPhong(1L, "908", false);
+        Long paidTenant = themNguoiThue("Nguoi thue da tra", "0909000203");
+        Long paidContract = themHopDong(paidRoom, paidTenant, TODAY.minusDays(10), TODAY.plusDays(20), "HIEU_LUC");
+        Long paidInvoice = themHoaDon(period, paidContract, TODAY.minusDays(8), "DA_THANH_TOAN", "3000000.00", "0.00");
+        themThanhToan(paidInvoice, new BigDecimal("4000000.00"), "THU", null, null, "RPT-NO-OVERPAID");
+
+        Long foreignRoom = themPhong(2L, "B-907", false);
+        Long foreignTenant = themNguoiThue("Nguoi thue ngoai pham vi", "0909000204");
+        Long foreignContract = themHopDong(foreignRoom, foreignTenant, TODAY.minusDays(10), TODAY.plusDays(20), "HIEU_LUC");
+        Long foreignPeriod = themKy(2L, TODAY.withDayOfMonth(1), TODAY.withDayOfMonth(1).plusMonths(1).minusDays(1), "DA_CHOT");
+        Long foreignInvoice = themHoaDon(foreignPeriod, foreignContract, TODAY.minusDays(30), "QUA_HAN", "9000000.00", "0.00");
+
+        String ownerToken = login(2L, "0900000002");
+
+        mockMvc.perform(get("/api/bao-cao/cong-no")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tinhLuc").value("2040-08-15T10:00+07:00"))
+                .andExpect(jsonPath("$.congNo", hasSize(3)))
+                .andExpect(jsonPath("$.congNo[0].hoaDonId").value(overdueInvoice))
+                .andExpect(jsonPath("$.congNo[0].toaNhaId").value(1))
+                .andExpect(jsonPath("$.congNo[0].soPhong").value("907"))
+                .andExpect(jsonPath("$.congNo[0].hoTenNguoiThue").value("Nguoi thue cu"))
+                .andExpect(jsonPath("$.congNo[0].hopDongId").value(oldContract))
+                .andExpect(jsonPath("$.congNo[0].tongTien").value("1000000.00"))
+                .andExpect(jsonPath("$.congNo[0].daThu").value("500000.00"))
+                .andExpect(jsonPath("$.congNo[0].conLai").value("500000.00"))
+                .andExpect(jsonPath("$.congNo[0].soNgayQuaHan").value(23))
+                .andExpect(jsonPath("$.congNo[1].hoaDonId").value(dueYesterdayInvoice))
+                .andExpect(jsonPath("$.congNo[1].hoTenNguoiThue").value("Nguoi thue bien han"))
+                .andExpect(jsonPath("$.congNo[1].hopDongId").value(boundaryContract))
+                .andExpect(jsonPath("$.congNo[1].soNgayQuaHan").value(1))
+                .andExpect(jsonPath("$.congNo[2].hoaDonId").value(dueTodayInvoice))
+                .andExpect(jsonPath("$.congNo[2].hoTenNguoiThue").value("Nguoi thue moi"))
+                .andExpect(jsonPath("$.congNo[2].hopDongId").value(newContract))
+                .andExpect(jsonPath("$.congNo[2].soNgayQuaHan").value(0))
+                .andExpect(jsonPath("$.congNo[*].hoaDonId").value(org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItems(paidInvoice, foreignInvoice))));
+
+        mockMvc.perform(get("/api/bao-cao/cong-no")
+                        .param("toaNhaId", "2")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void FR_RPT_03_supportsSettlementInvoiceDrillDownAndDeniesWrongRoles() throws Exception {
+        Long room = themPhong(1L, "909", false);
+        Long tenantId = themNguoiThue("Nguoi thue quyet toan", "0909000205");
+        Long contractId = themHopDong(room, tenantId, TODAY.minusDays(60), TODAY.minusDays(30), "DA_THANH_LY");
+        Long invoiceId = themHoaDonQuyetToan(contractId, TODAY.minusDays(5), "QUYET-TOAN-RPT", "1250000.00");
+        themChiTiet(invoiceId, "Khoan phai thu quyet toan", "1250000.00");
+
+        String ownerToken = login(2L, "0900000002");
+        mockMvc.perform(get("/api/bao-cao/cong-no/hoa-don/" + invoiceId)
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hoaDonId").value(invoiceId))
+                .andExpect(jsonPath("$.kyId").value(nullValue()))
+                .andExpect(jsonPath("$.hopDongId").value(contractId))
+                .andExpect(jsonPath("$.nguoiThue").value("Nguoi thue quyet toan"));
+
+        String managerToken = login(3L, "0900000003");
+        mockMvc.perform(get("/api/bao-cao/cong-no")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/bao-cao/cong-no/hoa-don/" + invoiceId)
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/bao-cao/cong-no"))
+                .andExpect(status().isUnauthorized());
+    }
+
     @TestConfiguration
     static class ReportClockConfiguration {
         @Bean
@@ -375,6 +466,22 @@ class TongQuanTaiChinhVanHanhIntegrationTest {
                 new BigDecimal(tongTien),
                 new BigDecimal(daThu),
                 trangThai
+        );
+    }
+
+    private Long themHoaDonQuyetToan(Long hopDongId, LocalDate ngayPhatHanh, String maHoaDon, String tongTien) {
+        return jdbcTemplate.queryForObject(
+                """
+                        INSERT INTO HOA_DON(ma_hoa_don, ky_id, hop_dong_id, ngay_phat_hanh, han_thanh_toan, tong_tien, da_thu, trang_thai)
+                        VALUES (?, NULL, ?, ?, ?, ?, 0.00, 'DA_PHAT_HANH')
+                        RETURNING id
+                        """,
+                Long.class,
+                maHoaDon,
+                hopDongId,
+                java.sql.Date.valueOf(ngayPhatHanh),
+                java.sql.Date.valueOf(ngayPhatHanh.plusDays(7)),
+                new BigDecimal(tongTien)
         );
     }
 

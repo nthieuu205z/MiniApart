@@ -91,6 +91,17 @@ public class HoaDonChiTietService {
         return chiTiet(phamVi.toaNhaId(), phamVi.kyId(), phamVi.hoaDonId(), nguoiDung);
     }
 
+    /** FR-RPT-03 resolves a guessable invoice id only after requiring an owner and checking its building scope. */
+    @Transactional(readOnly = true)
+    public ThongTinHoaDonChiTiet chiTietCuaChuTheoHoaDonId(Long hoaDonId, NguoiDung nguoiDung) {
+        if (nguoiDung == null || nguoiDung.vaiTro() != VaiTro.CHU) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        HoaDonPhamVi phamVi = hoaDonChiTietRepository.findPhamViByHoaDonId(hoaDonId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return chiTiet(phamVi.toaNhaId(), phamVi.kyId(), phamVi.hoaDonId(), nguoiDung);
+    }
+
     private ThongTinHoaDonChiTiet chiTiet(
             Long toaNhaId, Long kyId, Long hoaDonId, NguoiDung nguoiDung, boolean kemLienKetAnhKy
     ) {

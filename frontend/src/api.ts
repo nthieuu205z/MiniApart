@@ -103,6 +103,30 @@ export type BoLocTongQuanBaoCao = {
   denNgay: string
 }
 
+export type ThongTinKhoanNoBaoCao = {
+  hoaDonId: number
+  maHoaDon: string
+  kyId: number | null
+  hopDongId: number
+  toaNhaId: number
+  tenToaNha: string
+  soPhong: string
+  nguoiThueId: number
+  hoTenNguoiThue: string
+  ngayPhatHanh: string
+  hanThanhToan: string
+  tongTien: string
+  daThu: string
+  conLai: string
+  soNgayQuaHan: number
+}
+
+export type ThongTinCongNoBaoCao = {
+  toaNhaId: number | null
+  tinhLuc: string
+  congNo: ThongTinKhoanNoBaoCao[]
+}
+
 export type ThongTinPhong = {
   id: number | null
   toaNhaId: number
@@ -543,6 +567,20 @@ export async function fetchBaoCaoTongQuan(
   return response.json() as Promise<ThongTinTongQuanBaoCao>
 }
 
+/** FR-RPT-02 reads the owner-only server-sorted debt snapshot for all or one assigned building. */
+export async function fetchCongNoBaoCao(token: string, toaNhaId: number | null): Promise<ThongTinCongNoBaoCao> {
+  const query = toaNhaId === null ? '' : `?toaNhaId=${toaNhaId}`
+  const response = await fetch(`/api/bao-cao/cong-no${query}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải báo cáo công nợ.')
+  }
+
+  return response.json() as Promise<ThongTinCongNoBaoCao>
+}
+
 /** FR-NTF-01 reads the server-scoped operational dashboard for one building. */
 export async function fetchBangViecVanHanh(token: string, toaNhaId: number): Promise<ThongTinBangViecVanHanh> {
   const response = await fetch(`/api/toa-nha/${toaNhaId}/bang-viec`, {
@@ -754,6 +792,19 @@ export async function fetchHoaDonCuaNguoiThue(token: string, hoaDonId: number): 
 
   if (!response.ok) {
     throw await toApiError(response, 'Không thể tải chi tiết hoá đơn.')
+  }
+
+  return response.json() as Promise<ThongTinHoaDonChiTiet>
+}
+
+/** FR-RPT-03 opens one owner-scoped debt invoice, including settlement invoices without a payment period. */
+export async function fetchHoaDonCongNoChiTiet(token: string, hoaDonId: number): Promise<ThongTinHoaDonChiTiet> {
+  const response = await fetch(`/api/bao-cao/cong-no/hoa-don/${hoaDonId}`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải chi tiết hoá đơn công nợ.')
   }
 
   return response.json() as Promise<ThongTinHoaDonChiTiet>

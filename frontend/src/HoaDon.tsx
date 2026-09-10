@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ApiError, fetchHoaDonChiTiet, fetchHoaDonCuaNguoiThue, fetchHoaDonMoiNhatCuaNguoiThue, fetchLienKetAnh, type ThongTinHoaDonChiTiet, type ThongTinDongHoaDon } from './api'
+import { ApiError, fetchHoaDonChiTiet, fetchHoaDonCongNoChiTiet, fetchHoaDonCuaNguoiThue, fetchHoaDonMoiNhatCuaNguoiThue, fetchLienKetAnh, type ThongTinHoaDonChiTiet, type ThongTinDongHoaDon } from './api'
 import { Button } from './design/core/Button'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Figure } from './design/core/Figure'
@@ -8,16 +8,16 @@ import { SysLabel } from './design/core/SysLabel'
 import { EmptyState } from './design/feedback/EmptyState'
 import { HighlightNotice, MetaGrid, MetaItem, MeterImage, ScreenHeader, ScreenSurface, TableCell, TableFrame, TableHeadCell, TotalLine } from './design/layout/Screen'
 
-type Props = { token: string; toaNhaId?: number; kyId?: number; hoaDonId?: number; mobile?: boolean; cheDoNguoiThue?: boolean }
+type Props = { token: string; toaNhaId?: number; kyId?: number; hoaDonId?: number; mobile?: boolean; cheDoNguoiThue?: boolean; cheDoCongNo?: boolean }
 
-export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false, cheDoNguoiThue = false }: Props) {
+export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false, cheDoNguoiThue = false, cheDoCongNo = false }: Props) {
   const [hoaDon, setHoaDon] = useState<ThongTinHoaDonChiTiet | null>(null)
   const [dangTai, setDangTai] = useState(true)
   const [loi, setLoi] = useState<string | null>(null)
   const [thongBaoRong, setThongBaoRong] = useState<string | null>(null)
   const [soLanTaiLai, setSoLanTaiLai] = useState(0)
   const variant = mobile ? 'mobile' : 'desktop'
-  const maTruyVet = cheDoNguoiThue ? 'FR-POR-02' : 'FR-INV-02'
+  const maTruyVet = cheDoNguoiThue ? 'FR-POR-02' : cheDoCongNo ? 'FR-RPT-03' : 'FR-INV-02'
 
   useEffect(() => {
     let mounted = true
@@ -41,6 +41,10 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
             setThongBaoRong(data.thongBao ?? 'Chưa có hoá đơn nào cho tài khoản này.')
           }
         })
+      : cheDoCongNo && hoaDonId !== undefined
+        ? fetchHoaDonCongNoChiTiet(token, hoaDonId).then((data) => {
+            if (mounted) setHoaDon(data)
+          })
       : toaNhaId !== undefined && kyId !== undefined && hoaDonId !== undefined
         ? fetchHoaDonChiTiet(token, toaNhaId, kyId, hoaDonId).then((data) => {
             if (mounted) setHoaDon(data)
@@ -58,7 +62,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
     return () => {
       mounted = false
     }
-  }, [cheDoNguoiThue, hoaDonId, kyId, soLanTaiLai, token, toaNhaId])
+  }, [cheDoCongNo, cheDoNguoiThue, hoaDonId, kyId, soLanTaiLai, token, toaNhaId])
 
   if (dangTai) return <ScreenSurface data-layout-variant={variant} aria-busy="true" aria-live="polite">Đang tải hoá đơn…</ScreenSurface>
   if (loi) {
