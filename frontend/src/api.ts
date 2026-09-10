@@ -51,6 +51,22 @@ export type ThongTinToaNha = {
   batBuocAnhCongTo: boolean
 }
 
+export type ThongTinNhomViecVanHanh = {
+  ma: string
+  tieuDe: string
+  soLuong: number | null
+  trangThai: string
+  tenTrangThai: string
+  khanCap: boolean
+  lienKet: string | null
+}
+
+export type ThongTinBangViecVanHanh = {
+  toaNhaId: number
+  tenToaNha: string
+  nhomViec: ThongTinNhomViecVanHanh[]
+}
+
 export type ThongTinPhong = {
   id: number | null
   toaNhaId: number
@@ -454,6 +470,19 @@ export async function fetchToaNha(token: string): Promise<ThongTinToaNha[]> {
   }
 
   return response.json() as Promise<ThongTinToaNha[]>
+}
+
+/** FR-NTF-01 reads the server-scoped operational dashboard for one building. */
+export async function fetchBangViecVanHanh(token: string, toaNhaId: number): Promise<ThongTinBangViecVanHanh> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/bang-viec`, {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải bảng việc vận hành.')
+  }
+
+  return response.json() as Promise<ThongTinBangViecVanHanh>
 }
 
 export async function taoToaNha(token: string, payload: YeuCauToaNha): Promise<ThongTinToaNha> {

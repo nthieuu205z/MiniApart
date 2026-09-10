@@ -21,6 +21,7 @@ import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { ViecCuaToi } from './ViecCuaToi'
 import { ThongBao } from './ThongBao'
 import { LichSuSuaChua } from './LichSuSuaChua'
+import { BangViecVanHanh } from './BangViecVanHanh'
 import { BlockedNotice } from './design/building/BlockedNotice'
 import { Button } from './design/core/Button'
 import { SysLabel } from './design/core/SysLabel'
@@ -401,6 +402,12 @@ function App() {
     && duongDanHienTai === '/su-co'
     && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro),
   )
+  const hienThiBangViec = Boolean(
+    token
+    && nguoiDung
+    && ((nguoiDung.vaiTro === 'QUAN_LY' && duongDanHienTai === '/nhac-viec')
+      || (nguoiDung.vaiTro === 'CHU' && duongDanHienTai === '/tong-quan')),
+  )
   const hienThiHoaDon = Boolean(
     token
     && nguoiDung
@@ -411,8 +418,10 @@ function App() {
     ? 'Tiêu thụ điện và nước'
     : hienThiHopDongNguoiThue
       ? 'Hợp đồng của tôi'
-    : hienThiThongBao
-      ? 'Thông báo'
+      : hienThiThongBao
+        ? 'Thông báo'
+      : hienThiBangViec
+        ? 'Bảng việc vận hành'
       : hienThiLichSuSuaChua
         ? 'Lịch sử sửa chữa'
     : hienThiHoaDonNguoiThue && duongDanHienTai !== '/'
@@ -434,6 +443,8 @@ function App() {
       ? 'FR-POR-07'
     : hienThiThongBao
       ? 'FR-MNT-02'
+      : hienThiBangViec
+        ? 'FR-NTF-01'
       : hienThiLichSuSuaChua
         ? 'FR-MNT-08'
     : hienThiHoaDonNguoiThue
@@ -614,6 +625,8 @@ function App() {
             <HopDongNguoiThue token={token} mobile={laManHinhHep} />
           ) : hienThiViecCuaToi && token ? (
             <ViecCuaToi token={token} />
+          ) : hienThiBangViec && token ? (
+            <BangViecVanHanh token={token} mobile={laManHinhHep} />
           ) : hienThiLichSuSuaChua && token ? (
             <LichSuSuaChua token={token} mobile={laManHinhHep} />
           ) : hienThiThongBao && token ? (

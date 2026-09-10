@@ -67,6 +67,24 @@ public class YeuCauSuaChuaRepository {
                 : jdbcTemplate.query(sql, (resultSet, rowNum) -> mapView(resultSet), toaNhaId, trangThai.name());
     }
 
+    /** FR-NTF-01 reads only the lifecycle timestamps needed to count the operational dashboard. */
+    public List<ThongTinTrangThaiBangViec> findTrangThaiChoBangViec(Long toaNhaId) {
+        return jdbcTemplate.query(
+                """
+                        SELECT yc.trang_thai, yc.cho_xac_nhan_luc, yc.tao_luc
+                        FROM YEU_CAU_SUA_CHUA yc
+                        JOIN PHONG p ON p.id = yc.phong_id
+                        WHERE p.toa_nha_id = ?
+                        """,
+                (resultSet, rowNum) -> new ThongTinTrangThaiBangViec(
+                        TrangThaiYeuCau.valueOf(resultSet.getString("trang_thai")),
+                        layInstantNullable(resultSet, "cho_xac_nhan_luc"),
+                        resultSet.getTimestamp("tao_luc").toInstant()
+                ),
+                toaNhaId
+        );
+    }
+
     public List<YeuCauSuaChuaView> findByNguoiQuanLy(Long nguoiDungId, TrangThaiYeuCau trangThai) {
         String sql = cauLenhView() + """
                 JOIN PHAN_QUYEN_TOA pqt
@@ -360,6 +378,13 @@ public class YeuCauSuaChuaRepository {
             Long toaNhaId,
             Long nguoiTaoId,
             Long nguoiXuLyId
+    ) {
+    }
+
+    public record ThongTinTrangThaiBangViec(
+            TrangThaiYeuCau trangThai,
+            Instant choXacNhanLuc,
+            Instant taoLuc
     ) {
     }
 }
