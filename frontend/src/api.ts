@@ -316,6 +316,9 @@ export type ThongTinThongBao = {
   daDoc: boolean
   docLuc: string | null
   taoLuc: string
+  hetHanLuc?: string | null
+  daLuuTru?: boolean
+  anh?: Array<{ id: number }>
 }
 
 export type ThongTinHopThongBao = {
@@ -325,6 +328,26 @@ export type ThongTinHopThongBao = {
 
 export type LienKetAnhKy = {
   url: string
+}
+
+export type YeuCauThongBaoChung = {
+  toaNhaId: number
+  phamVi: 'TOA_NHA' | 'TANG' | 'PHONG'
+  tang?: number
+  phongIds?: number[]
+  tieuDe: string
+  noiDung: string
+  hetHanLuc: string
+}
+
+export type ThongTinXemTruocThongBaoChung = {
+  soNguoiNhan: number
+  soPhongNhan: number
+  soPhongKhongCoTaiKhoan: number
+}
+
+export type ThongTinGuiThongBaoChung = ThongTinXemTruocThongBaoChung & {
+  maThamChieu: string
 }
 
 export type YeuCauToaNha = {
@@ -637,6 +660,16 @@ export async function fetchLienKetAnh(token: string, anhId: number): Promise<str
   return lienKet.url
 }
 
+/** FR-NTF-02 fetches a private common-notification image with the recipient's authorization. */
+export async function fetchAnhThongBao(token: string, anhId: number): Promise<string> {
+  const signedUrl = await fetchLienKetAnh(token, anhId)
+  const response = await fetch(signedUrl, { headers: authorizationHeaders(token) })
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải ảnh thông báo.')
+  }
+  return URL.createObjectURL(await response.blob())
+}
+
 /** FR-MNT-04 returns the active repair work assigned to the authenticated worker. */
 export async function fetchViecCuaToi(token: string): Promise<ThongTinViecCuaToi[]> {
   const response = await fetch('/api/tho/viec-cua-toi', {
@@ -682,6 +715,91 @@ export async function fetchThongBao(token: string): Promise<ThongTinHopThongBao>
   }
 
   return response.json() as Promise<ThongTinHopThongBao>
+}
+
+/** FR-NTF-02/FR-NTF-07 reads expired notifications from the immutable archive. */
+export async function fetchThongBaoLuuTru(token: string): Promise<ThongTinHopThongBao> {
+  const response = await fetch('/api/thong-bao/luu-tru', {
+    headers: authorizationHeaders(token),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải kho lưu trữ thông báo.')
+  }
+
+  return response.json() as Promise<ThongTinHopThongBao>
+}
+
+/** FR-NTF-02/FR-NTF-07 previews recipient counts before a manager sends a common notification. */
+export async function xemTruocThongBaoChung(
+  token: string,
+  payload: YeuCauThongBaoChung,
+): Promise<ThongTinXemTruocThongBaoChung> {
+  const response = await fetch('/api/thong-bao/chung/xem-truoc', {
+    method: 'POST',
+    headers: jsonAuthorizationHeaders(token),
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể xem trước người nhận.')
+  }
+
+  return response.json() as Promise<ThongTinXemTruocThongBaoChung>
+}
+
+/** FR-NTF-02/FR-NTF-07 sends one idempotent common notification as JSON. */
+export async function guiThongBaoChung(
+  token: string,
+  payload: YeuCauThongBaoChung,
+  idempotencyKey: string,
+): Promise<ThongTinGuiThongBaoChung> {
+  const response = await fetch('/api/thong-bao/chung', {
+    method: 'POST',
+    headers: {
+      ...jsonAuthorizationHeaders(token),
+      'Idempotency-Key': idempotencyKey,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể gửi thông báo chung.')
+  }
+
+  return response.json() as Promise<ThongTinGuiThongBaoChung>
+}
+
+/** FR-NTF-02/FR-NTF-07 sends one common notification with a private image attachment. */
+export async function guiThongBaoChungCoAnh(
+  token: string,
+  payload: YeuCauThongBaoChung,
+  idempotencyKey: string,
+  tep: File,
+): Promise<ThongTinGuiThongBaoChung> {
+  const formData = new FormData()
+  formData.set('toaNhaId', String(payload.toaNhaId))
+  formData.set('phamVi', payload.phamVi)
+  if (payload.tang !== undefined) formData.set('tang', String(payload.tang))
+  if (payload.phongIds?.length) formData.set('phongIds', payload.phongIds.join(','))
+  formData.set('tieuDe', payload.tieuDe)
+  formData.set('noiDung', payload.noiDung)
+  formData.set('hetHanLuc', payload.hetHanLuc)
+  formData.set('tep', tep)
+  const response = await fetch('/api/thong-bao/chung', {
+    method: 'POST',
+    headers: {
+      ...authorizationHeaders(token),
+      'Idempotency-Key': idempotencyKey,
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể gửi thông báo chung.')
+  }
+
+  return response.json() as Promise<ThongTinGuiThongBaoChung>
 }
 
 /** FR-MNT-02/FR-MNT-04/FR-INV-08 marks one notification owned by the user as read. */

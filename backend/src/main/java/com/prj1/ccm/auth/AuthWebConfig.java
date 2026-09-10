@@ -20,7 +20,6 @@ public class AuthWebConfig implements WebMvcConfigurer {
                         "/api/health",
                         "/api/auth/login",
                         "/api/auth/kich-hoat",
-                        "/api/anh/*/xem",
                         "/api/toa-nha/*/ky-thanh-toan/*/hoa-don/*/ma-qr-chuyen-khoan/xem",
                         "/error"
                 );

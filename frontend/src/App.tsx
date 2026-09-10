@@ -617,7 +617,7 @@ function App() {
           ) : hienThiLichSuSuaChua && token ? (
             <LichSuSuaChua token={token} mobile={laManHinhHep} />
           ) : hienThiThongBao && token ? (
-            <ThongBao token={token} mobile={laManHinhHep} onUnreadCountChange={setSoThongBaoChuaDoc} />
+            <ThongBao token={token} mobile={laManHinhHep} vaiTro={nguoiDung.vaiTro} onUnreadCountChange={setSoThongBaoChuaDoc} />
           ) : hienThiLichSuHoaDonNguoiThue && token ? (
             <LichSuHoaDon token={token} mobile={laManHinhHep} />
           ) : (hienThiHoaDon || hienThiHoaDonNguoiThue) && token ? (

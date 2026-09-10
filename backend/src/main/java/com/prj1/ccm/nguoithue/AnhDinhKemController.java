@@ -27,7 +27,12 @@ public class AnhDinhKemController {
         if (coNhieuGiaTri(request, "hetHan") || coNhieuGiaTri(request, "chuKy")) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Liên kết ảnh không hợp lệ hoặc đã hết hạn");
         }
-        AnhDinhKem anh = anhDinhKemService.layAnhDaKy(anhId, hetHan, chuKy);
+        AnhDinhKem anh = anhDinhKemService.layAnhDaKy(
+                anhId,
+                hetHan,
+                chuKy,
+                (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE)
+        );
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(anh.loaiNoiDung())).body(anhDinhKemService.docTep(anh));
     }
 

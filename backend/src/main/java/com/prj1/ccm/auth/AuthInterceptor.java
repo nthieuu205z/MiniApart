@@ -36,6 +36,11 @@ public class AuthInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authorization == null || !authorization.startsWith("Bearer ")) {
+            if (laLienKetAnhDaKy(request)) {
+                // Legacy image links are bearer capabilities. Common-notification images
+                // perform a second, recipient/sender permission check in the service.
+                return true;
+            }
             authErrorWriter.write(response, HttpStatus.UNAUTHORIZED.value(), "Phiên đăng nhập không hợp lệ hoặc đã hết hạn");
             return false;
         }
@@ -59,5 +64,11 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         request.setAttribute(CURRENT_USER_ATTRIBUTE, nguoiDung.get().toNguoiDung());
         return true;
+    }
+
+    private boolean laLienKetAnhDaKy(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        return path.startsWith(contextPath + "/api/anh/") && path.endsWith("/xem");
     }
 }
