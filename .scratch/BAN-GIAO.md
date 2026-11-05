@@ -1,14 +1,14 @@
 # BIÊN BẢN BÀN GIAO TIẾP QUẢN DỰ ÁN (DÀNH CHO CODEX REVIEW)
 
-> **Thời điểm bàn giao:** Sau khi hoàn tất khắc phục lỗi P2 cuối cùng về tương thích đa schema (multi-tenant / multi-schema) cho cột khấu trừ tài sản trên mốc `825d938`.  
+> **Thời điểm bàn giao:** Sau khi hoàn tất khắc phục lỗi bảo toàn dữ liệu trong migration MiniApart (bảo toàn mức khấu trừ 0 hợp lệ, fail-fast và rollback toàn diện khi có xung đột giá trị hai chiều 0/150000 và 150000/0, hai số dương khác nhau) trên mốc `af3d8eb`.  
 > **Trạng thái hệ thống:**  
 > - **PostgreSQL 17 Portable:** Đang chạy tại port `5432` (`miniapart_db`)  
 > - **Spring Boot Backend:** Đang chạy tại `http://localhost:8080/`  
 > - **Vite Frontend Dev Server:** Đang chạy tại `http://localhost:5173/`  
 > - **Frontend Test Suite:** `vitest run --run` đạt **31/31 suites passed (219/219 tests passed 100%)**  
 > - **Frontend Build:** `npm run build` (`tsc -b && vite build`) thành công 100% (0 lỗi TypeScript, 0 lỗi bundle)  
-> - **Backend Test Suites (chạy trên PostgreSQL cô lập, 65/65 passed 100%):**
->   - `MigrationUpgradeHistoryIntegrationTest`: **17/17 passed** (bao quát toàn diện 17 kịch bản: clean DB, pre-V49, 046d45a, d2e3d69, e1 pending canonical, e2 pending canonical, f checksum lạ fail-fast, g khởi động lần hai idempotent, h tương thích V58 tương lai, i nghiệp vụ biên bản tài sản sau nâng cấp, j defaultSchema khác public, k custom history table name, l bảng lịch sử tồn tại nhưng đọc lỗi fail-fast, m đa schema A chuẩn B lỗi bảo toàn dữ liệu & repo đọc/ghi, n đảo thứ tự nâng cấp B trước A sau, o cả 2 cột cùng tồn tại không xung đột hợp nhất dữ liệu, p cả 2 cột cùng tồn tại có xung đột giá trị fail-fast)
+> - **Backend Test Suites (chạy trên PostgreSQL cô lập, 67/67 passed 100%):**
+>   - `MigrationUpgradeHistoryIntegrationTest`: **19/19 passed** (bao quát toàn diện 19 kịch bản: clean DB, pre-V49, 046d45a, d2e3d69, e1 pending canonical, e2 pending canonical, f checksum lạ fail-fast, g khởi động lần hai idempotent, h tương thích V58 tương lai, i nghiệp vụ biên bản tài sản sau nâng cấp, j defaultSchema khác public, k custom history table name, l bảng lịch sử tồn tại nhưng đọc lỗi fail-fast, m đa schema A chuẩn B lỗi bảo toàn dữ liệu & repo đọc/ghi, n đảo thứ tự nâng cấp B trước A sau, o cả 2 cột cùng tồn tại không xung đột hợp nhất dữ liệu an toàn, p1 xung đột 2 số dương khác nhau fail và rollback, p2 xung đột chiều 1: 0 và 150000 fail và rollback, p3 xung đột chiều 2: 150000 và 0 fail và rollback)
 >   - `DemoDataSeederIntegrationTest`: **6/6 passed** (kiểm chứng Spring Bean Proxy thật, @ConditionalOnProperty qua ApplicationContextRunner, @Transactional rollback toàn bộ dữ liệu nghiệp vụ qua trigger lỗi PostgreSQL, idempotency, bảo toàn 100% dịch vụ thật trùng tên có giá quá khứ/tương lai/chưa có giá/trùng nhiều tên, candidate reconciliation read-only)
 >   - `HuyVaThanhToanConcurrencyIntegrationTest`: **5/5 passed**
 >   - `BangViecVanHanhIntegrationTest`: **8/8 passed**
@@ -19,8 +19,8 @@
 >   - `PublicPortalServiceTest`: **4/4 passed**
 >   - `HopDongPdfServiceTest`: **3/3 passed**
 > - **Mốc commit trước đợt sửa:** `046d45a`  
-> - **Commit sửa trung gian:** `d2e3d69` $\rightarrow$ `cceb3a0` $\rightarrow$ `f533e88` $\rightarrow$ `e6976cc` $\rightarrow$ `208cd93` $\rightarrow$ `825d938`  
-> - **Commit hoàn tất khắc phục:** `HEAD` (`git log -1`)
+> - **Commit sửa trung gian:** `d2e3d69` $\rightarrow$ `cceb3a0` $\rightarrow$ `f533e88` $\rightarrow$ `e6976cc` $\rightarrow$ `208cd93` $\rightarrow$ `825d938` $\rightarrow$ `af3d8eb`  
+> - **Commit hoàn tất khắc phục:** `041ebb8` (HEAD)
 
 ---
 
@@ -52,16 +52,22 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
    - Nếu bảng lịch sử chứa checksum lạ không khớp bất kỳ bản chính tắc hay biến thể hợp lệ nào của `046d45a`/`d2e3d69`, hệ thống ném ngay `IllegalStateException` rõ ràng kèm mã phiên bản và giá trị checksum để ngăn chặn việc chạy sai lệch trên môi trường không xác định.
    - Tuyệt đối không can thiệp, không sửa đổi `flyway_schema_history`, không chạy `repair` và không tắt validation của Flyway.
 
-5. **Khắc phục triệt để lỗi unscoped schema ở V56 qua Forward Migration V57 (`V57__handover_column_schema_scoped_fix.sql`):**
-   - **Bối cảnh & Vấn đề gốc:** `V56__handover_schema_compatibility.sql:5–12` kiểm tra `information_schema.columns` nhưng không lọc `table_schema = CURRENT_SCHEMA`. Trong môi trường đa tenant / đa schema (multi-schema): nếu Schema A đã có cột chuẩn `tien_khau_tru`, trong khi Schema B còn cột lỗi `tien_khautru` từ `d2e3d69`, khi V56 chạy trên Schema B, nó tìm thấy cột `tien_khau_tru` ở Schema A nên bỏ qua việc rename ở Schema B. Flyway ghi nhận success nhưng Schema B vẫn giữ cột cũ, làm hỏng các truy vấn của `TaiSanRepository` trên Schema B.
-   - **Nguyên tắc giải quyết:**
-     - Không chỉnh sửa file `V56` đã phát hành để giữ nguyên checksum và lịch sử Flyway.
-     - Tạo forward migration `V57__handover_column_schema_scoped_fix.sql`:
-       - Chỉ kiểm tra và thao tác trên đúng schema đích (`cur_schema text := current_schema()`).
-       - Dùng `format('%I.%I', cur_schema, 'chi_tiet_bien_ban_tai_san')` để quote identifier chính xác, bảo đảm tính an toàn SQL injection và tên schema/bảng đặc thù.
-       - **Trường hợp 1 (Cả 2 cột cùng tồn tại):** Kiểm tra xung đột giá trị giữa 2 cột (`tien_khautru IS NOT NULL AND tien_khau_tru IS NOT NULL AND tien_khautru <> 0 AND tien_khau_tru <> 0 AND tien_khautru <> tien_khau_tru`). Nếu có xung đột -> ném `RAISE EXCEPTION` rõ ràng ngăn chặn ghi đè/mất mát dữ liệu. Nếu không xung đột -> hợp nhất dữ liệu từ `tien_khautru` sang `tien_khau_tru` (nơi `tien_khau_tru IS NULL OR tien_khau_tru = 0`) rồi DROP cột cũ `tien_khautru`.
-       - **Trường hợp 2 (Cột cũ có, cột chuẩn chưa có):** RENAME `tien_khautru` thành `tien_khau_tru` bảo toàn 100% dữ liệu.
-       - **Trường hợp 3 (Cột chuẩn đã có):** Giữ nguyên, không làm gì.
+5. **Khắc phục triệt để lỗi unscoped schema ở V56 & Bảo toàn dữ liệu tuyệt đối ở Forward Migration V57 (`V57__handover_column_schema_scoped_fix.sql`):**
+   - **Xác định trạng thái phát hành của V57:** `V57` là forward migration mới được tác tạo trong đợt sửa này, **chưa từng được phát hành (unreleased / pending)** ra bất kỳ môi trường production nào. Vì vậy, hoàn thiện triệt để logic trong chính file script `V57` trước khi phát hành là phương án an toàn nhất, bảo toàn tính toàn vẹn của lịch sử mà không cần sinh thêm các migration vá lỗi dở dang.
+   - **Nguyên tắc bảo toàn dữ liệu mức khấu trừ 0:** Số 0 là mức khấu trừ hợp lệ (miễn trừ khấu trừ / tài sản còn tốt). Tuyệt đối không giả định 0 là "chưa có dữ liệu" để ghi đè giá trị khác lên hoặc drop cột cũ.
+   - **Quy tắc phát hiện xung đột dữ liệu (Conflict Detection):**
+     - Bất kỳ khi nào cả hai cột `tien_khautru` và `tien_khau_tru` cùng tồn tại và chứa hai giá trị non-null khác nhau (`tien_khautru IS NOT NULL AND tien_khau_tru IS NOT NULL AND tien_khautru <> tien_khau_tru`), bao gồm:
+       1. Hai số dương khác nhau: `150000.00` khác `300000.00`
+       2. Chiều 1: Cột cũ = `0.00`, cột chuẩn = `150000.00`
+       3. Chiều 2: Cột cũ = `150000.00`, cột chuẩn = `0.00`
+     - Hệ thống lập tức **DỪNG RÕ RÀNG (`RAISE EXCEPTION`)**, làm giao dịch Flyway rollback toàn diện. Cả hai cột và dữ liệu nguyên vẹn 100%, không bị sửa đổi, không bị drop để chờ đối soát thủ công.
+   - **Quy tắc hợp nhất an toàn (Safe Merge khi `conflict_count = 0`):**
+     - Chỉ khi 100% các bản ghi không có xung đột (giá trị hai bên bằng nhau, hoặc một bên NULL) thì mới thực hiện:
+       + Gán `tien_khau_tru = tien_khautru` cho những bản ghi mà `tien_khau_tru IS NULL AND tien_khautru IS NOT NULL`.
+       + Những bản ghi `tien_khau_tru` đã có giá trị và `tien_khautru` NULL hoặc bằng nhau thì giữ nguyên.
+       + DROP cột cũ `tien_khautru` khi và chỉ khi không mất mát bất kỳ thông tin nào.
+   - **Trường hợp chỉ có cột cũ:** RENAME `tien_khautru` thành `tien_khau_tru` bảo toàn 100% dữ liệu.
+   - **Trường hợp chỉ có cột chuẩn:** Bỏ qua (No-op), không thay đổi dữ liệu.
 
 ### 1.2. Cơ chế Seed Demo & Audit đối soát an toàn:
 - **Tách biệt vào component độc lập (`DemoDataSeeder.java`):**
@@ -146,7 +152,7 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
 - **Hành vi sau sửa:** Đồng bộ câu lệnh SQL insert vào `PCCC_THIET_BI` với schema chuẩn (`ten, vi_tri, han_kiem_dinh`). Bổ sung xoá bảng con PCCC trước khi reset bảng cha toà nhà.
 - **Kiểm chứng:** Chạy trực tiếp trên PostgreSQL cô lập (**8/8 passed**).
 
-### 2.7. Tương thích Đa Schema & Xử lý Cột khấu trừ (P2 - Mốc 825d938)
+### 2.7. Tương thích Đa Schema & Xử lý Cột khấu trừ (P2 - Mốc 825d938 -> af3d8eb)
 - **Files:**
   - `backend/src/main/resources/db/migration/V57__handover_column_schema_scoped_fix.sql`
   - `backend/src/test/java/com/prj1/ccm/architecture/MigrationUpgradeHistoryIntegrationTest.java`
@@ -154,8 +160,10 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
   - Bổ sung `V57` forward migration lọc đúng `table_schema = current_schema()` và quote identifier bằng `%I.%I`.
   - Bảo toàn 100% dữ liệu tiền khấu trừ ở schema B khi nâng cấp, kể cả khi schema A đã có cột chuẩn.
   - Đọc/ghi biên bản qua repository `TaiSanRepository` trên schema B hoạt động trơn tru.
-  - Tự động hợp nhất dữ liệu an toàn khi cả hai cột cùng tồn tại mà không xung đột; fail-fast rõ ràng khi có xung đột giá trị.
-- **Kiểm chứng:** `MigrationUpgradeHistoryIntegrationTest` (17/17 passed), gồm các test cases `m`, `n`, `o`, `p`.
+  - **Bảo toàn dữ liệu mức khấu trừ 0:** 0 là giá trị khấu trừ hợp lệ, không suy đoán 0 là chưa có dữ liệu.
+  - **Phát hiện xung đột toàn diện:** Kiểm tra hai chiều 0/150000, 150000/0, và hai số dương khác nhau: khi có xung đột, ném Exception rõ ràng, rollback transaction bảo toàn cả hai cột và giá trị để đối soát thủ công.
+  - **Hợp nhất an toàn:** Chỉ hợp nhất và drop cột cũ khi hai bên bằng nhau hoặc một bên NULL.
+- **Kiểm chứng:** `MigrationUpgradeHistoryIntegrationTest` (19/19 passed), bao gồm các test cases `m`, `n`, `o`, `p1`, `p2`, `p3`.
 
 ---
 
@@ -165,7 +173,7 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
 | :--- | :--- | :--- | :--- |
 | **Frontend Test Suite** | Vitest 4.1.11 (`QuanLyTaiSanPhong`, `App`, `CongNoBaoCao`, `TieuThuBaoCao`, v.v.) | 31 suites / 219 tests | **219/219 PASSED (100%)** |
 | **Frontend Production Build** | TypeScript compiler + Vite bundler (`tsc -b && vite build`) | Toàn bộ ứng dụng React | **PASSED (0 errors)** |
-| **Migration Upgrade History Test** | `MigrationUpgradeHistoryIntegrationTest` (17 test cases a -> p bao quát toàn bộ kịch bản đơn/đa schema, legacy 046d45a & d2e3d69, fail fast, idempotent, V58 tương lai) | 17 tests | **17/17 PASSED (100%)** |
+| **Migration Upgrade History Test** | `MigrationUpgradeHistoryIntegrationTest` (19 test cases bao quát toàn bộ kịch bản đơn/đa schema, legacy 046d45a & d2e3d69, fail fast, idempotent, V58 tương lai, xung đột 2 chiều 0/150000 và 150000/0) | 19 tests | **19/19 PASSED (100%)** |
 | **Demo Data Seeder Integration Test** | `DemoDataSeederIntegrationTest` (Spring AOP proxy bean, ConditionalOnProperty, Transactional Rollback thực tế qua trigger lỗi PostgreSQL, idempotency, bảo toàn 100% dịch vụ thật cùng tên có giá quá khứ/chưa có giá/giá tương lai/trùng nhiều tên) | 6 tests | **6/6 PASSED (100%)** |
 | **Concurrency Integration Test** | `HuyVaThanhToanConcurrencyIntegrationTest` (Đa luồng hủy/thanh toán hóa đơn, đối ứng tiền) | 5 tests | **5/5 PASSED (100%)** |
 | **Operational Tasks (PCCC)** | `BangViecVanHanhIntegrationTest` | 8 tests | **8/8 PASSED (100%)** |
@@ -176,7 +184,7 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
 | **PublicPortalService Test** | Scope phân quyền tòa nhà cho lịch hẹn xem phòng | 4 tests | **4/4 PASSED (100%)** |
 | **HopDongPdfService Test** | Xuất văn bản hợp đồng PDF chính xác | 3 tests | **3/3 PASSED (100%)** |
 
-**Tổng cộng kiểm thử Backend: 65/65 tests PASSED 100% (0 failures, 0 errors, 0 skipped).**
+**Tổng cộng kiểm thử Backend: 67/67 tests PASSED 100% (0 failures, 0 errors, 0 skipped).**
 
 ---
 
@@ -188,7 +196,7 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
 # 1. Khởi động PostgreSQL Daemon (nếu chưa chạy)
 & "d:\vscode\miniapart\pgsql\pgsql\bin\postgres.exe" -D "d:\vscode\miniapart\pgsql\data"
 
-# 2. Chạy toàn bộ bộ kiểm thử Backend (bao gồm cả integration và unit tests):
+# 2. Chạy toàn bộ bộ kiểm thử Backend (bao gồm cả integration và unit tests, 67 tests):
 Set-Location D:\vscode\miniapart\MiniApart-main\backend
 $env:MINIAPART_TEST_JDBC_URL = "jdbc:postgresql://localhost:5432/miniapart"
 .\gradlew.bat test --tests "*MoneySchemaRegressionTest" --tests "*HopDongServiceTest" --tests "*TaiSanServiceTest" --tests "*HuyHoaDonNhapServiceTest" --tests "*PublicPortalServiceTest" --tests "*HopDongPdfServiceTest" --tests "*BangViecVanHanhIntegrationTest" --tests "*HuyVaThanhToanConcurrencyIntegrationTest" --tests "*MigrationUpgradeHistoryIntegrationTest" --tests "*DemoDataSeederIntegrationTest" --rerun-tasks

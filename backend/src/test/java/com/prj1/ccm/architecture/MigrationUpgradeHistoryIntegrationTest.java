@@ -665,7 +665,8 @@ class MigrationUpgradeHistoryIntegrationTest {
 
     @Test
     void o_daSchema_caHaiCotCungTonTai_khongXungDot_hopNhatBaoToanDuLieu() {
-        // Schema tồn tại cả hai cột nhưng không xung đột giá trị: V57 hợp nhất sang tien_khau_tru và xóa tien_khautru
+        // Schema tồn tại cả hai cột nhưng không xung đột giá trị (bằng nhau hoặc NULL một bên):
+        // V57 hợp nhất an toàn sang tien_khau_tru và dọn dẹp tien_khautru mà không làm mất thông tin
         String schemaDual = "schema_dual_col";
         jdbc.execute("CREATE SCHEMA IF NOT EXISTS " + schemaDual);
 
@@ -680,15 +681,23 @@ class MigrationUpgradeHistoryIntegrationTest {
                 .load();
         strategy.migrate(flyway56);
 
-        // 2. Thêm cột cũ tien_khautru và tạo dữ liệu mô phỏng cả hai cột cùng tồn tại
+        // 2. Thêm cột cũ tien_khautru và tạo dữ liệu mô phỏng không xung đột:
         jdbc.execute("ALTER TABLE " + schemaDual + ".chi_tiet_bien_ban_tai_san ADD COLUMN tien_khautru NUMERIC(15,2)");
+        jdbc.execute("ALTER TABLE " + schemaDual + ".chi_tiet_bien_ban_tai_san ALTER COLUMN tien_khau_tru DROP NOT NULL");
         jdbc.update("INSERT INTO " + schemaDual + ".toa_nha (id, ma_toa, ten, dia_chi, so_tang, ngay_chot_so, so_ngay_han_tt, tk_ngan_hang, nguong_that_thoat, ma_ngan_hang) VALUES (1, 'TN-O', 'Toà O', 'HN', 5, 25, 7, '9704000000000001', 100000.00, '970422') ON CONFLICT DO NOTHING");
         jdbc.update("INSERT INTO " + schemaDual + ".phong (id, toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai) VALUES (9101, 1, 'P.9101', 9, 30.0, 2, 5000000.00, 'VIP', 'TRONG') ON CONFLICT DO NOTHING");
         jdbc.update("INSERT INTO " + schemaDual + ".nguoi_thue (id, ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan) VALUES (91, 'Khách O', '1995-01-01', '0911111111', '123456789001', 'HN') ON CONFLICT DO NOTHING");
         jdbc.update("INSERT INTO " + schemaDual + ".hop_dong (id, phong_id, nguoi_thue_id, ngay_bat_dau, ngay_ket_thuc, gia_thue, tien_coc, so_ngay_bao_truoc, trang_thai) VALUES (91, 9101, 91, '2026-01-01', '2026-12-31', 5000000.00, 5000000.00, 30, 'HIEU_LUC') ON CONFLICT DO NOTHING");
         jdbc.update("INSERT INTO " + schemaDual + ".bien_ban_ban_giao_tai_san (id, hop_dong_id, phong_id, loai_bien_ban, ngay_thuc_hien, nguoi_lap_id, tong_tien_khau_tru) VALUES (91, 91, 9101, 'TRA_PHONG', '2026-03-01', 1, 350000.00) ON CONFLICT DO NOTHING");
-        jdbc.update("INSERT INTO " + schemaDual + ".chi_tiet_bien_ban_tai_san (id, bien_ban_id, ten_tai_san, so_luong, tinh_trang_luc_giao, tinh_trang_luc_tra, tien_khautru, tien_khau_tru, ly_do_khau_tru) VALUES (911, 91, 'Tủ lạnh', 1, 'Tốt', 'Nứt khay', 150000.00, 0.00, 'Nứt khay')");
-        jdbc.update("INSERT INTO " + schemaDual + ".chi_tiet_bien_ban_tai_san (id, bien_ban_id, ten_tai_san, so_luong, tinh_trang_luc_giao, tinh_trang_luc_tra, tien_khautru, tien_khau_tru, ly_do_khau_tru) VALUES (912, 91, 'Điều hoà', 1, 'Tốt', 'Hỏng điều khiển', 0.00, 200000.00, 'Hỏng điều khiển')");
+
+        // a) Hai giá trị bằng nhau (số dương): 150000.00 == 150000.00
+        jdbc.update("INSERT INTO " + schemaDual + ".chi_tiet_bien_ban_tai_san (id, bien_ban_id, ten_tai_san, so_luong, tinh_trang_luc_giao, tinh_trang_luc_tra, tien_khautru, tien_khau_tru, ly_do_khau_tru) VALUES (911, 91, 'Tủ lạnh', 1, 'Tốt', 'Nứt khay', 150000.00, 150000.00, 'Nứt khay')");
+        // b) Hai giá trị bằng nhau (mức 0 hợp lệ): 0.00 == 0.00
+        jdbc.update("INSERT INTO " + schemaDual + ".chi_tiet_bien_ban_tai_san (id, bien_ban_id, ten_tai_san, so_luong, tinh_trang_luc_giao, tinh_trang_luc_tra, tien_khautru, tien_khau_tru, ly_do_khau_tru) VALUES (912, 91, 'Quạt trần', 1, 'Tốt', 'Bình thường', 0.00, 0.00, 'Miễn trừ')");
+        // c) Cột cũ NULL, cột chuẩn có giá trị: NULL vs 200000.00
+        jdbc.update("INSERT INTO " + schemaDual + ".chi_tiet_bien_ban_tai_san (id, bien_ban_id, ten_tai_san, so_luong, tinh_trang_luc_giao, tinh_trang_luc_tra, tien_khautru, tien_khau_tru, ly_do_khau_tru) VALUES (913, 91, 'Điều hoà', 1, 'Tốt', 'Hỏng điều khiển', NULL, 200000.00, 'Hỏng điều khiển')");
+        // d) Cột chuẩn NULL, cột cũ có giá trị: 300000.00 vs NULL
+        jdbc.update("INSERT INTO " + schemaDual + ".chi_tiet_bien_ban_tai_san (id, bien_ban_id, ten_tai_san, so_luong, tinh_trang_luc_giao, tinh_trang_luc_tra, tien_khautru, tien_khau_tru, ly_do_khau_tru) VALUES (914, 91, 'Máy giặt', 1, 'Tốt', 'Kẹt cửa', 300000.00, NULL, 'Kẹt cửa')");
 
         // 3. Chạy migration V57 trực tiếp trong schemaDual
         Flyway flyway57 = Flyway.configure()
@@ -698,25 +707,28 @@ class MigrationUpgradeHistoryIntegrationTest {
                 .load();
         strategy.migrate(flyway57);
 
-        // Kiểm tra dữ liệu được hợp nhất đầy đủ vào tien_khau_tru và cột cũ đã được dọn dẹp
+        // Kiểm tra dữ liệu được bảo toàn đầy đủ và cột cũ đã được dọn dẹp
         BigDecimal val1 = jdbc.queryForObject("SELECT tien_khau_tru FROM " + schemaDual + ".chi_tiet_bien_ban_tai_san WHERE id = 911", BigDecimal.class);
         BigDecimal val2 = jdbc.queryForObject("SELECT tien_khau_tru FROM " + schemaDual + ".chi_tiet_bien_ban_tai_san WHERE id = 912", BigDecimal.class);
+        BigDecimal val3 = jdbc.queryForObject("SELECT tien_khau_tru FROM " + schemaDual + ".chi_tiet_bien_ban_tai_san WHERE id = 913", BigDecimal.class);
+        BigDecimal val4 = jdbc.queryForObject("SELECT tien_khau_tru FROM " + schemaDual + ".chi_tiet_bien_ban_tai_san WHERE id = 914", BigDecimal.class);
         assertThat(val1).isEqualByComparingTo("150000.00");
-        assertThat(val2).isEqualByComparingTo("200000.00");
+        assertThat(val2).isEqualByComparingTo("0.00");
+        assertThat(val3).isEqualByComparingTo("200000.00");
+        assertThat(val4).isEqualByComparingTo("300000.00");
 
         Boolean cotCuConKhong = jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema = '" + schemaDual + "' AND table_name = 'chi_tiet_bien_ban_tai_san' AND column_name = 'tien_khautru')", Boolean.class);
         assertThat(cotCuConKhong).isFalse();
     }
 
     @Test
-    void p_daSchema_caHaiCotCungTonTai_xungDotGiaTri_failRoRang() {
-        // Schema tồn tại cả hai cột và có hàng mang giá trị khác nhau: V57 phải fail rõ ràng để bảo toàn dữ liệu
-        String schemaConflict = "schema_conflict_col";
+    void p1_daSchema_caHaiCot_xungDotHaiSoDuongKhacNhau_failVaRollbackBaoToanDuLieu() {
+        // Hai số dương khác nhau (150000.00 <> 300000.00): V57 phải fail rõ ràng, transaction rollback, giữ nguyên 2 cột và dữ liệu
+        String schemaConflict = "schema_conflict_pos";
         jdbc.execute("CREATE SCHEMA IF NOT EXISTS " + schemaConflict);
 
         FlywayUpgradeStrategy strategy = new FlywayUpgradeStrategy();
 
-        // 1. Chạy Flyway đến V56
         Flyway flyway56 = Flyway.configure()
                 .dataSource(testUrl, POSTGRES.getUsername(), POSTGRES.getPassword())
                 .defaultSchema(schemaConflict)
@@ -725,11 +737,10 @@ class MigrationUpgradeHistoryIntegrationTest {
                 .load();
         strategy.migrate(flyway56);
 
-        // 2. Thêm cột cũ tien_khautru và chèn dữ liệu xung đột giá trị (150000.00 <> 300000.00)
         jdbc.execute("ALTER TABLE " + schemaConflict + ".chi_tiet_bien_ban_tai_san ADD COLUMN tien_khautru NUMERIC(15,2)");
-        jdbc.update("INSERT INTO " + schemaConflict + ".toa_nha (id, ma_toa, ten, dia_chi, so_tang, ngay_chot_so, so_ngay_han_tt, tk_ngan_hang, nguong_that_thoat, ma_ngan_hang) VALUES (1, 'TN-C', 'Toà C', 'HN', 5, 25, 7, '9704000000000001', 100000.00, '970422') ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schemaConflict + ".toa_nha (id, ma_toa, ten, dia_chi, so_tang, ngay_chot_so, so_ngay_han_tt, tk_ngan_hang, nguong_that_thoat, ma_ngan_hang) VALUES (1, 'TN-C1', 'Toà C1', 'HN', 5, 25, 7, '9704000000000001', 100000.00, '970422') ON CONFLICT DO NOTHING");
         jdbc.update("INSERT INTO " + schemaConflict + ".phong (id, toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai) VALUES (9201, 1, 'P.9201', 9, 30.0, 2, 5000000.00, 'VIP', 'TRONG') ON CONFLICT DO NOTHING");
-        jdbc.update("INSERT INTO " + schemaConflict + ".nguoi_thue (id, ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan) VALUES (92, 'Khách C', '1995-01-01', '0911111111', '123456789001', 'HN') ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schemaConflict + ".nguoi_thue (id, ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan) VALUES (92, 'Khách C1', '1995-01-01', '0911111111', '123456789001', 'HN') ON CONFLICT DO NOTHING");
         jdbc.update("INSERT INTO " + schemaConflict + ".hop_dong (id, phong_id, nguoi_thue_id, ngay_bat_dau, ngay_ket_thuc, gia_thue, tien_coc, so_ngay_bao_truoc, trang_thai) VALUES (92, 9201, 92, '2026-01-01', '2026-12-31', 5000000.00, 5000000.00, 30, 'HIEU_LUC') ON CONFLICT DO NOTHING");
         jdbc.update("INSERT INTO " + schemaConflict + ".bien_ban_ban_giao_tai_san (id, hop_dong_id, phong_id, loai_bien_ban, ngay_thuc_hien, nguoi_lap_id, tong_tien_khau_tru) VALUES (92, 92, 9201, 'TRA_PHONG', '2026-03-01', 1, 350000.00) ON CONFLICT DO NOTHING");
         jdbc.update("INSERT INTO " + schemaConflict + ".chi_tiet_bien_ban_tai_san (id, bien_ban_id, ten_tai_san, so_luong, tinh_trang_luc_giao, tinh_trang_luc_tra, tien_khautru, tien_khau_tru, ly_do_khau_tru) VALUES (921, 92, 'Tủ lạnh', 1, 'Tốt', 'Nứt khay', 150000.00, 300000.00, 'Nứt khay')");
@@ -743,5 +754,107 @@ class MigrationUpgradeHistoryIntegrationTest {
         assertThatThrownBy(() -> strategy.migrate(flyway57))
                 .isInstanceOf(Exception.class)
                 .hasMessageContaining("Xung đột dữ liệu schema");
+
+        // KIỂM TRA BẤT BIẾN KHI BỊ TỪ CHỐI: Transaction rollback, cả hai cột và giá trị còn nguyên
+        Boolean cotOldTonTai = jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema = '" + schemaConflict + "' AND table_name = 'chi_tiet_bien_ban_tai_san' AND column_name = 'tien_khautru')", Boolean.class);
+        Boolean cotStdTonTai = jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema = '" + schemaConflict + "' AND table_name = 'chi_tiet_bien_ban_tai_san' AND column_name = 'tien_khau_tru')", Boolean.class);
+        assertThat(cotOldTonTai).isTrue();
+        assertThat(cotStdTonTai).isTrue();
+
+        Map<String, Object> row = jdbc.queryForMap("SELECT tien_khautru, tien_khau_tru FROM " + schemaConflict + ".chi_tiet_bien_ban_tai_san WHERE id = 921");
+        assertThat(row.get("tien_khautru").toString()).isEqualTo("150000.00");
+        assertThat(row.get("tien_khau_tru").toString()).isEqualTo("300000.00");
+    }
+
+    @Test
+    void p2_daSchema_caHaiCot_xungDotChieu1_khauTru0VaSoDuong_failVaRollbackBaoToanDuLieu() {
+        // Chiều 1: tien_khautru = 0.00 và tien_khau_tru = 150000.00
+        // 0 là mức khấu trừ hợp lệ (miễn trừ), không được tự ý ghi đè hay drop -> phải fail và rollback
+        String schema0Pos = "schema_conflict_0_pos";
+        jdbc.execute("CREATE SCHEMA IF NOT EXISTS " + schema0Pos);
+
+        FlywayUpgradeStrategy strategy = new FlywayUpgradeStrategy();
+
+        Flyway flyway56 = Flyway.configure()
+                .dataSource(testUrl, POSTGRES.getUsername(), POSTGRES.getPassword())
+                .defaultSchema(schema0Pos)
+                .locations("classpath:db/migration")
+                .target("56")
+                .load();
+        strategy.migrate(flyway56);
+
+        jdbc.execute("ALTER TABLE " + schema0Pos + ".chi_tiet_bien_ban_tai_san ADD COLUMN tien_khautru NUMERIC(15,2)");
+        jdbc.update("INSERT INTO " + schema0Pos + ".toa_nha (id, ma_toa, ten, dia_chi, so_tang, ngay_chot_so, so_ngay_han_tt, tk_ngan_hang, nguong_that_thoat, ma_ngan_hang) VALUES (1, 'TN-C2', 'Toà C2', 'HN', 5, 25, 7, '9704000000000001', 100000.00, '970422') ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schema0Pos + ".phong (id, toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai) VALUES (9301, 1, 'P.9301', 9, 30.0, 2, 5000000.00, 'VIP', 'TRONG') ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schema0Pos + ".nguoi_thue (id, ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan) VALUES (93, 'Khách C2', '1995-01-01', '0911111111', '123456789001', 'HN') ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schema0Pos + ".hop_dong (id, phong_id, nguoi_thue_id, ngay_bat_dau, ngay_ket_thuc, gia_thue, tien_coc, so_ngay_bao_truoc, trang_thai) VALUES (93, 9301, 93, '2026-01-01', '2026-12-31', 5000000.00, 5000000.00, 30, 'HIEU_LUC') ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schema0Pos + ".bien_ban_ban_giao_tai_san (id, hop_dong_id, phong_id, loai_bien_ban, ngay_thuc_hien, nguoi_lap_id, tong_tien_khau_tru) VALUES (93, 93, 9301, 'TRA_PHONG', '2026-03-01', 1, 150000.00) ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schema0Pos + ".chi_tiet_bien_ban_tai_san (id, bien_ban_id, ten_tai_san, so_luong, tinh_trang_luc_giao, tinh_trang_luc_tra, tien_khautru, tien_khau_tru, ly_do_khau_tru) VALUES (931, 93, 'Điều hoà', 1, 'Tốt', 'Hỏng remote', 0.00, 150000.00, 'Cần đối soát')");
+
+        Flyway flyway57 = Flyway.configure()
+                .dataSource(testUrl, POSTGRES.getUsername(), POSTGRES.getPassword())
+                .defaultSchema(schema0Pos)
+                .locations("classpath:db/migration")
+                .load();
+
+        assertThatThrownBy(() -> strategy.migrate(flyway57))
+                .isInstanceOf(Exception.class)
+                .hasMessageContaining("Xung đột dữ liệu schema");
+
+        // KIỂM TRA BẤT BIẾN KHI BỊ TỪ CHỐI: Transaction rollback, cả hai cột và giá trị còn nguyên
+        Boolean cotOldTonTai = jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema = '" + schema0Pos + "' AND table_name = 'chi_tiet_bien_ban_tai_san' AND column_name = 'tien_khautru')", Boolean.class);
+        Boolean cotStdTonTai = jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema = '" + schema0Pos + "' AND table_name = 'chi_tiet_bien_ban_tai_san' AND column_name = 'tien_khau_tru')", Boolean.class);
+        assertThat(cotOldTonTai).isTrue();
+        assertThat(cotStdTonTai).isTrue();
+
+        Map<String, Object> row = jdbc.queryForMap("SELECT tien_khautru, tien_khau_tru FROM " + schema0Pos + ".chi_tiet_bien_ban_tai_san WHERE id = 931");
+        assertThat(row.get("tien_khautru").toString()).isEqualTo("0.00");
+        assertThat(row.get("tien_khau_tru").toString()).isEqualTo("150000.00");
+    }
+
+    @Test
+    void p3_daSchema_caHaiCot_xungDotChieu2_soDuongVaKhauTru0_failVaRollbackBaoToanDuLieu() {
+        // Chiều 2: tien_khautru = 150000.00 và tien_khau_tru = 0.00
+        // Cột chuẩn có 0 không có nghĩa là chưa có dữ liệu; không được ghi đè 150000 và drop cột cũ -> phải fail và rollback
+        String schemaPos0 = "schema_conflict_pos_0";
+        jdbc.execute("CREATE SCHEMA IF NOT EXISTS " + schemaPos0);
+
+        FlywayUpgradeStrategy strategy = new FlywayUpgradeStrategy();
+
+        Flyway flyway56 = Flyway.configure()
+                .dataSource(testUrl, POSTGRES.getUsername(), POSTGRES.getPassword())
+                .defaultSchema(schemaPos0)
+                .locations("classpath:db/migration")
+                .target("56")
+                .load();
+        strategy.migrate(flyway56);
+
+        jdbc.execute("ALTER TABLE " + schemaPos0 + ".chi_tiet_bien_ban_tai_san ADD COLUMN tien_khautru NUMERIC(15,2)");
+        jdbc.update("INSERT INTO " + schemaPos0 + ".toa_nha (id, ma_toa, ten, dia_chi, so_tang, ngay_chot_so, so_ngay_han_tt, tk_ngan_hang, nguong_that_thoat, ma_ngan_hang) VALUES (1, 'TN-C3', 'Toà C3', 'HN', 5, 25, 7, '9704000000000001', 100000.00, '970422') ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schemaPos0 + ".phong (id, toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai) VALUES (9401, 1, 'P.9401', 9, 30.0, 2, 5000000.00, 'VIP', 'TRONG') ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schemaPos0 + ".nguoi_thue (id, ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan) VALUES (94, 'Khách C3', '1995-01-01', '0911111111', '123456789001', 'HN') ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schemaPos0 + ".hop_dong (id, phong_id, nguoi_thue_id, ngay_bat_dau, ngay_ket_thuc, gia_thue, tien_coc, so_ngay_bao_truoc, trang_thai) VALUES (94, 9401, 94, '2026-01-01', '2026-12-31', 5000000.00, 5000000.00, 30, 'HIEU_LUC') ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schemaPos0 + ".bien_ban_ban_giao_tai_san (id, hop_dong_id, phong_id, loai_bien_ban, ngay_thuc_hien, nguoi_lap_id, tong_tien_khau_tru) VALUES (94, 94, 9401, 'TRA_PHONG', '2026-03-01', 1, 150000.00) ON CONFLICT DO NOTHING");
+        jdbc.update("INSERT INTO " + schemaPos0 + ".chi_tiet_bien_ban_tai_san (id, bien_ban_id, ten_tai_san, so_luong, tinh_trang_luc_giao, tinh_trang_luc_tra, tien_khautru, tien_khau_tru, ly_do_khau_tru) VALUES (941, 94, 'Tủ lạnh', 1, 'Tốt', 'Nứt khay', 150000.00, 0.00, 'Cần đối soát')");
+
+        Flyway flyway57 = Flyway.configure()
+                .dataSource(testUrl, POSTGRES.getUsername(), POSTGRES.getPassword())
+                .defaultSchema(schemaPos0)
+                .locations("classpath:db/migration")
+                .load();
+
+        assertThatThrownBy(() -> strategy.migrate(flyway57))
+                .isInstanceOf(Exception.class)
+                .hasMessageContaining("Xung đột dữ liệu schema");
+
+        // KIỂM TRA BẤT BIẾN KHI BỊ TỪ CHỐI: Transaction rollback, cả hai cột và giá trị còn nguyên
+        Boolean cotOldTonTai = jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema = '" + schemaPos0 + "' AND table_name = 'chi_tiet_bien_ban_tai_san' AND column_name = 'tien_khautru')", Boolean.class);
+        Boolean cotStdTonTai = jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema = '" + schemaPos0 + "' AND table_name = 'chi_tiet_bien_ban_tai_san' AND column_name = 'tien_khau_tru')", Boolean.class);
+        assertThat(cotOldTonTai).isTrue();
+        assertThat(cotStdTonTai).isTrue();
+
+        Map<String, Object> row = jdbc.queryForMap("SELECT tien_khautru, tien_khau_tru FROM " + schemaPos0 + ".chi_tiet_bien_ban_tai_san WHERE id = 941");
+        assertThat(row.get("tien_khautru").toString()).isEqualTo("150000.00");
+        assertThat(row.get("tien_khau_tru").toString()).isEqualTo("0.00");
     }
 }
