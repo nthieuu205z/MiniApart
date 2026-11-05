@@ -1,0 +1,12 @@
+flowchart TD
+  S((Bắt đầu)) --> A1["Người thuê báo trả phòng"]
+  A1 --> D1{"Báo trước đủ<br/>số ngày hợp đồng?"}
+  D1 -- Không --> A2["Cảnh báo có thể bị khấu trừ cọc"]
+  D1 -- Có --> A3["Quản lý hẹn ngày bàn giao"]
+  A2 --> A3
+  A3 --> A4["Chốt chỉ số điện, nước cuối cùng<br/>kèm ảnh công tơ"]
+  A4 --> A5["Kiểm kê tài sản theo biên bản bàn giao"]
+  A5 --> D2{"Có hư hỏng?"}
+  D2 -- Có --> A6["Ghi hạng mục hư hỏng<br/>và số tiền khấu trừ"]
+  D2 -- Không --> E((Chuyển sang<br/>quyết toán))
+  A6 --> E

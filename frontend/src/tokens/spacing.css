@@ -1,0 +1,27 @@
+:root {
+  /* Bậc 4px */
+  --ma-space-1: 4px;   /* khe trong nhóm nhỏ */
+  --ma-space-2: 6px;   /* khe giữa các thẻ phòng */
+  --ma-space-3: 9px;   /* khe giữa hai nút */
+  --ma-space-4: 12px;  /* nhãn ↔ nội dung */
+  --ma-space-5: 14px;
+  --ma-space-6: 18px;  /* đệm trong khối */
+  --ma-space-7: 24px;  /* đệm dọc vùng nội dung */
+  --ma-space-8: 30px;  /* đệm ngang vùng nội dung */
+  --ma-space-9: 48px;
+
+  /* Khung ứng dụng */
+  --ma-nav-width: 214px;
+  --ma-topbar-height: 58px;
+  --ma-breadcrumb-height: 30px;
+  --ma-task-column-width: 486px;
+
+  /* Vùng bấm tối thiểu */
+  --ma-hit-desktop: 32px;
+  --ma-hit-mobile: 44px;
+
+  /* Điểm ngắt */
+  --ma-bp-desktop: 1280px;
+  --ma-bp-tablet: 768px;
+  --ma-bp-mobile: 360px;
+}

@@ -1,0 +1,23 @@
+services:
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      APP_ACTIVATION_DELIVERY_LOCAL_ENABLED: 'false'
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?Set the public DNS name for HTTPS}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  caddy_data:
+  caddy_config:

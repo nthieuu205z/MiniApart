@@ -1,0 +1,57 @@
+%% Sơ đồ tuần tự — UC-19 và UC-20: Người thuê xem hoá đơn và ảnh công tơ
+%% Yêu cầu: FR-POR-01, FR-POR-02, FR-POR-04, FR-POR-06. Phi chức năng: NFR-SEC-03, NFR-SEC-04
+%% Sơ đồ này minh hoạ cách hệ thống chặn truy cập chéo giữa các phòng.
+sequenceDiagram
+  autonumber
+  actor NT as Nguoi thue phong 101
+  participant UI as Cong nguoi thue
+  participant API as PortalController
+  participant AUTH as Bo loc phan quyen
+  participant SV as PortalService
+  participant ANH as AnhService
+  participant DB as PostgreSQL
+
+  NT->>UI: Dang nhap
+  UI->>API: POST /api/auth/login
+  API->>DB: Doc NGUOI_DUNG theo so dien thoai
+  DB-->>API: nguoiDung kem nguoiThueId
+  Note over API,DB: CR-001 - lien ket tai khoan sang ho so nguoi thue.<br/>Khong co lien ket nay thi ca cong nguoi thue khong chay duoc.
+  API-->>UI: Token kem vaiTro va nguoiThueId
+
+  NT->>UI: Xem hoa don ky gan nhat
+  UI->>API: GET /api/portal/hoa-don/moi-nhat
+  API->>AUTH: Kiem tra token
+  AUTH->>SV: Lay hop dong hieu luc theo nguoiThueId
+  SV->>DB: Truy van rang buoc theo nguoiThueId cua token
+  Note over SV,DB: Pham vi du lieu lay tu token, khong lay tu tham so URL
+  DB-->>SV: hoa don cua phong 101
+  SV-->>API: hoa don kem chi tiet tung khoan
+  API-->>UI: Chi so dau, chi so cuoi, muc tieu thu, don gia, thanh tien
+  UI-->>NT: Hien hoa don minh bach tung khoan (FR-POR-02)
+
+  rect rgb(250, 240, 240)
+    Note over NT,DB: Kiem thu theo huong tan cong - phai chay khi bao ve
+    NT->>UI: Goi thang API hoa don cua phong 102
+    UI->>API: GET /api/portal/hoa-don/{idCuaPhong102}
+    API->>AUTH: Kiem tra token
+    AUTH->>SV: Doi chieu chu so huu hoa don voi nguoiThueId trong token
+    SV->>DB: Hoa don nay thuoc hop dong cua nguoi thue nao?
+    DB-->>SV: nguoiThueId khac
+    SV-->>API: Tu choi
+    API-->>UI: 403 Forbidden
+    UI-->>NT: Khong co quyen truy cap
+    Note over API,SV: FR-POR-04 duoc chan o tang may chu,<br/>khong phai bang cach an nut tren giao dien
+  end
+
+  NT->>UI: Xem anh cong to ky nay
+  UI->>API: GET /api/portal/chi-so/{id}/anh
+  API->>AUTH: Kiem tra quyen tren phong cua chi so
+  AUTH->>ANH: capLienKetCoHan(khoaLuuTru)
+  ANH->>ANH: Ky lien ket, han 15 phut (NFR-SEC-04)
+  ANH-->>API: lienKetCoHan
+  API-->>UI: lienKetCoHan
+  UI->>ANH: Tai anh qua lien ket
+  ANH-->>UI: Anh cong to
+  UI-->>NT: Hien anh
+
+  Note over NT,ANH: Sau 15 phut lien ket het han.<br/>Anh khong bao gio phuc vu truc tiep qua Nginx.

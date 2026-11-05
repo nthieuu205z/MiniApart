@@ -1,0 +1,48 @@
+{
+  "viewports": [
+    { "id": "mobile-360", "width": 360, "height": 2200, "deviceScaleFactor": 1 },
+    { "id": "desktop-1920", "width": 1920, "height": 2200, "deviceScaleFactor": 1 }
+  ],
+  "screens": [
+    {
+    "id": "building",
+    "route": "/toa-nha",
+    "url": "/toa-nha",
+    "testId": "building-catalog",
+    "readyText": "MiniApart Hai Bà Trưng",
+    "user": { "id": 1, "hoTen": "Nguyễn Chủ Nhà", "soDienThoai": "0900000001", "vaiTro": "CHU", "tenVaiTro": "Chủ sở hữu" }
+  },
+  {
+    "id": "room",
+    "route": "/phong",
+    "url": "/phong",
+    "testId": "room-catalog",
+    "readyText": "6 phòng",
+    "user": { "id": 2, "hoTen": "Trần Quản Lý", "soDienThoai": "0900000002", "vaiTro": "QUAN_LY", "tenVaiTro": "Quản lý toà nhà" }
+  },
+  {
+    "id": "meter",
+    "route": "/ghi-chi-so",
+    "url": "/ghi-chi-so",
+    "testId": "meter-screen",
+    "readyText": "12 / 24 phòng",
+    "user": { "id": 2, "hoTen": "Trần Quản Lý", "soDienThoai": "0900000002", "vaiTro": "QUAN_LY", "tenVaiTro": "Quản lý toà nhà" }
+  },
+  {
+    "id": "invoice",
+    "route": "/hoa-don-cua-toi",
+    "url": "/hoa-don-cua-toi?toaNhaId=1&kyId=8&hoaDonId=10",
+    "testId": "invoice-detail",
+    "readyText": "TN-A-101-202608",
+    "user": { "id": 3, "hoTen": "Lê Người Thuê", "soDienThoai": "0900000003", "vaiTro": "NGUOI_THUE", "tenVaiTro": "Người thuê" }
+  },
+  {
+    "id": "account",
+    "route": "/tai-khoan",
+    "url": "/tai-khoan",
+    "testId": "account-management",
+    "readyText": "Vũ Kỹ Thuật",
+    "user": { "id": 4, "hoTen": "Phạm Quản Trị", "soDienThoai": "0900000004", "vaiTro": "QTHT", "tenVaiTro": "Quản trị hệ thống" }
+    }
+  ]
+}

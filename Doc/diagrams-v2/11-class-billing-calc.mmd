@@ -1,0 +1,148 @@
+%% Sơ đồ lớp — Gói tính tiền (billing/calc)
+%% Toàn bộ các lớp trong sơ đồ này là lớp thuần: không phụ thuộc Spring,
+%% không đọc ghi cơ sở dữ liệu. Nhận dữ liệu vào, trả kết quả ra.
+%% Nhờ vậy kiểm thử chạy trong mili giây và viết được hàng trăm ca.
+classDiagram
+  direction TB
+
+  class MayTinhHoaDon {
+    <<orchestrator>>
+    -List~ChienLuocTinhTien~ cacChienLuoc
+    -QuyTacLamTron quyTacLamTron
+    +KetQuaTinhHoaDon tinh(BoiCanhTinh boiCanh)
+    -List~DongChiTiet~ tinhTienPhong(BoiCanhTinh bc)
+    -List~DongChiTiet~ tinhCacDichVu(BoiCanhTinh bc)
+    -List~DongChiTiet~ congKhoanPhatSinh(BoiCanhTinh bc)
+    -DongChiTiet truSoDu(BoiCanhTinh bc, BigDecimal tong)
+  }
+
+  class BoiCanhTinh {
+    <<value object>>
+    +KyThanhToan ky
+    +HopDong hopDong
+    +int soNgayOThucTe
+    +int soNguoiOTrongKy
+    +Map~DichVu, ChiSoDichVu~ cacChiSo
+    +Map~DichVu, BangGiaTaiThoiDiem~ cacBangGia
+    +List~KhoanPhatSinh~ khoanChoTinh
+    +BigDecimal soDuKhaDung
+  }
+
+  class KetQuaTinhHoaDon {
+    <<value object>>
+    +List~DongChiTiet~ cacDong
+    +BigDecimal tongTien
+    +List~LyDoBoQua~ lyDoBoQua
+    +boolean thanhCong()
+  }
+
+  class DongChiTiet {
+    <<value object>>
+    +String tenKhoan
+    +BigDecimal chiSoDau
+    +BigDecimal chiSoCuoi
+    +BigDecimal soLuong
+    +BigDecimal donGia
+    +BigDecimal thanhTien
+    +LoaiKhoan loaiKhoan
+  }
+
+  class ChienLuocTinhTien {
+    <<interface>>
+    +boolean apDungCho(CachTinh cachTinh)
+    +DongChiTiet tinh(DichVu dv, BoiCanhTinh bc)
+  }
+
+  class TinhTheoChiSo {
+    -ChienLuocGia chienLuocGia
+    +DongChiTiet tinh(DichVu dv, BoiCanhTinh bc)
+    -BigDecimal mucTieuThu(ChiSoDichVu cs)
+  }
+
+  class TinhCoDinh {
+    +DongChiTiet tinh(DichVu dv, BoiCanhTinh bc)
+  }
+
+  class TinhTheoNguoi {
+    +DongChiTiet tinh(DichVu dv, BoiCanhTinh bc)
+  }
+
+  class TinhTheoSoLuong {
+    +DongChiTiet tinh(DichVu dv, BoiCanhTinh bc)
+  }
+
+  class ChienLuocGia {
+    <<interface>>
+    +BigDecimal thanhTien(BigDecimal soLuong, BoiCanhTinh bc)
+  }
+
+  class GiaCoDinh {
+    -BigDecimal donGia
+    +BigDecimal thanhTien(BigDecimal soLuong, BoiCanhTinh bc)
+  }
+
+  class GiaBacThang {
+    -List~Bac~ cacBac
+    +BigDecimal thanhTien(BigDecimal soLuong, BoiCanhTinh bc)
+    -BigDecimal dinhMucTheoSoNguoi(int soNguoi)
+    -List~Bac~ giaNoiSuyTheoDinhMuc(int soNguoi)
+  }
+
+  class Bac {
+    <<value object>>
+    +int thuTu
+    +BigDecimal tuSoLuong
+    +BigDecimal denSoLuong
+    +BigDecimal donGia
+    +BigDecimal phanRoiVao(BigDecimal soLuong)
+  }
+
+  class BangGiaTaiThoiDiem {
+    <<value object>>
+    +LocalDate ngayHieuLuc
+    +BigDecimal donGia
+    +List~Bac~ cacBac
+  }
+
+  class QuyTacLamTron {
+    +BigDecimal lamTron(BigDecimal soTien)
+    +DongChiTiet dongChenhLech(BigDecimal truoc, BigDecimal sau)
+  }
+
+  class TienTe {
+    <<value object>>
+    -BigDecimal giaTri
+    +TienTe cong(TienTe khac)
+    +TienTe tru(TienTe khac)
+    +TienTe nhan(BigDecimal heSo)
+    +boolean am()
+  }
+
+  class LyDoBoQua {
+    <<value object>>
+    +Long phongId
+    +MaLyDo ma
+    +String moTa
+  }
+
+  MayTinhHoaDon --> BoiCanhTinh : doc
+  MayTinhHoaDon --> KetQuaTinhHoaDon : tra ve
+  MayTinhHoaDon o-- ChienLuocTinhTien
+  MayTinhHoaDon o-- QuyTacLamTron
+  KetQuaTinhHoaDon *-- DongChiTiet
+  KetQuaTinhHoaDon *-- LyDoBoQua
+  ChienLuocTinhTien <|.. TinhTheoChiSo
+  ChienLuocTinhTien <|.. TinhCoDinh
+  ChienLuocTinhTien <|.. TinhTheoNguoi
+  ChienLuocTinhTien <|.. TinhTheoSoLuong
+  TinhTheoChiSo o-- ChienLuocGia
+  ChienLuocGia <|.. GiaCoDinh
+  ChienLuocGia <|.. GiaBacThang
+  GiaBacThang *-- Bac
+  BangGiaTaiThoiDiem *-- Bac
+  BoiCanhTinh o-- BangGiaTaiThoiDiem
+  DongChiTiet ..> TienTe : dung
+
+  note for GiaBacThang "BR-02b, BR-02c<br/>Dinh muc 4 nguoi mot ho.<br/>Ho tren 4 nguoi duoc noi rong<br/>nguong cac bac theo so nguoi thuc te."
+  note for QuyTacLamTron "BR-15<br/>Lam tron den nghin, quy tac nua len.<br/>Chenh lech co the mang dau am.<br/>Chenh lech ghi thanh mot dong<br/>rieng loai LAM_TRON de tong<br/>cac dong luon bang tong tien."
+  note for TienTe "Bao BigDecimal.<br/>Khong bao gio dung double.<br/>Luat ArchUnit ep dieu nay<br/>trong khi chay kiem thu."

@@ -1,0 +1,312 @@
+%% ERD phiên bản 2.0 — Hệ thống Quản lý và Vận hành Chung cư mini
+%% Áp dụng lô phiếu thay đổi số 01 (CR-001 đến CR-015)
+%% Thay đổi so với phiên bản 1.0 được đánh dấu bằng chú thích [CR-xxx]
+erDiagram
+  NGUOI_DUNG ||--o{ PHAN_QUYEN_TOA : "được gán"
+  NGUOI_DUNG |o--o| NGUOI_THUE : "là hồ sơ của"
+  TOA_NHA ||--o{ PHAN_QUYEN_TOA : "có"
+  TOA_NHA ||--|{ PHONG : "gồm"
+  TOA_NHA ||--o{ DICH_VU : "khai báo"
+  TOA_NHA ||--o{ KY_THANH_TOAN : "có"
+  TOA_NHA ||--o{ THONG_BAO : "phát"
+  TOA_NHA ||--o{ THIET_BI_PCCC : "trang bị"
+  TOA_NHA ||--o{ HO_SO_AN_TOAN : "lưu"
+  TOA_NHA ||--o{ CHI_SO_TONG : "đo tổng"
+  DICH_VU ||--o{ BANG_GIA : "giá cố định"
+  DICH_VU ||--o{ BANG_GIA_BAC_THANG : "giá bậc thang"
+  DICH_VU ||--o{ CHI_SO_TONG : "đo bởi"
+  PHONG ||--o{ HOP_DONG : "được thuê qua"
+  PHONG ||--o{ TAI_SAN_PHONG : "trang bị"
+  PHONG ||--o{ CHI_SO_DICH_VU : "ghi nhận"
+  PHONG ||--o{ YEU_CAU_SUA_CHUA : "phát sinh"
+  PHONG ||--o{ NHAN_KHAU_KY : "chốt nhân khẩu"
+  NGUOI_THUE ||--o{ HOP_DONG : "đại diện ký"
+  HOP_DONG ||--o{ NGUOI_O_CUNG : "có"
+  NGUOI_THUE ||--o{ NGUOI_O_CUNG : "là"
+  HOP_DONG ||--o{ PHUONG_TIEN : "đăng ký"
+  HOP_DONG ||--o{ HOP_DONG_DICH_VU : "áp dụng"
+  HOP_DONG ||--o{ GIAO_DICH_COC : "phát sinh cọc"
+  HOP_DONG ||--o{ SO_DU_KHA_DUNG : "giữ số dư"
+  HOP_DONG ||--o{ KHOAN_PHAT_SINH : "gánh khoản"
+  DICH_VU ||--o{ HOP_DONG_DICH_VU : "được áp dụng"
+  HOP_DONG ||--o{ HOA_DON : "phát sinh"
+  KY_THANH_TOAN ||--o{ HOA_DON : "thuộc kỳ"
+  KY_THANH_TOAN ||--o{ CHI_SO_DICH_VU : "thuộc kỳ"
+  KY_THANH_TOAN ||--o{ CHI_SO_TONG : "thuộc kỳ"
+  KY_THANH_TOAN ||--o{ NHAN_KHAU_KY : "thuộc kỳ"
+  DICH_VU ||--o{ CHI_SO_DICH_VU : "đo bởi"
+  HOA_DON ||--|{ CHI_TIET_HOA_DON : "gồm"
+  HOA_DON ||--o{ THANH_TOAN : "được trả bởi"
+  HOA_DON ||--o{ SO_DU_KHA_DUNG : "sinh ra dư"
+  HOA_DON ||--o{ KHOAN_PHAT_SINH : "tiêu thụ khoản"
+  THANH_TOAN ||--o| THANH_TOAN : "đối ứng cho"
+  NGUOI_DUNG ||--o{ THANH_TOAN : "ghi nhận"
+  NGUOI_DUNG ||--o{ GIAO_DICH_COC : "thu chi cọc"
+  NGUOI_DUNG ||--o{ CHI_SO_DICH_VU : "người ghi"
+  NGUOI_DUNG ||--o{ CHI_SO_TONG : "người ghi"
+  NGUOI_DUNG ||--o{ YEU_CAU_SUA_CHUA : "xử lý"
+  NGUOI_DUNG ||--o{ NHAT_KY_THAO_TAC : "thực hiện"
+  YEU_CAU_SUA_CHUA ||--o{ ANH_DINH_KEM : "có"
+  CHI_SO_DICH_VU ||--o{ ANH_DINH_KEM : "có ảnh công tơ"
+  NGUOI_THUE ||--o{ ANH_DINH_KEM : "có ảnh giấy tờ"
+
+  NGUOI_DUNG {
+    bigint id PK
+    string ho_ten
+    string so_dien_thoai UK
+    string mat_khau_hash
+    enum vai_tro "QTHT|CHU|QUAN_LY|THO|NGUOI_THUE"
+    bigint nguoi_thue_id FK "CR-001 nullable, unique"
+    enum trang_thai
+  }
+  PHAN_QUYEN_TOA {
+    bigint nguoi_dung_id FK
+    bigint toa_nha_id FK
+  }
+  TOA_NHA {
+    bigint id PK
+    string ma_toa UK
+    string ten
+    string dia_chi
+    int so_tang
+    int ngay_chot_so
+    int so_ngay_han_tt
+    string tk_ngan_hang
+    decimal nguong_that_thoat
+  }
+  PHONG {
+    bigint id PK
+    bigint toa_nha_id FK
+    string so_phong
+    int tang
+    decimal dien_tich
+    int suc_chua
+    decimal gia_thue_mac_dinh
+    enum trang_thai "CR-012 dem, he thong ghi: TRONG|DANG_THUE|DA_COC|DANG_SUA|NGUNG"
+  }
+  NGUOI_THUE {
+    bigint id PK
+    string ho_ten
+    date ngay_sinh
+    string so_dien_thoai
+    string so_giay_to
+    string que_quan
+    enum trang_thai_luu_tru
+  }
+  HOP_DONG {
+    bigint id PK
+    bigint phong_id FK
+    bigint nguoi_thue_id FK
+    date ngay_bat_dau
+    date ngay_ket_thuc
+    decimal gia_thue
+    decimal tien_coc
+    int so_ngay_bao_truoc
+    enum trang_thai "CR-005 CR-012: CHO_KY|DA_COC|HIEU_LUC|DA_THANH_LY"
+  }
+  NGUOI_O_CUNG {
+    bigint id PK
+    bigint hop_dong_id FK
+    bigint nguoi_thue_id FK
+    string quan_he
+    date tu_ngay "CR-002"
+    date den_ngay "CR-002 nullable"
+  }
+  NHAN_KHAU_KY {
+    bigint id PK "CR-002 bang moi"
+    bigint ky_id FK
+    bigint phong_id FK
+    int so_nguoi
+    datetime thoi_diem_chot
+  }
+  PHUONG_TIEN {
+    bigint id PK
+    bigint hop_dong_id FK
+    enum loai_xe
+    string bien_so
+    date ngay_dang_ky
+  }
+  DICH_VU {
+    bigint id PK
+    bigint toa_nha_id FK
+    string ten
+    enum cach_tinh "THEO_CHI_SO|CO_DINH|THEO_NGUOI|THEO_SO_LUONG"
+    enum che_do_gia "CO_DINH|BAC_THANG"
+    string don_vi
+  }
+  BANG_GIA {
+    bigint id PK
+    bigint dich_vu_id FK
+    decimal don_gia
+    date ngay_hieu_luc
+  }
+  BANG_GIA_BAC_THANG {
+    bigint id PK "CR-003 bang moi"
+    bigint dich_vu_id FK
+    int bac
+    decimal tu_so_luong
+    decimal den_so_luong "nullable = vo cuc"
+    decimal ty_le "CR-015 % gia binh quan"
+    decimal don_gia "da quy doi, giu cho hoa don cu"
+    date ngay_hieu_luc
+  }
+  HOP_DONG_DICH_VU {
+    bigint hop_dong_id FK
+    bigint dich_vu_id FK
+    decimal don_gia_ap_dung
+  }
+  KY_THANH_TOAN {
+    bigint id PK
+    bigint toa_nha_id FK
+    int nam
+    int thang
+    date ngay_bat_dau
+    date ngay_ket_thuc
+    enum trang_thai "DANG_MO|DA_CHOT"
+  }
+  CHI_SO_DICH_VU {
+    bigint id PK
+    bigint ky_id FK
+    bigint phong_id FK
+    bigint dich_vu_id FK
+    decimal chi_so_dau
+    decimal chi_so_cuoi
+    boolean co_thay_cong_to
+    decimal chi_so_cuoi_cong_to_cu "CR-004 nullable"
+    decimal chi_so_dau_cong_to_moi "CR-004 nullable"
+    bigint nguoi_ghi_id FK
+    datetime thoi_diem_ghi
+  }
+  CHI_SO_TONG {
+    bigint id PK "CR-007 bang moi"
+    bigint ky_id FK
+    bigint toa_nha_id FK
+    bigint dich_vu_id FK
+    decimal chi_so_dau
+    decimal chi_so_cuoi
+    bigint nguoi_ghi_id FK
+    datetime thoi_diem_ghi
+  }
+  HOA_DON {
+    bigint id PK
+    string ma_hoa_don UK
+    bigint ky_id FK
+    bigint hop_dong_id FK
+    date ngay_phat_hanh
+    date han_thanh_toan
+    decimal tong_tien
+    decimal da_thu
+    enum trang_thai "NHAP|DA_PHAT_HANH|THU_MOT_PHAN|DA_TT|QUA_HAN|DA_HUY"
+  }
+  CHI_TIET_HOA_DON {
+    bigint id PK
+    bigint hoa_don_id FK
+    bigint dich_vu_id FK
+    string ten_khoan
+    decimal chi_so_dau
+    decimal chi_so_cuoi
+    decimal so_luong
+    decimal don_gia
+    decimal thanh_tien
+    enum loai_khoan "DICH_VU|PHAT_SINH|GIAM_TRU|LAM_TRON"
+  }
+  THANH_TOAN {
+    bigint id PK
+    bigint hoa_don_id FK
+    decimal so_tien "CR-010 cho phep am"
+    enum loai "CR-010: THU|DOI_UNG"
+    bigint dieu_chinh_cho_id FK "CR-010 nullable"
+    string ly_do "CR-010 bat buoc khi DOI_UNG"
+    enum hinh_thuc "TIEN_MAT|CHUYEN_KHOAN"
+    date ngay_thu
+    bigint nguoi_thu_id FK
+    string ma_bien_lai
+  }
+  SO_DU_KHA_DUNG {
+    bigint id PK "CR-006 bang moi"
+    bigint hop_dong_id FK
+    decimal so_tien
+    bigint nguon_hoa_don_id FK
+    date ngay_phat_sinh
+    bigint hoa_don_su_dung_id FK "nullable"
+    date ngay_su_dung "nullable"
+  }
+  GIAO_DICH_COC {
+    bigint id PK "CR-009 bang moi"
+    bigint hop_dong_id FK
+    enum loai "THU_COC|HOAN_COC|KHAU_TRU_COC"
+    decimal so_tien
+    date ngay
+    bigint nguoi_thu_id FK
+    string ma_bien_lai
+    string ly_do
+  }
+  KHOAN_PHAT_SINH {
+    bigint id PK "CR-008 bang moi"
+    bigint hop_dong_id FK
+    string nguon_loai "SUA_CHUA|DEN_BU|PHAT"
+    bigint nguon_id
+    string ten_khoan
+    decimal so_tien
+    enum loai "PHAT_SINH|GIAM_TRU"
+    enum trang_thai "CHO_TINH|DA_TINH"
+    bigint hoa_don_id FK "nullable"
+  }
+  YEU_CAU_SUA_CHUA {
+    bigint id PK
+    string ma_yeu_cau UK
+    bigint phong_id FK
+    bigint nguoi_tao_id FK
+    enum hang_muc
+    enum muc_do "KHAN_CAP|BINH_THUONG|CHO_DUOC"
+    enum trang_thai
+    bigint nguoi_xu_ly_id FK
+    decimal chi_phi
+    enum ben_chiu_chi_phi
+  }
+  TAI_SAN_PHONG {
+    bigint id PK
+    bigint phong_id FK
+    string ten
+    enum tinh_trang
+    decimal gia_tri
+  }
+  ANH_DINH_KEM {
+    bigint id PK
+    string doi_tuong_loai "NGUOI_THUE|CHI_SO|SUA_CHUA"
+    bigint doi_tuong_id
+    string khoa_luu_tru "CR-013 doi tu duong_dan"
+    string ghi_chu "CR-013 vd mat truoc, mat sau"
+  }
+  THONG_BAO {
+    bigint id PK
+    bigint toa_nha_id FK
+    string tieu_de
+    text noi_dung
+    string pham_vi
+    date tu_ngay
+    date den_ngay
+  }
+  THIET_BI_PCCC {
+    bigint id PK
+    bigint toa_nha_id FK
+    string loai
+    string vi_tri
+    date han_kiem_dinh
+  }
+  HO_SO_AN_TOAN {
+    bigint id PK
+    bigint toa_nha_id FK
+    string loai_ho_so
+    string duong_dan
+    date ngay_het_han
+  }
+  NHAT_KY_THAO_TAC {
+    bigint id PK
+    bigint nguoi_dung_id FK
+    string hanh_dong
+    string doi_tuong
+    text gia_tri_truoc
+    text gia_tri_sau
+    datetime thoi_diem
+  }

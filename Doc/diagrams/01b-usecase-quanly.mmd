@@ -1,0 +1,32 @@
+flowchart LR
+  classDef uc fill:#eef5ff,stroke:#4a6fa5;
+  QL(["👤 Quản lý<br/>toà nhà"])
+  THO(["👤 Thợ<br/>sửa chữa"])
+  subgraph HT["HỆ THỐNG MINIAPART — Phân hệ vận hành"]
+    direction TB
+    U05(["UC-05 Quản lý hồ sơ người thuê"]):::uc
+    U06(["UC-06 Lập hợp đồng thuê"]):::uc
+    U07(["UC-07 Gia hạn hợp đồng"]):::uc
+    U08(["UC-08 Thanh lý hợp đồng, quyết toán cọc"]):::uc
+    U09(["UC-09 Ghi chỉ số điện nước"]):::uc
+    U10(["UC-10 Tạo hoá đơn kỳ"]):::uc
+    U11(["UC-11 Phát hành và gửi hoá đơn"]):::uc
+    U12(["UC-12 Ghi nhận thanh toán"]):::uc
+    U13(["UC-13 Theo dõi công nợ"]):::uc
+    U15(["UC-15 Phân công và theo dõi sự cố"]):::uc
+    U16(["UC-16 Cập nhật kết quả sửa chữa"]):::uc
+    U17(["UC-17 Gửi thông báo toà nhà"]):::uc
+  end
+  QL --- U05
+  QL --- U06
+  QL --- U07
+  QL --- U08
+  QL --- U09
+  QL --- U10
+  QL --- U11
+  QL --- U12
+  QL --- U13
+  QL --- U15
+  QL --- U17
+  THO --- U16
+  THO --- U15

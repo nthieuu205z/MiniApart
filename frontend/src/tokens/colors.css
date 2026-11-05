@@ -1,0 +1,76 @@
+:root {
+  /* Nền */
+  --ma-paper-0: #FFFFFF;
+  --ma-paper-1: #F9F7F6;
+  --ma-paper-2: #F8FAFC;
+  --ma-paper-3: #F1F5F9;
+
+  /* Tông thương hiệu cao cấp */
+  --ma-brand-primary: #0F172A;
+  --ma-brand-accent: #0D9488;
+  --ma-brand-accent-hover: #0F766E;
+  --ma-brand-accent-light: #F0FDFA;
+  --ma-brand-blue: #2563EB;
+  --ma-brand-blue-hover: #1D4ED8;
+  --ma-brand-blue-light: #EFF6FF;
+
+  /* Mực & Chữ sắc nét */
+  --ma-ink-900: #0F172A;
+  --ma-ink-600: #475569;
+  --ma-ink-500: #64748B;
+  --ma-ink-400: #94A3B8;
+  --ma-ink-300: #CBD5E1;
+  /* Giữ màu tiêu đề màn Ghi chỉ số trong đợt dọn CSS cũ (Ticket 08). */
+  --ma-ink-screen-title: #0F766E;
+
+  /* Viền */
+  --ma-line-100: #F1F5F9;
+  --ma-line-200: #E2E8F0;
+  --ma-line-300: #CBD5E1;
+  --ma-line-600: #94A3B8;
+
+  /* Tín hiệu & Trạng thái chuyên nghiệp */
+  --ma-red-600: #DC2626;
+  --ma-red-100: #FEF2F2;
+  --ma-amber-600: #D97706;
+  --ma-amber-500: #F59E0B;
+  --ma-amber-100: #FFFBEB;
+  --ma-green-700: #047857;
+  --ma-green-600: #059669;
+  --ma-green-100: #ECFDF5;
+
+  /* Bí danh theo ngữ nghĩa — dùng cái này khi dựng giao diện */
+  --ma-bg-page: #F8FAFC;
+  --ma-bg-card: #FFFFFF;
+  --ma-bg-nav: #FFFFFF;
+  --ma-bg-sunken: #F1F5F9;
+  --ma-bg-nav-active: #F1F5F9;
+  --ma-bg-inverse: #0F172A;
+
+  --ma-text-primary: #0F172A;
+  --ma-text-secondary: #475569;
+  --ma-text-muted: #64748B;
+  --ma-text-disabled: #94A3B8;
+  --ma-text-on-inverse: #FFFFFF;
+  --ma-text-secondary-on-inverse: #94A3B8;
+
+  --ma-border-default: #E2E8F0;
+  --ma-border-subtle: #F1F5F9;
+  --ma-border-dashed: #CBD5E1;
+  --ma-border-strong: #94A3B8;
+  --ma-border-inverse: #334155;
+
+  /* Trạng thái nghiệp vụ */
+  --ma-urgent: var(--ma-red-600);
+  --ma-urgent-bg: var(--ma-red-100);
+  --ma-waiting: var(--ma-amber-600);
+  --ma-waiting-border: var(--ma-amber-500);
+  --ma-waiting-bg: var(--ma-amber-100);
+  --ma-done: var(--ma-green-600);
+  --ma-done-bg: var(--ma-green-100);
+  --ma-done-text: var(--ma-green-700);
+  --ma-vacant: var(--ma-brand-accent);
+
+  --ma-focus-ring: var(--ma-brand-accent);
+  --ma-focus-halo: rgba(13, 148, 136, 0.2);
+}

@@ -1,0 +1,16 @@
+flowchart TD
+  S((Bắt đầu)) --> A1["Người thuê phát hiện sự cố"]
+  A1 --> A2["Tạo yêu cầu trên cổng:<br/>hạng mục, mô tả, mức độ, ảnh"]
+  A2 --> D0{"Đã nhập mô tả?"}
+  D0 -- Chưa --> E0["Báo lỗi thiếu thông tin"]
+  E0 --> A2
+  D0 -- Rồi --> A3["Sinh mã yêu cầu<br/>Trạng thái: Mới tiếp nhận"]
+  A3 --> D1{"Mức độ<br/>Khẩn cấp?"}
+  D1 -- Có --> A4["Gửi thông báo ưu tiên,<br/>hiển thị nổi bật cho quản lý"]
+  D1 -- Không --> A5["Gửi thông báo thường"]
+  A4 --> A6["Quản lý xem xét và tiếp nhận"]
+  A5 --> A6
+  A6 --> D2{"Yêu cầu hợp lệ?"}
+  D2 -- Không --> A7["Huỷ kèm lý do, thông báo người thuê"]
+  A7 --> E2((Kết thúc))
+  D2 -- Có --> E1((Chuyển sang<br/>phân công xử lý))

@@ -1,0 +1,15 @@
+flowchart TD
+  S((Yêu cầu<br/>đã tiếp nhận)) --> A8["Quản lý phân công thợ sửa chữa"]
+  A8 --> A9["Thợ nhận việc — Trạng thái: Đang xử lý"]
+  A9 --> A10["Thợ xử lý tại phòng"]
+  A10 --> A11["Báo hoàn thành: chi phí,<br/>bên chịu chi phí, ảnh sau sửa"]
+  A11 --> D3{"Bên chịu chi phí<br/>là người thuê?"}
+  D3 -- Có --> A12["Tạo khoản phát sinh<br/>gắn vào hoá đơn kỳ sau"]
+  D3 -- Không --> A13["Ghi vào chi phí bảo trì của chủ"]
+  A12 --> A14["Trạng thái: Chờ xác nhận<br/>Thông báo người thuê"]
+  A13 --> A14
+  A14 --> D4{"Người thuê<br/>xác nhận?"}
+  D4 -- "Chưa đạt" --> A9
+  D4 -- "Đạt" --> A15["Trạng thái: Đã đóng"]
+  D4 -- "Không phản hồi<br/>sau 72 giờ" --> A15
+  A15 --> E((Kết thúc))

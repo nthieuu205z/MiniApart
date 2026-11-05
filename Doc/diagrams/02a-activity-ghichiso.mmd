@@ -1,0 +1,16 @@
+flowchart TD
+  S((Bắt đầu)) --> A1["Đến ngày chốt số<br/>Hệ thống hiển thị nhắc việc"]
+  A1 --> A2["Quản lý mở màn hình ghi chỉ số kỳ"]
+  A2 --> A3["Hệ thống liệt kê phòng theo tầng,<br/>kèm chỉ số kỳ trước"]
+  A3 --> A4["Nhập chỉ số mới, chụp ảnh công tơ"]
+  A4 --> D1{"Chỉ số mới<br/>≥ chỉ số cũ?"}
+  D1 -- Không --> E1["Báo lỗi, gợi ý khai báo thay công tơ"]
+  E1 --> A4
+  D1 -- Có --> D2{"Tiêu thụ > 150%<br/>trung bình 3 kỳ?"}
+  D2 -- Có --> W1["Cảnh báo bất thường, yêu cầu xác nhận"]
+  W1 --> A5
+  D2 -- Không --> A5["Lưu chỉ số và ảnh"]
+  A5 --> D3{"Đã ghi đủ<br/>mọi phòng?"}
+  D3 -- Chưa --> A6["Hiển thị danh sách phòng còn thiếu"]
+  A6 --> A4
+  D3 -- Rồi --> E((Chuyển sang<br/>lập hoá đơn))

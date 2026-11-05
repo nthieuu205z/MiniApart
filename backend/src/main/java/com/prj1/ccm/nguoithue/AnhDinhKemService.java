@@ -1,0 +1,307 @@
+package com.prj1.ccm.nguoithue;
+
+import com.prj1.ccm.nguoidung.NguoiDung;
+import com.prj1.ccm.nguoidung.VaiTro;
+import com.prj1.ccm.suachua.YeuCauSuaChuaRepository;
+import com.prj1.ccm.thongbao.ThongBaoRepository;
+import com.prj1.ccm.toanha.ChiSoDichVuRepository;
+import com.prj1.ccm.toanha.PhanQuyenToaService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.time.Clock;
+import java.util.Base64;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.UUID;
+
+@Service
+public class AnhDinhKemService {
+    private static final String DOI_TUONG_NGUOI_THUE = "NGUOI_THUE";
+    private static final String DOI_TUONG_CHI_SO_DICH_VU = "CHI_SO_DICH_VU";
+    private static final String DOI_TUONG_YEU_CAU_SUA_CHUA = "YEU_CAU_SUA_CHUA";
+    private static final String DOI_TUONG_THONG_BAO_CHUNG = "THONG_BAO_CHUNG";
+    private static final String HANH_DONG_XEM_ANH_GIAY_TO = "XEM_ANH_GIAY_TO";
+    private static final long KICH_THUOC_TOI_DA = 5L * 1024 * 1024;
+    private static final String THONG_BAO_TEP_KHONG_HOP_LE = "Tệp tải lên phải là ảnh PNG hoặc JPEG hợp lệ";
+    private static final String THONG_BAO_TEP_QUA_LON = "Tệp tải lên không được vượt quá 5 MB";
+    private static final String THONG_BAO_LIEN_KET_KHONG_HOP_LE = "Liên kết ảnh không hợp lệ hoặc đã hết hạn";
+    private final AnhDinhKemRepository anhDinhKemRepository;
+    private final NguoiThueRepository nguoiThueRepository;
+    private final NhatKyThaoTacRepository nhatKyThaoTacRepository;
+    private final PhanQuyenToaService phanQuyenToaService;
+    private final ChiSoDichVuRepository chiSoDichVuRepository;
+    private final YeuCauSuaChuaRepository yeuCauSuaChuaRepository;
+    private final ThongBaoRepository thongBaoRepository;
+    private final Clock clock;
+    private final Path thuMucLuuTru;
+    private final byte[] khoaKy;
+    private final long thoiHanLienKetGiay;
+
+    public AnhDinhKemService(AnhDinhKemRepository anhDinhKemRepository, NguoiThueRepository nguoiThueRepository,
+                              NhatKyThaoTacRepository nhatKyThaoTacRepository, PhanQuyenToaService phanQuyenToaService,
+                              ChiSoDichVuRepository chiSoDichVuRepository, YeuCauSuaChuaRepository yeuCauSuaChuaRepository,
+                              ThongBaoRepository thongBaoRepository,
+                              Clock clock,
+                              @Value("${app.anh.storage-root:${ANH_STORAGE_ROOT:/var/lib/miniapart/private-attachments}}") String thuMucLuuTru,
+                              @Value("${app.anh.link-secret:${ANH_LINK_SECRET:dev-only-image-link-secret-not-for-production}}") String khoaKy,
+                              @Value("${app.anh.link-ttl-seconds:900}") long thoiHanLienKetGiay) {
+        this.anhDinhKemRepository = anhDinhKemRepository;
+        this.nguoiThueRepository = nguoiThueRepository;
+        this.nhatKyThaoTacRepository = nhatKyThaoTacRepository;
+        this.phanQuyenToaService = phanQuyenToaService;
+        this.chiSoDichVuRepository = chiSoDichVuRepository;
+        this.yeuCauSuaChuaRepository = yeuCauSuaChuaRepository;
+        this.thongBaoRepository = thongBaoRepository;
+        this.clock = clock;
+        this.thuMucLuuTru = Path.of(thuMucLuuTru).toAbsolutePath().normalize();
+        this.khoaKy = khoaKy.getBytes(StandardCharsets.UTF_8);
+        this.thoiHanLienKetGiay = thoiHanLienKetGiay;
+    }
+
+    @Transactional
+    public ThongTinAnhDinhKem taiLenAnhNguoiThue(Long nguoiThueId, String ghiChu, MultipartFile tep, NguoiDung nguoiDung) {
+        kiemTraQuyen(nguoiDung);
+        nguoiThueRepository.findById(nguoiThueId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if ((nguoiDung.vaiTro() == VaiTro.CHU || nguoiDung.vaiTro() == VaiTro.QUAN_LY)
+                && !nguoiThueRepository.coNguoiThueTrongPhamVi(nguoiDung.id(), nguoiThueId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return luuAnh(DOI_TUONG_NGUOI_THUE, nguoiThueId, ghiChu, tep);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public LienKetAnhKy taoLienKet(Long anhId, NguoiDung nguoiDung) {
+        AnhDinhKem anh = kiemTraQuyenXemAnh(anhId, nguoiDung);
+        if (DOI_TUONG_NGUOI_THUE.equals(anh.doiTuongLoai())) {
+            nhatKyThaoTacRepository.ghi(
+                    nguoiDung.id(),
+                    HANH_DONG_XEM_ANH_GIAY_TO,
+                    DOI_TUONG_NGUOI_THUE + ":" + anh.doiTuongId(),
+                    null,
+                    null
+            );
+        }
+        long hetHan = clock.instant().getEpochSecond() + Math.min(thoiHanLienKetGiay, 15 * 60L);
+        return new LienKetAnhKy("/api/anh/" + anhId + "/xem?hetHan=" + hetHan + "&chuKy=" + chuKy(anhId, hetHan));
+    }
+
+    @Transactional(readOnly = true)
+    public AnhDinhKem layAnhDaKy(Long anhId, long hetHan, String chuKy) {
+        if (clock.instant().getEpochSecond() >= hetHan || !chuKyHopLe(anhId, hetHan, chuKy)) throw lienKetKhongHopLe();
+        return layAnhDaKy(anhId, hetHan, chuKy, null);
+    }
+
+    @Transactional(readOnly = true)
+    public AnhDinhKem layAnhDaKy(Long anhId, long hetHan, String chuKy, NguoiDung nguoiDung) {
+        if (clock.instant().getEpochSecond() >= hetHan || !chuKyHopLe(anhId, hetHan, chuKy)) throw lienKetKhongHopLe();
+        AnhDinhKem anh = anhDinhKemRepository.findById(anhId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (DOI_TUONG_THONG_BAO_CHUNG.equals(anh.doiTuongLoai())) {
+            if (nguoiDung == null || nguoiDung.vaiTro() == VaiTro.QTHT
+                    || !thongBaoRepository.coQuyenXemAnhThongBaoChung(nguoiDung.id(), anh.doiTuongId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+        }
+        return anh;
+    }
+
+    public byte[] docTep(AnhDinhKem anh) {
+        try {
+            Path tep = thuMucLuuTru.resolve(anh.khoaLuuTru()).normalize();
+            if (!tep.startsWith(thuMucLuuTru)) throw new IOException("Storage key escaped root");
+            return Files.readAllBytes(tep);
+        } catch (IOException exception) { throw new ResponseStatusException(HttpStatus.NOT_FOUND); }
+    }
+
+    @Transactional
+    public Long taiLenAnhChiSoDichVu(Long chiSoId, MultipartFile tep) {
+        return luuAnh(DOI_TUONG_CHI_SO_DICH_VU, chiSoId, null, tep).id();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean coAnhChoChiSoDichVu(Long chiSoId) {
+        return anhDinhKemRepository.existsByDoiTuong(DOI_TUONG_CHI_SO_DICH_VU, chiSoId);
+    }
+
+    @Transactional(readOnly = true)
+    public Long layAnhMoiNhatIdChoChiSoDichVu(Long chiSoId) {
+        return anhDinhKemRepository.findIdMoiNhatByDoiTuong(DOI_TUONG_CHI_SO_DICH_VU, chiSoId).orElse(null);
+    }
+
+    @Transactional
+    public List<Long> taiLenAnhYeuCauSuaChua(Long yeuCauId, List<MultipartFile> tep) {
+        if (tep == null || tep.isEmpty()) {
+            return List.of();
+        }
+        if (tep.size() > 5) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mỗi yêu cầu chỉ được đính kèm tối đa 5 ảnh");
+        }
+        return tep.stream()
+                .map(item -> luuAnh(DOI_TUONG_YEU_CAU_SUA_CHUA, yeuCauId, null, item).id())
+                .toList();
+    }
+
+    @Transactional
+    public Long taiLenAnhThongBaoChung(Long thongBaoChungId, MultipartFile tep) {
+        return luuAnh(DOI_TUONG_THONG_BAO_CHUNG, thongBaoChungId, null, tep).id();
+    }
+
+    private byte[] docVaKiemTra(MultipartFile tep) {
+        if (tep == null || tep.isEmpty()) throw tepKhongHopLe();
+        if (tep.getSize() > KICH_THUOC_TOI_DA) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_TEP_QUA_LON);
+        try {
+            byte[] duLieu = tep.getBytes();
+            if (loaiNoiDungCua(duLieu) == null) throw tepKhongHopLe();
+            return duLieu;
+        } catch (IOException exception) { throw tepKhongHopLe(); }
+    }
+
+    private ThongTinAnhDinhKem luuAnh(String doiTuongLoai, Long doiTuongId, String ghiChu, MultipartFile tep) {
+        byte[] duLieu = docVaKiemTra(tep);
+        String loaiNoiDung = loaiNoiDungCua(duLieu);
+        AnhDinhKem anh = new AnhDinhKem(null, doiTuongLoai, doiTuongId, UUID.randomUUID() + phanMoRongCua(loaiNoiDung), ghiChu, loaiNoiDung, duLieu.length);
+        Path duongDan = ghiTep(anh.khoaLuuTru(), duLieu);
+        try {
+            Long id = anhDinhKemRepository.insert(anh);
+            dangKyXoaTepNeuRollback(duongDan);
+            return ThongTinAnhDinhKem.tu(new AnhDinhKem(id, anh.doiTuongLoai(), anh.doiTuongId(), anh.khoaLuuTru(), anh.ghiChu(), anh.loaiNoiDung(), anh.kichThuoc()));
+        } catch (RuntimeException exception) {
+            xoaTepImLang(duongDan);
+            throw exception;
+        }
+    }
+
+    private String loaiNoiDungCua(byte[] duLieu) {
+        try (ImageInputStream input = ImageIO.createImageInputStream(new ByteArrayInputStream(duLieu))) {
+            if (input == null) return null;
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+            if (!readers.hasNext()) return null;
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(input, true, true);
+                reader.read(0);
+                return switch (reader.getFormatName().toLowerCase(Locale.ROOT)) {
+                    case "png" -> "image/png";
+                    case "jpeg", "jpg" -> "image/jpeg";
+                    default -> null;
+                };
+            } finally {
+                reader.dispose();
+            }
+        } catch (IOException | RuntimeException exception) {
+            return null;
+        }
+    }
+
+    private String phanMoRongCua(String loaiNoiDung) { return "image/png".equals(loaiNoiDung) ? ".png" : ".jpg"; }
+    private Path ghiTep(String khoaLuuTru, byte[] duLieu) {
+        Path duongDan = thuMucLuuTru.resolve(khoaLuuTru).normalize();
+        try { Files.createDirectories(thuMucLuuTru); Files.write(duongDan, duLieu); return duongDan; }
+        catch (IOException exception) { throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Không thể lưu ảnh giấy tờ"); }
+    }
+
+    private void dangKyXoaTepNeuRollback(Path duongDan) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) return;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status != STATUS_COMMITTED) xoaTepImLang(duongDan);
+            }
+        });
+    }
+
+    private void xoaTepImLang(Path duongDan) {
+        try { Files.deleteIfExists(duongDan); }
+        catch (IOException ignored) { /* Best-effort cleanup of a rolled-back private file. */ }
+    }
+    private AnhDinhKem kiemTraQuyenXemAnh(Long anhId, NguoiDung nguoiDung) {
+        AnhDinhKem anh = anhDinhKemRepository.findById(anhId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (DOI_TUONG_NGUOI_THUE.equals(anh.doiTuongLoai())) {
+            if (nguoiDung == null
+                    || (nguoiDung.vaiTro() != VaiTro.CHU && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+            // A historical contract still establishes the manager's legitimate audit scope.
+            // Do not filter by contract status or dates: former managers may need old documents.
+            if (nguoiDung == null
+                    || !nguoiThueRepository.coNguoiThueTrongToaDuocPhanCong(nguoiDung.id(), anh.doiTuongId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+            return anh;
+        }
+        if (DOI_TUONG_CHI_SO_DICH_VU.equals(anh.doiTuongLoai())) {
+            if (nguoiDung != null && nguoiDung.vaiTro() == VaiTro.NGUOI_THUE) {
+                Long nguoiThueId = chiSoDichVuRepository.findNguoiThueIdByChiSoId(anh.doiTuongId()).orElse(null);
+                if (!Objects.equals(nguoiDung.nguoiThueId(), nguoiThueId)) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+                }
+                return anh;
+            }
+            Long toaNhaId = chiSoDichVuRepository.findToaNhaIdByChiSoId(anh.doiTuongId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
+            return anh;
+        }
+        if (DOI_TUONG_YEU_CAU_SUA_CHUA.equals(anh.doiTuongLoai())) {
+            YeuCauSuaChuaRepository.PhamViAnh phamVi = yeuCauSuaChuaRepository.findPhamViAnh(anh.doiTuongId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            if (nguoiDung == null || nguoiDung.vaiTro() == VaiTro.QTHT) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+            if (nguoiDung.vaiTro() == VaiTro.CHU || nguoiDung.vaiTro() == VaiTro.QUAN_LY) {
+                phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, phamVi.toaNhaId());
+                return anh;
+            }
+            if (nguoiDung.vaiTro() == VaiTro.NGUOI_THUE
+                    && Objects.equals(nguoiDung.id(), phamVi.nguoiTaoId())) {
+                return anh;
+            }
+            if (nguoiDung.vaiTro() == VaiTro.THO
+                    && Objects.equals(nguoiDung.id(), phamVi.nguoiXuLyId())) {
+                return anh;
+            }
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        if (DOI_TUONG_THONG_BAO_CHUNG.equals(anh.doiTuongLoai())) {
+            if (nguoiDung == null || nguoiDung.vaiTro() == VaiTro.QTHT
+                    || !thongBaoRepository.coQuyenXemAnhThongBaoChung(nguoiDung.id(), anh.doiTuongId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+            return anh;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    }
+    private void kiemTraQuyen(NguoiDung nguoiDung) {
+        if (nguoiDung == null || (nguoiDung.vaiTro() != VaiTro.CHU && nguoiDung.vaiTro() != VaiTro.QUAN_LY)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    }
+    private String chuKy(Long anhId, long hetHan) {
+        try { Mac mac = Mac.getInstance("HmacSHA256"); mac.init(new SecretKeySpec(khoaKy, "HmacSHA256")); return Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal((anhId + ":" + hetHan).getBytes(StandardCharsets.UTF_8))); }
+        catch (GeneralSecurityException exception) { throw new IllegalStateException("Cannot sign image link", exception); }
+    }
+    private boolean chuKyHopLe(Long anhId, long hetHan, String chuKy) { return chuKy != null && MessageDigest.isEqual(chuKy(anhId, hetHan).getBytes(StandardCharsets.UTF_8), chuKy.getBytes(StandardCharsets.UTF_8)); }
+    private ResponseStatusException tepKhongHopLe() { return new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_TEP_KHONG_HOP_LE); }
+    private ResponseStatusException lienKetKhongHopLe() { return new ResponseStatusException(HttpStatus.FORBIDDEN, THONG_BAO_LIEN_KET_KHONG_HOP_LE); }
+}

@@ -1,0 +1,110 @@
+import type * as React from 'react'
+import { Glyph } from '../core/Glyph'
+import type { GlyphName } from '../core/GlyphName'
+
+export interface TopBarProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** "Toà A — Nguyễn Trãi" */
+  building: string
+  /** "Kỳ 08/2026" */
+  period: string
+  /** "Đang mở · chốt 31/08" — nhãn xanh. Bỏ trống khi kỳ đã chốt. */
+  periodStatus?: string
+  search?: string
+  notifications?: number
+  notificationHref?: string
+  onLogout?: () => void
+}
+
+/** Thanh đầu: bộ chọn toà và kỳ luôn ở đây, mọi vai trò, mọi màn. */
+export function TopBar({ building, period, periodStatus, search = 'Tìm nhanh', notifications, notificationHref, onLogout, style, ...rest }: TopBarProps): React.ReactElement {
+  const pick = (glyph: GlyphName | null, text: string) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14.5, fontWeight: 700, letterSpacing: "-0.01em", minHeight: "var(--ma-hit-desktop)" }}>
+      {glyph ? <Glyph name={glyph} size={14} color="var(--ma-text-secondary)" strokeWidth={1.5} /> : null}
+      {text}
+      <Glyph name="mo-xuong" size={9} color="var(--ma-text-secondary)" strokeWidth={1.4} />
+    </div>
+  );
+  return (
+    <div
+      style={{
+        height: "var(--ma-topbar-height)",
+        display: "flex",
+        alignItems: "center",
+        gap: 13,
+        padding: "0 30px",
+        borderBottom: "1px solid var(--ma-border-default)",
+        background: 'var(--ma-bg-card)',
+        fontFamily: "var(--ma-font-ui)",
+        ...(style || {}),
+      }}
+      {...rest}
+    >
+      {pick("toa-nha", building)}
+      <div style={{ width: 1, height: 18, background: "var(--ma-border-default)" }} />
+      {pick(null, period)}
+      {periodStatus ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--ma-font-mono)", fontSize: 10.5, letterSpacing: "0.1em", padding: "4px 10px", borderRadius: "var(--ma-radius-pill)", background: "var(--ma-done-bg)", color: "var(--ma-done-text)", textTransform: "uppercase" }}>
+          <Glyph name="cong-to" size={11} />
+          {periodStatus}
+        </div>
+      ) : null}
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 20, fontSize: 13, color: "var(--ma-text-secondary)" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          <Glyph name="tim" size={14} strokeWidth={1.5} />
+          {search}
+          <span style={{ fontFamily: "var(--ma-font-mono)", fontSize: 11, border: "1px solid var(--ma-border-default)", borderRadius: "var(--ma-radius-sm)", padding: "1px 6px" }}>/</span>
+        </span>
+        {notificationHref ? (
+          <a
+            className="ma-topbar-notification"
+            data-testid="topbar-notifications"
+            href={notificationHref}
+            aria-label={notifications ? `Thông báo, ${notifications} chưa đọc` : 'Thông báo'}
+            style={{ display: "flex", alignItems: "center", gap: 7, minHeight: "var(--ma-hit-mobile)", padding: "0 4px", fontWeight: 600, color: "var(--ma-text-primary)", textDecoration: "none" }}
+          >
+            <Glyph name="thong-bao" size={15} strokeWidth={1.5} />
+            <span>Thông báo</span>
+            {notifications ? (
+              <span data-testid="topbar-unread-count" style={{ fontFamily: "var(--ma-font-mono)", fontSize: 11.5, fontWeight: 700, color: "var(--ma-text-on-inverse)", background: "var(--ma-urgent)", borderRadius: "var(--ma-radius-pill)", padding: "1px 7px" }}>
+                {notifications}
+              </span>
+            ) : null}
+          </a>
+        ) : (
+          <span data-testid="topbar-notifications" style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 600, color: "var(--ma-text-primary)" }}>
+            <Glyph name="thong-bao" size={15} strokeWidth={1.5} />
+            Thông báo
+            {notifications ? (
+              <span data-testid="topbar-unread-count" style={{ fontFamily: "var(--ma-font-mono)", fontSize: 11.5, fontWeight: 700, color: "var(--ma-text-on-inverse)", background: "var(--ma-urgent)", borderRadius: "var(--ma-radius-pill)", padding: "1px 7px" }}>
+                {notifications}
+              </span>
+            ) : null}
+          </span>
+        )}
+        {onLogout ? (
+          <button
+            type="button"
+            data-testid="topbar-logout"
+            onClick={onLogout}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              background: "transparent",
+              border: "1px solid var(--ma-border-default)",
+              borderRadius: "var(--ma-radius)",
+              padding: "4px 10px",
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: "pointer",
+              color: "var(--ma-text-primary)",
+              fontFamily: "var(--ma-font-ui)",
+            }}
+          >
+            Đăng xuất
+          </button>
+        ) : null}
+      </div>
+    </div>
+  )
+}

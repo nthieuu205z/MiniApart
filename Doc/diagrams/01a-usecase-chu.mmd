@@ -1,0 +1,27 @@
+flowchart LR
+  classDef uc fill:#eef5ff,stroke:#4a6fa5;
+  QTHT(["👤 Quản trị<br/>hệ thống"])
+  CHU(["👤 Chủ sở hữu"])
+  subgraph HT["HỆ THỐNG MINIAPART — Phân hệ quản trị và báo cáo"]
+    direction TB
+    U01(["UC-01 Đăng nhập"]):::uc
+    U02(["UC-02 Quản lý tài khoản và phân quyền theo toà"]):::uc
+    U03(["UC-03 Quản lý toà nhà, tầng, phòng"]):::uc
+    U04(["UC-04 Quản lý dịch vụ và biểu giá"]):::uc
+    U18(["UC-18 Quản lý hồ sơ an toàn PCCC"]):::uc
+    U22(["UC-22 Xem tổng quan nhiều toà"]):::uc
+    U23(["UC-23 Xem báo cáo công nợ, doanh thu"]):::uc
+    U24(["UC-24 Xem nhật ký thao tác"]):::uc
+    U25(["UC-25 Huỷ hoá đơn đã phát hành"]):::uc
+  end
+  QTHT --- U01
+  QTHT --- U02
+  CHU --- U01
+  CHU --- U02
+  CHU --- U03
+  CHU --- U04
+  CHU --- U18
+  CHU --- U22
+  CHU --- U23
+  CHU --- U24
+  CHU --- U25

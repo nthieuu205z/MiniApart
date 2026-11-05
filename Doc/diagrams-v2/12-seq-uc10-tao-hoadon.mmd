@@ -1,0 +1,71 @@
+%% Sơ đồ tuần tự — UC-10 Tạo hoá đơn kỳ
+%% Bám đúng 7 bước luồng chính và 4 luồng ngoại lệ đã đặc tả ở mục 6.2.
+%% Quy tắc áp dụng: BR-01 đến BR-07, BR-13, BR-15
+sequenceDiagram
+  autonumber
+  actor QL as Quan ly toa nha
+  participant UI as Man hinh React
+  participant API as HoaDonController
+  participant SV as TaoHoaDonService
+  participant CTX as BoiCanhBuilder
+  participant CALC as MayTinhHoaDon
+  participant DB as PostgreSQL
+
+  QL->>UI: Chon ky, bam "Tao hoa don"
+  UI->>API: POST /api/ky/{kyId}/tao-hoa-don
+  API->>API: Kiem tra quyen QUAN_LY tren toa nha
+  API->>SV: taoHoaDonHangLoat(kyId)
+
+  SV->>DB: Lay hop dong hieu luc trong ky
+  DB-->>SV: danh sach hop dong
+
+  Note over SV,DB: Chot nhan khau mot lan cho ca ky (CR-002)
+  SV->>DB: Ket tinh NHAN_KHAU_KY tu NGUOI_O_CUNG
+  DB-->>SV: so nguoi tung phong
+
+  loop Voi tung hop dong
+    rect rgb(245, 245, 245)
+      Note over SV,DB: Moi phong chay trong mot giao dich rieng (E4)
+      SV->>DB: Da co hoa don trong ky chua?
+      alt Da ton tai (E2)
+        DB-->>SV: co
+        SV->>SV: Bo qua, ghi ly do "Da ton tai hoa don"
+      else Chua co
+        SV->>CTX: dungBoiCanh(hopDong, ky)
+        CTX->>DB: Doc chi so dich vu cua phong
+        CTX->>DB: Doc bang gia hieu luc tai ngay ket thuc ky
+        CTX->>DB: Doc khoan phat sinh trang thai CHO_TINH
+        CTX->>DB: Doc so du kha dung con lai
+        DB-->>CTX: du lieu
+
+        alt Thieu chi so (E1) hoac thieu don gia (E3)
+          CTX-->>SV: LyDoBoQua
+          SV->>SV: Bo qua phong, ghi ly do cu the
+        else Du du lieu
+          CTX-->>SV: BoiCanhTinh
+          SV->>CALC: tinh(boiCanh)
+
+          Note over CALC: Thuan tuy, khong cham DB
+          CALC->>CALC: So ngay o thuc te trong ky (BR-06)
+          CALC->>CALC: Tien phong theo ngay (BR-01)
+          CALC->>CALC: Dich vu theo chi so (BR-02, BR-03)
+          CALC->>CALC: Phi co dinh (BR-04), phi gui xe (BR-05)
+          CALC->>CALC: Cong khoan phat sinh cho tinh
+          CALC->>CALC: Tru so du kha dung (BR-13)
+          CALC->>CALC: Lam tron den nghin nua len, sinh dong chenh lech (BR-15)
+          CALC-->>SV: KetQuaTinhHoaDon
+
+          SV->>DB: Ghi HOA_DON trang thai NHAP
+          SV->>DB: Ghi CHI_TIET_HOA_DON kem don gia da ap dung
+          Note over SV,DB: Luu don gia tai thoi diem nay<br/>de in lai hoa don cu van ra dung so (NFR-CMP-02)
+          SV->>DB: Danh dau KHOAN_PHAT_SINH thanh DA_TINH
+          Note over SV,DB: CR-008 - ngan tinh tien hai lan o ky sau
+          SV->>DB: Danh dau SO_DU_KHA_DUNG da su dung
+        end
+      end
+    end
+  end
+
+  SV-->>API: Bang tong hop
+  API-->>UI: So hoa don tao duoc, tong tien, danh sach bo qua kem ly do
+  UI-->>QL: Hien thi ket qua

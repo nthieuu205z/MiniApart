@@ -1,0 +1,22 @@
+stateDiagram-v2
+  direction LR
+  [*] --> Nhap : Tạo hoá đơn kỳ
+  Nhap : Nháp
+  Nhap --> DaPhatHanh : Phát hành
+  Nhap --> [*] : Xoá bản nháp
+  DaPhatHanh : Đã phát hành
+  DaPhatHanh --> DaThuMotPhan : Thu một phần
+  DaPhatHanh --> DaThanhToan : Thu đủ
+  DaPhatHanh --> QuaHan : Quá hạn thanh toán
+  DaPhatHanh --> DaHuy : Huỷ (có lý do, chỉ Chủ sở hữu)
+  DaThuMotPhan : Đã thu một phần
+  DaThuMotPhan --> DaThanhToan : Thu đủ phần còn lại
+  DaThuMotPhan --> QuaHan : Quá hạn thanh toán
+  QuaHan : Quá hạn
+  QuaHan --> DaThuMotPhan : Thu một phần
+  QuaHan --> DaThanhToan : Thu đủ
+  QuaHan --> DaHuy : Huỷ (có lý do)
+  DaThanhToan : Đã thanh toán
+  DaHuy : Đã huỷ
+  DaThanhToan --> [*]
+  DaHuy --> [*]

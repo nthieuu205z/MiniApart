@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: miniapart
+      POSTGRES_USER: miniapart
+      # Local-only fallback; deployment must provide POSTGRES_PASSWORD.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-miniapart-dev}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-miniapart-app-dev}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/init-app-user.sh:/docker-entrypoint-initdb.d/10-app-user.sh:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U miniapart -d miniapart"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/miniapart
+      SPRING_DATASOURCE_USERNAME: miniapart_app
+      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD:-miniapart-app-dev}
+      SPRING_FLYWAY_URL: jdbc:postgresql://postgres:5432/miniapart
+      SPRING_FLYWAY_USER: miniapart
+      SPRING_FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:-miniapart-dev}
+      JWT_SECRET: ${JWT_SECRET:?Run scripts/init-local.ps1 to create private keys first}
+      ANH_LINK_SECRET: ${ANH_LINK_SECRET:?Run scripts/init-local.ps1 to create private keys first}
+      ANH_STORAGE_ROOT: /var/lib/miniapart/private-attachments
+      SPRING_PROFILES_ACTIVE: ${APP_PROFILE:-local}
+      APP_ACTIVATION_DELIVERY_LOCAL_ENABLED: ${LOCAL_CODE_DELIVERY:-true}
+      APP_ACTIVATION_DELIVERY_HTTP_URL: ${ACTIVATION_DELIVERY_URL:-}
+      APP_ACTIVATION_DELIVERY_HTTP_BEARER_TOKEN: ${ACTIVATION_DELIVERY_TOKEN:-}
+    volumes:
+      - private_attachments:/var/lib/miniapart/private-attachments
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${FRONTEND_PORT:-5173}:80"
+    restart: unless-stopped
+
+  backup:
+    image: postgres:17-alpine
+    profiles: [backup]
+    environment:
+      PGHOST: postgres
+      PGDATABASE: miniapart
+      PGUSER: miniapart
+      PGPASSWORD: ${POSTGRES_PASSWORD:-miniapart-dev}
+    volumes:
+      - ./deploy/backup.sh:/opt/miniapart/backup.sh:ro
+      - ./deploy/restore-check.sh:/opt/miniapart/restore-check.sh:ro
+      - private_attachments:/attachments:ro
+      - ${BACKUP_DIR:-./backups}:/backups
+      - restore_attachments:/restore-attachments
+    entrypoint: ["sh", "/opt/miniapart/backup.sh"]
+    command: ["loop"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  private_attachments:
+  restore_attachments:

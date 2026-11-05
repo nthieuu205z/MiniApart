@@ -1,0 +1,60 @@
+# 08: Tự đóng sau 72 giờ · FR-MNT-07 · BR-16 · ruling 2B
+
+**What to build:** Yêu cầu ở *Chờ xác nhận* quá 72 giờ thì hệ thống coi như *Đã đóng* — **suy ra khi đọc, không ghi, không tác vụ nền**.
+
+**Blocked by:** 01, 03
+
+**Status:** done
+
+**Migration:** không cần.
+
+## Ruling 2B: vì sao không dùng tác vụ nền
+
+`BR-16` viết *"Tự động chuyển từ Chờ xác nhận sang Đã đóng sau 72 giờ không phản hồi"* nhưng không nói làm bằng cách nào.
+
+Ghi chú **CR-012** trong `BR-14` đã từ chối đúng mẫu hình đó khi không lưu "sắp hết hạn" thành cột trạng thái:
+
+> *"hệ thống sẽ cần một tác vụ chạy hằng ngày quét lại toàn bộ hợp đồng, và **tác vụ đó lỗi một hôm thì dữ liệu sai mà không ai biết**."*
+
+Dự án hiện **không có hạ tầng chạy theo lịch ở đâu cả**. Dựng cái đầu tiên cho một yêu cầu mức **Could have** là đánh đổi tồi — và nó thành điểm hỏng im lặng đầu tiên của hệ thống.
+
+## Điểm yếu của cách này, và cách bù
+
+Suy ra khi đọc nghĩa là **mọi** truy vấn trạng thái phải nhớ áp luật 72 giờ. Quên một chỗ là lệch: màn quản lý thấy *Chờ xác nhận*, màn thợ thấy *Đã đóng*.
+
+**Cách bù bắt buộc: đặt luật vào đúng một chỗ** trong tầng thuần, cùng khuôn `QuyTacTrangThaiHoaDon` — một hàm nhận trạng thái lưu, thời điểm vào *Chờ xác nhận*, và thời điểm hiện tại, trả về trạng thái hiệu lực.
+
+**Tuyệt đối không rải `INTERVAL '72 hours'` ra từng câu SQL.** Đây đúng cái bẫy `TinhHoaDonRepository:281` đã dính ở Slice 04 — logic BR nằm trong SQL, nơi ArchUnit không soi tới, và lệch với tầng thuần mà không ai biết cho tới lúc review.
+
+## Cần một cột thời điểm
+
+Phải biết yêu cầu vào *Chờ xác nhận* **lúc nào**. Cột đó đã tạo sẵn ở `V36` (ticket 02) hay chưa — kiểm trước; nếu chưa thì ticket này cần một migration nhỏ trong dải `V38`+.
+
+**Không dùng thời điểm cập nhật chung chung.** Mọi thao tác khác cũng chạm nó, và đồng hồ 72 giờ sẽ bị đẩy lùi mỗi lần ai đó sửa gì đó.
+
+## Hoàn thành khi
+
+- [x] Luật 72 giờ nằm ở **đúng một chỗ**, trong tầng thuần, không phụ thuộc Spring hay cơ sở dữ liệu
+- [x] **Không có `INTERVAL` hay phép tính 72 giờ nào trong SQL** — kiểm bằng `grep`
+- [x] Yêu cầu *Chờ xác nhận* quá 72 giờ hiện là *Đã đóng* ở **mọi đường đọc hiện có**: danh sách quản lý, chi tiết, danh sách thợ và trạng thái phòng; đường đọc lịch sử sẽ tái sử dụng luật này ở ticket 09
+- [x] Đúng 72 giờ (không hơn) thì **vẫn** *Chờ xác nhận* — test biên
+- [x] Người thuê xác nhận **trước** 72 giờ → *Đã đóng* thật, ghi vào cơ sở dữ liệu
+- [x] Người thuê phản hồi **sau** 72 giờ → chốt hành vi (đã đóng thì thôi, hay mở lại) và ghi lý do vào `## Comments`
+- [x] Test dùng **đồng hồ đẩy được** — khuôn `MutableClock` đã có ở bốn bộ test tích hợp, dùng lại, **không chờ thật**
+- [x] Thời điểm vào *Chờ xác nhận* lưu riêng, **không dùng cột cập nhật chung**
+- [x] Tên test mang mã `FR-MNT-07` và `BR-16`
+
+## Comments
+
+- Sau khi quá 72 giờ, trạng thái hiệu lực là `DA_DONG`. Người thuê xác nhận
+  muộn bị từ chối (`409`), không mở lại yêu cầu và không làm thay đổi trạng
+  thái lưu trong `YEU_CAU_SUA_CHUA` (vẫn là `CHO_XAC_NHAN`). Lý do: `DA_DONG`
+  là trạng thái kết thúc của BR-16, nên không có cạnh chuyển ngược hay thao
+  tác phản hồi muộn nào được phép làm biến đổi dữ liệu.
+- Bổ sung kiểm thử endpoint MockMvc `FR_MNT_07_BR_16` với đồng hồ đẩy được ở
+  đúng mốc 72 giờ: chi tiết vẫn trả `CHO_XAC_NHAN` và trạng thái trong cơ sở
+  dữ liệu vẫn `CHO_XAC_NHAN`.
+- Verification: `./gradlew clean test --no-parallel` — `BUILD SUCCESSFUL`; review
+  fix round 1 đã xác nhận cả hai finding được xử lý.
+- Final review follow-up: thêm regression test tài khoản người thuê phản hồi sau
+  hạn (`FR_MNT_07_BR_16`) và ghi rõ đường đọc lịch sử thuộc ticket 09.

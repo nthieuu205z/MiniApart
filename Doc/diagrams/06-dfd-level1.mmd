@@ -1,0 +1,76 @@
+flowchart TB
+  CHU["Chủ sở hữu"]
+  QL["Quản lý toà nhà"]
+  NT["Người thuê"]
+  THO["Thợ sửa chữa"]
+
+  P1(("1.0<br/>Quản lý danh mục<br/>toà nhà & dịch vụ"))
+  P2(("2.0<br/>Quản lý người thuê<br/>& hợp đồng"))
+  P3(("3.0<br/>Ghi chỉ số<br/>dịch vụ"))
+  P4(("4.0<br/>Tính & phát hành<br/>hoá đơn"))
+  P5(("5.0<br/>Thu tiền &<br/>theo dõi công nợ"))
+  P6(("6.0<br/>Xử lý<br/>sự cố"))
+  P7(("7.0<br/>Báo cáo &<br/>thông báo"))
+
+  D1[("D1 · Toà nhà, Phòng")]
+  D2[("D2 · Dịch vụ, Bảng giá")]
+  D3[("D3 · Người thuê")]
+  D4[("D4 · Hợp đồng")]
+  D5[("D5 · Chỉ số dịch vụ")]
+  D6[("D6 · Hoá đơn & chi tiết")]
+  D7[("D7 · Thanh toán")]
+  D8[("D8 · Yêu cầu sửa chữa")]
+  D9[("D9 · Nhật ký thao tác")]
+
+  CHU --> P1
+  P1 --> D1
+  P1 --> D2
+  D1 --> P1
+
+  QL --> P2
+  P2 --> D3
+  P2 --> D4
+  D1 --> P2
+  D4 --> P2
+  P2 --> QL
+
+  QL --> P3
+  D1 --> P3
+  D4 --> P3
+  P3 --> D5
+  D5 --> P3
+
+  QL --> P4
+  D4 --> P4
+  D5 --> P4
+  D2 --> P4
+  P4 --> D6
+  D6 --> P4
+  P4 --> NT
+
+  QL --> P5
+  NT --> P5
+  D6 --> P5
+  P5 --> D7
+  P5 --> D6
+  P5 --> QL
+
+  NT --> P6
+  P6 --> D8
+  D8 --> P6
+  P6 --> THO
+  THO --> P6
+  P6 --> D6
+
+  D6 --> P7
+  D7 --> P7
+  D8 --> P7
+  D4 --> P7
+  P7 --> CHU
+  P7 --> QL
+  P7 --> NT
+
+  P1 --> D9
+  P4 --> D9
+  P5 --> D9
+  D9 --> P7

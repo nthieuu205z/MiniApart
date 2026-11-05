@@ -1,0 +1,198 @@
+%% Sơ đồ lớp — Mô hình miền tổng thể
+%% Rút gọn: chỉ các lớp miền chính và phương thức nghiệp vụ đáng chú ý.
+%% Các lớp phụ trợ (PCCC, thông báo, nhật ký) không đưa vào để giữ sơ đồ đọc được.
+classDiagram
+  direction LR
+
+  class ToaNha {
+    +Long id
+    +String maToa
+    +String ten
+    +int ngayChotSo
+    +int soNgayHanThanhToan
+    +BigDecimal nguongThatThoat
+    +KyThanhToan moKyMoi(int nam, int thang)
+  }
+
+  class Phong {
+    +Long id
+    +String soPhong
+    +int tang
+    +int sucChua
+    +BigDecimal giaThueMacDinh
+    +TrangThaiPhong trangThaiDem
+    +TrangThaiPhong tinhLaiTrangThai(LocalDate tai)
+    +boolean vuotSucChua(int soNguoi)
+  }
+
+  class NguoiThue {
+    +Long id
+    +String hoTen
+    +String soGiayTo
+    +LocalDate ngaySinh
+  }
+
+  class NguoiDung {
+    +Long id
+    +String soDienThoai
+    +VaiTro vaiTro
+    +Long nguoiThueId
+    +boolean laNguoiThue()
+    +boolean duocTruyCap(Phong p)
+  }
+
+  class HopDong {
+    +Long id
+    +LocalDate ngayBatDau
+    +LocalDate ngayKetThuc
+    +BigDecimal giaThue
+    +BigDecimal tienCoc
+    +TrangThaiHopDong trangThai
+    +int soNgayOTrongKy(KyThanhToan ky)
+    +boolean sapHetHan(LocalDate tai)
+    +boolean chongLan(HopDong khac)
+  }
+
+  class NguoiOCung {
+    +Long id
+    +String quanHe
+    +LocalDate tuNgay
+    +LocalDate denNgay
+    +boolean dangOTrong(KyThanhToan ky)
+  }
+
+  class NhanKhauKy {
+    +Long id
+    +int soNguoi
+    +LocalDateTime thoiDiemChot
+  }
+
+  class DichVu {
+    +Long id
+    +String ten
+    +CachTinh cachTinh
+    +CheDoGia cheDoGia
+    +String donVi
+  }
+
+  class BangGia {
+    +BigDecimal donGia
+    +LocalDate ngayHieuLuc
+  }
+
+  class BangGiaBacThang {
+    +int bac
+    +BigDecimal tuSoLuong
+    +BigDecimal denSoLuong
+    +BigDecimal donGia
+    +LocalDate ngayHieuLuc
+  }
+
+  class KyThanhToan {
+    +Long id
+    +int nam
+    +int thang
+    +LocalDate ngayBatDau
+    +LocalDate ngayKetThuc
+    +TrangThaiKy trangThai
+    +int soNgayTrongKy()
+    +void chotKy()
+  }
+
+  class ChiSoDichVu {
+    +BigDecimal chiSoDau
+    +BigDecimal chiSoCuoi
+    +boolean coThayCongTo
+    +BigDecimal chiSoCuoiCongToCu
+    +BigDecimal chiSoDauCongToMoi
+    +BigDecimal mucTieuThu()
+  }
+
+  class HoaDon {
+    +Long id
+    +String maHoaDon
+    +LocalDate ngayPhatHanh
+    +LocalDate hanThanhToan
+    +BigDecimal tongTien
+    +BigDecimal daThu
+    +TrangThaiHoaDon trangThai
+    +BigDecimal conLai()
+    +void capNhatTrangThai(LocalDate homNay)
+    +boolean quaHan(LocalDate homNay)
+  }
+
+  class ChiTietHoaDon {
+    +String tenKhoan
+    +BigDecimal soLuong
+    +BigDecimal donGia
+    +BigDecimal thanhTien
+    +LoaiKhoan loaiKhoan
+  }
+
+  class ThanhToan {
+    +BigDecimal soTien
+    +LoaiButToan loai
+    +Long dieuChinhChoId
+    +String lyDo
+    +String maBienLai
+    +boolean laDoiUng()
+  }
+
+  class SoDuKhaDung {
+    +BigDecimal soTien
+    +LocalDate ngayPhatSinh
+    +LocalDate ngaySuDung
+    +boolean conKhaDung()
+  }
+
+  class GiaoDichCoc {
+    +LoaiGiaoDichCoc loai
+    +BigDecimal soTien
+    +LocalDate ngay
+    +String lyDo
+  }
+
+  class KhoanPhatSinh {
+    +String tenKhoan
+    +BigDecimal soTien
+    +TrangThaiKhoan trangThai
+    +Long hoaDonId
+    +void danhDauDaTinh(HoaDon hd)
+  }
+
+  class YeuCauSuaChua {
+    +String maYeuCau
+    +MucDo mucDo
+    +TrangThaiYeuCau trangThai
+    +BigDecimal chiPhi
+    +BenChiuChiPhi benChiu
+    +KhoanPhatSinh sinhKhoanPhatSinh()
+  }
+
+  ToaNha "1" *-- "n" Phong
+  ToaNha "1" *-- "n" DichVu
+  ToaNha "1" *-- "n" KyThanhToan
+  Phong "1" o-- "n" HopDong
+  Phong "1" o-- "n" ChiSoDichVu
+  Phong "1" o-- "n" YeuCauSuaChua
+  Phong "1" o-- "n" NhanKhauKy
+  NguoiThue "1" o-- "n" HopDong
+  NguoiDung "0..1" --> "0..1" NguoiThue : hoSoCua
+  HopDong "1" *-- "n" NguoiOCung
+  HopDong "1" o-- "n" HoaDon
+  HopDong "1" o-- "n" GiaoDichCoc
+  HopDong "1" o-- "n" SoDuKhaDung
+  HopDong "1" o-- "n" KhoanPhatSinh
+  NguoiThue "1" o-- "n" NguoiOCung
+  DichVu "1" o-- "n" BangGia
+  DichVu "1" o-- "n" BangGiaBacThang
+  DichVu "1" o-- "n" ChiSoDichVu
+  KyThanhToan "1" o-- "n" ChiSoDichVu
+  KyThanhToan "1" o-- "n" NhanKhauKy
+  KyThanhToan "1" o-- "n" HoaDon
+  HoaDon "1" *-- "n" ChiTietHoaDon
+  HoaDon "1" o-- "n" ThanhToan
+  HoaDon "1" o-- "n" SoDuKhaDung
+  HoaDon "1" o-- "n" KhoanPhatSinh
+  ThanhToan "0..1" --> "0..1" ThanhToan : doiUngCho
+  YeuCauSuaChua "1" ..> "0..1" KhoanPhatSinh : sinh ra

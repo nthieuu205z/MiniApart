@@ -1,0 +1,3 @@
+ALTER TABLE HOA_DON ALTER COLUMN ky_id DROP NOT NULL;
+ALTER TABLE HOA_DON DROP CONSTRAINT uq_hoa_don_hop_dong_ky;
+CREATE UNIQUE INDEX uq_hoa_don_hop_dong_ky ON HOA_DON(hop_dong_id, ky_id) WHERE ky_id IS NOT NULL;
