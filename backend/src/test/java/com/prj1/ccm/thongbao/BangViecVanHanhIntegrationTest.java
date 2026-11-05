@@ -72,6 +72,10 @@ class BangViecVanHanhIntegrationTest {
         jdbcTemplate.update("DELETE FROM NGUOI_THUE");
         jdbcTemplate.update("DELETE FROM DICH_VU");
         jdbcTemplate.update("DELETE FROM PHONG");
+        jdbcTemplate.update("DELETE FROM PCCC_KIEM_TRA");
+        jdbcTemplate.update("DELETE FROM PCCC_THIET_BI");
+        jdbcTemplate.update("DELETE FROM PCCC_HO_SO");
+        jdbcTemplate.update("UPDATE TOA_NHA SET pccc_ngay_kiem_tra_tiep = ? WHERE id = 1", TODAY.plusMonths(3));
         jdbcTemplate.update("DELETE FROM PHAN_QUYEN_TOA WHERE nguoi_dung_id IN (2, 3, 4, 5)");
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET phien_ban_token = 0, so_lan_sai = 0, lan_sai_dau_tien = NULL, khoa_den = NULL, trang_thai = 'HOAT_DONG', nguoi_thue_id = NULL WHERE id IN (1, 2, 3, 4, 5)");
         jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (2, 1), (3, 1)");
@@ -113,6 +117,49 @@ class BangViecVanHanhIntegrationTest {
                 .andExpect(jsonPath("$.nhomViec[4].trangThai").value("DA_XONG"))
                 .andExpect(jsonPath("$.nhomViec[4].tenTrangThai").value("Đã xong"))
                 .andExpect(jsonPath("$.nhomViec[4].lienKet").value("/an-toan?toaNhaId=1"));
+    }
+
+    @Test
+    void FR_NTF_01_pccc_demViecDenHan_chuaDenHan_traVe0VaDaXong() throws Exception {
+        // Đã reset: pccc_ngay_kiem_tra_tiep = TODAY.plusMonths(3), không có thiết bị đến hạn
+        String managerToken = login(3L, "0900000003");
+        mockMvc.perform(get("/api/toa-nha/1/bang-viec")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nhomViec[4].ma").value("PCCC"))
+                .andExpect(jsonPath("$.nhomViec[4].soLuong").value(0))
+                .andExpect(jsonPath("$.nhomViec[4].trangThai").value("DA_XONG"));
+    }
+
+    @Test
+    void FR_NTF_01_pccc_demViecDenHan_toaNhaDenHanKiemTra_traVe1VaCanXuLy() throws Exception {
+        // Đặt lịch kiểm tra định kỳ của toà nhà đến hạn (bằng TODAY hoặc quá hạn)
+        jdbcTemplate.update("UPDATE TOA_NHA SET pccc_ngay_kiem_tra_tiep = ? WHERE id = 1", TODAY);
+        String managerToken = login(3L, "0900000003");
+        mockMvc.perform(get("/api/toa-nha/1/bang-viec")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nhomViec[4].ma").value("PCCC"))
+                .andExpect(jsonPath("$.nhomViec[4].soLuong").value(1))
+                .andExpect(jsonPath("$.nhomViec[4].trangThai").value("CAN_XU_LY"));
+    }
+
+    @Test
+    void FR_NTF_01_pccc_demViecDenHan_thietBiSapHetHanKiemDinh_traVe1VaCanXuLy() throws Exception {
+        // Lịch toà nhà chưa đến hạn (sau 3 tháng)
+        jdbcTemplate.update("UPDATE TOA_NHA SET pccc_ngay_kiem_tra_tiep = ? WHERE id = 1", TODAY.plusMonths(3));
+        // Thêm thiết bị có hạn kiểm định trong vòng 30 ngày (TODAY + 15 ngày)
+        jdbcTemplate.update(
+                "INSERT INTO PCCC_THIET_BI (toa_nha_id, ten_thiet_bi, loai_thiet_bi, vi_tri, han_kiem_dinh, trang_thai) VALUES (1, 'Bình bột MFZ4', 'BINH_CHUA_CHAY', 'Hành lang T1', ?, 'BINH_THUONG')",
+                TODAY.plusDays(15)
+        );
+        String managerToken = login(3L, "0900000003");
+        mockMvc.perform(get("/api/toa-nha/1/bang-viec")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nhomViec[4].ma").value("PCCC"))
+                .andExpect(jsonPath("$.nhomViec[4].soLuong").value(1))
+                .andExpect(jsonPath("$.nhomViec[4].trangThai").value("CAN_XU_LY"));
     }
 
     @Test

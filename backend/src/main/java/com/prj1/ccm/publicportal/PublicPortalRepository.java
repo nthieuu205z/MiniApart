@@ -36,8 +36,7 @@ public class PublicPortalRepository {
                 rs.getString("ten"),
                 rs.getString("dia_chi"),
                 rs.getInt("so_tang"),
-                rs.getInt("so_phong_trong")
-        ));
+                rs.getInt("so_phong_trong")));
     }
 
     public List<PublicPhongDto> layDanhSachPhong(
@@ -46,8 +45,7 @@ public class PublicPortalRepository {
             BigDecimal giaDen,
             String loaiPhong,
             String tuKhoa,
-            Boolean chiPhongTrong
-    ) {
+            Boolean chiPhongTrong) {
         StringBuilder sql = new StringBuilder("""
                 SELECT p.id, p.toa_nha_id, t.ten AS ten_toa, t.dia_chi AS dia_chi_toa,
                        p.so_phong, p.tang, p.dien_tich, p.suc_chua, p.gia_thue_mac_dinh,
@@ -83,7 +81,8 @@ public class PublicPortalRepository {
         }
 
         if (tuKhoa != null && !tuKhoa.isBlank()) {
-            sql.append(" AND (LOWER(p.so_phong) LIKE ? OR LOWER(t.ten) LIKE ? OR LOWER(COALESCE(p.tien_ich, '')) LIKE ?)");
+            sql.append(
+                    " AND (LOWER(p.so_phong) LIKE ? OR LOWER(t.ten) LIKE ? OR LOWER(COALESCE(p.tien_ich, '')) LIKE ?)");
             String pattern = "%" + tuKhoa.trim().toLowerCase() + "%";
             params.add(pattern);
             params.add(pattern);
@@ -120,8 +119,7 @@ public class PublicPortalRepository {
                     tienIchList,
                     rs.getString("mo_ta"),
                     rs.getString("anh_dai_dien"),
-                    Collections.emptyList()
-            );
+                    Collections.emptyList());
         }, params.toArray());
 
         // Gắn bảng giá dịch vụ cho từng phòng
@@ -130,14 +128,12 @@ public class PublicPortalRepository {
         for (PublicPhongDto phong : dsPhong) {
             List<DichVuCongKhaiDto> bangGia = cacheBangGia.computeIfAbsent(
                     phong.toaNhaId(),
-                    this::layBangGiaDichVuCuaToa
-            );
+                    this::layBangGiaDichVuCuaToa);
             ketQua.add(new PublicPhongDto(
                     phong.id(), phong.toaNhaId(), phong.tenToaNha(), phong.diaChiToaNha(),
                     phong.soPhong(), phong.tang(), phong.dienTich(), phong.sucChua(),
                     phong.giaThue(), phong.loaiPhong(), phong.trangThai(), phong.nhanTrangThai(),
-                    phong.tienIch(), phong.moTa(), phong.anhDaiDien(), bangGia
-            ));
+                    phong.tienIch(), phong.moTa(), phong.anhDaiDien(), bangGia));
         }
 
         return ketQua;
@@ -180,8 +176,7 @@ public class PublicPortalRepository {
                     parseTienIch(rs.getString("tien_ich")),
                     rs.getString("mo_ta"),
                     rs.getString("anh_dai_dien"),
-                    bangGia
-            );
+                    bangGia);
         }, phongId);
 
         return ketQua.isEmpty() ? Optional.empty() : Optional.of(ketQua.get(0));
@@ -207,8 +202,7 @@ public class PublicPortalRepository {
                 rs.getString("don_vi"),
                 rs.getBigDecimal("don_gia"),
                 rs.getString("cach_tinh"),
-                rs.getString("che_do_gia")
-        ), toaNhaId);
+                rs.getString("che_do_gia")), toaNhaId);
     }
 
     public Long luuLichHen(YeuCauDatLichHen yeuCau) {
@@ -219,7 +213,7 @@ public class PublicPortalRepository {
                 """;
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
+            PreparedStatement ps = connection.prepareStatement(sql, new String[] { "id" });
             ps.setString(1, yeuCau.hoTen().trim());
             ps.setString(2, yeuCau.soDienThoai().trim());
             ps.setString(3, yeuCau.email() == null ? null : yeuCau.email().trim());
@@ -287,8 +281,7 @@ public class PublicPortalRepository {
                 rs.getTimestamp("thoi_gian_hen").toLocalDateTime(),
                 rs.getString("ghi_chu"),
                 rs.getString("trang_thai"),
-                rs.getTimestamp("tao_luc").toLocalDateTime()
-        ), params.toArray());
+                rs.getTimestamp("tao_luc").toLocalDateTime()), params.toArray());
     }
 
     public boolean capNhatTrangThaiLichHen(Long id, String trangThaiMoi, Long nguoiDungId) {

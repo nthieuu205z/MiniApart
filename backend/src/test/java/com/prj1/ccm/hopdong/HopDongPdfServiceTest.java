@@ -30,6 +30,31 @@ class HopDongPdfServiceTest {
         verify(contracts).chiTietCuaNguoiThue(21L, tenant);
         verify(contracts, never()).chiTiet(anyLong(), any());
     }
+    @Test void exportsTieredServiceTextCorrectlyWithoutFalseFreePrice() throws Exception {
+        HopDongService contracts = mock(HopDongService.class);
+        NguoiDung manager = user(VaiTro.QUAN_LY);
+        ThongTinHopDong contractWithTiered = new ThongTinHopDong(
+                22L, 101L, "101", 10L, "Nguyễn Văn An",
+                LocalDate.parse("2026-01-01"), LocalDate.parse("2026-12-31"),
+                "3500000.00", "3500000.00", 30, "HIEU_LUC", "Hiệu lực", false, 60,
+                List.of(
+                        new ThongTinHopDongDichVu(7L, "Điện sinh hoạt", "0.00", "BAC_THANG"),
+                        new ThongTinHopDongDichVu(8L, "Nước sinh hoạt", "0.00", "CO_DINH"),
+                        new ThongTinHopDongDichVu(9L, "Internet", "100000.00", "CO_DINH")
+                ),
+                null
+        );
+        when(contracts.chiTiet(22L, manager)).thenReturn(contractWithTiered);
+        byte[] pdf = new HopDongPdfService(contracts, "HỢP ĐỒNG THUÊ PHÒNG", "Điều khoản").xuat(22L, manager);
+        try (PdfReader reader = new PdfReader(pdf)) {
+            String text = new PdfTextExtractor(reader).getTextFromPage(1);
+            assertThat(text).contains("Điện sinh hoạt: Tính theo biểu giá bậc thang quy định");
+            assertThat(text).contains("Nước sinh hoạt: Miễn phí (0 đ)");
+            assertThat(text).contains("Internet: 100.000 đ");
+            assertThat(text).doesNotContain("Điện sinh hoạt: 0 đ");
+        }
+    }
+
     private static NguoiDung user(VaiTro role) { return new NguoiDung(3L, "Người dùng", "0900000003", "hash", role, TrangThaiNguoiDung.HOAT_DONG, 0, 10L); }
     private static ThongTinHopDong contract() {
         return new ThongTinHopDong(21L, 101L, "101", 10L, "Nguyễn Văn An", LocalDate.parse("2026-01-01"), LocalDate.parse("2026-12-31"), "3500000.00", "3500000.00", 30, "HIEU_LUC", "Hiệu lực", false, 60, List.of(new ThongTinHopDongDichVu(7L, "Điện", "3500.00")), null);

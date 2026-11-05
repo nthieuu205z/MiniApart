@@ -49,7 +49,7 @@ class HuyHoaDonNhapServiceTest {
                 hoaDonId, TrangThaiHoaDon.DA_PHAT_HANH, BigDecimal.valueOf(500000)
         );
 
-        when(tinhHoaDonRepository.timHoaDonTrongPhamVi(toaNhaId, kyId, hoaDonId))
+        when(tinhHoaDonRepository.timHoaDonTrongPhamVi(toaNhaId, kyId, hoaDonId, true))
                 .thenReturn(Optional.of(hoaDon));
 
         YeuCauHuyHoaDon req = new YeuCauHuyHoaDon("Huỷ do tính sai");
@@ -76,7 +76,7 @@ class HuyHoaDonNhapServiceTest {
                 hoaDonId, TrangThaiHoaDon.DA_PHAT_HANH, BigDecimal.ZERO
         );
 
-        when(tinhHoaDonRepository.timHoaDonTrongPhamVi(toaNhaId, kyId, hoaDonId))
+        when(tinhHoaDonRepository.timHoaDonTrongPhamVi(toaNhaId, kyId, hoaDonId, true))
                 .thenReturn(Optional.of(hoaDon));
 
         YeuCauHuyHoaDon req = new YeuCauHuyHoaDon("Huỷ do chỉnh sửa hợp đồng");
@@ -86,5 +86,32 @@ class HuyHoaDonNhapServiceTest {
         verify(tinhHoaDonRepository).capNhatTrangThaiHoaDon(hoaDonId, TrangThaiHoaDon.DA_HUY);
         verify(tinhHoaDonRepository).khoiPhucKhoanPhatSinhChoTinh(hoaDonId);
         verify(tinhHoaDonRepository).khoiPhucSoDuKhaDung(hoaDonId);
+    }
+
+    @Test
+    void huyHoaDonNhapDaCoThanhToan_nemLoiConflictYeuCauButToanDoiUng() {
+        Long toaNhaId = 1L;
+        Long kyId = 10L;
+        Long hoaDonId = 102L;
+
+        // Hoá đơn nháp nhưng đã ghi nhận tiền thu ròng khác 0
+        TinhHoaDonRepository.HoaDonTrongPhamVi hoaDon = new TinhHoaDonRepository.HoaDonTrongPhamVi(
+                hoaDonId, TrangThaiHoaDon.NHAP, BigDecimal.valueOf(200000)
+        );
+
+        when(tinhHoaDonRepository.timHoaDonTrongPhamVi(toaNhaId, kyId, hoaDonId, true))
+                .thenReturn(Optional.of(hoaDon));
+
+        YeuCauHuyHoaDon req = new YeuCauHuyHoaDon("Huỷ hoá đơn nháp");
+
+        assertThatThrownBy(() -> huyHoaDonNhapService.huy(toaNhaId, kyId, hoaDonId, req, chuSoHuu))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> {
+                    ResponseStatusException rse = (ResponseStatusException) e;
+                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+                    assertThat(rse.getReason()).contains("Lập bút toán đối ứng cho các khoản đã thu trước khi huỷ hoá đơn.");
+                });
+
+        verify(tinhHoaDonRepository, never()).capNhatTrangThaiHoaDon(any(), any());
     }
 }

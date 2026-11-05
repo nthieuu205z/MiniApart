@@ -354,23 +354,28 @@ class TinhHoaDonRepository {
     }
 
     java.util.Optional<HoaDonTrongPhamVi> timHoaDonTrongPhamVi(Long toaNhaId, Long kyId, Long hoaDonId) {
+        return timHoaDonTrongPhamVi(toaNhaId, kyId, hoaDonId, false);
+    }
+
+    java.util.Optional<HoaDonTrongPhamVi> timHoaDonTrongPhamVi(Long toaNhaId, Long kyId, Long hoaDonId, boolean khoa) {
+        String sql = """
+                SELECT hd.id,
+                       hd.trang_thai,
+                       hd.tong_tien,
+                       COALESCE(
+                           (SELECT SUM(tt.so_tien) FROM THANH_TOAN tt WHERE tt.hoa_don_id = hd.id),
+                           0.00
+                       ) AS da_thu,
+                       hd.han_thanh_toan
+                FROM HOA_DON hd
+                JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
+                JOIN PHONG p ON p.id = hop_dong.phong_id
+                WHERE hd.id = ?
+                  AND hd.ky_id IS NOT DISTINCT FROM ?
+                  AND p.toa_nha_id = ?
+                """ + (khoa ? " FOR UPDATE OF hd" : "");
         return jdbcTemplate.query(
-                        """
-                                SELECT hd.id,
-                                       hd.trang_thai,
-                                       hd.tong_tien,
-                                       COALESCE(
-                                           (SELECT SUM(tt.so_tien) FROM THANH_TOAN tt WHERE tt.hoa_don_id = hd.id),
-                                           0.00
-                                       ) AS da_thu,
-                                       hd.han_thanh_toan
-                                FROM HOA_DON hd
-                                JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
-                                JOIN PHONG p ON p.id = hop_dong.phong_id
-                                WHERE hd.id = ?
-                                  AND hd.ky_id IS NOT DISTINCT FROM ?
-                                  AND p.toa_nha_id = ?
-                                """,
+                        sql,
                         (resultSet, rowNum) -> new HoaDonTrongPhamVi(
                                 resultSet.getLong("id"),
                                 tinhTrangThai(

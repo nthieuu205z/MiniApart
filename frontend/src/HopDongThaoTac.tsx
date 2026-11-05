@@ -55,8 +55,9 @@ export default function HopDongThaoTac({ token }: { token: string }) {
   const [applied, setApplied] = useState<Record<number, string>>({})
   const [occupant, setOccupant] = useState({ nguoiThueId: '', quanHe: '', tuNgay: today(), denNgay: '' })
   const [renewal, setRenewal] = useState({ ngayKetThuc: '', giaThue: '' })
-  const [settle, setSettle] = useState({ khauTruHuHong: '0', lyDo: '' })
+  const [settle, setSettle] = useState<{ khauTruHuHong: string; lyDo: string; bienBanId?: number | null }>({ khauTruHuHong: '0', lyDo: '', bienBanId: null })
   const [bienBans, setBienBans] = useState<any[]>([])
+  const [xacNhanKhauTruKhacBienBan, setXacNhanKhauTruKhacBienBan] = useState(false)
   const [finalReadings, setFinalReadings] = useState<Record<number, string>>({})
   const [confirmed, setConfirmed] = useState(false)
   const [settlement, setSettlement] = useState<Settlement | null>(null)
@@ -86,8 +87,9 @@ export default function HopDongThaoTac({ token }: { token: string }) {
     setSettlement(null)
     setFinalReadings({})
     setConfirmed(false)
-    setSettle({ khauTruHuHong: '0', lyDo: '' })
+    setSettle({ khauTruHuHong: '0', lyDo: '', bienBanId: null })
     setBienBans([])
+    setXacNhanKhauTruKhacBienBan(false)
     if (!selected) {
       setOccupants([])
       return
@@ -774,6 +776,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
                       'POST',
                       {
                         ...settle,
+                        bienBanId: bienBans.find((b) => b.loaiBienBan === 'TRA_PHONG')?.id ?? settle.bienBanId ?? null,
                         chiSoCuoi: Object.entries(finalReadings)
                           .filter(([, v]) => v !== '')
                           .map(([id, value]) => ({
@@ -832,50 +835,67 @@ export default function HopDongThaoTac({ token }: { token: string }) {
                         ?.join('; ') || bbTra.ghiChuChung || 'Khấu trừ theo biên bản trả phòng'
                     const daKhop = Number(settle.khauTruHuHong) === Number(tienBb)
                     return (
-                      <div
-                        style={{
-                          gridColumn: '1 / -1',
-                          padding: '10px 14px',
-                          background: daKhop ? 'var(--ma-brand-accent-light)' : '#FFFBEB',
-                          border: `1px solid ${daKhop ? 'var(--ma-brand-accent)' : '#FDE68A'}`,
-                          borderRadius: 'var(--ma-radius)',
-                          fontSize: 13,
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          flexWrap: 'wrap',
-                          gap: 10,
-                        }}
-                      >
-                        <div>
-                          <strong>📋 Đối chiếu biên bản trả phòng ({bbTra.ngayThucHien}):</strong> Khấu trừ{' '}
-                          <span style={{ fontWeight: 700, color: 'var(--ma-urgent)' }}>{dinhDangTien(tienBb)} đ</span>
-                          {daKhop ? (
-                            <span style={{ marginLeft: 8, color: 'var(--ma-done-text)', fontWeight: 600 }}>
-                              ✓ Đã khớp với thanh lý
-                            </span>
-                          ) : (
-                            <span style={{ marginLeft: 8, color: '#B45309', fontWeight: 600 }}>
-                              ⚠ Chưa khớp số tiền thanh lý ({dinhDangTien(settle.khauTruHuHong)} đ)
-                            </span>
+                      <>
+                        <div
+                          style={{
+                            gridColumn: '1 / -1',
+                            padding: '10px 14px',
+                            background: daKhop ? 'var(--ma-brand-accent-light)' : '#FFFBEB',
+                            border: `1px solid ${daKhop ? 'var(--ma-brand-accent)' : '#FDE68A'}`,
+                            borderRadius: 'var(--ma-radius)',
+                            fontSize: 13,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: 10,
+                          }}
+                        >
+                          <div>
+                            <strong>📋 Đối chiếu biên bản trả phòng ({bbTra.ngayThucHien}):</strong> Khấu trừ{' '}
+                            <span style={{ fontWeight: 700, color: 'var(--ma-urgent)' }}>{dinhDangTien(tienBb)} đ</span>
+                            {daKhop ? (
+                              <span style={{ marginLeft: 8, color: 'var(--ma-done-text)', fontWeight: 600 }}>
+                                ✓ Đã khớp với thanh lý
+                              </span>
+                            ) : (
+                              <span style={{ marginLeft: 8, color: '#B45309', fontWeight: 600 }}>
+                                ⚠ Chưa khớp số tiền thanh lý ({dinhDangTien(settle.khauTruHuHong)} đ)
+                              </span>
+                            )}
+                          </div>
+                          {!daKhop && (
+                            <button
+                              type="button"
+                              style={quickPresetButtonStyle}
+                              onClick={() => {
+                                setSettle((prev) => ({
+                                  ...prev,
+                                  khauTruHuHong: tienBb,
+                                  lyDo: lyDoBb,
+                                  bienBanId: bbTra.id,
+                                }))
+                                setXacNhanKhauTruKhacBienBan(false)
+                              }}
+                            >
+                              ⚡ Áp dụng số liệu biên bản
+                            </button>
                           )}
                         </div>
+
                         {!daKhop && (
-                          <button
-                            type="button"
-                            style={quickPresetButtonStyle}
-                            onClick={() =>
-                              setSettle((prev) => ({
-                                ...prev,
-                                khauTruHuHong: tienBb,
-                                lyDo: lyDoBb,
-                              }))
-                            }
-                          >
-                            ⚡ Áp dụng số liệu biên bản
-                          </button>
+                          <div style={{ gridColumn: '1 / -1' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#B45309', fontWeight: 600 }}>
+                              <input
+                                type="checkbox"
+                                checked={xacNhanKhauTruKhacBienBan}
+                                onChange={(e) => setXacNhanKhauTruKhacBienBan(e.target.checked)}
+                              />
+                              <span>Xác nhận áp dụng số tiền quyết toán ({dinhDangTien(settle.khauTruHuHong)} đ) khác với biên bản trả phòng ({dinhDangTien(tienBb)} đ)</span>
+                            </label>
+                          </div>
                         )}
-                      </div>
+                      </>
                     )
                   })()}
 
@@ -911,7 +931,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
                 </label>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <SaveButton busy={action.busy || !confirmed}>
+                  <SaveButton busy={action.busy || !confirmed || (Boolean(bienBans.find((b) => b.loaiBienBan === 'TRA_PHONG') && Number(settle.khauTruHuHong) !== Number(bienBans.find((b) => b.loaiBienBan === 'TRA_PHONG')?.tongTienKhauTru || 0) && !xacNhanKhauTruKhacBienBan))}>
                     Thanh lý hợp đồng
                   </SaveButton>
                 </div>

@@ -37,8 +37,11 @@ public class HuyHoaDonNhapService {
     public void huy(Long toaNhaId, Long kyId, Long hoaDonId, YeuCauHuyHoaDon yeuCau, NguoiDung nguoiDung) {
         kiemTraVaiTro(nguoiDung);
         phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId);
-        TinhHoaDonRepository.HoaDonTrongPhamVi hoaDon = tinhHoaDonRepository.timHoaDonTrongPhamVi(toaNhaId, kyId, hoaDonId)
+        TinhHoaDonRepository.HoaDonTrongPhamVi hoaDon = tinhHoaDonRepository.timHoaDonTrongPhamVi(toaNhaId, kyId, hoaDonId, true)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (hoaDon.daThu() != null && hoaDon.daThu().signum() != 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_CAN_BUT_TOAN_DOI_UNG);
+        }
         if (hoaDon.trangThai() == TrangThaiHoaDon.NHAP) {
             TrangThaiHoaDon trangThaiMoi = chuyen(hoaDon.trangThai(), TrangThaiHoaDon.DA_HUY);
             tinhHoaDonRepository.capNhatTrangThaiHoaDon(hoaDonId, trangThaiMoi);

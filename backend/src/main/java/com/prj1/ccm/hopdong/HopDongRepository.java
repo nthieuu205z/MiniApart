@@ -132,7 +132,7 @@ class HopDongRepository {
     public List<ThongTinHopDongDichVu> findDichVuApDungByHopDongId(Long hopDongId) {
         return jdbcTemplate.query(
                 """
-                        SELECT dv.id, dv.ten, hddv.don_gia_ap_dung
+                        SELECT dv.id, dv.ten, hddv.don_gia_ap_dung, dv.che_do_gia
                         FROM HOP_DONG_DICH_VU hddv
                         JOIN DICH_VU dv ON dv.id = hddv.dich_vu_id
                         WHERE hddv.hop_dong_id = ?
@@ -141,10 +141,20 @@ class HopDongRepository {
                 (resultSet, rowNum) -> ThongTinHopDongDichVu.tao(
                         resultSet.getLong("id"),
                         resultSet.getString("ten"),
-                        resultSet.getBigDecimal("don_gia_ap_dung")
+                        resultSet.getBigDecimal("don_gia_ap_dung"),
+                        resultSet.getString("che_do_gia")
                 ),
                 hopDongId
         );
+    }
+
+    public boolean kiemTraBienBanThuocHopDong(Long bienBanId, Long hopDongId) {
+        if (bienBanId == null || hopDongId == null) return false;
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM BIEN_BAN_BAN_GIAO_TAI_SAN WHERE id = ? AND hop_dong_id = ?",
+                Integer.class, bienBanId, hopDongId
+        );
+        return count != null && count > 0;
     }
 
     public List<HopDongDichVu> findDichVuApDungDeGiaHan(Long hopDongId) {

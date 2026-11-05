@@ -28,6 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Optional;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -191,6 +192,11 @@ public class HopDongService {
         if (yeuCau != null && yeuCau.chiSoCuoi() != null) {
             yeuCau.chiSoCuoi().forEach(chiSo -> chiSoDichVuService.ghiChiSo(toaNha.id(), ky.id(), chiSo, nguoiDung));
         }
+        if (yeuCau != null && yeuCau.bienBanId() != null) {
+            if (!hopDongRepository.kiemTraBienBanThuocHopDong(yeuCau.bienBanId(), hopDongId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Biên bản bàn giao không thuộc hợp đồng này.");
+            }
+        }
         Long hoaDonCuoiId = taoHoaDonHangLoatService.taoHoaDonKyCuoi(toaNha.id(), hopDongId, nguoiDung);
         com.prj1.ccm.billing.ThongTinQuyetToan quyetToan = giaoDichCocService.quyetToan(hopDongId, hoaDonCuoiId, yeuCau == null ? null : yeuCau.khauTruHuHong(), yeuCau == null ? null : yeuCau.lyDo(), toaNha.maToa(), toaNha.soNgayHanTt(), nguoiDung);
         hopDongRepository.updateTrangThai(hopDongId, TrangThaiHopDong.DA_THANH_LY);
@@ -351,6 +357,13 @@ public class HopDongService {
             if (item.donGiaApDung() != null) {
                 donGiaApDung = chuanHoaSoKhongAm(item.donGiaApDung());
             } else if (dichVu.cheDoGia() == com.prj1.ccm.toanha.CheDoGia.BAC_THANG) {
+                Optional<LocalDate> ngayHieuLuc = bangGiaRepository.findApplicableNgayHieuLucBacThangByDichVuIdAndNgay(
+                        dichVu.id(), LocalDate.now(clock)
+                );
+                if (ngayHieuLuc.isEmpty()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Dịch vụ " + dichVu.ten() + " tính theo bậc thang nhưng chưa có bảng giá bậc thang hiệu lực.");
+                }
                 donGiaApDung = BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY);
             } else {
                 donGiaApDung = layDonGiaMacDinh(dichVu.id());

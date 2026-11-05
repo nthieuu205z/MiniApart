@@ -53,7 +53,17 @@ public class HopDongPdfService {
             add(document, font, "Tiền cọc thoả thuận: " + money(contract.tienCoc()));
             add(document, font, "Thời hạn báo trước: " + contract.soNgayBaoTruoc() + " ngày");
             add(document, font, "Dịch vụ áp dụng:");
-            for (ThongTinHopDongDichVu service : contract.dichVuApDung()) add(document, font, service.tenDichVu() + ": " + money(service.donGiaApDung()));
+            for (ThongTinHopDongDichVu service : contract.dichVuApDung()) {
+                String priceLabel;
+                if ("BAC_THANG".equals(service.cheDoGia())) {
+                    priceLabel = "Tính theo biểu giá bậc thang quy định";
+                } else if ("0.00".equals(service.donGiaApDung()) || "0".equals(service.donGiaApDung())) {
+                    priceLabel = "Miễn phí (0 đ)";
+                } else {
+                    priceLabel = money(service.donGiaApDung());
+                }
+                add(document, font, service.tenDichVu() + ": " + priceLabel);
+            }
             add(document, font, "Điều khoản:");
             for (String clause : clauses.split("\\n")) add(document, font, clause);
             add(document, font, " ");

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import {
   fetchTaiSanPhong,
   themTaiSanPhong,
@@ -85,29 +85,37 @@ export default function QuanLyTaiSanPhong({
     }>
   >([])
 
-  const loadData = useCallback(async (isCancelled?: () => boolean) => {
+  const currentScopeRef = useRef({ phongId, hopDongId })
+  useEffect(() => {
+    currentScopeRef.current = { phongId, hopDongId }
+  })
+
+  async function loadData() {
+    const curPhong = phongId
+    const curHd = hopDongId
     setDangTai(true)
-    setLoi(null)
     try {
       const [taiSan, bienBan] = await Promise.all([
-        fetchTaiSanPhong(token, phongId),
-        hopDongId ? fetchBienBanTaiSan(token, hopDongId) : Promise.resolve([]),
+        fetchTaiSanPhong(token, curPhong),
+        curHd ? fetchBienBanTaiSan(token, curHd) : Promise.resolve([]),
       ])
-      if (isCancelled && isCancelled()) return
-      setDanhSachTaiSan(taiSan)
-      setDanhSachBienBan(bienBan)
-      if (onBienBanLoaded) {
-        onBienBanLoaded(bienBan)
+      if (currentScopeRef.current.phongId === curPhong && currentScopeRef.current.hopDongId === curHd) {
+        setDanhSachTaiSan(taiSan)
+        setDanhSachBienBan(bienBan)
+        if (onBienBanLoaded) {
+          onBienBanLoaded(bienBan)
+        }
       }
     } catch (e: unknown) {
-      if (isCancelled && isCancelled()) return
-      setLoi(e instanceof Error ? e.message : 'Không thể tải dữ liệu tài sản.')
+      if (currentScopeRef.current.phongId === curPhong) {
+        setLoi(e instanceof Error ? e.message : 'Không thể tải dữ liệu tài sản.')
+      }
     } finally {
-      if (!isCancelled || !isCancelled()) {
+      if (currentScopeRef.current.phongId === curPhong) {
         setDangTai(false)
       }
     }
-  }, [token, phongId, hopDongId, onBienBanLoaded])
+  }
 
   useEffect(() => {
     let active = true
@@ -118,12 +126,31 @@ export default function QuanLyTaiSanPhong({
     setThongBao(null)
     setLoi(null)
 
-    void loadData(() => !active)
+    setDangTai(true)
+    Promise.all([
+      fetchTaiSanPhong(token, phongId),
+      hopDongId ? fetchBienBanTaiSan(token, hopDongId) : Promise.resolve([]),
+    ])
+      .then(([taiSan, bienBan]) => {
+        if (!active) return
+        setDanhSachTaiSan(taiSan)
+        setDanhSachBienBan(bienBan)
+        if (onBienBanLoaded) {
+          onBienBanLoaded(bienBan)
+        }
+      })
+      .catch((e: unknown) => {
+        if (!active) return
+        setLoi(e instanceof Error ? e.message : 'Không thể tải dữ liệu tài sản.')
+      })
+      .finally(() => {
+        if (active) setDangTai(false)
+      })
 
     return () => {
       active = false
     }
-  }, [loadData])
+  }, [token, phongId, hopDongId])
 
   // Chuẩn bị danh sách kiểm kê khi chuyển sang lập biên bản
   function chuanBiKiemKe(kieu: 'NHAN_PHONG' | 'TRA_PHONG') {
@@ -202,6 +229,8 @@ export default function QuanLyTaiSanPhong({
       setLoi('Cần chỉ định hợp đồng để lập biên bản bàn giao.')
       return
     }
+    const submittingHopDongId = hopDongId
+    const submittingPhongId = phongId
     setDangLuu(true)
     setLoi(null)
     setThongBao(null)
@@ -220,7 +249,14 @@ export default function QuanLyTaiSanPhong({
           lyDoKhauTru: ct.lyDoKhauTru,
         })),
       }
-      await lapBienBanTaiSan(token, hopDongId, payload)
+      await lapBienBanTaiSan(token, submittingHopDongId, payload)
+      // Chặn nếu người dùng đã đổi hợp đồng / phòng trong lúc request đang xử lý
+      if (
+        currentScopeRef.current.hopDongId !== submittingHopDongId ||
+        currentScopeRef.current.phongId !== submittingPhongId
+      ) {
+        return
+      }
       setThongBao(
         `Lập biên bản ${loaiBienBan === 'NHAN_PHONG' ? 'nhận phòng' : 'trả phòng'} thành công!`
       )
@@ -231,11 +267,27 @@ export default function QuanLyTaiSanPhong({
           .join('; ')
         onKhauTruThayDoi(tongKhauTruBienBan, lyDoTongHop)
       }
-      await loadData()
+      const [taiSan, bienBan] = await Promise.all([
+        fetchTaiSanPhong(token, submittingPhongId),
+        fetchBienBanTaiSan(token, submittingHopDongId),
+      ])
+      if (
+        currentScopeRef.current.hopDongId !== submittingHopDongId ||
+        currentScopeRef.current.phongId !== submittingPhongId
+      ) {
+        return
+      }
+      setDanhSachTaiSan(taiSan)
+      setDanhSachBienBan(bienBan)
+      if (onBienBanLoaded) onBienBanLoaded(bienBan)
     } catch (e: unknown) {
-      setLoi(e instanceof Error ? e.message : 'Lỗi lập biên bản bàn giao.')
+      if (currentScopeRef.current.hopDongId === submittingHopDongId) {
+        setLoi(e instanceof Error ? e.message : 'Lỗi lập biên bản bàn giao.')
+      }
     } finally {
-      setDangLuu(false)
+      if (currentScopeRef.current.hopDongId === submittingHopDongId) {
+        setDangLuu(false)
+      }
     }
   }
 

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -142,8 +143,11 @@ class HopDongServiceTest {
         ));
         // Dịch vụ bậc thang
         when(dichVuRepository.findById(dichVuDienId)).thenReturn(Optional.of(
-                new DichVu(dichVuDienId, 1L, "Điện sinh hoạt bậc thang", null, com.prj1.ccm.toanha.CheDoGia.BAC_THANG, "kWh", true, true)
+                new DichVu(dichVuDienId, 1L, "Điện sinh hoạt bậc thang", com.prj1.ccm.toanha.CachTinh.THEO_CHI_SO, com.prj1.ccm.toanha.CheDoGia.BAC_THANG, "kWh", true, true)
         ));
+        when(bangGiaRepository.findApplicableNgayHieuLucBacThangByDichVuIdAndNgay(eq(dichVuDienId), any())).thenReturn(
+                Optional.of(LocalDate.of(2026, 1, 1))
+        );
         when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(eq(quanLy), eq(1L))).thenReturn(
                 new ToaNha(1L, "T01", "Toà A", "Địa chỉ", 5, 25, 7, "970405", "0123456789", new BigDecimal("0.15"), false)
         );
@@ -156,7 +160,7 @@ class HopDongServiceTest {
                 )
         ));
         when(hopDongRepository.findDichVuApDungByHopDongId(1001L)).thenReturn(
-                List.of(new ThongTinHopDongDichVu(dichVuDienId, "Điện sinh hoạt bậc thang", "0.00"))
+                List.of(ThongTinHopDongDichVu.tao(dichVuDienId, "Điện sinh hoạt bậc thang", BigDecimal.ZERO))
         );
 
         // donGiaApDung = null (như khi bấm "Chọn tất cả" trên UI)
@@ -174,5 +178,41 @@ class HopDongServiceTest {
             assertThat(list.get(0).donGiaApDung()).isEqualByComparingTo(BigDecimal.ZERO);
             return true;
         }));
+    }
+
+    @Test
+    void taoHopDong_dichVuBacThangThieuBangGia_nemLoiBadRequest() {
+        NguoiDung quanLy = new NguoiDung(3L, "Quản lý", "0900000003", "hash", VaiTro.QUAN_LY, TrangThaiNguoiDung.HOAT_DONG, 0, null);
+        Long phongId = 101L;
+        Long nguoiThueId = 201L;
+        Long dichVuDienId = 301L;
+
+        when(phongRepository.findById(phongId)).thenReturn(Optional.of(
+                new Phong(phongId, 1L, "501", 5, new BigDecimal("25.00"), 2, new BigDecimal("3500000.00"), "Studio", TrangThaiPhong.TRONG)
+        ));
+        when(nguoiThueRepository.findById(nguoiThueId)).thenReturn(Optional.of(
+                new NguoiThue(nguoiThueId, "Phạm Ngọc An", LocalDate.of(2000, 1, 1), "0900001007", "079123456785", "Nam Định", null)
+        ));
+        when(dichVuRepository.findById(dichVuDienId)).thenReturn(Optional.of(
+                new DichVu(dichVuDienId, 1L, "Điện sinh hoạt bậc thang", com.prj1.ccm.toanha.CachTinh.THEO_CHI_SO, com.prj1.ccm.toanha.CheDoGia.BAC_THANG, "kWh", true, true)
+        ));
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(eq(quanLy), eq(1L))).thenReturn(
+                new ToaNha(1L, "T01", "Toà A", "Địa chỉ", 5, 25, 7, "970405", "0123456789", new BigDecimal("0.15"), false)
+        );
+        // Thiếu bảng giá bậc thang hiệu lực
+        when(bangGiaRepository.findApplicableNgayHieuLucBacThangByDichVuIdAndNgay(eq(dichVuDienId), any()))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> hopDongService.tao(new YeuCauHopDong(
+                phongId, nguoiThueId, LocalDate.of(2040, 9, 10), LocalDate.of(2040, 9, 20),
+                new BigDecimal("3500000.00"), new BigDecimal("3500000.00"), 30,
+                List.of(new YeuCauHopDongDichVu(dichVuDienId, null))
+        ), quanLy))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> {
+                    ResponseStatusException rse = (ResponseStatusException) e;
+                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(rse.getReason()).contains("chưa có bảng giá bậc thang hiệu lực");
+                });
     }
 }
