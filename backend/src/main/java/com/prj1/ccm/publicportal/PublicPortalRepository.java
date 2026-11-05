@@ -189,7 +189,7 @@ public class PublicPortalRepository {
 
     public List<DichVuCongKhaiDto> layBangGiaDichVuCuaToa(Long toaNhaId) {
         String sql = """
-                SELECT d.id, d.ten, d.don_vi, d.cach_tinh, COALESCE(bg.don_gia, 0) AS don_gia
+                SELECT d.id, d.ten, d.don_vi, d.cach_tinh, d.che_do_gia, bg.don_gia
                 FROM DICH_VU d
                 LEFT JOIN LATERAL (
                     SELECT don_gia
@@ -206,7 +206,8 @@ public class PublicPortalRepository {
                 rs.getString("ten"),
                 rs.getString("don_vi"),
                 rs.getBigDecimal("don_gia"),
-                rs.getString("cach_tinh")
+                rs.getString("cach_tinh"),
+                rs.getString("che_do_gia")
         ), toaNhaId);
     }
 

@@ -23,60 +23,67 @@ CREATE TABLE IF NOT EXISTS LICH_HEN_XEM_PHONG (
 CREATE INDEX IF NOT EXISTS idx_lich_hen_toa_nha ON LICH_HEN_XEM_PHONG(toa_nha_id, trang_thai);
 CREATE INDEX IF NOT EXISTS idx_lich_hen_thoi_gian ON LICH_HEN_XEM_PHONG(thoi_gian_hen);
 
--- Seed dich vu cho Toa A neu chua co
-INSERT INTO DICH_VU (id, toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
-VALUES 
-    (1, 1, 'Điện sinh hoạt', 'THEO_CHI_SO', 'CO_DINH', 'kWh', TRUE, TRUE),
-    (2, 1, 'Nước sinh hoạt', 'THEO_CHI_SO', 'CO_DINH', 'm³', FALSE, TRUE),
-    (3, 1, 'Internet tốc độ cao', 'CO_DINH', 'CO_DINH', 'phòng', FALSE, TRUE),
-    (4, 1, 'Vệ sinh & thang máy', 'THEO_NGUOI', 'CO_DINH', 'người', FALSE, TRUE),
-    (5, 1, 'Gửi xe máy', 'THEO_SO_LUONG', 'CO_DINH', 'xe', FALSE, TRUE)
-ON CONFLICT (id) DO NOTHING;
+-- 1. Nâng cấp mô tả và tiện ích cho các phòng đã tồn tại theo cặp unique (toa_nha_id, so_phong)
+UPDATE PHONG SET
+    tien_ich = COALESCE(PHONG.tien_ich, demo.tien_ich),
+    mo_ta = COALESCE(PHONG.mo_ta, demo.mo_ta)
+FROM (VALUES
+    (1, 'P.101', 'Điều hoà inverter, Nóng lạnh, Tủ lạnh 180L, Giường đệm 1m6x2m, Tủ quần áo, Bàn làm việc, Cửa sổ thoáng', 'Phòng tầng 1 thuận tiện đi lại, đầy đủ đồ cơ bản chỉ việc xách vali về ở. Vệ sinh khép kín sạch sẽ.'),
+    (1, 'P.102', 'Điều hoà, Nóng lạnh, Tủ lạnh, Máy giặt riêng, Giường đệm, Sofa, Kệ bếp, Ban công riêng', 'Căn hộ 1 phòng ngủ tách biệt phòng khách, có ban công phơi đồ riêng, máy giặt riêng.'),
+    (1, 'P.201', 'Điều hoà, Nóng lạnh, Tủ lạnh, Giường đệm cao cấp, Tủ âm tường, Bàn trà, Ban công view thoáng, Khóa vân tay', 'Phòng tầng 2 view đẹp, ban công rộng đón ánh sáng tự nhiên. Khóa cửa vân tay bảo mật cao.'),
+    (1, 'P.202', 'Điều hoà, Nóng lạnh, Giường đệm, Tủ quần áo, Kệ bếp nấu ăn, Cửa sổ giếng trời', 'Phòng nhỏ gọn ấm cúng, thiết kế tối ưu công năng, bếp nấu tiện lợi, phù hợp sinh viên hoặc người đi làm.'),
+    (1, 'P.301', 'Điều hoà 2 chiều, Nóng lạnh, Tủ lạnh 2 cánh, Máy giặt riêng, Sofa bed, Tủ bếp trên dưới, Ban công thoáng mát', 'Căn hộ duplex gác lửng hiện đại, trần cao thoáng đãng, khu ngủ tách biệt bên trên, tiếp khách bên dưới.'),
+    (1, 'P.302', 'Điều hoà, Nóng lạnh, Tủ lạnh, Giường đệm, Tủ gỗ, Bàn ăn, Cửa sổ lớn', 'Phòng tầng 3 yên tĩnh, thoáng gió, đầy đủ tiện nghi.'),
+    (2, 'B.101', 'Máy lạnh Daikin, Máy nước nóng, Tủ lạnh, Tủ quần áo gỗ, Bếp từ, Cửa sổ kính lớn, Thang máy, Khóa thẻ từ', 'Căn hộ dịch vụ trung tâm, gần cầu Ông Lãnh, tiện đi lại Quận 1. Giờ giấc tự do, không chung chủ.'),
+    (2, 'B.201', '2 Máy lạnh, Nóng lạnh, Tủ lạnh lớn, Máy giặt riêng, Giường đệm, Bàn ăn, Sofa, Ban công thoáng', 'Căn 1PN rộng rãi tầng 2, ánh sáng tràn ngập, ban công nhìn ra đường nội khu yên tĩnh.')
+) AS demo(toa_nha_id, so_phong, tien_ich, mo_ta)
+WHERE PHONG.toa_nha_id = demo.toa_nha_id AND PHONG.so_phong = demo.so_phong;
 
-INSERT INTO BANG_GIA (id, dich_vu_id, don_gia, ngay_hieu_luc)
-VALUES
-    (1, 1, 3800.00, '2026-01-01'),
-    (2, 2, 28000.00, '2026-01-01'),
-    (3, 3, 100000.00, '2026-01-01'),
-    (4, 4, 50000.00, '2026-01-01'),
-    (5, 5, 120000.00, '2026-01-01')
-ON CONFLICT (id) DO NOTHING;
-
--- Seed phong mau cho Toa A (Toa A — Ngo Hoa Binh, Ha Noi)
-INSERT INTO PHONG (id, toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai, tien_ich, mo_ta)
-VALUES
-    (101, 1, 'P.101', 1, 28.5, 2, 3800000.00, 'Studio khép kín', 'TRONG', 
+-- 2. Tách seed dữ liệu mẫu khỏi production: chỉ seed khi toà nhà chưa có phòng nào
+INSERT INTO PHONG (toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai, tien_ich, mo_ta)
+SELECT v.toa_nha_id, v.so_phong, v.tang, v.dien_tich, v.suc_chua, v.gia_thue_mac_dinh, v.loai_phong, v.trang_thai, v.tien_ich, v.mo_ta
+FROM (VALUES
+    (1, 'P.101', 1, 28.5, 2, 3800000.00, 'Studio khép kín', 'TRONG', 
      'Điều hoà inverter, Nóng lạnh, Tủ lạnh 180L, Giường đệm 1m6x2m, Tủ quần áo, Bàn làm việc, Cửa sổ thoáng',
      'Phòng tầng 1 thuận tiện đi lại, đầy đủ đồ cơ bản chỉ việc xách vali về ở. Vệ sinh khép kín sạch sẽ.'),
-    (102, 1, 'P.102', 1, 32.0, 3, 4200000.00, '1 ngủ 1 khách', 'DANG_THUE', 
+    (1, 'P.102', 1, 32.0, 3, 4200000.00, '1 ngủ 1 khách', 'DANG_THUE', 
      'Điều hoà, Nóng lạnh, Tủ lạnh, Máy giặt riêng, Giường đệm, Sofa, Kệ bếp, Ban công riêng',
      'Căn hộ 1 phòng ngủ tách biệt phòng khách, có ban công phơi đồ riêng, máy giặt riêng.'),
-    (201, 1, 'P.201', 2, 30.0, 2, 4000000.00, 'Studio ban công', 'TRONG', 
+    (1, 'P.201', 2, 30.0, 2, 4000000.00, 'Studio ban công', 'TRONG', 
      'Điều hoà, Nóng lạnh, Tủ lạnh, Giường đệm cao cấp, Tủ âm tường, Bàn trà, Ban công view thoáng, Khóa vân tay',
      'Phòng tầng 2 view đẹp, ban công rộng đón ánh sáng tự nhiên. Khóa cửa vân tay bảo mật cao.'),
-    (202, 1, 'P.202', 2, 26.0, 2, 3600000.00, 'Studio tiêu chuẩn', 'TRONG', 
+    (1, 'P.202', 2, 26.0, 2, 3600000.00, 'Studio tiêu chuẩn', 'TRONG', 
      'Điều hoà, Nóng lạnh, Giường đệm, Tủ quần áo, Kệ bếp nấu ăn, Cửa sổ giếng trời',
      'Phòng nhỏ gọn ấm cúng, thiết kế tối ưu công năng, bếp nấu tiện lợi, phù hợp sinh viên hoặc người đi làm.'),
-    (301, 1, 'P.301', 3, 35.0, 3, 4800000.00, 'Gác lửng Duplex', 'TRONG', 
+    (1, 'P.301', 3, 35.0, 3, 4800000.00, 'Gác lửng Duplex', 'TRONG', 
      'Điều hoà 2 chiều, Nóng lạnh, Tủ lạnh 2 cánh, Máy giặt riêng, Sofa bed, Tủ bếp trên dưới, Ban công thoáng mát',
      'Căn hộ duplex gác lửng hiện đại, trần cao thoáng đãng, khu ngủ tách biệt bên trên, tiếp khách bên dưới.'),
-    (302, 1, 'P.302', 3, 28.0, 2, 3900000.00, 'Studio khép kín', 'DA_COC', 
+    (1, 'P.302', 3, 28.0, 2, 3900000.00, 'Studio khép kín', 'DA_COC', 
      'Điều hoà, Nóng lạnh, Tủ lạnh, Giường đệm, Tủ gỗ, Bàn ăn, Cửa sổ lớn',
-     'Phòng tầng 3 yên tĩnh, thoáng gió, đầy đủ tiện nghi.')
-ON CONFLICT (id) DO NOTHING;
-
--- Seed phong mau cho Toa B (Toa B — Ben Van Don, TP.HCM)
-INSERT INTO PHONG (id, toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai, tien_ich, mo_ta)
-VALUES
-    (20101, 2, 'B.101', 1, 25.0, 2, 4500000.00, 'Studio hiện đại', 'TRONG', 
+     'Phòng tầng 3 yên tĩnh, thoáng gió, đầy đủ tiện nghi.'),
+    (2, 'B.101', 1, 25.0, 2, 4500000.00, 'Studio hiện đại', 'TRONG', 
      'Máy lạnh Daikin, Máy nước nóng, Tủ lạnh, Tủ quần áo gỗ, Bếp từ, Cửa sổ kính lớn, Thang máy, Khóa thẻ từ',
      'Căn hộ dịch vụ trung tâm, gần cầu Ông Lãnh, tiện đi lại Quận 1. Giờ giấc tự do, không chung chủ.'),
-    (20201, 2, 'B.201', 2, 34.0, 3, 5500000.00, '1 phòng ngủ riêng', 'TRONG', 
+    (2, 'B.201', 2, 34.0, 3, 5500000.00, '1 phòng ngủ riêng', 'TRONG', 
      '2 Máy lạnh, Nóng lạnh, Tủ lạnh lớn, Máy giặt riêng, Giường đệm, Bàn ăn, Sofa, Ban công thoáng',
      'Căn 1PN rộng rãi tầng 2, ánh sáng tràn ngập, ban công nhìn ra đường nội khu yên tĩnh.')
-ON CONFLICT (id) DO NOTHING;
+) AS v(toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai, tien_ich, mo_ta)
+WHERE EXISTS (SELECT 1 FROM TOA_NHA WHERE id = v.toa_nha_id)
+  AND NOT EXISTS (
+      SELECT 1 FROM PHONG p WHERE p.toa_nha_id = v.toa_nha_id AND p.so_phong = v.so_phong
+  );
 
-SELECT setval('DICH_VU_id_seq', (SELECT COALESCE(MAX(id), 1) FROM DICH_VU));
-SELECT setval('BANG_GIA_id_seq', (SELECT COALESCE(MAX(id), 1) FROM BANG_GIA));
-SELECT setval('PHONG_id_seq', (SELECT COALESCE(MAX(id), 1) FROM PHONG));
-
+-- 3. Seed dịch vụ mẫu chỉ khi toà nhà 1 chưa có dịch vụ tương ứng
+INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
+SELECT 1, v.ten, v.cach_tinh, v.che_do_gia, v.don_vi, v.la_dien, v.dang_su_dung
+FROM (VALUES 
+    ('Điện sinh hoạt', 'THEO_CHI_SO', 'CO_DINH', 'kWh', TRUE, TRUE),
+    ('Nước sinh hoạt', 'THEO_CHI_SO', 'CO_DINH', 'm³', FALSE, TRUE),
+    ('Internet tốc độ cao', 'CO_DINH', 'CO_DINH', 'phòng', FALSE, TRUE),
+    ('Vệ sinh & thang máy', 'THEO_NGUOI', 'CO_DINH', 'người', FALSE, TRUE),
+    ('Gửi xe máy', 'THEO_SO_LUONG', 'CO_DINH', 'xe', FALSE, TRUE)
+) AS v(ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
+WHERE EXISTS (SELECT 1 FROM TOA_NHA WHERE id = 1)
+  AND NOT EXISTS (
+      SELECT 1 FROM DICH_VU dv WHERE dv.toa_nha_id = 1 AND dv.ten = v.ten
+  );

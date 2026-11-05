@@ -58,7 +58,7 @@ class AuthMigrationRegressionTest {
         jdbcTemplate.update(
                 """
                         INSERT INTO NGUOI_THUE(ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan, trang_thai_luu_tru)
-                        VALUES ('Người thuê ràng buộc', DATE '1995-01-01', '0901777002', '001234567899', 'Hà Nội', 'DANG_THUE')
+                        VALUES ('Người thuê ràng buộc', DATE '1995-01-01', '0901777002', '001234567899', 'Hà Nội', 'DA_DANG_KY_TAM_TRU')
                         """
         );
         Long nguoiThueId = jdbcTemplate.queryForObject(

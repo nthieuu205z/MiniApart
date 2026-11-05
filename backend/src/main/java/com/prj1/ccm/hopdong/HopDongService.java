@@ -347,9 +347,14 @@ public class HopDongService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_DICH_VU_KHONG_HOP_LE);
             }
 
-            BigDecimal donGiaApDung = item.donGiaApDung() != null
-                    ? chuanHoaSoKhongAm(item.donGiaApDung())
-                    : layDonGiaMacDinh(dichVu.id());
+            BigDecimal donGiaApDung;
+            if (item.donGiaApDung() != null) {
+                donGiaApDung = chuanHoaSoKhongAm(item.donGiaApDung());
+            } else if (dichVu.cheDoGia() == com.prj1.ccm.toanha.CheDoGia.BAC_THANG) {
+                donGiaApDung = BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY);
+            } else {
+                donGiaApDung = layDonGiaMacDinh(dichVu.id());
+            }
             ketQua.add(new HopDongDichVuDaChuanHoa(dichVu.id(), dichVu.ten(), donGiaApDung));
         }
 

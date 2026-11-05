@@ -22,6 +22,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.server.ResponseStatusException;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
+
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -122,5 +125,54 @@ class HopDongServiceTest {
 
         verify(hopDongRepository, never()).findXungDotTheoPhongVaKhoangNgay(any(), any(), any());
         verify(hopDongRepository, never()).insertDichVuApDung(any());
+    }
+
+    @Test
+    void taoHopDong_dichVuBacThang_khongCanTimDonGiaCoDinh() {
+        NguoiDung quanLy = new NguoiDung(3L, "Quản lý", "0900000003", "hash", VaiTro.QUAN_LY, TrangThaiNguoiDung.HOAT_DONG, 0, null);
+        Long phongId = 9L;
+        Long nguoiThueId = 12L;
+        Long dichVuDienId = 7L;
+
+        when(phongRepository.findById(phongId)).thenReturn(Optional.of(
+                new Phong(phongId, 1L, "501", 3, new BigDecimal("22.50"), 4, new BigDecimal("3500000.00"), "Studio", TrangThaiPhong.TRONG)
+        ));
+        when(nguoiThueRepository.findById(nguoiThueId)).thenReturn(Optional.of(
+                new NguoiThue(nguoiThueId, "Phạm Ngọc An", LocalDate.of(2000, 1, 1), "0900001007", "079123456785", "Nam Định", null)
+        ));
+        // Dịch vụ bậc thang
+        when(dichVuRepository.findById(dichVuDienId)).thenReturn(Optional.of(
+                new DichVu(dichVuDienId, 1L, "Điện sinh hoạt bậc thang", null, com.prj1.ccm.toanha.CheDoGia.BAC_THANG, "kWh", true, true)
+        ));
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(eq(quanLy), eq(1L))).thenReturn(
+                new ToaNha(1L, "T01", "Toà A", "Địa chỉ", 5, 25, 7, "970405", "0123456789", new BigDecimal("0.15"), false)
+        );
+        when(hopDongRepository.insert(any())).thenReturn(1001L);
+        when(hopDongRepository.findViewById(1001L)).thenReturn(Optional.of(
+                new HopDongRepository.HopDongView(
+                        new HopDong(1001L, phongId, nguoiThueId, LocalDate.of(2040, 9, 10), LocalDate.of(2040, 9, 20),
+                                new BigDecimal("3500000.00"), new BigDecimal("3500000.00"), 30, TrangThaiHopDong.CHO_KY),
+                        1L, "501", "Phạm Ngọc An"
+                )
+        ));
+        when(hopDongRepository.findDichVuApDungByHopDongId(1001L)).thenReturn(
+                List.of(new ThongTinHopDongDichVu(dichVuDienId, "Điện sinh hoạt bậc thang", "0.00"))
+        );
+
+        // donGiaApDung = null (như khi bấm "Chọn tất cả" trên UI)
+        ThongTinHopDong ketQua = hopDongService.tao(new YeuCauHopDong(
+                phongId, nguoiThueId, LocalDate.of(2040, 9, 10), LocalDate.of(2040, 9, 20),
+                new BigDecimal("3500000.00"), new BigDecimal("3500000.00"), 30,
+                List.of(new YeuCauHopDongDichVu(dichVuDienId, null))
+        ), quanLy);
+
+        assertThat(ketQua).isNotNull();
+        // Không hề gọi bangGiaRepository tìm đơn giá cố định
+        verify(bangGiaRepository, never()).findApplicableByDichVuIdAndNgay(any(), any());
+        verify(hopDongRepository).insertDichVuApDung(argThat(list -> {
+            assertThat(list).hasSize(1);
+            assertThat(list.get(0).donGiaApDung()).isEqualByComparingTo(BigDecimal.ZERO);
+            return true;
+        }));
     }
 }

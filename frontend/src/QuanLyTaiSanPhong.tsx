@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 import {
   fetchTaiSanPhong,
   themTaiSanPhong,
@@ -28,6 +28,7 @@ type Props = {
   soPhong?: string
   hopDongId?: number
   onKhauTruThayDoi?: (tienKhauTru: number, lyDo: string) => void
+  onBienBanLoaded?: (bienBans: BienBanBanGiao[]) => void
   mobile?: boolean
 }
 
@@ -47,6 +48,7 @@ export default function QuanLyTaiSanPhong({
   soPhong,
   hopDongId,
   onKhauTruThayDoi,
+  onBienBanLoaded,
   mobile = false,
 }: Props) {
   const [tab, setTab] = useState<'DANH_MUC' | 'BIEN_BAN'>('DANH_MUC')
@@ -83,26 +85,45 @@ export default function QuanLyTaiSanPhong({
     }>
   >([])
 
-  async function loadData() {
+  const loadData = useCallback(async (isCancelled?: () => boolean) => {
     setDangTai(true)
     setLoi(null)
     try {
-      const taiSan = await fetchTaiSanPhong(token, phongId)
+      const [taiSan, bienBan] = await Promise.all([
+        fetchTaiSanPhong(token, phongId),
+        hopDongId ? fetchBienBanTaiSan(token, hopDongId) : Promise.resolve([]),
+      ])
+      if (isCancelled && isCancelled()) return
       setDanhSachTaiSan(taiSan)
-      if (hopDongId) {
-        const bienBan = await fetchBienBanTaiSan(token, hopDongId)
-        setDanhSachBienBan(bienBan)
+      setDanhSachBienBan(bienBan)
+      if (onBienBanLoaded) {
+        onBienBanLoaded(bienBan)
       }
     } catch (e: unknown) {
+      if (isCancelled && isCancelled()) return
       setLoi(e instanceof Error ? e.message : 'Không thể tải dữ liệu tài sản.')
     } finally {
-      setDangTai(false)
+      if (!isCancelled || !isCancelled()) {
+        setDangTai(false)
+      }
     }
-  }
+  }, [token, phongId, hopDongId, onBienBanLoaded])
 
   useEffect(() => {
-    void loadData()
-  }, [token, phongId, hopDongId])
+    let active = true
+    // Reset form / checklist khi đổi phòng hoặc đổi hợp đồng
+    setChiTietKiemKe([])
+    setGhiChuBienBan('')
+    setLoaiBienBan('NHAN_PHONG')
+    setThongBao(null)
+    setLoi(null)
+
+    void loadData(() => !active)
+
+    return () => {
+      active = false
+    }
+  }, [loadData])
 
   // Chuẩn bị danh sách kiểm kê khi chuyển sang lập biên bản
   function chuanBiKiemKe(kieu: 'NHAN_PHONG' | 'TRA_PHONG') {
@@ -203,7 +224,7 @@ export default function QuanLyTaiSanPhong({
       setThongBao(
         `Lập biên bản ${loaiBienBan === 'NHAN_PHONG' ? 'nhận phòng' : 'trả phòng'} thành công!`
       )
-      if (loaiBienBan === 'TRA_PHONG' && tongKhauTruBienBan > 0 && onKhauTruThayDoi) {
+      if (loaiBienBan === 'TRA_PHONG' && onKhauTruThayDoi) {
         const lyDoTongHop = chiTietKiemKe
           .filter((ct) => Number(ct.tienKhauTru) > 0)
           .map((ct) => `${ct.tenTaiSan}: ${ct.lyDoKhauTru || 'Hư hỏng/Mất mát'}`)

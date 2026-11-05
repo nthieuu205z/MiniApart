@@ -19,17 +19,25 @@ public class TaiSanController {
         this.taiSanService = taiSanService;
     }
 
+    private NguoiDung currentUser(HttpServletRequest request) {
+        return (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
+    }
+
     @GetMapping("/phong/{phongId}/tai-san")
-    public List<TaiSanPhongDto> layDanhSachTaiSan(@PathVariable Long phongId) {
-        return taiSanService.layDanhSachTaiSan(phongId);
+    public List<TaiSanPhongDto> layDanhSachTaiSan(
+            @PathVariable Long phongId,
+            HttpServletRequest request
+    ) {
+        return taiSanService.layDanhSachTaiSan(phongId, currentUser(request));
     }
 
     @PostMapping("/phong/{phongId}/tai-san")
     public ResponseEntity<Map<String, Object>> themTaiSan(
             @PathVariable Long phongId,
-            @RequestBody YeuCauKhaiBaoTaiSan yeuCau
+            @RequestBody YeuCauKhaiBaoTaiSan yeuCau,
+            HttpServletRequest request
     ) {
-        Long id = taiSanService.themTaiSan(phongId, yeuCau);
+        Long id = taiSanService.themTaiSan(phongId, yeuCau, currentUser(request));
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "thanhCong", true,
                 "taiSanId", id,
@@ -38,8 +46,11 @@ public class TaiSanController {
     }
 
     @DeleteMapping("/tai-san/{id}")
-    public ResponseEntity<Map<String, Object>> xoaTaiSan(@PathVariable Long id) {
-        boolean ok = taiSanService.xoaTaiSan(id);
+    public ResponseEntity<Map<String, Object>> xoaTaiSan(
+            @PathVariable Long id,
+            HttpServletRequest request
+    ) {
+        boolean ok = taiSanService.xoaTaiSan(id, currentUser(request));
         if (ok) {
             return ResponseEntity.ok(Map.of("thanhCong", true, "thongBao", "Đã xoá tài sản khỏi danh mục phòng"));
         }
@@ -47,8 +58,11 @@ public class TaiSanController {
     }
 
     @GetMapping("/hop-dong/{hopDongId}/bien-ban-tai-san")
-    public List<BienBanBanGiaoDto> layDanhSachBienBan(@PathVariable Long hopDongId) {
-        return taiSanService.layDanhSachBienBan(hopDongId);
+    public List<BienBanBanGiaoDto> layDanhSachBienBan(
+            @PathVariable Long hopDongId,
+            HttpServletRequest request
+    ) {
+        return taiSanService.layDanhSachBienBan(hopDongId, currentUser(request));
     }
 
     @PostMapping("/hop-dong/{hopDongId}/bien-ban-tai-san")
@@ -57,10 +71,8 @@ public class TaiSanController {
             @RequestBody YeuCauLapBienBan yeuCau,
             HttpServletRequest request
     ) {
-        NguoiDung nguoiDung = (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
-        Long nguoiLapId = nguoiDung != null ? nguoiDung.id() : 1L;
-
-        Long bienBanId = taiSanService.lapBienBan(hopDongId, nguoiLapId, yeuCau);
+        NguoiDung nguoiDung = currentUser(request);
+        Long bienBanId = taiSanService.lapBienBan(hopDongId, yeuCau, nguoiDung);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "thanhCong", true,
                 "bienBanId", bienBanId,
@@ -68,4 +80,3 @@ public class TaiSanController {
         ));
     }
 }
-

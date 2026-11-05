@@ -1459,7 +1459,8 @@ export type PublicDichVu = {
   maDichVu: string
   tenDichVu: string
   loaiThu: string
-  donGia: number
+  cheDoGia?: string
+  donGia: number | null
   donViTinh: string
   ghiChu: string
 }
@@ -1541,9 +1542,18 @@ export async function fetchPublicPhong(toaNhaId?: number, giaToiDa?: number): Pr
   if (!response.ok) {
     throw await toApiError(response, 'Không thể tải danh sách phòng công khai.')
   }
-  const rows = await response.json() as Array<PublicPhong & { giaThue?: number; bangGiaDichVu?: Array<{id: number; ten: string; cachTinh: string; donVi: string; donGia: number}> }>
+  const rows = await response.json() as Array<PublicPhong & { giaThue?: number; bangGiaDichVu?: Array<{id: number; ten: string; cachTinh: string; donVi: string; donGia: number | null; cheDoGia?: string}> }>
   return rows.map((row) => ({ ...row, giaThueMacDinh: row.giaThue ?? row.giaThueMacDinh,
-    danhSachDichVu: row.bangGiaDichVu?.map((dv) => ({ id: dv.id, maDichVu: String(dv.id), tenDichVu: dv.ten, loaiThu: dv.cachTinh, donGia: dv.donGia, donViTinh: dv.donVi, ghiChu: '' })) ?? row.danhSachDichVu ?? [],
+    danhSachDichVu: row.bangGiaDichVu?.map((dv) => ({
+      id: dv.id,
+      maDichVu: String(dv.id),
+      tenDichVu: dv.ten,
+      loaiThu: dv.cachTinh,
+      cheDoGia: dv.cheDoGia,
+      donGia: dv.donGia,
+      donViTinh: dv.donVi,
+      ghiChu: dv.cheDoGia === 'BAC_THANG' ? 'Bậc thang' : (dv.donGia == null ? 'Chưa có giá' : ''),
+    })) ?? row.danhSachDichVu ?? [],
   }))
 }
 

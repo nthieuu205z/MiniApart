@@ -76,6 +76,51 @@ public class TaiSanRepository {
         return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
     }
 
+    public Optional<Long> layToaNhaIdTheoPhong(Long phongId) {
+        String sql = "SELECT toa_nha_id FROM PHONG WHERE id = ?";
+        List<Long> result = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getLong("toa_nha_id"), phongId);
+        return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
+    }
+
+    public record ThongTinHopDongTaiSan(Long hopDongId, Long phongId, Long toaNhaId, Long nguoiThueId) {}
+
+    public Optional<ThongTinHopDongTaiSan> layThongTinHopDongTaiSan(Long hopDongId) {
+        String sql = """
+                SELECT hd.id AS hop_dong_id, hd.phong_id, p.toa_nha_id, hd.nguoi_thue_id
+                FROM HOP_DONG hd
+                JOIN PHONG p ON p.id = hd.phong_id
+                WHERE hd.id = ?
+                """;
+        List<ThongTinHopDongTaiSan> result = jdbcTemplate.query(sql, (rs, rowNum) -> new ThongTinHopDongTaiSan(
+                rs.getLong("hop_dong_id"),
+                rs.getLong("phong_id"),
+                rs.getLong("toa_nha_id"),
+                rs.getLong("nguoi_thue_id")
+        ), hopDongId);
+        return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
+    }
+
+    public Optional<Long> layToaNhaIdTheoTaiSan(Long taiSanId) {
+        String sql = """
+                SELECT p.toa_nha_id
+                FROM TAI_SAN_PHONG ts
+                JOIN PHONG p ON p.id = ts.phong_id
+                WHERE ts.id = ?
+                """;
+        List<Long> result = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getLong("toa_nha_id"), taiSanId);
+        return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
+    }
+
+    public boolean kiemTraNguoiThueDangThuePhong(Long nguoiThueId, Long phongId) {
+        String sql = """
+                SELECT COUNT(*)
+                FROM HOP_DONG
+                WHERE nguoi_thue_id = ? AND phong_id = ? AND trang_thai IN ('CHO_KY', 'DA_COC', 'HIEU_LUC')
+                """;
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, nguoiThueId, phongId);
+        return count != null && count > 0;
+    }
+
     public List<BienBanBanGiaoDto> layDanhSachBienBan(Long hopDongId) {
         String sql = """
                 SELECT bb.id, bb.hop_dong_id, bb.phong_id, p.so_phong, bb.loai_bien_ban,

@@ -56,6 +56,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
   const [occupant, setOccupant] = useState({ nguoiThueId: '', quanHe: '', tuNgay: today(), denNgay: '' })
   const [renewal, setRenewal] = useState({ ngayKetThuc: '', giaThue: '' })
   const [settle, setSettle] = useState({ khauTruHuHong: '0', lyDo: '' })
+  const [bienBans, setBienBans] = useState<any[]>([])
   const [finalReadings, setFinalReadings] = useState<Record<number, string>>({})
   const [confirmed, setConfirmed] = useState(false)
   const [settlement, setSettlement] = useState<Settlement | null>(null)
@@ -85,6 +86,8 @@ export default function HopDongThaoTac({ token }: { token: string }) {
     setSettlement(null)
     setFinalReadings({})
     setConfirmed(false)
+    setSettle({ khauTruHuHong: '0', lyDo: '' })
+    setBienBans([])
     if (!selected) {
       setOccupants([])
       return
@@ -590,6 +593,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
               phongId={contract.phongId}
               soPhong={contract.soPhong}
               hopDongId={contract.id}
+              onBienBanLoaded={setBienBans}
               onKhauTruThayDoi={(amount, reason) =>
                 setSettle((prev) => ({
                   ...prev,
@@ -816,6 +820,64 @@ export default function HopDongThaoTac({ token }: { token: string }) {
                         />
                       </Field>
                     ))}
+
+                  {(() => {
+                    const bbTra = bienBans.find((b) => b.loaiBienBan === 'TRA_PHONG')
+                    if (!bbTra) return null
+                    const tienBb = String(bbTra.tongTienKhauTru || '0')
+                    const lyDoBb =
+                      bbTra.chiTiet
+                        ?.filter((c: any) => Number(c.tienKhauTru) > 0)
+                        ?.map((c: any) => `${c.tenTaiSan}: ${c.lyDoKhauTru || 'Hư hỏng'}`)
+                        ?.join('; ') || bbTra.ghiChuChung || 'Khấu trừ theo biên bản trả phòng'
+                    const daKhop = Number(settle.khauTruHuHong) === Number(tienBb)
+                    return (
+                      <div
+                        style={{
+                          gridColumn: '1 / -1',
+                          padding: '10px 14px',
+                          background: daKhop ? 'var(--ma-brand-accent-light)' : '#FFFBEB',
+                          border: `1px solid ${daKhop ? 'var(--ma-brand-accent)' : '#FDE68A'}`,
+                          borderRadius: 'var(--ma-radius)',
+                          fontSize: 13,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: 10,
+                        }}
+                      >
+                        <div>
+                          <strong>📋 Đối chiếu biên bản trả phòng ({bbTra.ngayThucHien}):</strong> Khấu trừ{' '}
+                          <span style={{ fontWeight: 700, color: 'var(--ma-urgent)' }}>{dinhDangTien(tienBb)} đ</span>
+                          {daKhop ? (
+                            <span style={{ marginLeft: 8, color: 'var(--ma-done-text)', fontWeight: 600 }}>
+                              ✓ Đã khớp với thanh lý
+                            </span>
+                          ) : (
+                            <span style={{ marginLeft: 8, color: '#B45309', fontWeight: 600 }}>
+                              ⚠ Chưa khớp số tiền thanh lý ({dinhDangTien(settle.khauTruHuHong)} đ)
+                            </span>
+                          )}
+                        </div>
+                        {!daKhop && (
+                          <button
+                            type="button"
+                            style={quickPresetButtonStyle}
+                            onClick={() =>
+                              setSettle((prev) => ({
+                                ...prev,
+                                khauTruHuHong: tienBb,
+                                lyDo: lyDoBb,
+                              }))
+                            }
+                          >
+                            ⚡ Áp dụng số liệu biên bản
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })()}
 
                   <Field title="Khấu trừ hư hỏng (đồng)">
                     <input

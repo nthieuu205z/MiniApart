@@ -109,10 +109,10 @@ class BangViecVanHanhIntegrationTest {
                 .andExpect(jsonPath("$.nhomViec[3].soLuong").value(1))
                 .andExpect(jsonPath("$.nhomViec[3].lienKet").value("/su-co?toaNhaId=1&boLoc=TON_DONG_QUA_48_GIO"))
                 .andExpect(jsonPath("$.nhomViec[4].ma").value("PCCC"))
-                .andExpect(jsonPath("$.nhomViec[4].soLuong").value(nullValue()))
-                .andExpect(jsonPath("$.nhomViec[4].trangThai").value("CHUA_SAN_SANG"))
-                .andExpect(jsonPath("$.nhomViec[4].tenTrangThai").value(containsString("Chưa triển khai nguồn kiểm tra PCCC")))
-                .andExpect(jsonPath("$.nhomViec[4].lienKet").value(nullValue()));
+                .andExpect(jsonPath("$.nhomViec[4].soLuong").value(0))
+                .andExpect(jsonPath("$.nhomViec[4].trangThai").value("DA_XONG"))
+                .andExpect(jsonPath("$.nhomViec[4].tenTrangThai").value("Đã xong"))
+                .andExpect(jsonPath("$.nhomViec[4].lienKet").value("/an-toan?toaNhaId=1"));
     }
 
     @Test

@@ -378,7 +378,8 @@ class TinhHoaDonRepository {
                                         resultSet.getBigDecimal("tong_tien"),
                                         resultSet.getBigDecimal("da_thu"),
                                         resultSet.getObject("han_thanh_toan", LocalDate.class)
-                                )
+                                ),
+                                resultSet.getBigDecimal("da_thu")
                         ),
                         hoaDonId,
                         kyId,
@@ -679,7 +680,10 @@ class TinhHoaDonRepository {
     ) {
     }
 
-    record HoaDonTrongPhamVi(Long hoaDonId, TrangThaiHoaDon trangThai) {
+    record HoaDonTrongPhamVi(Long hoaDonId, TrangThaiHoaDon trangThai, BigDecimal daThu) {
+        public HoaDonTrongPhamVi(Long hoaDonId, TrangThaiHoaDon trangThai) {
+            this(hoaDonId, trangThai, BigDecimal.ZERO);
+        }
     }
 
     record HoaDonCanPhatHanh(Long hoaDonId, Long phongId, TrangThaiHoaDon trangThai, BigDecimal tongTien) {

@@ -36,35 +36,58 @@ CREATE TABLE IF NOT EXISTS CHI_TIET_BIEN_BAN_TAI_SAN (
     so_luong INT NOT NULL DEFAULT 1,
     tinh_trang_luc_giao VARCHAR(255) NOT NULL,
     tinh_trang_luc_tra VARCHAR(255),
-    tien_khau_tru NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
+    tien_khauTru NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
     ly_do_khau_tru TEXT,
     anh_minh_chung VARCHAR(500)
 );
 
 CREATE INDEX IF NOT EXISTS idx_chi_tiet_bien_ban ON CHI_TIET_BIEN_BAN_TAI_SAN(bien_ban_id);
 
--- Dữ liệu mẫu tài sản cho các phòng đang có
+-- Dữ liệu mẫu tài sản cho các phòng đang có (chỉ chèn khi chưa tồn tại để tách biệt và bảo vệ dữ liệu thực)
 INSERT INTO TAI_SAN_PHONG (phong_id, ten_tai_san, loai_tai_san, so_luong, tinh_trang, gia_tri_uoc_tinh, ghi_chu)
 SELECT id, 'Điều hoà Casper 9000 BTU Inverter', 'DIEN_LANH', 1, 'Mới 100%, làm lạnh tốt, kèm điều khiển', 6500000.00, 'Lắp đặt tháng 01/2026'
-FROM PHONG WHERE so_phong IN ('P.101', 'P.102', 'P.201', 'P.202', 'B.101', 'B.201');
+FROM PHONG p
+WHERE p.so_phong IN ('P.101', 'P.102', 'P.201', 'P.202', 'B.101', 'B.201')
+  AND NOT EXISTS (
+      SELECT 1 FROM TAI_SAN_PHONG ts WHERE ts.phong_id = p.id AND ts.ten_tai_san = 'Điều hoà Casper 9000 BTU Inverter'
+  );
 
 INSERT INTO TAI_SAN_PHONG (phong_id, ten_tai_san, loai_tai_san, so_luong, tinh_trang, gia_tri_uoc_tinh, ghi_chu)
 SELECT id, 'Tủ lạnh Toshiba 180L 2 cánh', 'DIEN_LANH', 1, 'Hoạt động tốt, sạch sẽ không mùi', 4800000.00, 'Đầy đủ khay kính chịu lực'
-FROM PHONG WHERE so_phong IN ('P.101', 'P.102', 'P.201', 'P.202', 'B.101');
+FROM PHONG p
+WHERE p.so_phong IN ('P.101', 'P.102', 'P.201', 'P.202', 'B.101')
+  AND NOT EXISTS (
+      SELECT 1 FROM TAI_SAN_PHONG ts WHERE ts.phong_id = p.id AND ts.ten_tai_san = 'Tủ lạnh Toshiba 180L 2 cánh'
+  );
 
 INSERT INTO TAI_SAN_PHONG (phong_id, ten_tai_san, loai_tai_san, so_luong, tinh_trang, gia_tri_uoc_tinh, ghi_chu)
 SELECT id, 'Bình nước nóng Ariston 20L', 'THIET_BI_VE_SINH', 1, 'Hoạt động tốt, có chống giật ELCB', 2800000.00, 'Bảo hành chính hãng'
-FROM PHONG WHERE so_phong IN ('P.101', 'P.102', 'P.201', 'P.202', 'P.301', 'B.101', 'B.201');
+FROM PHONG p
+WHERE p.so_phong IN ('P.101', 'P.102', 'P.201', 'P.202', 'P.301', 'B.101', 'B.201')
+  AND NOT EXISTS (
+      SELECT 1 FROM TAI_SAN_PHONG ts WHERE ts.phong_id = p.id AND ts.ten_tai_san = 'Bình nước nóng Ariston 20L'
+  );
 
 INSERT INTO TAI_SAN_PHONG (phong_id, ten_tai_san, loai_tai_san, so_luong, tinh_trang, gia_tri_uoc_tinh, ghi_chu)
 SELECT id, 'Giường ngủ gỗ MDF An Cường 1m6 x 2m', 'NOI_THAT', 1, 'Chắc chắn, kèm đệm bông ép 10cm', 3500000.00, 'Đệm sạch bọc ga'
-FROM PHONG WHERE so_phong IN ('P.101', 'P.102', 'P.201', 'P.202', 'B.101', 'B.201');
+FROM PHONG p
+WHERE p.so_phong IN ('P.101', 'P.102', 'P.201', 'P.202', 'B.101', 'B.201')
+  AND NOT EXISTS (
+      SELECT 1 FROM TAI_SAN_PHONG ts WHERE ts.phong_id = p.id AND ts.ten_tai_san = 'Giường ngủ gỗ MDF An Cường 1m6 x 2m'
+  );
 
 INSERT INTO TAI_SAN_PHONG (phong_id, ten_tai_san, loai_tai_san, so_luong, tinh_trang, gia_tri_uoc_tinh, ghi_chu)
 SELECT id, 'Tủ quần áo 2 cánh gỗ MDF', 'NOI_THAT', 1, 'Tốt, bản lề êm', 2200000.00, 'Có ngăn khoá'
-FROM PHONG WHERE so_phong IN ('P.101', 'P.102', 'P.201', 'P.202', 'B.101');
+FROM PHONG p
+WHERE p.so_phong IN ('P.101', 'P.102', 'P.201', 'P.202', 'B.101')
+  AND NOT EXISTS (
+      SELECT 1 FROM TAI_SAN_PHONG ts WHERE ts.phong_id = p.id AND ts.ten_tai_san = 'Tủ quần áo 2 cánh gỗ MDF'
+  );
 
 INSERT INTO TAI_SAN_PHONG (phong_id, ten_tai_san, loai_tai_san, so_luong, tinh_trang, gia_tri_uoc_tinh, ghi_chu)
 SELECT id, 'Bàn làm việc 1m2 kèm ghế xoay', 'NOI_THAT', 1, 'Mới, không trầy xước', 1200000.00, 'Ghế lưới thoáng'
-FROM PHONG WHERE so_phong IN ('P.101', 'P.201', 'B.101');
-
+FROM PHONG p
+WHERE p.so_phong IN ('P.101', 'P.201', 'B.101')
+  AND NOT EXISTS (
+      SELECT 1 FROM TAI_SAN_PHONG ts WHERE ts.phong_id = p.id AND ts.ten_tai_san = 'Bàn làm việc 1m2 kèm ghế xoay'
+  );

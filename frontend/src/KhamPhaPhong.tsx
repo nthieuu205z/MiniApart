@@ -481,7 +481,15 @@ export default function KhamPhaPhong({ onChuyenDangNhap, manHinhHep = false }: P
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontSize: 12, marginTop: 4 }}>
                         {phong.danhSachDichVu.slice(0, 3).map((dv) => (
                           <span key={dv.id} style={{ color: 'var(--ma-text-secondary)' }}>
-                            • {dv.tenDichVu}: <strong>{dinhDangTien(dv.donGia)}</strong>/{dv.donViTinh}
+                            • {dv.tenDichVu}:{' '}
+                            <strong>
+                              {dv.cheDoGia === 'BAC_THANG'
+                                ? 'Bậc thang'
+                                : dv.donGia != null
+                                ? dinhDangTien(dv.donGia)
+                                : 'Chưa có giá'}
+                            </strong>
+                            {dv.cheDoGia !== 'BAC_THANG' && dv.donGia != null ? `/${dv.donViTinh}` : ''}
                           </span>
                         ))}
                       </div>
@@ -581,7 +589,11 @@ export default function KhamPhaPhong({ onChuyenDangNhap, manHinhHep = false }: P
                           </td>
                           <td style={styleTd}>{dv.loaiThu === 'DONG_HO' ? 'Theo chỉ số công tơ' : dv.loaiThu === 'CO_DINH' ? 'Phí cố định/tháng' : dv.loaiThu}</td>
                           <td style={{ ...styleTd, fontFamily: 'var(--ma-font-mono)', fontWeight: 700 }}>
-                            {dinhDangTien(dv.donGia)} / {dv.donViTinh}
+                            {dv.cheDoGia === 'BAC_THANG'
+                              ? 'Theo biểu giá bậc thang'
+                              : dv.donGia != null
+                              ? `${dinhDangTien(dv.donGia)} / ${dv.donViTinh}`
+                              : 'Chưa cập nhật'}
                           </td>
                           <td style={{ ...styleTd, color: 'var(--ma-text-secondary)', fontSize: 12 }}>
                             {dv.ghiChu || 'Theo quy định'}

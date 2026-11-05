@@ -16,6 +16,7 @@ public class HuyHoaDonNhapService {
     private static final String THONG_BAO_LY_DO_BAT_BUOC = "Lý do huỷ hoá đơn là bắt buộc.";
     private static final String THONG_BAO_CHU_SO_HUU_BAT_BUOC = "Chỉ chủ sở hữu được huỷ hoá đơn đã phát hành.";
     private static final String THONG_BAO_CHUYEN_TRANG_THAI_KHONG_HOP_LE = "Không thể chuyển trạng thái hoá đơn.";
+    private static final String THONG_BAO_CAN_BUT_TOAN_DOI_UNG = "Lập bút toán đối ứng cho các khoản đã thu trước khi huỷ hoá đơn.";
 
     private final PhanQuyenToaService phanQuyenToaService;
     private final TinhHoaDonRepository tinhHoaDonRepository;
@@ -58,6 +59,9 @@ public class HuyHoaDonNhapService {
         }
         if (yeuCau == null || yeuCau.lyDo() == null || yeuCau.lyDo().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_LY_DO_BAT_BUOC);
+        }
+        if (hoaDon.daThu() != null && hoaDon.daThu().signum() != 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_CAN_BUT_TOAN_DOI_UNG);
         }
         TrangThaiHoaDon trangThaiMoi = chuyen(hoaDon.trangThai(), TrangThaiHoaDon.DA_HUY);
         tinhHoaDonRepository.capNhatTrangThaiHoaDon(hoaDon.hoaDonId(), trangThaiMoi);
