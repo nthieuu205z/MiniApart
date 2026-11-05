@@ -1,6 +1,7 @@
 package com.prj1.ccm.config;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.flyway.autoconfigure.FlywayMigrationStrategy;
@@ -17,7 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -60,13 +63,10 @@ public class FlywayUpgradeStrategy implements FlywayMigrationStrategy {
 
     @Override
     public void migrate(Flyway flyway) {
-        DataSource dataSource = flyway.getConfiguration().getDataSource();
-        String table = flyway.getConfiguration().getTable();
-        if (table == null || table.isBlank()) {
-            table = "flyway_schema_history";
-        }
+        Configuration config = flyway.getConfiguration();
+        DataSource dataSource = config.getDataSource();
 
-        Map<String, Integer> installedChecksums = docInstalledMigrations(dataSource, table);
+        Map<String, Integer> installedChecksums = docInstalledMigrations(dataSource, config);
 
         Integer checksumV49 = installedChecksums.get("49");
         Integer checksumV55 = installedChecksums.get("55");
@@ -178,31 +178,100 @@ public class FlywayUpgradeStrategy implements FlywayMigrationStrategy {
         return MigrationVariant.CANONICAL;
     }
 
-    public static Map<String, Integer> docInstalledMigrations(DataSource dataSource, String tableName) {
-        Map<String, Integer> result = new HashMap<>();
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
+    public static String resolveTable(Configuration config) {
+        if (config != null) {
+            String table = config.getTable();
+            if (table != null && !table.isBlank()) {
+                return table.trim();
+            }
+        }
+        return "flyway_schema_history";
+    }
 
-            ResultSet rsTable = stmt.executeQuery(String.format("""
-                    SELECT EXISTS (
-                        SELECT 1 FROM information_schema.tables 
-                        WHERE table_schema = CURRENT_SCHEMA AND table_name = '%s'
-                    )
-                    """, tableName));
-            if (!rsTable.next() || !rsTable.getBoolean(1)) {
+    public static String resolveSchema(Connection conn, Configuration config) throws SQLException {
+        if (config != null) {
+            String defaultSchema = config.getDefaultSchema();
+            if (defaultSchema != null && !defaultSchema.isBlank()) {
+                return defaultSchema.trim();
+            }
+            String[] schemas = config.getSchemas();
+            if (schemas != null && schemas.length > 0 && schemas[0] != null && !schemas[0].isBlank()) {
+                return schemas[0].trim();
+            }
+        }
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT CURRENT_SCHEMA")) {
+            if (rs.next()) {
+                String current = rs.getString(1);
+                if (current != null && !current.isBlank()) {
+                    return current.trim();
+                }
+            }
+        }
+        return "public";
+    }
+
+    public static String escapeIdentifier(String identifier) {
+        return identifier.replace("\"", "\"\"");
+    }
+
+    public static Map<String, Integer> docInstalledMigrations(DataSource dataSource, Configuration config) {
+        Map<String, Integer> result = new HashMap<>();
+        String table = resolveTable(config);
+
+        try (Connection conn = dataSource.getConnection()) {
+            String schema = resolveSchema(conn, config);
+
+            // 1. Kiểm tra bảng history có tồn tại trong schema chỉ định không
+            boolean tableExists = false;
+            try (PreparedStatement checkStmt = conn.prepareStatement(
+                    "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE (table_schema = ? OR table_schema = LOWER(?)) AND (table_name = ? OR table_name = LOWER(?)))"
+            )) {
+                checkStmt.setString(1, schema);
+                checkStmt.setString(2, schema);
+                checkStmt.setString(3, table);
+                checkStmt.setString(4, table);
+                try (ResultSet rs = checkStmt.executeQuery()) {
+                    if (rs.next()) {
+                        tableExists = rs.getBoolean(1);
+                    }
+                }
+            }
+
+            // Nếu bảng chưa tồn tại (ví dụ database mới): trả về map rỗng (chạy canonical)
+            if (!tableExists) {
+                log.info("Bảng lịch sử Flyway \"{}\".\"{}\" chưa tồn tại (database mới).", schema, table);
                 return result;
             }
 
-            ResultSet rs = stmt.executeQuery(String.format("SELECT version, checksum FROM %s WHERE version IS NOT NULL", tableName));
-            while (rs.next()) {
-                String version = rs.getString("version");
-                int checksum = rs.getInt("checksum");
-                boolean wasNull = rs.wasNull();
-                result.put(version, wasNull ? null : checksum);
+            // 2. Bảng ĐÃ tồn tại: đọc lịch sử migration đã cài đặt
+            // Quote identifier chuẩn: "schema"."table"
+            String sql = String.format("SELECT version, checksum FROM \"%s\".\"%s\" WHERE version IS NOT NULL",
+                    escapeIdentifier(schema), escapeIdentifier(table));
+
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(sql)) {
+                while (rs.next()) {
+                    String version = rs.getString("version");
+                    int checksum = rs.getInt("checksum");
+                    boolean wasNull = rs.wasNull();
+                    result.put(version, wasNull ? null : checksum);
+                }
+            } catch (SQLException e) {
+                // Bảng tồn tại nhưng đọc lỗi -> ném ngoại lệ rõ ràng, không che giấu lỗi thành database mới
+                log.error("Lỗi khi đọc dữ liệu từ bảng lịch sử Flyway \"{}\".\"{}\": {}", schema, table, e.getMessage());
+                throw new IllegalStateException(String.format("Không thể đọc dữ liệu từ bảng lịch sử Flyway \"%s\".\"%s\": %s",
+                        schema, table, e.getMessage()), e);
             }
-        } catch (Exception e) {
-            log.warn("Không thể đọc bảng {}: {}", tableName, e.getMessage());
+        } catch (SQLException e) {
+            log.error("Lỗi kết nối cơ sở dữ liệu khi kiểm tra Flyway history: {}", e.getMessage());
+            throw new IllegalStateException("Lỗi kết nối khi kiểm tra lịch sử Flyway: " + e.getMessage(), e);
         }
+
         return result;
+    }
+
+    public static Map<String, Integer> docInstalledMigrations(DataSource dataSource, String tableName) {
+        return docInstalledMigrations(dataSource, Flyway.configure().table(tableName));
     }
 }

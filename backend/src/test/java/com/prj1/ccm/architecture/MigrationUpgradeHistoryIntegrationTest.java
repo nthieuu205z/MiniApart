@@ -425,4 +425,89 @@ class MigrationUpgradeHistoryIntegrationTest {
         assertThat(chiTiet.get("ly_do_khau_tru")).isEqualTo("Làm mất điều khiển gốc");
         assertThat(chiTiet.get("tien_khau_tru").toString()).isEqualTo("350000.00");
     }
+
+    @Test
+    void j_flywayDefaultSchemaKhac_nhanDienDungHistoryLegacyVaNangCapThanhCong() throws Exception {
+        // Kịch bản: Connection current schema là public nhưng Flyway được cấu hình defaultSchema("custom_tenant")
+        String customSchema = "custom_tenant";
+        jdbc.execute("CREATE SCHEMA IF NOT EXISTS " + customSchema);
+
+        Path fixDir = taoFixtureMigration("046d45a");
+
+        // 1. Chạy migration 046d45a đến V55 trong schema custom_tenant
+        Flyway.configure()
+                .dataSource(testUrl, POSTGRES.getUsername(), POSTGRES.getPassword())
+                .defaultSchema(customSchema)
+                .locations("filesystem:" + fixDir.toAbsolutePath().toString().replace('\\', '/'))
+                .target("55")
+                .load()
+                .migrate();
+
+        // 2. Chạy upgrade strategy với cấu hình defaultSchema khác public
+        Flyway flyway = Flyway.configure()
+                .dataSource(testUrl, POSTGRES.getUsername(), POSTGRES.getPassword())
+                .defaultSchema(customSchema)
+                .locations("classpath:db/migration")
+                .load();
+
+        FlywayUpgradeStrategy strategy = new FlywayUpgradeStrategy();
+        assertThatNoException().isThrownBy(() -> strategy.migrate(flyway));
+
+        // Kiểm tra schema custom_tenant đã được nâng cấp lên V56
+        Integer checksumV56 = jdbc.queryForObject(
+                "SELECT checksum FROM \"" + customSchema + "\".\"flyway_schema_history\" WHERE version = '56'",
+                Integer.class
+        );
+        assertThat(checksumV56).isNotNull();
+    }
+
+    @Test
+    void k_flywayHistoryTableTuyChinh_nhanDienDungVaNangCapThanhCong() throws Exception {
+        // Kịch bản: Flyway được cấu hình tên bảng lịch sử tùy chỉnh "my_custom_history"
+        String customTable = "my_custom_history";
+        Path fixDir = taoFixtureMigration("d2e3d69");
+
+        // 1. Chạy migration d2e3d69 đến V55 vào bảng custom
+        Flyway.configure()
+                .dataSource(testUrl, POSTGRES.getUsername(), POSTGRES.getPassword())
+                .table(customTable)
+                .locations("filesystem:" + fixDir.toAbsolutePath().toString().replace('\\', '/'))
+                .target("55")
+                .load()
+                .migrate();
+
+        // 2. Chạy upgrade strategy với bảng custom
+        Flyway flyway = Flyway.configure()
+                .dataSource(testUrl, POSTGRES.getUsername(), POSTGRES.getPassword())
+                .table(customTable)
+                .locations("classpath:db/migration")
+                .load();
+
+        FlywayUpgradeStrategy strategy = new FlywayUpgradeStrategy();
+        assertThatNoException().isThrownBy(() -> strategy.migrate(flyway));
+
+        // Xác nhận bảng custom đã lưu bản ghi V56
+        Integer checksumV56 = jdbc.queryForObject(
+                "SELECT checksum FROM \"" + customTable + "\" WHERE version = '56'",
+                Integer.class
+        );
+        assertThat(checksumV56).isNotNull();
+    }
+
+    @Test
+    void l_flywayBangTonTaiNhungDocLoi_nemExceptionRoRang() {
+        // Kịch bản: Bảng lịch sử tồn tại nhưng schema bị sai/lỗi (ví dụ thiếu cột checksum)
+        // Hệ thống phải fail-fast và ném exception rõ ràng, KHÔNG được che giấu coi như DB mới
+        jdbc.execute("CREATE TABLE \"flyway_schema_history\" (id INT, sai_schema VARCHAR(50))");
+
+        Flyway flyway = Flyway.configure()
+                .dataSource(testUrl, POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .load();
+
+        FlywayUpgradeStrategy strategy = new FlywayUpgradeStrategy();
+        assertThatThrownBy(() -> strategy.migrate(flyway))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Không thể đọc dữ liệu từ bảng lịch sử Flyway");
+    }
 }

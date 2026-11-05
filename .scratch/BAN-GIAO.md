@@ -1,15 +1,15 @@
 # BIÊN BẢN BÀN GIAO TIẾP QUẢN DỰ ÁN (DÀNH CHO CODEX REVIEW)
 
-> **Thời điểm bàn giao:** Sau khi hoàn thành toàn diện các phát hiện review độc lập (P1, P2, P3).  
+> **Thời điểm bàn giao:** Sau khi hoàn thành toàn diện 3 phát hiện review độc lập bổ sung trên mốc `208cd93`.  
 > **Trạng thái hệ thống:**  
 > - **PostgreSQL 17 Portable:** Đang chạy tại port `5432` (`miniapart_db`)  
 > - **Spring Boot Backend:** Đang chạy tại `http://localhost:8080/`  
 > - **Vite Frontend Dev Server:** Đang chạy tại `http://localhost:5173/`  
 > - **Frontend Test Suite:** `vitest run --run` đạt **31/31 suites passed (219/219 tests passed 100%)**  
 > - **Frontend Build:** `npm run build` (`tsc -b && vite build`) thành công 100% (0 lỗi TypeScript, 0 lỗi bundle)  
-> - **Backend Test Suites (chạy trên PostgreSQL cô lập, 55/55 passed 100%):**
->   - `MigrationUpgradeHistoryIntegrationTest`: **10/10 passed** (bao quát toàn diện 10 kịch bản: clean DB, pre-V49, 046d45a, d2e3d69, e1 pending canonical, e2 pending canonical, f checksum lạ fail, g khởi động lần hai idempotent, h tương thích V57 tương lai, i nghiệp vụ biên bản tài sản sau nâng cấp)
->   - `DemoDataSeederIntegrationTest`: **3/3 passed** (chạy lần 1 và 2 idempotent không nhân bản, tắt demo hoàn toàn sạch, transaction rollback an toàn khi lỗi giữa chừng)
+> - **Backend Test Suites (chạy trên PostgreSQL cô lập, 61/61 passed 100%):**
+>   - `MigrationUpgradeHistoryIntegrationTest`: **13/13 passed** (bao quát toàn diện 13 kịch bản: clean DB, pre-V49, 046d45a, d2e3d69, e1 pending canonical, e2 pending canonical, f checksum lạ fail-fast, g khởi động lần hai idempotent, h tương thích V57 tương lai, i nghiệp vụ biên bản tài sản sau nâng cấp, j defaultSchema khác public, k custom history table name, l bảng lịch sử tồn tại nhưng đọc lỗi fail-fast)
+>   - `DemoDataSeederIntegrationTest`: **6/6 passed** (kiểm chứng Spring Bean Proxy thật, @ConditionalOnProperty qua ApplicationContextRunner, @Transactional rollback toàn bộ dữ liệu nghiệp vụ qua trigger lỗi PostgreSQL, idempotency, bảo toàn 100% dịch vụ thật trùng tên có giá quá khứ/tương lai/chưa có giá/trùng nhiều tên, candidate reconciliation read-only)
 >   - `HuyVaThanhToanConcurrencyIntegrationTest`: **5/5 passed**
 >   - `BangViecVanHanhIntegrationTest`: **8/8 passed**
 >   - `MoneySchemaRegressionTest`: **2/2 passed**
@@ -19,16 +19,15 @@
 >   - `PublicPortalServiceTest`: **4/4 passed**
 >   - `HopDongPdfServiceTest`: **3/3 passed**
 > - **Mốc commit trước đợt sửa:** `046d45a`  
-> - **Commit sửa trung gian:** `d2e3d69`  
-> - **Commit reviewer đã kiểm tra:** `e6976cc`  
+> - **Commit sửa trung gian:** `d2e3d69` $\rightarrow$ `cceb3a0` $\rightarrow$ `f533e88` $\rightarrow$ `e6976cc` $\rightarrow$ `208cd93`  
 > - **Commit hoàn tất khắc phục:** `git rev-parse --short HEAD`
 
 ---
 
 ## 1. PHƯƠNG ÁN NÂNG CẤP MIGRATION & SEED DỮ LIỆU PRODUCTION (ROOT CAUSE FIX)
 
-### 1.1. Ma trận 4 lịch sử cơ sở dữ liệu thực tế & Cơ chế `FlywayUpgradeStrategy`:
-Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUpgradeStrategy` thực thi `FlywayMigrationStrategy` của Spring Boot) nhằm tự động kiểm tra lịch sử schema hiện tại qua bảng `flyway_schema_history` và áp dụng chiến lược nâng cấp động an toàn:
+### 1.1. Ma trận lịch sử cơ sở dữ liệu thực tế & Cơ chế `FlywayUpgradeStrategy`:
+Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUpgradeStrategy` thực thi `FlywayMigrationStrategy` của Spring Boot) nhằm tự động kiểm tra lịch sử schema hiện tại qua bảng lịch sử Flyway và áp dụng chiến lược nâng cấp động an toàn:
 
 1. **Kiến trúc Single Source of Truth (Xóa bỏ thư mục trùng lặp `migration_common`):**
    - Không duy trì thư mục `migration_common` song song để tránh nguy cơ drift mã nguồn.
@@ -37,36 +36,41 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
      - `v046d45a`: `V49` (CRC32: `-1020674094`), `V55` (CRC32: `-1007063486`)
      - `vd2e3d69`: `V49` (CRC32: `676094527`), `V55` (CRC32: `52954075`)
 
-2. **Quy tắc phân biệt APPLIED Migration vs PENDING Migration:**
+2. **Đọc đúng schema và bảng history theo cấu hình Flyway (Quote Identifier):**
+   - Không dùng `CURRENT_SCHEMA` hay bảng không định danh schema.
+   - Tự động trích xuất `defaultSchema`, `schemas`, và `table` từ `Configuration` của Flyway (mặc định schema connection hoặc `public`, bảng `flyway_schema_history`).
+   - Quote identifier chuẩn theo cú pháp SQL: `"schema"."table"` (ví dụ: `"custom_tenant"."flyway_schema_history"` hoặc `"public"."my_custom_history"`).
+   - **Phân biệt rõ ràng:**
+     - Nếu bảng history chưa tồn tại (kiểm tra qua `information_schema.tables`): trả về kết quả rỗng để database mới thực thi trực tiếp bộ migration canonical.
+     - Nếu bảng history ĐÃ tồn tại nhưng truy vấn đọc thất bại (ví dụ: lỗi kết nối, sai quyền, bảng bị hỏng schema): ném ngay `IllegalStateException` rõ ràng kèm thông điệp lỗi gốc, **tuyệt đối không nuốt lỗi hoặc che giấu thành database mới**.
+
+3. **Quy tắc phân biệt APPLIED Migration vs PENDING Migration:**
    - **Đã áp dụng (Applied):** Nếu DB đã từng chạy V49/V55 của `046d45a` hoặc `d2e3d69`, `FlywayUpgradeStrategy` tạo thư mục tạm thời, sao chép toàn bộ bộ migration chính tắc từ `classpath:db/migration/`, nhưng **chỉ ghi đè những phiên bản ĐÃ ÁP DỤNG** bằng tệp biến thể tương ứng để Flyway xác thực checksum khớp 100%.
    - **Chưa áp dụng (Pending):** Bất kỳ migration nào chưa chạy (ví dụ hệ thống dừng ở V50 hoặc V54 thì V55 là pending) **BẮT BUỘC giữ nguyên bản chính tắc (Pure DDL)**. Tuyệt đối không nạp tệp biến thể cũ cho migration pending, đảm bảo không bao giờ vô tình kích hoạt lại seed demo của phiên bản cũ vào database production.
    - **Migration tương lai (Forward Compatibility):** Bất kỳ migration mới nào trong tương lai (ví dụ `V57`) được đặt trong `classpath:db/migration/` đều tự động được phát hiện và áp dụng tiếp tục một cách trơn tru.
 
-3. **Từ chối checksum không được hỗ trợ (Fail-Fast Validation):**
-   - Nếu `flyway_schema_history` chứa checksum lạ không khớp bất kỳ bản chính tắc hay biến thể hợp lệ nào của `046d45a`/`d2e3d69`, hệ thống ném ngay `IllegalStateException` rõ ràng kèm mã phiên bản và giá trị checksum để ngăn chặn việc chạy sai lệch trên môi trường không xác định.
+4. **Từ chối checksum không được hỗ trợ (Fail-Fast Validation):**
+   - Nếu bảng lịch sử chứa checksum lạ không khớp bất kỳ bản chính tắc hay biến thể hợp lệ nào của `046d45a`/`d2e3d69`, hệ thống ném ngay `IllegalStateException` rõ ràng kèm mã phiên bản và giá trị checksum để ngăn chặn việc chạy sai lệch trên môi trường không xác định.
    - Tuyệt đối không can thiệp, không sửa đổi `flyway_schema_history`, không chạy `repair` và không tắt validation của Flyway.
-
-4. **Ma trận xử lý 4 trạng thái DB:**
-   - **Lịch sử 1 (Pre-V49 có dữ liệu thật):** Chạy `V49` và `V55` chính tắc (Pure DDL). Không xung đột unique `(toa_nha_id, so_phong)`, không gán sai giá vào ID dịch vụ thật, nâng cấp thành công lên `V56`.
-   - **Lịch sử 2 (Đã áp dụng bản `046d45a` đến V55):** Khớp checksum biến thể `046d45a`, chạy tiếp `V56` thành công.
-   - **Lịch sử 3 (Đã áp dụng bản `d2e3d69` đến V55):** Khớp checksum biến thể `d2e3d69`, chạy `V56` chuẩn hóa cột `tien_khautru` -> `tien_khau_tru` thành công.
-   - **Lịch sử 4 (Clean DB):** Chạy trực tiếp từ `classpath:db/migration/` từ `V1` đến `V56`, hoàn toàn sạch dữ liệu demo.
 
 ### 1.2. Cơ chế Seed Demo & Audit đối soát an toàn:
 - **Tách biệt vào component độc lập (`DemoDataSeeder.java`):**
-  - Mặc định TẮT (`app.seed-demo=false`). Chỉ kích hoạt khi người dùng cấu hình tường minh `app.seed-demo=true`.
-  - **Tạo dịch vụ và bảng giá an toàn:** Không bao giờ gán ID cứng 1..5. Truy vấn dịch vụ theo tên trên tòa nhà, tạo mới không ép ID nếu chưa có, và liên kết bảng giá vào ID tự sinh thực tế.
+  - Mặc định TẮT (`app.seed-demo=false`). Chỉ kích hoạt khi người dùng cấu hình tường minh `app.seed-demo=true` (`@ConditionalOnProperty`).
+  - **Tách biệt hoàn toàn dịch vụ demo khỏi dịch vụ thật:**
+    - Không suy diễn nguồn demo từ tên, ID hay việc thiếu bảng giá ngày 2026-01-01.
+    - Khi kiểm tra dịch vụ theo tên trên toà nhà: nếu đã tồn tại bất kỳ dịch vụ nào cùng tên (`SELECT id FROM DICH_VU WHERE toa_nha_id = ... AND ten = ?`), hệ thống **BỎ QUA HOÀN TOÀN**. Tuyệt đối không sửa thuộc tính của dịch vụ thật, không gán giá demo vào dịch vụ thật (kể cả dịch vụ đã có giá từ quá khứ 2025-12-01, dịch vụ chưa có bảng giá, dịch vụ có giá tương lai 2026-06-01, hay dịch vụ bị trùng nhiều tên).
+    - Chỉ khi chưa tồn tại dịch vụ cùng tên mới tạo dịch vụ demo mới và chèn bảng giá ban đầu cho ID tự sinh đó.
   - **Bảo vệ phòng thật của khách hàng:** Dữ liệu phòng demo được gắn tiền tố `[DEMO]` trong trường `mo_ta` và kiểm tra `NOT EXISTS (SELECT 1 FROM PHONG WHERE toa_nha_id = ... AND so_phong = ...)`.
   - **Bảo vệ tài sản thật:** Chỉ gắn tài sản demo vào phòng có `mo_ta LIKE '[DEMO]%'` và có kiểm tra `NOT EXISTS (SELECT 1 FROM TAI_SAN_PHONG WHERE phong_id = p.id AND ten_tai_san = ...)`. Tuyệt đối không gắn vào phòng thật của khách hàng.
   - **Tính Idempotent (Chạy lại không nhân bản):** Chạy seeder 1 lần hay nhiều lần đều cho ra cùng một số lượng bản ghi duy nhất, không tạo bản ghi trùng lặp.
-  - **Biên giới Giao dịch (@Transactional):** Toàn bộ quá trình seed được bao bọc trong một transaction duy nhất. Bất kỳ lỗi nào phát sinh giữa chừng sẽ rollback toàn bộ, không để lại dữ liệu rác dở dang.
+  - **Biên giới Giao dịch (@Transactional):** Toàn bộ quá trình seed được bao bọc trong một transaction duy nhất (`@Transactional(rollbackFor = Exception.class)`). Bất kỳ lỗi nào phát sinh giữa chừng sẽ rollback toàn bộ dữ liệu nghiệp vụ (toà nhà, phòng, dịch vụ, bảng giá, tài sản), không để lại dữ liệu rác dở dang.
 - **Audit đối soát an toàn dữ liệu mẫu đã chèn (`DemoDataReconciliationService.java`):**
   - Dịch vụ **Read-Only**: Chỉ thực hiện truy vấn và trả về danh sách ứng viên đối soát `List<UngVienDoiSoat>` kèm đầy đủ ngữ cảnh nghiệp vụ (số hợp đồng, chỉ số dịch vụ, yêu cầu sửa chữa).
   - Tuyệt đối không tự ý xóa hay lưu trữ (archive) dữ liệu của khách hàng dựa trên suy đoán hoặc tên phòng.
 
 ---
 
-## 2. CHI TIẾT CÁC PHÁT HIỆN REVIEW ĐÃ KHẮC PHỤC (P1 & P2)
+## 2. CHI TIẾT CÁC PHÁT HIỆN REVIEW ĐÃ KHẮC PHỤC (P1, P2 & P3)
 
 ### 2.1. Concurrency Race: Hủy hoá đơn & Thu tiền đồng thời (P1.4)
 - **Files:**
@@ -140,8 +144,8 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
 | :--- | :--- | :--- | :--- |
 | **Frontend Test Suite** | Vitest 4.1.11 (`QuanLyTaiSanPhong`, `App`, `CongNoBaoCao`, `TieuThuBaoCao`, v.v.) | 31 suites / 219 tests | **219/219 PASSED (100%)** |
 | **Frontend Production Build** | TypeScript compiler + Vite bundler (`tsc -b && vite build`) | Toàn bộ ứng dụng React | **PASSED (0 errors)** |
-| **Migration Upgrade History Test** | `MigrationUpgradeHistoryIntegrationTest` (10 test cases a -> i bao quát 4 kịch bản DB, pending canonical, fail fast checksum lạ, V57 tương lai) | 10 tests | **10/10 PASSED (100%)** |
-| **Demo Data Seeder Integration Test** | `DemoDataSeederIntegrationTest` (Idempotent lần 1 & 2, demo tắt không tạo rác, rollback giao dịch an toàn) | 3 tests | **3/3 PASSED (100%)** |
+| **Migration Upgrade History Test** | `MigrationUpgradeHistoryIntegrationTest` (13 test cases a -> l bao quát 4 kịch bản DB, pending canonical, fail fast checksum lạ, V57 tương lai, defaultSchema khác public, custom table name, bảng lỗi fail-fast) | 13 tests | **13/13 PASSED (100%)** |
+| **Demo Data Seeder Integration Test** | `DemoDataSeederIntegrationTest` (Spring AOP proxy bean, ConditionalOnProperty, Transactional Rollback thực tế qua trigger lỗi PostgreSQL, idempotency, bảo toàn 100% dịch vụ thật cùng tên có giá quá khứ/chưa có giá/giá tương lai/trùng nhiều tên) | 6 tests | **6/6 PASSED (100%)** |
 | **Concurrency Integration Test** | `HuyVaThanhToanConcurrencyIntegrationTest` (Đa luồng hủy/thanh toán hóa đơn, đối ứng tiền) | 5 tests | **5/5 PASSED (100%)** |
 | **Operational Tasks (PCCC)** | `BangViecVanHanhIntegrationTest` | 8 tests | **8/8 PASSED (100%)** |
 | **Money Schema ArchUnit** | `MoneySchemaRegressionTest` | 2 tests | **2/2 PASSED (100%)** |
@@ -150,6 +154,8 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
 | **HuyHoaDonNhapService Test** | Quy tắc hủy hóa đơn và kiểm soát số tiền đã thu | 3 tests | **3/3 PASSED (100%)** |
 | **PublicPortalService Test** | Scope phân quyền tòa nhà cho lịch hẹn xem phòng | 4 tests | **4/4 PASSED (100%)** |
 | **HopDongPdfService Test** | Xuất văn bản hợp đồng PDF chính xác | 3 tests | **3/3 PASSED (100%)** |
+
+**Tổng cộng kiểm thử Backend: 61/61 tests PASSED 100% (0 failures, 0 skipped).**
 
 ---
 

@@ -69,42 +69,37 @@ public class DemoDataSeeder implements CommandLineRunner {
         );
 
         for (MauDichVu m : danhSach) {
-            // 1. Kiểm tra xem dịch vụ tên này đã tồn tại ở toà 1 chưa
+            // 1. Kiểm tra xem đã tồn tại bất kỳ dịch vụ nào cùng tên ở toà 1 chưa (kể cả 1 hay nhiều bản ghi)
             List<Long> existingIds = jdbcTemplate.query(
                     "SELECT id FROM DICH_VU WHERE toa_nha_id = 1 AND ten = ?",
                     (rs, rowNum) -> rs.getLong("id"),
                     m.ten
             );
 
-            Long dichVuId;
-            if (existingIds.isEmpty()) {
-                // Chèn mới không hardcode ID, lấy ID do sequence sinh ra
-                dichVuId = jdbcTemplate.queryForObject("""
-                        INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
-                        VALUES (1, ?, ?, ?, ?, ?, TRUE)
-                        RETURNING id
-                        """,
-                        Long.class,
-                        m.ten, m.cachTinh, m.cheDoGia, m.donVi, m.laDien
-                );
-            } else {
-                dichVuId = existingIds.get(0);
+            // 2. Nếu đã tồn tại dịch vụ cùng tên:
+            // BỎ QUA HOÀN TOÀN: không gán giá demo, không sửa thuộc tính, không suy đoán nguồn gốc
+            // Tuyệt đối không thay đổi bất kỳ bảng giá nào của dịch vụ đã có (dù đã có giá, có giá tương lai, hay chưa có giá)
+            if (!existingIds.isEmpty()) {
+                log.info("Dịch vụ '{}' đã tồn tại ở toà 1. Bỏ qua hoàn toàn để bảo vệ dữ liệu, không chèn bảng giá demo.", m.ten);
+                continue;
             }
 
-            // 2. Chèn bảng giá cho đúng dichVuId vừa có nếu chưa có bảng giá hiệu lực 2026-01-01
-            Integer countBangGia = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM BANG_GIA WHERE dich_vu_id = ? AND ngay_hieu_luc = '2026-01-01'",
-                    Integer.class,
-                    dichVuId
+            // 3. Chỉ khi CHƯA TỒN TẠI bất kỳ dịch vụ nào cùng tên mới tạo dịch vụ demo mới và gán giá ban đầu
+            Long dichVuId = jdbcTemplate.queryForObject("""
+                    INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
+                    VALUES (1, ?, ?, ?, ?, ?, TRUE)
+                    RETURNING id
+                    """,
+                    Long.class,
+                    m.ten, m.cachTinh, m.cheDoGia, m.donVi, m.laDien
             );
-            if (countBangGia == null || countBangGia == 0) {
-                jdbcTemplate.update("""
-                        INSERT INTO BANG_GIA (dich_vu_id, don_gia, ngay_hieu_luc)
-                        VALUES (?, ?, '2026-01-01')
-                        """,
-                        dichVuId, m.donGia
-                );
-            }
+
+            jdbcTemplate.update("""
+                    INSERT INTO BANG_GIA (dich_vu_id, don_gia, ngay_hieu_luc)
+                    VALUES (?, ?, '2026-01-01')
+                    """,
+                    dichVuId, m.donGia
+            );
         }
     }
 
