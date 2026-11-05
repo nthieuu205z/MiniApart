@@ -8,13 +8,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Quy trình đối soát dữ liệu mẫu đã chèn (Demo Data Reconciliation Service).
- * Tuân thủ nghiêm ngặt nguyên tắc: KHÔNG xoá dữ liệu chỉ bằng tên hoặc ID.
- * Căn cứ nguồn gốc mẫu kết hợp đối soát lịch sử giao dịch phát sinh:
- * - Nếu phòng/tài sản mẫu đã phát sinh hợp đồng thật, chỉ số công tơ, hoặc hóa đơn thanh toán:
- *   BẢO TOÀN NGUYÊN TRẠNG, xem như dữ liệu nghiệp vụ chính thức.
- * - Nếu hoàn toàn không phát sinh giao dịch thật:
- *   Gắn cờ nhận diện để quản trị viên kiểm tra và quyết định lưu trữ (archive).
+ * Quy trình đối soát và nhận diện ứng viên dữ liệu mẫu (Demo Data Reconciliation).
+ * Tuân thủ nghiêm ngặt nguyên tắc an toàn dữ liệu:
+ * 1. Tuyệt đối KHÔNG tự ý xóa, lưu trữ (archive), hoặc gắn nhãn dữ liệu dựa trên phỏng đoán heuristic.
+ * 2. Chỉ truy vấn và trả về danh sách các ứng viên cần quản trị viên kiểm tra và xác nhận thủ công.
+ * 3. Cung cấp đầy đủ thông tin giao dịch (hợp đồng, hóa đơn, chỉ số điện nước) để đảm bảo không chạm vào dữ liệu thật.
  */
 @Service
 public class DemoDataReconciliationService {
@@ -26,26 +24,35 @@ public class DemoDataReconciliationService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public record PhongDoiSoat(
-            Long id,
+    public record UngVienDoiSoat(
+            Long phongId,
             Long toaNhaId,
             String soPhong,
             boolean coHopDong,
             boolean coHoaDon,
             boolean coChiSo,
-            boolean trungKhopMauDemo,
-            String khuyenNghi
+            boolean coTaiSan,
+            boolean chuaTienToDemo,
+            String ghiChuKiemTra
     ) {}
 
-    public List<PhongDoiSoat> doiSoatPhongMau() {
+    /**
+     * Lấy danh sách các phòng có dấu hiệu dữ liệu mẫu để quản trị viên đối soát thủ công.
+     * Phương thức này ở chế độ READ-ONLY, hoàn toàn không thay đổi cơ sở dữ liệu.
+     */
+    public List<UngVienDoiSoat> timUngVienCanDoiSoat() {
         String sql = """
                 SELECT p.id, p.toa_nha_id, p.so_phong,
                        EXISTS(SELECT 1 FROM HOP_DONG hd WHERE hd.phong_id = p.id) AS co_hop_dong,
                        EXISTS(SELECT 1 FROM HOA_DON h JOIN HOP_DONG hd ON hd.id = h.hop_dong_id WHERE hd.phong_id = p.id) AS co_hoa_don,
                        EXISTS(SELECT 1 FROM CHI_SO_DICH_VU cs WHERE cs.phong_id = p.id) AS co_chi_so,
-                       (p.mo_ta LIKE '%Phòng tầng 1 thuận tiện đi lại%' OR p.mo_ta LIKE '%Căn hộ dịch vụ trung tâm%') AS trung_khop_mau
+                       EXISTS(SELECT 1 FROM TAI_SAN_PHONG ts WHERE ts.phong_id = p.id) AS co_tai_san,
+                       (p.mo_ta LIKE '[DEMO]%' OR p.mo_ta LIKE '%Phòng tầng 1 thuận tiện đi lại%') AS chua_tien_to_demo
                 FROM PHONG p
-                WHERE p.id IN (101, 102, 201, 202, 301, 302, 20101, 20201)
+                WHERE p.mo_ta LIKE '[DEMO]%' 
+                   OR p.mo_ta LIKE '%Phòng tầng 1 thuận tiện đi lại%'
+                   OR p.mo_ta LIKE '%Căn hộ dịch vụ trung tâm%'
+                   OR p.id IN (101, 102, 201, 202, 301, 302, 20101, 20201)
                 ORDER BY p.id
                 """;
 
@@ -53,28 +60,29 @@ public class DemoDataReconciliationService {
             boolean coHd = rs.getBoolean("co_hop_dong");
             boolean coHdon = rs.getBoolean("co_hoa_don");
             boolean coCs = rs.getBoolean("co_chi_so");
-            boolean trungMau = rs.getBoolean("trung_khop_mau");
+            boolean coTs = rs.getBoolean("co_tai_san");
+            boolean coDemoPrefix = rs.getBoolean("chua_tien_to_demo");
 
-            String khuyenNghi;
+            String ghiChu;
             if (coHd || coHdon || coCs) {
-                khuyenNghi = "GIU_NGUYEN_VI_DA_PHAT_SINH_GIAO_DICH";
-            } else if (trungMau) {
-                khuyenNghi = "DU_LIEU_DEMO_CHUA_PHAT_SINH_GIAO_DICH_CAN_XAC_NHAN";
+                ghiChu = "DỮ LIỆU ĐÃ PHÁT SINH GIAO DỊCH NGHIỆP VỤ: KHUYẾN NGHỊ BẢO TOÀN NGUYÊN TRẠNG";
+            } else if (coDemoPrefix) {
+                ghiChu = "ỨNG VIÊN DỮ LIỆU MẪU CHƯA PHÁT SINH GIAO DỊCH: CẦN QUẢN TRỊ VIÊN XÁC NHẬN";
             } else {
-                khuyenNghi = "DU_LIEU_THAT_GIU_NGUYEN";
+                ghiChu = "TRÙNG ID/SỐ PHÒNG MẪU NHƯNG KHÔNG CÓ TIỀN TỐ DEMO: CẦN ĐỐI SOÁT KỸ";
             }
 
-            return new PhongDoiSoat(
+            return new UngVienDoiSoat(
                     rs.getLong("id"),
                     rs.getLong("toa_nha_id"),
                     rs.getString("so_phong"),
                     coHd,
                     coHdon,
                     coCs,
-                    trungMau,
-                    khuyenNghi
+                    coTs,
+                    coDemoPrefix,
+                    ghiChu
             );
         });
     }
 }
-

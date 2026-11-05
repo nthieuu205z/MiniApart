@@ -23,65 +23,65 @@ CREATE TABLE IF NOT EXISTS LICH_HEN_XEM_PHONG (
 CREATE INDEX IF NOT EXISTS idx_lich_hen_toa_nha ON LICH_HEN_XEM_PHONG(toa_nha_id, trang_thai);
 CREATE INDEX IF NOT EXISTS idx_lich_hen_thoi_gian ON LICH_HEN_XEM_PHONG(thoi_gian_hen);
 
--- 1. N├óng cß║Ñp m├┤ tß║ú v├á tiß╗çn ├¡ch cho c├íc ph├▓ng ─æ├ú tß╗ôn tß║íi theo cß║╖p unique (toa_nha_id, so_phong)
+-- 1. Nâng cấp mô tả và tiện ích cho các phòng đã tồn tại theo cặp unique (toa_nha_id, so_phong)
 UPDATE PHONG SET
     tien_ich = COALESCE(PHONG.tien_ich, demo.tien_ich),
     mo_ta = COALESCE(PHONG.mo_ta, demo.mo_ta)
 FROM (VALUES
-    (1, 'P.101', '─Éiß╗üu ho├á inverter, N├│ng lß║ính, Tß╗º lß║ính 180L, Gi╞░ß╗¥ng ─æß╗çm 1m6x2m, Tß╗º quß║ºn ├ío, B├án l├ám viß╗çc, Cß╗¡a sß╗ò tho├íng', 'Ph├▓ng tß║ºng 1 thuß║¡n tiß╗çn ─æi lß║íi, ─æß║ºy ─æß╗º ─æß╗ô c╞í bß║ún chß╗ë viß╗çc x├ích vali vß╗ü ß╗ƒ. Vß╗ç sinh kh├⌐p k├¡n sß║ích sß║╜.'),
-    (1, 'P.102', '─Éiß╗üu ho├á, N├│ng lß║ính, Tß╗º lß║ính, M├íy giß║╖t ri├¬ng, Gi╞░ß╗¥ng ─æß╗çm, Sofa, Kß╗ç bß║┐p, Ban c├┤ng ri├¬ng', 'C─ân hß╗Ö 1 ph├▓ng ngß╗º t├ích biß╗çt ph├▓ng kh├ích, c├│ ban c├┤ng ph╞íi ─æß╗ô ri├¬ng, m├íy giß║╖t ri├¬ng.'),
-    (1, 'P.201', '─Éiß╗üu ho├á, N├│ng lß║ính, Tß╗º lß║ính, Gi╞░ß╗¥ng ─æß╗çm cao cß║Ñp, Tß╗º ├óm t╞░ß╗¥ng, B├án tr├á, Ban c├┤ng view tho├íng, Kh├│a v├ón tay', 'Ph├▓ng tß║ºng 2 view ─æß║╣p, ban c├┤ng rß╗Öng ─æ├│n ├ính s├íng tß╗▒ nhi├¬n. Kh├│a cß╗¡a v├ón tay bß║úo mß║¡t cao.'),
-    (1, 'P.202', '─Éiß╗üu ho├á, N├│ng lß║ính, Gi╞░ß╗¥ng ─æß╗çm, Tß╗º quß║ºn ├ío, Kß╗ç bß║┐p nß║Ñu ─ân, Cß╗¡a sß╗ò giß║┐ng trß╗¥i', 'Ph├▓ng nhß╗Å gß╗ìn ß║Ñm c├║ng, thiß║┐t kß║┐ tß╗æi ╞░u c├┤ng n─âng, bß║┐p nß║Ñu tiß╗çn lß╗úi, ph├╣ hß╗úp sinh vi├¬n hoß║╖c ng╞░ß╗¥i ─æi l├ám.'),
-    (1, 'P.301', '─Éiß╗üu ho├á 2 chiß╗üu, N├│ng lß║ính, Tß╗º lß║ính 2 c├ính, M├íy giß║╖t ri├¬ng, Sofa bed, Tß╗º bß║┐p tr├¬n d╞░ß╗¢i, Ban c├┤ng tho├íng m├ít', 'C─ân hß╗Ö duplex g├íc lß╗¡ng hiß╗çn ─æß║íi, trß║ºn cao tho├íng ─æ├úng, khu ngß╗º t├ích biß╗çt b├¬n tr├¬n, tiß║┐p kh├ích b├¬n d╞░ß╗¢i.'),
-    (1, 'P.302', '─Éiß╗üu ho├á, N├│ng lß║ính, Tß╗º lß║ính, Gi╞░ß╗¥ng ─æß╗çm, Tß╗º gß╗ù, B├án ─ân, Cß╗¡a sß╗ò lß╗¢n', 'Ph├▓ng tß║ºng 3 y├¬n t─⌐nh, tho├íng gi├│, ─æß║ºy ─æß╗º tiß╗çn nghi.'),
-    (2, 'B.101', 'M├íy lß║ính Daikin, M├íy n╞░ß╗¢c n├│ng, Tß╗º lß║ính, Tß╗º quß║ºn ├ío gß╗ù, Bß║┐p tß╗½, Cß╗¡a sß╗ò k├¡nh lß╗¢n, Thang m├íy, Kh├│a thß║╗ tß╗½', 'C─ân hß╗Ö dß╗ïch vß╗Ñ trung t├óm, gß║ºn cß║ºu ├öng L├únh, tiß╗çn ─æi lß║íi Quß║¡n 1. Giß╗¥ giß║Ñc tß╗▒ do, kh├┤ng chung chß╗º.'),
-    (2, 'B.201', '2 M├íy lß║ính, N├│ng lß║ính, Tß╗º lß║ính lß╗¢n, M├íy giß║╖t ri├¬ng, Gi╞░ß╗¥ng ─æß╗çm, B├án ─ân, Sofa, Ban c├┤ng tho├íng', 'C─ân 1PN rß╗Öng r├úi tß║ºng 2, ├ính s├íng tr├án ngß║¡p, ban c├┤ng nh├¼n ra ─æ╞░ß╗¥ng nß╗Öi khu y├¬n t─⌐nh.')
+    (1, 'P.101', 'Điều hoà inverter, Nóng lạnh, Tủ lạnh 180L, Giường đệm 1m6x2m, Tủ quần áo, Bàn làm việc, Cửa sổ thoáng', 'Phòng tầng 1 thuận tiện đi lại, đầy đủ đồ cơ bản chỉ việc xách vali về ở. Vệ sinh khép kín sạch sẽ.'),
+    (1, 'P.102', 'Điều hoà, Nóng lạnh, Tủ lạnh, Máy giặt riêng, Giường đệm, Sofa, Kệ bếp, Ban công riêng', 'Căn hộ 1 phòng ngủ tách biệt phòng khách, có ban công phơi đồ riêng, máy giặt riêng.'),
+    (1, 'P.201', 'Điều hoà, Nóng lạnh, Tủ lạnh, Giường đệm cao cấp, Tủ âm tường, Bàn trà, Ban công view thoáng, Khóa vân tay', 'Phòng tầng 2 view đẹp, ban công rộng đón ánh sáng tự nhiên. Khóa cửa vân tay bảo mật cao.'),
+    (1, 'P.202', 'Điều hoà, Nóng lạnh, Giường đệm, Tủ quần áo, Kệ bếp nấu ăn, Cửa sổ giếng trời', 'Phòng nhỏ gọn ấm cúng, thiết kế tối ưu công năng, bếp nấu tiện lợi, phù hợp sinh viên hoặc người đi làm.'),
+    (1, 'P.301', 'Điều hoà 2 chiều, Nóng lạnh, Tủ lạnh 2 cánh, Máy giặt riêng, Sofa bed, Tủ bếp trên dưới, Ban công thoáng mát', 'Căn hộ duplex gác lửng hiện đại, trần cao thoáng đãng, khu ngủ tách biệt bên trên, tiếp khách bên dưới.'),
+    (1, 'P.302', 'Điều hoà, Nóng lạnh, Tủ lạnh, Giường đệm, Tủ gỗ, Bàn ăn, Cửa sổ lớn', 'Phòng tầng 3 yên tĩnh, thoáng gió, đầy đủ tiện nghi.'),
+    (2, 'B.101', 'Máy lạnh Daikin, Máy nước nóng, Tủ lạnh, Tủ quần áo gỗ, Bếp từ, Cửa sổ kính lớn, Thang máy, Khóa thẻ từ', 'Căn hộ dịch vụ trung tâm, gần cầu Ông Lãnh, tiện đi lại Quận 1. Giờ giấc tự do, không chung chủ.'),
+    (2, 'B.201', '2 Máy lạnh, Nóng lạnh, Tủ lạnh lớn, Máy giặt riêng, Giường đệm, Bàn ăn, Sofa, Ban công thoáng', 'Căn 1PN rộng rãi tầng 2, ánh sáng tràn ngập, ban công nhìn ra đường nội khu yên tĩnh.')
 ) AS demo(toa_nha_id, so_phong, tien_ich, mo_ta)
 WHERE PHONG.toa_nha_id = demo.toa_nha_id AND PHONG.so_phong = demo.so_phong;
 
--- 2. T├ích seed dß╗» liß╗çu mß║½u khß╗Åi production: chß╗ë seed khi to├á nh├á ch╞░a c├│ ph├▓ng n├áo
+-- 2. Tách seed dữ liệu mẫu khỏi production: chỉ seed khi toà nhà chưa có phòng nào
 INSERT INTO PHONG (toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai, tien_ich, mo_ta)
 SELECT v.toa_nha_id, v.so_phong, v.tang, v.dien_tich, v.suc_chua, v.gia_thue_mac_dinh, v.loai_phong, v.trang_thai, v.tien_ich, v.mo_ta
 FROM (VALUES
-    (1, 'P.101', 1, 28.5, 2, 3800000.00, 'Studio kh├⌐p k├¡n', 'TRONG', 
-     '─Éiß╗üu ho├á inverter, N├│ng lß║ính, Tß╗º lß║ính 180L, Gi╞░ß╗¥ng ─æß╗çm 1m6x2m, Tß╗º quß║ºn ├ío, B├án l├ám viß╗çc, Cß╗¡a sß╗ò tho├íng',
-     'Ph├▓ng tß║ºng 1 thuß║¡n tiß╗çn ─æi lß║íi, ─æß║ºy ─æß╗º ─æß╗ô c╞í bß║ún chß╗ë viß╗çc x├ích vali vß╗ü ß╗ƒ. Vß╗ç sinh kh├⌐p k├¡n sß║ích sß║╜.'),
-    (1, 'P.102', 1, 32.0, 3, 4200000.00, '1 ngß╗º 1 kh├ích', 'DANG_THUE', 
-     '─Éiß╗üu ho├á, N├│ng lß║ính, Tß╗º lß║ính, M├íy giß║╖t ri├¬ng, Gi╞░ß╗¥ng ─æß╗çm, Sofa, Kß╗ç bß║┐p, Ban c├┤ng ri├¬ng',
-     'C─ân hß╗Ö 1 ph├▓ng ngß╗º t├ích biß╗çt ph├▓ng kh├ích, c├│ ban c├┤ng ph╞íi ─æß╗ô ri├¬ng, m├íy giß║╖t ri├¬ng.'),
-    (1, 'P.201', 2, 30.0, 2, 4000000.00, 'Studio ban c├┤ng', 'TRONG', 
-     '─Éiß╗üu ho├á, N├│ng lß║ính, Tß╗º lß║ính, Gi╞░ß╗¥ng ─æß╗çm cao cß║Ñp, Tß╗º ├óm t╞░ß╗¥ng, B├án tr├á, Ban c├┤ng view tho├íng, Kh├│a v├ón tay',
-     'Ph├▓ng tß║ºng 2 view ─æß║╣p, ban c├┤ng rß╗Öng ─æ├│n ├ính s├íng tß╗▒ nhi├¬n. Kh├│a cß╗¡a v├ón tay bß║úo mß║¡t cao.'),
-    (1, 'P.202', 2, 26.0, 2, 3600000.00, 'Studio ti├¬u chuß║⌐n', 'TRONG', 
-     '─Éiß╗üu ho├á, N├│ng lß║ính, Gi╞░ß╗¥ng ─æß╗çm, Tß╗º quß║ºn ├ío, Kß╗ç bß║┐p nß║Ñu ─ân, Cß╗¡a sß╗ò giß║┐ng trß╗¥i',
-     'Ph├▓ng nhß╗Å gß╗ìn ß║Ñm c├║ng, thiß║┐t kß║┐ tß╗æi ╞░u c├┤ng n─âng, bß║┐p nß║Ñu tiß╗çn lß╗úi, ph├╣ hß╗úp sinh vi├¬n hoß║╖c ng╞░ß╗¥i ─æi l├ám.'),
-    (1, 'P.301', 3, 35.0, 3, 4800000.00, 'G├íc lß╗¡ng Duplex', 'TRONG', 
-     '─Éiß╗üu ho├á 2 chiß╗üu, N├│ng lß║ính, Tß╗º lß║ính 2 c├ính, M├íy giß║╖t ri├¬ng, Sofa bed, Tß╗º bß║┐p tr├¬n d╞░ß╗¢i, Ban c├┤ng tho├íng m├ít',
-     'C─ân hß╗Ö duplex g├íc lß╗¡ng hiß╗çn ─æß║íi, trß║ºn cao tho├íng ─æ├úng, khu ngß╗º t├ích biß╗çt b├¬n tr├¬n, tiß║┐p kh├ích b├¬n d╞░ß╗¢i.'),
-    (1, 'P.302', 3, 28.0, 2, 3900000.00, 'Studio kh├⌐p k├¡n', 'DA_COC', 
-     '─Éiß╗üu ho├á, N├│ng lß║ính, Tß╗º lß║ính, Gi╞░ß╗¥ng ─æß╗çm, Tß╗º gß╗ù, B├án ─ân, Cß╗¡a sß╗ò lß╗¢n',
-     'Ph├▓ng tß║ºng 3 y├¬n t─⌐nh, tho├íng gi├│, ─æß║ºy ─æß╗º tiß╗çn nghi.'),
-    (2, 'B.101', 1, 25.0, 2, 4500000.00, 'Studio hiß╗çn ─æß║íi', 'TRONG', 
-     'M├íy lß║ính Daikin, M├íy n╞░ß╗¢c n├│ng, Tß╗º lß║ính, Tß╗º quß║ºn ├ío gß╗ù, Bß║┐p tß╗½, Cß╗¡a sß╗ò k├¡nh lß╗¢n, Thang m├íy, Kh├│a thß║╗ tß╗½',
-     'C─ân hß╗Ö dß╗ïch vß╗Ñ trung t├óm, gß║ºn cß║ºu ├öng L├únh, tiß╗çn ─æi lß║íi Quß║¡n 1. Giß╗¥ giß║Ñc tß╗▒ do, kh├┤ng chung chß╗º.'),
-    (2, 'B.201', 2, 34.0, 3, 5500000.00, '1 ph├▓ng ngß╗º ri├¬ng', 'TRONG', 
-     '2 M├íy lß║ính, N├│ng lß║ính, Tß╗º lß║ính lß╗¢n, M├íy giß║╖t ri├¬ng, Gi╞░ß╗¥ng ─æß╗çm, B├án ─ân, Sofa, Ban c├┤ng tho├íng',
-     'C─ân 1PN rß╗Öng r├úi tß║ºng 2, ├ính s├íng tr├án ngß║¡p, ban c├┤ng nh├¼n ra ─æ╞░ß╗¥ng nß╗Öi khu y├¬n t─⌐nh.')
+    (1, 'P.101', 1, 28.5, 2, 3800000.00, 'Studio khép kín', 'TRONG', 
+     'Điều hoà inverter, Nóng lạnh, Tủ lạnh 180L, Giường đệm 1m6x2m, Tủ quần áo, Bàn làm việc, Cửa sổ thoáng',
+     'Phòng tầng 1 thuận tiện đi lại, đầy đủ đồ cơ bản chỉ việc xách vali về ở. Vệ sinh khép kín sạch sẽ.'),
+    (1, 'P.102', 1, 32.0, 3, 4200000.00, '1 ngủ 1 khách', 'DANG_THUE', 
+     'Điều hoà, Nóng lạnh, Tủ lạnh, Máy giặt riêng, Giường đệm, Sofa, Kệ bếp, Ban công riêng',
+     'Căn hộ 1 phòng ngủ tách biệt phòng khách, có ban công phơi đồ riêng, máy giặt riêng.'),
+    (1, 'P.201', 2, 30.0, 2, 4000000.00, 'Studio ban công', 'TRONG', 
+     'Điều hoà, Nóng lạnh, Tủ lạnh, Giường đệm cao cấp, Tủ âm tường, Bàn trà, Ban công view thoáng, Khóa vân tay',
+     'Phòng tầng 2 view đẹp, ban công rộng đón ánh sáng tự nhiên. Khóa cửa vân tay bảo mật cao.'),
+    (1, 'P.202', 2, 26.0, 2, 3600000.00, 'Studio tiêu chuẩn', 'TRONG', 
+     'Điều hoà, Nóng lạnh, Giường đệm, Tủ quần áo, Kệ bếp nấu ăn, Cửa sổ giếng trời',
+     'Phòng nhỏ gọn ấm cúng, thiết kế tối ưu công năng, bếp nấu tiện lợi, phù hợp sinh viên hoặc người đi làm.'),
+    (1, 'P.301', 3, 35.0, 3, 4800000.00, 'Gác lửng Duplex', 'TRONG', 
+     'Điều hoà 2 chiều, Nóng lạnh, Tủ lạnh 2 cánh, Máy giặt riêng, Sofa bed, Tủ bếp trên dưới, Ban công thoáng mát',
+     'Căn hộ duplex gác lửng hiện đại, trần cao thoáng đãng, khu ngủ tách biệt bên trên, tiếp khách bên dưới.'),
+    (1, 'P.302', 3, 28.0, 2, 3900000.00, 'Studio khép kín', 'DA_COC', 
+     'Điều hoà, Nóng lạnh, Tủ lạnh, Giường đệm, Tủ gỗ, Bàn ăn, Cửa sổ lớn',
+     'Phòng tầng 3 yên tĩnh, thoáng gió, đầy đủ tiện nghi.'),
+    (2, 'B.101', 1, 25.0, 2, 4500000.00, 'Studio hiện đại', 'TRONG', 
+     'Máy lạnh Daikin, Máy nước nóng, Tủ lạnh, Tủ quần áo gỗ, Bếp từ, Cửa sổ kính lớn, Thang máy, Khóa thẻ từ',
+     'Căn hộ dịch vụ trung tâm, gần cầu Ông Lãnh, tiện đi lại Quận 1. Giờ giấc tự do, không chung chủ.'),
+    (2, 'B.201', 2, 34.0, 3, 5500000.00, '1 phòng ngủ riêng', 'TRONG', 
+     '2 Máy lạnh, Nóng lạnh, Tủ lạnh lớn, Máy giặt riêng, Giường đệm, Bàn ăn, Sofa, Ban công thoáng',
+     'Căn 1PN rộng rãi tầng 2, ánh sáng tràn ngập, ban công nhìn ra đường nội khu yên tĩnh.')
 ) AS v(toa_nha_id, so_phong, tang, dien_tich, suc_chua, gia_thue_mac_dinh, loai_phong, trang_thai, tien_ich, mo_ta)
 WHERE EXISTS (SELECT 1 FROM TOA_NHA WHERE id = v.toa_nha_id)
   AND NOT EXISTS (
       SELECT 1 FROM PHONG p WHERE p.toa_nha_id = v.toa_nha_id AND p.so_phong = v.so_phong
   );
 
--- 3. Seed dß╗ïch vß╗Ñ mß║½u chß╗ë khi to├á nh├á 1 ch╞░a c├│ dß╗ïch vß╗Ñ t╞░╞íng ß╗⌐ng
+-- 3. Seed dịch vụ mẫu chỉ khi toà nhà 1 chưa có dịch vụ tương ứng
 INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
 SELECT 1, v.ten, v.cach_tinh, v.che_do_gia, v.don_vi, v.la_dien, v.dang_su_dung
 FROM (VALUES 
-    ('─Éiß╗çn sinh hoß║ít', 'THEO_CHI_SO', 'CO_DINH', 'kWh', TRUE, TRUE),
-    ('N╞░ß╗¢c sinh hoß║ít', 'THEO_CHI_SO', 'CO_DINH', 'm┬│', FALSE, TRUE),
-    ('Internet tß╗æc ─æß╗Ö cao', 'CO_DINH', 'CO_DINH', 'ph├▓ng', FALSE, TRUE),
-    ('Vß╗ç sinh & thang m├íy', 'THEO_NGUOI', 'CO_DINH', 'ng╞░ß╗¥i', FALSE, TRUE),
-    ('Gß╗¡i xe m├íy', 'THEO_SO_LUONG', 'CO_DINH', 'xe', FALSE, TRUE)
+    ('Điện sinh hoạt', 'THEO_CHI_SO', 'CO_DINH', 'kWh', TRUE, TRUE),
+    ('Nước sinh hoạt', 'THEO_CHI_SO', 'CO_DINH', 'm³', FALSE, TRUE),
+    ('Internet tốc độ cao', 'CO_DINH', 'CO_DINH', 'phòng', FALSE, TRUE),
+    ('Vệ sinh & thang máy', 'THEO_NGUOI', 'CO_DINH', 'người', FALSE, TRUE),
+    ('Gửi xe máy', 'THEO_SO_LUONG', 'CO_DINH', 'xe', FALSE, TRUE)
 ) AS v(ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung)
 WHERE EXISTS (SELECT 1 FROM TOA_NHA WHERE id = 1)
   AND NOT EXISTS (

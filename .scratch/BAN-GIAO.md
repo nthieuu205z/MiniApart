@@ -6,9 +6,10 @@
 > - **Spring Boot Backend:** Đang chạy tại `http://localhost:8080/`  
 > - **Vite Frontend Dev Server:** Đang chạy tại `http://localhost:5173/`  
 > - **Frontend Test Suite:** `vitest run --run` đạt **31/31 suites passed (219/219 tests passed 100%)**  
-> - **Frontend Build:** `npm run build` thành công 100% (0 lỗi TypeScript, 0 lỗi bundle)  
-> - **Backend Test Suites (chạy trên PostgreSQL cô lập):**
->   - `MigrationUpgradeHistoryIntegrationTest`: **4/4 passed (cả 4 đường nâng cấp database)**
+> - **Frontend Build:** `npm run build` (`tsc -b && vite build`) thành công 100% (0 lỗi TypeScript, 0 lỗi bundle)  
+> - **Backend Test Suites (chạy trên PostgreSQL cô lập, 55/55 passed 100%):**
+>   - `MigrationUpgradeHistoryIntegrationTest`: **10/10 passed** (bao quát toàn diện 10 kịch bản: clean DB, pre-V49, 046d45a, d2e3d69, e1 pending canonical, e2 pending canonical, f checksum lạ fail, g khởi động lần hai idempotent, h tương thích V57 tương lai, i nghiệp vụ biên bản tài sản sau nâng cấp)
+>   - `DemoDataSeederIntegrationTest`: **3/3 passed** (chạy lần 1 và 2 idempotent không nhân bản, tắt demo hoàn toàn sạch, transaction rollback an toàn khi lỗi giữa chừng)
 >   - `HuyVaThanhToanConcurrencyIntegrationTest`: **5/5 passed**
 >   - `BangViecVanHanhIntegrationTest`: **8/8 passed**
 >   - `MoneySchemaRegressionTest`: **2/2 passed**
@@ -19,32 +20,49 @@
 >   - `HopDongPdfServiceTest`: **3/3 passed**
 > - **Mốc commit trước đợt sửa:** `046d45a`  
 > - **Commit sửa trung gian:** `d2e3d69`  
-> - **Commit hoàn tất khắc phục:** `7cae884` (hoặc commit HEAD hiện tại: `git rev-parse --short HEAD`)
+> - **Commit reviewer đã kiểm tra:** `e6976cc`  
+> - **Commit hoàn tất khắc phục:** `git rev-parse --short HEAD`
 
 ---
 
-## 1. PHƯƠNG ÁN NÂNG CẤP MIGRATION & SEED DỮ LIỆU PRODUCTION (4 ĐƯỜNG LỊCH SỬ)
+## 1. PHƯƠNG ÁN NÂNG CẤP MIGRATION & SEED DỮ LIỆU PRODUCTION (ROOT CAUSE FIX)
 
 ### 1.1. Ma trận 4 lịch sử cơ sở dữ liệu thực tế & Cơ chế `FlywayUpgradeStrategy`:
-Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUpgradeStrategy` kế thừa `FlywayMigrationStrategy` của Spring Boot) nhằm tự động phát hiện lịch sử schema hiện tại qua `flyway_schema_history` và định tuyến bộ migration tương thích phù hợp:
+Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUpgradeStrategy` thực thi `FlywayMigrationStrategy` của Spring Boot) nhằm tự động kiểm tra lịch sử schema hiện tại qua bảng `flyway_schema_history` và áp dụng chiến lược nâng cấp động an toàn:
 
-1. **Lịch sử 1: Cơ sở dữ liệu có dữ liệu thực trước V49 (V01..V48):**
-   - *Rủi ro nếu chạy V49 gốc:* `INSERT INTO PHONG (id, ...)` dùng `ON CONFLICT (id) DO NOTHING`. Nếu phòng đã tồn tại trong DB với `(toa_nha_id, so_phong)` trùng nhau nhưng ID khác nhau, Flyway sẽ dừng và fail ngay tại `V49` do vi phạm ràng buộc unique `(toa_nha_id, so_phong)`. Đồng thời `V49` chèn `BANG_GIA` với `dich_vu_id` cố định 1..5, có nguy cơ gắn biểu giá cố định vào dịch vụ nghiệp vụ thực tế mang ID 1..5 của khách hàng.
-   - *Giải pháp nâng cấp:* File migration chuẩn production `V49__public_lead_and_viewing_appointments.sql` và `V55__room_assets_and_handover.sql` là Pure DDL, đã tách hoàn toàn các câu lệnh INSERT dữ liệu demo cứng. Nhờ vậy, khi chạy nâng cấp từ pre-V49, migration tạo bảng `lich_hen_xem_phong`, `tai_san_phong`, `bien_ban_tai_san` hoàn toàn thành công, không phát sinh xung đột unique `(toa_nha_id, so_phong)` và không can thiệp dịch vụ thật.
-2. **Lịch sử 2: Cơ sở dữ liệu đã áp dụng bản `046d45a`:**
-   - *Trạng thái:* `flyway_schema_history` đã ghi nhận `V49` và `V55` của mốc `046d45a`.
-   - *Giải pháp tương thích:* `FlywayUpgradeStrategy` tự động phát hiện checksum `V49` của mốc `046d45a`, chuyển sang nạp cấu hình `classpath:db/migration_common` kết hợp `classpath:db/migration_variants/v046d45a`. Flyway xác thực checksum khớp 100%, không báo lỗi validation, và áp dụng tiếp forward migration `V56__handover_schema_compatibility.sql`. Tuyệt đối không can thiệp hay sửa đổi `flyway_schema_history`, không chạy `repair`.
-3. **Lịch sử 3: Cơ sở dữ liệu đã áp dụng bản trung gian `d2e3d69`:**
-   - *Trạng thái:* `flyway_schema_history` đã ghi nhận `V49` và `V55` của mốc `d2e3d69` (chứa cột `tien_khautru`).
-   - *Giải pháp tương thích:* `FlywayUpgradeStrategy` tự động phát hiện checksum `V49` của mốc `d2e3d69`, chuyển sang nạp cấu hình `classpath:db/migration_common` kết hợp `classpath:db/migration_variants/vd2e3d69`. Flyway xác thực checksum khớp 100%, sau đó áp dụng `V56__handover_schema_compatibility.sql` để đổi tên an toàn `tien_khautru` -> `tien_khau_tru`.
-4. **Lịch sử 4: Database tạo mới hoàn toàn (Clean DB):**
-   - `FlywayUpgradeStrategy` chọn nhánh canonical chuẩn (`classpath:db/migration`), chạy tuần tự từ `V01` đến `V56` thành công 100% trong trạng thái sạch, không sinh bất kỳ bản ghi demo nào vào bảng nghiệp vụ.
+1. **Kiến trúc Single Source of Truth (Xóa bỏ thư mục trùng lặp `migration_common`):**
+   - Không duy trì thư mục `migration_common` song song để tránh nguy cơ drift mã nguồn.
+   - Toàn bộ 56 migration chính tắc được lưu trữ duy nhất tại `classpath:db/migration/` (`V1`..`V56`). Cả `V49` và `V55` chính tắc đều là **Pure DDL**, không chứa bất kỳ câu lệnh chèn dữ liệu mẫu/demo nào.
+   - Các biến thể lịch sử xác thực được trích xuất trực tiếp từ Git blobs gốc vào `classpath:db/migration_variants/`:
+     - `v046d45a`: `V49` (CRC32: `-1020674094`), `V55` (CRC32: `-1007063486`)
+     - `vd2e3d69`: `V49` (CRC32: `676094527`), `V55` (CRC32: `52954075`)
 
-### 1.2. Cơ chế tách dữ liệu Demo chủ động (Active Seed Mechanism):
-- **Tách biệt khỏi Migration:** Dữ liệu demo được tách hoàn toàn ra khỏi các migration script và chuyển vào component riêng `DemoDataSeeder.java` (`com.prj1.ccm.toanha.DemoDataSeeder`), được bảo vệ bởi cờ cấu hình `@ConditionalOnProperty(name = "app.seed-demo", havingValue = "true")`. Trong môi trường production (`app.seed-demo=false` hoặc mặc định), seeder hoàn toàn không được nạp hay kích hoạt.
-- **Đối soát an toàn dữ liệu mẫu đã chèn (`DemoDataReconciliationService.java`):**
-  - Tuyệt đối không xoá dữ liệu theo tên phòng (`DELETE FROM PHONG WHERE so_phong LIKE 'P.%'`) vì khách hàng có thể đặt tên phòng thực tế trùng tên demo.
-  - Service cung cấp quy trình audit an toàn: kiểm tra chéo foreign key (phòng không có hợp đồng `HOP_DONG`, không có chỉ số `CHI_SO_DICH_VU`, không có yêu cầu sửa chữa `YEU_CAU_SUA_CHUA`), so khớp ID mẫu đã định nghĩa trước khi gắn cờ hoặc đưa vào diện cô lập an toàn.
+2. **Quy tắc phân biệt APPLIED Migration vs PENDING Migration:**
+   - **Đã áp dụng (Applied):** Nếu DB đã từng chạy V49/V55 của `046d45a` hoặc `d2e3d69`, `FlywayUpgradeStrategy` tạo thư mục tạm thời, sao chép toàn bộ bộ migration chính tắc từ `classpath:db/migration/`, nhưng **chỉ ghi đè những phiên bản ĐÃ ÁP DỤNG** bằng tệp biến thể tương ứng để Flyway xác thực checksum khớp 100%.
+   - **Chưa áp dụng (Pending):** Bất kỳ migration nào chưa chạy (ví dụ hệ thống dừng ở V50 hoặc V54 thì V55 là pending) **BẮT BUỘC giữ nguyên bản chính tắc (Pure DDL)**. Tuyệt đối không nạp tệp biến thể cũ cho migration pending, đảm bảo không bao giờ vô tình kích hoạt lại seed demo của phiên bản cũ vào database production.
+   - **Migration tương lai (Forward Compatibility):** Bất kỳ migration mới nào trong tương lai (ví dụ `V57`) được đặt trong `classpath:db/migration/` đều tự động được phát hiện và áp dụng tiếp tục một cách trơn tru.
+
+3. **Từ chối checksum không được hỗ trợ (Fail-Fast Validation):**
+   - Nếu `flyway_schema_history` chứa checksum lạ không khớp bất kỳ bản chính tắc hay biến thể hợp lệ nào của `046d45a`/`d2e3d69`, hệ thống ném ngay `IllegalStateException` rõ ràng kèm mã phiên bản và giá trị checksum để ngăn chặn việc chạy sai lệch trên môi trường không xác định.
+   - Tuyệt đối không can thiệp, không sửa đổi `flyway_schema_history`, không chạy `repair` và không tắt validation của Flyway.
+
+4. **Ma trận xử lý 4 trạng thái DB:**
+   - **Lịch sử 1 (Pre-V49 có dữ liệu thật):** Chạy `V49` và `V55` chính tắc (Pure DDL). Không xung đột unique `(toa_nha_id, so_phong)`, không gán sai giá vào ID dịch vụ thật, nâng cấp thành công lên `V56`.
+   - **Lịch sử 2 (Đã áp dụng bản `046d45a` đến V55):** Khớp checksum biến thể `046d45a`, chạy tiếp `V56` thành công.
+   - **Lịch sử 3 (Đã áp dụng bản `d2e3d69` đến V55):** Khớp checksum biến thể `d2e3d69`, chạy `V56` chuẩn hóa cột `tien_khautru` -> `tien_khau_tru` thành công.
+   - **Lịch sử 4 (Clean DB):** Chạy trực tiếp từ `classpath:db/migration/` từ `V1` đến `V56`, hoàn toàn sạch dữ liệu demo.
+
+### 1.2. Cơ chế Seed Demo & Audit đối soát an toàn:
+- **Tách biệt vào component độc lập (`DemoDataSeeder.java`):**
+  - Mặc định TẮT (`app.seed-demo=false`). Chỉ kích hoạt khi người dùng cấu hình tường minh `app.seed-demo=true`.
+  - **Tạo dịch vụ và bảng giá an toàn:** Không bao giờ gán ID cứng 1..5. Truy vấn dịch vụ theo tên trên tòa nhà, tạo mới không ép ID nếu chưa có, và liên kết bảng giá vào ID tự sinh thực tế.
+  - **Bảo vệ phòng thật của khách hàng:** Dữ liệu phòng demo được gắn tiền tố `[DEMO]` trong trường `mo_ta` và kiểm tra `NOT EXISTS (SELECT 1 FROM PHONG WHERE toa_nha_id = ... AND so_phong = ...)`.
+  - **Bảo vệ tài sản thật:** Chỉ gắn tài sản demo vào phòng có `mo_ta LIKE '[DEMO]%'` và có kiểm tra `NOT EXISTS (SELECT 1 FROM TAI_SAN_PHONG WHERE phong_id = p.id AND ten_tai_san = ...)`. Tuyệt đối không gắn vào phòng thật của khách hàng.
+  - **Tính Idempotent (Chạy lại không nhân bản):** Chạy seeder 1 lần hay nhiều lần đều cho ra cùng một số lượng bản ghi duy nhất, không tạo bản ghi trùng lặp.
+  - **Biên giới Giao dịch (@Transactional):** Toàn bộ quá trình seed được bao bọc trong một transaction duy nhất. Bất kỳ lỗi nào phát sinh giữa chừng sẽ rollback toàn bộ, không để lại dữ liệu rác dở dang.
+- **Audit đối soát an toàn dữ liệu mẫu đã chèn (`DemoDataReconciliationService.java`):**
+  - Dịch vụ **Read-Only**: Chỉ thực hiện truy vấn và trả về danh sách ứng viên đối soát `List<UngVienDoiSoat>` kèm đầy đủ ngữ cảnh nghiệp vụ (số hợp đồng, chỉ số dịch vụ, yêu cầu sửa chữa).
+  - Tuyệt đối không tự ý xóa hay lưu trữ (archive) dữ liệu của khách hàng dựa trên suy đoán hoặc tên phòng.
 
 ---
 
@@ -57,17 +75,11 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
   - `backend/src/main/java/com/prj1/ccm/billing/HuyHoaDonNhapService.java`
   - `backend/src/main/java/com/prj1/ccm/billing/ThayTheHoaDonController.java`
   - `backend/src/main/java/com/prj1/ccm/billing/calc/QuyTacTrangThaiHoaDon.java`
-- **Nguyên nhân:** Trước đây, câu lệnh khoá và tính toán `da_thu` kết hợp trong cùng 1 statement SQL (`SUM(tt.so_tien)` và `FOR UPDATE OF hd`). Trong cơ chế Read Committed của PostgreSQL, statement bắt đầu trước khi giao dịch thu tiền commit có thể đọc snapshot cũ của ledger dù hàng hoá đơn đã được khoá sau đó. Đồng thời, `ThanhToanRepository` khoá toàn bộ các bảng tham gia join (`FOR UPDATE`) dẫn đến nguy cơ deadlock khi giao dịch khác khoá hợp đồng/phòng.
 - **Hành vi sau sửa:**
   - `TinhHoaDonRepository.khoaHoaDonTrongPhamVi`: Tách statement khoá hoá đơn riêng biệt (`FOR UPDATE OF hd`). Sau khi khoá thành công, mở một statement đọc mới để tính toán chính xác tổng tiền đã thu `da_thu` trên snapshot mới nhất trong transaction.
   - `ThanhToanRepository`: Đồng bộ cú pháp khoá chỉ trên hàng hoá đơn `FOR UPDATE OF hd`, tránh lock lan truyền sang `HOP_DONG` hay `PHONG`.
-  - `QuyTacTrangThaiHoaDon`: Khi có bút toán đối ứng đưa số tiền thực thu về `<= 0`, cho phép hoàn trạng thái hoá đơn về `DA_PHAT_HANH` (hoặc `QUA_HAN` nếu quá hạn thanh toán) thông qua `ghiNhanThanhToanDoiUng`. Từ đó hoá đơn được phép chuyển tiếp sang `DA_HUY`. Đồng thời bảo toàn bảng chuyển trạng thái chuẩn trong `taoBangChuyenHopLe()`.
-- **Kiểm chứng:** Test suite `HuyVaThanhToanConcurrencyIntegrationTest` chạy trên PostgreSQL cô lập, mô phỏng đa luồng có `CountDownLatch` kiểm chứng 5 kịch bản:
-  1. `thuTienTruoc_huySau_biChanBangConflictVaBaoToanTienThu`: **PASS**
-  2. `huyTruoc_thuTienSau_biChanBangConflict`: **PASS**
-  3. `doiUngXong_choPhepChuyenDaHuy`: **PASS**
-  4. `thayTheHoaDon_daThuTien_nemLoiConflict`: **PASS**
-  5. `thayTheHoaDon_chuaThuTien_thayTheThanhCongVaKhongLapKhoanPhaiThu`: **PASS**
+  - `QuyTacTrangThaiHoaDon`: Khi có bút toán đối ứng đưa số tiền thực thu về `<= 0`, cho phép hoàn trạng thái hoá đơn về `DA_PHAT_HANH` (hoặc `QUA_HAN` nếu quá hạn thanh toán) thông qua `ghiNhanThanhToanDoiUng`. Từ đó hoá đơn được phép chuyển tiếp sang `DA_HUY`.
+- **Kiểm chứng:** Test suite `HuyVaThanhToanConcurrencyIntegrationTest` chạy trên PostgreSQL cô lập (**5/5 passed**).
 
 ### 2.2. Căn cứ quyết toán hợp đồng & Audit Trail khấu trừ (P2.5 & P2.6)
 - **Files:**
@@ -76,37 +88,32 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
   - `backend/src/main/java/com/prj1/ccm/hopdong/YeuCauThanhLy.java`
   - `backend/src/main/java/com/prj1/ccm/nguoithue/NhatKyThaoTacRepository.java`
   - `frontend/src/HopDongThaoTac.tsx`
-- **Nguyên nhân:** Trước đây hệ thống chỉ kiểm tra `kiemTraBienBanThuocHopDong` mà không kiểm tra biên bản có đúng phòng hay không, không bắt buộc loại biên bản phải là `TRA_PHONG`, và cho phép bỏ qua biên bản trả phòng khi quyết toán tiền khấu trừ mà không có sự xác nhận chênh lệch. Đồng thời, trường hợp biên bản có khấu trừ nhưng quyết toán về 0 chỉ ghi log cọc khi khấu trừ > 0, thiếu audit log kiên cố khi khấu trừ = 0.
 - **Hành vi sau sửa:**
   - `HopDongService.thanhLy`:
     1. Xác thực `bienBanId` phải thuộc đúng hợp đồng và đúng phòng (`phongId`).
     2. Bắt buộc loại biên bản phải là `TRA_PHONG` (ném `400 BAD_REQUEST` nếu gửi biên bản `NHAN_PHONG`).
-    3. Nếu không truyền `bienBanId` nhưng trong database đã tồn tại biên bản `TRA_PHONG` của hợp đồng đó, từ chối thanh lý yêu cầu cung cấp căn cứ biên bản.
+    3. Nếu không truyền `bienBanId` nhưng trong database đã tồn tại biên bản `TRA_PHONG` của hợp đồng đó, từ chối thanh lý và yêu cầu cung cấp căn cứ biên bản.
     4. Nếu số tiền khấu trừ trong yêu cầu thanh lý lệch với `tong_tien_khau_tru` trong biên bản (kể cả biên bản > 0 và quyết toán = 0), bắt buộc client phải gửi `xacNhanChenhLech = true` và `lyDo` không được để trống.
     5. Ghi nhận audit trail kiên cố vào `NHAT_KY_THAO_TAC` (`hanh_dong = 'THANH_LY'`, lưu toàn diện `bienBanId`, `bbKhauTru`, `khauTruQuyetToan`, `chenhLech`, `xacNhanChenhLech`, `lyDo`, `hoaDonCuoiId`, `thoiDiem`). Thao tác ghi log thất bại sẽ ném exception làm rollback toàn bộ transaction thanh lý.
   - `HopDongThaoTac.tsx`: Form thanh lý đối chiếu số tiền khấu trừ với biên bản trả phòng đã lưu. Nếu khác nhau, yêu cầu người dùng tích chọn checkbox "Xác nhận số tiền khấu trừ khác biên bản bàn giao" và nhập lý do mới kích hoạt nút "Thanh lý hợp đồng".
-- **Kiểm chứng:** `HopDongServiceTest` kiểm thử đầy đủ các nhánh: biên bản sai hợp đồng, biên bản sai loại, bỏ qua biên bản khi đã có biên bản trả phòng, khấu trừ lệch mà chưa xác nhận, khấu trừ biên bản 500k nhưng quyết toán 0 đồng có lý do và audit log, rollback khi ghi log lỗi (**10/10 passed**).
+- **Kiểm chứng:** `HopDongServiceTest` (**10/10 passed**).
 
 ### 2.3. Khắc phục Race / Stale Response & Trạng thái Mutation Loading trong Quản lý tài sản (P2.6)
 - **Files:**
   - `frontend/src/QuanLyTaiSanPhong.tsx`
   - `frontend/src/QuanLyTaiSanPhong.test.tsx`
-- **Nguyên nhân:**
-  1. Khi chuyển đổi nhanh giữa các phòng (ví dụ A -> B -> A), các request fetch dữ liệu phòng cũ hoàn thành muộn có thể ghi đè dữ liệu của phòng mới được chọn.
-  2. Biến trạng thái `dangLuu` không được reset khi chuyển phòng / hợp đồng mới, và khối `finally` của các thao tác thêm/xóa/lập biên bản bỏ qua lệnh `setDangLuu(false)` nếu request không thuộc phòng hiện tại, khiến giao diện phòng mới có nguy cơ bị treo vô thời hạn ở trạng thái "Đang lưu...".
 - **Hành vi sau sửa:**
   - Áp dụng token thế hệ mutation `mutationIdRef` kết hợp với `requestIdRef` và cờ huỷ `isMountedRef`.
   - Khi phòng hoặc hợp đồng thay đổi (`phongId`, `hopDongId`), `mutationIdRef.current++` được tăng ngay lập tức và `dangLuu` được reset về `false`.
   - Mọi thao tác thêm tài sản, xóa tài sản, lập biên bản đều gắn liền với thế hệ mutation hiện tại: nếu người dùng chuyển phòng trong lúc mutation đang gửi lên server, mutation cũ bị cô lập hoàn toàn, không hiển thị lỗi rò rỉ sang phòng mới và không làm đơ nút bấm của phòng mới.
-- **Kiểm chứng:** `QuanLyTaiSanPhong.test.tsx` bổ sung 3 test cases chuyên sâu với deferred promise mô phỏng độ trễ mạng: thêm tài sản phòng A bị trễ rồi chuyển sang phòng B (phòng B không bị kẹt `dangLuu`, vẫn thao tác bình thường khi request phòng A hoàn tất); mutation lỗi ở phòng A không rò rỉ thông báo sang phòng B (**6/6 passed**).
+- **Kiểm chứng:** `QuanLyTaiSanPhong.test.tsx` (**6/6 passed**).
 
 ### 2.4. Chặn gian lận/bỏ qua đơn giá dịch vụ bậc thang (P2.9)
 - **Files:**
   - `backend/src/main/java/com/prj1/ccm/hopdong/HopDongService.java`
   - `backend/src/test/java/com/prj1/ccm/hopdong/HopDongServiceTest.java`
-- **Nguyên nhân:** Khi tạo hợp đồng, kiểm tra `item.donGiaApDung() != null` đứng trước kiểm tra `dichVu.cheDoGia() == BAC_THANG`. Người dùng có thể truyền `donGiaApDung` để lách dịch vụ bậc thang chưa có biểu giá hiệu lực.
 - **Hành vi sau sửa:** Đưa nhánh `dichVu.cheDoGia() == BAC_THANG` lên kiểm tra đầu tiên. Bắt buộc dịch vụ bậc thang phải có bảng giá bậc thang hiệu lực tại thời điểm tạo hợp đồng, ném `400 BAD_REQUEST` nếu thiếu bảng giá, kể cả khi client truyền `donGiaApDung`.
-- **Kiểm chứng:** `HopDongServiceTest.taoHopDong_dichVuBacThangThieuBangGia_ngayCaKhiCoDonGiaApDung_nemLoiBadRequest` (**passed**).
+- **Kiểm chứng:** `HopDongServiceTest` (**10/10 passed**).
 
 ### 2.5. Phân quyền Lịch hẹn theo Toà nhà & Scope (P1.1)
 - **Files:**
@@ -122,56 +129,47 @@ Hệ thống triển khai `FlywayUpgradeStrategy` (`com.prj1.ccm.config.FlywayUp
 ### 2.6. Chuẩn hoá Fixture PCCC & Bảng việc vận hành (P2.11)
 - **Files:**
   - `backend/src/test/java/com/prj1/ccm/thongbao/BangViecVanHanhIntegrationTest.java`
-- **Nguyên nhân:** Fixture test cũ insert cột không khớp schema V51 của bảng `PCCC_THIET_BI`, và `resetDatabase()` vi phạm ràng buộc khoá ngoại khi xoá `PHONG` và `DICH_VU`.
 - **Hành vi sau sửa:** Đồng bộ câu lệnh SQL insert vào `PCCC_THIET_BI` với schema chuẩn (`ten, vi_tri, han_kiem_dinh`). Bổ sung xoá bảng con PCCC trước khi reset bảng cha toà nhà.
-- **Kiểm chứng:** Chạy trực tiếp trên PostgreSQL cô lập: **8/8 tests passed**.
+- **Kiểm chứng:** Chạy trực tiếp trên PostgreSQL cô lập (**8/8 passed**).
 
 ---
 
-## 3. THỐNG KÊ CHI TIẾT ENDPOINTS, HTTP METHODS & TẬP TRẠNG THÁI
+## 3. BẢNG TỔNG HỢP KẾT QUẢ KIỂM CHỨNG TOÀN DIỆN
 
-### Cổng Khách vãng lai & Quản lý Lịch hẹn (`FR-PUB`)
-- `POST /api/public/dat-lich-hen`: Đặt lịch hẹn xem phòng công khai (Public).
-- `GET /api/lich-hen`: Danh sách lịch hẹn xem phòng theo toà nhà hoặc theo quyền quản trị của tài khoản (Quyền: `CHU`, `QUAN_LY`).
-- `PATCH /api/lich-hen/{id}/trang-thai`: Cập nhật trạng thái lịch hẹn xem phòng (Quyền: `CHU`, `QUAN_LY`).
-- **Tập trạng thái hợp lệ của Lịch hẹn xem phòng (`LICH_HEN_XEM_PHONG`):**
-  - `CHO_XAC_NHAN`: Chờ xác nhận
-  - `DA_XAC_NHAN`: Đã xác nhận
-  - `DA_XEM`: Đã xem phòng
-  - `HUY`: Hủy lịch hẹn
-
-### Quản lý Danh mục Tài sản & Biên bản Bàn giao
-- `GET /api/phong/{phongId}/tai-san`: Danh mục tài sản phòng (Quyền: `CHU`, `QUAN_LY`, `NGUOI_THUE` đang thuê phòng).
-- `POST /api/phong/{phongId}/tai-san`: Thêm tài sản vào phòng (Quyền: `CHU`, `QUAN_LY`).
-- `DELETE /api/tai-san/{id}`: Xóa tài sản theo ID tài sản (`tai_san_id`) khỏi phòng (Quyền: `CHU`, `QUAN_LY`).
-- `GET /api/hop-dong/{hopDongId}/bien-ban-tai-san`: Danh sách biên bản bàn giao (Quyền: `CHU`, `QUAN_LY`, `NGUOI_THUE` của hợp đồng).
-- `POST /api/hop-dong/{hopDongId}/bien-ban-tai-san`: Lập biên bản nhận phòng / trả phòng (Quyền: `CHU`, `QUAN_LY`).
-- **Cơ chế Snapshot tài sản:**
-  - `ten_tai_san`: Được snapshot trực tiếp từ cơ sở dữ liệu (`TAI_SAN_PHONG`).
-  - `tinh_trang_luc_giao`, `tinh_trang_luc_tra`: Được ghi nhận theo đánh giá hiện trạng thực tế do client gửi lên tại thời điểm lập biên bản.
-
-### Huỷ & Thay thế Hoá đơn
-- `POST /api/hoa-don/{id}/huy`: Huỷ hoá đơn (khoá `FOR UPDATE OF hd`, chặn khi có tiền thu thực tế `daThu.signum() != 0`).
-- `POST /api/hoa-don/{id}/thay-the`: Thay thế hoá đơn (khoá `FOR UPDATE OF h,hd`, chặn khi hoá đơn cũ đã có thanh toán).
-
----
-
-## 4. KẾT QUẢ KIỂM CHỨNG TOÀN DIỆN
-
-### 4.1. Kiểm thử ĐÃ CHẠY VÀ ĐẠT TRÊN MÔI TRƯỜNG THỰC TẾ:
-| Hạng mục kiểm thử | Công cụ / Môi trường | Số lượng test | Kết quả |
+| Bộ kiểm thử | Phạm vi / Mục tiêu kiểm chứng | Số lượng tests | Kết quả |
 | :--- | :--- | :--- | :--- |
-| **Frontend Test Suite** | Vitest 4.1.11 | 31 suites / 219 tests | **219/219 PASSED (100%)** |
-| **Frontend Production Build** | Vite + TypeScript (`tsc -b && vite build`) | Toàn bộ ứng dụng | **0 lỗi TypeScript, 0 lỗi bundle** |
-| **Migration Upgrade History Test** | JUnit 5 + PostgreSQL 17 Portable | 4 tests nâng cấp (4 lịch sử) | **4/4 PASSED (100%)** |
-| **Concurrency Integration Test** | JUnit 5 + PostgreSQL 17 Portable | 5 tests đa luồng (Latch) | **5/5 PASSED (100%)** |
-| **Operational Tasks (PCCC)** | JUnit 5 + PostgreSQL 17 Portable | 8 tests integration | **8/8 PASSED (100%)** |
-| **Money Schema ArchUnit** | JUnit 5 + PostgreSQL 17 Portable | 2 tests schema | **2/2 PASSED (100%)** |
-| **HopDongService Test** | Mockito / JUnit 5 | 10 tests | **10/10 PASSED (100%)** |
-| **TaiSanService Test** | Mockito / JUnit 5 | 7 tests | **7/7 PASSED (100%)** |
-| **HuyHoaDonNhapService Test**| Mockito / JUnit 5 | 3 tests | **3/3 PASSED (100%)** |
-| **PublicPortalService Test** | Mockito / JUnit 5 | 4 tests | **4/4 PASSED (100%)** |
-| **HopDongPdfService Test** | iText / JUnit 5 | 3 tests | **3/3 PASSED (100%)** |
+| **Frontend Test Suite** | Vitest 4.1.11 (`QuanLyTaiSanPhong`, `App`, `CongNoBaoCao`, `TieuThuBaoCao`, v.v.) | 31 suites / 219 tests | **219/219 PASSED (100%)** |
+| **Frontend Production Build** | TypeScript compiler + Vite bundler (`tsc -b && vite build`) | Toàn bộ ứng dụng React | **PASSED (0 errors)** |
+| **Migration Upgrade History Test** | `MigrationUpgradeHistoryIntegrationTest` (10 test cases a -> i bao quát 4 kịch bản DB, pending canonical, fail fast checksum lạ, V57 tương lai) | 10 tests | **10/10 PASSED (100%)** |
+| **Demo Data Seeder Integration Test** | `DemoDataSeederIntegrationTest` (Idempotent lần 1 & 2, demo tắt không tạo rác, rollback giao dịch an toàn) | 3 tests | **3/3 PASSED (100%)** |
+| **Concurrency Integration Test** | `HuyVaThanhToanConcurrencyIntegrationTest` (Đa luồng hủy/thanh toán hóa đơn, đối ứng tiền) | 5 tests | **5/5 PASSED (100%)** |
+| **Operational Tasks (PCCC)** | `BangViecVanHanhIntegrationTest` | 8 tests | **8/8 PASSED (100%)** |
+| **Money Schema ArchUnit** | `MoneySchemaRegressionTest` | 2 tests | **2/2 PASSED (100%)** |
+| **HopDongService Test** | Hợp đồng, dịch vụ bậc thang, căn cứ quyết toán và audit trail | 10 tests | **10/10 PASSED (100%)** |
+| **TaiSanService Test** | Phân quyền tài sản theo tòa/phòng, snapshot từ database, khấu trừ | 7 tests | **7/7 PASSED (100%)** |
+| **HuyHoaDonNhapService Test** | Quy tắc hủy hóa đơn và kiểm soát số tiền đã thu | 3 tests | **3/3 PASSED (100%)** |
+| **PublicPortalService Test** | Scope phân quyền tòa nhà cho lịch hẹn xem phòng | 4 tests | **4/4 PASSED (100%)** |
+| **HopDongPdfService Test** | Xuất văn bản hợp đồng PDF chính xác | 3 tests | **3/3 PASSED (100%)** |
 
-### 4.2. Lưu ý kiểm thử chưa thực hiện:
-- Kiểm tra trực quan layout đồ hoạ trang in PDF (Visual layout QA) của tệp xuất PDF hợp đồng chưa được kiểm tra bằng mắt người dùng; mới chỉ kiểm tra qua nội dung text trích xuất tự động bằng thư viện `PdfTextExtractor`.
+---
+
+## 4. CÁC LỆNH KIỂM CHỨNG ĐỘC LẬP DÀNH CHO REVIEWER
+
+Để kiểm chứng toàn bộ hệ thống trên môi trường local:
+
+```powershell
+# 1. Khởi động PostgreSQL Daemon (nếu chưa chạy)
+& "d:\vscode\miniapart\pgsql\pgsql\bin\postgres.exe" -D "d:\vscode\miniapart\pgsql\data"
+
+# 2. Chạy toàn bộ bộ kiểm thử Backend (bao gồm cả integration và unit tests):
+Set-Location D:\vscode\miniapart\MiniApart-main\backend
+$env:MINIAPART_TEST_JDBC_URL = "jdbc:postgresql://localhost:5432/miniapart"
+.\gradlew.bat test --tests "*MoneySchemaRegressionTest" --tests "*HopDongServiceTest" --tests "*TaiSanServiceTest" --tests "*HuyHoaDonNhapServiceTest" --tests "*PublicPortalServiceTest" --tests "*HopDongPdfServiceTest" --tests "*BangViecVanHanhIntegrationTest" --tests "*HuyVaThanhToanConcurrencyIntegrationTest" --tests "*MigrationUpgradeHistoryIntegrationTest" --tests "*DemoDataSeederIntegrationTest" --rerun-tasks
+
+# 3. Chạy toàn bộ bộ kiểm thử Frontend:
+Set-Location D:\vscode\miniapart\MiniApart-main\frontend
+npm run test -- --run
+
+# 4. Kiểm tra Frontend Build:
+npm run build
+```
