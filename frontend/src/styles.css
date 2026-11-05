@@ -6,12 +6,39 @@
 
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ma-line-300) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ma-line-300);
+  border-radius: var(--ma-radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ma-line-600);
+}
+
+::selection {
+  background: var(--ma-brand-accent-light);
+  color: var(--ma-brand-primary);
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background: var(--ma-bg-page);
+  color: var(--ma-text-primary);
 }
 
 button,
@@ -19,6 +46,27 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+input,
+textarea {
+  caret-color: var(--ma-brand-accent);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.ma-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media print {
+  .ma-no-print {
+    display: none !important;
+  }
 }
 
 /* Normalize the browser's heading/paragraph default block margin for screens

@@ -1,17 +1,17 @@
 package com.prj1.ccm.nguoithue;
 
-final class SoGiayToFormatter {
+public final class SoGiayToFormatter {
     private SoGiayToFormatter() {
     }
 
-    static String chuanHoa(String soGiayTo) {
+    public static String chuanHoa(String soGiayTo) {
         if (soGiayTo == null) {
             return "";
         }
         return soGiayTo.replaceAll("\\s+", "");
     }
 
-    static String che(String soGiayTo) {
+    public static String che(String soGiayTo) {
         if (soGiayTo == null || soGiayTo.isBlank()) {
             return "";
         }

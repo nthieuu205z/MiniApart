@@ -903,7 +903,7 @@ class KyThanhToanIntegrationTest {
         return jdbcTemplate.queryForObject(
                 """
                         INSERT INTO NGUOI_THUE (ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan, trang_thai_luu_tru)
-                        VALUES (?, DATE '1995-01-01', ?, ?, 'TP HCM', 'HOAT_DONG')
+                        VALUES (?, DATE '1995-01-01', ?, ?, 'TP HCM', 'CHUA_KHAI_BAO')
                         RETURNING id
                         """,
                 Long.class,

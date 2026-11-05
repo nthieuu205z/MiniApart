@@ -71,6 +71,18 @@
   --ma-done-text: var(--ma-green-700);
   --ma-vacant: var(--ma-brand-accent);
 
+  /* Bí danh đồng bộ trạng thái */
+  --ma-status-urgent: var(--ma-urgent);
+  --ma-status-urgent-light: var(--ma-urgent-bg);
+  --ma-status-done: var(--ma-done);
+  --ma-status-done-light: var(--ma-done-bg);
+  --ma-status-error: var(--ma-urgent);
+  --ma-status-warning: var(--ma-waiting);
+  --ma-status-warning-light: var(--ma-waiting-bg);
+  --ma-status-info: var(--ma-brand-accent);
+  --ma-status-info-light: var(--ma-brand-accent-light);
+  --ma-primary-default: var(--ma-brand-primary);
+
   --ma-focus-ring: var(--ma-brand-accent);
   --ma-focus-halo: rgba(13, 148, 136, 0.2);
 }

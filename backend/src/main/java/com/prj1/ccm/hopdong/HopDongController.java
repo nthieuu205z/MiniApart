@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -214,6 +215,63 @@ public class HopDongController {
             ));
         }
         return List.copyOf(ketQua);
+    }
+
+    @GetMapping("/{hopDongId}/ho-so")
+    public HopDongHoSoDto layHoSo(@PathVariable Long hopDongId, HttpServletRequest request) {
+        return hopDongService.layHoSoHopDong(hopDongId, nguoiDungHienTai(request));
+    }
+
+    @PutMapping("/{hopDongId}/ho-so/draft")
+    public HopDongHoSoDto luuDraftHoSo(
+            @PathVariable Long hopDongId,
+            @RequestBody YeuCauLuuDraftHoSo req,
+            HttpServletRequest request
+    ) {
+        return hopDongService.luuDraftHoSo(hopDongId, req, nguoiDungHienTai(request));
+    }
+
+    @PostMapping("/{hopDongId}/ho-so/chot")
+    public HopDongHoSoDto chotHoSo(
+            @PathVariable Long hopDongId,
+            @RequestBody YeuCauChotHoSo req,
+            HttpServletRequest request
+    ) {
+        return hopDongService.chotHoSo(hopDongId, req, nguoiDungHienTai(request));
+    }
+
+    @PostMapping("/{hopDongId}/ho-so/ghi-nhan-ky")
+    public HopDongHoSoDto ghiNhanKy(
+            @PathVariable Long hopDongId,
+            @RequestBody YeuCauGhiNhanKy req,
+            HttpServletRequest request
+    ) {
+        return hopDongService.ghiNhanKy(hopDongId, req, nguoiDungHienTai(request));
+    }
+
+    @PostMapping("/{hopDongId}/ho-so/mo-lai-draft")
+    public HopDongHoSoDto moLaiDraft(
+            @PathVariable Long hopDongId,
+            @RequestBody(required = false) YeuCauMoLaiDraft req,
+            HttpServletRequest request
+    ) {
+        Integer expectedRevision = req != null ? req.expectedRevision() : null;
+        String lyDo = req != null ? req.lyDo() : null;
+        return hopDongService.moLaiDraft(hopDongId, expectedRevision, lyDo, nguoiDungHienTai(request));
+    }
+
+    @GetMapping("/{hopDongId}/phu-luc")
+    public List<HopDongPhuLucDto> danhSachPhuLuc(@PathVariable Long hopDongId, HttpServletRequest request) {
+        return hopDongService.danhSachPhuLuc(hopDongId, nguoiDungHienTai(request));
+    }
+
+    @PostMapping("/{hopDongId}/phu-luc")
+    public HopDongPhuLucDto taoPhuLuc(
+            @PathVariable Long hopDongId,
+            @RequestBody YeuCauTaoPhuLuc req,
+            HttpServletRequest request
+    ) {
+        return hopDongService.taoPhuLuc(hopDongId, req, nguoiDungHienTai(request));
     }
 
     private Long layLongBatBuoc(JsonNode yeuCau, String tenTruong) {

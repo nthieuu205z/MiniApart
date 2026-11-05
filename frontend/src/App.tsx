@@ -185,6 +185,27 @@ const styleNhomNut: CSSProperties = {
   gap: 'var(--ma-space-3)',
 }
 
+const styleNutChonDemo: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  gap: 2,
+  padding: '8px 12px',
+  background: 'var(--ma-bg-page)',
+  border: '1px solid var(--ma-border-default)',
+  borderRadius: 'var(--ma-radius)',
+  cursor: 'pointer',
+  textAlign: 'left',
+  fontFamily: 'var(--ma-font-ui)',
+  transition: 'border-color 0.15s ease, background 0.15s ease',
+}
+
+const styleSoDemo: CSSProperties = {
+  fontFamily: 'var(--ma-font-mono)',
+  fontSize: 11,
+  color: 'var(--ma-text-secondary)',
+}
+
 function App() {
   const [health, setHealth] = useState<HealthStatus | null>(null)
   const [healthError, setHealthError] = useState<string | null>(null)
@@ -627,6 +648,46 @@ function App() {
                 title="Khung ứng dụng mới đã sẵn sàng"
                 reason="Đăng nhập để mở menu theo vai trò, thanh đầu và vùng nội dung theo bộ kit mới."
               />
+              <div style={{ display: 'grid', gap: 'var(--ma-space-3)', marginTop: 'var(--ma-space-2)' }}>
+                <SysLabel>⚡ TRẢI NGHIỆM NHANH THEO VAI TRÒ</SysLabel>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 'var(--ma-space-2)' }}>
+                  <button
+                    type="button"
+                    onClick={() => setForm({ soDienThoai: '0900000003', matKhau: 'password' })}
+                    style={styleNutChonDemo}
+                  >
+                    <span>👔 <strong>Quản lý</strong></span>
+                    <span style={styleSoDemo}>0900000003</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm({ soDienThoai: '0900000002', matKhau: 'password' })}
+                    style={styleNutChonDemo}
+                  >
+                    <span>🏠 <strong>Chủ nhà</strong></span>
+                    <span style={styleSoDemo}>0900000002</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm({ soDienThoai: '0900000005', matKhau: 'password' })}
+                    style={styleNutChonDemo}
+                  >
+                    <span>👤 <strong>Khách thuê</strong></span>
+                    <span style={styleSoDemo}>0900000005</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm({ soDienThoai: '0900000004', matKhau: 'password' })}
+                    style={styleNutChonDemo}
+                  >
+                    <span>🔧 <strong>Thợ kỹ thuật</strong></span>
+                    <span style={styleSoDemo}>0900000004</span>
+                  </button>
+                </div>
+                <span style={{ fontSize: 11, color: 'var(--ma-text-muted)', fontFamily: 'var(--ma-font-mono)' }}>
+                  * Bấm để tự điền số điện thoại & mật khẩu thử nghiệm
+                </span>
+              </div>
             </div>
           </article>
 
@@ -882,6 +943,143 @@ function App() {
                       <dd style={{ margin: 0, font: 'var(--ma-text-body)', color: 'var(--ma-text-primary)' }}>{nguoiDung.vaiTro}</dd>
                     </div>
                   </dl>
+
+                  {['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && (
+                    <div style={{ display: 'grid', gap: 'var(--ma-space-4)', marginTop: 'var(--ma-space-2)' }}>
+                      <SysLabel>LỐI TẮT PHÂN HỆ VẬN HÀNH</SysLabel>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                          gap: 'var(--ma-space-4)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            border: '1px solid var(--ma-border-default)',
+                            borderRadius: 'var(--ma-radius-md)',
+                            padding: 'var(--ma-space-4)',
+                            background: 'var(--ma-bg-card)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 'var(--ma-space-2)',
+                            boxShadow: 'var(--ma-shadow-sm)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 14, fontWeight: 700 }}>📋 Hợp đồng & Hồ sơ</span>
+                            <span style={{ fontSize: 11, fontFamily: 'var(--ma-font-mono)', background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>5 BƯỚC</span>
+                          </div>
+                          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
+                            Quy trình chốt hồ sơ bất biến, phụ lục bàn giao tài sản phòng, điều khoản mẫu và xuất file PDF văn bản ký kết.
+                          </p>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => dieuHuongToi('/hop-dong')}
+                            style={{ marginTop: 'auto', alignSelf: 'flex-start' }}
+                          >
+                            Mở phân hệ Hợp đồng →
+                          </Button>
+                        </div>
+
+                        <div
+                          style={{
+                            border: '1px solid var(--ma-border-default)',
+                            borderRadius: 'var(--ma-radius-md)',
+                            padding: 'var(--ma-space-4)',
+                            background: 'var(--ma-bg-card)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 'var(--ma-space-2)',
+                            boxShadow: 'var(--ma-shadow-sm)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 14, fontWeight: 700 }}>👥 Người thuê & Cư trú</span>
+                            <span style={{ fontSize: 11, fontFamily: 'var(--ma-font-mono)', background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>2 CỘT</span>
+                          </div>
+                          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
+                            Danh bạ khách thuê thông minh, tra cứu CCCD, trạng thái duyệt cư trú tạm trú và liên kết phòng đang ở.
+                          </p>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => dieuHuongToi('/nguoi-thue')}
+                            style={{ marginTop: 'auto', alignSelf: 'flex-start' }}
+                          >
+                            Mở phân hệ Người thuê →
+                          </Button>
+                        </div>
+
+                        <div
+                          style={{
+                            border: '1px solid var(--ma-border-default)',
+                            borderRadius: 'var(--ma-radius-md)',
+                            padding: 'var(--ma-space-4)',
+                            background: 'var(--ma-bg-card)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 'var(--ma-space-2)',
+                            boxShadow: 'var(--ma-shadow-sm)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 14, fontWeight: 700 }}>💳 Hoá đơn & Thu tiền</span>
+                            <span style={{ fontSize: 11, fontFamily: 'var(--ma-font-mono)', background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>VIETQR</span>
+                          </div>
+                          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
+                            Sổ quỹ đối soát thu tiền đa kênh, lập hoá đơn hằng tháng, ghi nhận phiếu thu cọc và quyết toán phòng.
+                          </p>
+                          <div style={{ display: 'flex', gap: 'var(--ma-space-2)', marginTop: 'auto', flexWrap: 'wrap' }}>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => dieuHuongToi('/thu-tien')}
+                            >
+                              Sổ thu tiền →
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => dieuHuongToi('/hoa-don')}
+                            >
+                              Hoá đơn →
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            border: '1px solid var(--ma-border-default)',
+                            borderRadius: 'var(--ma-radius-md)',
+                            padding: 'var(--ma-space-4)',
+                            background: 'var(--ma-bg-card)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 'var(--ma-space-2)',
+                            boxShadow: 'var(--ma-shadow-sm)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 14, fontWeight: 700 }}>🏢 Sơ đồ Phòng & Toà</span>
+                            <span style={{ fontSize: 11, fontFamily: 'var(--ma-font-mono)', background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>SƠ ĐỒ TẦNG</span>
+                          </div>
+                          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
+                            Sơ đồ mặt bằng phòng theo tầng, trực quan hoá phòng trống / đang thuê / bảo trì và tài sản gắn phòng.
+                          </p>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => dieuHuongToi(nguoiDung.vaiTro === 'CHU' ? '/toa-nha' : '/phong')}
+                            style={{ marginTop: 'auto', alignSelf: 'flex-start' }}
+                          >
+                            Mở Sơ đồ phòng →
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </section>

@@ -166,12 +166,57 @@ function soNguyenDuong(value: string | null): number | null {
   return Number.isSafeInteger(parsed) ? parsed : null
 }
 
-const styleList: CSSProperties = { display: 'grid', gap: 10 }
-const styleRow: CSSProperties = { display: 'grid', gridTemplateColumns: 'minmax(14rem, 1.4fr) auto minmax(12rem, 1fr)', alignItems: 'center', gap: 16, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)', minWidth: 0 }
-const styleRowMain: CSSProperties = { display: 'grid', gap: 5, minWidth: 0, overflowWrap: 'anywhere' }
-const styleMoney: CSSProperties = { display: 'grid', gap: 5, justifyItems: 'end', color: 'var(--ma-text-secondary)', textAlign: 'right' }
-const styleMuted: CSSProperties = { color: 'var(--ma-text-secondary)' }
-const styleField: CSSProperties = { display: 'grid', gap: 6, maxWidth: 420 }
-const styleInput: CSSProperties = { minHeight: 'var(--ma-hit-mobile)', padding: '8px 10px', border: '1px solid var(--ma-border-strong)', background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'inherit' }
-const styleLink: CSSProperties = { color: 'var(--ma-text-primary)', fontWeight: 800, textDecoration: 'underline', textUnderlineOffset: 3 }
-const styleActiveFilter: CSSProperties = { margin: 0, padding: '10px 12px', borderLeft: '4px solid var(--ma-ink-900)', background: 'var(--ma-bg-sunken)', fontWeight: 700 }
+const styleList: CSSProperties = { display: 'grid', gap: 12 }
+const styleRow: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 14rem), 1fr))',
+  alignItems: 'center',
+  gap: 16,
+  padding: '16px 20px',
+  border: '1px solid var(--ma-border-default)',
+  borderRadius: 'var(--ma-radius-md)',
+  boxShadow: 'var(--ma-shadow-sm)',
+  background: 'var(--ma-bg-card)',
+  minWidth: 0,
+  transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
+}
+const styleRowMain: CSSProperties = { display: 'grid', gap: 4, minWidth: 0, overflowWrap: 'anywhere' }
+const styleMoney: CSSProperties = {
+  display: 'grid',
+  gap: 4,
+  justifyItems: 'end',
+  color: 'var(--ma-text-secondary)',
+  textAlign: 'right',
+  fontFamily: 'var(--ma-font-mono)',
+  fontVariantNumeric: 'tabular-nums',
+  fontSize: 13,
+}
+const styleMuted: CSSProperties = { color: 'var(--ma-text-secondary)', fontSize: 13 }
+const styleField: CSSProperties = { display: 'grid', gap: 6, maxWidth: 420, fontSize: 13, fontWeight: 600, color: 'var(--ma-text-secondary)' }
+const styleInput: CSSProperties = {
+  minHeight: 'var(--ma-hit-mobile)',
+  padding: '10px 14px',
+  border: '1px solid var(--ma-border-strong)',
+  borderRadius: 'var(--ma-radius)',
+  background: 'var(--ma-bg-card)',
+  color: 'var(--ma-text-primary)',
+  font: 'inherit',
+  boxShadow: 'var(--ma-shadow-sm)',
+}
+const styleLink: CSSProperties = {
+  color: 'var(--ma-brand-accent)',
+  fontFamily: 'var(--ma-font-mono)',
+  fontWeight: 700,
+  textDecoration: 'none',
+  fontSize: 14,
+}
+const styleActiveFilter: CSSProperties = {
+  margin: 0,
+  padding: '10px 14px',
+  border: '1px solid var(--ma-border-default)',
+  borderRadius: 'var(--ma-radius)',
+  background: 'var(--ma-bg-sunken)',
+  color: 'var(--ma-text-primary)',
+  fontWeight: 600,
+  fontSize: 13.5,
+}

@@ -56,8 +56,9 @@ public class NguoiThueRepository {
     public Long insert(NguoiThue nguoiThue) {
         return jdbcTemplate.queryForObject(
                 """
-                        INSERT INTO NGUOI_THUE(ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan, trang_thai_luu_tru)
-                        VALUES (?, ?, ?, ?, ?, ?)
+                        INSERT INTO NGUOI_THUE(ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan, trang_thai_luu_tru,
+                                               loai_giay_to, ngay_cap_giay_to, noi_cap_giay_to, dia_chi_thuong_tru, dia_chi_lien_he, email)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         RETURNING id
                         """,
                 Long.class,
@@ -66,7 +67,13 @@ public class NguoiThueRepository {
                 nguoiThue.soDienThoai(),
                 nguoiThue.soGiayTo(),
                 nguoiThue.queQuan(),
-                nguoiThue.trangThaiLuuTru()
+                nguoiThue.trangThaiLuuTru(),
+                nguoiThue.loaiGiayTo() != null ? nguoiThue.loaiGiayTo() : "CCCD",
+                nguoiThue.ngayCapGiayTo() != null ? java.sql.Date.valueOf(nguoiThue.ngayCapGiayTo()) : null,
+                nguoiThue.noiCapGiayTo(),
+                nguoiThue.diaChiThuongTru(),
+                nguoiThue.diaChiLienHe(),
+                nguoiThue.email()
         );
     }
 
@@ -78,7 +85,13 @@ public class NguoiThueRepository {
                             ngay_sinh = ?,
                             so_dien_thoai = ?,
                             so_giay_to = ?,
-                            que_quan = ?
+                            que_quan = ?,
+                            loai_giay_to = ?,
+                            ngay_cap_giay_to = ?,
+                            noi_cap_giay_to = ?,
+                            dia_chi_thuong_tru = ?,
+                            dia_chi_lien_he = ?,
+                            email = ?
                         WHERE id = ?
                         """,
                 nguoiThue.hoTen(),
@@ -86,6 +99,12 @@ public class NguoiThueRepository {
                 nguoiThue.soDienThoai(),
                 nguoiThue.soGiayTo(),
                 nguoiThue.queQuan(),
+                nguoiThue.loaiGiayTo() != null ? nguoiThue.loaiGiayTo() : "CCCD",
+                nguoiThue.ngayCapGiayTo() != null ? java.sql.Date.valueOf(nguoiThue.ngayCapGiayTo()) : null,
+                nguoiThue.noiCapGiayTo(),
+                nguoiThue.diaChiThuongTru(),
+                nguoiThue.diaChiLienHe(),
+                nguoiThue.email(),
                 nguoiThue.id()
         );
     }
@@ -160,7 +179,8 @@ public class NguoiThueRepository {
 
     private String cauLenhCoBan() {
         return """
-                SELECT nt.id, nt.ho_ten, nt.ngay_sinh, nt.so_dien_thoai, nt.so_giay_to, nt.que_quan, nt.trang_thai_luu_tru
+                SELECT nt.id, nt.ho_ten, nt.ngay_sinh, nt.so_dien_thoai, nt.so_giay_to, nt.que_quan, nt.trang_thai_luu_tru,
+                       nt.loai_giay_to, nt.ngay_cap_giay_to, nt.noi_cap_giay_to, nt.dia_chi_thuong_tru, nt.dia_chi_lien_he, nt.email
                 FROM NGUOI_THUE nt
                 """;
     }
@@ -185,6 +205,7 @@ public class NguoiThueRepository {
 
     private NguoiThue mapNguoiThue(ResultSet resultSet) throws SQLException {
         LocalDate ngaySinh = resultSet.getDate("ngay_sinh").toLocalDate();
+        java.sql.Date ngayCap = resultSet.getDate("ngay_cap_giay_to");
         return new NguoiThue(
                 resultSet.getLong("id"),
                 resultSet.getString("ho_ten"),
@@ -192,7 +213,13 @@ public class NguoiThueRepository {
                 resultSet.getString("so_dien_thoai"),
                 resultSet.getString("so_giay_to"),
                 resultSet.getString("que_quan"),
-                resultSet.getString("trang_thai_luu_tru")
+                resultSet.getString("trang_thai_luu_tru"),
+                resultSet.getString("loai_giay_to"),
+                ngayCap != null ? ngayCap.toLocalDate() : null,
+                resultSet.getString("noi_cap_giay_to"),
+                resultSet.getString("dia_chi_thuong_tru"),
+                resultSet.getString("dia_chi_lien_he"),
+                resultSet.getString("email")
         );
     }
 }

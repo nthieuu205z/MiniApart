@@ -17,6 +17,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -157,7 +158,7 @@ class NguoiOCungIntegrationTest {
     }
 
     @Test
-    void FR_TNT_03_CR_002_canhBaoQuaSucChuaNhungVanLuuVaHienThiSoNguoiTrenSucChua() throws Exception {
+    void FR_TNT_03_CR_002_quanLyThemNguoiOCungTrucTiep_vuotSucChuaBiTuChoiVaKhongLuu() throws Exception {
         String managerToken = login(3L, "0900000003");
         themNguoiOCung(managerToken, nguoiThueDaiDienId, "Đại diện", "2040-03-01", null);
 
@@ -174,11 +175,14 @@ class NguoiOCungIntegrationTest {
                         .header("Authorization", "Bearer " + managerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(nguoiOCungPayload(nguoiThueKhacId, "Bạn", "2040-03-15", null)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.canhBaoQuaSucChua").value(true))
-                .andExpect(jsonPath("$.soNguoiHienTai").value(3))
-                .andExpect(jsonPath("$.sucChua").value(1))
-                .andExpect(jsonPath("$.thongBaoCanhBao").value(containsString("3 người trên sức chứa 1")));
+                .andExpect(status().isBadRequest());
+
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM NGUOI_O_CUNG WHERE hop_dong_id = ? AND nguoi_thue_id = ?",
+                Integer.class,
+                hopDongId, nguoiThueKhacId
+        );
+        assertThat(count).isEqualTo(0);
     }
 
     @Test

@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Testcontainers
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "spring.main.allow-bean-definition-overriding=true")
 @AutoConfigureMockMvc
 @Import(NguoiDungQuanLyIntegrationTest.KichHoatTaiKhoanTestConfiguration.class)
 class NguoiDungQuanLyIntegrationTest {
@@ -64,6 +64,7 @@ class NguoiDungQuanLyIntegrationTest {
 
     @BeforeEach
     void resetDatabaseState() {
+        jdbcTemplate.update("DELETE FROM NHAT_KY_THAO_TAC");
         jdbcTemplate.update("DELETE FROM LAN_DANG_NHAP_SAI");
         jdbcTemplate.update("DELETE FROM THEO_DOI_DANG_NHAP");
         jdbcTemplate.update("DELETE FROM KICH_HOAT_TAI_KHOAN");
@@ -804,7 +805,7 @@ class NguoiDungQuanLyIntegrationTest {
         jdbcTemplate.update(
                 """
                         INSERT INTO NGUOI_THUE(ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan, trang_thai_luu_tru)
-                        VALUES (?, DATE '1995-01-01', ?, ?, 'Hà Nội', 'DANG_THUE')
+                        VALUES (?, DATE '1995-01-01', ?, ?, 'Hà Nội', 'CHUA_KHAI_BAO')
                         """,
                 hoTen,
                 soDienThoai,

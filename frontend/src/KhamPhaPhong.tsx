@@ -329,7 +329,7 @@ export default function KhamPhaPhong({ onChuyenDangNhap, manHinhHep = false }: P
                   style={{
                     ...styleChipButton,
                     background: active ? 'var(--ma-ink-900)' : 'var(--ma-bg-card)',
-                    color: active ? '#FFFFFF' : 'var(--ma-text-primary)',
+                    color: active ? 'var(--ma-text-on-inverse)' : 'var(--ma-text-primary)',
                     borderColor: active ? 'var(--ma-ink-900)' : 'var(--ma-border-dashed)',
                   }}
                 >
@@ -818,7 +818,7 @@ const styleTrangPortal: CSSProperties = {
 
 const styleHeaderPortal: CSSProperties = {
   borderBottom: '1px solid var(--ma-border-default)',
-  background: '#FFFFFF',
+  background: 'var(--ma-bg-card)',
   position: 'sticky',
   top: 0,
   zIndex: 30,
@@ -839,16 +839,17 @@ const styleHeaderContainer: CSSProperties = {
 const styleLogoHieu: CSSProperties = {
   width: 44,
   height: 44,
-  background: 'linear-gradient(135deg, #0F172A 0%, #0D9488 100%)',
-  color: '#FFFFFF',
+  background: 'var(--ma-ink-900)',
+  color: 'var(--ma-text-on-inverse)',
   fontFamily: 'var(--ma-font-mono)',
   fontWeight: 800,
   fontSize: 22,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  borderRadius: '12px',
+  borderRadius: 'var(--ma-radius-md)',
   boxShadow: 'var(--ma-shadow-sm)',
+  border: '1px solid var(--ma-border-inverse)',
 }
 
 const styleBrandTitle: CSSProperties = {
@@ -856,7 +857,7 @@ const styleBrandTitle: CSSProperties = {
   fontSize: 22,
   fontWeight: 800,
   letterSpacing: '-0.02em',
-  color: '#0F172A',
+  color: 'var(--ma-text-primary)',
 }
 
 const styleTagBadge: CSSProperties = {
@@ -871,9 +872,9 @@ const styleTagBadge: CSSProperties = {
 }
 
 const styleHeroBanner: CSSProperties = {
-  background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 55%, #0D9488 100%)',
-  color: '#FFFFFF',
-  borderBottom: 'none',
+  background: 'radial-gradient(ellipse at 80% 20%, rgba(13, 148, 136, 0.22) 0%, rgba(15, 23, 42, 0) 70%), var(--ma-ink-900)',
+  color: 'var(--ma-text-on-inverse)',
+  borderBottom: '1px solid var(--ma-line-200)',
   padding: 'clamp(36px, 6vw, 68px) var(--ma-space-6) clamp(48px, 8vw, 84px)',
 }
 
@@ -888,14 +889,14 @@ const styleHeroHeading: CSSProperties = {
   letterSpacing: 'var(--ma-tracking-title)',
   fontWeight: 800,
   lineHeight: 1.2,
-  color: '#FFFFFF',
+  color: 'var(--ma-text-on-inverse)',
 }
 
 const styleHeroSub: CSSProperties = {
   margin: 0,
   maxWidth: 720,
   fontSize: 'clamp(14px, 2vw, 16px)',
-  color: '#CBD5E1',
+  color: 'var(--ma-text-secondary-on-inverse)',
   lineHeight: 1.6,
 }
 
@@ -911,24 +912,25 @@ const styleThongKeItem: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 2,
-  background: 'rgba(255, 255, 255, 0.08)',
+  background: 'rgba(255, 255, 255, 0.07)',
   backdropFilter: 'blur(8px)',
   border: '1px solid rgba(255, 255, 255, 0.15)',
-  borderRadius: '12px',
+  borderRadius: 'var(--ma-radius-md)',
   padding: '10px 20px',
 }
 
 const styleSoThongKe: CSSProperties = {
   fontFamily: 'var(--ma-font-mono)',
+  fontVariantNumeric: 'tabular-nums',
   fontSize: 28,
   fontWeight: 800,
-  color: '#FFFFFF',
+  color: 'var(--ma-text-on-inverse)',
 }
 
 const styleChuThongKe: CSSProperties = {
   fontSize: 12,
   fontFamily: 'var(--ma-font-mono)',
-  color: '#E2E8F0',
+  color: 'var(--ma-text-secondary-on-inverse)',
 }
 
 const styleKhuVucBoLoc: CSSProperties = {
@@ -938,8 +940,8 @@ const styleKhuVucBoLoc: CSSProperties = {
   padding: 'var(--ma-space-5) var(--ma-space-6)',
   display: 'grid',
   gap: 'var(--ma-space-4)',
-  background: '#FFFFFF',
-  borderRadius: '16px',
+  background: 'var(--ma-bg-card)',
+  borderRadius: 'var(--ma-radius-md)',
   boxShadow: 'var(--ma-shadow-md)',
   border: '1px solid var(--ma-border-default)',
   position: 'relative',
@@ -970,7 +972,7 @@ const styleSelect: CSSProperties = {
   minHeight: 42,
   padding: '8px 14px',
   border: '1px solid var(--ma-border-default)',
-  background: '#F8FAFC',
+  background: 'var(--ma-bg-page)',
   color: 'var(--ma-text-primary)',
   fontFamily: 'var(--ma-font-ui)',
   fontSize: 13,
@@ -983,7 +985,7 @@ const styleInputSearch: CSSProperties = {
   minHeight: 42,
   padding: '8px 14px',
   border: '1px solid var(--ma-border-default)',
-  background: '#F8FAFC',
+  background: 'var(--ma-bg-page)',
   color: 'var(--ma-text-primary)',
   fontFamily: 'var(--ma-font-ui)',
   fontSize: 13,
@@ -1040,8 +1042,8 @@ const styleKetQuaThanh: CSSProperties = {
 
 const styleKhungThongBao: CSSProperties = {
   border: '1px dashed var(--ma-border-dashed)',
-  background: '#FFFFFF',
-  borderRadius: '16px',
+  background: 'var(--ma-bg-card)',
+  borderRadius: 'var(--ma-radius-md)',
   padding: 'var(--ma-space-8)',
   textAlign: 'center',
 }
@@ -1054,14 +1056,14 @@ const styleGridPhong: CSSProperties = {
 
 const styleCardPhong: CSSProperties = {
   border: '1px solid var(--ma-border-default)',
-  borderRadius: '16px',
-  background: '#FFFFFF',
-  boxShadow: 'var(--ma-shadow)',
+  borderRadius: 'var(--ma-radius-md)',
+  background: 'var(--ma-bg-card)',
+  boxShadow: 'var(--ma-shadow-sm)',
   padding: 'var(--ma-space-5)',
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--ma-space-3)',
-  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  transition: 'transform 0.18s ease, box-shadow 0.18s ease',
 }
 
 const styleCardHeader: CSSProperties = {
@@ -1075,7 +1077,7 @@ const styleSoPhongHien: CSSProperties = {
   fontFamily: 'var(--ma-font-mono)',
   fontSize: 22,
   fontWeight: 800,
-  color: '#0F172A',
+  color: 'var(--ma-text-primary)',
 }
 
 const styleTenToaNha: CSSProperties = {
@@ -1093,9 +1095,10 @@ const styleGiaThueKhoi: CSSProperties = {
 
 const styleGiaSo: CSSProperties = {
   fontFamily: 'var(--ma-font-mono)',
+  fontVariantNumeric: 'tabular-nums',
   fontSize: 20,
   fontWeight: 800,
-  color: 'var(--ma-green-600)',
+  color: 'var(--ma-green-700)',
 }
 
 const styleGiaKy: CSSProperties = {
@@ -1119,9 +1122,9 @@ const styleDiaChiText: CSSProperties = {
 const styleThongSoKop: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(4, 1fr)',
-  background: '#F8FAFC',
+  background: 'var(--ma-bg-sunken)',
   border: '1px solid var(--ma-border-subtle)',
-  borderRadius: '10px',
+  borderRadius: 'var(--ma-radius)',
   padding: '8px 12px',
   gap: 4,
 }
@@ -1141,6 +1144,7 @@ const styleThongSoNhan: CSSProperties = {
 
 const styleThongSoGiaTri: CSSProperties = {
   fontFamily: 'var(--ma-font-mono)',
+  fontVariantNumeric: 'tabular-nums',
   fontSize: 12,
   fontWeight: 700,
   color: 'var(--ma-text-primary)',
@@ -1165,10 +1169,10 @@ const styleTagTienIch: CSSProperties = {
   fontFamily: 'var(--ma-font-mono)',
   fontSize: 10,
   padding: '3px 8px',
-  background: '#F0FDFA',
-  border: '1px solid #CCFBF1',
+  background: 'var(--ma-brand-accent-light)',
+  border: '1px solid var(--ma-brand-accent)',
   borderRadius: 'var(--ma-radius-pill)',
-  color: 'var(--ma-green-700)',
+  color: 'var(--ma-brand-accent-hover)',
   fontWeight: 600,
 }
 
@@ -1176,10 +1180,10 @@ const styleTagTienIchLon: CSSProperties = {
   fontFamily: 'var(--ma-font-mono)',
   fontSize: 12,
   padding: '5px 12px',
-  background: '#F0FDFA',
-  border: '1px solid #CCFBF1',
+  background: 'var(--ma-brand-accent-light)',
+  border: '1px solid var(--ma-brand-accent)',
   borderRadius: 'var(--ma-radius-pill)',
-  color: 'var(--ma-green-700)',
+  color: 'var(--ma-brand-accent-hover)',
   fontWeight: 600,
 }
 
@@ -1200,8 +1204,8 @@ const styleCardActions: CSSProperties = {
 const styleBackdropModal: CSSProperties = {
   position: 'fixed',
   inset: 0,
-  background: 'rgba(15, 23, 42, 0.65)',
-  backdropFilter: 'blur(6px)',
+  background: 'rgba(15, 23, 42, 0.72)',
+  backdropFilter: 'blur(8px)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -1210,8 +1214,8 @@ const styleBackdropModal: CSSProperties = {
 }
 
 const styleModalHop: CSSProperties = {
-  background: '#FFFFFF',
-  borderRadius: '16px',
+  background: 'var(--ma-bg-card)',
+  borderRadius: 'var(--ma-radius-md)',
   boxShadow: 'var(--ma-shadow-frame)',
   border: '1px solid var(--ma-border-default)',
   width: '100%',
@@ -1236,7 +1240,7 @@ const styleModalTitle: CSSProperties = {
   fontSize: 20,
   fontWeight: 800,
   letterSpacing: 'var(--ma-tracking-title)',
-  color: '#0F172A',
+  color: 'var(--ma-text-primary)',
 }
 
 const styleNutDongModal: CSSProperties = {
@@ -1258,7 +1262,7 @@ const styleModalBody: CSSProperties = {
 const styleModalFooter: CSSProperties = {
   padding: 'var(--ma-space-4) var(--ma-space-5)',
   borderTop: '1px solid var(--ma-border-default)',
-  background: '#F8FAFC',
+  background: 'var(--ma-bg-page)',
   display: 'flex',
   justifyContent: 'flex-end',
   gap: 'var(--ma-space-3)',
@@ -1270,8 +1274,8 @@ const styleHopGiaChinh: CSSProperties = {
   alignItems: 'center',
   padding: 'var(--ma-space-4)',
   border: '1px solid var(--ma-border-default)',
-  background: '#F8FAFC',
-  borderRadius: '12px',
+  background: 'var(--ma-bg-sunken)',
+  borderRadius: 'var(--ma-radius)',
 }
 
 const styleTieuDePhu: CSSProperties = {
@@ -1325,7 +1329,7 @@ const styleInputForm: CSSProperties = {
   minHeight: 42,
   padding: '8px 14px',
   border: '1px solid var(--ma-border-default)',
-  background: '#F8FAFC',
+  background: 'var(--ma-bg-card)',
   color: 'var(--ma-text-primary)',
   fontFamily: 'var(--ma-font-ui)',
   fontSize: 13,
@@ -1336,7 +1340,7 @@ const styleInputForm: CSSProperties = {
 const styleTextareaForm: CSSProperties = {
   padding: '8px 14px',
   border: '1px solid var(--ma-border-default)',
-  background: '#F8FAFC',
+  background: 'var(--ma-bg-card)',
   color: 'var(--ma-text-primary)',
   fontFamily: 'var(--ma-font-ui)',
   fontSize: 13,
@@ -1348,7 +1352,7 @@ const styleTextareaForm: CSSProperties = {
 const styleHopThanhCong: CSSProperties = {
   border: '1px solid var(--ma-done)',
   background: 'var(--ma-done-bg)',
-  borderRadius: '12px',
+  borderRadius: 'var(--ma-radius-md)',
   padding: 'var(--ma-space-6)',
   textAlign: 'center',
 }
@@ -1358,7 +1362,7 @@ const styleLoiForm: CSSProperties = {
   background: 'var(--ma-urgent-bg)',
   color: 'var(--ma-urgent)',
   border: '1px solid var(--ma-urgent)',
-  borderRadius: '8px',
+  borderRadius: 'var(--ma-radius)',
   fontSize: 13,
   marginBottom: 'var(--ma-space-4)',
 }

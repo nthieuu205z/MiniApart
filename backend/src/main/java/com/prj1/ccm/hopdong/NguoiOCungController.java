@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,7 +24,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/hop-dong/{hopDongId}/nguoi-o-cung")
 public class NguoiOCungController {
-    private static final Set<String> KHOA_HOP_LE = Set.of("nguoiThueId", "quanHe", "tuNgay", "denNgay");
+    private static final Set<String> KHOA_HOP_LE = Set.of("nguoiThueId", "quanHe", "tuNgay", "denNgay", "vaiTro");
     private static final String THONG_BAO_YEU_CAU_KHONG_HOP_LE = "Yêu cầu người ở cùng không hợp lệ.";
 
     private final NguoiOCungService nguoiOCungService;
@@ -50,6 +51,47 @@ public class NguoiOCungController {
         );
     }
 
+    @PutMapping("/{id}/duyet")
+    public ThongTinNguoiOCung duyet(
+            @PathVariable Long hopDongId,
+            @PathVariable Long id,
+            HttpServletRequest request
+    ) {
+        return nguoiOCungService.duyet(hopDongId, id, nguoiDungHienTai(request));
+    }
+
+    @PutMapping("/{id}/tu-choi")
+    public ThongTinNguoiOCung tuChoi(
+            @PathVariable Long hopDongId,
+            @PathVariable Long id,
+            @RequestBody(required = false) YeuCauTuChoiNguoiOCung req,
+            HttpServletRequest request
+    ) {
+        String lyDo = req != null ? req.lyDo() : null;
+        return nguoiOCungService.tuChoi(hopDongId, id, lyDo, nguoiDungHienTai(request));
+    }
+
+    @PutMapping("/{id}/roi-phong")
+    public ThongTinNguoiOCung roiPhong(
+            @PathVariable Long hopDongId,
+            @PathVariable Long id,
+            @RequestBody(required = false) YeuCauRoiPhong req,
+            HttpServletRequest request
+    ) {
+        LocalDate ngay = req != null ? req.ngayRoiDi() : null;
+        String lyDo = req != null ? req.lyDo() : null;
+        return nguoiOCungService.roiPhong(hopDongId, id, ngay, lyDo, nguoiDungHienTai(request));
+    }
+
+    @PostMapping("/{id}/kich-hoat-tai-khoan")
+    public ThongTinNguoiOCung kichHoatTaiKhoan(
+            @PathVariable Long hopDongId,
+            @PathVariable Long id,
+            HttpServletRequest request
+    ) {
+        return nguoiOCungService.kichHoatTaiKhoan(hopDongId, id, nguoiDungHienTai(request));
+    }
+
     /** FR-TNT-03 and CR-002 count occupants on an inclusive date, so denNgay remains occupied on that date; NFR-SEC-03 enforces server-side access control. */
     @GetMapping("/so-luong")
     public ThongTinSoNguoiO soLuong(
@@ -71,9 +113,10 @@ public class NguoiOCungController {
         }
         return new YeuCauNguoiOCung(
                 layLong(yeuCau, "nguoiThueId"),
-                layChuoi(yeuCau, "quanHe"),
+                layChuoiTuyChon(yeuCau, "quanHe"),
                 layNgay(yeuCau, "tuNgay", false),
-                layNgay(yeuCau, "denNgay", true)
+                layNgay(yeuCau, "denNgay", true),
+                layChuoiTuyChon(yeuCau, "vaiTro")
         );
     }
 
@@ -85,9 +128,12 @@ public class NguoiOCungController {
         return node.longValue();
     }
 
-    private String layChuoi(JsonNode yeuCau, String tenTruong) {
+    private String layChuoiTuyChon(JsonNode yeuCau, String tenTruong) {
         JsonNode node = yeuCau.get(tenTruong);
-        if (node == null || node.isNull() || !node.isTextual()) {
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        if (!node.isTextual()) {
             throw khongHopLe();
         }
         return node.textValue();
@@ -111,11 +157,11 @@ public class NguoiOCungController {
         }
     }
 
-    private NguoiDung nguoiDungHienTai(HttpServletRequest request) {
-        return (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
-    }
-
     private ResponseStatusException khongHopLe() {
         return new ResponseStatusException(HttpStatus.BAD_REQUEST, THONG_BAO_YEU_CAU_KHONG_HOP_LE);
+    }
+
+    private NguoiDung nguoiDungHienTai(HttpServletRequest request) {
+        return (NguoiDung) request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE);
     }
 }

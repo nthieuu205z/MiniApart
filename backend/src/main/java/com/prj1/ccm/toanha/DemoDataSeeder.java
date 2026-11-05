@@ -42,6 +42,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         seedDichVuVaBangGia();
         seedPhongMau();
         seedTaiSanMau();
+        seedCauHinhBenAVaMauHopDongNeuChuaCo();
         log.info("Hoàn tất nạp dữ liệu mẫu an toàn và idempotent.");
     }
 
@@ -163,5 +164,37 @@ public class DemoDataSeeder implements CommandLineRunner {
                     WHERE ts.phong_id = p.id AND ts.ten_tai_san = d.ten_tai_san
                 )
                 """);
+    }
+
+    public void seedCauHinhBenAVaMauHopDongNeuChuaCo() {
+        try {
+            jdbcTemplate.update("""
+                    INSERT INTO CAU_HINH_BEN_A_TOA_NHA (
+                        toa_nha_id, loai_chu_the, ten_chu_the, ma_so_dinh_danh, dia_chi_lien_he,
+                        so_dien_thoai, email, ho_ten_nguoi_ky, chuc_vu_nguoi_ky, tu_cach_ky,
+                        so_tai_khoan, ten_ngan_hang, chu_tai_khoan
+                    ) VALUES 
+                        (1, 'CA_NHAN', 'Chủ sở hữu mẫu Toà A', '001090000002', 'Số 12 ngõ 34 đường Hoà Bình, Phường Mẫu, Hà Nội',
+                         '0900000002', 'chusohootoaA@miniapart.local', 'Chủ sở hữu mẫu', 'Chủ sở hữu', 'CHU_SO_HUU',
+                         '9704000000000101', 'Ngân hàng TMCP Quân Đội (MB)', 'CHU SO HUU TOA A'),
+                        (2, 'CA_NHAN', 'Chủ sở hữu mẫu Toà B', '001090000002', 'Số 8 đường Bến Vân Đồn, Phường Mẫu, TP. Hồ Chí Minh',
+                         '0900000002', 'chusohootoaB@miniapart.local', 'Chủ sở hữu mẫu', 'Chủ sở hữu', 'CHU_SO_HUU',
+                         '9704000000000202', 'Ngân hàng TMCP Ngoại Thương (Vietcombank)', 'CHU SO HUU TOA B')
+                    ON CONFLICT (toa_nha_id) DO NOTHING
+                    """);
+
+            String mauVanBan = MauHopDongChuan.NOI_DUNG_DIEU_KHOAN_CHUAN;
+
+            jdbcTemplate.update("""
+                    INSERT INTO MAU_HOP_DONG (
+                        toa_nha_id, ten_mau, phien_ban, trang_thai, tieu_de, noi_dung_dieu_khoan, nguoi_tao_id
+                    ) VALUES 
+                        (1, 'Mẫu hợp đồng chuẩn Toà A (12 điều khoản)', 1, 'PUBLISHED', 'HỢP ĐỒNG THUÊ PHÒNG', ?, 1),
+                        (2, 'Mẫu hợp đồng chuẩn Toà B (12 điều khoản)', 1, 'PUBLISHED', 'HỢP ĐỒNG THUÊ PHÒNG', ?, 1)
+                    ON CONFLICT (toa_nha_id, phien_ban) DO NOTHING
+                    """, mauVanBan, mauVanBan);
+        } catch (Exception ex) {
+            log.warn("Bỏ qua seed Bên A/Mẫu HĐ demo nếu bảng chưa tồn tại: {}", ex.getMessage());
+        }
     }
 }

@@ -58,6 +58,15 @@ class HopDongRepository {
         );
     }
 
+    public BigDecimal layTongThuCoc(Long hopDongId) {
+        BigDecimal tong = jdbcTemplate.queryForObject(
+                "SELECT COALESCE(SUM(so_tien), 0.00) FROM GIAO_DICH_COC WHERE hop_dong_id = ? AND loai = 'THU_COC'",
+                BigDecimal.class,
+                hopDongId
+        );
+        return tong != null ? tong : BigDecimal.ZERO;
+    }
+
     public Optional<HopDong> findById(Long id) {
         return jdbcTemplate.query(
                         """

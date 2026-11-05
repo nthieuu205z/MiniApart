@@ -205,12 +205,13 @@ public class TaoHoaDonHangLoatService {
             KetQuaTinhHoaDon ketQua
     ) {
         LocalDate ngayPhatHanh = LocalDate.now(clock);
+        LocalDate hanThanhToan = tinhHoaDonRepository.tinhHanThanhToan(hopDong.hopDongId(), kyThanhToan, toaNha.soNgayHanTt());
         return new TinhHoaDonRepository.HoaDonMoi(
                 tinhHoaDonRepository.maHoaDonChuaSuDung(maHoaDon(toaNha.maToa(), hopDong.soPhong(), kyThanhToan)),
                 kyThanhToan.id(),
                 hopDong.hopDongId(),
                 ngayPhatHanh,
-                kyThanhToan.ngayKetThuc().plusDays(toaNha.soNgayHanTt()),
+                hanThanhToan,
                 ketQua.tongTien().giaTri(),
                 ketQua.soNguoiOTrongKy(),
                 ketQua.soHoQuyDoi(),

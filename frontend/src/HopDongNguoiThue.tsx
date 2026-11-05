@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { ApiError, fetchHopDongCuaNguoiThue, type ThongTinHopDong } from './api'
+import { ApiError, fetchHopDongCuaNguoiThue, fetchHoSoHopDong, type ThongTinHopDong, type HopDongHoSoDto } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Figure } from './design/core/Figure'
 import { StatusTag } from './design/core/StatusTag'
@@ -99,6 +99,13 @@ export default function HopDongNguoiThue({ token, mobile = false }: Props) {
 function HopDongCard({ hopDong, token }: { hopDong: ThongTinHopDong; token: string }) {
   const trangThai = xacDinhTrangThai(hopDong)
   const [busy, setBusy] = useState(false)
+  const [hoSo, setHoSo] = useState<HopDongHoSoDto | null>(null)
+
+  useEffect(() => {
+    fetchHoSoHopDong(token, hopDong.id)
+      .then(setHoSo)
+      .catch(() => {})
+  }, [hopDong.id, token])
 
   return (
     <article data-contract-card={hopDong.id} style={styleTheHopDong}>
@@ -109,7 +116,28 @@ function HopDongCard({ hopDong, token }: { hopDong: ThongTinHopDong; token: stri
             {dinhDangNgayIso(hopDong.ngayBatDau)} → {dinhDangNgayIso(hopDong.ngayKetThuc)}
           </span>
         </div>
-        <StatusTag tone={trangThai.tone}>{trangThai.nhan}</StatusTag>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {hoSo?.trangThaiTaiLieu ? (
+            <StatusTag
+              tone={
+                hoSo.trangThaiTaiLieu === 'DA_GHI_NHAN_KY'
+                  ? 'done'
+                  : hoSo.trangThaiTaiLieu === 'DA_CHOT'
+                  ? 'waiting'
+                  : 'urgent'
+              }
+            >
+              {hoSo.trangThaiTaiLieu === 'DA_GHI_NHAN_KY'
+                ? 'Đã ký giấy'
+                : hoSo.trangThaiTaiLieu === 'DA_CHOT'
+                ? 'Đã chốt'
+                : 'Bản dự thảo'}
+            </StatusTag>
+          ) : (
+            <StatusTag tone="neutral">Hồ sơ lịch sử</StatusTag>
+          )}
+          <StatusTag tone={trangThai.tone}>{trangThai.nhan}</StatusTag>
+        </div>
       </header>
 
       <ThongBaoTrangThai trangThai={trangThai} />

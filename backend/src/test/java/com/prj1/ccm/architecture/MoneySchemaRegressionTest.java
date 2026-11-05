@@ -25,7 +25,8 @@ class MoneySchemaRegressionTest {
             Map.entry("nguoi_dung.lan_sai_dau_tien", "login-failure timestamp ends with tien but is not money"),
             Map.entry("theo_doi_dang_nhap.lan_sai_dau_tien", "login-failure timestamp ends with tien but is not money"),
             Map.entry("nhat_ky_thao_tac.gia_tri_truoc", "audit before-value is text, not a price"),
-            Map.entry("nhat_ky_thao_tac.gia_tri_sau", "audit after-value is text, not a price")
+            Map.entry("nhat_ky_thao_tac.gia_tri_sau", "audit after-value is text, not a price"),
+            Map.entry("hop_dong_ho_so.tai_khoan_nhan_tien", "bank account receiving payment is text, not money")
     );
 
     @Container

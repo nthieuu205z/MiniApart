@@ -116,7 +116,13 @@ public class NguoiThueService {
                 soDienThoai,
                 soGiayTo,
                 yeuCau.queQuan().trim(),
-                null
+                null,
+                yeuCau.loaiGiayTo() != null ? yeuCau.loaiGiayTo().trim() : "CCCD",
+                yeuCau.ngayCapGiayTo(),
+                yeuCau.noiCapGiayTo() != null ? yeuCau.noiCapGiayTo().trim() : null,
+                yeuCau.diaChiThuongTru() != null ? yeuCau.diaChiThuongTru().trim() : null,
+                yeuCau.diaChiLienHe() != null ? yeuCau.diaChiLienHe().trim() : null,
+                yeuCau.email() != null ? yeuCau.email().trim() : null
         );
     }
 

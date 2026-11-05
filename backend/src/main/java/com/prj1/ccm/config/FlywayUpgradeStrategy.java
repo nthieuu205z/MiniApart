@@ -55,6 +55,8 @@ public class FlywayUpgradeStrategy implements FlywayMigrationStrategy {
     public static final int CHECKSUM_V49_D2E3D69 = 676094527;
     public static final int CHECKSUM_V55_D2E3D69 = 52954075;
 
+    public static final int CHECKSUM_V58_DRAFT = -1463358195;
+
     public enum MigrationVariant {
         CANONICAL,
         V046D45A,
@@ -70,6 +72,7 @@ public class FlywayUpgradeStrategy implements FlywayMigrationStrategy {
 
         Integer checksumV49 = installedChecksums.get("49");
         Integer checksumV55 = installedChecksums.get("55");
+        Integer checksumV58 = installedChecksums.get("58");
 
         MigrationVariant variantV49 = determineVariant("49", checksumV49);
         MigrationVariant variantV55 = determineVariant("55", checksumV55);
@@ -77,8 +80,9 @@ public class FlywayUpgradeStrategy implements FlywayMigrationStrategy {
         // Nếu database mới hoặc các migration đã áp dụng đều là canonical: chạy trực tiếp từ classpath:db/migration
         boolean needVariantForV49 = (checksumV49 != null && variantV49 != MigrationVariant.CANONICAL);
         boolean needVariantForV55 = (checksumV55 != null && variantV55 != MigrationVariant.CANONICAL);
+        boolean needVariantForV58 = (checksumV58 != null && checksumV58 == CHECKSUM_V58_DRAFT);
 
-        if (!needVariantForV49 && !needVariantForV55) {
+        if (!needVariantForV49 && !needVariantForV55 && !needVariantForV58) {
             log.info("Database chạy canonical migrations trực tiếp từ classpath:db/migration.");
             Flyway effectiveFlyway = Flyway.configure()
                     .configuration(flyway.getConfiguration())
@@ -123,6 +127,11 @@ public class FlywayUpgradeStrategy implements FlywayMigrationStrategy {
                         : "classpath:db/migration_variants/vd2e3d69/V55__room_assets_and_handover.sql";
                 copyVariant(resolver, variantPath, tempDir, "V55__room_assets_and_handover.sql");
                 log.info("Áp dụng variant lịch sử {} cho V55 (checksum: {})", variantV55, checksumV55);
+            }
+
+            if (needVariantForV58) {
+                copyVariant(resolver, "classpath:db/migration_variants/draft_v58/V58__contract_dossier_snapshot_and_templates.sql", tempDir, "V58__contract_dossier_snapshot_and_templates.sql");
+                log.info("Áp dụng variant lịch sử draft cho V58 (checksum: {})", checksumV58);
             }
 
             String fileLocation = "filesystem:" + tempDir.toAbsolutePath().toString().replace('\\', '/');

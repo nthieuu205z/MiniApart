@@ -1706,4 +1706,325 @@ export async function lapBienBanTaiSan(token: string, hopDongId: number, data: Y
   return response.json()
 }
 
+export type CauHinhBenADto = {
+  id?: number
+  toaNhaId: number
+  loaiChuThe: 'CA_NHAN' | 'TO_CHUC'
+  tenChuThe: string
+  maSoDinhDanh: string
+  diaChiLienHe: string
+  soDienThoai: string
+  email?: string
+  hoTenNguoiKy: string
+  chucVuNguoiKy?: string
+  tuCachKy: 'CHU_SO_HUU' | 'DAI_DIEN_PHAP_LUAT' | 'NGUOI_DUOC_UY_QUYEN'
+  canCuUyQuyen?: string
+  thongTinDonViQuanLy?: string
+  soTaiKhoan?: string
+  tenNganHang?: string
+  chuTaiKhoan?: string
+}
+
+export type MauHopDongDto = {
+  id?: number
+  toaNhaId: number
+  tenMau: string
+  phienBan: number
+  trangThai: 'DRAFT' | 'PUBLISHED' | 'LUU_TRU'
+  tieuDe: string
+  noiDungDieuKhoan: string
+  nguoiTaoId?: number
+  taoLuc?: string
+  capNhatLuc?: string
+}
+
+export type ThongTinNguoiOCungDto = {
+  id: number
+  hopDongId: number
+  nguoiThueId: number
+  hoTenNguoiThue: string
+  quanHe?: string
+  tuNgay?: string
+  denNgay?: string
+  vaiTro?: string
+  trangThai?: 'CHO_DUYET' | 'DA_DUYET' | 'TU_CHOI' | 'DA_ROI_DI'
+  nguoiDeNghiId?: number
+  thoiDiemDeNghi?: string
+  nguoiDuyetId?: number
+  thoiDiemDuyet?: string
+  lyDoTuChoi?: string
+  lyDoRoiDi?: string
+  soDienThoai?: string
+  soGiayToChe?: string
+  coTaiKhoan?: boolean
+}
+
+export type HopDongHoSoDto = {
+  id?: number
+  hopDongId: number
+  revision: number
+  expectedRevision?: number
+  trangThaiTaiLieu: 'DRAFT' | 'DA_CHOT' | 'DA_GHI_NHAN_KY'
+  mauHopDongId?: number
+  mauPhienBan?: number
+  tieuDe: string
+  ngayLap: string
+  diaDiemLap: string
+  mucDichThue: string
+  phamViSuDung: string
+  ngayNhanPhong?: string
+  phuongThucThanhToan: string
+  kyThanhToanThang: number
+  hanThanhToanNgay: number
+  taiKhoanNhanTien?: string
+  dieuKienDieuChinhGia?: string
+  bienBanBanGiaoId?: number
+
+  // Chính sách vận hành đã thỏa thuận
+  soNguoiToiDa?: number
+  soNgayBaoTruocGiaHan?: number
+  soNgayHoanCoc?: number
+  khungGioYenTinh?: string
+
+  // Bên A
+  benALoaiChuThe?: 'CA_NHAN' | 'TO_CHUC'
+  benATenChuThe?: string
+  benADinhDanh?: string
+  benADiaChi?: string
+  benADienThoai?: string
+  benAEmail?: string
+  benANguoiKy?: string
+  benAChucVu?: string
+  benATuCachKy?: string
+  benACanCuUyQuyen?: string
+  benADonViQuanLy?: string
+
+  // Bên B
+  benBHoTen?: string
+  benBNgaySinh?: string
+  benBLoaiGiayTo?: string
+  benBSoGiayTo?: string
+  benBNgayCap?: string
+  benBNoiCap?: string
+  benBThuongTru?: string
+  benBLienHe?: string
+  benBDienThoai?: string
+  benBEmail?: string
+
+  // Bất động sản
+  bdsTenToaNha?: string
+  bdsDiaChiToaNha?: string
+  bdsSoPhong?: string
+  bdsTang?: number
+  bdsDienTich?: number
+
+  // Snapshots & Terms
+  dieuKhoanTuyBien?: string
+  snapshotDichVuJson?: string
+  snapshotTaiSanJson?: string
+
+  // Metadata
+  chotBoiNguoiDungId?: number
+  thoiDiemChot?: string
+  ghiNhanKyBoiId?: number
+  ngayKy?: string
+  thoiDiemGhiNhanKy?: string
+  ghiChuKy?: string
+  fileScanDinhKem?: string
+  taoLuc?: string
+  capNhatLuc?: string
+
+  // Bổ trợ hiển thị
+  giaThue?: string
+  tienCocThoaThuan?: string
+  tienCocThucThu?: string
+  ngayBatDau?: string
+  ngayKetThuc?: string
+  soNgayBaoTruoc?: number
+  trangThaiHopDong?: string
+  dsNguoiOCung?: ThongTinNguoiOCungDto[]
+  canhBaoThieuThongTin?: string[]
+  daCoHoSoChot?: boolean
+}
+
+export type HopDongPhuLucDto = {
+  id: number
+  hopDongId: number
+  soPhuLuc: number
+  tieuDe: string
+  ngayLap: string
+  ngayHieuLuc: string
+  noiDungThayDoi: string
+  trangThai: 'DRAFT' | 'DA_CHOT'
+  nguoiTaoId?: number
+  taoLuc?: string
+}
+
+export async function fetchCauHinhBenA(token: string, toaNhaId: number): Promise<CauHinhBenADto | null> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/ben-a`, { headers: authorizationHeaders(token) })
+  if (response.status === 404 || response.status === 204) return null
+  if (!response.ok) throw await toApiError(response, 'Không thể tải cấu hình Bên A.')
+  const text = await response.text()
+  return text ? JSON.parse(text) : null
+}
+
+export async function luuCauHinhBenA(token: string, toaNhaId: number, data: Partial<CauHinhBenADto>): Promise<CauHinhBenADto> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/ben-a`, {
+    method: 'PUT',
+    headers: { ...authorizationHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể lưu cấu hình Bên A.')
+  return response.json()
+}
+
+export async function fetchMauHopDong(token: string, toaNhaId: number): Promise<MauHopDongDto[]> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/mau-hop-dong`, { headers: authorizationHeaders(token) })
+  if (!response.ok) throw await toApiError(response, 'Không thể tải mẫu hợp đồng.')
+  return response.json()
+}
+
+export async function fetchMauHopDongChuan(token: string, toaNhaId: number): Promise<MauHopDongDto> {
+  const response = await fetch(`/api/toa-nha/${toaNhaId}/mau-hop-dong/chuan`, { headers: authorizationHeaders(token) })
+  if (!response.ok) throw await toApiError(response, 'Không thể tải mẫu hợp đồng chuẩn.')
+  return response.json()
+}
+
+export async function fetchHoSoHopDong(token: string, hopDongId: number): Promise<HopDongHoSoDto> {
+  const response = await fetch(`/api/hop-dong/${hopDongId}/ho-so`, { headers: authorizationHeaders(token) })
+  if (!response.ok) throw await toApiError(response, 'Không thể tải hồ sơ hợp đồng.')
+  return response.json()
+}
+
+export async function luuDraftHoSo(token: string, hopDongId: number, data: Partial<HopDongHoSoDto>): Promise<HopDongHoSoDto> {
+  const response = await fetch(`/api/hop-dong/${hopDongId}/ho-so/draft`, {
+    method: 'PUT',
+    headers: { ...authorizationHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể lưu bản nháp hợp đồng.')
+  return response.json()
+}
+
+export async function chotHoSoHopDong(token: string, hopDongId: number, data: { expectedRevision?: number; revision?: number; duLieuHoSo?: Partial<HopDongHoSoDto> }): Promise<HopDongHoSoDto> {
+  const response = await fetch(`/api/hop-dong/${hopDongId}/ho-so/chot`, {
+    method: 'POST',
+    headers: { ...authorizationHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể chốt hợp đồng.')
+  return response.json()
+}
+
+export async function ghiNhanKyHopDong(token: string, hopDongId: number, data: { expectedRevision?: number; ngayKy?: string; ghiChuKy?: string; fileScanDinhKem?: string }): Promise<HopDongHoSoDto> {
+  const response = await fetch(`/api/hop-dong/${hopDongId}/ho-so/ghi-nhan-ky`, {
+    method: 'POST',
+    headers: { ...authorizationHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể ghi nhận ký.')
+  return response.json()
+}
+
+export async function fetchPhuLucHopDong(token: string, hopDongId: number): Promise<HopDongPhuLucDto[]> {
+  const response = await fetch(`/api/hop-dong/${hopDongId}/phu-luc`, { headers: authorizationHeaders(token) })
+  if (!response.ok) throw await toApiError(response, 'Không thể tải danh sách phụ lục.')
+  return response.json()
+}
+
+export async function taoPhuLucHopDong(token: string, hopDongId: number, data: { tieuDe: string; ngayLap?: string; ngayHieuLuc: string; noiDungThayDoi: string }): Promise<HopDongPhuLucDto> {
+  const response = await fetch(`/api/hop-dong/${hopDongId}/phu-luc`, {
+    method: 'POST',
+    headers: { ...authorizationHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể tạo phụ lục.')
+  return response.json()
+}
+
+export type ThongTinGiaDichVuPhongDto = {
+  dichVuId: number
+  tenDichVu: string
+  donVi: string
+  cachTinh: 'THEO_CHI_SO' | 'CO_DINH'
+  cheDoGia: 'CO_DINH' | 'BAC_THANG'
+  donGia?: string | number | null
+  nguonGia: 'GHI_DE' | 'KE_THUA' | 'THIEU_BANG_GIA'
+  ngayHieuLuc?: string | null
+  bangGiaPhongId?: number | null
+}
+
+export async function moLaiDraftHoSo(token: string, hopDongId: number, data?: { expectedRevision?: number; lyDo?: string }): Promise<HopDongHoSoDto> {
+  const response = await fetch(`/api/hop-dong/${hopDongId}/ho-so/mo-lai-draft`, {
+    method: 'POST',
+    headers: { ...authorizationHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data || {}),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể mở lại bản nháp hợp đồng.')
+  return response.json()
+}
+
+export async function duyetNguoiOCung(token: string, hopDongId: number, id: number): Promise<ThongTinNguoiOCungDto> {
+  const response = await fetch(`/api/hop-dong/${hopDongId}/nguoi-o-cung/${id}/duyet`, {
+    method: 'PUT',
+    headers: authorizationHeaders(token),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể phê duyệt người ở cùng.')
+  return response.json()
+}
+
+export async function tuChoiNguoiOCung(token: string, hopDongId: number, id: number, lyDo: string): Promise<ThongTinNguoiOCungDto> {
+  const response = await fetch(`/api/hop-dong/${hopDongId}/nguoi-o-cung/${id}/tu-choi`, {
+    method: 'PUT',
+    headers: { ...authorizationHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lyDo }),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể từ chối người ở cùng.')
+  return response.json()
+}
+
+export async function roiPhongNguoiOCung(token: string, hopDongId: number, id: number, data?: { ngayRoiDi?: string; lyDo?: string }): Promise<ThongTinNguoiOCungDto> {
+  const response = await fetch(`/api/hop-dong/${hopDongId}/nguoi-o-cung/${id}/roi-phong`, {
+    method: 'PUT',
+    headers: { ...authorizationHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data || {}),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể ghi nhận rời phòng.')
+  return response.json()
+}
+
+export async function kichHoatTaiKhoanNguoiOCung(token: string, hopDongId: number, id: number): Promise<ThongTinNguoiOCungDto> {
+  const response = await fetch(`/api/hop-dong/${hopDongId}/nguoi-o-cung/${id}/kich-hoat-tai-khoan`, {
+    method: 'POST',
+    headers: authorizationHeaders(token),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể kích hoạt tài khoản người ở cùng.')
+  return response.json()
+}
+
+export async function fetchGiaDichVuPhong(token: string, phongId: number): Promise<ThongTinGiaDichVuPhongDto[]> {
+  const response = await fetch(`/api/phong/${phongId}/bang-gia-dich-vu`, { headers: authorizationHeaders(token) })
+  if (!response.ok) throw await toApiError(response, 'Không thể tải giá dịch vụ theo phòng.')
+  return response.json()
+}
+
+export async function themGiaDichVuPhong(token: string, phongId: number, dichVuId: number, data: { donGia: string | number; ngayHieuLuc: string }): Promise<ThongTinGiaDichVuPhongDto> {
+  const response = await fetch(`/api/phong/${phongId}/dich-vu/${dichVuId}/bang-gia`, {
+    method: 'POST',
+    headers: { ...authorizationHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể áp dụng đơn giá phòng.')
+  return response.json()
+}
+
+export async function xoaGiaDichVuPhong(token: string, phongId: number, bangGiaPhongId: number): Promise<void> {
+  const response = await fetch(`/api/phong/${phongId}/bang-gia/${bangGiaPhongId}`, {
+    method: 'DELETE',
+    headers: authorizationHeaders(token),
+  })
+  if (!response.ok) throw await toApiError(response, 'Không thể xóa đơn giá riêng của phòng.')
+}
+
+
 

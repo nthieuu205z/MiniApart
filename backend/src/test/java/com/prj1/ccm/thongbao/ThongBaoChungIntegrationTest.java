@@ -582,7 +582,7 @@ class ThongBaoChungIntegrationTest {
         return jdbcTemplate.queryForObject(
                 """
                         INSERT INTO NGUOI_THUE(ho_ten, ngay_sinh, so_dien_thoai, so_giay_to, que_quan, trang_thai_luu_tru)
-                        VALUES (?, DATE '1995-01-01', ?, ?, 'Hà Nội', 'DANG_THUE')
+                        VALUES (?, DATE '1995-01-01', ?, ?, 'Hà Nội', 'CHUA_KHAI_BAO')
                         RETURNING id
                         """,
                 Long.class,

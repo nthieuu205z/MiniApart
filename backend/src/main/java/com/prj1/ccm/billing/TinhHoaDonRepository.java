@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Repository
 class TinhHoaDonRepository {
@@ -42,6 +44,7 @@ class TinhHoaDonRepository {
     private final JdbcTemplate jdbcTemplate;
     private final Clock clock;
     private final QuyTacTrangThaiHoaDon quyTacTrangThaiHoaDon = new QuyTacTrangThaiHoaDon();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     TinhHoaDonRepository(JdbcTemplate jdbcTemplate, Clock clock) {
         this.jdbcTemplate = jdbcTemplate;
@@ -80,7 +83,7 @@ class TinhHoaDonRepository {
         for (DichVuApDung apDung : dichVuApDung) {
             boolean giaBacThang = apDung.dichVu().cheDoGia() == CheDoGia.BAC_THANG;
             List<Bac> cacBac = giaBacThang
-                    ? layBacThang(apDung.dichVu().id(), ky.ngayKetThuc())
+                    ? layBacThangChoHopDong(hopDongId, apDung.dichVu().id(), ky.ngayKetThuc())
                     : List.of();
             if (giaBacThang && cacBac.isEmpty()) {
                 lyDoKhongTheTinh.add(new LyDoBoQua(hopDong.phongId(), MaLyDo.THIEU_BANG_GIA,
@@ -650,6 +653,70 @@ class TinhHoaDonRepository {
                 phongId
         );
         return cacChiSo;
+    }
+
+    public LocalDate tinhHanThanhToan(Long hopDongId, com.prj1.ccm.toanha.KyThanhToan kyThanhToan, int soNgayHanTtMacDinh) {
+        if (hopDongId != null) {
+            List<Integer> hanNgayList = jdbcTemplate.query(
+                    """
+                    SELECT han_thanh_toan_ngay
+                    FROM HOP_DONG_HO_SO
+                    WHERE hop_dong_id = ? AND trang_thai_tai_lieu IN ('DA_CHOT', 'DA_GHI_NHAN_KY')
+                    ORDER BY revision DESC, id DESC
+                    LIMIT 1
+                    """,
+                    (rs, rowNum) -> rs.getInt("han_thanh_toan_ngay"),
+                    hopDongId
+            );
+            if (!hanNgayList.isEmpty() && hanNgayList.get(0) != null && hanNgayList.get(0) > 0) {
+                int hanNgay = hanNgayList.get(0);
+                java.time.YearMonth nextMonth = java.time.YearMonth.from(kyThanhToan.ngayKetThuc().plusDays(1));
+                int day = Math.min(hanNgay, nextMonth.lengthOfMonth());
+                return nextMonth.atDay(day);
+            }
+        }
+        return kyThanhToan.ngayKetThuc().plusDays(soNgayHanTtMacDinh);
+    }
+
+    private List<Bac> layBacThangChoHopDong(Long hopDongId, Long dichVuId, LocalDate ngayKetThuc) {
+        if (hopDongId != null) {
+            List<String> snapshots = jdbcTemplate.query(
+                    """
+                    SELECT snapshot_dich_vu_json
+                    FROM HOP_DONG_HO_SO
+                    WHERE hop_dong_id = ? AND trang_thai_tai_lieu IN ('DA_CHOT', 'DA_GHI_NHAN_KY')
+                    ORDER BY revision DESC, id DESC
+                    LIMIT 1
+                    """,
+                    (rs, rowNum) -> rs.getString("snapshot_dich_vu_json"),
+                    hopDongId
+            );
+            if (!snapshots.isEmpty() && snapshots.get(0) != null && !snapshots.get(0).isBlank()) {
+                try {
+                    JsonNode root = objectMapper.readTree(snapshots.get(0));
+                    if (root.isArray()) {
+                        for (JsonNode item : root) {
+                            if (item.has("dichVuId") && item.get("dichVuId").asLong() == dichVuId) {
+                                JsonNode tiers = item.get("cacBacThang");
+                                if (tiers != null && tiers.isArray() && tiers.size() > 0) {
+                                    List<Bac> result = new ArrayList<>();
+                                    for (JsonNode t : tiers) {
+                                        int bac = t.get("bac").asInt();
+                                        BigDecimal tuSoLuong = new BigDecimal(t.get("tuSoLuong").asText());
+                                        BigDecimal denSoLuong = t.hasNonNull("denSoLuong") ? new BigDecimal(t.get("denSoLuong").asText()) : null;
+                                        BigDecimal donGia = new BigDecimal(t.get("donGia").asText());
+                                        result.add(new Bac(bac, tuSoLuong, denSoLuong, new TienTe(donGia)));
+                                    }
+                                    return result;
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        return layBacThang(dichVuId, ngayKetThuc);
     }
 
     private List<Bac> layBacThang(Long dichVuId, LocalDate ngay) {

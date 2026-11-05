@@ -1,5 +1,32 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
-import { fetchHopDongQuanLy, fetchPhong, type ThongTinHopDong, type ThongTinPhong } from './api'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import {
+  fetchHopDongQuanLy,
+  fetchPhong,
+  fetchHoSoHopDong,
+  luuDraftHoSo,
+  chotHoSoHopDong,
+  ghiNhanKyHopDong,
+  moLaiDraftHoSo,
+  duyetNguoiOCung,
+  tuChoiNguoiOCung,
+  roiPhongNguoiOCung,
+  kichHoatTaiKhoanNguoiOCung,
+  fetchGiaDichVuPhong,
+  themGiaDichVuPhong,
+  xoaGiaDichVuPhong,
+  fetchPhuLucHopDong,
+  taoPhuLucHopDong,
+  fetchCauHinhBenA,
+  fetchMauHopDong,
+  fetchMauHopDongChuan,
+  type ThongTinHopDong,
+  type ThongTinPhong,
+  type HopDongHoSoDto,
+  type HopDongPhuLucDto,
+  type CauHinhBenADto,
+  type MauHopDongDto,
+  type ThongTinGiaDichVuPhongDto,
+} from './api'
 import { downloadManagementFile, managementRequest, type Service, type Tenant } from './managementApi'
 import { BuildingSelect, Field, Feedback, SaveButton, fieldStyle, gridStyle, panelStyle, rowStyle, today, useAction, useBuildings } from './ManagementShared'
 import { Button } from './design/core/Button'
@@ -8,7 +35,20 @@ import { StatusTag } from './design/core/StatusTag'
 import { SysLabel } from './design/core/SysLabel'
 import QuanLyTaiSanPhong from './QuanLyTaiSanPhong'
 
-type Occupant = { id: number; hoTenNguoiThue: string; quanHe: string; tuNgay: string; denNgay: string | null }
+type Occupant = {
+  id: number
+  hoTenNguoiThue: string
+  quanHe?: string
+  tuNgay: string
+  denNgay?: string | null
+  vaiTro?: string
+  trangThai?: 'CHO_DUYET' | 'DA_DUYET' | 'TU_CHOI' | 'DA_ROI_DI'
+  soDienThoai?: string
+  soGiayToChe?: string
+  coTaiKhoan?: boolean
+  lyDoTuChoi?: string
+  lyDoRoiDi?: string
+}
 type Settlement = { tongHoaDonCuoi: string; daThuCoc: string; congNo: string; khauTru: string; hoanCoc: string; hoaDonQuyetToanId: number | null }
 
 const quickPresetButtonStyle: CSSProperties = {
@@ -64,18 +104,176 @@ export default function HopDongThaoTac({ token }: { token: string }) {
   const action = useAction()
   const contract = contracts.find((c) => c.id === selected)
 
+  // Dossier state
+  const [hoSo, setHoSo] = useState<HopDongHoSoDto | null>(null)
+  const [phuLucList, setPhuLucList] = useState<HopDongPhuLucDto[]>([])
+  const [cauHinhBenA, setCauHinhBenA] = useState<CauHinhBenADto | null>(null)
+  const [mauList, setMauList] = useState<MauHopDongDto[]>([])
+  const [activeStep, setActiveStep] = useState<number>(1)
+  const [dossierForm, setDossierForm] = useState<Partial<HopDongHoSoDto>>({})
+  const [xacNhanChot, setXacNhanChot] = useState(false)
+  const [signingForm, setSigningForm] = useState({ ngayKy: today(), ghiChuKy: '', fileScanDinhKem: '' })
+  const [phuLucForm, setPhuLucForm] = useState({ tieuDe: '', ngayLap: today(), ngayHieuLuc: today(), noiDungThayDoi: '' })
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void; confirmLabel?: string } | null>(null)
+  const [promptDialog, setPromptDialog] = useState<{ title: string; message: string; placeholder?: string; defaultValue?: string; confirmLabel?: string; tone?: 'primary' | 'urgent'; onConfirm: (val: string) => void } | null>(null)
+  const requestGenRef = useRef(0)
+  const currentHopDongIdRef = useRef<number | null>(null)
+  const selectedHopDongIdRef = useRef<number | null>(selected)
+  selectedHopDongIdRef.current = selected
+
+  async function loadDossier(hopDongId: number) {
+    if (hopDongId !== selectedHopDongIdRef.current) {
+      return
+    }
+    const gen = ++requestGenRef.current
+    currentHopDongIdRef.current = hopDongId
+    setHoSo(null)
+    setPhuLucList([])
+    setDossierForm({})
+    try {
+      const [dossier, phuLucs] = await Promise.all([
+        fetchHoSoHopDong(token, hopDongId),
+        fetchPhuLucHopDong(token, hopDongId).catch(() => []),
+      ])
+      if (
+        requestGenRef.current !== gen ||
+        currentHopDongIdRef.current !== hopDongId ||
+        selectedHopDongIdRef.current !== hopDongId
+      ) {
+        return
+      }
+      setHoSo(dossier)
+      setPhuLucList(phuLucs)
+      setDossierForm({
+        tieuDe: dossier.tieuDe || 'HỢP ĐỒNG THUÊ PHÒNG',
+        ngayLap: dossier.ngayLap || today(),
+        diaDiemLap: dossier.diaDiemLap || 'Hà Nội',
+        mucDichThue: dossier.mucDichThue || 'Để ở',
+        phamViSuDung: dossier.phamViSuDung || 'Sử dụng riêng diện tích phòng thuê và sử dụng chung các tiện ích công cộng của toà nhà theo nội quy.',
+        ngayNhanPhong: dossier.ngayNhanPhong || '',
+        phuongThucThanhToan: dossier.phuongThucThanhToan || 'CHUYEN_KHOAN',
+        kyThanhToanThang: dossier.kyThanhToanThang ?? 1,
+        hanThanhToanNgay: dossier.hanThanhToanNgay ?? 5,
+        soNguoiToiDa: dossier.soNguoiToiDa ?? 2,
+        soNgayBaoTruocGiaHan: dossier.soNgayBaoTruocGiaHan ?? (contract?.soNgayBaoTruoc || 30),
+        soNgayHoanCoc: dossier.soNgayHoanCoc ?? 7,
+        khungGioYenTinh: dossier.khungGioYenTinh || '22:00 - 06:00 hàng ngày',
+        taiKhoanNhanTien: dossier.taiKhoanNhanTien || '',
+        dieuKienDieuChinhGia: dossier.dieuKienDieuChinhGia || 'Giá thuê giữ nguyên trong suốt thời hạn hợp đồng, trừ trường hợp có thỏa thuận bằng văn bản.',
+        bienBanBanGiaoId: dossier.bienBanBanGiaoId,
+        benALoaiChuThe: dossier.benALoaiChuThe || 'CA_NHAN',
+        benATenChuThe: dossier.benATenChuThe || '',
+        benADinhDanh: dossier.benADinhDanh || '',
+        benADiaChi: dossier.benADiaChi || '',
+        benADienThoai: dossier.benADienThoai || '',
+        benAEmail: dossier.benAEmail || '',
+        benANguoiKy: dossier.benANguoiKy || '',
+        benAChucVu: dossier.benAChucVu || 'Chủ sở hữu',
+        benATuCachKy: dossier.benATuCachKy || 'CHU_SO_HUU',
+        benACanCuUyQuyen: dossier.benACanCuUyQuyen || '',
+        benADonViQuanLy: dossier.benADonViQuanLy || '',
+        benBHoTen: dossier.benBHoTen || '',
+        benBNgaySinh: dossier.benBNgaySinh || '',
+        benBLoaiGiayTo: dossier.benBLoaiGiayTo || 'CCCD',
+        benBSoGiayTo: dossier.benBSoGiayTo || '',
+        benBNgayCap: dossier.benBNgayCap || '',
+        benBNoiCap: dossier.benBNoiCap || '',
+        benBThuongTru: dossier.benBThuongTru || '',
+        benBLienHe: dossier.benBLienHe || '',
+        benBDienThoai: dossier.benBDienThoai || '',
+        benBEmail: dossier.benBEmail || '',
+        dieuKhoanTuyBien: dossier.dieuKhoanTuyBien || '',
+      })
+    } catch (err: any) {
+      if (
+        requestGenRef.current === gen &&
+        currentHopDongIdRef.current === hopDongId &&
+        selectedHopDongIdRef.current === hopDongId
+      ) {
+        action.setError(err.message || 'Không thể tải hồ sơ hợp đồng.')
+      }
+    }
+  }
+
+  async function runScopedMutation(
+    targetHopDongId: number,
+    mutationFn: () => Promise<unknown>,
+    successMessage: string
+  ) {
+    if (!targetHopDongId || targetHopDongId !== selectedHopDongIdRef.current) {
+      return
+    }
+    const expectedGen = requestGenRef.current
+    action.setBusy(true)
+    action.setError(null)
+    action.setSuccess(null)
+
+    try {
+      await mutationFn()
+
+      if (
+        selectedHopDongIdRef.current !== targetHopDongId ||
+        requestGenRef.current !== expectedGen
+      ) {
+        return
+      }
+
+      await loadDossier(targetHopDongId)
+
+      if (
+        selectedHopDongIdRef.current === targetHopDongId &&
+        currentHopDongIdRef.current === targetHopDongId
+      ) {
+        action.setSuccess(successMessage)
+      }
+    } catch (err: any) {
+      if (
+        selectedHopDongIdRef.current === targetHopDongId &&
+        requestGenRef.current === expectedGen
+      ) {
+        action.setError(err.message || 'Thao tác thất bại.')
+      }
+    } finally {
+      action.setBusy(false)
+    }
+  }
+
+  function napTuCauHinhBenA() {
+    if (!cauHinhBenA) return
+    setDossierForm((prev) => ({
+      ...prev,
+      benALoaiChuThe: cauHinhBenA.loaiChuThe,
+      benATenChuThe: cauHinhBenA.tenChuThe,
+      benADinhDanh: cauHinhBenA.maSoDinhDanh,
+      benADiaChi: cauHinhBenA.diaChiLienHe,
+      benADienThoai: cauHinhBenA.soDienThoai,
+      benAEmail: cauHinhBenA.email || '',
+      benANguoiKy: cauHinhBenA.hoTenNguoiKy,
+      benAChucVu: cauHinhBenA.chucVuNguoiKy || 'Chủ sở hữu',
+      benATuCachKy: cauHinhBenA.tuCachKy,
+      benACanCuUyQuyen: cauHinhBenA.canCuUyQuyen || '',
+      taiKhoanNhanTien: cauHinhBenA.soTaiKhoan
+        ? `${cauHinhBenA.soTaiKhoan} - ${cauHinhBenA.tenNganHang} (${cauHinhBenA.chuTaiKhoan})`
+        : prev.taiKhoanNhanTien,
+    }))
+  }
+
   async function load() {
     if (!building.buildingId) return
-    const [a, b, c, d] = await Promise.all([
+    const [a, b, c, d, benA, maus] = await Promise.all([
       fetchHopDongQuanLy(token, building.buildingId),
       managementRequest<Tenant[]>(token, '/api/nguoi-thue'),
       fetchPhong(token, building.buildingId),
       managementRequest<Service[]>(token, `/api/toa-nha/${building.buildingId}/dich-vu`),
+      fetchCauHinhBenA(token, building.buildingId).catch(() => null),
+      fetchMauHopDong(token, building.buildingId).catch(() => []),
     ])
     setContracts(a)
     setTenants(b)
     setRooms(c)
     setServices(d)
+    setCauHinhBenA(benA)
+    setMauList(maus)
   }
 
   useEffect(() => {
@@ -84,12 +282,19 @@ export default function HopDongThaoTac({ token }: { token: string }) {
   }, [building.buildingId, token])
 
   useEffect(() => {
+    selectedHopDongIdRef.current = selected
+    action.setError(null)
+    action.setSuccess(null)
     setSettlement(null)
     setFinalReadings({})
     setConfirmed(false)
     setSettle({ khauTruHuHong: '0', lyDo: '', bienBanId: null })
     setBienBans([])
     setXacNhanKhauTruKhacBienBan(false)
+    setHoSo(null)
+    setPhuLucList([])
+    setActiveStep(1)
+    setXacNhanChot(false)
     if (!selected) {
       setOccupants([])
       return
@@ -97,11 +302,12 @@ export default function HopDongThaoTac({ token }: { token: string }) {
     let active = true
     managementRequest<Occupant[]>(token, `/api/hop-dong/${selected}/nguoi-o-cung`)
       .then((rows) => {
-        if (active) setOccupants(rows)
+        if (active && selectedHopDongIdRef.current === selected) setOccupants(rows)
       })
       .catch((e: Error) => {
-        if (active) action.setError(e.message)
+        if (active && selectedHopDongIdRef.current === selected) action.setError(e.message)
       })
+    loadDossier(selected)
     return () => {
       active = false
     }
@@ -317,63 +523,61 @@ export default function HopDongThaoTac({ token }: { token: string }) {
         {/* THẺ TÓM TẮT HỢP ĐỒNG TRỰC QUAN LIVE */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-            color: '#FFFFFF',
+            background: 'var(--ma-bg-card)',
+            color: 'var(--ma-text-primary)',
             borderRadius: 'var(--ma-radius-md)',
+            border: '1px solid var(--ma-border-default)',
             padding: '20px 24px',
-            boxShadow: 'var(--ma-shadow-md)',
+            boxShadow: 'var(--ma-shadow-sm)',
             display: 'grid',
-            gap: 14,
+            gap: 16,
             marginTop: 8,
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>📋</span>
-              <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>Tóm tắt Hợp đồng & Chi phí kỳ đầu</span>
-            </div>
-            <span style={{ fontFamily: 'var(--ma-font-mono)', fontSize: 11, background: 'rgba(13, 148, 136, 0.25)', color: '#2DD4BF', padding: '3px 10px', borderRadius: 'var(--ma-radius-pill)', fontWeight: 600 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--ma-border-subtle)', paddingBottom: 12 }}>
+            <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>Tóm tắt Hợp đồng & Chi phí kỳ đầu</span>
+            <span style={{ fontFamily: 'var(--ma-font-mono)', fontSize: 11, background: 'var(--ma-brand-accent-light)', color: 'var(--ma-brand-accent)', padding: '3px 10px', borderRadius: 'var(--ma-radius-pill)', fontWeight: 600 }}>
               {form.ngayKetThuc ? 'ĐÃ ĐẶT HẠN' : 'CHỜ CHỌN THỜI HẠN'}
             </span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
             <div>
-              <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'var(--ma-font-mono)' }}>PHÒNG THUÊ</div>
-              <div style={{ fontSize: 16, fontWeight: 700, marginTop: 3 }}>
+              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>PHÒNG THUÊ</div>
+              <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4 }}>
                 {phongChon ? `Phòng ${phongChon.soPhong} (Tầng ${phongChon.tang})` : '— Chưa chọn phòng —'}
               </div>
-              <div style={{ fontSize: 12, color: '#CBD5E1', marginTop: 2 }}>
+              <div style={{ fontSize: 12.5, color: 'var(--ma-text-secondary)', marginTop: 2 }}>
                 {phongChon ? `${phongChon.dienTich} m² · ${phongChon.loaiPhong || 'Phòng tiêu chuẩn'}` : 'Vui lòng chọn phòng phía trên'}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'var(--ma-font-mono)' }}>NGƯỜI THUÊ</div>
-              <div style={{ fontSize: 16, fontWeight: 700, marginTop: 3 }}>
+              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>NGƯỜI THUÊ</div>
+              <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4 }}>
                 {nguoiThueChon ? nguoiThueChon.hoTen : '— Chưa chọn khách —'}
               </div>
-              <div style={{ fontSize: 12, color: '#CBD5E1', marginTop: 2 }}>
+              <div style={{ fontSize: 12.5, color: 'var(--ma-text-secondary)', marginTop: 2 }}>
                 {nguoiThueChon ? `SĐT: ${nguoiThueChon.soDienThoai}` : 'Vui lòng chọn khách thuê'}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'var(--ma-font-mono)' }}>THỜI HẠN THUÊ</div>
-              <div style={{ fontSize: 14, fontWeight: 600, marginTop: 3 }}>
+              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>THỜI HẠN THUÊ</div>
+              <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4, fontFamily: 'var(--ma-font-mono)' }}>
                 {form.ngayBatDau} → {form.ngayKetThuc || '...'}
               </div>
-              <div style={{ fontSize: 12, color: '#CBD5E1', marginTop: 2 }}>
+              <div style={{ fontSize: 12.5, color: 'var(--ma-text-secondary)', marginTop: 2 }}>
                 Báo trước: {form.soNgayBaoTruoc} ngày
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'var(--ma-font-mono)' }}>TỔNG TIỀN ĐẦU KỲ (THUÊ + CỌC)</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#34D399', fontFamily: 'var(--ma-font-mono)', marginTop: 3 }}>
+              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>TỔNG TIỀN ĐẦU KỲ (THUÊ + CỌC)</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--ma-done-text)', fontFamily: 'var(--ma-font-mono)', fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
                 {dinhDangTien(String(tongThanhToanDauKy))} đ
               </div>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--ma-text-secondary)', marginTop: 2 }}>
                 (Thuê: {dinhDangTien(String(giaThueSo))} đ + Cọc: {dinhDangTien(String(tienCocSo))} đ)
               </div>
             </div>
@@ -589,6 +793,945 @@ export default function HopDongThaoTac({ token }: { token: string }) {
               </div>
             </div>
 
+            {/* KHU VỰC BỘ HỒ SƠ HỢP ĐỒNG THUÊ & CHỐT PHÁP LÝ (5 BƯỚC) */}
+            <div style={{ ...panelStyle, background: 'var(--ma-bg-card)', border: '1px solid var(--ma-border-strong)', padding: '20px 22px' }}>
+              <div style={sectionHeaderStyle}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <h3 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Hồ sơ hợp đồng thuê & Chốt pháp lý</h3>
+                    <StatusTag
+                      tone={
+                        hoSo?.trangThaiTaiLieu === 'DA_GHI_NHAN_KY'
+                          ? 'done'
+                          : hoSo?.trangThaiTaiLieu === 'DA_CHOT'
+                          ? 'waiting'
+                          : 'urgent'
+                      }
+                    >
+                      {hoSo?.trangThaiTaiLieu === 'DA_GHI_NHAN_KY'
+                        ? 'Đã ghi nhận ký giấy'
+                        : hoSo?.trangThaiTaiLieu === 'DA_CHOT'
+                        ? `Đã chốt (Rev ${hoSo.revision})`
+                        : 'Bản dự thảo (DRAFT)'}
+                    </StatusTag>
+                  </div>
+                  <p style={{ margin: '4px 0 0', color: 'var(--ma-text-secondary)', fontSize: 13 }}>
+                    {hoSo?.daCoHoSoChot
+                      ? `Hợp đồng đã chốt thời điểm ${hoSo.thoiDiemChot ? new Date(hoSo.thoiDiemChot).toLocaleString('vi-VN') : ''}. Dữ liệu được bảo toàn bất biến; mọi sửa đổi thỏa thuận cần lập qua Phụ lục.`
+                      : 'Hồ sơ đang ở trạng thái dự thảo. Hãy rà soát 5 bước bên dưới và hoàn thiện thông tin trước khi chốt.'}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {hoSo?.trangThaiTaiLieu === 'DRAFT' ? (
+                    <Button
+                      variant="secondary"
+                      blocked={action.busy}
+                      onClick={() => {
+                        if (!selected) return
+                        void runScopedMutation(
+                          selected,
+                          () => luuDraftHoSo(token, selected, { ...dossierForm, expectedRevision: hoSo?.revision, revision: hoSo?.revision }),
+                          'Đã lưu bản nháp hợp đồng thành công.'
+                        )
+                      }}
+                    >
+                      💾 Lưu bản nháp
+                    </Button>
+                  ) : null}
+
+                  <Button
+                    variant="primary"
+                    blocked={action.busy}
+                    onClick={() =>
+                      void action.run(
+                        () =>
+                          downloadManagementFile(
+                            token,
+                            `/api/hop-dong/${selected}/xuat-pdf`,
+                            `hop-dong-${selected}.pdf`
+                          ),
+                        'Đã xuất PDF hợp đồng.'
+                      )
+                    }
+                  >
+                    📄 Tải PDF {hoSo?.trangThaiTaiLieu === 'DRAFT' ? 'dự thảo' : 'chính thức'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* THANH ĐIỀU HƯỚNG 5 BƯỚC */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 6,
+                  overflowX: 'auto',
+                  padding: 4,
+                  background: 'var(--ma-bg-sunken)',
+                  border: '1px solid var(--ma-border-default)',
+                  borderRadius: 'var(--ma-radius)',
+                  marginBottom: 18,
+                }}
+              >
+                {[
+                  { id: 1, title: '1. Phòng & Thời hạn' },
+                  { id: 2, title: '2. Bên A & Bên B' },
+                  { id: 3, title: '3. Giá thuê & Cọc' },
+                  { id: 4, title: '4. Điều khoản & Bàn giao' },
+                  { id: 5, title: '5. Chốt & Ký giấy' },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => setActiveStep(st.id)}
+                    style={{
+                      flex: '1 1 auto',
+                      padding: '9px 14px',
+                      borderRadius: 'var(--ma-radius-sm)',
+                      border: '1px solid',
+                      borderColor: activeStep === st.id ? 'var(--ma-border-default)' : 'transparent',
+                      background: activeStep === st.id ? 'var(--ma-bg-card)' : 'transparent',
+                      color: activeStep === st.id ? 'var(--ma-text-primary)' : 'var(--ma-text-secondary)',
+                      boxShadow: activeStep === st.id ? 'var(--ma-shadow-sm)' : 'none',
+                      cursor: 'pointer',
+                      fontWeight: activeStep === st.id ? 700 : 500,
+                      fontSize: 13,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 'var(--ma-radius-pill)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'var(--ma-font-mono)',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        background: activeStep === st.id ? 'var(--ma-brand-accent)' : 'var(--ma-line-200)',
+                        color: activeStep === st.id ? '#ffffff' : 'var(--ma-text-secondary)',
+                      }}
+                    >
+                      {st.id}
+                    </span>
+                    <span>{st.title}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* BƯỚC 1: PHÒNG & THỜI HẠN */}
+              {activeStep === 1 ? (
+                <div style={{ display: 'grid', gap: 14 }}>
+                  <div style={gridStyle}>
+                    <Field title="Tiêu đề hợp đồng">
+                      <input
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.tieuDe || ''}
+                        onChange={(e) => setDossierForm({ ...dossierForm, tieuDe: e.target.value })}
+                      />
+                    </Field>
+
+                    <Field title="Ngày lập hồ sơ">
+                      <input
+                        type="date"
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.ngayLap || ''}
+                        onChange={(e) => setDossierForm({ ...dossierForm, ngayLap: e.target.value })}
+                      />
+                    </Field>
+
+                    <Field title="Địa điểm lập">
+                      <input
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.diaDiemLap || ''}
+                        onChange={(e) => setDossierForm({ ...dossierForm, diaDiemLap: e.target.value })}
+                      />
+                    </Field>
+
+                    <Field title="Ngày nhận phòng thực tế">
+                      <input
+                        type="date"
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.ngayNhanPhong || ''}
+                        onChange={(e) => setDossierForm({ ...dossierForm, ngayNhanPhong: e.target.value })}
+                      />
+                    </Field>
+
+                    <Field title="Mục đích thuê">
+                      <input
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.mucDichThue || ''}
+                        onChange={(e) => setDossierForm({ ...dossierForm, mucDichThue: e.target.value })}
+                      />
+                    </Field>
+                  </div>
+
+                  <Field title="Phạm vi sử dụng diện tích & tiện ích chung">
+                    <textarea
+                      rows={2}
+                      style={fieldStyle}
+                      disabled={hoSo?.daCoHoSoChot}
+                      value={dossierForm.phamViSuDung || ''}
+                      onChange={(e) => setDossierForm({ ...dossierForm, phamViSuDung: e.target.value })}
+                    />
+                  </Field>
+                </div>
+              ) : null}
+
+              {/* BƯỚC 2: BÊN A & BÊN B */}
+              {activeStep === 2 ? (
+                <div style={{ display: 'grid', gap: 20 }}>
+                  {/* BÊN CHO THUÊ (BÊN A) */}
+                  <div style={{ padding: '14px 16px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                      <strong style={{ fontSize: 14 }}>🏛️ THÔNG TIN BÊN CHO THUÊ (BÊN A)</strong>
+                      {!hoSo?.daCoHoSoChot && cauHinhBenA ? (
+                        <button type="button" style={quickPresetButtonStyle} onClick={napTuCauHinhBenA}>
+                          ⚡ Nạp từ Cấu hình Bên A của Toà nhà
+                        </button>
+                      ) : null}
+                    </div>
+
+                    <div style={gridStyle}>
+                      <Field title="Loại chủ thể">
+                        <select
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benALoaiChuThe || 'CA_NHAN'}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benALoaiChuThe: e.target.value as any })}
+                        >
+                          <option value="CA_NHAN">Cá nhân chủ sở hữu</option>
+                          <option value="TO_CHUC">Tổ chức / Doanh nghiệp</option>
+                        </select>
+                      </Field>
+
+                      <Field title="Tên chủ thể / Đơn vị cho thuê">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          placeholder="Ví dụ: Nguyễn Văn Chủ / Công ty TNHH MiniApart"
+                          value={dossierForm.benATenChuThe || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benATenChuThe: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Số CCCD / Mã số thuế">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          placeholder="001090123456 / MST"
+                          value={dossierForm.benADinhDanh || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benADinhDanh: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Số điện thoại Bên A">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benADienThoai || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benADienThoai: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Email Bên A (nếu có)">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benAEmail || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benAEmail: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Người đại diện ký tên">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          placeholder="Họ tên người ký"
+                          value={dossierForm.benANguoiKy || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benANguoiKy: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Chức vụ người ký">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benAChucVu || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benAChucVu: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Tư cách ký">
+                        <select
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benATuCachKy || 'CHU_SO_HUU'}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benATuCachKy: e.target.value })}
+                        >
+                          <option value="CHU_SO_HUU">Chủ sở hữu</option>
+                          <option value="DAI_DIEN_PHAP_LUAT">Đại diện pháp luật</option>
+                          <option value="NGUOI_DUOC_UY_QUYEN">Người được ủy quyền</option>
+                        </select>
+                      </Field>
+
+                      {dossierForm.benATuCachKy === 'NGUOI_DUOC_UY_QUYEN' ? (
+                        <Field title="Căn cứ ủy quyền">
+                          <input
+                            style={fieldStyle}
+                            disabled={hoSo?.daCoHoSoChot}
+                            placeholder="Giấy ủy quyền số... ngày..."
+                            value={dossierForm.benACanCuUyQuyen || ''}
+                            onChange={(e) => setDossierForm({ ...dossierForm, benACanCuUyQuyen: e.target.value })}
+                          />
+                        </Field>
+                      ) : null}
+                    </div>
+
+                    <div style={{ marginTop: 10 }}>
+                      <Field title="Địa chỉ liên hệ Bên A">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benADiaChi || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benADiaChi: e.target.value })}
+                        />
+                      </Field>
+                    </div>
+
+                    <div style={{ marginTop: 10 }}>
+                      <Field title="Tài khoản nhận tiền thuê & cọc">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          placeholder="Số TK - Ngân hàng (Tên chủ TK)"
+                          value={dossierForm.taiKhoanNhanTien || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, taiKhoanNhanTien: e.target.value })}
+                        />
+                      </Field>
+                    </div>
+                  </div>
+
+                  {/* BÊN THUÊ (BÊN B) */}
+                  <div style={{ padding: '14px 16px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
+                    <div style={{ marginBottom: 12 }}>
+                      <strong style={{ fontSize: 14 }}>👤 THÔNG TIN BÊN THUÊ (BÊN B)</strong>
+                      <p style={{ margin: '2px 0 0', color: 'var(--ma-text-secondary)', fontSize: 12 }}>
+                        Yêu cầu đầy đủ CCCD/Hộ chiếu và Địa chỉ thường trú theo đúng giấy tờ pháp lý.
+                      </p>
+                    </div>
+
+                    <div style={gridStyle}>
+                      <Field title="Họ và tên khách thuê (đứng tên HĐ)">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benBHoTen || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benBHoTen: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Ngày sinh">
+                        <input
+                          type="date"
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benBNgaySinh || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benBNgaySinh: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Loại giấy tờ">
+                        <select
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benBLoaiGiayTo || 'CCCD'}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benBLoaiGiayTo: e.target.value })}
+                        >
+                          <option value="CCCD">Căn cước công dân (CCCD)</option>
+                          <option value="HO_CHIEU">Hộ chiếu</option>
+                        </select>
+                      </Field>
+
+                      <Field title="Số CCCD / Hộ chiếu">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benBSoGiayTo || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benBSoGiayTo: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Ngày cấp">
+                        <input
+                          type="date"
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benBNgayCap || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benBNgayCap: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Nơi cấp">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          placeholder="Cục CSQLHC về TTXH"
+                          value={dossierForm.benBNoiCap || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benBNoiCap: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Số điện thoại">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benBDienThoai || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benBDienThoai: e.target.value })}
+                        />
+                      </Field>
+
+                      <Field title="Email (nếu có)">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benBEmail || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benBEmail: e.target.value })}
+                        />
+                      </Field>
+                    </div>
+
+                    <div style={{ marginTop: 10 }}>
+                      <Field title="Địa chỉ thường trú (theo CCCD/Hộ chiếu) *">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          placeholder="Số nhà, đường/thôn, phường/xã, quận/huyện, tỉnh/TP"
+                          value={dossierForm.benBThuongTru || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benBThuongTru: e.target.value })}
+                        />
+                      </Field>
+                    </div>
+
+                    <div style={{ marginTop: 10 }}>
+                      <Field title="Địa chỉ liên hệ / Nơi ở hiện tại">
+                        <input
+                          style={fieldStyle}
+                          disabled={hoSo?.daCoHoSoChot}
+                          value={dossierForm.benBLienHe || ''}
+                          onChange={(e) => setDossierForm({ ...dossierForm, benBLienHe: e.target.value })}
+                        />
+                      </Field>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* BƯỚC 3: GIÁ THUÊ & CỌC */}
+              {activeStep === 3 ? (
+                <div style={{ display: 'grid', gap: 16 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+                    <div style={{ padding: '12px 14px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>GIÁ THUÊ HỢP ĐỒNG</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--ma-brand-accent)', marginTop: 2 }}>
+                        {dinhDangTien(contract.giaThue)} đ/tháng
+                      </div>
+                    </div>
+
+                    <div style={{ padding: '12px 14px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>TIỀN CỌC THỎA THUẬN</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, marginTop: 2 }}>
+                        {dinhDangTien(contract.tienCoc)} đ
+                      </div>
+                    </div>
+
+                    <div style={{ padding: '12px 14px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>TIỀN CỌC THỰC THU (SỔ CÁI)</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: Number(hoSo?.tienCocThucThu || '0') >= Number(contract.tienCoc) ? 'var(--ma-status-done)' : 'var(--ma-status-urgent)', marginTop: 2 }}>
+                        {dinhDangTien(hoSo?.tienCocThucThu || '0')} đ
+                      </div>
+                    </div>
+                  </div>
+
+                  {Number(hoSo?.tienCocThucThu || '0') < Number(contract.tienCoc) ? (
+                    <div style={{ padding: '10px 14px', background: 'var(--ma-status-urgent-light)', border: '1px solid var(--ma-status-urgent)', borderRadius: 'var(--ma-radius)', color: 'var(--ma-status-urgent)', fontSize: 13 }}>
+                      ⚠️ Tiền cọc thực thu trên sổ cái ({dinhDangTien(hoSo?.tienCocThucThu || '0')} đ) chưa đủ mức thỏa thuận ({dinhDangTien(contract.tienCoc)} đ). Cần nộp cọc trước khi kích hoạt và bàn giao phòng.
+                    </div>
+                  ) : (
+                    <div style={{ padding: '10px 14px', background: 'var(--ma-status-done-light)', border: '1px solid var(--ma-status-done)', borderRadius: 'var(--ma-radius)', color: 'var(--ma-status-done)', fontSize: 13 }}>
+                      ✓ Đã thu đủ 100% tiền đặt cọc theo thỏa thuận hợp đồng.
+                    </div>
+                  )}
+
+                  <div style={gridStyle}>
+                    <Field title="Phương thức thanh toán">
+                      <select
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.phuongThucThanhToan || 'CHUYEN_KHOAN'}
+                        onChange={(e) => setDossierForm({ ...dossierForm, phuongThucThanhToan: e.target.value })}
+                      >
+                        <option value="CHUYEN_KHOAN">Chuyển khoản ngân hàng</option>
+                        <option value="TIEN_MAT">Tiền mặt</option>
+                      </select>
+                    </Field>
+
+                    <Field title="Kỳ thanh toán (tháng/lần)">
+                      <input
+                        type="number"
+                        min="1"
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.kyThanhToanThang ?? 1}
+                        onChange={(e) => setDossierForm({ ...dossierForm, kyThanhToanThang: Number(e.target.value) })}
+                      />
+                    </Field>
+
+                    <Field title="Hạn thanh toán (ngày trong tháng)">
+                      <input
+                        type="number"
+                        min="1"
+                        max="31"
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.hanThanhToanNgay ?? 5}
+                        onChange={(e) => setDossierForm({ ...dossierForm, hanThanhToanNgay: Number(e.target.value) })}
+                      />
+                    </Field>
+
+                    <Field title="Số người cư trú tối đa">
+                      <input
+                        type="number"
+                        min="1"
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.soNguoiToiDa ?? 2}
+                        onChange={(e) => setDossierForm({ ...dossierForm, soNguoiToiDa: Number(e.target.value) })}
+                      />
+                    </Field>
+
+                    <Field title="Báo trước gia hạn / kết thúc (ngày)">
+                      <input
+                        type="number"
+                        min="1"
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.soNgayBaoTruocGiaHan ?? 30}
+                        onChange={(e) => setDossierForm({ ...dossierForm, soNgayBaoTruocGiaHan: Number(e.target.value) })}
+                      />
+                    </Field>
+
+                    <Field title="Thời hạn hoàn cọc (ngày)">
+                      <input
+                        type="number"
+                        min="1"
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.soNgayHoanCoc ?? 7}
+                        onChange={(e) => setDossierForm({ ...dossierForm, soNgayHoanCoc: Number(e.target.value) })}
+                      />
+                    </Field>
+
+                    <Field title="Khung giờ yên tĩnh">
+                      <input
+                        type="text"
+                        style={fieldStyle}
+                        disabled={hoSo?.daCoHoSoChot}
+                        value={dossierForm.khungGioYenTinh || '22:00 - 06:00 hàng ngày'}
+                        onChange={(e) => setDossierForm({ ...dossierForm, khungGioYenTinh: e.target.value })}
+                      />
+                    </Field>
+                  </div>
+
+                  <Field title="Chính sách / Điều kiện điều chỉnh giá thuê">
+                    <input
+                      style={fieldStyle}
+                      disabled={hoSo?.daCoHoSoChot}
+                      value={dossierForm.dieuKienDieuChinhGia || ''}
+                      onChange={(e) => setDossierForm({ ...dossierForm, dieuKienDieuChinhGia: e.target.value })}
+                    />
+                  </Field>
+                </div>
+              ) : null}
+
+              {/* BƯỚC 4: ĐIỀU KHOẢN & BÀN GIAO */}
+              {activeStep === 4 ? (
+                <div style={{ display: 'grid', gap: 16 }}>
+                  {!hoSo?.daCoHoSoChot ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      {mauList.length > 0 ? (
+                        <>
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>Áp dụng mẫu toà nhà:</span>
+                          <select
+                            style={{ ...fieldStyle, width: 'auto', minWidth: 260 }}
+                            onChange={(e) => {
+                              const val = Number(e.target.value)
+                              const m = mauList.find((item) => item.id === val)
+                              if (m) {
+                                if (dossierForm.dieuKhoanTuyBien) {
+                                  setConfirmDialog({
+                                    title: 'Áp dụng mẫu hợp đồng toà nhà',
+                                    message: `Hành động này sẽ thay thế nội dung điều khoản hiện tại bằng mẫu toà nhà "${m.tenMau}". Bạn có chắc muốn tiếp tục?`,
+                                    confirmLabel: 'Áp dụng mẫu',
+                                    onConfirm: () => {
+                                      setDossierForm((prev) => ({
+                                        ...prev,
+                                        mauHopDongId: m.id,
+                                        tieuDe: m.tieuDe,
+                                        dieuKhoanTuyBien: m.noiDungDieuKhoan,
+                                      }))
+                                      setConfirmDialog(null)
+                                    },
+                                  })
+                                  return
+                                }
+                                setDossierForm((prev) => ({
+                                  ...prev,
+                                  mauHopDongId: m.id,
+                                  tieuDe: m.tieuDe,
+                                  dieuKhoanTuyBien: m.noiDungDieuKhoan,
+                                }))
+                              }
+                            }}
+                          >
+                            <option value="">-- Chọn mẫu hợp đồng --</option>
+                            {mauList.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {m.tenMau} (Phiên bản {m.phienBan}) - {m.trangThai}
+                              </option>
+                            ))}
+                          </select>
+                        </>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        style={quickPresetButtonStyle}
+                        onClick={async () => {
+                          if (!building?.buildingId) return
+                          const currentBuildingId = building.buildingId
+                          const currentGen = requestGenRef.current
+
+                          const napMau = async () => {
+                            try {
+                              const chuan = await fetchMauHopDongChuan(token, currentBuildingId)
+                              if (chuan && requestGenRef.current === currentGen && building?.buildingId === currentBuildingId) {
+                                setDossierForm((prev) => ({
+                                  ...prev,
+                                  tieuDe: chuan.tieuDe,
+                                  dieuKhoanTuyBien: chuan.noiDungDieuKhoan,
+                                }))
+                              }
+                            } catch {
+                              // ignore
+                            }
+                          }
+
+                          if (dossierForm.dieuKhoanTuyBien) {
+                            setConfirmDialog({
+                              title: 'Nạp điều khoản mẫu chuẩn MiniApart',
+                              message: 'Hành động này sẽ thay thế nội dung điều khoản hiện tại bằng mẫu chuẩn MiniApart (12 điều khoản). Bạn có chắc muốn nạp lại?',
+                              confirmLabel: 'Nạp mẫu chuẩn',
+                              onConfirm: () => {
+                                void napMau()
+                                setConfirmDialog(null)
+                              },
+                            })
+                            return
+                          }
+                          void napMau()
+                        }}
+                      >
+                        ⚡ Nạp điều khoản mẫu chuẩn MiniApart (12 điều khoản)
+                      </button>
+                    </div>
+                  ) : null}
+
+                  <Field title="Nội dung điều khoản hợp đồng (12 điều khoản chuẩn mực vận hành)">
+                    <textarea
+                      rows={12}
+                      style={{ ...fieldStyle, fontFamily: 'var(--ma-font-mono)', fontSize: 12, lineHeight: 1.6 }}
+                      disabled={hoSo?.daCoHoSoChot}
+                      value={dossierForm.dieuKhoanTuyBien || ''}
+                      onChange={(e) => setDossierForm({ ...dossierForm, dieuKhoanTuyBien: e.target.value })}
+                    />
+                  </Field>
+
+                  <div style={{ padding: '14px 16px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)' }}>
+                    <strong style={{ fontSize: 13 }}>📋 LIÊN KẾT BIÊN BẢN BÀN GIAO NHẬN PHÒNG</strong>
+                    <p style={{ margin: '4px 0 10px', color: 'var(--ma-text-secondary)', fontSize: 12 }}>
+                      Biên bản nhận phòng là căn cứ pháp lý để xác nhận danh mục và tình trạng tài sản khi giao phòng.
+                    </p>
+                    <select
+                      style={fieldStyle}
+                      disabled={hoSo?.daCoHoSoChot}
+                      value={dossierForm.bienBanBanGiaoId ?? ''}
+                      onChange={(e) => setDossierForm({ ...dossierForm, bienBanBanGiaoId: e.target.value ? Number(e.target.value) : undefined })}
+                    >
+                      <option value="">-- Chưa gắn biên bản nhận phòng --</option>
+                      {bienBans
+                        .filter((b: any) => b.loaiBienBan === 'NHAN_PHONG')
+                        .map((b: any) => (
+                          <option key={b.id} value={b.id}>
+                            Biên bản #{b.id} · Nhận phòng ngày {b.ngayThucHien} · Người lập: {b.tenNguoiLap}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* BƯỚC 5: CHỐT & KÝ GIẤY */}
+              {activeStep === 5 ? (
+                <div style={{ display: 'grid', gap: 16 }}>
+                  {/* CẢNH BÁO THIẾU DỮ LIỆU */}
+                  {hoSo?.canhBaoThieuThongTin && hoSo.canhBaoThieuThongTin.length > 0 ? (
+                    <div style={{ padding: '12px 16px', background: 'var(--ma-status-urgent-light)', border: '1px solid var(--ma-status-urgent)', borderRadius: 'var(--ma-radius)', color: 'var(--ma-status-urgent)' }}>
+                      <strong>⚠️ Cảnh báo thiếu thông tin trước khi chốt:</strong>
+                      <ul style={{ margin: '6px 0 0', paddingLeft: 20 }}>
+                        {hoSo.canhBaoThieuThongTin.map((cb, idx) => (
+                          <li key={idx} style={{ marginTop: 2 }}>{cb}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <div style={{ padding: '12px 16px', background: 'var(--ma-status-done-light)', border: '1px solid var(--ma-status-done)', borderRadius: 'var(--ma-radius)', color: 'var(--ma-status-done)' }}>
+                      ✓ Toàn bộ thông tin pháp lý bắt buộc của Bên A, Bên B và điều khoản đã được hoàn thiện đầy đủ.
+                    </div>
+                  )}
+
+                  {/* THAO TÁC CHỐT HỢP ĐỒNG NẾU ĐANG LÀ DRAFT */}
+                  {hoSo?.trangThaiTaiLieu === 'DRAFT' ? (
+                    <div style={{ padding: '16px 18px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)', display: 'grid', gap: 12 }}>
+                      <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>🔒 Chốt hồ sơ hợp đồng</h4>
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)' }}>
+                        Khi chốt hợp đồng, hệ thống sẽ lưu snapshot bất biến toàn bộ Bên A, Bên B, thông tin phòng, bảng giá dịch vụ và danh mục tài sản bàn giao.
+                      </p>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                        <input
+                          type="checkbox"
+                          checked={xacNhanChot}
+                          onChange={(e) => setXacNhanChot(e.target.checked)}
+                        />
+                        <span>Tôi xác nhận các thông tin trên là chính xác và muốn chốt hồ sơ hợp đồng này.</span>
+                      </label>
+
+                      <div>
+                        <Button
+                          variant="primary"
+                          blocked={action.busy || !xacNhanChot}
+                          onClick={() => {
+                            if (!selected) return
+                            void runScopedMutation(
+                              selected,
+                              async () => {
+                                await chotHoSoHopDong(token, selected, {
+                                  expectedRevision: hoSo?.revision,
+                                  revision: hoSo?.revision || 1,
+                                  duLieuHoSo: { ...dossierForm, expectedRevision: hoSo?.revision, revision: hoSo?.revision },
+                                })
+                                setXacNhanChot(false)
+                              },
+                              'Đã chốt hồ sơ hợp đồng và tạo snapshot bất biến thành công!'
+                            )
+                          }}
+                        >
+                          🔒 Chốt hồ sơ hợp đồng ngay
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: 16 }}>
+                      {/* KHỐI GHI NHẬN KÝ GIẤY */}
+                      <div style={{ padding: '14px 16px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
+                        <h4 style={{ margin: '0 0 8px', font: 'var(--ma-text-task-name)' }}>✍️ Ghi nhận ký kết hợp đồng giấy</h4>
+                        {hoSo?.trangThaiTaiLieu === 'DA_GHI_NHAN_KY' ? (
+                          <div style={{ color: 'var(--ma-status-done)', fontWeight: 600, fontSize: 13 }}>
+                            ✓ Hợp đồng đã được ký giấy ngày {hoSo.thoiDiemGhiNhanKy ? new Date(hoSo.thoiDiemGhiNhanKy).toLocaleDateString('vi-VN') : ''}
+                            {hoSo.ghiChuKy ? ` (Ghi chú: ${hoSo.ghiChuKy})` : ''}
+                          </div>
+                        ) : (
+                          <div style={{ display: 'grid', gap: 10 }}>
+                            <div style={gridStyle}>
+                              <Field title="Ngày ký giấy">
+                                <input
+                                  type="date"
+                                  style={fieldStyle}
+                                  value={signingForm.ngayKy}
+                                  onChange={(e) => setSigningForm({ ...signingForm, ngayKy: e.target.value })}
+                                />
+                              </Field>
+
+                              <Field title="Ghi chú ký kết">
+                                <input
+                                  style={fieldStyle}
+                                  placeholder="Đã ký 2 bản gốc, mỗi bên giữ 1 bản"
+                                  value={signingForm.ghiChuKy}
+                                  onChange={(e) => setSigningForm({ ...signingForm, ghiChuKy: e.target.value })}
+                                />
+                              </Field>
+
+                              <Field title="Tên / đường dẫn file scan (nếu có)">
+                                <input
+                                  style={fieldStyle}
+                                  placeholder="hop_dong_da_ky.pdf"
+                                  value={signingForm.fileScanDinhKem}
+                                  onChange={(e) => setSigningForm({ ...signingForm, fileScanDinhKem: e.target.value })}
+                                />
+                              </Field>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                              <Button
+                                variant="primary"
+                                blocked={action.busy}
+                                onClick={() => {
+                                  if (!selected) return
+                                  void runScopedMutation(
+                                    selected,
+                                    () => ghiNhanKyHopDong(token, selected, { ...signingForm, expectedRevision: hoSo?.revision }),
+                                    'Đã ghi nhận ký kết hợp đồng giấy thành công!'
+                                  )
+                                }}
+                              >
+                                ✍️ Xác nhận đã ký giấy
+                              </Button>
+
+                              <Button
+                                variant="secondary"
+                                blocked={action.busy}
+                                onClick={() => {
+                                  if (!selected) return
+                                  setPromptDialog({
+                                    title: 'Mở lại hồ sơ bản nháp',
+                                    message: 'Nhập lý do mở lại hồ sơ để chuyển về trạng thái dự thảo (DRAFT) chỉnh sửa:',
+                                    placeholder: 'Ví dụ: Cập nhật điều khoản thỏa thuận hoặc giấy tờ...',
+                                    confirmLabel: 'Mở lại bản nháp',
+                                    onConfirm: (lyDo) => {
+                                      setPromptDialog(null)
+                                      void runScopedMutation(
+                                        selected,
+                                        () => moLaiDraftHoSo(token, selected, { expectedRevision: hoSo?.revision, lyDo }),
+                                        'Đã mở lại hồ sơ thành bản nháp thành công!'
+                                      )
+                                    },
+                                  })
+                                }}
+                              >
+                                🔄 Mở lại bản nháp để chỉnh sửa
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* KHỐI QUẢN LÝ PHỤ LỤC HỢP ĐỒNG */}
+                      <div style={{ padding: '14px 16px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
+                        <h4 style={{ margin: '0 0 8px', font: 'var(--ma-text-task-name)' }}>📑 Phụ lục hợp đồng đã lập</h4>
+                        {phuLucList.length === 0 ? (
+                          <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--ma-text-secondary)', fontStyle: 'italic' }}>
+                            Chưa có phụ lục sửa đổi/bổ sung nào.
+                          </p>
+                        ) : (
+                          <div style={{ display: 'grid', gap: 8, marginBottom: 14 }}>
+                            {phuLucList.map((pl) => (
+                              <div
+                                key={pl.id}
+                                style={{
+                                  padding: '10px 14px',
+                                  background: 'var(--ma-bg-card)',
+                                  borderRadius: 'var(--ma-radius)',
+                                  border: '1px solid var(--ma-border-default)',
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <strong>Phụ lục số {pl.soPhuLuc}: {pl.tieuDe}</strong>
+                                  <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>
+                                    Hiệu lực: {pl.ngayHieuLuc}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: 13, marginTop: 4, color: 'var(--ma-text-secondary)' }}>
+                                  {pl.noiDungThayDoi}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div style={{ borderTop: '1px solid var(--ma-border-subtle)', paddingTop: 12 }}>
+                          <strong style={{ fontSize: 13 }}>➕ Lập phụ lục hợp đồng mới</strong>
+                          <div style={{ ...gridStyle, marginTop: 8 }}>
+                            <Field title="Tiêu đề phụ lục">
+                              <input
+                                style={fieldStyle}
+                                placeholder="Phụ lục điều chỉnh giá / gia hạn..."
+                                value={phuLucForm.tieuDe}
+                                onChange={(e) => setPhuLucForm({ ...phuLucForm, tieuDe: e.target.value })}
+                              />
+                            </Field>
+
+                            <Field title="Ngày hiệu lực">
+                              <input
+                                type="date"
+                                style={fieldStyle}
+                                value={phuLucForm.ngayHieuLuc}
+                                onChange={(e) => setPhuLucForm({ ...phuLucForm, ngayHieuLuc: e.target.value })}
+                              />
+                            </Field>
+                          </div>
+
+                          <div style={{ marginTop: 8 }}>
+                            <Field title="Nội dung điều chỉnh / thỏa thuận bổ sung">
+                              <textarea
+                                rows={3}
+                                style={fieldStyle}
+                                placeholder="Ghi rõ nội dung thay đổi so với hợp đồng gốc..."
+                                value={phuLucForm.noiDungThayDoi}
+                                onChange={(e) => setPhuLucForm({ ...phuLucForm, noiDungThayDoi: e.target.value })}
+                              />
+                            </Field>
+                          </div>
+
+                          <div style={{ marginTop: 10 }}>
+                            <Button
+                              variant="secondary"
+                              blocked={action.busy || !phuLucForm.tieuDe || !phuLucForm.noiDungThayDoi}
+                              onClick={() => {
+                                if (!selected) return
+                                void runScopedMutation(
+                                  selected,
+                                  async () => {
+                                    await taoPhuLucHopDong(token, selected, phuLucForm)
+                                    setPhuLucForm({ tieuDe: '', ngayLap: today(), ngayHieuLuc: today(), noiDungThayDoi: '' })
+                                  },
+                                  'Đã lập phụ lục hợp đồng thành công!'
+                                )
+                              }}
+                            >
+                              ➕ Tạo phụ lục
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+
             {/* QUẢN LÝ TÀI SẢN BÀN GIAO & TỰ ĐỘNG KHẤU TRỪ VÀO THANH LÝ */}
             <QuanLyTaiSanPhong
               token={token}
@@ -621,24 +1764,156 @@ export default function HopDongThaoTac({ token }: { token: string }) {
                   Chưa có người ở cùng nào được khai báo.
                 </p>
               ) : (
-                <div style={{ display: 'grid', gap: 8 }}>
+                <div style={{ display: 'grid', gap: 10 }}>
                   {occupants.map((o) => (
                     <div
                       key={o.id}
                       style={{
-                        padding: '10px 14px',
+                        padding: '12px 16px',
                         background: 'var(--ma-bg-card)',
                         borderRadius: 'var(--ma-radius)',
                         border: '1px solid var(--ma-border-default)',
                         display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
+                        flexDirection: 'column',
+                        gap: 8,
                       }}
                     >
-                      <span style={{ fontWeight: 600 }}>{o.hoTenNguoiThue} ({o.quanHe})</span>
-                      <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>
-                        {o.tuNgay} → {o.denNgay ?? 'Đang ở'}
-                      </span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                        <div>
+                          <span style={{ fontWeight: 600, fontSize: 14 }}>{o.hoTenNguoiThue}</span>
+                          {o.quanHe ? <span style={{ color: 'var(--ma-text-secondary)', fontSize: 13 }}> ({o.quanHe})</span> : null}
+                          {o.vaiTro && o.vaiTro !== 'NGUOI_O' ? (
+                            <span style={{ marginLeft: 8, fontSize: 11, background: 'var(--ma-bg-sunken)', padding: '2px 6px', borderRadius: 4 }}>
+                              {o.vaiTro}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {o.trangThai === 'CHO_DUYET' ? (
+                            <StatusTag tone="waiting">Chờ duyệt</StatusTag>
+                          ) : o.trangThai === 'TU_CHOI' ? (
+                            <StatusTag tone="urgent">Đã từ chối</StatusTag>
+                          ) : o.trangThai === 'DA_ROI_DI' ? (
+                            <StatusTag tone="neutral">Đã rời phòng</StatusTag>
+                          ) : (
+                            <StatusTag tone="done">Đã duyệt cư trú</StatusTag>
+                          )}
+                          {o.coTaiKhoan ? (
+                            <span style={{ fontSize: 11, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>
+                              ✓ Đã có tài khoản
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, fontSize: 12, color: 'var(--ma-text-secondary)' }}>
+                        <div>
+                          {o.soDienThoai ? <span>SĐT: {o.soDienThoai} | </span> : null}
+                          {o.soGiayToChe ? <span>CCCD: {o.soGiayToChe} | </span> : null}
+                          <span>Thời gian: {o.tuNgay} → {o.denNgay ?? 'Đang ở'}</span>
+                          {o.lyDoTuChoi ? <span style={{ color: 'var(--ma-status-error)', display: 'block' }}>Lý do từ chối: {o.lyDoTuChoi}</span> : null}
+                          {o.lyDoRoiDi ? <span style={{ display: 'block' }}>Lý do rời: {o.lyDoRoiDi}</span> : null}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {o.trangThai === 'CHO_DUYET' ? (
+                            <>
+                              <button
+                                type="button"
+                                style={{ ...quickPresetButtonStyle, background: 'var(--ma-primary-default)', color: '#fff' }}
+                                onClick={async () => {
+                                  if (!selected) return
+                                  try {
+                                    await duyetNguoiOCung(token, selected, o.id)
+                                    setOccupants(await managementRequest(token, `/api/hop-dong/${selected}/nguoi-o-cung`))
+                                    action.setSuccess('Đã phê duyệt người ở cùng thành công!')
+                                  } catch (err: any) {
+                                    action.setError(err.message || 'Lỗi phê duyệt.')
+                                  }
+                                }}
+                              >
+                                ✓ Duyệt cư trú
+                              </button>
+                              <button
+                                type="button"
+                                style={quickPresetButtonStyle}
+                                onClick={() => {
+                                  if (!selected) return
+                                  setPromptDialog({
+                                    title: 'Từ chối người ở cùng',
+                                    message: 'Nhập lý do từ chối yêu cầu đăng ký cư trú:',
+                                    placeholder: 'Ví dụ: Thiếu giấy tờ tùy thân hợp lệ...',
+                                    confirmLabel: 'Từ chối cư trú',
+                                    tone: 'urgent',
+                                    onConfirm: async (lyDo) => {
+                                      if (!lyDo.trim()) return
+                                      setPromptDialog(null)
+                                      try {
+                                        await tuChoiNguoiOCung(token, selected, o.id, lyDo)
+                                        setOccupants(await managementRequest(token, `/api/hop-dong/${selected}/nguoi-o-cung`))
+                                        action.setSuccess('Đã từ chối người ở cùng.')
+                                      } catch (err: any) {
+                                        action.setError(err.message || 'Lỗi từ chối.')
+                                      }
+                                    },
+                                  })
+                                }}
+                              >
+                                ✕ Từ chối
+                              </button>
+                            </>
+                          ) : null}
+
+                          {o.trangThai === 'DA_DUYET' ? (
+                            <>
+                              {!o.coTaiKhoan ? (
+                                <button
+                                  type="button"
+                                  style={quickPresetButtonStyle}
+                                  onClick={async () => {
+                                    if (!selected) return
+                                    try {
+                                      await kichHoatTaiKhoanNguoiOCung(token, selected, o.id)
+                                      setOccupants(await managementRequest(token, `/api/hop-dong/${selected}/nguoi-o-cung`))
+                                      action.setSuccess('Đã kích hoạt tài khoản người dùng thành công!')
+                                    } catch (err: any) {
+                                      action.setError(err.message || 'Lỗi kích hoạt tài khoản.')
+                                    }
+                                  }}
+                                >
+                                  🔑 Kích hoạt tài khoản
+                                </button>
+                              ) : null}
+
+                              <button
+                                type="button"
+                                style={quickPresetButtonStyle}
+                                onClick={() => {
+                                  if (!selected) return
+                                  setPromptDialog({
+                                    title: 'Ghi nhận người ở cùng rời phòng',
+                                    message: 'Nhập lý do rời phòng (tùy chọn) trước khi xác nhận:',
+                                    placeholder: 'Ví dụ: Hết hạn tạm trú / Chuyển nơi công tác...',
+                                    confirmLabel: 'Xác nhận rời phòng',
+                                    onConfirm: async (lyDo) => {
+                                      setPromptDialog(null)
+                                      try {
+                                        await roiPhongNguoiOCung(token, selected, o.id, { ngayRoiDi: today(), lyDo: lyDo || '' })
+                                        setOccupants(await managementRequest(token, `/api/hop-dong/${selected}/nguoi-o-cung`))
+                                        action.setSuccess('Đã ghi nhận người ở cùng rời phòng.')
+                                      } catch (err: any) {
+                                        action.setError(err.message || 'Lỗi ghi nhận rời phòng.')
+                                      }
+                                    },
+                                  })
+                                }}
+                              >
+                                🚪 Rời phòng
+                              </button>
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1002,6 +2277,192 @@ export default function HopDongThaoTac({ token }: { token: string }) {
           </>
         ) : null}
       </section>
+
+      {confirmDialog ? (
+        <ConfirmModal
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmLabel={confirmDialog.confirmLabel}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog(null)}
+        />
+      ) : null}
+
+      {promptDialog ? (
+        <PromptModal
+          title={promptDialog.title}
+          message={promptDialog.message}
+          placeholder={promptDialog.placeholder}
+          defaultValue={promptDialog.defaultValue}
+          confirmLabel={promptDialog.confirmLabel}
+          tone={promptDialog.tone}
+          onConfirm={promptDialog.onConfirm}
+          onCancel={() => setPromptDialog(null)}
+        />
+      ) : null}
     </section>
+  )
+}
+
+function ConfirmModal({
+  title,
+  message,
+  confirmLabel = 'Xác nhận',
+  cancelLabel = 'Hủy bỏ',
+  onConfirm,
+  onCancel,
+}: {
+  title: string
+  message: string
+  confirmLabel?: string
+  cancelLabel?: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15, 23, 42, 0.45)',
+        backdropFilter: 'blur(3px)',
+        display: 'grid',
+        placeItems: 'center',
+        padding: 16,
+        zIndex: 1000,
+      }}
+      onClick={onCancel}
+    >
+      <div
+        style={{
+          background: 'var(--ma-bg-card)',
+          borderRadius: 'var(--ma-radius-md)',
+          border: '1px solid var(--ma-border-default)',
+          boxShadow: 'var(--ma-shadow-lg)',
+          padding: '24px 28px',
+          maxWidth: 480,
+          width: '100%',
+          display: 'grid',
+          gap: 16,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'grid', gap: 6 }}>
+          <h4 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--ma-text-primary)' }}>{title}</h4>
+          <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>{message}</p>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <Button variant="secondary" onClick={onCancel} style={{ minHeight: 40 }}>
+            {cancelLabel}
+          </Button>
+          <Button variant="primary" onClick={onConfirm} style={{ minHeight: 40 }}>
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PromptModal({
+  title,
+  message,
+  placeholder,
+  defaultValue = '',
+  confirmLabel = 'Xác nhận',
+  cancelLabel = 'Hủy bỏ',
+  tone = 'primary',
+  onConfirm,
+  onCancel,
+}: {
+  title: string
+  message: string
+  placeholder?: string
+  defaultValue?: string
+  confirmLabel?: string
+  cancelLabel?: string
+  tone?: 'primary' | 'urgent'
+  onConfirm: (val: string) => void
+  onCancel: () => void
+}) {
+  const [val, setVal] = useState(defaultValue)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15, 23, 42, 0.45)',
+        backdropFilter: 'blur(3px)',
+        display: 'grid',
+        placeItems: 'center',
+        padding: 16,
+        zIndex: 1000,
+      }}
+      onClick={onCancel}
+    >
+      <div
+        style={{
+          background: 'var(--ma-bg-card)',
+          borderRadius: 'var(--ma-radius-md)',
+          border: '1px solid var(--ma-border-default)',
+          boxShadow: 'var(--ma-shadow-lg)',
+          padding: '24px 28px',
+          maxWidth: 480,
+          width: '100%',
+          display: 'grid',
+          gap: 16,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'grid', gap: 6 }}>
+          <h4 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--ma-text-primary)' }}>{title}</h4>
+          <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>{message}</p>
+        </div>
+        <input
+          ref={inputRef}
+          style={fieldStyle}
+          placeholder={placeholder}
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              onConfirm(val)
+            } else if (e.key === 'Escape') {
+              e.preventDefault()
+              onCancel()
+            }
+          }}
+        />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <Button variant="secondary" onClick={onCancel} style={{ minHeight: 40 }}>
+            {cancelLabel}
+          </Button>
+          <Button
+            variant={tone === 'urgent' ? 'primary' : 'primary'}
+            onClick={() => onConfirm(val)}
+            style={{
+              minHeight: 40,
+              background: tone === 'urgent' ? 'var(--ma-urgent)' : undefined,
+              borderColor: tone === 'urgent' ? 'var(--ma-urgent)' : undefined,
+            }}
+          >
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
   )
 }

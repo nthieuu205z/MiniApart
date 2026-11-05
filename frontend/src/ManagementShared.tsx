@@ -6,8 +6,51 @@ export const fieldStyle: CSSProperties = { minHeight: 44, width: '100%', minWidt
 export const gridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,230px),1fr))', gap: 14 }
 export const panelStyle: CSSProperties = { display: 'grid', gap: 16, padding: 22, border: '1px solid var(--ma-border-default)', borderRadius: 'var(--ma-radius-md)', boxShadow: 'var(--ma-shadow-sm)', background: 'var(--ma-bg-card)', minWidth: 0, overflowWrap: 'anywhere' }
 export const rowStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }
-export function Field({ title, children }: { title: string; children: ReactNode }) { return <label style={{ display: 'grid', gap: 6, minWidth: 0 }}>{title}{children}</label> }
-export function Feedback({ error, success }: { error?: string | null; success?: string | null }) { return <>{error ? <p role="alert" style={{ color: 'var(--ma-urgent)' }}>{error}</p> : null}{success ? <p role="status" style={{ color: 'var(--ma-done-text)' }}>{success}</p> : null}</> }
+export function Field({ title, children }: { title: string; children: ReactNode }) { return <label style={{ display: 'grid', gap: 6, minWidth: 0, fontSize: 13, fontWeight: 600, color: 'var(--ma-text-secondary)' }}><span>{title}</span>{children}</label> }
+export function Feedback({ error, success }: { error?: string | null; success?: string | null }) {
+  return (
+    <>
+      {error ? (
+        <p
+          role="alert"
+          style={{
+            margin: '8px 0',
+            padding: '10px 14px',
+            background: 'var(--ma-urgent-bg)',
+            border: '1px solid var(--ma-urgent)',
+            borderRadius: 'var(--ma-radius)',
+            color: 'var(--ma-urgent)',
+            fontSize: 13.5,
+            lineHeight: 1.5,
+            fontWeight: 500,
+            overflowWrap: 'anywhere',
+          }}
+        >
+          {error}
+        </p>
+      ) : null}
+      {success ? (
+        <p
+          role="status"
+          style={{
+            margin: '8px 0',
+            padding: '10px 14px',
+            background: 'var(--ma-done-bg)',
+            border: '1px solid var(--ma-done)',
+            borderRadius: 'var(--ma-radius)',
+            color: 'var(--ma-done-text)',
+            fontSize: 13.5,
+            lineHeight: 1.5,
+            fontWeight: 500,
+            overflowWrap: 'anywhere',
+          }}
+        >
+          {success}
+        </p>
+      ) : null}
+    </>
+  )
+}
 export function useAction() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -16,7 +59,7 @@ export function useAction() {
     setBusy(true); setError(null); setSuccess(null)
     try { await action(); setSuccess(message); return true } catch (e) { setError(e instanceof Error ? e.message : 'Thao tác thất bại.'); return false } finally { setBusy(false) }
   }
-  return { busy, error, success, run, setError }
+  return { busy, error, success, run, setError, setSuccess, setBusy }
 }
 export function useBuildings(token: string) {
   const [buildings, setBuildings] = useState<ThongTinToaNha[]>([])

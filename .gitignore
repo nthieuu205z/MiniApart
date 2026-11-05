@@ -40,6 +40,8 @@ docs/agents/
 .scratch/BAN-GIAO.md
 .superpowers/
 Fontend Design/
+.agent/
+.agents/
 
 # Graphify output (generated)
 graphify-out/

@@ -63,6 +63,7 @@ class ThanhLyHopDongIntegrationTest {
 
     @BeforeEach
     void resetDatabase() {
+        jdbcTemplate.update("DELETE FROM NHAT_KY_THAO_TAC");
         xoa("GIAO_DICH_COC");
         xoa("SO_DU_KHA_DUNG");
         xoa("THANH_TOAN");
@@ -78,7 +79,6 @@ class ThanhLyHopDongIntegrationTest {
         xoa("DICH_VU");
         xoa("PHONG");
         xoa("KY_THANH_TOAN");
-        jdbcTemplate.update("DELETE FROM NHAT_KY_THAO_TAC");
         jdbcTemplate.update("DELETE FROM PHAN_QUYEN_TOA WHERE nguoi_dung_id IN (2, 4, 5)");
         jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (3, 1) ON CONFLICT DO NOTHING");
         jdbcTemplate.update("UPDATE NGUOI_DUNG SET nguoi_thue_id = NULL, phien_ban_token = 0 WHERE id IN (1, 2, 3, 4, 5)");

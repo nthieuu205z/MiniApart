@@ -84,6 +84,31 @@ public class TaiSanRepository {
 
     public record ThongTinHopDongTaiSan(Long hopDongId, Long phongId, Long toaNhaId, Long nguoiThueId) {}
 
+    public record ThongTinKiemTraBienBan(
+            Long id,
+            Long hopDongId,
+            Long phongId,
+            Long toaNhaId,
+            String loaiBienBan
+    ) {}
+
+    public Optional<ThongTinKiemTraBienBan> layThongTinKiemTraBienBan(Long bienBanId) {
+        String sql = """
+                SELECT bb.id, bb.hop_dong_id, bb.phong_id, p.toa_nha_id, bb.loai_bien_ban
+                FROM BIEN_BAN_BAN_GIAO_TAI_SAN bb
+                JOIN PHONG p ON bb.phong_id = p.id
+                WHERE bb.id = ?
+                """;
+        List<ThongTinKiemTraBienBan> list = jdbcTemplate.query(sql, (rs, rowNum) -> new ThongTinKiemTraBienBan(
+                rs.getLong("id"),
+                rs.getLong("hop_dong_id"),
+                rs.getLong("phong_id"),
+                rs.getLong("toa_nha_id"),
+                rs.getString("loai_bien_ban")
+        ), bienBanId);
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
+    }
+
     public Optional<ThongTinHopDongTaiSan> layThongTinHopDongTaiSan(Long hopDongId) {
         String sql = """
                 SELECT hd.id AS hop_dong_id, hd.phong_id, p.toa_nha_id, hd.nguoi_thue_id
