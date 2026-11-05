@@ -86,6 +86,7 @@ export default function QuanLyTaiSanPhong({
   >([])
 
   const requestIdRef = useRef(0)
+  const mutationIdRef = useRef(0)
   const isMountedRef = useRef(true)
 
   useEffect(() => {
@@ -93,6 +94,7 @@ export default function QuanLyTaiSanPhong({
     return () => {
       isMountedRef.current = false
       requestIdRef.current++
+      mutationIdRef.current++
     }
   }, [])
 
@@ -125,6 +127,10 @@ export default function QuanLyTaiSanPhong({
 
   useEffect(() => {
     const reqId = ++requestIdRef.current
+    // Invalidate active mutation of previous scope and reset saving state
+    mutationIdRef.current++
+    setDangLuu(false)
+
     // Reset form / checklist khi đổi phòng hoặc đổi hợp đồng
     setChiTietKiemKe([])
     setGhiChuBienBan('')
@@ -174,15 +180,16 @@ export default function QuanLyTaiSanPhong({
 
   async function handleThemTaiSan(e: FormEvent) {
     e.preventDefault()
-    const reqId = ++requestIdRef.current
+    const mutationId = ++mutationIdRef.current
     const targetPhongId = phongId
+    const tenDaThem = bieuMauTaiSan.tenTaiSan
     setDangLuu(true)
     setLoi(null)
     setThongBao(null)
     try {
       await themTaiSanPhong(token, targetPhongId, bieuMauTaiSan)
-      if (requestIdRef.current !== reqId || !isMountedRef.current) return
-      setThongBao(`Đã thêm thiết bị "${bieuMauTaiSan.tenTaiSan}" vào phòng.`)
+      if (mutationIdRef.current !== mutationId || !isMountedRef.current) return
+      setThongBao(`Đã thêm thiết bị "${tenDaThem}" vào phòng.`)
       setBieuMauTaiSan({
         tenTaiSan: '',
         loaiTaiSan: 'NỘI THẤT',
@@ -191,13 +198,13 @@ export default function QuanLyTaiSanPhong({
         giaTriUocTinh: '',
         ghiChu: '',
       })
-      await loadData(reqId)
+      await loadData(requestIdRef.current)
     } catch (e: unknown) {
-      if (requestIdRef.current === reqId && isMountedRef.current) {
+      if (mutationIdRef.current === mutationId && isMountedRef.current) {
         setLoi(e instanceof Error ? e.message : 'Lỗi thêm tài sản.')
       }
     } finally {
-      if (requestIdRef.current === reqId && isMountedRef.current) {
+      if (mutationIdRef.current === mutationId && isMountedRef.current) {
         setDangLuu(false)
       }
     }
@@ -205,20 +212,20 @@ export default function QuanLyTaiSanPhong({
 
   async function handleXoaTaiSan(id: number, ten: string) {
     if (!window.confirm(`Xoá tài sản "${ten}" khỏi danh mục phòng?`)) return
-    const reqId = ++requestIdRef.current
+    const mutationId = ++mutationIdRef.current
     setDangLuu(true)
     setLoi(null)
     try {
       await xoaTaiSanPhong(token, id)
-      if (requestIdRef.current !== reqId || !isMountedRef.current) return
+      if (mutationIdRef.current !== mutationId || !isMountedRef.current) return
       setThongBao(`Đã xoá thiết bị "${ten}".`)
-      await loadData(reqId)
+      await loadData(requestIdRef.current)
     } catch (e: unknown) {
-      if (requestIdRef.current === reqId && isMountedRef.current) {
+      if (mutationIdRef.current === mutationId && isMountedRef.current) {
         setLoi(e instanceof Error ? e.message : 'Lỗi xoá tài sản.')
       }
     } finally {
-      if (requestIdRef.current === reqId && isMountedRef.current) {
+      if (mutationIdRef.current === mutationId && isMountedRef.current) {
         setDangLuu(false)
       }
     }
@@ -246,7 +253,7 @@ export default function QuanLyTaiSanPhong({
       setLoi('Cần chỉ định hợp đồng để lập biên bản bàn giao.')
       return
     }
-    const reqId = ++requestIdRef.current
+    const mutationId = ++mutationIdRef.current
     const submittingHopDongId = hopDongId
     const submittingPhongId = phongId
     setDangLuu(true)
@@ -268,7 +275,7 @@ export default function QuanLyTaiSanPhong({
         })),
       }
       await lapBienBanTaiSan(token, submittingHopDongId, payload)
-      if (requestIdRef.current !== reqId || !isMountedRef.current) return
+      if (mutationIdRef.current !== mutationId || !isMountedRef.current) return
       setThongBao(
         `Lập biên bản ${loaiBienBan === 'NHAN_PHONG' ? 'nhận phòng' : 'trả phòng'} thành công!`
       )
@@ -283,16 +290,16 @@ export default function QuanLyTaiSanPhong({
         fetchTaiSanPhong(token, submittingPhongId),
         fetchBienBanTaiSan(token, submittingHopDongId),
       ])
-      if (requestIdRef.current !== reqId || !isMountedRef.current) return
+      if (mutationIdRef.current !== mutationId || !isMountedRef.current) return
       setDanhSachTaiSan(taiSan)
       setDanhSachBienBan(bienBan)
       if (onBienBanLoaded) onBienBanLoaded(bienBan)
     } catch (e: unknown) {
-      if (requestIdRef.current === reqId && isMountedRef.current) {
+      if (mutationIdRef.current === mutationId && isMountedRef.current) {
         setLoi(e instanceof Error ? e.message : 'Lỗi lập biên bản bàn giao.')
       }
     } finally {
-      if (requestIdRef.current === reqId && isMountedRef.current) {
+      if (mutationIdRef.current === mutationId && isMountedRef.current) {
         setDangLuu(false)
       }
     }

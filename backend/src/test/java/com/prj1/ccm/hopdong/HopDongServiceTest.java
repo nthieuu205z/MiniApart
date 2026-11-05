@@ -34,9 +34,16 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
+import com.prj1.ccm.billing.GiaoDichCocService;
+import com.prj1.ccm.billing.TaoHoaDonHangLoatService;
+import com.prj1.ccm.toanha.ChiSoDichVuService;
+import com.prj1.ccm.nguoithue.NhatKyThaoTacRepository;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -68,6 +75,18 @@ class HopDongServiceTest {
     @Mock
     private TrangThaiPhongService trangThaiPhongService;
 
+    @Mock
+    private TaoHoaDonHangLoatService taoHoaDonHangLoatService;
+
+    @Mock
+    private GiaoDichCocService giaoDichCocService;
+
+    @Mock
+    private NhatKyThaoTacRepository nhatKyThaoTacRepository;
+
+    @Mock
+    private ChiSoDichVuService chiSoDichVuService;
+
     private HopDongService hopDongService;
 
     @BeforeEach
@@ -81,6 +100,10 @@ class HopDongServiceTest {
                 nguoiOCungRepository,
                 phanQuyenToaService,
                 trangThaiPhongService,
+                taoHoaDonHangLoatService,
+                giaoDichCocService,
+                nhatKyThaoTacRepository,
+                chiSoDichVuService,
                 Clock.fixed(LocalDate.of(2040, 8, 1).atStartOfDay(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant(), ZoneId.of("Asia/Ho_Chi_Minh"))
         );
     }
@@ -356,5 +379,134 @@ class HopDongServiceTest {
                     assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
                     assertThat(rse.getReason()).contains("Yêu cầu xác nhận chênh lệch");
                 });
+    }
+
+    @Test
+    void thanhLy_bienBan500k_quyetToan0_coXacNhanVaLyDo_ghiDayDuNhatKyVaThanhCong() {
+        NguoiDung quanLy = new NguoiDung(3L, "Quản lý", "0900000003", "hash", VaiTro.QUAN_LY, TrangThaiNguoiDung.HOAT_DONG, 0, null);
+        Long hopDongId = 1001L;
+        Long phongId = 101L;
+        Long bienBanId = 777L;
+
+        when(hopDongRepository.findViewById(hopDongId)).thenReturn(Optional.of(
+                new HopDongRepository.HopDongView(
+                        new HopDong(hopDongId, phongId, 201L, LocalDate.of(2040, 1, 1), LocalDate.of(2040, 6, 30),
+                                new BigDecimal("3500000.00"), new BigDecimal("3500000.00"), 30, TrangThaiHopDong.HIEU_LUC),
+                        1L, "501", "Phạm Ngọc An"
+                )
+        ));
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(eq(quanLy), eq(1L))).thenReturn(
+                new ToaNha(1L, "T01", "Toà A", "Địa chỉ", 5, 25, 7, "970405", "0123456789", new BigDecimal("0.15"), false)
+        );
+        when(hopDongRepository.timBienBanBanGiao(bienBanId)).thenReturn(Optional.of(
+                new HopDongRepository.BienBanBanGiaoRecord(bienBanId, hopDongId, phongId, "TRA_PHONG", new BigDecimal("500000.00"))
+        ));
+        when(taoHoaDonHangLoatService.taoHoaDonKyCuoi(eq(1L), eq(hopDongId), eq(quanLy))).thenReturn(9001L);
+        when(giaoDichCocService.quyetToan(eq(hopDongId), eq(9001L), eq(BigDecimal.ZERO), eq("Chủ nhà đồng ý miễn giảm"), eq("T01"), eq(7), eq(quanLy)))
+                .thenReturn(com.prj1.ccm.billing.ThongTinQuyetToan.tao(
+                        9001L, new BigDecimal("3500000.00"), new BigDecimal("3500000.00"),
+                        BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("3500000.00"), null
+                ));
+
+        hopDongService.thanhLy(
+                hopDongId,
+                new YeuCauThanhLy(BigDecimal.ZERO, "Chủ nhà đồng ý miễn giảm", List.of(), bienBanId, true),
+                quanLy
+        );
+
+        org.mockito.ArgumentCaptor<String> giaTriSauCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        org.mockito.ArgumentCaptor<String> lyDoCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(nhatKyThaoTacRepository).ghi(
+                eq(1L),
+                eq(quanLy.id()),
+                eq("THANH_LY_HOP_DONG"),
+                eq("HOP_DONG:" + hopDongId),
+                eq("HIEU_LUC"),
+                giaTriSauCaptor.capture(),
+                eq(phongId),
+                isNull(),
+                lyDoCaptor.capture(),
+                any()
+        );
+
+        String giaTriSau = giaTriSauCaptor.getValue();
+        assertThat(giaTriSau).contains("bienBanId=777");
+        assertThat(giaTriSau).contains("bbKhauTru=500000.00");
+        assertThat(giaTriSau).contains("khauTruQuyetToan=0");
+        assertThat(giaTriSau).contains("chenhLech=true");
+        assertThat(giaTriSau).contains("xacNhanChenhLech=true");
+        assertThat(giaTriSau).contains("lyDo=Chủ nhà đồng ý miễn giảm");
+        assertThat(lyDoCaptor.getValue()).isEqualTo("Chủ nhà đồng ý miễn giảm");
+    }
+
+    @Test
+    void thanhLy_bienBan500k_quyetToan0_thieuLyDo_nemLoiBadRequest() {
+        NguoiDung quanLy = new NguoiDung(3L, "Quản lý", "0900000003", "hash", VaiTro.QUAN_LY, TrangThaiNguoiDung.HOAT_DONG, 0, null);
+        Long hopDongId = 1001L;
+        Long phongId = 101L;
+        Long bienBanId = 777L;
+
+        when(hopDongRepository.findViewById(hopDongId)).thenReturn(Optional.of(
+                new HopDongRepository.HopDongView(
+                        new HopDong(hopDongId, phongId, 201L, LocalDate.of(2040, 1, 1), LocalDate.of(2040, 6, 30),
+                                new BigDecimal("3500000.00"), new BigDecimal("3500000.00"), 30, TrangThaiHopDong.HIEU_LUC),
+                        1L, "501", "Phạm Ngọc An"
+                )
+        ));
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(eq(quanLy), eq(1L))).thenReturn(
+                new ToaNha(1L, "T01", "Toà A", "Địa chỉ", 5, 25, 7, "970405", "0123456789", new BigDecimal("0.15"), false)
+        );
+        when(hopDongRepository.timBienBanBanGiao(bienBanId)).thenReturn(Optional.of(
+                new HopDongRepository.BienBanBanGiaoRecord(bienBanId, hopDongId, phongId, "TRA_PHONG", new BigDecimal("500000.00"))
+        ));
+
+        // Có xacNhanChenhLech = true nhưng lyDo để trống / rỗng -> Bắt buộc ném 400!
+        assertThatThrownBy(() -> hopDongService.thanhLy(
+                hopDongId,
+                new YeuCauThanhLy(BigDecimal.ZERO, "   ", List.of(), bienBanId, true),
+                quanLy
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> {
+                    ResponseStatusException rse = (ResponseStatusException) e;
+                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(rse.getReason()).contains("Yêu cầu xác nhận chênh lệch và nhập lý do");
+                });
+
+        verify(giaoDichCocService, never()).quyetToan(any(), any(), any(), any(), any(), anyInt(), any());
+    }
+
+    @Test
+    void thanhLy_ghiNhatKyThatBai_nemLoiDeRollbackTransaction() {
+        NguoiDung quanLy = new NguoiDung(3L, "Quản lý", "0900000003", "hash", VaiTro.QUAN_LY, TrangThaiNguoiDung.HOAT_DONG, 0, null);
+        Long hopDongId = 1001L;
+        Long phongId = 101L;
+
+        when(hopDongRepository.findViewById(hopDongId)).thenReturn(Optional.of(
+                new HopDongRepository.HopDongView(
+                        new HopDong(hopDongId, phongId, 201L, LocalDate.of(2040, 1, 1), LocalDate.of(2040, 6, 30),
+                                new BigDecimal("3500000.00"), new BigDecimal("3500000.00"), 30, TrangThaiHopDong.HIEU_LUC),
+                        1L, "501", "Phạm Ngọc An"
+                )
+        ));
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(eq(quanLy), eq(1L))).thenReturn(
+                new ToaNha(1L, "T01", "Toà A", "Địa chỉ", 5, 25, 7, "970405", "0123456789", new BigDecimal("0.15"), false)
+        );
+        when(taoHoaDonHangLoatService.taoHoaDonKyCuoi(eq(1L), eq(hopDongId), eq(quanLy))).thenReturn(9001L);
+        when(giaoDichCocService.quyetToan(eq(hopDongId), eq(9001L), eq(BigDecimal.ZERO), isNull(), eq("T01"), eq(7), eq(quanLy)))
+                .thenReturn(com.prj1.ccm.billing.ThongTinQuyetToan.tao(
+                        9001L, new BigDecimal("3500000.00"), new BigDecimal("3500000.00"),
+                        BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("3500000.00"), null
+                ));
+        org.mockito.Mockito.doThrow(new org.springframework.dao.DataRetrievalFailureException("Database crash on audit"))
+                .when(nhatKyThaoTacRepository).ghi(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+
+        assertThatThrownBy(() -> hopDongService.thanhLy(
+                hopDongId,
+                new YeuCauThanhLy(BigDecimal.ZERO, null, List.of(), null, false),
+                quanLy
+        ))
+                .isInstanceOf(org.springframework.dao.DataRetrievalFailureException.class)
+                .hasMessageContaining("Database crash on audit");
     }
 }

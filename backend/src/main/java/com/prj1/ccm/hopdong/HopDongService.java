@@ -238,22 +238,44 @@ public class HopDongService {
         Long hoaDonCuoiId = taoHoaDonHangLoatService.taoHoaDonKyCuoi(toaNha.id(), hopDongId, nguoiDung);
         com.prj1.ccm.billing.ThongTinQuyetToan quyetToan = giaoDichCocService.quyetToan(hopDongId, hoaDonCuoiId, yeuCau == null ? null : yeuCau.khauTruHuHong(), yeuCau == null ? null : yeuCau.lyDo(), toaNha.maToa(), toaNha.soNgayHanTt(), nguoiDung);
         hopDongRepository.updateTrangThai(hopDongId, TrangThaiHopDong.DA_THANH_LY);
-        String bienBanInfo = bienBanDung != null
-                ? "bienBanId=" + bienBanDung.id() + ";bbKhauTru=" + bienBanDung.tongTienKhauTru()
-                : "bienBanId=NONE";
+        BigDecimal khauTruQuyetToan = new BigDecimal(quyetToan.khauTru());
+        boolean coChenhLech = bienBanDung != null && bienBanDung.tongTienKhauTru() != null
+                && khauTruQuyetToan.compareTo(bienBanDung.tongTienKhauTru()) != 0;
+        boolean daXacNhan = yeuCau != null && Boolean.TRUE.equals(yeuCau.xacNhanChenhLech());
+        String lyDoThanhLy = yeuCau != null && yeuCau.lyDo() != null ? yeuCau.lyDo().trim() : "";
+
+        StringBuilder auditGiaTriSau = new StringBuilder("DA_THANH_LY;");
+        if (bienBanDung != null) {
+            auditGiaTriSau.append("bienBanId=").append(bienBanDung.id())
+                    .append(";bbKhauTru=").append(bienBanDung.tongTienKhauTru())
+                    .append(";khauTruQuyetToan=").append(quyetToan.khauTru())
+                    .append(";chenhLech=").append(coChenhLech)
+                    .append(";xacNhanChenhLech=").append(daXacNhan);
+        } else {
+            auditGiaTriSau.append("bienBanId=NONE;khauTruQuyetToan=").append(quyetToan.khauTru());
+        }
+        if (!lyDoThanhLy.isEmpty()) {
+            auditGiaTriSau.append(";lyDo=").append(lyDoThanhLy);
+        }
+        auditGiaTriSau.append(";hoaDonCuoi=").append(quyetToan.hoaDonCuoiId())
+                .append(";tong=").append(quyetToan.tongHoaDonCuoi())
+                .append(";daThuCoc=").append(quyetToan.daThuCoc())
+                .append(";congNo=").append(quyetToan.congNo())
+                .append(";khauTru=").append(quyetToan.khauTru())
+                .append(";hoan=").append(quyetToan.hoanCoc())
+                .append(";hoaDonQT=").append(quyetToan.hoaDonQuyetToanId());
+
         nhatKyThaoTacRepository.ghi(
+                toaNha.id(),
                 nguoiDung.id(),
                 "THANH_LY_HOP_DONG",
                 "HOP_DONG:" + hopDongId,
                 trangThaiHienTai.name(),
-                "DA_THANH_LY;" + bienBanInfo
-                        + ";hoaDonCuoi=" + quyetToan.hoaDonCuoiId()
-                        + ";tong=" + quyetToan.tongHoaDonCuoi()
-                        + ";daThuCoc=" + quyetToan.daThuCoc()
-                        + ";congNo=" + quyetToan.congNo()
-                        + ";khauTru=" + quyetToan.khauTru()
-                        + ";hoan=" + quyetToan.hoanCoc()
-                        + ";hoaDonQT=" + quyetToan.hoaDonQuyetToanId()
+                auditGiaTriSau.toString(),
+                phongId,
+                null,
+                lyDoThanhLy.isEmpty() ? null : lyDoThanhLy,
+                java.time.LocalDateTime.now(clock)
         );
         trangThaiPhongService.dongBoTheoPhongId(hopDongView.hopDong().phongId());
         return chiTiet(hopDongId, nguoiDung).voiQuyetToan(quyetToan);

@@ -37,13 +37,29 @@ public class NhatKyThaoTacRepository {
             String lyDo,
             LocalDateTime thoiDiem
     ) {
+        ghi(null, nguoiDungId, hanhDong, doiTuong, giaTriTruoc, giaTriSau, phongId, dichVuId, lyDo, thoiDiem);
+    }
+
+    public void ghi(
+            Long toaNhaId,
+            Long nguoiDungId,
+            String hanhDong,
+            String doiTuong,
+            String giaTriTruoc,
+            String giaTriSau,
+            Long phongId,
+            Long dichVuId,
+            String lyDo,
+            LocalDateTime thoiDiem
+    ) {
         jdbcTemplate.update(
                 """
                         INSERT INTO NHAT_KY_THAO_TAC(
-                            nguoi_dung_id, hanh_dong, doi_tuong, gia_tri_truoc, gia_tri_sau, phong_id, dich_vu_id, ly_do, thoi_diem
+                            toa_nha_id, nguoi_dung_id, hanh_dong, doi_tuong, gia_tri_truoc, gia_tri_sau, phong_id, dich_vu_id, ly_do, thoi_diem
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
                         """,
+                toaNhaId,
                 nguoiDungId,
                 hanhDong,
                 doiTuong,
