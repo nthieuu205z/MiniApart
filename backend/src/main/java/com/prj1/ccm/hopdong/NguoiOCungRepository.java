@@ -164,6 +164,7 @@ public class NguoiOCungRepository {
                 FROM NGUOI_O_CUNG noc
                 WHERE noc.hop_dong_id = ?
                   AND noc.trang_thai = 'DA_DUYET'
+                  AND noc.nguoi_thue_id <> (SELECT hd.nguoi_thue_id FROM HOP_DONG hd WHERE hd.id = noc.hop_dong_id)
                   AND (?::bigint IS NULL OR noc.id <> ?)
                   AND noc.tu_ngay <= COALESCE(?::date, DATE '9999-12-31')
                   AND (noc.den_ngay IS NULL OR noc.den_ngay >= ?::date)
