@@ -188,19 +188,73 @@ public class HopDongService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, THONG_BAO_CHUYEN_TRANG_THAI);
         }
         ToaNha toaNha = phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, hopDongView.toaNhaId());
-        KyThanhToan ky = taoHoaDonHangLoatService.layKyDangMo(toaNha.id());
-        if (yeuCau != null && yeuCau.chiSoCuoi() != null) {
-            yeuCau.chiSoCuoi().forEach(chiSo -> chiSoDichVuService.ghiChiSo(toaNha.id(), ky.id(), chiSo, nguoiDung));
-        }
+
+        Long phongId = hopDongView.hopDong().phongId();
+        HopDongRepository.BienBanBanGiaoRecord bienBanDung = null;
         if (yeuCau != null && yeuCau.bienBanId() != null) {
-            if (!hopDongRepository.kiemTraBienBanThuocHopDong(yeuCau.bienBanId(), hopDongId)) {
+            HopDongRepository.BienBanBanGiaoRecord bb = hopDongRepository.timBienBanBanGiao(yeuCau.bienBanId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Biên bản bàn giao không tồn tại."));
+            if (!bb.hopDongId().equals(hopDongId)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Biên bản bàn giao không thuộc hợp đồng này.");
             }
+            if (!bb.phongId().equals(phongId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Biên bản bàn giao không thuộc phòng của hợp đồng này.");
+            }
+            if (!"TRA_PHONG".equals(bb.loaiBienBan())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ được dùng biên bản trả phòng (TRA_PHONG) làm căn cứ quyết toán.");
+            }
+            bienBanDung = bb;
+        } else {
+            // Không truyền bienBanId: Kiểm tra xem DB đã có biên bản trả phòng cho hợp đồng này chưa
+            Optional<HopDongRepository.BienBanBanGiaoRecord> existingTraPhong = hopDongRepository.timBienBanTraPhongCuaHopDong(hopDongId, phongId);
+            if (existingTraPhong.isPresent()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Hợp đồng đã có biên bản trả phòng; bắt buộc cung cấp ID biên bản để đối chiếu quyết toán.");
+            }
+            BigDecimal khauTru = yeuCau == null || yeuCau.khauTruHuHong() == null ? BigDecimal.ZERO : yeuCau.khauTruHuHong();
+            if (khauTru.signum() > 0 && (yeuCau.lyDo() == null || yeuCau.lyDo().isBlank())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trường hợp không có biên bản bàn giao và có khấu trừ bồi thường, bắt buộc phải nhập lý do khấu trừ.");
+            }
         }
+
+        // Đối chiếu số tiền khấu trừ nếu có biên bản
+        if (bienBanDung != null) {
+            BigDecimal khauTruYeuCau = yeuCau == null || yeuCau.khauTruHuHong() == null ? BigDecimal.ZERO : yeuCau.khauTruHuHong();
+            BigDecimal khauTruBienBan = bienBanDung.tongTienKhauTru() == null ? BigDecimal.ZERO : bienBanDung.tongTienKhauTru();
+            if (khauTruYeuCau.compareTo(khauTruBienBan) != 0) {
+                if (yeuCau == null || !Boolean.TRUE.equals(yeuCau.xacNhanChenhLech()) || yeuCau.lyDo() == null || yeuCau.lyDo().isBlank()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Số tiền khấu trừ (" + khauTruYeuCau + ") khác với biên bản bàn giao (" + khauTruBienBan + "). Yêu cầu xác nhận chênh lệch và nhập lý do.");
+                }
+            }
+        }
+
+        if (taoHoaDonHangLoatService != null) {
+            KyThanhToan ky = taoHoaDonHangLoatService.layKyDangMo(toaNha.id());
+            if (yeuCau != null && yeuCau.chiSoCuoi() != null && chiSoDichVuService != null && ky != null) {
+                yeuCau.chiSoCuoi().forEach(chiSo -> chiSoDichVuService.ghiChiSo(toaNha.id(), ky.id(), chiSo, nguoiDung));
+            }
+        }
+
         Long hoaDonCuoiId = taoHoaDonHangLoatService.taoHoaDonKyCuoi(toaNha.id(), hopDongId, nguoiDung);
         com.prj1.ccm.billing.ThongTinQuyetToan quyetToan = giaoDichCocService.quyetToan(hopDongId, hoaDonCuoiId, yeuCau == null ? null : yeuCau.khauTruHuHong(), yeuCau == null ? null : yeuCau.lyDo(), toaNha.maToa(), toaNha.soNgayHanTt(), nguoiDung);
         hopDongRepository.updateTrangThai(hopDongId, TrangThaiHopDong.DA_THANH_LY);
-        nhatKyThaoTacRepository.ghi(nguoiDung.id(), "THANH_LY_HOP_DONG", "HOP_DONG:" + hopDongId, trangThaiHienTai.name(), "DA_THANH_LY;hoaDonCuoi=" + quyetToan.hoaDonCuoiId() + ";tong=" + quyetToan.tongHoaDonCuoi() + ";daThuCoc=" + quyetToan.daThuCoc() + ";congNo=" + quyetToan.congNo() + ";khauTru=" + quyetToan.khauTru() + ";hoan=" + quyetToan.hoanCoc() + ";hoaDonQT=" + quyetToan.hoaDonQuyetToanId());
+        String bienBanInfo = bienBanDung != null
+                ? "bienBanId=" + bienBanDung.id() + ";bbKhauTru=" + bienBanDung.tongTienKhauTru()
+                : "bienBanId=NONE";
+        nhatKyThaoTacRepository.ghi(
+                nguoiDung.id(),
+                "THANH_LY_HOP_DONG",
+                "HOP_DONG:" + hopDongId,
+                trangThaiHienTai.name(),
+                "DA_THANH_LY;" + bienBanInfo
+                        + ";hoaDonCuoi=" + quyetToan.hoaDonCuoiId()
+                        + ";tong=" + quyetToan.tongHoaDonCuoi()
+                        + ";daThuCoc=" + quyetToan.daThuCoc()
+                        + ";congNo=" + quyetToan.congNo()
+                        + ";khauTru=" + quyetToan.khauTru()
+                        + ";hoan=" + quyetToan.hoanCoc()
+                        + ";hoaDonQT=" + quyetToan.hoaDonQuyetToanId()
+        );
         trangThaiPhongService.dongBoTheoPhongId(hopDongView.hopDong().phongId());
         return chiTiet(hopDongId, nguoiDung).voiQuyetToan(quyetToan);
     }
@@ -354,9 +408,7 @@ public class HopDongService {
             }
 
             BigDecimal donGiaApDung;
-            if (item.donGiaApDung() != null) {
-                donGiaApDung = chuanHoaSoKhongAm(item.donGiaApDung());
-            } else if (dichVu.cheDoGia() == com.prj1.ccm.toanha.CheDoGia.BAC_THANG) {
+            if (dichVu.cheDoGia() == com.prj1.ccm.toanha.CheDoGia.BAC_THANG) {
                 Optional<LocalDate> ngayHieuLuc = bangGiaRepository.findApplicableNgayHieuLucBacThangByDichVuIdAndNgay(
                         dichVu.id(), LocalDate.now(clock)
                 );
@@ -365,6 +417,8 @@ public class HopDongService {
                             "Dịch vụ " + dichVu.ten() + " tính theo bậc thang nhưng chưa có bảng giá bậc thang hiệu lực.");
                 }
                 donGiaApDung = BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY);
+            } else if (item.donGiaApDung() != null) {
+                donGiaApDung = chuanHoaSoKhongAm(item.donGiaApDung());
             } else {
                 donGiaApDung = layDonGiaMacDinh(dichVu.id());
             }

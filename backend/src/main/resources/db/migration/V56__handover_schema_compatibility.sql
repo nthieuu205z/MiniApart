@@ -12,3 +12,4 @@ BEGIN
         ALTER TABLE CHI_TIET_BIEN_BAN_TAI_SAN RENAME COLUMN tien_khautru TO tien_khau_tru;
     END IF;
 END $$;
+

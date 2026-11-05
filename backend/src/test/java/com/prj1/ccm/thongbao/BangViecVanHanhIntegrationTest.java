@@ -67,9 +67,15 @@ class BangViecVanHanhIntegrationTest {
         jdbcTemplate.update("DELETE FROM KY_THANH_TOAN");
         jdbcTemplate.update("DELETE FROM KHOAN_PHAT_SINH");
         jdbcTemplate.update("DELETE FROM YEU_CAU_SUA_CHUA");
+        jdbcTemplate.update("DELETE FROM CHI_TIET_BIEN_BAN_TAI_SAN");
+        jdbcTemplate.update("DELETE FROM BIEN_BAN_BAN_GIAO_TAI_SAN");
+        jdbcTemplate.update("DELETE FROM TAI_SAN_PHONG");
+        jdbcTemplate.update("DELETE FROM LICH_HEN_XEM_PHONG");
         jdbcTemplate.update("DELETE FROM HOP_DONG_DICH_VU");
         jdbcTemplate.update("DELETE FROM HOP_DONG");
         jdbcTemplate.update("DELETE FROM NGUOI_THUE");
+        jdbcTemplate.update("DELETE FROM BANG_GIA_BAC_THANG");
+        jdbcTemplate.update("DELETE FROM BANG_GIA");
         jdbcTemplate.update("DELETE FROM DICH_VU");
         jdbcTemplate.update("DELETE FROM PHONG");
         jdbcTemplate.update("DELETE FROM PCCC_KIEM_TRA");
@@ -150,7 +156,7 @@ class BangViecVanHanhIntegrationTest {
         jdbcTemplate.update("UPDATE TOA_NHA SET pccc_ngay_kiem_tra_tiep = ? WHERE id = 1", TODAY.plusMonths(3));
         // Thêm thiết bị có hạn kiểm định trong vòng 30 ngày (TODAY + 15 ngày)
         jdbcTemplate.update(
-                "INSERT INTO PCCC_THIET_BI (toa_nha_id, ten_thiet_bi, loai_thiet_bi, vi_tri, han_kiem_dinh, trang_thai) VALUES (1, 'Bình bột MFZ4', 'BINH_CHUA_CHAY', 'Hành lang T1', ?, 'BINH_THUONG')",
+                "INSERT INTO PCCC_THIET_BI (toa_nha_id, ten, vi_tri, han_kiem_dinh) VALUES (1, 'Bình bột MFZ4', 'Hành lang T1', ?)",
                 TODAY.plusDays(15)
         );
         String managerToken = login(3L, "0900000003");

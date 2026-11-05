@@ -8,9 +8,14 @@ public record YeuCauThanhLy(
         BigDecimal khauTruHuHong,
         String lyDo,
         List<YeuCauGhiChiSo> chiSoCuoi,
-        Long bienBanId
+        Long bienBanId,
+        Boolean xacNhanChenhLech
 ) {
+    public YeuCauThanhLy(BigDecimal khauTruHuHong, String lyDo, List<YeuCauGhiChiSo> chiSoCuoi, Long bienBanId) {
+        this(khauTruHuHong, lyDo, chiSoCuoi, bienBanId, false);
+    }
+
     public YeuCauThanhLy(BigDecimal khauTruHuHong, String lyDo, List<YeuCauGhiChiSo> chiSoCuoi) {
-        this(khauTruHuHong, lyDo, chiSoCuoi, null);
+        this(khauTruHuHong, lyDo, chiSoCuoi, null, false);
     }
 }

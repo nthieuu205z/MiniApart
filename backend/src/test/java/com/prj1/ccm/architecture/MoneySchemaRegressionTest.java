@@ -20,6 +20,7 @@ class MoneySchemaRegressionTest {
 
     private static final Map<String, String> NON_MONEY_COLUMN_EXCLUSIONS = Map.ofEntries(
             Map.entry("phong.dien_tich", "room area is a physical measurement, not money"),
+            Map.entry("phong.tien_ich", "room amenities is text, not money"),
             Map.entry("bang_gia_bac_thang.ty_le", "tier percentage is a rate, not money"),
             Map.entry("nguoi_dung.lan_sai_dau_tien", "login-failure timestamp ends with tien but is not money"),
             Map.entry("theo_doi_dang_nhap.lan_sai_dau_tien", "login-failure timestamp ends with tien but is not money"),

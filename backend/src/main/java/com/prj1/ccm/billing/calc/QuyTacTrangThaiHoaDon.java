@@ -65,6 +65,10 @@ public final class QuyTacTrangThaiHoaDon {
                 && mongMuon != TrangThaiHoaDon.DA_THANH_TOAN) {
             return mongMuon;
         }
+        if (hienTai == TrangThaiHoaDon.DA_THU_MOT_PHAN
+                && (mongMuon == TrangThaiHoaDon.DA_PHAT_HANH || mongMuon == TrangThaiHoaDon.QUA_HAN)) {
+            return mongMuon;
+        }
         return chuyen(hienTai, mongMuon);
     }
 
@@ -76,6 +80,11 @@ public final class QuyTacTrangThaiHoaDon {
     ) {
         if (soTienDaThu.giaTri().compareTo(tongPhaiThu.giaTri()) >= 0) {
             return TrangThaiHoaDon.DA_THANH_TOAN;
+        }
+        if (soTienDaThu.giaTri().signum() <= 0) {
+            return ngayHienTai.isAfter(hanThanhToan)
+                    ? TrangThaiHoaDon.QUA_HAN
+                    : TrangThaiHoaDon.DA_PHAT_HANH;
         }
         return ngayHienTai.isAfter(hanThanhToan)
                 ? TrangThaiHoaDon.QUA_HAN

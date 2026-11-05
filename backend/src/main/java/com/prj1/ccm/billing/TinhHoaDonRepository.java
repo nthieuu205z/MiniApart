@@ -353,11 +353,38 @@ class TinhHoaDonRepository {
                 && (thongDiep.contains(RANG_BUOC_TRUNG_MA_HOA_DON) || thongDiep.contains(RANG_BUOC_TRUNG_HOP_DONG_KY));
     }
 
+    boolean khoaHoaDonTrongPhamVi(Long toaNhaId, Long kyId, Long hoaDonId) {
+        String lockSql = """
+                SELECT hd.id
+                FROM HOA_DON hd
+                JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
+                JOIN PHONG p ON p.id = hop_dong.phong_id
+                WHERE hd.id = ?
+                  AND hd.ky_id IS NOT DISTINCT FROM ?
+                  AND p.toa_nha_id = ?
+                FOR UPDATE OF hd
+                """;
+        java.util.List<Long> lockedIds = jdbcTemplate.query(
+                lockSql,
+                (rs, rowNum) -> rs.getLong(1),
+                hoaDonId,
+                kyId,
+                toaNhaId
+        );
+        return !lockedIds.isEmpty();
+    }
+
     java.util.Optional<HoaDonTrongPhamVi> timHoaDonTrongPhamVi(Long toaNhaId, Long kyId, Long hoaDonId) {
         return timHoaDonTrongPhamVi(toaNhaId, kyId, hoaDonId, false);
     }
 
     java.util.Optional<HoaDonTrongPhamVi> timHoaDonTrongPhamVi(Long toaNhaId, Long kyId, Long hoaDonId, boolean khoa) {
+        if (khoa) {
+            boolean daKhoa = khoaHoaDonTrongPhamVi(toaNhaId, kyId, hoaDonId);
+            if (!daKhoa) {
+                return java.util.Optional.empty();
+            }
+        }
         String sql = """
                 SELECT hd.id,
                        hd.trang_thai,
@@ -373,7 +400,7 @@ class TinhHoaDonRepository {
                 WHERE hd.id = ?
                   AND hd.ky_id IS NOT DISTINCT FROM ?
                   AND p.toa_nha_id = ?
-                """ + (khoa ? " FOR UPDATE OF hd" : "");
+                """;
         return jdbcTemplate.query(
                         sql,
                         (resultSet, rowNum) -> new HoaDonTrongPhamVi(

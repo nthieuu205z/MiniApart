@@ -215,4 +215,146 @@ class HopDongServiceTest {
                     assertThat(rse.getReason()).contains("chưa có bảng giá bậc thang hiệu lực");
                 });
     }
+
+    @Test
+    void taoHopDong_dichVuBacThangThieuBangGia_ngayCaKhiCoDonGiaApDung_nemLoiBadRequest() {
+        NguoiDung quanLy = new NguoiDung(3L, "Quản lý", "0900000003", "hash", VaiTro.QUAN_LY, TrangThaiNguoiDung.HOAT_DONG, 0, null);
+        Long phongId = 101L;
+        Long nguoiThueId = 201L;
+        Long dichVuDienId = 301L;
+
+        when(phongRepository.findById(phongId)).thenReturn(Optional.of(
+                new Phong(phongId, 1L, "501", 5, new BigDecimal("25.00"), 2, new BigDecimal("3500000.00"), "Studio", TrangThaiPhong.TRONG)
+        ));
+        when(nguoiThueRepository.findById(nguoiThueId)).thenReturn(Optional.of(
+                new NguoiThue(nguoiThueId, "Phạm Ngọc An", LocalDate.of(2000, 1, 1), "0900001007", "079123456785", "Nam Định", null)
+        ));
+        when(dichVuRepository.findById(dichVuDienId)).thenReturn(Optional.of(
+                new DichVu(dichVuDienId, 1L, "Điện sinh hoạt bậc thang", com.prj1.ccm.toanha.CachTinh.THEO_CHI_SO, com.prj1.ccm.toanha.CheDoGia.BAC_THANG, "kWh", true, true)
+        ));
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(eq(quanLy), eq(1L))).thenReturn(
+                new ToaNha(1L, "T01", "Toà A", "Địa chỉ", 5, 25, 7, "970405", "0123456789", new BigDecimal("0.15"), false)
+        );
+        when(bangGiaRepository.findApplicableNgayHieuLucBacThangByDichVuIdAndNgay(eq(dichVuDienId), any()))
+                .thenReturn(Optional.empty());
+
+        // Truyền donGiaApDung = 3500 (cố tình bypass) -> vẫn phải bị chặn!
+        assertThatThrownBy(() -> hopDongService.tao(new YeuCauHopDong(
+                phongId, nguoiThueId, LocalDate.of(2040, 9, 10), LocalDate.of(2040, 9, 20),
+                new BigDecimal("3500000.00"), new BigDecimal("3500000.00"), 30,
+                List.of(new YeuCauHopDongDichVu(dichVuDienId, new BigDecimal("3500.00")))
+        ), quanLy))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> {
+                    ResponseStatusException rse = (ResponseStatusException) e;
+                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(rse.getReason()).contains("chưa có bảng giá bậc thang hiệu lực");
+                });
+    }
+
+    @Test
+    void thanhLy_bienBanKhongThuocHopDong_nemLoiBadRequest() {
+        NguoiDung quanLy = new NguoiDung(3L, "Quản lý", "0900000003", "hash", VaiTro.QUAN_LY, TrangThaiNguoiDung.HOAT_DONG, 0, null);
+        Long hopDongId = 1001L;
+        Long phongId = 101L;
+        Long bienBanId = 999L;
+
+        when(hopDongRepository.findViewById(hopDongId)).thenReturn(Optional.of(
+                new HopDongRepository.HopDongView(
+                        new HopDong(hopDongId, phongId, 201L, LocalDate.of(2040, 1, 1), LocalDate.of(2040, 6, 30),
+                                new BigDecimal("3500000.00"), new BigDecimal("3500000.00"), 30, TrangThaiHopDong.HIEU_LUC),
+                        1L, "501", "Phạm Ngọc An"
+                )
+        ));
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(eq(quanLy), eq(1L))).thenReturn(
+                new ToaNha(1L, "T01", "Toà A", "Địa chỉ", 5, 25, 7, "970405", "0123456789", new BigDecimal("0.15"), false)
+        );
+        // Biên bản thuộc hợp đồng khác (hopDongId = 2002L)
+        when(hopDongRepository.timBienBanBanGiao(bienBanId)).thenReturn(Optional.of(
+                new HopDongRepository.BienBanBanGiaoRecord(bienBanId, 2002L, phongId, "TRA_PHONG", BigDecimal.ZERO)
+        ));
+
+        assertThatThrownBy(() -> hopDongService.thanhLy(
+                hopDongId,
+                new YeuCauThanhLy(BigDecimal.ZERO, "Thanh lý", List.of(), bienBanId, false),
+                quanLy
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> {
+                    ResponseStatusException rse = (ResponseStatusException) e;
+                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(rse.getReason()).contains("không thuộc hợp đồng này");
+                });
+    }
+
+    @Test
+    void thanhLy_bienBanLaNhanPhong_nemLoiBadRequest() {
+        NguoiDung quanLy = new NguoiDung(3L, "Quản lý", "0900000003", "hash", VaiTro.QUAN_LY, TrangThaiNguoiDung.HOAT_DONG, 0, null);
+        Long hopDongId = 1001L;
+        Long phongId = 101L;
+        Long bienBanId = 888L;
+
+        when(hopDongRepository.findViewById(hopDongId)).thenReturn(Optional.of(
+                new HopDongRepository.HopDongView(
+                        new HopDong(hopDongId, phongId, 201L, LocalDate.of(2040, 1, 1), LocalDate.of(2040, 6, 30),
+                                new BigDecimal("3500000.00"), new BigDecimal("3500000.00"), 30, TrangThaiHopDong.HIEU_LUC),
+                        1L, "501", "Phạm Ngọc An"
+                )
+        ));
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(eq(quanLy), eq(1L))).thenReturn(
+                new ToaNha(1L, "T01", "Toà A", "Địa chỉ", 5, 25, 7, "970405", "0123456789", new BigDecimal("0.15"), false)
+        );
+        // Biên bản là NHAN_PHONG, không phải TRA_PHONG
+        when(hopDongRepository.timBienBanBanGiao(bienBanId)).thenReturn(Optional.of(
+                new HopDongRepository.BienBanBanGiaoRecord(bienBanId, hopDongId, phongId, "NHAN_PHONG", BigDecimal.ZERO)
+        ));
+
+        assertThatThrownBy(() -> hopDongService.thanhLy(
+                hopDongId,
+                new YeuCauThanhLy(BigDecimal.ZERO, "Thanh lý", List.of(), bienBanId, false),
+                quanLy
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> {
+                    ResponseStatusException rse = (ResponseStatusException) e;
+                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(rse.getReason()).contains("Chỉ được dùng biên bản trả phòng (TRA_PHONG)");
+                });
+    }
+
+    @Test
+    void thanhLy_khauTruLechKhongXacNhan_nemLoiBadRequest() {
+        NguoiDung quanLy = new NguoiDung(3L, "Quản lý", "0900000003", "hash", VaiTro.QUAN_LY, TrangThaiNguoiDung.HOAT_DONG, 0, null);
+        Long hopDongId = 1001L;
+        Long phongId = 101L;
+        Long bienBanId = 777L;
+
+        when(hopDongRepository.findViewById(hopDongId)).thenReturn(Optional.of(
+                new HopDongRepository.HopDongView(
+                        new HopDong(hopDongId, phongId, 201L, LocalDate.of(2040, 1, 1), LocalDate.of(2040, 6, 30),
+                                new BigDecimal("3500000.00"), new BigDecimal("3500000.00"), 30, TrangThaiHopDong.HIEU_LUC),
+                        1L, "501", "Phạm Ngọc An"
+                )
+        ));
+        when(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(eq(quanLy), eq(1L))).thenReturn(
+                new ToaNha(1L, "T01", "Toà A", "Địa chỉ", 5, 25, 7, "970405", "0123456789", new BigDecimal("0.15"), false)
+        );
+        // Biên bản ghi nhận khấu trừ 500.000 đ
+        when(hopDongRepository.timBienBanBanGiao(bienBanId)).thenReturn(Optional.of(
+                new HopDongRepository.BienBanBanGiaoRecord(bienBanId, hopDongId, phongId, "TRA_PHONG", new BigDecimal("500000.00"))
+        ));
+
+        // Request gửi lên 0 đ, nhưng xacNhanChenhLech = false -> Bắt buộc ném 400!
+        assertThatThrownBy(() -> hopDongService.thanhLy(
+                hopDongId,
+                new YeuCauThanhLy(BigDecimal.ZERO, "", List.of(), bienBanId, false),
+                quanLy
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> {
+                    ResponseStatusException rse = (ResponseStatusException) e;
+                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(rse.getReason()).contains("Yêu cầu xác nhận chênh lệch");
+                });
+    }
 }

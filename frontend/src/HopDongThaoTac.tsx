@@ -777,6 +777,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
                       {
                         ...settle,
                         bienBanId: bienBans.find((b) => b.loaiBienBan === 'TRA_PHONG')?.id ?? settle.bienBanId ?? null,
+                        xacNhanChenhLech: xacNhanKhauTruKhacBienBan,
                         chiSoCuoi: Object.entries(finalReadings)
                           .filter(([, v]) => v !== '')
                           .map(([id, value]) => ({

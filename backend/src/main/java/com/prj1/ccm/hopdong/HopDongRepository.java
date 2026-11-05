@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -146,6 +147,44 @@ class HopDongRepository {
                 ),
                 hopDongId
         );
+    }
+
+    public record BienBanBanGiaoRecord(
+            Long id,
+            Long hopDongId,
+            Long phongId,
+            String loaiBienBan,
+            BigDecimal tongTienKhauTru
+    ) {}
+
+    public Optional<BienBanBanGiaoRecord> timBienBanBanGiao(Long bienBanId) {
+        if (bienBanId == null) return Optional.empty();
+        return jdbcTemplate.query(
+                "SELECT id, hop_dong_id, phong_id, loai_bien_ban, tong_tien_khau_tru FROM BIEN_BAN_BAN_GIAO_TAI_SAN WHERE id = ?",
+                (rs, rowNum) -> new BienBanBanGiaoRecord(
+                        rs.getLong("id"),
+                        rs.getLong("hop_dong_id"),
+                        rs.getLong("phong_id"),
+                        rs.getString("loai_bien_ban"),
+                        rs.getBigDecimal("tong_tien_khau_tru")
+                ),
+                bienBanId
+        ).stream().findFirst();
+    }
+
+    public Optional<BienBanBanGiaoRecord> timBienBanTraPhongCuaHopDong(Long hopDongId, Long phongId) {
+        if (hopDongId == null || phongId == null) return Optional.empty();
+        return jdbcTemplate.query(
+                "SELECT id, hop_dong_id, phong_id, loai_bien_ban, tong_tien_khau_tru FROM BIEN_BAN_BAN_GIAO_TAI_SAN WHERE hop_dong_id = ? AND phong_id = ? AND loai_bien_ban = 'TRA_PHONG' ORDER BY id DESC LIMIT 1",
+                (rs, rowNum) -> new BienBanBanGiaoRecord(
+                        rs.getLong("id"),
+                        rs.getLong("hop_dong_id"),
+                        rs.getLong("phong_id"),
+                        rs.getString("loai_bien_ban"),
+                        rs.getBigDecimal("tong_tien_khau_tru")
+                ),
+                hopDongId, phongId
+        ).stream().findFirst();
     }
 
     public boolean kiemTraBienBanThuocHopDong(Long bienBanId, Long hopDongId) {

@@ -34,7 +34,7 @@ class ThanhToanRepository {
                 """;
         sql = sql.replace("WHERE hd.id = ?", "WHERE hd.id = ?" + (kyId == null ? " AND hd.ky_id IS NULL" : " AND hd.ky_id = ?"));
         if (khoa) {
-            sql += " FOR UPDATE";
+            sql += " FOR UPDATE OF hd";
         }
         return jdbcTemplate.query(
                         sql,

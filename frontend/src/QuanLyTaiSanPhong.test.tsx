@@ -139,5 +139,112 @@ describe('QuanLyTaiSanPhong', () => {
     expect(container.textContent).toContain('BÀN GIAO NHẬN PHÒNG')
     expect(container.textContent).toContain('Bàn giao đầy đủ chìa khoá')
   })
+
+  it('drops stale responses when switching A -> B -> A with deferred promise returning out of order', async () => {
+    type Resolver = (res: Response) => void
+    let resolveSlowFetchA: Resolver | null = null
+
+    const mockTaiSanAOld: TaiSanPhong[] = [
+      {
+        id: 101,
+        phongId: 101,
+        soPhong: 'P.101',
+        tenTaiSan: 'Tài sản Cũ A',
+        loaiTaiSan: 'ĐIỆN LẠNH',
+        soLuong: 1,
+        tinhTrang: 'Cũ',
+        giaTriUocTinh: '1000000.00',
+        ghiChu: '',
+        ngayLap: '2026-01-01',
+      },
+    ]
+
+    const mockTaiSanB: TaiSanPhong[] = [
+      {
+        id: 202,
+        phongId: 202,
+        soPhong: 'P.202',
+        tenTaiSan: 'Tài sản Phòng B',
+        loaiTaiSan: 'ĐIỆN LẠNH',
+        soLuong: 1,
+        tinhTrang: 'Mới',
+        giaTriUocTinh: '2000000.00',
+        ghiChu: '',
+        ngayLap: '2026-01-01',
+      },
+    ]
+
+    const mockTaiSanANew: TaiSanPhong[] = [
+      {
+        id: 101,
+        phongId: 101,
+        soPhong: 'P.101',
+        tenTaiSan: 'Tài sản Mới Nhất A',
+        loaiTaiSan: 'ĐIỆN LẠNH',
+        soLuong: 1,
+        tinhTrang: 'Mới 100%',
+        giaTriUocTinh: '5000000.00',
+        ghiChu: '',
+        ngayLap: '2026-11-05',
+      },
+    ]
+
+    let fetchACount = 0
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('/api/phong/101/tai-san')) {
+        fetchACount++
+        if (fetchACount === 1) {
+          // Slow fetch for A
+          return new Promise<Response>((resolve) => {
+            resolveSlowFetchA = resolve
+          })
+        }
+        // Fast second fetch for A
+        return Promise.resolve(new Response(JSON.stringify(mockTaiSanANew), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }))
+      }
+      if (url.includes('/api/phong/202/tai-san')) {
+        return Promise.resolve(new Response(JSON.stringify(mockTaiSanB), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }))
+      }
+      return Promise.resolve(new Response('[]', { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    }))
+
+    // 1. Initial render Room A -> triggers slow fetch
+    await act(async () => {
+      root.render(<QuanLyTaiSanPhong token="mock-token" phongId={101} soPhong="P.101" />)
+    })
+
+    // 2. Switch to Room B
+    await act(async () => {
+      root.render(<QuanLyTaiSanPhong token="mock-token" phongId={202} soPhong="P.202" />)
+    })
+    expect(container.textContent).toContain('Tài sản Phòng B')
+
+    // 3. Switch back to Room A -> triggers second fetch for A which resolves immediately
+    await act(async () => {
+      root.render(<QuanLyTaiSanPhong token="mock-token" phongId={101} soPhong="P.101" />)
+    })
+    expect(container.textContent).toContain('Tài sản Mới Nhất A')
+
+    // 4. Now resolve the slow first fetch for A
+    await act(async () => {
+      if (resolveSlowFetchA) {
+        resolveSlowFetchA(new Response(JSON.stringify(mockTaiSanAOld), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }))
+      }
+    })
+
+    // 5. Verification: The component must STILL display "Tài sản Mới Nhất A", NOT "Tài sản Cũ A"
+    expect(container.textContent).toContain('Tài sản Mới Nhất A')
+    expect(container.textContent).not.toContain('Tài sản Cũ A')
+  })
 })
 

@@ -85,40 +85,46 @@ export default function QuanLyTaiSanPhong({
     }>
   >([])
 
-  const currentScopeRef = useRef({ phongId, hopDongId })
-  useEffect(() => {
-    currentScopeRef.current = { phongId, hopDongId }
-  })
+  const requestIdRef = useRef(0)
+  const isMountedRef = useRef(true)
 
-  async function loadData() {
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+      requestIdRef.current++
+    }
+  }, [])
+
+  async function loadData(targetReqId?: number) {
     const curPhong = phongId
     const curHd = hopDongId
+    const reqId = targetReqId ?? ++requestIdRef.current
     setDangTai(true)
     try {
       const [taiSan, bienBan] = await Promise.all([
         fetchTaiSanPhong(token, curPhong),
         curHd ? fetchBienBanTaiSan(token, curHd) : Promise.resolve([]),
       ])
-      if (currentScopeRef.current.phongId === curPhong && currentScopeRef.current.hopDongId === curHd) {
-        setDanhSachTaiSan(taiSan)
-        setDanhSachBienBan(bienBan)
-        if (onBienBanLoaded) {
-          onBienBanLoaded(bienBan)
-        }
+      if (requestIdRef.current !== reqId || !isMountedRef.current) return
+      setDanhSachTaiSan(taiSan)
+      setDanhSachBienBan(bienBan)
+      if (onBienBanLoaded) {
+        onBienBanLoaded(bienBan)
       }
     } catch (e: unknown) {
-      if (currentScopeRef.current.phongId === curPhong) {
+      if (requestIdRef.current === reqId && isMountedRef.current) {
         setLoi(e instanceof Error ? e.message : 'Không thể tải dữ liệu tài sản.')
       }
     } finally {
-      if (currentScopeRef.current.phongId === curPhong) {
+      if (requestIdRef.current === reqId && isMountedRef.current) {
         setDangTai(false)
       }
     }
   }
 
   useEffect(() => {
-    let active = true
+    const reqId = ++requestIdRef.current
     // Reset form / checklist khi đổi phòng hoặc đổi hợp đồng
     setChiTietKiemKe([])
     setGhiChuBienBan('')
@@ -132,7 +138,7 @@ export default function QuanLyTaiSanPhong({
       hopDongId ? fetchBienBanTaiSan(token, hopDongId) : Promise.resolve([]),
     ])
       .then(([taiSan, bienBan]) => {
-        if (!active) return
+        if (requestIdRef.current !== reqId || !isMountedRef.current) return
         setDanhSachTaiSan(taiSan)
         setDanhSachBienBan(bienBan)
         if (onBienBanLoaded) {
@@ -140,16 +146,14 @@ export default function QuanLyTaiSanPhong({
         }
       })
       .catch((e: unknown) => {
-        if (!active) return
+        if (requestIdRef.current !== reqId || !isMountedRef.current) return
         setLoi(e instanceof Error ? e.message : 'Không thể tải dữ liệu tài sản.')
       })
       .finally(() => {
-        if (active) setDangTai(false)
+        if (requestIdRef.current === reqId && isMountedRef.current) {
+          setDangTai(false)
+        }
       })
-
-    return () => {
-      active = false
-    }
   }, [token, phongId, hopDongId])
 
   // Chuẩn bị danh sách kiểm kê khi chuyển sang lập biên bản
@@ -170,11 +174,14 @@ export default function QuanLyTaiSanPhong({
 
   async function handleThemTaiSan(e: FormEvent) {
     e.preventDefault()
+    const reqId = ++requestIdRef.current
+    const targetPhongId = phongId
     setDangLuu(true)
     setLoi(null)
     setThongBao(null)
     try {
-      await themTaiSanPhong(token, phongId, bieuMauTaiSan)
+      await themTaiSanPhong(token, targetPhongId, bieuMauTaiSan)
+      if (requestIdRef.current !== reqId || !isMountedRef.current) return
       setThongBao(`Đã thêm thiết bị "${bieuMauTaiSan.tenTaiSan}" vào phòng.`)
       setBieuMauTaiSan({
         tenTaiSan: '',
@@ -184,26 +191,36 @@ export default function QuanLyTaiSanPhong({
         giaTriUocTinh: '',
         ghiChu: '',
       })
-      await loadData()
+      await loadData(reqId)
     } catch (e: unknown) {
-      setLoi(e instanceof Error ? e.message : 'Lỗi thêm tài sản.')
+      if (requestIdRef.current === reqId && isMountedRef.current) {
+        setLoi(e instanceof Error ? e.message : 'Lỗi thêm tài sản.')
+      }
     } finally {
-      setDangLuu(false)
+      if (requestIdRef.current === reqId && isMountedRef.current) {
+        setDangLuu(false)
+      }
     }
   }
 
   async function handleXoaTaiSan(id: number, ten: string) {
     if (!window.confirm(`Xoá tài sản "${ten}" khỏi danh mục phòng?`)) return
+    const reqId = ++requestIdRef.current
     setDangLuu(true)
     setLoi(null)
     try {
       await xoaTaiSanPhong(token, id)
+      if (requestIdRef.current !== reqId || !isMountedRef.current) return
       setThongBao(`Đã xoá thiết bị "${ten}".`)
-      await loadData()
+      await loadData(reqId)
     } catch (e: unknown) {
-      setLoi(e instanceof Error ? e.message : 'Lỗi xoá tài sản.')
+      if (requestIdRef.current === reqId && isMountedRef.current) {
+        setLoi(e instanceof Error ? e.message : 'Lỗi xoá tài sản.')
+      }
     } finally {
-      setDangLuu(false)
+      if (requestIdRef.current === reqId && isMountedRef.current) {
+        setDangLuu(false)
+      }
     }
   }
 
@@ -229,6 +246,7 @@ export default function QuanLyTaiSanPhong({
       setLoi('Cần chỉ định hợp đồng để lập biên bản bàn giao.')
       return
     }
+    const reqId = ++requestIdRef.current
     const submittingHopDongId = hopDongId
     const submittingPhongId = phongId
     setDangLuu(true)
@@ -250,13 +268,7 @@ export default function QuanLyTaiSanPhong({
         })),
       }
       await lapBienBanTaiSan(token, submittingHopDongId, payload)
-      // Chặn nếu người dùng đã đổi hợp đồng / phòng trong lúc request đang xử lý
-      if (
-        currentScopeRef.current.hopDongId !== submittingHopDongId ||
-        currentScopeRef.current.phongId !== submittingPhongId
-      ) {
-        return
-      }
+      if (requestIdRef.current !== reqId || !isMountedRef.current) return
       setThongBao(
         `Lập biên bản ${loaiBienBan === 'NHAN_PHONG' ? 'nhận phòng' : 'trả phòng'} thành công!`
       )
@@ -271,21 +283,16 @@ export default function QuanLyTaiSanPhong({
         fetchTaiSanPhong(token, submittingPhongId),
         fetchBienBanTaiSan(token, submittingHopDongId),
       ])
-      if (
-        currentScopeRef.current.hopDongId !== submittingHopDongId ||
-        currentScopeRef.current.phongId !== submittingPhongId
-      ) {
-        return
-      }
+      if (requestIdRef.current !== reqId || !isMountedRef.current) return
       setDanhSachTaiSan(taiSan)
       setDanhSachBienBan(bienBan)
       if (onBienBanLoaded) onBienBanLoaded(bienBan)
     } catch (e: unknown) {
-      if (currentScopeRef.current.hopDongId === submittingHopDongId) {
+      if (requestIdRef.current === reqId && isMountedRef.current) {
         setLoi(e instanceof Error ? e.message : 'Lỗi lập biên bản bàn giao.')
       }
     } finally {
-      if (currentScopeRef.current.hopDongId === submittingHopDongId) {
+      if (requestIdRef.current === reqId && isMountedRef.current) {
         setDangLuu(false)
       }
     }
