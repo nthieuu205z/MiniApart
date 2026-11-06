@@ -3,10 +3,12 @@ import { Button } from './design/core/Button'
 import { dinhDangTien } from './design/core/format'
 import { counterPayment, downloadFinanceFile, financeRequest, getLedger, invoiceUrl, localDate, recordPayment, validMoney, type Ledger, type Payment } from './financeApi'
 
-type Props = { token: string; hoaDonId: number; conLai?: string; trangThai?: string; onChanged?: () => void }
+type Props = { token: string; hoaDonId: number; maHoaDon?: string; conLai?: string; trangThai?: string; onChanged?: () => void }
 
 /** FR-INV-11/12/13/14 presents the immutable ledger, receipts and explicit counter entries. */
-export default function FinancePaymentPanel({ token, hoaDonId, conLai = '', trangThai, onChanged }: Props) {
+export default function FinancePaymentPanel({ token, hoaDonId, maHoaDon, conLai = '', trangThai, onChanged }: Props) {
+  // A temporary local-demo choice; production continues using the building's signed invoice QR.
+  const personalDemoQr = import.meta.env.DEV && import.meta.env.VITE_DEMO_PERSONAL_QR === 'true'
   const [ledger, setLedger] = useState<Ledger | null>(null)
   const [amount, setAmount] = useState(conLai)
   const [date, setDate] = useState(localDate)
@@ -23,6 +25,7 @@ export default function FinancePaymentPanel({ token, hoaDonId, conLai = '', tran
   useEffect(() => {
     let active = true
     setLedger(null)
+    setQr(null)
     getLedger(token, hoaDonId).then((value) => { if (active) setLedger(value) }).catch((cause: unknown) => { if (active) setError(message(cause)) })
     return () => { active = false }
   }, [token, hoaDonId, reload])
@@ -65,11 +68,25 @@ export default function FinancePaymentPanel({ token, hoaDonId, conLai = '', tran
         <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.4 }}><input type="checkbox" checked={extra} onChange={(event) => setExtra(event.target.checked)} /> Xác nhận thu thêm khi hoá đơn đã thanh toán đủ; phần thừa được lưu thành số dư.</label>
         <Button type="submit" blocked={busy || !validMoney(amount)} blockedReason={busy ? 'Đang ghi nhận giao dịch.' : 'Nhập số tiền lớn hơn 0, tối đa 2 chữ số thập phân.'}>Ghi nhận thu tiền</Button>
       </form> : <p style={{ color: 'var(--ma-text-secondary)' }}>Phát hành hoá đơn trước khi thu tiền. Hoá đơn đã huỷ chỉ có thể xem lịch sử.</p>}
-      {ledger.kyId !== null && canCollect ? <Button variant="secondary" blocked={busy} blockedReason="Đang xử lý giao dịch." onClick={() => void run(async () => {
+      {ledger.kyId !== null && canCollect && (!personalDemoQr || validMoney(conLai)) ? <Button variant="secondary" blocked={busy} blockedReason="Đang xử lý giao dịch." onClick={() => void run(async () => {
+        if (personalDemoQr) {
+          setQr('/payments/viettel-money-demo-qr.png')
+          return
+        }
         const link = await financeRequest<{ url: string }>(token, `${invoiceUrl({ toaNhaId: ledger.toaNhaId, kyId: ledger.kyId!, hoaDonId })}/ma-qr-chuyen-khoan`)
         setQr(link.url)
-      })}>Tạo mã QR chuyển khoản</Button> : null}
-      {qr ? <figure style={{ margin: 0, padding: 16, background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)', textAlign: 'center' }}><img src={qr} alt="Mã QR chuyển khoản cho hoá đơn đang chọn" style={{ maxWidth: '100%', width: 280, borderRadius: 'var(--ma-radius-sm)', border: '1px solid var(--ma-border-default)' }} /><figcaption style={{ marginTop: 8, fontSize: 12, color: 'var(--ma-text-secondary)' }}>Mã có hiệu lực 15 phút. Xác minh khoản tiền đã nhận trước khi ghi nhận thanh toán.</figcaption></figure> : null}
+      })}>{personalDemoQr ? 'Hiện QR nhận tiền demo' : 'Tạo mã QR chuyển khoản'}</Button> : null}
+      {qr ? <figure style={{ margin: 0, padding: 16, background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)', textAlign: 'center' }}>
+        <img src={qr} alt={personalDemoQr ? 'QR nhận tiền Viettel Money của Trần Ngọc Đức' : 'Mã QR chuyển khoản cho hoá đơn đang chọn'} style={{ maxWidth: '100%', width: personalDemoQr ? 340 : 280, height: 'auto', background: '#fff', border: '1px solid var(--ma-border-default)' }} />
+        <figcaption style={{ marginTop: 10, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.6 }}>
+          {personalDemoQr ? <>
+            <strong style={{ display: 'block', color: 'var(--ma-text-primary)' }}>QR nhận tiền tĩnh · dùng tạm cho demo</strong>
+            <span style={{ display: 'block' }}>Số tiền cần nhập: {dinhDangTien(conLai)} đ</span>
+            {maHoaDon ? <span style={{ display: 'block' }}>Nội dung chuyển khoản: {maHoaDon}</span> : <span style={{ display: 'block' }}>Nhập mã hóa đơn đang xem vào nội dung chuyển khoản.</span>}
+            <span>Mã không tự điền số tiền hoặc nội dung hóa đơn. Chỉ ghi nhận thanh toán sau khi đối chiếu tiền đã nhận.</span>
+          </> : 'Mã có hiệu lực 15 phút. Xác minh khoản tiền đã nhận trước khi ghi nhận thanh toán.'}
+        </figcaption>
+      </figure> : null}
       {receipt ? <div role="status" style={{ ...box, background: 'var(--ma-done-bg)', border: '1px solid var(--ma-done)', color: 'var(--ma-done-text)' }}><strong>Đã ghi {receipt.maBienLai}</strong><span style={{ fontFamily: 'var(--ma-font-mono)', fontVariantNumeric: 'tabular-nums' }}>Đã thu: {dinhDangTien(receipt.daThu)} đ · Còn lại: {dinhDangTien(receipt.conLai)} đ · Số dư: {dinhDangTien(receipt.soTienThanhSoDu)} đ</span></div> : null}
       <h5 style={{ margin: '8px 0 0', fontSize: 14, fontWeight: 700 }}>Lịch sử thanh toán</h5>
       {ledger.giaoDich.length === 0 ? <p style={{ color: 'var(--ma-text-secondary)' }}>Chưa có giao dịch.</p> : ledger.giaoDich.map((entry) => <article key={entry.id} style={box}>

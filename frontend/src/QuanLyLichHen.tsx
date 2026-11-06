@@ -86,7 +86,7 @@ export default function QuanLyLichHen({ token, mobile = false }: Props) {
       {/* Tiêu đề & Thông tin dẫn nhập */}
       <div style={styleTieuDeManHinh}>
         <div>
-          <SysLabel>FR-PUB-02 · TIẾP NHẬN KHÁCH VÃNG LAI</SysLabel>
+          <SysLabel>TIẾP NHẬN KHÁCH VÃNG LAI</SysLabel>
           <h2 style={styleTieuDeH2}>Lịch Hẹn Xem Phòng Trực Tuyến</h2>
           <p style={{ margin: '4px 0 0', color: 'var(--ma-text-secondary)', fontSize: 13 }}>
             Danh sách khách đặt hẹn xem phòng từ trang chủ công khai. Quản lý cần gọi xác nhận trước khi khách đến.

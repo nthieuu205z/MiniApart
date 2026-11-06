@@ -119,7 +119,7 @@ export default function TieuThuBaoCao({ token, mobile = false }: Props): React.R
   if (loi && !baoCao) {
     return (
       <ScreenSurface data-testid="consumption-report-screen" data-layout-variant={variant} role="alert">
-        <SysLabel>FR-RPT-02 · FR-RPT-05</SysLabel>
+        <SysLabel>BÁO CÁO TIÊU THỤ</SysLabel>
         <ScreenNotice tone="urgent">{loi}</ScreenNotice>
       </ScreenSurface>
     )
@@ -128,7 +128,7 @@ export default function TieuThuBaoCao({ token, mobile = false }: Props): React.R
   return (
     <ScreenSurface data-testid="consumption-report-screen" data-layout-variant={variant} aria-labelledby="consumption-report-title">
       <ScreenHeader action={<ExcelExportButton token={token} report="tieu-thu" filters={boLoc} loading={dangTai} />}>
-        <SysLabel>FR-RPT-02 · FR-RPT-05</SysLabel>
+        <SysLabel>BÁO CÁO TIÊU THỤ</SysLabel>
         <h3 id="consumption-report-title" style={{ margin: '8px 0 0' }}>Tiêu thụ điện và nước</h3>
         <p style={styleMuted}>Bảng và biểu đồ dùng cùng một ảnh chụp dữ liệu, tách riêng theo kWh và m³ để đối soát.</p>
       </ScreenHeader>
@@ -369,9 +369,9 @@ function mauTheoDonVi(unit: string): string {
 }
 
 const styleMuted: CSSProperties = { margin: '4px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.5 }
-const styleFilterGrid: CSSProperties = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)' }
-const styleField: CSSProperties = { display: 'grid', gap: 6, minWidth: 0 }
-const styleInput: CSSProperties = { width: '100%', minWidth: 0, minHeight: 'var(--ma-hit-mobile)', padding: '0 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 0, background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)' }
+const styleFilterGrid: CSSProperties = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
+const styleField: CSSProperties = { display: 'grid', gap: 6, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
+const styleInput: CSSProperties = { width: '100%', minWidth: 0, maxWidth: '100%', minHeight: 'var(--ma-hit-mobile)', padding: '0 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 0, background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)', boxSizing: 'border-box' }
 const styleChart: CSSProperties = { display: 'grid', gap: 14, minWidth: 0, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }
 const styleLegend: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 14, color: 'var(--ma-text-secondary)', fontSize: 12 }
 const styleLegendDot: CSSProperties = { display: 'inline-block', width: 10, height: 10, marginRight: 5 }

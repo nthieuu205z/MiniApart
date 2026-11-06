@@ -357,7 +357,7 @@ function ThongBaoChungForm({ token, mobile }: { token: string; mobile: boolean }
     <section aria-label="Soạn thông báo chung" style={{ gridColumn: '1 / -1', display: 'grid', gap: 'var(--ma-space-5)', padding: 'var(--ma-space-5)', border: '1px solid var(--ma-border-strong)', background: 'var(--ma-bg-sunken)', minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 'var(--ma-space-3)', flexWrap: 'wrap' }}>
         <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
-          <SysLabel tone="primary">FR-NTF-02</SysLabel>
+          <SysLabel tone="primary">GỬI THÔNG BÁO</SysLabel>
           <h2 style={{ margin: 0, font: 'var(--ma-text-block-title)' }}>Soạn thông báo chung</h2>
           <p style={{ margin: 0, color: 'var(--ma-text-secondary)', font: 'var(--ma-text-body)' }}>Xem trước số phòng nhận trước khi gửi. Người nhận được chụp tại thời điểm gửi.</p>
         </div>

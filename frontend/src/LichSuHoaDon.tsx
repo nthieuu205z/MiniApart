@@ -43,7 +43,7 @@ export default function LichSuHoaDon({ token, mobile = false }: Props) {
   if (loi) {
     return (
       <ScreenSurface data-testid="invoice-history-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'} role="alert">
-        <SysLabel>FR-POR-03</SysLabel>
+        <SysLabel>LỊCH SỬ HOÁ ĐƠN</SysLabel>
         <ScreenNotice tone="urgent">{loi}</ScreenNotice>
         <Button data-retry-invoice-history variant="secondary" onClick={() => setSoLanTaiLai((count) => count + 1)}>Thử lại</Button>
       </ScreenSurface>
@@ -53,7 +53,7 @@ export default function LichSuHoaDon({ token, mobile = false }: Props) {
   return (
     <ScreenSurface data-testid="invoice-history-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'} aria-labelledby="invoice-history-title">
       <ScreenHeader>
-        <SysLabel>FR-POR-03</SysLabel>
+        <SysLabel>LỊCH SỬ HOÁ ĐƠN</SysLabel>
         <h3 id="invoice-history-title" style={{ margin: '8px 0 0' }}>Lịch sử hoá đơn</h3>
       </ScreenHeader>
 

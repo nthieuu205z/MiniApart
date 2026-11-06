@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import {
   fetchHopDongQuanLy,
   fetchPhong,
@@ -33,6 +33,7 @@ import { Button } from './design/core/Button'
 import { dinhDangTien } from './design/core/format'
 import { StatusTag } from './design/core/StatusTag'
 import { SysLabel } from './design/core/SysLabel'
+import { useDialogTrap } from './design/feedback/useDialogTrap'
 import QuanLyTaiSanPhong from './QuanLyTaiSanPhong'
 
 type Occupant = {
@@ -75,13 +76,90 @@ const sectionHeaderStyle: CSSProperties = {
   marginBottom: 14,
 }
 
-export default function HopDongThaoTac({ token }: { token: string }) {
+const tabActiveStyle: CSSProperties = {
+  padding: '8px 16px',
+  fontFamily: 'var(--ma-font-ui)',
+  fontSize: 13.5,
+  fontWeight: 700,
+  border: 'none',
+  borderBottom: '3px solid var(--ma-brand-accent)',
+  background: 'transparent',
+  color: 'var(--ma-brand-accent)',
+  cursor: 'pointer',
+  marginBottom: -2,
+}
+
+const tabInactiveStyle: CSSProperties = {
+  padding: '8px 16px',
+  fontFamily: 'var(--ma-font-ui)',
+  fontSize: 13.5,
+  fontWeight: 500,
+  border: 'none',
+  borderBottom: '3px solid transparent',
+  background: 'transparent',
+  color: 'var(--ma-text-secondary)',
+  cursor: 'pointer',
+  marginBottom: -2,
+}
+
+export type HopDongThaoTacProps = {
+  token: string
+  buildingId?: number | null
+  onBuildingChange?: (id: number | null) => void
+  selectedHopDongId?: number | null
+  onSelectHopDong?: (id: number | null) => void
+  hienThiFormTao?: boolean
+  onToggleFormTao?: (show: boolean) => void
+  onDongChiTiet?: () => void
+  embedded?: boolean
+}
+
+export default function HopDongThaoTac({
+  token,
+  buildingId,
+  onBuildingChange,
+  selectedHopDongId,
+  onSelectHopDong,
+  hienThiFormTao = false,
+  onToggleFormTao,
+  onDongChiTiet,
+  embedded = false,
+}: HopDongThaoTacProps) {
   const building = useBuildings(token)
+  const isControlled = selectedHopDongId !== undefined
+  const [internalSelected, setInternalSelected] = useState<number | null>(null)
+  const selected = isControlled ? selectedHopDongId : internalSelected
+
+  const setSelected = useCallback((id: number | null) => {
+    setInternalSelected(id)
+    onSelectHopDong?.(id)
+  }, [onSelectHopDong])
+
+  const activeBuildingId = buildingId !== undefined ? buildingId : building.buildingId
+  const prevBuildingIdRef = useRef<number | null>(activeBuildingId)
+
+  useEffect(() => {
+    if (buildingId !== undefined && buildingId !== null && buildingId !== building.buildingId) {
+      building.setBuildingId(buildingId)
+    }
+  }, [buildingId, building.buildingId])
+
   const [contracts, setContracts] = useState<ThongTinHopDong[]>([])
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [rooms, setRooms] = useState<ThongTinPhong[]>([])
   const [services, setServices] = useState<Service[]>([])
-  const [selected, setSelected] = useState<number | null>(null)
+  const [tabHienTai, setTabHienTai] = useState<'HO_SO' | 'CU_TRU' | 'TAI_SAN' | 'QUYET_TOAN'>('HO_SO')
+  const [moFormTao, setMoFormTao] = useState(Boolean(hienThiFormTao))
+
+  useEffect(() => {
+    if (hienThiFormTao !== undefined) {
+      setMoFormTao(hienThiFormTao)
+    }
+  }, [hienThiFormTao])
+
+  const cheDoTaoMoiThucTe = embedded ? Boolean(hienThiFormTao) : moFormTao
+  const dossierRef = useRef<HTMLDivElement>(null)
+  const lastScrolledHopDongIdRef = useRef<number | null>(null)
   const [occupants, setOccupants] = useState<Occupant[]>([])
   const [form, setForm] = useState({
     phongId: '',
@@ -120,6 +198,20 @@ export default function HopDongThaoTac({ token }: { token: string }) {
   const currentHopDongIdRef = useRef<number | null>(null)
   const selectedHopDongIdRef = useRef<number | null>(selected)
   selectedHopDongIdRef.current = selected
+
+  useEffect(() => {
+    if (selected == null || cheDoTaoMoiThucTe) {
+      lastScrolledHopDongIdRef.current = null
+      return
+    }
+
+    if (hoSo?.hopDongId === selected || action.error) {
+      if (lastScrolledHopDongIdRef.current !== selected) {
+        lastScrolledHopDongIdRef.current = selected
+        dossierRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+      }
+    }
+  }, [selected, hoSo?.hopDongId, cheDoTaoMoiThucTe, action.error])
 
   async function loadDossier(hopDongId: number) {
     if (hopDongId !== selectedHopDongIdRef.current) {
@@ -258,16 +350,28 @@ export default function HopDongThaoTac({ token }: { token: string }) {
     }))
   }
 
-  async function load() {
-    if (!building.buildingId) return
+  const loadGenRef = useRef(0)
+  const currentBuildingIdRef = useRef<number | null>(null)
+
+  async function load(targetBuildingId?: number | null) {
+    const bId = targetBuildingId !== undefined ? targetBuildingId : activeBuildingId
+    if (!bId) return
+    const gen = ++loadGenRef.current
+    currentBuildingIdRef.current = bId
+
     const [a, b, c, d, benA, maus] = await Promise.all([
-      fetchHopDongQuanLy(token, building.buildingId),
+      fetchHopDongQuanLy(token, bId),
       managementRequest<Tenant[]>(token, '/api/nguoi-thue'),
-      fetchPhong(token, building.buildingId),
-      managementRequest<Service[]>(token, `/api/toa-nha/${building.buildingId}/dich-vu`),
-      fetchCauHinhBenA(token, building.buildingId).catch(() => null),
-      fetchMauHopDong(token, building.buildingId).catch(() => []),
+      fetchPhong(token, bId),
+      managementRequest<Service[]>(token, `/api/toa-nha/${bId}/dich-vu`),
+      fetchCauHinhBenA(token, bId).catch(() => null),
+      fetchMauHopDong(token, bId).catch(() => []),
     ])
+
+    if (loadGenRef.current !== gen || currentBuildingIdRef.current !== bId) {
+      return
+    }
+
     setContracts(a)
     setTenants(b)
     setRooms(c)
@@ -277,9 +381,14 @@ export default function HopDongThaoTac({ token }: { token: string }) {
   }
 
   useEffect(() => {
-    setSelected(null)
-    if (building.buildingId) void action.run(load, 'Đã tải dữ liệu hợp đồng.')
-  }, [building.buildingId, token])
+    if (prevBuildingIdRef.current !== activeBuildingId) {
+      prevBuildingIdRef.current = activeBuildingId
+      if (!isControlled) {
+        setSelected(null)
+      }
+    }
+    if (activeBuildingId) void action.run(() => load(activeBuildingId), 'Đã tải dữ liệu hợp đồng.')
+  }, [activeBuildingId, token, isControlled])
 
   useEffect(() => {
     selectedHopDongIdRef.current = selected
@@ -326,8 +435,10 @@ export default function HopDongThaoTac({ token }: { token: string }) {
           donGiaApDung: price || null,
         })),
       })
-      await load()
+      await load(activeBuildingId)
       setSelected(row.id)
+      setMoFormTao(false)
+      onToggleFormTao?.(false)
     }, 'Đã tạo hợp đồng chờ ký.')
   }
 
@@ -335,7 +446,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
     if (!selected) return
     await action.run(async () => {
       await managementRequest(token, `/api/hop-dong/${selected}/${path}`, 'POST', body)
-      await load()
+      await load(activeBuildingId)
     })
   }
 
@@ -379,17 +490,32 @@ export default function HopDongThaoTac({ token }: { token: string }) {
   const tongThanhToanDauKy = giaThueSo + tienCocSo
 
   return (
-    <section style={{ display: 'grid', gap: 24 }}>
-      <div>
-        <SysLabel>FR-TNT · QUẢN LÝ HỢP ĐỒNG THUÊ</SysLabel>
-        <h2 style={{ margin: '4px 0 0', font: 'var(--ma-text-screen-title)' }}>Thao tác & Nghiệp vụ Hợp đồng</h2>
-      </div>
+    <section style={{ display: 'grid', gap: 24, minWidth: 0, maxWidth: '100%' }}>
+      {!embedded && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <SysLabel>QUẢN LÝ HỢP ĐỒNG THUÊ</SysLabel>
+              <h2 style={{ margin: '4px 0 0', font: 'var(--ma-text-screen-title)' }}>Thao tác & Nghiệp vụ Hợp đồng</h2>
+            </div>
+            <Button
+              variant="secondary"
+              onClick={() => setMoFormTao(!moFormTao)}
+            >
+              {moFormTao ? '✕ Đóng form tạo' : '+ Tạo hợp đồng mới'}
+            </Button>
+          </div>
 
-      <Feedback error={action.error ?? building.error} success={action.success} />
-      <BuildingSelect buildings={building.buildings} value={building.buildingId} onChange={building.setBuildingId} />
+          <Feedback error={action.error ?? building.error} success={action.success} />
+          <BuildingSelect buildings={building.buildings} value={building.buildingId} onChange={building.setBuildingId} />
+        </>
+      )}
 
-      {/* FORM TẠO HỢP ĐỒNG THUÊ VỚI TIỆN ÍCH 1-CHẠM */}
-      <form onSubmit={create} style={panelStyle}>
+      {embedded && <Feedback error={action.error} success={action.success} />}
+
+      {/* FORM TẠO HỢP ĐỒNG THUÊ: Chỉ xuất hiện khi người dùng chọn tạo mới */}
+      {cheDoTaoMoiThucTe && (
+        <form onSubmit={create} style={panelStyle}>
         <div style={sectionHeaderStyle}>
           <div>
             <h3 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>📝 Tạo hợp đồng thuê mới</h3>
@@ -541,7 +667,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 16, minWidth: 0 }}>
             <div>
               <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>PHÒNG THUÊ</div>
               <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4 }}>
@@ -598,7 +724,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 12, minWidth: 0 }}>
             {services.filter((s) => s.dangSuDung).map((s) => (
               <div
                 key={s.id}
@@ -655,34 +781,44 @@ export default function HopDongThaoTac({ token }: { token: string }) {
           </SaveButton>
         </div>
       </form>
+      )}
 
-      {/* KHU VỰC THAO TÁC HỢP ĐỒNG HIỆN CÓ */}
-      <section style={panelStyle}>
-        <div style={sectionHeaderStyle}>
-          <div>
-            <h3 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>🔍 Danh sách & Chi tiết Hợp đồng</h3>
-            <p style={{ margin: '4px 0 0', color: 'var(--ma-text-secondary)', fontSize: 13 }}>
-              Chọn một hợp đồng để xuất PDF, xem người ở cùng, quản lý tài sản bàn giao hoặc thanh lý quyết toán.
-            </p>
+      {/* KHU VỰC THAO TÁC HỢP ĐỒNG HIỆN CÓ: Chỉ xuất hiện khi xem hồ sơ */}
+      {!cheDoTaoMoiThucTe && (
+      <section ref={dossierRef} style={{ ...panelStyle, minWidth: 0, maxWidth: '100%' }} data-testid="contract-dossier-panel">
+        {!embedded && (
+          <>
+            <div style={sectionHeaderStyle}>
+              <div>
+                <h3 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>🔍 Danh sách & Chi tiết Hợp đồng</h3>
+                <p style={{ margin: '4px 0 0', color: 'var(--ma-text-secondary)', fontSize: 13 }}>
+                  Chọn một hợp đồng để xuất PDF, xem người ở cùng, quản lý tài sản bàn giao hoặc thanh lý quyết toán.
+                </p>
+              </div>
+            </div>
+
+            <Field title="Chọn hợp đồng cần thao tác">
+              <select
+                style={fieldStyle}
+                value={selected ?? ''}
+                onChange={(e) => setSelected(e.target.value ? Number(e.target.value) : null)}
+              >
+                <option value="">-- Chọn hợp đồng trong toà nhà --</option>
+                {contracts.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    #{c.id} · Phòng {c.soPhong} · {c.hoTenNguoiThue} · Trạng thái: {c.tenTrangThai} ({c.ngayBatDau} → {c.ngayKetThuc})
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </>
+        )}
+
+        {action.busy && !contract && selected ? (
+          <div style={{ padding: 24, textAlign: 'center', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-body)' }}>
+            Đang tải thông tin hợp đồng #{selected}…
           </div>
-        </div>
-
-        <Field title="Chọn hợp đồng cần thao tác">
-          <select
-            style={fieldStyle}
-            value={selected ?? ''}
-            onChange={(e) => setSelected(e.target.value ? Number(e.target.value) : null)}
-          >
-            <option value="">-- Chọn hợp đồng trong toà nhà --</option>
-            {contracts.map((c) => (
-              <option key={c.id} value={c.id}>
-                #{c.id} · Phòng {c.soPhong} · {c.hoTenNguoiThue} · Trạng thái: {c.tenTrangThai} ({c.ngayBatDau} → {c.ngayKetThuc})
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        {contract ? (
+        ) : contract ? (
           <>
             {/* THẺ CHI TIẾT HỢP ĐỒNG ĐƯỢC CHỌN */}
             <div
@@ -719,7 +855,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
                 </StatusTag>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))', gap: 14, minWidth: 0 }}>
                 <div style={{ background: 'var(--ma-bg-card)', padding: '10px 14px', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
                   <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>THỜI HẠN HIỆU LỰC</div>
                   <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2 }}>{contract.ngayBatDau} → {contract.ngayKetThuc}</div>
@@ -1242,7 +1378,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
               {/* BƯỚC 3: GIÁ THUÊ & CỌC */}
               {activeStep === 3 ? (
                 <div style={{ display: 'grid', gap: 16 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 12, minWidth: 0 }}>
                     <div style={{ padding: '12px 14px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)' }}>
                       <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>GIÁ THUÊ HỢP ĐỒNG</div>
                       <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--ma-brand-accent)', marginTop: 2 }}>
@@ -2228,7 +2364,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
                     ✓ Kết quả Quyết toán Hợp đồng
                   </h3>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 14, minWidth: 0 }}>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>HOÁ ĐƠN CUỐI</div>
                     <div style={{ fontSize: 16, fontWeight: 700 }}>{settlement.tongHoaDonCuoi} đ</div>
@@ -2277,6 +2413,7 @@ export default function HopDongThaoTac({ token }: { token: string }) {
           </>
         ) : null}
       </section>
+      )}
 
       {confirmDialog ? (
         <ConfirmModal
@@ -2304,6 +2441,103 @@ export default function HopDongThaoTac({ token }: { token: string }) {
   )
 }
 
+function useModalTrap(dialogRef: React.RefObject<HTMLDivElement | null>, onCancel: () => void) {
+  const onCancelRef = useRef(onCancel)
+  onCancelRef.current = onCancel
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    const activeDialog = dialog
+
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const newlyInertElements: HTMLElement[] = []
+    let branch: HTMLElement = activeDialog
+
+    while (branch.parentElement) {
+      const parent = branch.parentElement
+      for (const sibling of parent.children) {
+        if (sibling === branch || !(sibling instanceof HTMLElement) || sibling.hasAttribute('inert')) continue
+        sibling.setAttribute('inert', '')
+        newlyInertElements.push(sibling)
+      }
+      if (parent === document.body) break
+      branch = parent
+    }
+
+    const focusableElements = () =>
+      [
+        ...activeDialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ].filter((element) => {
+        if (element.tabIndex < 0 || (element instanceof HTMLInputElement && element.type === 'hidden')) return false
+        for (let ancestor: HTMLElement | null = element; ancestor; ancestor = ancestor.parentElement) {
+          if (ancestor.hidden || ancestor.hasAttribute('inert') || ancestor.getAttribute('aria-hidden') === 'true')
+            return false
+          const computedStyle = window.getComputedStyle(ancestor)
+          if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') return false
+        }
+        return true
+      })
+
+    function focusElement(element?: HTMLElement) {
+      element?.focus()
+      if (document.activeElement !== element) activeDialog.focus()
+    }
+
+    function focusFirstElement() {
+      focusElement(focusableElements()[0])
+    }
+
+    function focusLastElement() {
+      const focusable = focusableElements()
+      focusElement(focusable[focusable.length - 1])
+    }
+
+    focusFirstElement()
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onCancelRef.current?.()
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const focusable = focusableElements()
+      if (focusable.length === 0) {
+        event.preventDefault()
+        focusFirstElement()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && (document.activeElement === first || !activeDialog.contains(document.activeElement))) {
+        event.preventDefault()
+        focusLastElement()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        focusFirstElement()
+      }
+    }
+
+    function handleFocusIn(event: FocusEvent) {
+      if (!activeDialog.contains(event.target as Node)) focusFirstElement()
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('focusin', handleFocusIn)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('focusin', handleFocusIn)
+      for (const element of newlyInertElements) element.removeAttribute('inert')
+      if (opener?.isConnected) opener.focus()
+    }
+  }, [])
+}
+
 function ConfirmModal({
   title,
   message,
@@ -2319,11 +2553,23 @@ function ConfirmModal({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const [submitting, setSubmitting] = useState(false)
+  useDialogTrap({ open: true, dialogRef, onClose: onCancel })
+
+  const handleConfirm = () => {
+    if (submitting) return
+    setSubmitting(true)
+    onConfirm()
+  }
+
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label={title}
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -2334,7 +2580,9 @@ function ConfirmModal({
         padding: 16,
         zIndex: 1000,
       }}
-      onClick={onCancel}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancel()
+      }}
     >
       <div
         style={{
@@ -2355,10 +2603,10 @@ function ConfirmModal({
           <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>{message}</p>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <Button variant="secondary" onClick={onCancel} style={{ minHeight: 40 }}>
+          <Button variant="secondary" onClick={onCancel} style={{ minHeight: 40 }} blocked={submitting}>
             {cancelLabel}
           </Button>
-          <Button variant="primary" onClick={onConfirm} style={{ minHeight: 40 }}>
+          <Button variant="primary" onClick={handleConfirm} style={{ minHeight: 40 }} blocked={submitting}>
             {confirmLabel}
           </Button>
         </div>
@@ -2388,18 +2636,32 @@ function PromptModal({
   onConfirm: (val: string) => void
   onCancel: () => void
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null)
   const [val, setVal] = useState(defaultValue)
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  useDialogTrap({ open: true, dialogRef, onClose: onCancel })
 
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+  const handleSubmit = () => {
+    const trimmed = val.trim()
+    if (!trimmed) {
+      setError('Lý do không được để trống.')
+      inputRef.current?.focus()
+      return
+    }
+    if (submitting) return
+    setSubmitting(true)
+    onConfirm(trimmed)
+  }
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label={title}
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -2410,7 +2672,9 @@ function PromptModal({
         padding: 16,
         zIndex: 1000,
       }}
-      onClick={onCancel}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancel()
+      }}
     >
       <div
         style={{
@@ -2430,34 +2694,47 @@ function PromptModal({
           <h4 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--ma-text-primary)' }}>{title}</h4>
           <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>{message}</p>
         </div>
-        <input
-          ref={inputRef}
-          style={fieldStyle}
-          placeholder={placeholder}
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              onConfirm(val)
-            } else if (e.key === 'Escape') {
-              e.preventDefault()
-              onCancel()
-            }
-          }}
-        />
+        <div>
+          <label htmlFor="prompt-modal-input" style={{ display: 'block', fontSize: 12.5, fontWeight: 600, marginBottom: 6, color: 'var(--ma-text-secondary)' }}>
+            Nội dung lý do
+          </label>
+          <input
+            id="prompt-modal-input"
+            ref={inputRef}
+            style={{
+              ...fieldStyle,
+              borderColor: error ? 'var(--ma-urgent)' : undefined,
+            }}
+            placeholder={placeholder}
+            value={val}
+            onChange={(e) => {
+              setVal(e.target.value)
+              if (error) setError(null)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleSubmit()
+              }
+            }}
+          />
+          {error ? (
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--ma-urgent)' }}>{error}</p>
+          ) : null}
+        </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <Button variant="secondary" onClick={onCancel} style={{ minHeight: 40 }}>
+          <Button variant="secondary" onClick={onCancel} style={{ minHeight: 40 }} blocked={submitting}>
             {cancelLabel}
           </Button>
           <Button
-            variant={tone === 'urgent' ? 'primary' : 'primary'}
-            onClick={() => onConfirm(val)}
+            variant="primary"
+            onClick={handleSubmit}
             style={{
               minHeight: 40,
-              background: tone === 'urgent' ? 'var(--ma-urgent)' : undefined,
+              backgroundColor: tone === 'urgent' ? 'var(--ma-urgent)' : undefined,
               borderColor: tone === 'urgent' ? 'var(--ma-urgent)' : undefined,
             }}
+            blocked={submitting}
           >
             {confirmLabel}
           </Button>

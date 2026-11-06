@@ -1835,9 +1835,9 @@ export type HopDongHoSoDto = {
   capNhatLuc?: string
 
   // Bổ trợ hiển thị
-  giaThue?: string
-  tienCocThoaThuan?: string
-  tienCocThucThu?: string
+  giaThue?: string | number
+  tienCocThoaThuan?: string | number
+  tienCocThucThu?: string | number
   ngayBatDau?: string
   ngayKetThuc?: string
   soNgayBaoTruoc?: number
@@ -2025,6 +2025,340 @@ export async function xoaGiaDichVuPhong(token: string, phongId: number, bangGiaP
   })
   if (!response.ok) throw await toApiError(response, 'Không thể xóa đơn giá riêng của phòng.')
 }
+
+/* =========================================================================
+ * DASHBOARD CHỦ NHÀ & QUẢN LÝ (VẬN HÀNH & KINH DOANH)
+ * ========================================================================= */
+
+export type ThongTinDashboardChu = {
+  toaNhaId: number | null
+  tenToaNha: string
+  tuNgay: string
+  denNgay: string
+  thoiDiemCapNhat: string
+  kpi: {
+    doanhThuPhatHanh: number | string
+    thucThu: number | string
+    daThuHopDong: number | string
+    congNoHienTai: number | string
+    soHoaDonQuaHan: number
+    tyLeLapDay: number | string
+    tongSoPhong: number
+    soPhongDangThue: number
+    soPhongTrong: number
+    soPhongDangSua: number
+    chiPhiBaoTri: number | string
+    soSuCoDangMo: number
+  }
+  taiChinhTheoThang: Array<{
+    thang: string
+    nhan: string
+    doanhThuPhatHanh: number | string
+    thucThu: number | string
+    daThuTheoHoaDon: number | string
+    congNo: number | string
+  }>
+  coCauPhong: {
+    tongSo: number
+    dangThue: number
+    tyLeDangThue: number | string
+    trong: number
+    tyLeTrong: number | string
+    daCoc: number
+    tyLeDaCoc: number | string
+    dangSua: number
+    tyLeDangSua: number | string
+    ngung: number
+    tyLeNgung: number | string
+  }
+  tyLeLapDayLichSu: Array<{
+    ky: string
+    tyLe: number | string
+    soPhongThue: number
+    tongPhong: number
+    duDuLieu: boolean
+  }>
+  soSanhToaNha: Array<{
+    toaNhaId: number
+    tenToaNha: string
+    doanhThuPhatHanh: number | string
+    thucThu: number | string
+    congNo: number | string
+    tyLeLapDay: number | string
+    tongSoPhong: number
+    soPhongDangThue: number
+    chiPhiBaoTri: number | string
+  }>
+  tieuThuDienNuoc: {
+    dien: Array<{ kyId: number | null; nhan: string; phong: number | string; dungChung: number | string; tong: number | string; donVi: string }>
+    nuoc: Array<{ kyId: number | null; nhan: string; phong: number | string; dungChung: number | string; tong: number | string; donVi: string }>
+  }
+  tuoiNo: {
+    chuaDenHan: { soLuong: number; soTien: number | string }
+    quaHan1Den7: { soLuong: number; soTien: number | string }
+    quaHan8Den30: { soLuong: number; soTien: number | string }
+    quaHanTren30: { soLuong: number; soTien: number | string }
+  }
+  chiPhiBaoTri: Array<{
+    thang: string
+    nhan: string
+    chiPhi: number | string
+    soSuCo: number
+  }>
+  dienNuocDungChung: {
+    khuVucChung: Array<{
+      diemDoId: number
+      maCongTo: string
+      tenCongTo: string
+      khuVuc: string
+      donVi: string
+      donGiaMua: number | string
+      mucTieuThu: number | string
+      chiPhi: number | string
+    }>
+    doiSoat: {
+      trangThai: string
+      mucTong: number | string | null
+      mucPhong: number | string | null
+      mucChungDoRieng: number | string | null
+      chenhLech: number | string | null
+      donVi: string
+      nguongChoPhep: number | string
+      vuotNguong: boolean
+      ghiChu: string
+      toaNhaId?: number | null
+      tenToaNha?: string | null
+      kyId?: number | null
+      tenKy?: string | null
+    } | null
+    chiPhiUocTinh: number | string
+  }
+}
+
+export type ThongTinDashboardQuanLy = {
+  toaNhaId: number | null
+  tenToaNha: string
+  thoiDiemCapNhat: string
+  kpi: {
+    khoanConPhaiThu: number | string
+    soHoaDonQuaHan: number
+    tienQuaHan: number | string
+    soPhongDangThue: number
+    soPhongTrong: number
+    soPhongDangSua: number
+    tongSoPhong: number
+    tyLeLapDay: number | string
+    soCongToChuaGhi: number
+    soSuCoCanXuLy: number
+    soCanhBaoDienNuocDangMo: number
+  }
+  canhBaoDienNuoc: Array<{
+    id: number
+    toaNhaId: number
+    tenToaNha: string
+    diemDoId: number | null
+    tenDiemDo: string | null
+    phongId: number | null
+    soPhong: string | null
+    kyId: number
+    tenKy: string
+    loaiDichVu: string
+    loaiCanhBao: string
+    mucTieuThuKyNay: number | string | null
+    mucThamChieu: number | string | null
+    mucTang: number | string | null
+    tyLeTang: number | string | null
+    lyDo: string
+    trangThai: string
+    nguoiXacNhan: string | null
+    ghiChuXuLy: string | null
+    thoiDiemTao: string | null
+    duongDanHanhDong: string
+  }>
+  coCauPhong: ThongTinDashboardChu['coCauPhong']
+  tuoiNo: ThongTinDashboardChu['tuoiNo']
+  congToChuaGhi: {
+    kyHienTaiId: number | null
+    tenKyHienTai: string
+    tongSoCongTo: number
+    soCongToDaGhi: number
+    soCongToChuaGhi: number
+    danhSachChuaGhi: Array<{
+      viTriId: number
+      tenViTri: string
+      toaNhaId: number
+      tenToaNha: string
+      tenDichVu: string
+      donVi: string
+      loaiDiemDo: string
+      kyId: number
+      chiSoCuoiKyTruoc?: number | string | null
+    }>
+  }
+  dienNuocDungChung: ThongTinDashboardChu['dienNuocDungChung']
+  lichHenSapToi: Array<{
+    id: number
+    hoTen: string
+    soDienThoai: string
+    soPhong: string
+    thoiGian: string
+    loai: string
+    trangThai: string
+  }>
+}
+
+export async function fetchDashboardChu(
+  token: string,
+  toaNhaId?: number | null,
+  tuNgay?: string,
+  denNgay?: string
+): Promise<ThongTinDashboardChu> {
+  const query = new URLSearchParams()
+  if (toaNhaId) query.set('toaNhaId', String(toaNhaId))
+  if (tuNgay) query.set('tuNgay', tuNgay)
+  if (denNgay) query.set('denNgay', denNgay)
+
+  const response = await fetch(`/api/dashboard/chu?${query.toString()}`, {
+    headers: authorizationHeaders(token),
+  })
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải dashboard chủ nhà.')
+  }
+  return response.json()
+}
+
+export async function fetchDashboardQuanLy(
+  token: string,
+  toaNhaId?: number | null
+): Promise<ThongTinDashboardQuanLy> {
+  const query = new URLSearchParams()
+  if (toaNhaId) query.set('toaNhaId', String(toaNhaId))
+
+  const response = await fetch(`/api/dashboard/quan-ly?${query.toString()}`, {
+    headers: authorizationHeaders(token),
+  })
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải dashboard quản lý.')
+  }
+  return response.json()
+}
+
+export async function fetchCanhBaoTieuThu(
+  token: string,
+  toaNhaId?: number | null,
+  trangThai?: string
+): Promise<ThongTinDashboardQuanLy['canhBaoDienNuoc']> {
+  const query = new URLSearchParams()
+  if (toaNhaId) query.set('toaNhaId', String(toaNhaId))
+  if (trangThai) query.set('trangThai', trangThai)
+
+  const response = await fetch(`/api/canh-bao-tieu-thu?${query.toString()}`, {
+    headers: authorizationHeaders(token),
+  })
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải danh sách cảnh báo tiêu thụ.')
+  }
+  return response.json()
+}
+
+export async function capNhatCanhBaoTieuThu(
+  token: string,
+  id: number,
+  trangThai: string,
+  ghiChu?: string
+): Promise<void> {
+  const response = await fetch(`/api/canh-bao-tieu-thu/${id}/trang-thai`, {
+    method: 'POST',
+    headers: { ...authorizationHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ trangThai, ghiChu: ghiChu || '' }),
+  })
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể cập nhật trạng thái cảnh báo.')
+  }
+}
+
+export type YeuCauGhiChiSoDungChung = {
+  diemDoId: number
+  kyId: number
+  chiSoDau?: number | null
+  chiSoCuoi: number
+  coThayCongTo?: boolean
+  chiSoCuoiCongToCu?: number | null
+  chiSoDauCongToMoi?: number | null
+  ghiChu?: string | null
+}
+
+export type ChiSoDungChungDto = {
+  id: number
+  diemDoId: number
+  maCongTo: string
+  tenCongTo: string
+  khuVuc: string
+  loaiDichVu: string
+  kyId: number
+  tenKy: string
+  chiSoDau: number | null
+  chiSoCuoi: number | null
+  coThayCongTo: boolean
+  chiSoCuoiCongToCu: number | null
+  chiSoDauCongToMoi: number | null
+  mucTieuThu: number | null
+  donVi: string
+  ngayGhi: string | null
+  nguoiGhi: string | null
+  ghiChu: string | null
+}
+
+export async function ghiChiSoDungChung(
+  token: string,
+  payload: YeuCauGhiChiSoDungChung
+): Promise<void> {
+  const response = await fetch('/api/cong-to-dung-chung/ghi-chi-so', {
+    method: 'POST',
+    headers: { ...authorizationHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      diemDoId: payload.diemDoId,
+      kyId: payload.kyId,
+      chiSoDau: payload.chiSoDau != null ? payload.chiSoDau : null,
+      chiSoCuoi: payload.chiSoCuoi,
+      coThayCongTo: Boolean(payload.coThayCongTo),
+      chiSoCuoiCongToCu: payload.chiSoCuoiCongToCu != null ? payload.chiSoCuoiCongToCu : null,
+      chiSoDauCongToMoi: payload.chiSoDauCongToMoi != null ? payload.chiSoDauCongToMoi : null,
+      ghiChu: payload.ghiChu || '',
+    }),
+  })
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể ghi chỉ số công tơ dùng chung.')
+  }
+}
+
+export async function fetchChiSoDungChung(token: string, kyId: number): Promise<ChiSoDungChungDto[]> {
+  const response = await fetch(`/api/cong-to-dung-chung/chi-so?kyId=${kyId}`, {
+    headers: authorizationHeaders(token),
+  })
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải chỉ số dùng chung.')
+  }
+  return response.json()
+}
+
+export async function fetchDoiSoatDienNuoc(
+  token: string,
+  toaNhaId: number,
+  kyId: number,
+  loaiDichVu = 'DIEN'
+): Promise<any> {
+  const response = await fetch(
+    `/api/cong-to-dung-chung/doi-soat?toaNhaId=${toaNhaId}&kyId=${kyId}&loaiDichVu=${loaiDichVu}`,
+    { headers: authorizationHeaders(token) }
+  )
+  if (!response.ok) {
+    throw await toApiError(response, 'Không thể tải kết quả đối soát điện nước.')
+  }
+  return response.json()
+}
+
+
 
 
 

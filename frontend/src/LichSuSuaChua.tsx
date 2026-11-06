@@ -114,7 +114,7 @@ export function LichSuSuaChua({ token, mobile = false }: Props): React.ReactElem
   return (
     <ScreenSurface data-testid="repair-history-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'} aria-labelledby="repair-history-title">
       <ScreenHeader>
-        <SysLabel>FR-MNT-08</SysLabel>
+        <SysLabel>LỊCH SỬ BẢO TRÌ</SysLabel>
         <h3 id="repair-history-title" style={{ margin: '8px 0 0' }}>Lịch sử sửa chữa</h3>
         <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)' }}>Tra cứu theo toà, phòng hoặc hạng mục. Không phải báo cáo theo kỳ.</p>
       </ScreenHeader>
@@ -188,7 +188,7 @@ function ChiTietSuaChua({ yeuCau, mobile }: { yeuCau: ThongTinYeuCauSuaChua; mob
   return (
     <section data-repair-detail={yeuCau.id} aria-label={`Chi tiết yêu cầu sửa chữa ${yeuCau.id}`} style={{ ...styleTong, display: 'grid', gap: 10, gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))' }}>
       <div style={{ display: 'grid', gap: 5 }}>
-        <SysLabel>FR-MNT-03</SysLabel>
+        <SysLabel>CHI TIẾT SỰ CỐ</SysLabel>
         <h4 style={{ margin: 0 }}>Yêu cầu #{yeuCau.id} · {yeuCau.hangMuc}</h4>
         <strong>{yeuCau.moTa}</strong>
       </div>

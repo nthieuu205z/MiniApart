@@ -9,11 +9,44 @@ import type { ThongTinHoaDonChiTiet } from './api'
 
 let container: HTMLDivElement
 let root: Root
-beforeEach(() => { globalThis.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container) })
-afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+beforeEach(() => { vi.stubEnv('VITE_DEMO_PERSONAL_QR', 'false'); globalThis.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container) })
+afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 const response = (value: unknown, status = 200) => new Response(value === undefined ? undefined : JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } })
 const ledger = { hoaDonId: 10, hopDongId: 11, toaNhaId: 1, kyId: 8, giaoDich: [{ id: 41, maBienLai: 'BL-41', soTien: '200000.00', loai: 'THANH_TOAN', hinhThuc: 'TIEN_MAT', ngayThu: '2026-11-04', lyDo: null, dieuChinhChoId: null }] }
 const payment = { thanhToanId: 42, hoaDonId: 10, maBienLai: 'BL-42', soTien: '100000.25', hinhThuc: 'TIEN_MAT', loai: 'THANH_TOAN', ngayThu: '2026-11-04', tongTien: '500000.00', daThu: '300000.25', conLai: '199999.75', soTienThanhSoDu: '0.00', trangThai: 'DA_THU_MOT_PHAN' }
+
+it('personal demo QR stays static, shows invoice instructions and never records a payment by scanning', async () => {
+  vi.stubEnv('VITE_DEMO_PERSONAL_QR', 'true')
+  const fetchMock = vi.fn(async () => response(ledger))
+  vi.stubGlobal('fetch', fetchMock)
+  await act(async () => root.render(<FinancePaymentPanel token="token" hoaDonId={10} maHoaDon="HD-10" conLai="300000.00" trangThai="DA_PHAT_HANH" />))
+  await act(async () => Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Hiện QR nhận tiền demo')!.click())
+  expect(container.querySelector('figure img')?.getAttribute('src')).toBe('/payments/viettel-money-demo-qr.png')
+  expect(container.textContent).toContain('300.000')
+  expect(container.textContent).toContain('Nội dung chuyển khoản: HD-10')
+  expect(container.textContent).toContain('Mã không tự điền số tiền')
+  expect(container.textContent).not.toContain('15 phút')
+  expect(fetchMock.mock.calls).toHaveLength(1)
+})
+
+it('production keeps the signed building invoice QR even if the local demo flag is present', async () => {
+  vi.stubEnv('VITE_DEMO_PERSONAL_QR', 'true')
+  vi.stubEnv('DEV', false)
+  const fetchMock = vi.fn(async (url: string) => url.endsWith('/ma-qr-chuyen-khoan') ? response({ url: '/api/signed-invoice-qr' }) : response(ledger))
+  vi.stubGlobal('fetch', fetchMock)
+  await act(async () => root.render(<FinancePaymentPanel token="token" hoaDonId={10} conLai="300000.00" trangThai="DA_PHAT_HANH" />))
+  await act(async () => Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Tạo mã QR chuyển khoản')!.click())
+  expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1/ky-thanh-toan/8/hoa-don/10/ma-qr-chuyen-khoan', expect.anything())
+  expect(container.querySelector('figure img')?.getAttribute('src')).toBe('/api/signed-invoice-qr')
+  expect(container.textContent).toContain('15 phút')
+})
+
+it('personal demo QR is not offered for a fully paid invoice', async () => {
+  vi.stubEnv('VITE_DEMO_PERSONAL_QR', 'true')
+  vi.stubGlobal('fetch', vi.fn(async () => response(ledger)))
+  await act(async () => root.render(<FinancePaymentPanel token="token" hoaDonId={10} conLai="0.00" trangThai="DA_THANH_TOAN" />))
+  expect(container.textContent).not.toContain('Hiện QR nhận tiền demo')
+})
 function setText(selector: string, value: string) {
   const element = container.querySelector(selector) as HTMLInputElement | HTMLTextAreaElement
   const prototype = element.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype

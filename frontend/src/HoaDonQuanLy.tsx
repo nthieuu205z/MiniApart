@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { ApiError, fetchHoaDonQuanLy, fetchKyThanhToan, fetchToaNha, type ThongTinHoaDonQuanLy, type ThongTinToaNha, type ThongTinKyThanhToan } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
+import { useDialogTrap } from './design/feedback/useDialogTrap'
 import { ScreenHeader, ScreenNotice, ScreenSurface } from './design/layout/Screen'
 import { SysLabel } from './design/core/SysLabel'
 import { Button } from './design/core/Button'
@@ -13,6 +14,25 @@ type Props = { token: string; mobile?: boolean; vaiTro?: string }
 export type BoLocHoaDonQuanLy = {
   toaNhaId: number | null
   trangThai: string
+}
+
+export function mapTrangThaiHoaDon(trangThai: string): { nhan: string; tone: 'neutral' | 'waiting' | 'done' | 'urgent' | 'strong' } {
+  switch (trangThai) {
+    case 'NHAP':
+      return { nhan: 'Bản nháp', tone: 'neutral' }
+    case 'DA_PHAT_HANH':
+      return { nhan: 'Đã phát hành', tone: 'waiting' }
+    case 'DA_THU_MOT_PHAN':
+      return { nhan: 'Thu một phần', tone: 'waiting' }
+    case 'DA_THANH_TOAN':
+      return { nhan: 'Đã thanh toán', tone: 'done' }
+    case 'QUA_HAN':
+      return { nhan: 'Quá hạn', tone: 'urgent' }
+    case 'DA_HUY':
+      return { nhan: 'Đã huỷ', tone: 'neutral' }
+    default:
+      return { nhan: trangThai, tone: 'neutral' }
+  }
 }
 
 /** FR-INV-02 keeps the manager invoice worklist query shareable from the operational dashboard. */
@@ -37,6 +57,7 @@ export default function HoaDonQuanLy({ token, mobile = false }: Props): React.Re
   const [kyId, setKyId] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<BulkResult | null>(null)
+  const [xacNhanPhatHanh, setXacNhanPhatHanh] = useState(false)
   const [reload, setReload] = useState(0)
   const variant = mobile ? 'mobile' : 'desktop'
 
@@ -99,35 +120,135 @@ export default function HoaDonQuanLy({ token, mobile = false }: Props): React.Re
 
   const visible = kyId === null ? hoaDons : hoaDons.filter((value) => value.kyId === kyId)
 
-  const tieuDeBoLoc = useMemo(() => boLoc.trangThai === 'NO_QUA_HAN' ? 'Nợ quá hạn' : `Trạng thái: ${boLoc.trangThai}`, [boLoc.trangThai])
+  const tieuDeBoLoc = useMemo(() => {
+    if (boLoc.trangThai === 'NO_QUA_HAN') return 'Nợ quá hạn'
+    if (!boLoc.trangThai) return 'Tất cả trạng thái'
+    return mapTrangThaiHoaDon(boLoc.trangThai).nhan
+  }, [boLoc.trangThai])
 
   return (
     <ScreenSurface data-testid="manager-invoice-screen" data-layout-variant={variant} aria-labelledby="manager-invoice-title">
       <ScreenHeader>
-        <SysLabel>FR-INV-02</SysLabel>
+        <SysLabel>QUẢN LÝ THU TIỀN & HOÁ ĐƠN</SysLabel>
         <h3 id="manager-invoice-title" style={{ margin: '8px 0 0' }}>Danh sách hoá đơn quản lý</h3>
-        <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>Worklist theo toà nhà và trạng thái vận hành.</p>
+        <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>Danh sách hoá đơn theo toà nhà và trạng thái vận hành.</p>
       </ScreenHeader>
 
-      <label style={styleField}>Toà nhà
-        <select
-          data-invoice-building-select
-          value={boLoc.toaNhaId ?? ''}
-          onChange={(event) => setBoLoc((current) => ({ ...current, toaNhaId: soNguyenDuong(event.target.value) }))}
-          style={styleInput}
-        >
-          <option value="">Chọn toà nhà</option>
-          {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
-        </select>
-      </label>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: mobile ? '1fr' : 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 16,
+          alignItems: 'end',
+          margin: '16px 0',
+        }}
+      >
+        <label style={styleField}>Toà nhà
+          <select
+            data-invoice-building-select
+            value={boLoc.toaNhaId ?? ''}
+            onChange={(event) => setBoLoc((current) => ({ ...current, toaNhaId: soNguyenDuong(event.target.value) }))}
+            style={styleInput}
+          >
+            <option value="">Chọn toà nhà</option>
+            {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
+          </select>
+        </label>
 
-      <label style={styleField}>Trạng thái<select aria-label="Lọc trạng thái hoá đơn" value={boLoc.trangThai} onChange={(event) => setBoLoc((value) => ({ ...value, trangThai: event.target.value }))} style={styleInput}>
-        <option value="">Tất cả trạng thái</option><option value="NO_QUA_HAN">Nợ quá hạn</option><option value="NHAP">Bản nháp</option><option value="DA_PHAT_HANH">Đã phát hành</option><option value="DA_THU_MOT_PHAN">Đã thu một phần</option><option value="DA_THANH_TOAN">Đã thanh toán</option><option value="QUA_HAN">Quá hạn</option><option value="DA_HUY">Đã huỷ</option>
-      </select></label>
-      <label style={styleField}>Kỳ thanh toán<select aria-label="Lọc kỳ hoá đơn" value={kyId ?? ''} onChange={(event) => { setKyId(event.target.value ? Number(event.target.value) : null); setResult(null) }} style={styleInput}><option value="">Tất cả kỳ</option>{ky.map((value) => <option key={value.id} value={value.id}>{value.thang}/{value.nam} · {value.trangThai}</option>)}</select></label>
+        <label style={styleField}>Trạng thái
+          <select aria-label="Lọc trạng thái hoá đơn" value={boLoc.trangThai} onChange={(event) => setBoLoc((value) => ({ ...value, trangThai: event.target.value }))} style={styleInput}>
+            <option value="">Tất cả trạng thái</option>
+            <option value="NO_QUA_HAN">Nợ quá hạn</option>
+            <option value="NHAP">Bản nháp</option>
+            <option value="DA_PHAT_HANH">Đã phát hành</option>
+            <option value="DA_THU_MOT_PHAN">Đã thu một phần</option>
+            <option value="DA_THANH_TOAN">Đã thanh toán</option>
+            <option value="QUA_HAN">Quá hạn</option>
+            <option value="DA_HUY">Đã huỷ</option>
+          </select>
+        </label>
+
+        <label style={styleField}>Kỳ thanh toán
+          <select aria-label="Lọc kỳ hoá đơn" value={kyId ?? ''} onChange={(event) => { setKyId(event.target.value ? Number(event.target.value) : null); setResult(null) }} style={styleInput}>
+            <option value="">Tất cả kỳ</option>
+            {ky.map((value) => <option key={value.id} value={value.id}>{value.thang}/{value.nam} · {value.trangThai}</option>)}
+          </select>
+        </label>
+      </div>
+
       {loiKy ? <p role="status">{loiKy}</p> : null}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><Button blocked={busy || kyId === null} blockedReason="Chọn một kỳ thanh toán và chờ thao tác trước hoàn tất." onClick={() => void runBulk('tao-hang-loat')}>Tạo hoá đơn nháp hàng loạt</Button><Button variant="secondary" blocked={busy || kyId === null} blockedReason="Chọn một kỳ thanh toán và chờ thao tác trước hoàn tất." onClick={() => void runBulk('phat-hanh-hang-loat')}>Phát hành hoá đơn trong kỳ</Button></div>
-      {result ? <div role="status"><p>Tạo mới: {result.soHoaDonTaoMoi ?? 0} · Đã phát hành: {result.soHoaDonDaPhatHanh ?? 0} · Đã có / trạng thái khác: {result.soHoaDonDaTonTai ?? result.soHoaDonDaOTrangThaiKhac ?? 0} · Bỏ qua: {result.soPhongBoQua ?? result.soHoaDonBoQua ?? 0}</p>{result.lyDoBoQua.map((value, index) => <p key={`${value.phongId}-${index}`}>Phòng #{value.phongId}: {value.moTa} ({value.ma})</p>)}</div> : null}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Button
+            blocked={busy || kyId === null}
+            blockedReason={busy ? 'Đang xử lý hoá đơn hàng loạt…' : kyId === null ? 'Cần chọn kỳ thanh toán' : undefined}
+            onClick={() => void runBulk('tao-hang-loat')}
+          >
+            Tạo hoá đơn nháp hàng loạt
+          </Button>
+          <Button
+            variant="secondary"
+            blocked={busy || kyId === null}
+            blockedReason={busy ? 'Đang xử lý hoá đơn hàng loạt…' : kyId === null ? 'Cần chọn kỳ thanh toán' : undefined}
+            onClick={() => setXacNhanPhatHanh(true)}
+          >
+            Phát hành hoá đơn trong kỳ
+          </Button>
+        </div>
+        {busy ? (
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-waiting)' }}>
+            ⏳ Hệ thống đang xử lý hoá đơn hàng loạt, vui lòng chờ…
+          </p>
+        ) : kyId === null && boLoc.toaNhaId !== null ? (
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)' }}>
+            💡 Chọn một kỳ thanh toán cụ thể để thực hiện tạo nháp hoặc phát hành hoá đơn hàng loạt.
+          </p>
+        ) : null}
+      </div>
+
+      {xacNhanPhatHanh && (
+        <XacNhanPhatHanhModal
+          kyTen={ky.find((k) => k.id === kyId) ? `${ky.find((k) => k.id === kyId)!.thang}/${ky.find((k) => k.id === kyId)!.nam}` : ''}
+          onClose={() => setXacNhanPhatHanh(false)}
+          onConfirm={() => {
+            setXacNhanPhatHanh(false)
+            void runBulk('phat-hanh-hang-loat')
+          }}
+        />
+      )}
+
+      {result ? (
+        <div
+          role="status"
+          style={{
+            padding: '14px 18px',
+            background: 'var(--ma-bg-sunken)',
+            border: '1px solid var(--ma-border-default)',
+            borderRadius: 'var(--ma-radius)',
+            display: 'grid',
+            gap: 8,
+          }}
+        >
+          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--ma-done-text)' }}>
+            ✓ Đã xử lý: Tạo mới {result.soHoaDonTaoMoi ?? 0} hoá đơn · Phát hành {result.soHoaDonDaPhatHanh ?? 0} hoá đơn · Đã có sẵn: {result.soHoaDonDaTonTai ?? result.soHoaDonDaOTrangThaiKhac ?? 0}
+          </div>
+          {result.lyDoBoQua && result.lyDoBoQua.length > 0 && (
+            <details style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
+                Xem chi tiết {result.lyDoBoQua.length} phòng được bỏ qua
+              </summary>
+              <ul style={{ margin: '6px 0 0', paddingLeft: 20 }}>
+                {result.lyDoBoQua.map((item, index) => (
+                  <li key={`${item.phongId}-${index}`} style={{ marginTop: 3 }}>
+                    Phòng #{item.phongId}: {item.moTa}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      ) : null}
 
       <p data-invoice-active-filter style={styleActiveFilter}>Đang lọc: {tieuDeBoLoc}</p>
       {dangTai ? <p aria-live="polite">Đang tải danh sách hoá đơn…</p>
@@ -143,6 +264,7 @@ function HoaDonQuanLyRow({ toaNhaId, hoaDon }: { toaNhaId: number; hoaDon: Thong
   const href = hoaDon.kyId === null
     ? null
     : `/hoa-don?toaNhaId=${toaNhaId}&kyId=${hoaDon.kyId}&hoaDonId=${hoaDon.hoaDonId}`
+  const status = mapTrangThaiHoaDon(hoaDon.trangThai)
   return (
     <article data-invoice-row={hoaDon.hoaDonId} style={styleRow}>
       <div style={styleRowMain}>
@@ -151,11 +273,33 @@ function HoaDonQuanLyRow({ toaNhaId, hoaDon }: { toaNhaId: number; hoaDon: Thong
         <span style={styleMuted}>Hạn thanh toán: {dinhDangNgayIso(hoaDon.hanThanhToan)}</span>
         {href ? null : <span style={styleMuted}>Hoá đơn quyết toán không thuộc kỳ thanh toán.</span>}
       </div>
-      <StatusTag tone={hoaDon.trangThai === 'QUA_HAN' ? 'urgent' : 'strong'}>{hoaDon.trangThai}</StatusTag>
+      <StatusTag tone={status.tone}>{status.nhan}</StatusTag>
       <div style={styleMoney}>
         <span>Tổng: {dinhDangTien(hoaDon.tongTien)} ₫</span>
-        <strong>Còn lại: {dinhDangTien(hoaDon.conLai)} ₫</strong>
+        <strong style={{ color: Number(hoaDon.conLai) > 0 ? 'var(--ma-urgent)' : 'var(--ma-done-text)' }}>
+          Còn lại: {dinhDangTien(hoaDon.conLai)} ₫
+        </strong>
       </div>
+      {href ? (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <a
+            href={href}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 'var(--ma-radius)',
+              background: 'var(--ma-bg-card)',
+              color: 'var(--ma-brand-accent)',
+              border: '1px solid var(--ma-border-strong)',
+              fontWeight: 600,
+              fontSize: 12.5,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Chi tiết →
+          </a>
+        </div>
+      ) : null}
     </article>
   )
 }
@@ -192,7 +336,7 @@ const styleMoney: CSSProperties = {
   fontSize: 13,
 }
 const styleMuted: CSSProperties = { color: 'var(--ma-text-secondary)', fontSize: 13 }
-const styleField: CSSProperties = { display: 'grid', gap: 6, maxWidth: 420, fontSize: 13, fontWeight: 600, color: 'var(--ma-text-secondary)' }
+const styleField: CSSProperties = { display: 'grid', gap: 6, width: '100%', fontSize: 13, fontWeight: 600, color: 'var(--ma-text-secondary)' }
 const styleInput: CSSProperties = {
   minHeight: 'var(--ma-hit-mobile)',
   padding: '10px 14px',
@@ -219,4 +363,72 @@ const styleActiveFilter: CSSProperties = {
   color: 'var(--ma-text-primary)',
   fontWeight: 600,
   fontSize: 13.5,
+}
+
+function XacNhanPhatHanhModal({
+  kyTen,
+  onClose,
+  onConfirm,
+}: {
+  kyTen: string
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useDialogTrap({ open: true, dialogRef, onClose })
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15, 23, 42, 0.45)',
+        backdropFilter: 'blur(3px)',
+        display: 'grid',
+        placeItems: 'center',
+        padding: 16,
+        zIndex: 1000,
+      }}
+      onClick={onClose}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-phat-hanh-title"
+        tabIndex={-1}
+        style={{
+          background: 'var(--ma-bg-card)',
+          borderRadius: 'var(--ma-radius-md)',
+          border: '1px solid var(--ma-border-default)',
+          boxShadow: 'var(--ma-shadow-lg)',
+          padding: '24px 28px',
+          maxWidth: 480,
+          width: '100%',
+          display: 'grid',
+          gap: 16,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h4 id="confirm-phat-hanh-title" style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>
+          Xác nhận phát hành hoá đơn kỳ {kyTen}?
+        </h4>
+        <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>
+          Toàn bộ hoá đơn dự thảo trong kỳ của toà nhà sẽ được chuyển sang trạng thái <strong>ĐÃ PHÁT HÀNH</strong>. Khách thuê sẽ nhìn thấy hoá đơn và có thể tiến hành thanh toán.
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <Button variant="secondary" onClick={onClose} style={{ minHeight: 40 }}>
+            Để sau
+          </Button>
+          <Button
+            variant="primary"
+            onClick={onConfirm}
+            style={{ minHeight: 40 }}
+          >
+            Xác nhận phát hành
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
 }

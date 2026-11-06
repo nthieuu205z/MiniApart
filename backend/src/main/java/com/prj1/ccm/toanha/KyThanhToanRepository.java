@@ -54,6 +54,26 @@ public class KyThanhToanRepository {
         );
     }
 
+    public Optional<KyThanhToan> findById(Long id) {
+        return jdbcTemplate.query(
+                """
+                        SELECT id, toa_nha_id, nam, thang, ngay_bat_dau, ngay_ket_thuc, trang_thai
+                        FROM KY_THANH_TOAN
+                        WHERE id = ?
+                        """,
+                (resultSet, rowNum) -> new KyThanhToan(
+                        resultSet.getLong("id"),
+                        resultSet.getLong("toa_nha_id"),
+                        resultSet.getInt("nam"),
+                        resultSet.getInt("thang"),
+                        resultSet.getObject("ngay_bat_dau", java.time.LocalDate.class),
+                        resultSet.getObject("ngay_ket_thuc", java.time.LocalDate.class),
+                        TrangThaiKy.valueOf(resultSet.getString("trang_thai"))
+                ),
+                id
+        ).stream().findFirst();
+    }
+
     public Optional<KyThanhToan> findByIdAndToaNhaId(Long id, Long toaNhaId) {
         return jdbcTemplate.query(
                         """

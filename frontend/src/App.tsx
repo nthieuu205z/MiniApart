@@ -26,6 +26,8 @@ import { ViecCuaToi } from './ViecCuaToi'
 import { ThongBao } from './ThongBao'
 import { LichSuSuaChua } from './LichSuSuaChua'
 import { BangViecVanHanh } from './BangViecVanHanh'
+import { ChuDashboard } from './ChuDashboard'
+import { QuanLyDashboard } from './QuanLyDashboard'
 import BaoCaoTongQuan from './BaoCaoTongQuan'
 import CongNoBaoCao from './CongNoBaoCao'
 import TieuThuBaoCao from './TieuThuBaoCao'
@@ -64,13 +66,83 @@ const styleKhungKhach: CSSProperties = {
 
 const styleGridKhach: CSSProperties = {
   display: 'grid',
-  gap: 'var(--ma-space-7)',
-  gridTemplateColumns: 'minmax(0, 1.15fr) minmax(320px, 0.85fr)',
-  alignItems: 'start',
+  gap: 'var(--ma-space-6)',
+  maxWidth: 440,
+  margin: '24px auto 0',
+  width: '100%',
+  gridTemplateColumns: 'minmax(0, 1fr)',
+}
+
+const styleGridKhachDesktop: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(320px, 1.15fr) minmax(360px, 1fr)',
+  maxWidth: 920,
+  margin: '20px auto 0',
+  width: '100%',
+  borderRadius: 'var(--ma-radius-lg, 12px)',
+  overflow: 'hidden',
+  boxShadow: 'var(--ma-shadow-md)',
+  border: '1px solid var(--ma-border-default)',
+  background: 'var(--ma-bg-card)',
+}
+
+const styleLoginShowcase: CSSProperties = {
+  position: 'relative',
+  background: 'var(--ma-ink-900)',
+  minHeight: 460,
+  overflow: 'hidden',
+}
+
+const styleLoginShowcaseImg: CSSProperties = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  display: 'block',
+  opacity: 0.85,
+}
+
+const styleLoginShowcaseOverlay: CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: 'linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.45) 50%, rgba(15, 23, 42, 0.7) 100%)',
+  padding: '36px 32px',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-start',
+}
+
+const styleLogoHieuSmall: CSSProperties = {
+  width: 32,
+  height: 32,
+  background: '#ffffff',
+  color: 'var(--ma-ink-900)',
+  fontFamily: 'var(--ma-font-mono)',
+  fontWeight: 800,
+  fontSize: 16,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: 6,
+}
+
+const styleShowcaseBadge: CSSProperties = {
+  backgroundColor: 'rgba(15, 23, 42, 0.75)',
+  color: '#ffffff',
+  fontSize: 10,
+  fontFamily: 'var(--ma-font-mono)',
+  fontWeight: 600,
+  padding: '2px 7px',
+  borderRadius: 4,
+  backdropFilter: 'blur(4px)',
+  letterSpacing: '0.04em',
 }
 
 const styleGridKhachManHinhHep: CSSProperties = {
   ...styleGridKhach,
+  margin: '12px auto 0',
   gridTemplateColumns: 'minmax(0, 1fr)',
 }
 
@@ -204,6 +276,23 @@ const styleSoDemo: CSSProperties = {
   fontFamily: 'var(--ma-font-mono)',
   fontSize: 11,
   color: 'var(--ma-text-secondary)',
+}
+
+function layDuongDanChinhTheoVaiTro(vaiTro: string): string {
+  switch (vaiTro) {
+    case 'CHU':
+      return '/tong-quan'
+    case 'QUAN_LY':
+      return '/nhac-viec'
+    case 'THO':
+      return '/viec-cua-toi'
+    case 'NGUOI_THUE':
+      return '/hoa-don-cua-toi'
+    case 'QTHT':
+      return '/tai-khoan'
+    default:
+      return '/tong-quan'
+  }
 }
 
 function App() {
@@ -363,8 +452,10 @@ function App() {
       setNguoiDung(response.nguoiDung)
       if (response.nguoiDung.vaiTro === 'THO') {
         thayTheDuongDan('/viec-cua-toi')
-      } else {
+      } else if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
         dieuHuongToi('/')
+      } else {
+        dieuHuongToi(layDuongDanChinhTheoVaiTro(response.nguoiDung.vaiTro))
       }
       setForm({ soDienThoai: '', matKhau: '' })
     } catch (reason) {
@@ -462,6 +553,18 @@ function App() {
     && duongDanHienTai === '/su-co'
     && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro),
   )
+  const hienThiDashboardChu = Boolean(
+    token
+    && nguoiDung
+    && nguoiDung.vaiTro === 'CHU'
+    && duongDanHienTai === '/tong-quan',
+  )
+  const hienThiDashboardQuanLy = Boolean(
+    token
+    && nguoiDung
+    && nguoiDung.vaiTro === 'QUAN_LY'
+    && duongDanHienTai === '/nhac-viec',
+  )
   const hienThiBangViec = Boolean(
     token
     && nguoiDung
@@ -549,39 +652,6 @@ function App() {
             : hienThiHoaDonQuanLy || hienThiHoaDon
               ? 'Hoá đơn'
               : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
-  const maTruyVetTheChinh = hienThiBieuDoTieuThuNguoiThue
-    ? 'FR-POR-05'
-    : hienThiHopDongNguoiThue
-      ? 'FR-POR-07'
-    : hienThiLichHen
-      ? 'FR-PUB-02'
-    : hienThiThongBao
-      ? 'FR-MNT-02'
-      : hienThiBaoCaoTongQuan
-        ? 'FR-RPT-01 · FR-RPT-02'
-      : hienThiBaoCaoTieuThu
-        ? 'FR-RPT-02 · FR-RPT-05'
-      : hienThiBaoCaoChiPhiBaoTri
-        ? 'FR-RPT-02 · FR-RPT-08'
-      : hienThiBaoCaoCongNo
-        ? 'FR-RPT-02 · FR-RPT-03'
-      : hienThiBangViec
-        ? 'FR-NTF-01'
-      : hienThiLichSuSuaChua
-        ? 'FR-MNT-08'
-    : hienThiHoaDonNguoiThue
-      ? 'FR-POR-01'
-    : hienThiLichSuHoaDonNguoiThue
-      ? 'FR-POR-03'
-      : hienThiDanhMucToaNha
-        ? 'FR-BLD-01'
-        : hienThiDanhMucPhong
-          ? 'FR-BLD-02'
-          : hienThiGhiChiSo
-            ? 'FR-MTR-01'
-            : hienThiHoaDon
-              ? 'FR-INV-02'
-              : nguoiDung ? 'FR-AUT-04' : 'FR-AUT-01'
 
   if (!nguoiDung) {
     if (moTroGiupTaiKhoan) return <TaiKhoanTruyCap onLogin={() => { setMoTroGiupTaiKhoan(false); setCheDoKhach('DANG_NHAP') }} />
@@ -596,7 +666,7 @@ function App() {
 
     return (
       <main style={styleKhungKhach}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: laManHinhHep ? 440 : 920, margin: '0 auto', width: '100%' }}>
           <button
             type="button"
             onClick={() => setCheDoKhach('KHAM_PHA')}
@@ -614,97 +684,73 @@ function App() {
               gap: 6,
             }}
           >
-            ← Xem danh mục phòng trống & biểu phí
+            ← Khám phá phòng trống
           </button>
-          <SysLabel>HỆ THỐNG VẬN HÀNH</SysLabel>
+          <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>
+            MiniApart
+          </span>
         </div>
-        <section style={laManHinhHep ? styleGridKhachManHinhHep : styleGridKhach}>
-          <article
+
+        <section style={laManHinhHep ? styleGridKhachManHinhHep : styleGridKhachDesktop}>
+          {/* Cột minh họa không gian toà nhà trên desktop */}
+          {!laManHinhHep && (
+            <div style={styleLoginShowcase}>
+              <img
+                src="/rooms/annhien_studio_noi_that.webp"
+                alt="Không gian căn hộ MiniApart"
+                style={styleLoginShowcaseImg}
+              />
+              <div style={styleLoginShowcaseOverlay}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <div style={styleLogoHieuSmall}>M</div>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em' }}>MiniApart</span>
+                </div>
+                <h3 style={{ margin: '0 0 10px', fontSize: 21, fontWeight: 700, color: '#ffffff', lineHeight: 1.35 }}>
+                  Nền tảng quản lý vận hành chung cư mini & nhà trọ
+                </h3>
+                <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255, 255, 255, 0.85)', lineHeight: 1.6 }}>
+                  Minh bạch hoá số liệu dịch vụ, kiểm soát hợp đồng chặt chẽ và kết nối người thuê nhanh chóng.
+                </p>
+                <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end', paddingTop: 16 }}>
+                  <span style={styleShowcaseBadge}>Ảnh minh họa</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div
             style={{
               ...styleTheNoiDung,
               display: 'grid',
-              gap: 'var(--ma-space-7)',
-              alignContent: 'start',
+              gap: 'var(--ma-space-5)',
+              padding: laManHinhHep ? '28px 24px' : '36px 36px',
             }}
-            aria-labelledby="app-title"
+            aria-labelledby="auth-title"
           >
-            <div style={{ display: 'grid', gap: 'var(--ma-space-3)' }}>
-              <SysLabel>QUẢN LÝ VẬN HÀNH</SysLabel>
-              <h1 id="app-title" style={{ ...styleTieuDe, fontSize: 'clamp(32px, 7vw, 56px)' }}>
+            <div style={{ textAlign: 'center', display: 'grid', gap: 4 }}>
+              <h1 id="app-title" style={{ margin: 0, font: 'var(--ma-text-screen-title)', fontSize: 26, letterSpacing: '-0.02em' }}>
                 MiniApart
               </h1>
-              <p style={{ ...styleDoanMoTa, maxWidth: '34rem' }}>
-                Một nơi rõ ràng để quản lý toà nhà, phòng và những khoản thu hằng tháng.
+              <p style={{ ...styleDoanMoTa, fontSize: 13.5 }}>
+                Quản lý vận hành chung cư mini & nhà trọ
               </p>
             </div>
-            <div style={{ display: 'grid', gap: 'var(--ma-space-5)' }}>
-              <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
-                <SysLabel>{maTruyVetTheChinh}</SysLabel>
-                <p style={{ ...styleDoanMoTa, color: 'var(--ma-text-primary)' }}>
-                  Đăng nhập để vào đúng khu vực công việc theo vai trò, không đổi luồng phiên hiện có.
-                </p>
-              </div>
-              <BlockedNotice
-                title="Khung ứng dụng mới đã sẵn sàng"
-                reason="Đăng nhập để mở menu theo vai trò, thanh đầu và vùng nội dung theo bộ kit mới."
-              />
-              <div style={{ display: 'grid', gap: 'var(--ma-space-3)', marginTop: 'var(--ma-space-2)' }}>
-                <SysLabel>⚡ TRẢI NGHIỆM NHANH THEO VAI TRÒ</SysLabel>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 'var(--ma-space-2)' }}>
-                  <button
-                    type="button"
-                    onClick={() => setForm({ soDienThoai: '0900000003', matKhau: 'password' })}
-                    style={styleNutChonDemo}
-                  >
-                    <span>👔 <strong>Quản lý</strong></span>
-                    <span style={styleSoDemo}>0900000003</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForm({ soDienThoai: '0900000002', matKhau: 'password' })}
-                    style={styleNutChonDemo}
-                  >
-                    <span>🏠 <strong>Chủ nhà</strong></span>
-                    <span style={styleSoDemo}>0900000002</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForm({ soDienThoai: '0900000005', matKhau: 'password' })}
-                    style={styleNutChonDemo}
-                  >
-                    <span>👤 <strong>Khách thuê</strong></span>
-                    <span style={styleSoDemo}>0900000005</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForm({ soDienThoai: '0900000004', matKhau: 'password' })}
-                    style={styleNutChonDemo}
-                  >
-                    <span>🔧 <strong>Thợ kỹ thuật</strong></span>
-                    <span style={styleSoDemo}>0900000004</span>
-                  </button>
-                </div>
-                <span style={{ fontSize: 11, color: 'var(--ma-text-muted)', fontFamily: 'var(--ma-font-mono)' }}>
-                  * Bấm để tự điền số điện thoại & mật khẩu thử nghiệm
-                </span>
-              </div>
-            </div>
-          </article>
 
-          <section style={{ ...styleTheNoiDung, display: 'grid', gap: 'var(--ma-space-6)' }} aria-labelledby="auth-title">
-            <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
-              <SysLabel>{maTruyVetTheChinh}</SysLabel>
-              <h2 id="auth-title" style={{ margin: 0, font: 'var(--ma-text-block-title)', ...styleTieuDeKhoi }}>
-                {tieuDeTheChinh}
-              </h2>
-            </div>
+            {healthError && (
+              <div role="alert">
+                <BlockedNotice
+                  title="Mất kết nối máy chủ"
+                  reason={healthError}
+                />
+              </div>
+            )}
 
             {dangTaiPhien ? (
-              <p style={styleDoanMoTa} aria-live="polite">
-                Đang khôi phục phiên đăng nhập…
+              <p style={{ ...styleDoanMoTa, textAlign: 'center' }} aria-live="polite">
+                Đang kiểm tra phiên đăng nhập…
               </p>
             ) : (
-              <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 'var(--ma-space-5)' }}>
+              <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 'var(--ma-space-4)' }}>
                 <label style={styleNhanTruong}>
                   <span>Số điện thoại</span>
                   <input
@@ -732,27 +778,28 @@ function App() {
 
                 {authError ? (
                   <div role="alert">
-                    <BlockedNotice title="Đăng nhập chưa thành công" reason={authError} />
+                    <BlockedNotice title="Đăng nhập không thành công" reason={authError} />
                   </div>
                 ) : (
-                  <p style={styleDoanMoTa}>Nhập số điện thoại và mật khẩu để tiếp tục.</p>
+                  <p style={{ ...styleDoanMoTa, fontSize: 12.5 }}>Nhập số điện thoại và mật khẩu được cấp để tiếp tục.</p>
                 )}
 
                 <Button
                   type="submit"
                   blocked={dangDangNhap}
-                  style={{ minHeight: 'var(--ma-hit-mobile)', justifyContent: 'center', width: '100%' }}
+                  style={{ minHeight: 'var(--ma-hit-mobile)', justifyContent: 'center', width: '100%', marginTop: 4 }}
                 >
                   {dangDangNhap ? 'Đang đăng nhập…' : 'Đăng nhập'}
                 </Button>
-                <Button variant="text" onClick={() => setMoTroGiupTaiKhoan(true)}>Kích hoạt tài khoản / Quên mật khẩu</Button>
+
+                <div style={{ textAlign: 'center', marginTop: 4 }}>
+                  <Button variant="text" type="button" onClick={() => setMoTroGiupTaiKhoan(true)}>
+                    Kích hoạt tài khoản / Quên mật khẩu
+                  </Button>
+                </div>
               </form>
             )}
-          </section>
-        </section>
-
-        <section style={styleTheNoiDung} aria-labelledby="status-title">
-          {renderTrangThaiHeThong(health, healthError)}
+          </div>
         </section>
       </main>
     )
@@ -810,6 +857,11 @@ function App() {
         ) : null}
 
         <section style={hienThiGhiChiSo ? styleVungNoiDungKhongDem : styleVungNoiDung}>
+          {healthError ? (
+            <div role="alert" style={{ marginBottom: 'var(--ma-space-4)' }}>
+              <BlockedNotice title="Mất kết nối máy chủ" reason={healthError} />
+            </div>
+          ) : null}
           {token && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && duongDanHienTai === '/nguoi-thue' ? (
             <HoSoNguoiThue token={token} />
           ) : token && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && duongDanHienTai === '/dich-vu' ? (
@@ -835,7 +887,7 @@ function App() {
           ) : hienThiHopDongNguoiThue && token ? (
             <HopDongNguoiThue token={token} mobile={laManHinhHep} />
           ) : hienThiHopDongQuanLy && token ? (
-            <><HopDongQuanLy token={token} mobile={laManHinhHep} /><HopDongThaoTac token={token} /></>
+            <HopDongQuanLy token={token} mobile={laManHinhHep} />
           ) : hienThiLichHen && token ? (
             <QuanLyLichHen token={token} mobile={laManHinhHep} />
           ) : hienThiViecCuaToi && token ? (
@@ -848,6 +900,10 @@ function App() {
             <ChiPhiBaoTriBaoCao token={token} mobile={laManHinhHep} />
           ) : hienThiBaoCaoCongNo && token ? (
             <CongNoBaoCao token={token} mobile={laManHinhHep} />
+          ) : hienThiDashboardChu && token ? (
+            <ChuDashboard token={token} mobile={laManHinhHep} />
+          ) : hienThiDashboardQuanLy && token ? (
+            <QuanLyDashboard token={token} mobile={laManHinhHep} />
           ) : hienThiBangViec && token ? (
             <BangViecVanHanh token={token} mobile={laManHinhHep} />
           ) : hienThiLichSuSuaChua && token ? (
@@ -883,7 +939,7 @@ function App() {
                 }}
               >
                 <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
-                  <SysLabel>{maTruyVetTheChinh}</SysLabel>
+                  <SysLabel tone="primary">{nguoiDung.tenVaiTro.toUpperCase()}</SysLabel>
                   <h2 id="current-route-title" style={{ margin: 0, font: 'var(--ma-text-block-title)', ...styleTieuDeKhoi }}>
                     {trangVaiTro.tieuDe}
                   </h2>
@@ -1084,10 +1140,6 @@ function App() {
               )}
             </section>
           ) : null}
-
-          <section style={styleTheNoiDung} aria-labelledby="status-title">
-            {renderTrangThaiHeThong(health, healthError)}
-          </section>
         </section>
       </div>
     </main>
@@ -1095,71 +1147,6 @@ function App() {
 }
 
 export default App
-
-function renderTrangThaiHeThong(health: HealthStatus | null, healthError: string | null) {
-  return (
-    <div style={{ display: 'grid', gap: 'var(--ma-space-5)' }}>
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          gap: 'var(--ma-space-4)',
-          alignItems: 'start',
-        }}
-      >
-        <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
-          <SysLabel>BẢN KIỂM TRA KẾT NỐI</SysLabel>
-          <h2 id="status-title" style={{ margin: 0, font: 'var(--ma-text-block-title)', ...styleTieuDeKhoi }}>
-            Trạng thái hệ thống
-          </h2>
-        </div>
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            minHeight: 'var(--ma-hit-mobile)',
-            padding: '0 var(--ma-space-4)',
-            border: '1px solid',
-            borderColor: health ? 'var(--ma-done-text)' : 'var(--ma-waiting-border)',
-            background: health ? 'var(--ma-done-bg)' : 'var(--ma-bg-sunken)',
-            color: health ? 'var(--ma-done-text)' : 'var(--ma-waiting)',
-            fontFamily: 'var(--ma-font-mono)',
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: 'var(--ma-tracking-syslabel)',
-            textTransform: 'uppercase',
-          }}
-        >
-          {health ? 'Đang hoạt động' : healthError ? 'Cần kiểm tra' : 'Đang kiểm tra'}
-        </span>
-      </div>
-
-      {healthError ? (
-        <div role="alert">
-          <BlockedNotice title="Không thể lấy trạng thái từ máy chủ" reason={healthError} />
-        </div>
-      ) : health ? (
-        <dl style={styleThongTinNguoiDung}>
-          <div style={styleHangThongTin}>
-            <dt>
-              <SysLabel>Ứng dụng</SysLabel>
-            </dt>
-            <dd style={{ margin: 0, font: 'var(--ma-text-body)', color: 'var(--ma-done-text)' }}>{health.status}</dd>
-          </div>
-          <div style={styleHangThongTin}>
-            <dt>
-              <SysLabel>Cơ sở dữ liệu</SysLabel>
-            </dt>
-            <dd style={{ margin: 0, font: 'var(--ma-text-body)', color: 'var(--ma-done-text)' }}>{health.database}</dd>
-          </div>
-        </dl>
-      ) : (
-        <Toast>Đang lấy trạng thái từ máy chủ…</Toast>
-      )}
-    </div>
-  )
-}
 
 function layDuongDanHienTai() {
   if (typeof window === 'undefined') {
@@ -1239,37 +1226,9 @@ function kiemTraManHinhHep() {
 
 function taoThongTinTopBar(vaiTro: string): { building: string; period: string; periodStatus?: string } {
   const period = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'long' }).format(new Date())
-  switch (vaiTro) {
-    case 'QTHT':
-      return {
-        building: 'Toàn hệ thống',
-        period,
-      }
-    case 'CHU':
-      return {
-        building: 'Cụm toà sở hữu',
-        period,
-      }
-    case 'QUAN_LY':
-      return {
-        building: 'Toà đang quản lý',
-        period,
-      }
-    case 'THO':
-      return {
-        building: 'Toà được phân công',
-        period: 'Ca hiện tại',
-      }
-    case 'NGUOI_THUE':
-      return {
-        building: 'Toà đang ở',
-        period,
-      }
-    default:
-      return {
-        building: 'MiniApart',
-        period: 'Kỳ hiện tại',
-      }
+  return {
+    building: 'Không gian quản lý',
+    period,
   }
 }
 

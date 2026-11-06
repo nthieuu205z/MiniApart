@@ -148,7 +148,7 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
     >
       <ScreenHeader action={<Button onClick={batDauTao}>Tạo tài khoản</Button>}>
         <div>
-          <SysLabel>FR-AUT-06</SysLabel>
+          <SysLabel>QUẢN LÝ TÀI KHOẢN</SysLabel>
           <h3 id="account-management-title">Quản lý tài khoản</h3>
         </div>
       </ScreenHeader>
@@ -265,7 +265,7 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
       {bieuMau ? (
         <FormPanel testId="account-form" onSubmit={luuTaiKhoan}>
           <div>
-            <SysLabel>FR-AUT-06</SysLabel>
+            <SysLabel>QUẢN LÝ TÀI KHOẢN</SysLabel>
             <h4>{bieuMau.id === null ? 'Tạo tài khoản' : 'Sửa tài khoản'}</h4>
           </div>
 

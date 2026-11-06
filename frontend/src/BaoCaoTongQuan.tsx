@@ -78,7 +78,7 @@ export default function BaoCaoTongQuan({ token, mobile = false }: Props): React.
   if (loi && !baoCao) {
     return (
       <ScreenSurface data-testid="report-overview-screen" data-layout-variant={variant} role="alert">
-        <SysLabel>FR-RPT-01 · FR-RPT-02</SysLabel>
+        <SysLabel>BÁO CÁO TỔNG QUAN</SysLabel>
         <ScreenNotice tone="urgent">{loi}</ScreenNotice>
       </ScreenSurface>
     )
@@ -99,7 +99,7 @@ export default function BaoCaoTongQuan({ token, mobile = false }: Props): React.
   return (
     <ScreenSurface data-testid="report-overview-screen" data-layout-variant={variant} aria-labelledby="report-overview-title">
       <ScreenHeader action={<ExcelExportButton token={token} report="tong-quan" filters={boLoc} loading={dangTai} />}>
-        <SysLabel>FR-RPT-01 · FR-RPT-02</SysLabel>
+        <SysLabel>BÁO CÁO TỔNG QUAN</SysLabel>
         <h3 id="report-overview-title" style={{ margin: '8px 0 0' }}>Tổng quan tài chính và vận hành</h3>
         <p style={styleMuted}>Một ảnh chụp nhất quán cho {baoCao.tenToaNha}, không trộn dữ liệu ngoài phạm vi được cấp quyền.</p>
       </ScreenHeader>
@@ -130,7 +130,7 @@ export default function BaoCaoTongQuan({ token, mobile = false }: Props): React.
       {dangTai ? <ScreenNotice live>Đang cập nhật báo cáo…</ScreenNotice> : null}
       {loi ? <ScreenNotice tone="urgent">{loi}</ScreenNotice> : null}
 
-      <section aria-label="Sáu chỉ số chính" style={{ display: 'grid', gap: 12, gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+      <section aria-label="Sáu chỉ số chính" style={{ display: 'grid', gap: 12, gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))' }}>
         {kpiItems.map((item) => (
           <article key={item.key} data-report-kpi={item.key} style={styleKpi}>
             <SysLabel>{item.label}</SysLabel>
@@ -280,9 +280,9 @@ function dinhDangPhanTram(value: string): string {
 }
 
 const styleMuted: CSSProperties = { margin: '8px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.6 }
-const styleFilterGrid: CSSProperties = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)' }
-const styleField: CSSProperties = { display: 'grid', gap: 6, minWidth: 0 }
-const styleInput: CSSProperties = { width: '100%', minWidth: 0, minHeight: 'var(--ma-hit-mobile)', padding: '0 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 0, background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)' }
+const styleFilterGrid: CSSProperties = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
+const styleField: CSSProperties = { display: 'grid', gap: 6, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
+const styleInput: CSSProperties = { width: '100%', minWidth: 0, maxWidth: '100%', minHeight: 'var(--ma-hit-mobile)', padding: '0 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 0, background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)', boxSizing: 'border-box' }
 const styleKpi: CSSProperties = { display: 'grid', gap: 8, minWidth: 0, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }
 const styleKpiValue: CSSProperties = { fontFamily: 'var(--ma-font-mono)', fontSize: 'clamp(20px, 3vw, 28px)', overflowWrap: 'anywhere' }
 const styleKpiNote: CSSProperties = { minHeight: 34, color: 'var(--ma-text-secondary)', fontSize: 12, lineHeight: 1.45 }

@@ -117,14 +117,15 @@ public class PresentationDemoSeeder implements CommandLineRunner {
             for (int r=1; r<=12; r++) {
                 String number = "%d%02d".formatted((r-1)/3+1,(r-1)%3+1);
                 BigDecimal rent = money(2800000 + b*250000L + (r%4)*400000L);
-                Long room = id("INSERT INTO PHONG(toa_nha_id,so_phong,tang,dien_tich,suc_chua,gia_thue_mac_dinh,loai_phong,trang_thai,mo_ta,tien_ich,ngung_cho_thue) VALUES (?,?,?,?,?,?,?,'TRONG',?,?,?) RETURNING id",
+                String anhDaiDien = layAnhDaiDienChoPhong(b, r);
+                Long room = id("INSERT INTO PHONG(toa_nha_id,so_phong,tang,dien_tich,suc_chua,gia_thue_mac_dinh,loai_phong,trang_thai,mo_ta,tien_ich,ngung_cho_thue,anh_dai_dien) VALUES (?,?,?,?,?,?,?,'TRONG',?,?,?,?) RETURNING id",
                         building,number,(r-1)/3+1,20+r%4*5,3,rent,
                         new String[]{"Studio ban công","Phòng có gác","Studio nội thất","Phòng cơ bản"}[r%4],
                         "Không gian "+(20+r%4*5)+" m², "+(r%2==0?"cửa sổ thoáng và khu bếp riêng":"ánh sáng tự nhiên, yên tĩnh")+". Dữ liệu mô phỏng phục vụ báo cáo.",
-                        "Điều hòa, nóng lạnh, tủ quần áo, chỗ để xe"+(r%4==0?", ban công":""),r==12);
-                for (int a=0; a<3; a++) assets.themTaiSan(room,new YeuCauKhaiBaoTaiSan(
-                        new String[]{"Điều hòa inverter 9000 BTU","Tủ quần áo hai cánh","Bình nóng lạnh 20 lít"}[a],
-                        new String[]{"DIEN_LANH","NOI_THAT","DIEN_TU"}[a],1,"HOAT_DONG_TOT",money(new long[]{6500000,1800000,2200000}[a]),"Đã kiểm tra khi bố trí phòng"),manager);
+                        String.join(", ",PresentationRoomEquipment.amenities(b,r)),r==12,
+                        anhDaiDien);
+                for (var equipment:PresentationRoomEquipment.inventory(b,r)) assets.themTaiSan(room,new YeuCauKhaiBaoTaiSan(
+                        equipment.name(),equipment.category(),1,"HOAT_DONG_TOT",equipment.value(),"Đã kiểm tra khi bố trí phòng"),manager);
                 if (r==12) { rooms.add(new RoomContract(room,null,null,rent,null)); continue; }
                 int person = b*11+r;
                 Long tenant = tenant(person,ref);
@@ -284,4 +285,46 @@ public class PresentationDemoSeeder implements CommandLineRunner {
     }
     private record ServicePrice(Long id,BigDecimal price,boolean applied,boolean metered) {}
     private record RoomContract(Long room,Long contract,Long tenant,BigDecimal rent,LocalDate start) {}
+    private static String layAnhDaiDienChoPhong(int b, int r) {
+        int kieu = r % 4;
+        return switch (b) {
+            case 0 -> switch (kieu) {
+                case 1 -> "/rooms/annhien_gac_xep.webp";
+                case 2 -> "/rooms/annhien_studio_noi_that.webp";
+                case 3 -> "/rooms/annhien_co_ban.webp";
+                default -> "/rooms/annhien_studio_ban_cong.webp";
+            };
+            case 1 -> switch (kieu) {
+                case 1 -> "/rooms/nhaxanh_phong_gac.webp";
+                case 2 -> "/rooms/nhaxanh_studio_gon.webp";
+                case 3 -> "/rooms/nhaxanh_co_ban.webp";
+                default -> "/rooms/annhien_studio_ban_cong.webp";
+            };
+            case 2 -> switch (kieu) {
+                case 1 -> "/rooms/moclan_gac_xep.webp";
+                case 2 -> "/rooms/moclan_studio_go.webp";
+                case 3 -> "/rooms/moclan_co_ban.webp";
+                default -> "/rooms/moclan_ban_cong.webp";
+            };
+            case 3 -> switch (kieu) {
+                case 1 -> "/rooms/nhaxanh_phong_gac.webp";
+                case 2 -> (r == 10) ? "/rooms/phonho_studio_gon.webp" : "/rooms/phonho_studio_bep.webp";
+                case 3 -> "/rooms/phonho_co_ban.webp";
+                default -> "/rooms/moclan_ban_cong.webp";
+            };
+            case 4 -> switch (kieu) {
+                case 1 -> "/rooms/annhien_gac_xep.webp";
+                case 2 -> (r == 10) ? "/rooms/binhminh_cua_so_lon.webp" : "/rooms/binhminh_studio_thoang.webp";
+                case 3 -> "/rooms/binhminh_co_ban.webp";
+                default -> "/rooms/binhminh_ban_cong.webp";
+            };
+            case 5 -> switch (kieu) {
+                case 1 -> "/rooms/annhien_gac_xep.webp";
+                case 2 -> (r == 10) ? "/rooms/vuonnang_cay_xanh.webp" : "/rooms/vuonnang_studio_nang.webp";
+                case 3 -> "/rooms/annhien_co_ban.webp";
+                default -> "/rooms/vuonnang_ban_cong.webp";
+            };
+            default -> "/rooms/annhien_co_ban.webp";
+        };
+    }
 }

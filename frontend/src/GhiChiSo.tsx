@@ -400,7 +400,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <SysLabel>FR-MTR-01 / FR-MTR-02 / FR-MTR-03 / FR-MTR-04</SysLabel>
+            <SysLabel>GHI CHỈ SỐ ĐIỆN NƯỚC</SysLabel>
             <h1
               id="meter-title"
               style={{
@@ -494,7 +494,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
               }}
             >
               <div>
-                <SysLabel>FR-MTR-08</SysLabel>
+                <SysLabel>CHỐT SỐ LIỆU KỲ</SysLabel>
                 <h2 id="meter-close-title" style={{ margin: 'var(--ma-space-1) 0 0', font: 'var(--ma-text-block-title)', letterSpacing: 'var(--ma-tracking-title)' }}>
                   Chốt kỳ
                 </h2>

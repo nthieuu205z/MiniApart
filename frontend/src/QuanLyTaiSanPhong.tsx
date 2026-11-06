@@ -315,6 +315,9 @@ export default function QuanLyTaiSanPhong({
         padding: mobile ? 'var(--ma-space-3)' : 'var(--ma-space-5)',
         border: '1px solid var(--ma-border-default)',
         borderRadius: 'var(--ma-radius)',
+        minWidth: 0,
+        maxWidth: '100%',
+        boxSizing: 'border-box',
       }}
     >
       <header
@@ -329,12 +332,12 @@ export default function QuanLyTaiSanPhong({
         }}
       >
         <div>
-          <SysLabel>FR-BLD-09 · US-07</SysLabel>
+          <SysLabel>QUẢN LÝ TÀI SẢN BÀN GIAO</SysLabel>
           <h3 style={{ margin: '4px 0 0', font: 'var(--ma-text-task-name)' }}>
             Tiện nghi & Biên bản tài sản {soPhong ? `(Phòng ${soPhong})` : ''}
           </h3>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Button
             type="button"
             variant={tab === 'DANH_MUC' ? 'primary' : 'secondary'}
@@ -435,10 +438,11 @@ export default function QuanLyTaiSanPhong({
               body="Chọn thiết bị mẫu phía trên hoặc nhập form bên dưới để thêm tiện nghi (Điều hoà, tủ lạnh, giường...) vào phòng."
             />
           ) : (
-            <div style={{ overflowX: 'auto' }}>
+            <div style={{ overflowX: 'auto', minWidth: 0, maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
               <table
                 style={{
                   width: '100%',
+                  minWidth: 480,
                   borderCollapse: 'collapse',
                   fontSize: 13,
                   textAlign: 'left',
@@ -518,14 +522,19 @@ export default function QuanLyTaiSanPhong({
               borderRadius: 'var(--ma-radius)',
               display: 'grid',
               gap: 10,
+              minWidth: 0,
+              maxWidth: '100%',
+              boxSizing: 'border-box',
             }}
           >
             <strong style={{ fontSize: 13 }}>Khai báo thêm tiện ích / tài sản mới:</strong>
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: mobile ? '1fr' : '2fr 1fr 1fr 1fr',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))',
                 gap: 8,
+                minWidth: 0,
+                maxWidth: '100%',
               }}
             >
               <label style={{ display: 'grid', gap: 2, fontSize: 12 }}>
@@ -588,9 +597,11 @@ export default function QuanLyTaiSanPhong({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: mobile ? '1fr' : '1fr 2fr auto',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))',
                 gap: 8,
                 alignItems: 'end',
+                minWidth: 0,
+                maxWidth: '100%',
               }}
             >
               <label style={{ display: 'grid', gap: 2, fontSize: 12 }}>
@@ -958,4 +969,7 @@ const inputStyle: CSSProperties = {
   background: 'var(--ma-bg-card)',
   color: 'var(--ma-text-primary)',
   fontSize: 13,
+  minWidth: 0,
+  width: '100%',
+  boxSizing: 'border-box',
 }

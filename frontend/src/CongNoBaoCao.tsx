@@ -89,7 +89,7 @@ export default function CongNoBaoCao({ token, mobile = false }: Props): React.Re
   if (loi && !baoCao) {
     return (
       <ScreenSurface data-testid="debt-report-screen" data-layout-variant={variant} role="alert">
-        <SysLabel>FR-RPT-02 · FR-RPT-03</SysLabel>
+        <SysLabel>BÁO CÁO CÔNG NỢ</SysLabel>
         <ScreenNotice tone="urgent">{loi}</ScreenNotice>
       </ScreenSurface>
     )
@@ -101,7 +101,7 @@ export default function CongNoBaoCao({ token, mobile = false }: Props): React.Re
   return (
     <ScreenSurface data-testid="debt-report-screen" data-layout-variant={variant} aria-labelledby="debt-report-title">
       <ScreenHeader action={<ExcelExportButton token={token} report="cong-no" filters={boLoc} loading={dangTai} />}>
-        <SysLabel>FR-RPT-02 · FR-RPT-03</SysLabel>
+        <SysLabel>BÁO CÁO CÔNG NỢ</SysLabel>
         <h3 id="debt-report-title" style={{ margin: '8px 0 0' }}>Báo cáo công nợ</h3>
         <p style={styleMuted}>Nợ được đọc từ sổ thanh toán tại thời điểm xem và đã sắp theo số ngày quá hạn từ cao xuống thấp.</p>
       </ScreenHeader>
@@ -181,8 +181,8 @@ function DongNo({ no }: { no: ThongTinKhoanNoBaoCao }): React.ReactElement {
 }
 
 const styleMuted: CSSProperties = { margin: '8px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.6 }
-const styleField: CSSProperties = { display: 'grid', gap: 6, maxWidth: 420 }
-const styleInput: CSSProperties = { width: '100%', minHeight: 'var(--ma-hit-mobile)', padding: '0 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 0, background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)' }
+const styleField: CSSProperties = { display: 'grid', gap: 6, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
+const styleInput: CSSProperties = { width: '100%', minWidth: 0, maxWidth: '100%', minHeight: 'var(--ma-hit-mobile)', padding: '0 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 0, background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)', boxSizing: 'border-box' }
 const styleTableWrap: CSSProperties = { minWidth: 0, overflowX: 'auto' }
 const styleCards: CSSProperties = { display: 'grid', gap: 10 }
 const styleCard: CSSProperties = { display: 'grid', gap: 7, minWidth: 0, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }

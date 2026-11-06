@@ -73,7 +73,7 @@ export default function BieuDoTieuThu({ token, mobile = false }: Props) {
   if (loi) {
     return (
       <ScreenSurface data-testid="consumption-screen" data-layout-variant={variant} role="alert">
-        <SysLabel>FR-POR-05</SysLabel>
+        <SysLabel>BIỂU ĐỒ TIÊU THỤ</SysLabel>
         <ScreenNotice tone="urgent">{loi}</ScreenNotice>
         <Button data-retry-consumption variant="secondary" onClick={() => setSoLanTaiLai((count) => count + 1)}>
           Thử lại
@@ -86,7 +86,7 @@ export default function BieuDoTieuThu({ token, mobile = false }: Props) {
     return (
       <ScreenSurface data-testid="consumption-screen" data-layout-variant={variant} aria-labelledby="consumption-title">
         <ScreenHeader>
-          <SysLabel>FR-POR-05</SysLabel>
+          <SysLabel>BIỂU ĐỒ TIÊU THỤ</SysLabel>
           <h3 id="consumption-title" style={{ margin: '8px 0 0' }}>Tiêu thụ điện và nước</h3>
         </ScreenHeader>
         <EmptyState
@@ -101,7 +101,7 @@ export default function BieuDoTieuThu({ token, mobile = false }: Props) {
   return (
     <ScreenSurface data-testid="consumption-screen" data-layout-variant={variant} aria-labelledby="consumption-title">
       <ScreenHeader>
-        <SysLabel>FR-POR-05</SysLabel>
+        <SysLabel>BIỂU ĐỒ TIÊU THỤ</SysLabel>
         <h3 id="consumption-title" style={{ margin: '8px 0 0' }}>Tiêu thụ điện và nước</h3>
         <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>
           {Math.max(duLieu.dien.length, duLieu.nuoc.length)} kỳ gần nhất có dữ liệu của bạn. Điện và nước được hiển thị riêng theo đúng đơn vị.

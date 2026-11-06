@@ -114,7 +114,7 @@ export default function ChiPhiBaoTriBaoCao({ token, mobile = false }: Props): Re
   if (loi && !baoCao) {
     return (
       <ScreenSurface data-testid="maintenance-cost-report-screen" data-layout-variant={variant} role="alert">
-        <SysLabel>FR-RPT-02 · FR-RPT-08</SysLabel>
+        <SysLabel>BÁO CÁO CHI PHÍ BẢO TRÌ</SysLabel>
         <ScreenNotice tone="urgent">{loi}</ScreenNotice>
       </ScreenSurface>
     )
@@ -126,7 +126,7 @@ export default function ChiPhiBaoTriBaoCao({ token, mobile = false }: Props): Re
   return (
     <ScreenSurface data-testid="maintenance-cost-report-screen" data-layout-variant={variant} aria-labelledby="maintenance-cost-report-title">
       <ScreenHeader action={<ExcelExportButton token={token} report="chi-phi-bao-tri" filters={boLoc} loading={dangTai} />}>
-        <SysLabel>FR-RPT-02 · FR-RPT-08</SysLabel>
+        <SysLabel>BÁO CÁO CHI PHÍ BẢO TRÌ</SysLabel>
         <h3 id="maintenance-cost-report-title" style={{ margin: '8px 0 0' }}>Chi phí bảo trì</h3>
         <p style={styleMuted}>Chi phí lấy từ yêu cầu sửa chữa, tách theo bên chịu chi phí và không cộng lại khoản phát sinh hoá đơn.</p>
       </ScreenHeader>
@@ -385,10 +385,10 @@ function thongBaoLoi(reason: unknown, fallback: string): string {
 }
 
 const styleMuted: CSSProperties = { margin: '4px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.5 }
-const styleFilterGrid: CSSProperties = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 190px), 1fr))', padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)' }
-const styleField: CSSProperties = { display: 'grid', gap: 6, minWidth: 0 }
-const styleInput: CSSProperties = { width: '100%', minWidth: 0, minHeight: 'var(--ma-hit-mobile)', padding: '0 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 0, background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)' }
-const styleSummary: CSSProperties = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }
+const styleFilterGrid: CSSProperties = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 190px), 1fr))', padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
+const styleField: CSSProperties = { display: 'grid', gap: 6, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
+const styleInput: CSSProperties = { width: '100%', minWidth: 0, maxWidth: '100%', minHeight: 'var(--ma-hit-mobile)', padding: '0 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 0, background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)', boxSizing: 'border-box' }
+const styleSummary: CSSProperties = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 190px), 1fr))' }
 const styleSummaryCard: CSSProperties = { display: 'grid', gap: 8, minWidth: 0, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }
 const styleSummaryValue: CSSProperties = { fontFamily: 'var(--ma-font-mono)', fontSize: 'clamp(20px, 3vw, 28px)', overflowWrap: 'anywhere' }
 const styleChart: CSSProperties = { display: 'grid', gap: 14, minWidth: 0, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }

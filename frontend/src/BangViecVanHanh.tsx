@@ -5,12 +5,13 @@ import { StatusTag } from './design/core/StatusTag'
 import { SysLabel } from './design/core/SysLabel'
 import { ScreenHeader, ScreenNotice, ScreenSurface } from './design/layout/Screen'
 
-type Props = { token: string; mobile?: boolean }
+type Props = { token: string; mobile?: boolean; toaNhaId?: number | null }
 
 /** FR-NTF-01 shows the server-scoped operational workboard; status text carries urgency beyond color. */
-export function BangViecVanHanh({ token, mobile = false }: Props): React.ReactElement {
+export function BangViecVanHanh({ token, mobile = false, toaNhaId: propToaNhaId }: Props): React.ReactElement {
+  const isEmbedded = propToaNhaId !== undefined
   const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
-  const [toaNhaId, setToaNhaId] = useState<number | null>(() => docToaNhaIdTuUrl())
+  const [toaNhaId, setToaNhaId] = useState<number | null>(() => (isEmbedded ? (propToaNhaId ?? null) : docToaNhaIdTuUrl()))
   const [bangViec, setBangViec] = useState<BangViecData | null>(null)
   const [dangTai, setDangTai] = useState(true)
   const [loi, setLoi] = useState<string | null>(null)
@@ -21,22 +22,38 @@ export function BangViecVanHanh({ token, mobile = false }: Props): React.ReactEl
       .then((items) => {
         if (!mounted) return
         setToaNha(items)
-        setToaNhaId((current) => current ?? items[0]?.id ?? null)
+        if (!isEmbedded) {
+          setToaNhaId((current) => current ?? items[0]?.id ?? null)
+        } else if (propToaNhaId === null) {
+          setToaNhaId((current) => current ?? items[0]?.id ?? null)
+        }
       })
       .catch((reason: unknown) => {
         if (mounted) setLoi(reason instanceof ApiError ? reason.message : 'Không thể tải danh sách toà nhà.')
       })
     return () => { mounted = false }
-  }, [token])
+  }, [token, isEmbedded, propToaNhaId])
+
+  useEffect(() => {
+    if (isEmbedded) {
+      if (propToaNhaId !== null && propToaNhaId !== undefined) {
+        setToaNhaId(propToaNhaId)
+      } else if (toaNha.length > 0 && (toaNhaId === null || !toaNha.some((t) => t.id === toaNhaId))) {
+        setToaNhaId(toaNha[0].id)
+      }
+    }
+  }, [isEmbedded, propToaNhaId, toaNha, toaNhaId])
 
   useEffect(() => {
     if (toaNhaId === null) {
       setDangTai(false)
       return undefined
     }
-    const query = new URLSearchParams(window.location.search)
-    query.set('toaNhaId', String(toaNhaId))
-    window.history.replaceState({}, '', `${window.location.pathname}?${query.toString()}`)
+    if (!isEmbedded) {
+      const query = new URLSearchParams(window.location.search)
+      query.set('toaNhaId', String(toaNhaId))
+      window.history.replaceState({}, '', `${window.location.pathname}?${query.toString()}`)
+    }
 
     let mounted = true
     setDangTai(true)
@@ -48,17 +65,17 @@ export function BangViecVanHanh({ token, mobile = false }: Props): React.ReactEl
       })
       .finally(() => { if (mounted) setDangTai(false) })
     return () => { mounted = false }
-  }, [token, toaNhaId])
+  }, [token, toaNhaId, isEmbedded])
 
   return (
     <ScreenSurface data-testid="operational-dashboard-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'} aria-labelledby="operational-dashboard-title">
       <ScreenHeader>
-        <SysLabel>FR-NTF-01 · BR-14</SysLabel>
+        <SysLabel>NHẮC VIỆC VẬN HÀNH</SysLabel>
         <h3 id="operational-dashboard-title" style={{ margin: '8px 0 0' }}>Bảng việc vận hành</h3>
         <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)' }}>Các việc cần xử lý theo đúng phạm vi toà nhà được phân quyền.</p>
       </ScreenHeader>
 
-      {toaNha.length > 0 ? (
+      {toaNha.length > 0 && (!isEmbedded || propToaNhaId === null) ? (
         <label style={{ display: 'grid', gap: 6, maxWidth: 420 }}>
           <span>Toà nhà</span>
           <select value={toaNhaId ?? ''} onChange={(event) => setToaNhaId(Number(event.target.value))} style={styleInput}>

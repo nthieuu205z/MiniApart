@@ -1,16 +1,18 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { ApiError, fetchHopDongQuanLy, fetchToaNha, type ThongTinHopDong, type ThongTinToaNha } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
 import { ScreenHeader, ScreenNotice, ScreenSurface } from './design/layout/Screen'
 import { SysLabel } from './design/core/SysLabel'
+import HopDongThaoTac from './HopDongThaoTac'
 
 type Props = { token: string; mobile?: boolean }
 
 export type BoLocHopDongQuanLy = {
   toaNhaId: number | null
   sapHetHan: boolean
+  hopDongId: number | null
 }
 
 /** FR-BLD-06 keeps the manager contract worklist state in the URL for dashboard click-through. */
@@ -19,15 +21,17 @@ export function layBoLocHopDongQuanLyTuUrl(url: string | URL): BoLocHopDongQuanL
   return {
     toaNhaId: soNguyenDuong(searchParams.get('toaNhaId')),
     sapHetHan: searchParams.get('sapHetHan') === 'true',
+    hopDongId: soNguyenDuong(searchParams.get('hopDongId')),
   }
 }
 
 export default function HopDongQuanLy({ token, mobile = false }: Props): React.ReactElement {
   const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
   const [boLoc, setBoLoc] = useState<BoLocHopDongQuanLy>(() => (
-    typeof window === 'undefined' ? { toaNhaId: null, sapHetHan: false } : layBoLocHopDongQuanLyTuUrl(window.location.href)
+    typeof window === 'undefined' ? { toaNhaId: null, sapHetHan: false, hopDongId: null } : layBoLocHopDongQuanLyTuUrl(window.location.href)
   ))
   const [hopDongs, setHopDongs] = useState<ThongTinHopDong[]>([])
+  const [hienThiFormTao, setHienThiFormTao] = useState(false)
   const [dangTai, setDangTai] = useState(true)
   const [loi, setLoi] = useState<string | null>(null)
 
@@ -50,6 +54,7 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
     const query = new URLSearchParams()
     query.set('toaNhaId', String(boLoc.toaNhaId))
     if (boLoc.sapHetHan) query.set('sapHetHan', 'true')
+    if (boLoc.hopDongId) query.set('hopDongId', String(boLoc.hopDongId))
     window.history.replaceState({}, '', `/hop-dong?${query.toString()}`)
   }, [boLoc])
 
@@ -76,20 +81,56 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
     [boLoc.sapHetHan, hopDongs],
   )
   const variant = mobile ? 'mobile' : 'desktop'
+  const chiTietRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (hienThiFormTao) {
+      chiTietRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+    }
+  }, [hienThiFormTao])
 
   return (
     <ScreenSurface data-testid="manager-contract-screen" data-layout-variant={variant} aria-labelledby="manager-contract-title">
       <ScreenHeader>
-        <SysLabel>FR-BLD-06</SysLabel>
-        <h3 id="manager-contract-title" style={{ margin: '8px 0 0' }}>Hợp đồng theo toà nhà</h3>
-        <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>Danh sách hợp đồng trong phạm vi được máy chủ phân quyền.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <SysLabel>QUẢN LÝ HỢP ĐỒNG</SysLabel>
+            <h3 id="manager-contract-title" style={{ margin: '8px 0 0' }}>Hợp đồng theo toà nhà</h3>
+            <p style={{ margin: '4px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>
+              Danh sách hợp đồng và quản lý hồ sơ pháp lý trong toà nhà.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const next = !hienThiFormTao
+              setHienThiFormTao(next)
+              if (next) setBoLoc((curr) => ({ ...curr, hopDongId: null }))
+            }}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 'var(--ma-radius)',
+              background: hienThiFormTao ? 'var(--ma-bg-sunken)' : 'var(--ma-brand-accent)',
+              color: hienThiFormTao ? 'var(--ma-text-primary)' : '#fff',
+              border: '1px solid var(--ma-border-default)',
+              fontWeight: 600,
+              fontSize: 13.5,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            {hienThiFormTao ? '✕ Đóng form tạo' : '+ Tạo hợp đồng mới'}
+          </button>
+        </div>
       </ScreenHeader>
 
       <label style={styleField}>Toà nhà
         <select
           data-contract-building-select
           value={boLoc.toaNhaId ?? ''}
-          onChange={(event) => setBoLoc((current) => ({ ...current, toaNhaId: soNguyenDuong(event.target.value) }))}
+          onChange={(event) => setBoLoc((current) => ({ ...current, toaNhaId: soNguyenDuong(event.target.value), hopDongId: null }))}
           style={styleInput}
         >
           <option value="">Chọn toà nhà</option>
@@ -112,14 +153,82 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
         : loi ? <div role="alert"><ScreenNotice tone="urgent">{loi}</ScreenNotice></div>
           : boLoc.toaNhaId === null ? <EmptyState title="Chọn một toà nhà để xem hợp đồng." />
             : hopDongsHienThi.length === 0 ? <EmptyState title={boLoc.sapHetHan ? 'Không có hợp đồng sắp hết hạn.' : 'Chưa có hợp đồng nào trong toà nhà này.'} />
-              : <div data-contract-list={variant} style={styleList}>{hopDongsHienThi.map((hopDong) => <HopDongQuanLyRow key={hopDong.id} hopDong={hopDong} />)}</div>}
+              : (
+                <div data-contract-list={variant} style={styleList}>
+                  {hopDongsHienThi.map((hopDong) => (
+                    <HopDongQuanLyRow
+                      key={hopDong.id}
+                      hopDong={hopDong}
+                      isSelected={boLoc.hopDongId === hopDong.id}
+                      onSelect={(id) => {
+                        setBoLoc((curr) => ({ ...curr, hopDongId: id }))
+                        setHienThiFormTao(false)
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+
+      {/* CHI TIẾT HỒ SƠ & THAO TÁC HỢP ĐỒNG ĐƯỢC CHỌN HOẶC FORM TẠO */}
+      {(boLoc.hopDongId !== null || hienThiFormTao) && (
+        <div ref={chiTietRef} style={{ marginTop: 24, borderTop: '2px solid var(--ma-border-subtle)', paddingTop: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>
+              {hienThiFormTao ? '📝 Tạo hợp đồng thuê mới' : `📄 Hồ sơ chi tiết hợp đồng #${boLoc.hopDongId}`}
+            </h3>
+            <button
+              type="button"
+              onClick={() => {
+                setHienThiFormTao(false)
+                setBoLoc((curr) => ({ ...curr, hopDongId: null }))
+              }}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 'var(--ma-radius)',
+                background: 'transparent',
+                border: '1px solid var(--ma-border-default)',
+                fontSize: 12.5,
+                color: 'var(--ma-text-secondary)',
+                cursor: 'pointer',
+              }}
+            >
+              ✕ Đóng chi tiết
+            </button>
+          </div>
+          <HopDongThaoTac
+            token={token}
+            buildingId={boLoc.toaNhaId}
+            selectedHopDongId={boLoc.hopDongId}
+            onSelectHopDong={(id) => setBoLoc((curr) => ({ ...curr, hopDongId: id }))}
+            hienThiFormTao={hienThiFormTao}
+            onToggleFormTao={setHienThiFormTao}
+            onDongChiTiet={() => setBoLoc((curr) => ({ ...curr, hopDongId: null }))}
+            embedded={true}
+          />
+        </div>
+      )}
     </ScreenSurface>
   )
 }
 
-function HopDongQuanLyRow({ hopDong }: { hopDong: ThongTinHopDong }): React.ReactElement {
+function HopDongQuanLyRow({
+  hopDong,
+  isSelected,
+  onSelect,
+}: {
+  hopDong: ThongTinHopDong
+  isSelected?: boolean
+  onSelect?: (id: number) => void
+}): React.ReactElement {
   return (
-    <article data-contract-row={hopDong.id} style={styleRow}>
+    <article
+      data-contract-row={hopDong.id}
+      style={{
+        ...styleRow,
+        borderColor: isSelected ? 'var(--ma-brand-accent)' : undefined,
+        background: isSelected ? 'var(--ma-brand-accent-light)' : 'var(--ma-bg-card)',
+      }}
+    >
       <div style={styleRowMain}>
         <strong>Phòng {hopDong.soPhong}</strong>
         <span>{hopDong.hoTenNguoiThue}</span>
@@ -130,6 +239,27 @@ function HopDongQuanLyRow({ hopDong }: { hopDong: ThongTinHopDong }): React.Reac
         <span>Giá thuê: {dinhDangTien(hopDong.giaThue)} ₫</span>
         <span>{hopDong.sapHetHan ? `Còn ${hopDong.soNgayConLai} ngày` : 'Chưa vào ngưỡng cảnh báo'}</span>
       </div>
+      {onSelect ? (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={() => onSelect(hopDong.id)}
+            style={{
+              padding: '7px 14px',
+              borderRadius: 'var(--ma-radius)',
+              background: isSelected ? 'var(--ma-brand-accent)' : 'var(--ma-bg-card)',
+              color: isSelected ? '#fff' : 'var(--ma-brand-accent)',
+              border: `1px solid ${isSelected ? 'var(--ma-brand-accent)' : 'var(--ma-border-strong)'}`,
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {isSelected ? '✓ Đang xem hồ sơ' : 'Xem hồ sơ & Thao tác →'}
+          </button>
+        </div>
+      ) : null}
     </article>
   )
 }

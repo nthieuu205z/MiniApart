@@ -66,7 +66,10 @@ class PresentationDemoSeederIntegrationTest {
         assertThat(count("PHONG")).isEqualTo(72);
         assertThat(count("NGUOI_THUE")).isEqualTo(96);
         assertThat(count("HOP_DONG")).isEqualTo(66);
-        assertThat(count("TAI_SAN_PHONG")).isEqualTo(216);
+        assertThat(count("TAI_SAN_PHONG")).isEqualTo(359);
+        for (var amenity:Map.of("Tủ lạnh",39L,"Giường nệm",45L,"Máy giặt",20L,"Bếp riêng",39L).entrySet())
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM PHONG WHERE tien_ich LIKE ?",Long.class,"%"+amenity.getKey()+"%"))
+                    .as(amenity.getKey()).isEqualTo(amenity.getValue());
         assertThat(count("BIEN_BAN_BAN_GIAO_TAI_SAN")).isEqualTo(48);
         assertThat(count("YEU_CAU_SUA_CHUA")).isEqualTo(30);
         assertThat(count("LICH_HEN_XEM_PHONG")).isEqualTo(30);
@@ -108,6 +111,68 @@ class PresentationDemoSeederIntegrationTest {
         for(String table:tables()) assertThat(count(table)).as(table).isEqualTo(before.get(table));
         assertThat(jdbc.queryForObject("SELECT sum(so_tien) FROM THANH_TOAN",java.math.BigDecimal.class)).isEqualByComparingTo(total);
         assertThat(org.springframework.aop.support.AopUtils.isAopProxy(seeder)).isTrue();
+    }
+    @Test void enrichmentOfCurrentDatasetIsIdempotentAndPreservesSignedAndFinancialHistory() throws Exception {
+        var protectedTables=List.of("HOP_DONG","HOP_DONG_HO_SO","BIEN_BAN_BAN_GIAO_TAI_SAN",
+                "CHI_TIET_BIEN_BAN_TAI_SAN","HOA_DON","THANH_TOAN","GIAO_DICH_COC");
+        Map<String,String> history=new LinkedHashMap<>();
+        for(String table:protectedTables) history.put(table,digest(jdbc,table));
+        enrich(URL,DATABASE);
+        long auditCount=count("NHAT_KY_THAO_TAC");
+        enrich(URL,DATABASE);
+        assertThat(count("TAI_SAN_PHONG")).isEqualTo(359);
+        assertThat(count("NHAT_KY_THAO_TAC")).isEqualTo(auditCount);
+        for(String table:protectedTables) assertThat(digest(jdbc,table)).as(table).isEqualTo(history.get(table));
+    }
+    @Test void enrichmentUpgradesOlderOwnedDatasetWithoutTouchingOtherBuildings() throws Exception {
+        String name="miniapart_demo_amenities_"+UUID.randomUUID().toString().replace("-", "");
+        String url=createDatabase(name);
+        org.flywaydb.core.Flyway.configure().dataSource(url,username(),password()).load().migrate();
+        var old=new JdbcTemplate(new org.springframework.jdbc.datasource.DriverManagerDataSource(url,username(),password()));
+        Long user=old.queryForObject("SELECT min(id) FROM NGUOI_DUNG",Long.class);
+        for(int b=0;b<6;b++) {
+            Long building=old.queryForObject("INSERT INTO TOA_NHA(ma_toa,ten,dia_chi,so_tang,ngay_chot_so,so_ngay_han_tt,tk_ngan_hang,nguong_that_thoat,ma_ngan_hang) VALUES (?,?,'Demo',4,25,7,'000000',0,'970422') RETURNING id",Long.class,"DEMO-P"+(b+1),"Demo fixture "+b);
+            for(int r=1;r<=12;r++) {
+                String number="%d%02d".formatted((r-1)/3+1,(r-1)%3+1);
+                Long room=old.queryForObject("INSERT INTO PHONG(toa_nha_id,so_phong,tang,dien_tich,suc_chua,gia_thue_mac_dinh,loai_phong,trang_thai,tien_ich) VALUES (?,?,1,25,3,3000000,'Studio','TRONG','Điều hòa, nóng lạnh, tủ quần áo, chỗ để xe, Wifi riêng') RETURNING id",Long.class,building,number);
+                for(var item:PresentationRoomEquipment.inventory(1,3))
+                    old.update("INSERT INTO TAI_SAN_PHONG(phong_id,ten_tai_san,loai_tai_san,gia_tri_uoc_tinh) VALUES (?,?,?,?)",room,item.name(),item.category(),item.value());
+            }
+        }
+        // One unrelated room in a baseline building must remain completely unchanged.
+        Long unrelated=old.queryForObject("INSERT INTO PHONG(toa_nha_id,so_phong,tang,dien_tich,suc_chua,gia_thue_mac_dinh,loai_phong,trang_thai,tien_ich) SELECT min(id),'999',1,25,3,3000000,'Studio','TRONG','Wifi' FROM TOA_NHA RETURNING id",Long.class);
+        assertThatThrownBy(()->enrich(url,name)).hasStackTraceContaining("ownership marker is missing");
+        assertThat(old.queryForObject("SELECT count(*) FROM TAI_SAN_PHONG",Long.class)).isEqualTo(216);
+        old.update("INSERT INTO NHAT_KY_THAO_TAC(nguoi_dung_id,hanh_dong,doi_tuong) VALUES (?,'DEMO_DATASET_READY','PRESENTATION_DEMO_V1')",user);
+        assertThatThrownBy(()->enrich(url,"miniapart_demo_wrong_confirmation")).hasStackTraceContaining("Refusing database");
+        enrich(url,name);
+        enrich(url,name);
+        assertThat(old.queryForObject("SELECT count(*) FROM TAI_SAN_PHONG",Long.class)).isEqualTo(359);
+        for(int b=0;b<6;b++) for(int r=1;r<=12;r++) {
+            String number="%d%02d".formatted((r-1)/3+1,(r-1)%3+1);
+            Long room=old.queryForObject("SELECT p.id FROM PHONG p JOIN TOA_NHA t ON t.id=p.toa_nha_id WHERE t.ma_toa=? AND p.so_phong=?",Long.class,"DEMO-P"+(b+1),number);
+            var inventory=old.queryForList("SELECT ten_tai_san FROM TAI_SAN_PHONG WHERE phong_id=?",String.class,room);
+            assertThat(inventory).containsExactlyInAnyOrderElementsOf(PresentationRoomEquipment.inventory(b,r).stream().map(PresentationRoomEquipment.Item::name).toList());
+            String amenities=old.queryForObject("SELECT tien_ich FROM PHONG WHERE id=?",String.class,room);
+            assertThat(amenities).contains("Wifi riêng");
+            for(String amenity:List.of("Tủ lạnh","Giường nệm","Máy giặt","Bếp riêng"))
+                assertThat(amenities.contains(amenity)).as(number+" / "+amenity).isEqualTo(PresentationRoomEquipment.amenities(b,r).contains(amenity));
+        }
+        assertThat(old.queryForObject("SELECT tien_ich FROM PHONG WHERE id=?",String.class,unrelated)).isEqualTo("Wifi");
+        assertThat(old.queryForObject("SELECT count(*) FROM TAI_SAN_PHONG WHERE phong_id=?",Long.class,unrelated)).isZero();
+    }
+    static String digest(JdbcTemplate database,String table) {
+        return database.queryForObject("SELECT md5(string_agg(t::text,'|' ORDER BY id)) FROM "+table+" t",String.class);
+    }
+    static void enrich(String url,String expectedDatabase) throws Exception {
+        String sql=Files.readString(Path.of("../scripts/enrich-presentation-demo-amenities.sql"));
+        try(var connection=DriverManager.getConnection(url,username(),password());var statement=connection.createStatement()) {
+            try(var confirm=connection.prepareStatement("SELECT set_config('app.demo_expected_database',?,false)")) {
+                confirm.setString(1,expectedDatabase);
+                confirm.execute();
+            }
+            statement.execute(sql);
+        }
     }
     @Test void primaryResidencyIsNotCountedTwiceForRoomCapacity() {
         Long contract=jdbc.queryForObject("SELECT min(id) FROM HOP_DONG WHERE trang_thai='HIEU_LUC'",Long.class);

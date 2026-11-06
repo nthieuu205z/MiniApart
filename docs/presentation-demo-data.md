@@ -32,13 +32,41 @@ Số liệu sau kiểm chứng ngày 2026-11-05:
 | Dịch vụ theo tòa nhà | 60 (10 loại × 6 tòa) |
 | Hóa đơn | 246 |
 | Thanh toán / bút toán quyết toán | 270 |
-| Tài sản | 216 |
+| Tài sản sau bổ sung tiện ích 2026-11-06 | 359 |
 | Biên bản nhận/trả | 48 |
 | Yêu cầu sửa chữa | 30 |
 | Lịch xem phòng | 30 |
 | Thiết bị / báo cáo kiểm tra PCCC | 24 / 6 |
 
 Hai tòa nhà và năm tài khoản baseline do migration V2 tạo ra được giữ nguyên, không xóa hoặc đổi tên. Chủ demo mới được phân quyền riêng, không phải sử dụng tài khoản baseline để trình diễn.
+
+### Phân bổ tiện ích phòng — cập nhật 2026-11-06
+
+| Tiện ích | Phòng trong tổng 72 phòng | Phòng có trạng thái TRONG tại lần kiểm tra API |
+|---|---:|---:|
+| Tủ lạnh | 39 | 9 |
+| Giường nệm | 45 | 9 |
+| Máy giặt riêng | 20 | 2 |
+| Bếp riêng | 39 | 9 |
+
+Giữ cả phòng cơ bản ít đồ và phòng có đầy đủ trang bị; một số phòng trống 402 cũng có nội thất. Mỗi tiện ích mới đều có tài sản tương ứng trong `TAI_SAN_PHONG`, không chỉ gắn nhãn trên trang tìm phòng. `PresentationRoomEquipment` quy định phân bổ cho các lần seed mới, trước khi lập hồ sơ hợp đồng và biên bản.
+
+Với bộ demo cũ đã có marker, seed vẫn không viết lại dữ liệu. Script riêng `scripts/enrich-presentation-demo-amenities.sql` chỉ bổ sung tiện ích và tài sản hiện tại cho đúng 72 phòng thuộc sáu tòa `DEMO-P1`…`DEMO-P6`. Script yêu cầu tên database `miniapart_demo_*`, xác nhận chính xác tên trên cùng kết nối và marker `PRESENTATION_DEMO_V1`; chạy trong transaction, không xóa dữ liệu, chạy lại không nhân bản tài sản hoặc audit. Không cập nhật lại snapshot hợp đồng/biên bản đã ký theo danh sách tài sản mới.
+
+Sau khi sao lưu database demo và khai báo PGPASSWORD theo môi trường local, có thể chạy bằng psql (thay tên database bằng bộ demo đã xác nhận):
+
+```powershell
+$demoDb = 'miniapart_demo_baocao_20261106'
+$env:PGCLIENTENCODING = 'UTF8'
+& 'D:\vscode\miniapart\pgsql\pgsql\bin\psql.exe' `
+  -h localhost -p 5432 -U miniapart -d $demoDb -X -v ON_ERROR_STOP=1 `
+  -c "SELECT set_config('app.demo_expected_database','$demoDb',false)" `
+  -f scripts/enrich-presentation-demo-amenities.sql
+```
+
+Đã chạy thực tế hai lần trên database demo đang phục vụ giao diện: `miniapart_demo_verify_df1c98999cbd44a3afcaa8a16b0d7d1c`. Kết quả 359 tài sản, một audit bổ sung; API công khai trả đúng số lượng tiện ích trong bảng. Hash toàn bộ dòng của hợp đồng, hồ sơ hợp đồng, biên bản và chi tiết bàn giao, hóa đơn, thanh toán và giao dịch cọc trước/sau khớp hoàn toàn. Bản sao lưu và hash nằm trong `backend/build/demo-amenities-review/` (không commit).
+
+Kiểm thử bổ sung: **61 PASS, 0 FAIL, 0 SKIP** gồm PresentationDemoSafetyTest (6), PresentationDemoSeederIntegrationTest (7), PresentationRoomEquipmentTest (2), HopDongHoSoServiceTest (31), HopDongPdfServiceTest (15). Test nâng cấp tạo database mới, kiểm tra dữ liệu 216 → 359 tài sản, giữ tiện ích có sẵn, không chạm phòng ngoài bộ demo, từ chối thiếu marker/sai xác nhận, chạy lại không trùng và bảo toàn lịch sử hợp đồng/tài chính.
 
 ## Cơ chế an toàn
 

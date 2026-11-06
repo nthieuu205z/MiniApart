@@ -21,7 +21,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
   const [moThanhToan, setMoThanhToan] = useState(false)
   const previousRequest = useRef('')
   const variant = mobile ? 'mobile' : 'desktop'
-  const maTruyVet = cheDoNguoiThue ? 'FR-POR-02' : cheDoCongNo ? 'FR-RPT-03' : 'FR-INV-02'
+  const maTruyVet = cheDoNguoiThue ? 'HOÁ ĐƠN CỦA TÔI' : cheDoCongNo ? 'ĐỐI SOÁT CÔNG NỢ' : 'QUẢN LÝ HOÁ ĐƠN'
 
   useEffect(() => {
     let mounted = true
@@ -156,7 +156,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
         <Figure value={dinhDangTien(hoaDon.conLai)} unit="₫" size="lg" />
       </TotalLine>
       {!cheDoNguoiThue && toaNhaId !== undefined && kyId !== undefined ? <InvoiceActions token={token} scope={{ toaNhaId, kyId, hoaDonId: hoaDon.hoaDonId }} hoaDon={hoaDon} vaiTro={vaiTro} onChanged={() => setSoLanTaiLai((count) => count + 1)} /> : null}
-      {!cheDoNguoiThue ? <details className="ma-no-print" onToggle={(event) => setMoThanhToan(event.currentTarget.open)}><summary>Thu tiền, biên lai và bút toán đối ứng</summary>{moThanhToan ? <FinancePaymentPanel token={token} hoaDonId={hoaDon.hoaDonId} conLai={hoaDon.conLai} trangThai={hoaDon.trangThai} onChanged={() => setSoLanTaiLai((count) => count + 1)} /> : null}</details> : null}
+      {!cheDoNguoiThue ? <details className="ma-no-print" onToggle={(event) => setMoThanhToan(event.currentTarget.open)}><summary>Thu tiền, biên lai và bút toán đối ứng</summary>{moThanhToan ? <FinancePaymentPanel token={token} hoaDonId={hoaDon.hoaDonId} maHoaDon={hoaDon.maHoaDon} conLai={hoaDon.conLai} trangThai={hoaDon.trangThai} onChanged={() => setSoLanTaiLai((count) => count + 1)} /> : null}</details> : null}
     </ScreenSurface>
   )
 }

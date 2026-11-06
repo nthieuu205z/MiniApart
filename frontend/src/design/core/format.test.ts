@@ -16,5 +16,8 @@ describe('dinhDangTien', () => {
     expect(dinhDangTien('99999999999999.99')).toBe('99.999.999.999.999,99')
     expect(dinhDangTien('-12345678901234.56')).toBe('-12.345.678.901.234,56')
     expect(dinhDangTien('3714500.00')).toBe('3.714.500')
+    expect(dinhDangTien(4000000)).toBe('4.000.000')
+    expect(dinhDangTien(null)).toBe('0')
+    expect(dinhDangTien(undefined)).toBe('0')
   })
 })

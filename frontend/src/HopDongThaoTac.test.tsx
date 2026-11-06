@@ -631,3 +631,291 @@ describe('HopDongThaoTac Scope & Stale Response Guard', () => {
     expect(container?.textContent).not.toContain('Đã chốt (Rev 1)')
   })
 })
+
+describe('HopDongThaoTac Selection & Embedded Mode P1', () => {
+  let container: HTMLDivElement | null = null
+  let root: Root | null = null
+
+  beforeEach(() => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    if (root && container) {
+      act(() => {
+        root?.unmount()
+      })
+      container.remove()
+    }
+    vi.restoreAllMocks()
+  })
+
+  const setupFetchMock = (customOverrides?: (url: string, opts?: any) => Promise<Response> | undefined) => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input: any, init?: any) => {
+      const url = typeof input === 'string' ? input : input.url
+      if (customOverrides) {
+        const custom = customOverrides(url, init)
+        if (custom) return custom
+      }
+      if (url.includes('/api/toa-nha') && !url.includes('/dich-vu') && !url.includes('/ben-a') && !url.includes('/mau-hop-dong')) {
+        return Promise.resolve(new Response(JSON.stringify([
+          { id: 1, ten: 'Toà Nhà A', diaChi: '123 Cầu Giấy' },
+          { id: 2, ten: 'Toà Nhà B', diaChi: '456 Đống Đa' },
+        ]), { status: 200 }))
+      }
+      if (url.includes('/api/phong?toaNhaId=2') || url.includes('/api/phong/2')) {
+        return Promise.resolve(new Response(JSON.stringify([
+          { id: 201, toaNhaId: 2, soPhong: '201', giaThue: '4500000.00', dienTich: 30, tang: 2, trangThai: 'TRONG' },
+        ]), { status: 200 }))
+      }
+      if (url.includes('/api/phong')) {
+        return Promise.resolve(new Response(JSON.stringify(mockRooms), { status: 200 }))
+      }
+      if (url.includes('/api/nguoi-thue')) {
+        return Promise.resolve(new Response(JSON.stringify(mockTenants), { status: 200 }))
+      }
+      if (url.includes('/dich-vu')) {
+        return Promise.resolve(new Response(JSON.stringify(mockServices), { status: 200 }))
+      }
+      if (url.includes('/api/hop-dong?toaNhaId=2')) {
+        return Promise.resolve(new Response(JSON.stringify([
+          {
+            id: 201,
+            phongId: 201,
+            soPhong: '201',
+            nguoiThueId: 10,
+            hoTenNguoiThue: 'Khách Tòa B',
+            ngayBatDau: '2026-03-01',
+            ngayKetThuc: '2027-03-01',
+            giaThue: '4500000.00',
+            tienCoc: '4500000.00',
+            soNgayBaoTruoc: 30,
+            trangThai: 'CHO_KY',
+            tenTrangThai: 'Chờ ký',
+            sapHetHan: false,
+            soNgayConLai: 200,
+            dichVuApDung: [],
+            quyetToan: null,
+          },
+        ]), { status: 200 }))
+      }
+      if (url.includes('/api/hop-dong?toaNhaId=1') || url.endsWith('/api/hop-dong')) {
+        return Promise.resolve(new Response(JSON.stringify(mockContracts), { status: 200 }))
+      }
+      if (url.includes('/nguoi-o-cung') || url.includes('/phu-luc') || url.includes('/tai-san') || url.includes('/bien-ban')) {
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }))
+      }
+      if (url.includes('/ben-a')) {
+        return Promise.resolve(new Response(JSON.stringify(null), { status: 404 }))
+      }
+      if (url.includes('/mau-hop-dong')) {
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }))
+      }
+      if (url.includes('/ho-so')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          id: 11,
+          hopDongId: 1,
+          revision: 1,
+          trangThaiTaiLieu: 'DRAFT',
+          tieuDe: 'HỢP ĐỒNG PHÒNG 101',
+          ngayLap: '2026-01-01',
+          diaDiemLap: 'Hà Nội',
+          mucDichThue: 'Để ở',
+          phamViSuDung: 'Sử dụng riêng',
+          phuongThucThanhToan: 'CHUYEN_KHOAN',
+          kyThanhToanThang: 1,
+          hanThanhToanNgay: 5,
+        }), { status: 200 }))
+      }
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }))
+    })
+  }
+
+  it('Bấm mở chi tiết lần đầu: giữ đúng ID khi mount và khi dữ liệu tòa nhà tải xong', async () => {
+    setupFetchMock()
+
+    await act(async () => {
+      root?.render(
+        <HopDongThaoTac
+          token="test-token"
+          embedded={true}
+          buildingId={1}
+          selectedHopDongId={1}
+        />,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(container?.textContent).toContain('HỢP ĐỒNG #1')
+      expect(container?.textContent).toContain('Phòng 101 · Khách thuê: Người thuê 1')
+    })
+  })
+
+  it('Mở hợp đồng ở tòa nhà khác tòa đầu tiên: giữ đúng tòa và hợp đồng đã chọn', async () => {
+    setupFetchMock()
+
+    await act(async () => {
+      root?.render(
+        <HopDongThaoTac
+          token="test-token"
+          embedded={true}
+          buildingId={2}
+          selectedHopDongId={201}
+        />,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(container?.textContent).toContain('HỢP ĐỒNG #201')
+      expect(container?.textContent).toContain('Phòng 201 · Khách thuê: Khách Tòa B')
+    })
+  })
+
+  it('Đổi A→B và A→B→A với phản hồi muộn: không nhận phản hồi cũ của A', async () => {
+    type Resolver = (res: Response) => void
+    let resolveBuilding1First: Resolver | null = null
+    let building1CallCount = 0
+
+    setupFetchMock((url) => {
+      if (url.includes('/api/hop-dong?toaNhaId=1')) {
+        building1CallCount++
+        if (building1CallCount === 1) {
+          return new Promise<Response>((resolve) => {
+            resolveBuilding1First = resolve
+          })
+        }
+        return Promise.resolve(new Response(JSON.stringify(mockContracts), { status: 200 }))
+      }
+      return undefined
+    })
+
+    // Mount initially with buildingId=1
+    await act(async () => {
+      root?.render(
+        <HopDongThaoTac
+          token="test-token"
+          embedded={true}
+          buildingId={1}
+          selectedHopDongId={null}
+        />,
+      )
+    })
+
+    // Switch to building 2 (resolves fast)
+    await act(async () => {
+      root?.render(
+        <HopDongThaoTac
+          token="test-token"
+          embedded={true}
+          buildingId={2}
+          selectedHopDongId={201}
+        />,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(container?.textContent).toContain('HỢP ĐỒNG #201')
+    })
+
+    // Now switch back to building 1
+    await act(async () => {
+      root?.render(
+        <HopDongThaoTac
+          token="test-token"
+          embedded={true}
+          buildingId={1}
+          selectedHopDongId={1}
+        />,
+      )
+    })
+
+    // Delayed response 1 arrives now
+    if (resolveBuilding1First) {
+      await act(async () => {
+        resolveBuilding1First!(new Response(JSON.stringify(mockContracts), { status: 200 }))
+      })
+    }
+
+    await vi.waitFor(() => {
+      expect(container?.textContent).toContain('HỢP ĐỒNG #1')
+    })
+  })
+
+  it('Tạo mới thành công rồi mở đúng hợp đồng vừa tạo', async () => {
+    const onSelectHopDong = vi.fn()
+    const onToggleFormTao = vi.fn()
+
+    setupFetchMock((url, init) => {
+      if (url.endsWith('/api/hop-dong') && init?.method === 'POST') {
+        const newContract = {
+          id: 99,
+          phongId: 101,
+          soPhong: '101',
+          nguoiThueId: 10,
+          hoTenNguoiThue: 'Khách Vừa Tạo',
+          ngayBatDau: '2026-06-01',
+          ngayKetThuc: '2027-06-01',
+          giaThue: '3500000.00',
+          tienCoc: '3500000.00',
+          soNgayBaoTruoc: 30,
+          trangThai: 'CHO_KY',
+          tenTrangThai: 'Chờ ký',
+          sapHetHan: false,
+          soNgayConLai: 365,
+          dichVuApDung: [],
+          quyetToan: null,
+        }
+        return Promise.resolve(new Response(JSON.stringify(newContract), { status: 200 }))
+      }
+      return undefined
+    })
+
+    await act(async () => {
+      root?.render(
+        <HopDongThaoTac
+          token="test-token"
+          embedded={true}
+          buildingId={1}
+          hienThiFormTao={true}
+          onSelectHopDong={onSelectHopDong}
+          onToggleFormTao={onToggleFormTao}
+        />,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(container?.querySelector('form')).not.toBeNull()
+    })
+
+    // Fill form
+    const selects = container?.querySelectorAll('form select') || []
+    const phongSelect = selects[0] as HTMLSelectElement
+    if (phongSelect) {
+      await act(async () => {
+        phongSelect.value = '101'
+        phongSelect.dispatchEvent(new Event('change', { bubbles: true }))
+      })
+    }
+
+    const tenantSelect = selects[1] as HTMLSelectElement
+    if (tenantSelect) {
+      await act(async () => {
+        tenantSelect.value = '10'
+        tenantSelect.dispatchEvent(new Event('change', { bubbles: true }))
+      })
+    }
+
+    const formEl = container?.querySelector('form')!
+    await act(async () => {
+      formEl.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    })
+
+    await vi.waitFor(() => {
+      expect(onSelectHopDong).toHaveBeenCalledWith(99)
+      expect(onToggleFormTao).toHaveBeenCalledWith(false)
+    })
+  })
+})

@@ -3,8 +3,8 @@ import { fetchToaNha, type ThongTinToaNha } from './api'
 import { Button } from './design/core/Button'
 
 export const fieldStyle: CSSProperties = { minHeight: 44, width: '100%', minWidth: 0, border: '1px solid var(--ma-border-strong)', borderRadius: 'var(--ma-radius)', background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', padding: '10px 14px', font: 'inherit', boxShadow: 'var(--ma-shadow-sm)' }
-export const gridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,230px),1fr))', gap: 14 }
-export const panelStyle: CSSProperties = { display: 'grid', gap: 16, padding: 22, border: '1px solid var(--ma-border-default)', borderRadius: 'var(--ma-radius-md)', boxShadow: 'var(--ma-shadow-sm)', background: 'var(--ma-bg-card)', minWidth: 0, overflowWrap: 'anywhere' }
+export const gridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,230px),1fr))', gap: 14, minWidth: 0, maxWidth: '100%' }
+export const panelStyle: CSSProperties = { display: 'grid', gap: 16, padding: 'clamp(14px, 3.5vw, 22px)', border: '1px solid var(--ma-border-default)', borderRadius: 'var(--ma-radius-md)', boxShadow: 'var(--ma-shadow-sm)', background: 'var(--ma-bg-card)', minWidth: 0, overflowWrap: 'anywhere' }
 export const rowStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }
 export function Field({ title, children }: { title: string; children: ReactNode }) { return <label style={{ display: 'grid', gap: 6, minWidth: 0, fontSize: 13, fontWeight: 600, color: 'var(--ma-text-secondary)' }}><span>{title}</span>{children}</label> }
 export function Feedback({ error, success }: { error?: string | null; success?: string | null }) {

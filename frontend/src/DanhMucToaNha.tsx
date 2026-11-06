@@ -152,7 +152,7 @@ export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) 
         }}
       >
         <div>
-          <small>FR-BLD-01</small>
+          <small style={{ color: "var(--ma-text-secondary)", fontFamily: "var(--ma-font-mono)", fontSize: 11 }}>DANH MỤC CƠ SỞ</small>
           <h3 id="building-management-title">Danh mục toà nhà</h3>
         </div>
         {canCreate && (

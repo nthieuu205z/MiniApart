@@ -60,7 +60,7 @@ export default function HopDongNguoiThue({ token, mobile = false }: Props) {
   if (loi) {
     return (
       <ScreenSurface data-testid="tenant-contract-screen" data-layout-variant={variant} role="alert">
-        <SysLabel>FR-POR-07</SysLabel>
+        <SysLabel>HỢP ĐỒNG THUÊ CỦA TÔI</SysLabel>
         <ScreenNotice tone="urgent">{loi}</ScreenNotice>
         <Button data-retry-tenant-contract variant="secondary" onClick={() => setSoLanTaiLai((count) => count + 1)}>
           Thử lại
@@ -72,7 +72,7 @@ export default function HopDongNguoiThue({ token, mobile = false }: Props) {
   return (
     <ScreenSurface data-testid="tenant-contract-screen" data-layout-variant={variant} aria-labelledby="tenant-contract-title">
       <ScreenHeader>
-        <SysLabel>FR-POR-07 · BR-14</SysLabel>
+        <SysLabel>HỢP ĐỒNG THUÊ CỦA TÔI</SysLabel>
         <h3 id="tenant-contract-title" style={{ margin: '8px 0 0' }}>Hợp đồng của tôi</h3>
         <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>
           Thông tin chỉ đọc của các hợp đồng thuộc hồ sơ người thuê này. Cảnh báo hết hạn được tính theo ngày hiện tại.

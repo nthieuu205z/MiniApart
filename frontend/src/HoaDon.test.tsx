@@ -198,7 +198,7 @@ describe('HoaDon detail and print view', () => {
       return element as HTMLElement
     })
     expect(invoice?.textContent).toContain('Chỉ số đầu:')
-    expect(invoice?.textContent).toContain('FR-POR-02')
+    expect(invoice?.textContent).toContain('HOÁ ĐƠN CỦA TÔI')
     expect(invoice?.textContent).toContain('1240.00')
     expect(invoice?.textContent).toContain('Chỉ số cuối:')
     expect(invoice?.textContent).toContain('1350.00')

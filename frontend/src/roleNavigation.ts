@@ -100,7 +100,7 @@ export function xacDinhTrangTheoVaiTro(vaiTro: string, tenVaiTro: string, duongD
     return {
       loai: 'menu',
       tieuDe: mucPhuHop.nhan,
-      thongDiep: `Màn hình ${mucPhuHop.nhan.toLowerCase()} sẽ tiếp tục được hoàn thiện ở các ticket sau. Menu hiện tại đang đưa bạn vào đúng khu vực công việc.`,
+      thongDiep: `Khu vực quản trị và xử lý nghiệp vụ ${mucPhuHop.nhan.toLowerCase()} dành cho ${tenVaiTro}.`,
     }
   }
 

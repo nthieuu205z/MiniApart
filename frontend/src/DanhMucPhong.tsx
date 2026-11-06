@@ -467,7 +467,7 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
     >
       <div className="building-management__heading" style={styleTieuDeManHinh}>
         <div>
-          <p className="eyebrow" style={styleEyebrow}>FR-BLD-02 · FR-PUB-02</p>
+          <p className="eyebrow" style={styleEyebrow}>SƠ ĐỒ PHÒNG & KHÁCH HẸN</p>
           <h3 id="room-management-title" style={{ margin: 0, font: 'var(--ma-text-block-title)' }}>Quản lý phòng & Lịch hẹn khách</h3>
         </div>
         <div style={{ display: 'flex', gap: 'var(--ma-space-2)', flexWrap: 'wrap' }}>
@@ -557,7 +557,7 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
                 <section className="building-summary room-status-summary" aria-labelledby="room-status-summary-title-mobile" style={{ ...styleTamThe, padding: 16 }}>
                   <div className="building-summary__heading" style={styleSuKienPhong}>
                     <div>
-                      <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
+                      <p className="eyebrow" style={styleEyebrow}>TỔNG QUAN PHÒNG</p>
                       <h4 id="room-status-summary-title-mobile" style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Tổng quan phòng</h4>
                     </div>
                     <span className="room-status-summary__total" style={{ color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)' }}>{danhSachPhong.length} phòng</span>
@@ -614,7 +614,7 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
                 <section className="building-summary room-status-summary" aria-labelledby="room-status-summary-title" style={styleTamThe}>
                   <div className="building-summary__heading" style={styleSuKienPhong}>
                     <div>
-                      <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
+                      <p className="eyebrow" style={styleEyebrow}>TỔNG QUAN PHÒNG</p>
                       <h4 id="room-status-summary-title" style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Tổng quan sơ đồ phòng</h4>
                     </div>
                     <span className="room-status-summary__total" style={{ color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)' }}>{danhSachPhong.length} phòng</span>
@@ -643,7 +643,7 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
               <>
                 <div className="building-summary__heading" style={styleSuKienPhong}>
                   <div>
-                    <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
+                    <p className="eyebrow" style={styleEyebrow}>CHI TIẾT PHÒNG</p>
                     <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Chi tiết phòng {phongDangXem.soPhong}</h4>
                   </div>
                   <span className={`room-detail__status ${layThongTinTrangThai(phongDangXem).lopCss.replace('room-tile', 'room-detail__status')}`} style={styleTrangThaiPhong(phongDangXem.trangThai)}>
@@ -689,7 +689,7 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
             ) : (
               <>
                 <div>
-                  <p className="eyebrow" style={styleEyebrow}>FR-BLD-03</p>
+                  <p className="eyebrow" style={styleEyebrow}>CHI TIẾT PHÒNG</p>
                   <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Chi tiết phòng</h4>
                 </div>
                 <p className="status-message" style={styleThongBao}>Chọn một ô phòng trong sơ đồ để xem chi tiết hiện tại của phòng đó.</p>
@@ -699,7 +699,7 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
 
           <form className="building-form" data-testid="room-form" onSubmit={handleTaoPhong} style={{ ...styleTamThe, padding: mobile ? 16 : styleTamThe.padding }}>
             <div>
-              <p className="eyebrow" style={styleEyebrow}>FR-BLD-02</p>
+              <p className="eyebrow" style={styleEyebrow}>KHAI BÁO PHÒNG MỚI</p>
               <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Khai báo một phòng</h4>
               <p style={{ margin: '4px 0 0', color: 'var(--ma-text-secondary)', fontSize: 13 }}>
                 Chọn mẫu phòng chuẩn 1-chạm hoặc tự nhập thông số:
@@ -777,7 +777,7 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
           {hienBieuMauHangLoat ? (
             <form className="building-form" data-testid="room-batch-form" onSubmit={handleXemTruocHangLoat} style={{ ...styleTamThe, padding: mobile ? 16 : styleTamThe.padding }}>
               <div>
-                <p className="eyebrow" style={styleEyebrow}>FR-BLD-02</p>
+                <p className="eyebrow" style={styleEyebrow}>TẠO NHANH DÃY PHÒNG</p>
                 <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Tạo nhanh dãy phòng</h4>
                 <p style={{ margin: '4px 0 0', color: 'var(--ma-text-secondary)', fontSize: 13 }}>
                   Khởi tạo nhanh toàn bộ các phòng theo dãy tầng:

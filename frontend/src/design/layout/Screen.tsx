@@ -1,10 +1,10 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import type * as React from 'react'
 
-export function ScreenSurface({ printable = false, children, className, ...rest }: React.HTMLAttributes<HTMLElement> & { printable?: boolean }): React.ReactElement {
+export function ScreenSurface({ printable = false, children, className, style, ...rest }: React.HTMLAttributes<HTMLElement> & { printable?: boolean }): React.ReactElement {
   return <>
     {printable ? <style data-invoice-print>{'@page { size: A4; margin: 12mm; } @media print { .ma-no-print { display: none !important } .ma-app-shell { display: block !important; min-height: 0 !important; padding: 0 !important; background: transparent !important; } .ma-app-shell > div { display: block !important; padding: 0 !important; } .ma-app-shell > div > section { display: block !important; padding: 0 !important; } .ma-printable { padding: 0 !important; border: 0 !important; box-shadow: none !important; max-width: none !important; overflow: visible !important; } }'}</style> : null}
-    <section className={`${printable ? 'ma-printable ' : ''}${className ?? ''}${printable ? ' invoice-printable' : ''}`.trim()} style={{ display: 'grid', gap: 16, padding: 'clamp(16px, 4vw, 32px)', border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)', maxWidth: '100%', minWidth: 0, overflow: 'hidden' }} {...rest}>{children}</section>
+    <section className={`${printable ? 'ma-printable ' : ''}${className ?? ''}${printable ? ' invoice-printable' : ''}`.trim()} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 16, padding: 'clamp(14px, 3.5vw, 28px)', border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box', ...(style || {}) }} {...rest}>{children}</section>
   </>
 }
 

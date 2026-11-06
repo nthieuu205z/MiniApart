@@ -263,35 +263,88 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
           </div>
 
           {user ? (
-            <div style={{ marginTop: "auto", padding: "14px 20px", borderTop: "1px solid var(--ma-border-default)", display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 32, height: 32, borderRadius: "var(--ma-radius-pill)", background: "var(--ma-brand-accent-light)", color: "var(--ma-brand-accent)", border: "1px solid var(--ma-brand-accent)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ma-font-mono)", fontSize: 12, fontWeight: 700, flex: "none" }}>
-                {user.initials}
-              </div>
-              <div style={{ fontSize: 12.5, lineHeight: 1.35, minWidth: 0, flex: 1 }}>
-                <span style={{ fontWeight: 700 }}>{user.name}</span>
-                <br />
-                <span style={{ color: "var(--ma-text-secondary)" }}>{user.role}</span>
+            <div
+              style={{
+                marginTop: "auto",
+                padding: "16px",
+                borderTop: "1px solid var(--ma-border-default)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                background: "var(--ma-bg-card)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "var(--ma-radius-pill)",
+                    background: "var(--ma-brand-accent-light)",
+                    color: "var(--ma-brand-accent)",
+                    border: "1px solid var(--ma-brand-accent)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontFamily: "var(--ma-font-mono)",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    flexShrink: 0,
+                  }}
+                >
+                  {user.initials}
+                </div>
+                <div style={{ fontSize: 13, lineHeight: 1.4, minWidth: 0, flex: 1 }}>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      color: "var(--ma-text-primary)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                    title={user.name}
+                  >
+                    {user.name}
+                  </div>
+                  <div
+                    style={{
+                      color: "var(--ma-text-secondary)",
+                      fontSize: 12,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                    title={user.role}
+                  >
+                    {user.role}
+                  </div>
+                </div>
               </div>
               {onLogout ? (
                 <button
                   type="button"
                   data-testid="nav-logout"
                   onClick={onLogout}
-                  title="Đăng xuất"
                   style={{
-                    padding: "4px 10px",
-                    fontSize: 11,
-                    fontFamily: "var(--ma-font-mono)",
-                    background: "transparent",
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    padding: "7px 12px",
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    fontFamily: "var(--ma-font-ui)",
+                    background: "var(--ma-bg-sunken)",
                     border: "1px solid var(--ma-border-default)",
                     borderRadius: "var(--ma-radius)",
                     cursor: "pointer",
                     color: "var(--ma-text-secondary)",
-                    whiteSpace: "nowrap",
-                    transition: "background 0.15s ease",
+                    transition: "all 0.15s ease",
                   }}
                 >
-                  Đăng xuất
+                  <span>Đăng xuất</span>
                 </button>
               ) : null}
             </div>

@@ -5,12 +5,24 @@ export function dinhDangNgayIso(value: string): string {
 }
 
 /** NFR-USA-06: Format NUMERIC strings without converting through JavaScript Number. */
-export function dinhDangTien(giaTri: string): string {
-  const match = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(giaTri.trim())
-  if (!match) return giaTri
+export function dinhDangTien(giaTri: string | number | null | undefined): string {
+  if (giaTri === null || giaTri === undefined || giaTri === '') return '0'
+  const str = String(giaTri).trim()
+  const match = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(str)
+  if (!match) return str
   const dau = match[1]
   const phanNguyen = match[2].replace(/^0+(?=\d)/, '')
   const phanThapPhan = (match[3] ?? '').replace(/0+$/, '')
   const nguyenDaNhom = phanNguyen.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
   return `${dau}${nguyenDaNhom}${phanThapPhan ? `,${phanThapPhan}` : ''}`
 }
+
+/** Format standard numbers or percentages with locale separators. */
+export function dinhDangSo(giaTri: string | number | null | undefined): string {
+  if (giaTri === null || giaTri === undefined || giaTri === '') return '0'
+  const str = String(giaTri).trim()
+  const num = Number(str)
+  if (isNaN(num)) return str
+  return num.toLocaleString('vi-VN', { maximumFractionDigits: 2 })
+}
+

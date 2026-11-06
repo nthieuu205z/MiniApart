@@ -279,8 +279,6 @@ describe('App role navigation', () => {
       'var(--ma-text-primary)',
       'var(--ma-text-primary)',
       'var(--ma-text-primary)',
-      'var(--ma-done-text)',
-      'var(--ma-done-text)',
     ])
   })
 
@@ -297,13 +295,15 @@ describe('App role navigation', () => {
     }
   })
 
-  it('FR-MTR-01 keeps the system-status section visible on the meter-reading route', async () => {
+  it('FR-MTR-01 ensures the connection status panel is removed from business routes', async () => {
     const quanLyToaNha = MENU_BY_ROLE[2]
     mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung, '/ghi-chi-so')
 
     await vi.waitFor(() => {
-      expect(mountedApp!.container.querySelector('#status-title')?.textContent).toBe('Trạng thái hệ thống')
+      expect(mountedApp!.container.querySelector('[data-testid="meter-screen"]')).not.toBeNull()
     })
+    expect(mountedApp!.container.querySelector('#status-title')).toBeNull()
+    expect(mountedApp!.container.textContent).not.toContain('BẢN KIỂM TRA KẾT NỐI')
   })
 
   it('FR-MTR-01 routes CHU to the scoped meter-reading screen from dashboard links', async () => {
