@@ -45,6 +45,7 @@ public class DashboardChuService {
         this(repository, phanQuyenToaService, doiSoatDienNuocService, kyThanhToanRepository, null, clock);
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
     public DashboardChuService(
             DashboardChuRepository repository,
             PhanQuyenToaService phanQuyenToaService,
