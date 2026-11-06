@@ -63,7 +63,9 @@ const DIEU_HUONG_THEO_VAI_TRO: Record<VaiTroDieuHuong, MucDieuHuong[]> = {
     { duongDan: '/thong-bao', nhan: 'Thông báo' },
   ],
   THO: [
-    { duongDan: '/viec-cua-toi', nhan: 'Việc của tôi' },
+    { duongDan: '/tho/tong-quan', nhan: 'Tổng quan' },
+    { duongDan: '/viec-cua-toi', nhan: 'Công việc' },
+    { duongDan: '/tho/chi-phi', nhan: 'Báo giá & thanh toán' },
     { duongDan: '/thong-bao', nhan: 'Thông báo' },
   ],
   NGUOI_THUE: [

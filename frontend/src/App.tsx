@@ -23,6 +23,9 @@ import HopDongQuanLy from './HopDongQuanLy'
 import HoaDonQuanLy from './HoaDonQuanLy'
 import QuanLyTaiKhoan from './QuanLyTaiKhoan'
 import { ViecCuaToi } from './ViecCuaToi'
+import { ThoTongQuan } from './ThoTongQuan'
+import { ThoCongViec } from './ThoCongViec'
+import { ThoChiPhi } from './ThoChiPhi'
 import { ThongBao } from './ThongBao'
 import { LichSuSuaChua } from './LichSuSuaChua'
 import { BangViecVanHanh } from './BangViecVanHanh'
@@ -285,7 +288,7 @@ function layDuongDanChinhTheoVaiTro(vaiTro: string): string {
     case 'QUAN_LY':
       return '/nhac-viec'
     case 'THO':
-      return '/viec-cua-toi'
+      return '/tho/tong-quan'
     case 'NGUOI_THUE':
       return '/hoa-don-cua-toi'
     case 'QTHT':
@@ -420,8 +423,8 @@ function App() {
   }, [duongDanHienTai, nguoiDung?.vaiTro, token])
 
   useEffect(() => {
-    if (nguoiDung?.vaiTro === 'THO' && !['/viec-cua-toi', '/thong-bao'].includes(duongDanHienTai)) {
-      thayTheDuongDan('/viec-cua-toi')
+    if (nguoiDung?.vaiTro === 'THO' && !['/tho/tong-quan', '/viec-cua-toi', '/tho/chi-phi', '/thong-bao'].includes(duongDanHienTai)) {
+      thayTheDuongDan('/tho/tong-quan')
     }
   }, [nguoiDung, duongDanHienTai])
 
@@ -451,7 +454,7 @@ function App() {
       setToken(response.token)
       setNguoiDung(response.nguoiDung)
       if (response.nguoiDung.vaiTro === 'THO') {
-        thayTheDuongDan('/viec-cua-toi')
+        thayTheDuongDan('/tho/tong-quan')
       } else if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
         dieuHuongToi('/')
       } else {
@@ -541,11 +544,23 @@ function App() {
     && duongDanHienTai === '/thong-bao'
     && ['CHU', 'QUAN_LY', 'THO', 'NGUOI_THUE'].includes(nguoiDung.vaiTro),
   )
+  const hienThiThoTongQuan = Boolean(
+    token
+    && nguoiDung
+    && nguoiDung.vaiTro === 'THO'
+    && duongDanHienTai === '/tho/tong-quan',
+  )
   const hienThiViecCuaToi = Boolean(
     token
     && nguoiDung
     && nguoiDung.vaiTro === 'THO'
     && duongDanHienTai === '/viec-cua-toi',
+  )
+  const hienThiThoChiPhi = Boolean(
+    token
+    && nguoiDung
+    && nguoiDung.vaiTro === 'THO'
+    && duongDanHienTai === '/tho/chi-phi',
   )
   const hienThiLichSuSuaChua = Boolean(
     token
@@ -890,8 +905,12 @@ function App() {
             <HopDongQuanLy token={token} mobile={laManHinhHep} />
           ) : hienThiLichHen && token ? (
             <QuanLyLichHen token={token} mobile={laManHinhHep} />
+          ) : hienThiThoTongQuan && token ? (
+            <ThoTongQuan token={token} mobile={laManHinhHep} onNavigate={dieuHuongToi} />
           ) : hienThiViecCuaToi && token ? (
-            <ViecCuaToi token={token} />
+            <ThoCongViec token={token} mobile={laManHinhHep} />
+          ) : hienThiThoChiPhi && token ? (
+            <ThoChiPhi token={token} mobile={laManHinhHep} onNavigateToTicket={(id) => dieuHuongToi(`/viec-cua-toi?yeuCauId=${id}`)} />
           ) : hienThiBaoCaoTongQuan && token ? (
             <BaoCaoTongQuan token={token} mobile={laManHinhHep} />
           ) : hienThiBaoCaoTieuThu && token ? (
@@ -1227,7 +1246,7 @@ function kiemTraManHinhHep() {
 function taoThongTinTopBar(vaiTro: string): { building: string; period: string; periodStatus?: string } {
   const period = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'long' }).format(new Date())
   return {
-    building: 'Không gian quản lý',
+    building: vaiTro === 'THO' ? 'Bàn làm việc thợ' : 'Không gian quản lý',
     period,
   }
 }
@@ -1282,6 +1301,8 @@ const GLYPH_THEO_DUONG_DAN: Record<string, GlyphName> = {
   '/thu-tien': 'goi-dien',
   '/phong': 'so-do-phong',
   '/hop-dong': 'hop-dong',
+  '/tho/tong-quan': 'bang-gia',
+  '/tho/chi-phi': 'hoa-don',
   '/thong-bao': 'thong-bao',
   '/viec-cua-toi': 'cho-tho',
   '/hoa-don-cua-toi': 'hoa-don',
@@ -1306,7 +1327,7 @@ const NHOM_DIEU_HUONG_THEO_VAI_TRO: Record<string, Array<{ label: string, duongD
     { label: 'Toà nhà', duongDan: ['/phong', '/hop-dong', '/nguoi-thue', '/dich-vu', '/cu-tru', '/lich-hen', '/su-co', '/an-toan', '/thong-bao'] },
   ],
   THO: [
-    { label: 'Công việc', duongDan: ['/viec-cua-toi', '/thong-bao'] },
+    { label: 'Bàn làm việc', duongDan: ['/tho/tong-quan', '/viec-cua-toi', '/tho/chi-phi', '/thong-bao'] },
   ],
   NGUOI_THUE: [
     { label: 'Cá nhân', duongDan: ['/hoa-don-cua-toi', '/lich-su', '/tieu-thu', '/hop-dong', '/bao-hong'] },
