@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,16 +26,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ThoBatchDemoSeederIntegrationTest {
 
     static final String DATABASE = "miniapart_demo_worker";
-    static final String URL = "jdbc:postgresql://localhost:5432/" + DATABASE;
-    static final String USERNAME = "miniapart";
-    static final String PASSWORD = "miniapart";
-    static final LocalDate REF_DATE = LocalDate.of(2026, 11, 6);
+    // Postgres dùng-một-lần: test không được phụ thuộc DB cục bộ của người chạy (CI cũng không có).
+    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:17-alpine")
+            .withDatabaseName(DATABASE).withUsername("miniapart").withPassword("miniapart");
+    static { POSTGRES.start(); }
+    // Ngày thật: seeder tạo lịch hẹn và chặn giờ hẹn đã qua, nên ngày cố định sẽ làm test hỏng dần theo thời gian.
+    static final LocalDate REF_DATE = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
 
     @DynamicPropertySource
     static void datasource(DynamicPropertyRegistry r) {
-        r.add("spring.datasource.url", () -> URL);
-        r.add("spring.datasource.username", () -> USERNAME);
-        r.add("spring.datasource.password", () -> PASSWORD);
+        r.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        r.add("spring.datasource.username", POSTGRES::getUsername);
+        r.add("spring.datasource.password", POSTGRES::getPassword);
         r.add("app.seed-demo", () -> false);
         r.add("app.presentation-demo.enabled", () -> true);
         r.add("app.presentation-demo.expected-database", () -> DATABASE);
