@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tổng quan — Chủ sở hữu · MiniApart</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+</head>
+<body>
+<!-- Màn khung (3) Dashboard Chủ nhà — 1440×900. Số liệu thật từ GET /api/dashboard/chu, /api/bao-cao/cong-no,
+     /api/bao-cao/tieu-thu, /api/hop-dong (tài khoản chủ 0999000011, khoảng 01/06/2026–21/11/2026). -->
+<div class="app">
+  <aside class="sidebar" data-role="CHU" data-active="/tong-quan" data-user="Nguyễn Hoàng Phúc|Chủ sở hữu"></aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="title-block">
+        <h1 class="h1">Tổng quan</h1>
+        <p class="sub">3 toà · 36 phòng · từ 01/06/2026 đến 21/11/2026 · cập nhật 01:29</p>
+      </div>
+      <div class="topbar-actions">
+        <label class="input-wrap" style="width:260px">
+          <span class="sr-only">Tìm phòng, người thuê, hoá đơn</span>
+          <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+          <input class="input pill" type="search" placeholder="Tìm phòng, người thuê…">
+        </label>
+        <label class="sr-only" for="ky">Khoảng thời gian</label>
+        <select class="select" id="ky" style="width:184px"><option>6 tháng gần nhất</option><option>Tháng này</option><option>12 tháng</option></select>
+        <button class="icon-btn boxed badge-dot" data-count="9" aria-label="Thông báo, 9 chưa đọc"><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg></button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Hàng 1: KPI lớn + gauge -->
+      <section class="card c-4" aria-labelledby="k1">
+        <h2 class="h2" id="k1">Thực thu</h2>
+        <p class="kpi-value">376.130.000<span class="unit">₫</span></p>
+        <p class="kpi-desc">Đã thu <b>66,8%</b> trên 563.147.000 ₫ phát hành trong kỳ.</p>
+        <div class="card-foot"><a class="link-more" href="#/bao-cao">Báo cáo doanh thu <svg class="ic-sm" aria-hidden="true"><use href="#i-arrow-right"/></svg></a></div>
+      </section>
+
+      <section class="card c-4" aria-labelledby="k2">
+        <h2 class="h2" id="k2">Công nợ</h2>
+        <p class="kpi-value t-danger">173.450.000<span class="unit">₫</span></p>
+        <p class="kpi-desc"><b>60 hoá đơn</b> quá hạn, tất cả đã trễ trên 30 ngày.</p>
+        <div class="card-foot"><a class="link-more" href="#/cong-no">Xem công nợ <svg class="ic-sm" aria-hidden="true"><use href="#i-arrow-right"/></svg></a></div>
+      </section>
+
+      <section class="card c-4" aria-labelledby="k3" style="align-items:center;text-align:center">
+        <h2 class="h2" id="k3">Tỷ lệ lấp đầy</h2>
+        <div class="gauge" role="img" aria-label="Lấp đầy 75%, 27 trên 36 phòng đang thuê">
+          <svg viewBox="0 0 240 132" aria-hidden="true">
+            <path d="M20 120 A100 100 0 0 1 220 120" fill="none" stroke="var(--ma-chart-track)" stroke-width="18" stroke-linecap="round"/>
+            <path d="M20 120 A100 100 0 0 1 220 120" fill="none" stroke="var(--ma-chart-1)" stroke-width="18" stroke-linecap="round" stroke-dasharray="235.6 400"/>
+          </svg>
+          <div class="gauge-value">75%<small>27/36 phòng đang thuê</small></div>
+        </div>
+        <div class="card-foot"><a class="link-more" href="#/toa-nha">6 phòng trống <svg class="ic-sm" aria-hidden="true"><use href="#i-arrow-right"/></svg></a></div>
+      </section>
+
+      <!-- Hàng 2: danh sách nợ quá hạn | biểu đồ + thẻ nhỏ -->
+      <section class="card c-5" aria-labelledby="l1">
+        <div class="card-head">
+          <h2 class="h2" id="l1">Nợ quá hạn nhiều nhất</h2>
+          <label class="sr-only" for="sx">Sắp xếp</label>
+          <select class="select" id="sx" style="width:auto;height:36px;border-color:transparent;background-color:transparent;font-size:14px;color:var(--ma-text-secondary)"><option>Theo số tiền</option><option>Theo số ngày</option></select>
+        </div>
+        <ul class="list">
+          <li class="list-row"><span class="avatar h1" aria-hidden="true">QH</span><div class="body"><div class="name">Nguyễn Quang Huy</div><div class="sub">Bình Minh Riverside · 201 · 4 hoá đơn</div></div><div class="end"><div class="t-money">17.676.000 ₫</div><div class="t-meta">trễ 139 ngày</div></div></li>
+          <li class="list-row is-selected"><span class="avatar h2" aria-hidden="true">TA</span><div class="body"><div class="name">Hoàng Tuấn Anh</div><div class="sub">Bình Minh Riverside · 302 · 4 hoá đơn</div></div>
+            <div class="acts"><button class="icon-btn sm" aria-label="Gọi Hoàng Tuấn Anh"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></button><button class="icon-btn sm" aria-label="Gửi nhắc nợ cho Hoàng Tuấn Anh"><svg class="ic" aria-hidden="true"><use href="#i-message"/></svg></button></div><div class="end"><div class="t-money">17.436.000 ₫</div><div class="t-meta">trễ 139 ngày</div></div></li>
+          <li class="list-row"><span class="avatar h5" aria-hidden="true">NQ</span><div class="body"><div class="name">Lê Nhật Quang</div><div class="sub">Mộc Lan Home · 201 · 4 hoá đơn</div></div><div class="end"><div class="t-money">16.168.000 ₫</div><div class="t-meta">trễ 139 ngày</div></div></li>
+          <li class="list-row"><span class="avatar h3" aria-hidden="true">HA</span><div class="body"><div class="name">Đặng Hoài An</div><div class="sub">Mộc Lan Home · 302 · 4 hoá đơn</div></div><div class="end"><div class="t-money">15.932.000 ₫</div><div class="t-meta">trễ 139 ngày</div></div></li>
+          <li class="list-row"><span class="avatar h4" aria-hidden="true">NH</span><div class="body"><div class="name">Hoàng Ngọc Hà</div><div class="sub">An Nhiên Residence · 201 · 4 hoá đơn</div></div><div class="end"><div class="t-money">13.904.000 ₫</div><div class="t-meta">trễ 139 ngày</div></div></li>
+        </ul>
+        <div class="card-foot"><a class="link-more" href="#/cong-no">Tất cả 60 hoá đơn quá hạn <svg class="ic-sm" aria-hidden="true"><use href="#i-arrow-right"/></svg></a></div>
+      </section>
+
+      <div class="c-7 stack">
+        <section class="card" aria-labelledby="g1">
+          <div class="card-head">
+            <h2 class="h2" id="g1">Doanh thu theo tháng</h2>
+            <div class="legend"><span><i style="background:var(--ma-chart-1)"></i>Thực thu</span><span><i style="background:var(--ma-chart-3)"></i>Phát hành</span></div>
+          </div>
+          <div class="chart-scroll" tabindex="0" role="region" aria-label="Biểu đồ, cuộn ngang trên điện thoại"><svg class="chart" viewBox="0 0 608 212" role="img" aria-label="Biểu đồ vùng: thực thu 94.032.500 ₫ mỗi tháng từ 07 đến 10/2026 trên 137.395.000 ₫ phát hành; kỳ 11/2026 đang mở.">
+            <g>
+              <line class="grid-line" x1="52" x2="600" y1="12" y2="12"/><line class="grid-line" x1="52" x2="600" y1="70.7" y2="70.7"/><line class="grid-line" x1="52" x2="600" y1="129.3" y2="129.3"/><line class="base-line" x1="52" x2="600" y1="188" y2="188"/>
+              <text x="0" y="16">150 tr</text><text x="0" y="74.7">100 tr</text><text x="6" y="133.3">50 tr</text><text x="30" y="192">0</text>
+            </g>
+            <defs><linearGradient id="fadeTeal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0D9488" stop-opacity="0.22"/><stop offset="1" stop-color="#0D9488" stop-opacity="0"/></linearGradient></defs>
+            <path d="M52 188 L161.6 77.7 L271.2 77.7 L380.8 77.7 L490.4 77.7 L490.4 188 Z" fill="url(#fadeTeal)"/>
+            <path d="M52 188 L161.6 77.7 L271.2 77.7 L380.8 77.7 L490.4 77.7" fill="none" stroke="var(--ma-chart-1)" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M52 188 L161.6 26.8 L271.2 26.8 L380.8 26.8 L490.4 26.8" fill="none" stroke="var(--ma-chart-3)" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M490.4 26.8 L600 172.1" fill="none" stroke="var(--ma-chart-3)" stroke-width="2" stroke-dasharray="4 4"/>
+            <line x1="545" x2="545" y1="20" y2="188" stroke="var(--ma-line-300)" stroke-dasharray="3 3"/>
+            <text x="538" y="52" text-anchor="end" style="fill:var(--ma-text-secondary)">Kỳ 11 đang mở</text>
+            <circle cx="490.4" cy="77.7" r="4.5" fill="#fff" stroke="var(--ma-chart-1)" stroke-width="2.5"/>
+            <g><rect x="400" y="86" width="96" height="26" rx="8" fill="var(--ma-bg-inverse)"/><text x="448" y="103" text-anchor="middle" style="fill:#fff;font-weight:600">94.032.500 ₫</text></g>
+            <g><text x="52" y="208" text-anchor="middle">06</text><text x="161.6" y="208" text-anchor="middle">07</text><text x="271.2" y="208" text-anchor="middle">08</text><text x="380.8" y="208" text-anchor="middle">09</text><text x="490.4" y="208" text-anchor="middle">10</text><text x="596" y="208" text-anchor="end">11/2026</text></g>
+          </svg></div>
+        </section>
+        <div class="minis">
+          <section class="card" style="padding:20px"><h2 class="mini-label">Toà thu nhiều nhất</h2><p class="mini-value">Bình Minh</p><p class="mini-sub">137.972.000 ₫ thực thu</p></section>
+          <section class="card" style="padding:20px"><h2 class="mini-label">Hợp đồng sắp hết</h2><p class="mini-value">02/12/2026</p><p class="mini-sub">Phòng 303 An Nhiên · còn 11 ngày</p></section>
+          <section class="card" style="padding:20px"><h2 class="mini-label">Sự cố đang mở</h2><p class="mini-value">12 việc</p><p class="mini-sub">Chi phí kỳ này 750.000 ₫</p></section>
+        </div>
+      </div>
+
+      <!-- Hàng 3: thanh ngang theo toà + việc cần chú ý -->
+      <section class="card c-4" aria-labelledby="b1">
+        <div class="card-head"><h2 class="h2" id="b1">Tiêu thụ điện theo toà</h2><span class="t-meta">kỳ 10/2026</span></div>
+        <div class="hbars">
+          <div class="hbar"><span class="hbar-label">Mộc Lan Home</span><span class="hbar-value">1.246 kWh</span><div class="hbar-track"><div class="hbar-fill" style="width:100%"></div></div></div>
+          <div class="hbar"><span class="hbar-label">Bình Minh Riverside</span><span class="hbar-value">1.036 kWh</span><div class="hbar-track"><div class="hbar-fill" style="width:83.1%"></div></div></div>
+          <div class="hbar"><span class="hbar-label">An Nhiên Residence</span><span class="hbar-value">1.006 kWh</span><div class="hbar-track"><div class="hbar-fill" style="width:80.7%"></div></div></div>
+        </div>
+        <p class="t-meta" style="margin-top:12px">Tổng 3.288 kWh · nước 178 m³</p>
+      </section>
+      <section class="card c-4" aria-labelledby="b2">
+        <div class="card-head"><h2 class="h2" id="b2">Công nợ theo toà</h2><span class="t-meta">hiện tại</span></div>
+        <div class="hbars">
+          <div class="hbar"><span class="hbar-label">Bình Minh Riverside</span><span class="hbar-value">64.476.000 ₫</span><div class="hbar-track"><div class="hbar-fill warm" style="width:100%"></div></div></div>
+          <div class="hbar"><span class="hbar-label">Mộc Lan Home</span><span class="hbar-value">58.576.000 ₫</span><div class="hbar-track"><div class="hbar-fill warm" style="width:90.8%"></div></div></div>
+          <div class="hbar"><span class="hbar-label">An Nhiên Residence</span><span class="hbar-value">50.398.000 ₫</span><div class="hbar-track"><div class="hbar-fill warm" style="width:78.2%"></div></div></div>
+        </div>
+        <p class="t-meta" style="margin-top:12px">Tổng 173.450.000 ₫ · 20 hoá đơn mỗi toà</p>
+      </section>
+      <section class="card c-4" aria-labelledby="b3">
+        <div class="card-head"><h2 class="h2" id="b3">Cần chú ý</h2></div>
+        <nav class="alist" aria-label="Việc cần chú ý">
+          <a class="arow" href="#/su-co"><svg class="ic" aria-hidden="true"><use href="#i-wrench"/></svg>Sự cố đang mở<b>12</b><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+          <a class="arow" href="#/cong-no"><svg class="ic" aria-hidden="true"><use href="#i-receipt"/></svg>Hoá đơn quá hạn<b>60</b><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+          <a class="arow" href="#/ghi-chi-so"><svg class="ic" aria-hidden="true"><use href="#i-meter"/></svg>Công tơ chưa ghi kỳ 11<b>4</b><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+          <a class="arow" href="#/hop-dong"><svg class="ic" aria-hidden="true"><use href="#i-contract"/></svg>Hợp đồng sắp hết hạn<b>1</b><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+        </nav>
+      </section>
+    </div>
+  </main>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/shell.js"></script>
+</body>
+</html>

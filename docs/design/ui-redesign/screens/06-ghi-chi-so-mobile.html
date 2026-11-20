@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ghi chỉ số — An Nhiên Residence · MiniApart</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<style>
+  body { background: var(--ma-bg-page); }
+  .rooms-strip { display: flex; gap: 8px; overflow-x: auto; padding: 2px 16px 4px; margin: 0 -16px; scrollbar-width: none; }
+  .rchip { flex: none; min-width: 56px; height: 44px; border-radius: 12px; border: 0; background: var(--ma-bg-card); font: 600 15px/1 var(--ma-font-ui); display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; color: var(--ma-text-primary); }
+  .rchip.done { color: var(--ma-done-text); background: var(--ma-done-bg); }
+  .rchip[aria-current] { background: var(--ma-text-primary); color: #fff; }
+  .prev { display: flex; justify-content: space-between; font: var(--ma-text-body-sm); color: var(--ma-text-secondary); margin: 12px 2px 8px; }
+  .usage { display: flex; align-items: baseline; gap: 8px; margin-top: 12px; }
+  .usage b { font: 600 28px/1 var(--ma-font-ui); letter-spacing: -0.02em; }
+  .pad-wrap { position: fixed; left: 0; right: 0; bottom: 0; background: var(--ma-bg-sunken); padding: 10px 12px 14px; border-radius: 20px 20px 0 0; }
+</style>
+</head>
+<body>
+<!-- Màn khung (6) Ghi chỉ số — MOBILE 390×844. Dữ liệu: GET /api/toa-nha/3/ky-thanh-toan/5/chi-so (chỉ số đầu 416, TB 3 kỳ 104 kWh, ngưỡng 1,5 lần).
+     Trạng thái minh hoạ: đang nhập phòng 303, giá trị 590 do người dùng gõ (số thật đã lưu là 520) để thấy cảnh báo bất thường.
+     Một hành động chính: "Lưu, sang công tơ nước 303" dưới bàn phím (tự nhảy công tơ/phòng kế). -->
+<div class="m-app" style="padding-bottom:300px">
+  <header class="m-top">
+    <a class="icon-btn touch" href="04-nhac-viec.html" aria-label="Quay lại Nhắc việc"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg></a>
+    <div class="h-title" style="font-size:18px">Ghi chỉ số<div class="h-sub">An Nhiên Residence · kỳ 11/2026</div></div>
+    <button class="icon-btn touch" aria-label="Chọn kỳ và toà"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></button>
+  </header>
+  <div class="m-body">
+    <div>
+      <div class="spread t-sm"><span class="t-2">Đã ghi <b class="t-strong" style="color:var(--ma-text-primary)">16/18</b> công tơ</span><span class="t-3">còn 303 · Điện, Nước</span></div>
+      <div class="progress" style="margin-top:8px" role="progressbar" aria-valuenow="16" aria-valuemin="0" aria-valuemax="18" aria-label="Đã ghi 16 trên 18 công tơ"><span style="width:88.9%"></span></div>
+    </div>
+    <nav class="rooms-strip" aria-label="Chọn phòng">
+      <button class="rchip done" aria-label="Phòng 203, đã ghi"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>203</button>
+      <button class="rchip done" aria-label="Phòng 301, đã ghi"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>301</button>
+      <button class="rchip done" aria-label="Phòng 302, đã ghi"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>302</button>
+      <button class="rchip" aria-current="true">303</button>
+      <button class="rchip done" aria-label="Phòng 101, đã ghi"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>101</button>
+    </nav>
+
+    <section class="m-card" aria-labelledby="ph">
+      <div class="spread">
+        <div><h1 class="h3" id="ph" style="font-size:18px">Phòng 303</h1><p class="t-meta">Ngô Hải Nam · tầng 3</p></div>
+        <div class="seg" role="group" aria-label="Loại công tơ"><button aria-pressed="true">Điện</button><button aria-pressed="false">Nước</button></div>
+      </div>
+      <div class="prev"><span>Chỉ số kỳ trước</span><b class="t-strong" style="color:var(--ma-text-primary)">416 kWh</b></div>
+      <label class="sr-only" for="cs">Chỉ số điện mới, phòng 303</label>
+      <div class="meter-wrap">
+        <input class="meter-input is-focus" id="cs" inputmode="decimal" value="590" aria-invalid="true" aria-describedby="cs-warn cs-use" readonly>
+        <span class="unit-tag">kWh</span>
+      </div>
+      <div class="usage" id="cs-use"><span class="t-2 t-sm">Tiêu thụ</span><b class="t-warm">174</b><span class="t-2 t-sm">kWh · TB 3 kỳ 104 kWh</span></div>
+      <div class="banner banner-warning" id="cs-warn" style="margin-top:12px;padding:12px">
+        <svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg>
+        <div><b>Cao gấp 1,7 lần trung bình.</b> Kiểm tra lại số hoặc chụp ảnh công tơ để lưu kèm.</div>
+      </div>
+      <button class="btn btn-secondary btn-touch btn-block" style="margin-top:12px"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Chụp ảnh công tơ</button>
+    </section>
+  </div>
+  <div class="pad-wrap">
+    <div class="keypad" role="group" aria-label="Bàn phím số">
+      <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+      <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+      <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+      <button class="key fn" aria-label="Dấu thập phân">,</button><button class="key">0</button><button class="key fn" aria-label="Xoá một số"><svg class="ic" aria-hidden="true"><use href="#i-backspace"/></svg></button>
+    </div>
+    <button class="btn btn-primary btn-touch btn-block" style="margin-top:8px">Lưu, sang công tơ nước 303<svg class="ic" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+  </div>
+</div>
+<script src="../assets/icons.js"></script>
+</body>
+</html>

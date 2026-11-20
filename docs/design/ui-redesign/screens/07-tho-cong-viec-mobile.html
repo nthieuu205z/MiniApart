@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Công việc — Thợ sửa chữa · MiniApart</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<style>
+  .job { display: grid; gap: 10px; }
+  .job .where { display: flex; align-items: center; gap: 6px; font: 500 14px/1.35 var(--ma-font-ui); color: var(--ma-text-secondary); }
+  .job .acts { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 8px; margin-top: 4px; }
+  .job .code { font: var(--ma-text-caption); color: var(--ma-text-muted); }
+  .sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .sum div { background: var(--ma-bg-card); border-radius: 16px; padding: 12px; }
+  .sum b { display: block; font: 600 24px/1.1 var(--ma-font-ui); letter-spacing: -0.02em; }
+  .sum span { font: var(--ma-text-caption); color: var(--ma-text-secondary); }
+</style>
+</head>
+<body>
+<!-- Màn khung (7) Thợ — Công việc — MOBILE 390×844 (chụp toàn trang). Dữ liệu: GET /api/tho/viec-cua-toi, /api/tho/tong-quan
+     (thợ 0999000031 Lê Quốc Huy: 6 việc đang mở, 3/9 hoàn tất trong kỳ). Câu "Dữ liệu tình huống mô phỏng." trong mô tả seed đã bỏ.
+     Một hành động chính: "Báo xong" ở việc đang làm đầu hàng; các việc khác là nút phụ. -->
+<div class="m-app">
+  <header class="m-top">
+    <div class="h-title">Công việc<div class="h-sub">Lê Quốc Huy · 3 toà được giao</div></div>
+    <button class="icon-btn touch" aria-label="Tìm việc"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg></button>
+  </header>
+  <div class="m-body">
+    <div class="sum" aria-label="Tóm tắt">
+      <div><b>3</b><span>Đang làm</span></div>
+      <div><b>3</b><span>Mới giao</span></div>
+      <div><b>3/9</b><span>Xong kỳ này</span></div>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Lọc công việc" style="margin:0 -16px;padding:0 8px">
+      <button class="tab" role="tab" aria-selected="true">Đang mở <span class="n">6</span></button>
+      <button class="tab" role="tab" aria-selected="false">Chờ xác nhận <span class="n">0</span></button>
+      <button class="tab" role="tab" aria-selected="false">Đã xong <span class="n">3</span></button>
+    </div>
+
+    <article class="m-card job" aria-labelledby="j24">
+      <div class="spread"><span class="tag tag-info"><svg class="ic-sm" aria-hidden="true"><use href="#i-hammer"/></svg>Đang xử lý</span><span class="code">SC-202611-0024 · 21/11</span></div>
+      <h2 class="h3" id="j24" style="font-size:18px">Chiếu sáng — đèn bếp nhấp nháy</h2>
+      <p class="where"><svg class="ic-sm" aria-hidden="true"><use href="#i-pin"/></svg>Bình Minh Riverside · Phòng 201 · Tầng 2</p>
+      <p class="t-sm t-2">Cần kiểm tra nguồn và bóng đèn khu bếp.</p>
+      <div class="acts"><a class="icon-btn touch boxed" href="tel:0999100048" aria-label="Gọi Nguyễn Quang Huy, người báo"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></a><button class="btn btn-primary btn-touch"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Báo xong</button></div>
+    </article>
+
+    <article class="m-card job" aria-labelledby="j23">
+      <div class="spread"><span class="tag tag-warning"><svg class="ic-sm" aria-hidden="true"><use href="#i-clock"/></svg>Mới giao</span><span class="code">SC-202611-0023 · 21/11</span></div>
+      <h2 class="h3" id="j23" style="font-size:18px">Khoá cửa — khó xoay</h2>
+      <p class="where"><svg class="ic-sm" aria-hidden="true"><use href="#i-pin"/></svg>Bình Minh Riverside · Phòng 103 · Tầng 1</p>
+      <p class="t-sm t-2">Kiểm tra trước khi thay lõi khoá.</p>
+      <div class="acts"><a class="icon-btn touch boxed" href="tel:0999100047" aria-label="Gọi Đinh Đình Phúc, người báo"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></a><button class="btn btn-secondary btn-touch">Nhận việc &amp; khảo sát</button></div>
+    </article>
+
+    <article class="m-card job" aria-labelledby="j14">
+      <div class="spread"><span class="tag tag-info"><svg class="ic-sm" aria-hidden="true"><use href="#i-hammer"/></svg>Đang xử lý</span><span class="code">SC-202611-0014 · 21/11</span></div>
+      <h2 class="h3" id="j14" style="font-size:18px">Chiếu sáng — đèn bếp nhấp nháy</h2>
+      <p class="where"><svg class="ic-sm" aria-hidden="true"><use href="#i-pin"/></svg>Mộc Lan Home · Phòng 201 · Tầng 2</p>
+      <div class="acts"><a class="icon-btn touch boxed" href="tel:0999100026" aria-label="Gọi người báo"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></a><button class="btn btn-secondary btn-touch">Lập báo giá</button></div>
+    </article>
+
+    <p class="t-sm t-3" style="text-align:center;padding:4px 0 8px">Còn 3 việc · Mộc Lan Home 103, An Nhiên 201, An Nhiên 103</p>
+  </div>
+  <nav class="bottom-nav" data-role="THO" data-active="/viec-cua-toi"></nav>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/shell.js"></script>
+</body>
+</html>

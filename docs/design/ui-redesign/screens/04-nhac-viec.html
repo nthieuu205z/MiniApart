@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nhắc việc — Quản lý · MiniApart</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<style>
+  .task { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 14px 12px; border-radius: 16px; }
+  .task + .task { border-top: 1px solid var(--ma-line-100); }
+  .task:hover { background: var(--ma-paper-1); }
+  .task .tile { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--ma-bg-sunken); color: var(--ma-text-secondary); }
+  .task.urgent .tile { background: var(--ma-urgent-bg); color: var(--ma-urgent); }
+  .task .count { font: 600 28px/1 var(--ma-font-ui); letter-spacing: -0.02em; min-width: 48px; text-align: right; }
+  .task.done { color: var(--ma-text-muted); }
+  .task.done .count { color: var(--ma-text-muted); font-weight: 500; }
+  @media (max-width: 767px) { .task { grid-template-columns: 44px minmax(0, 1fr) auto; } .task > :last-child { grid-column: 2 / -1; justify-self: start; } .task > span:last-child:empty { display: none; } }
+  .meters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .meter-chip { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--ma-bg-sunken); font: 500 14px/1.3 var(--ma-font-ui); }
+  .meter-chip .ic { color: var(--ma-accent-warm); }
+</style>
+</head>
+<body>
+<!-- Màn khung (4) Quản lý — Nhắc việc — 1440×900. Dữ liệu: GET /api/toa-nha/3/bang-viec, /api/dashboard/quan-ly
+     (tài khoản quản lý 0999000020, An Nhiên Residence, kỳ 11/2026). Một hành động chính: Ghi 4 công tơ còn thiếu. -->
+<div class="app">
+  <aside class="sidebar" data-role="QUAN_LY" data-active="/nhac-viec" data-user="Vũ Thu Hà|Quản lý toà nhà"></aside>
+  <main class="main">
+    <header class="topbar">
+      <div class="title-block">
+        <h1 class="h1">Nhắc việc</h1>
+        <p class="sub">An Nhiên Residence · kỳ 11/2026 đang mở, chốt số ngày 25/11/2026 (còn 4 ngày)</p>
+      </div>
+      <div class="topbar-actions">
+        <label class="sr-only" for="toa">Toà nhà</label>
+        <select class="select" id="toa" style="width:220px"><option>An Nhiên Residence</option></select>
+        <button class="icon-btn boxed badge-dot" data-count="25" aria-label="Thông báo, 25 chưa đọc"><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg></button>
+        <a class="btn btn-primary" href="06-ghi-chi-so-mobile.html"><svg class="ic" aria-hidden="true"><use href="#i-meter"/></svg>Ghi 4 công tơ còn thiếu</a>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card c-8" aria-labelledby="v">
+        <div class="card-head"><h2 class="h2" id="v">Việc của toà hôm nay</h2><span class="t-meta">3 việc cần xử lý · 2 đã xong</span></div>
+        <div>
+          <div class="task urgent"><span class="tile"><svg class="ic" aria-hidden="true"><use href="#i-receipt"/></svg></span>
+            <div><div class="row" style="gap:10px"><h3 class="h3">Nợ quá hạn</h3><span class="tag tag-danger"><svg class="ic-sm" aria-hidden="true"><use href="#i-alert"/></svg>Khẩn</span></div><p class="t-sm t-2">20 hoá đơn · 50.398.000 ₫ · lâu nhất trễ 139 ngày</p></div>
+            <span class="count">20</span><a class="btn btn-secondary btn-sm" href="#/hoa-don?trangThai=NO_QUA_HAN">Mở danh sách</a></div>
+          <div class="task"><span class="tile"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg></span>
+            <div><div class="row" style="gap:10px"><h3 class="h3">Kiểm tra PCCC</h3><span class="tag tag-warning"><svg class="ic-sm" aria-hidden="true"><use href="#i-clock"/></svg>Cần xử lý</span></div><p class="t-sm t-2">2 hạng mục chưa kiểm tra trong kỳ</p></div>
+            <span class="count">2</span><a class="btn btn-secondary btn-sm" href="#/an-toan">Ghi kết quả</a></div>
+          <div class="task"><span class="tile"><svg class="ic" aria-hidden="true"><use href="#i-contract"/></svg></span>
+            <div><div class="row" style="gap:10px"><h3 class="h3">Hợp đồng sắp hết hạn</h3><span class="tag tag-warning"><svg class="ic-sm" aria-hidden="true"><use href="#i-clock"/></svg>Cần xử lý</span></div><p class="t-sm t-2">Phòng 303 · Ngô Hải Nam · hết hạn 02/12/2026</p></div>
+            <span class="count">1</span><a class="btn btn-secondary btn-sm" href="#/hop-dong?sapHetHan=true">Gia hạn</a></div>
+          <div class="task done"><span class="tile"><svg class="ic" aria-hidden="true"><use href="#i-meter"/></svg></span>
+            <div><div class="row" style="gap:10px"><h3 class="h3" style="color:inherit">Thiếu chỉ số sau ngày chốt</h3><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Đã xong</span></div><p class="t-sm">Chưa tới ngày chốt; 4 công tơ phòng trống còn chờ ghi</p></div>
+            <span class="count">0</span><span style="width:112px"></span></div>
+          <div class="task done"><span class="tile"><svg class="ic" aria-hidden="true"><use href="#i-wrench"/></svg></span>
+            <div><div class="row" style="gap:10px"><h3 class="h3" style="color:inherit">Sự cố tồn đọng trên 48 giờ</h3><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Đã xong</span></div><p class="t-sm">4 sự cố đang xử lý, chưa cái nào quá 48 giờ</p></div>
+            <span class="count">0</span><span style="width:112px"></span></div>
+        </div>
+      </section>
+
+      <div class="c-4 stack" style="grid-template-rows:auto 1fr">
+        <section class="card" aria-labelledby="pt">
+          <h2 class="h2" id="pt">Còn phải thu</h2>
+          <p class="kpi-value t-danger" style="font-size:36px">50.398.000<span class="unit">₫</span></p>
+          <p class="kpi-desc">Toàn bộ là nợ quá hạn trên 30 ngày.</p>
+        </section>
+        <section class="card" aria-labelledby="cs">
+          <div class="card-head" style="margin-bottom:12px"><h2 class="h2" id="cs">Công tơ kỳ 11</h2><span class="t-strong">20/24</span></div>
+          <div class="progress" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="24" aria-label="Đã ghi 20 trên 24 công tơ"><span style="width:83.3%"></span></div>
+          <p class="t-sm t-2" style="margin:14px 0 10px">Còn thiếu</p>
+          <div class="meters">
+            <span class="meter-chip"><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg>401 · Điện</span>
+            <span class="meter-chip"><svg class="ic" aria-hidden="true"><use href="#i-droplet"/></svg>401 · Nước</span>
+            <span class="meter-chip"><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg>403 · Điện</span>
+            <span class="meter-chip"><svg class="ic" aria-hidden="true"><use href="#i-droplet"/></svg>403 · Nước</span>
+          </div>
+        </section>
+      </div>
+
+      <section class="card c-8" aria-labelledby="lh">
+        <div class="card-head"><h2 class="h2" id="lh">Lịch hẹn xem phòng</h2><a class="link-more brand" href="#/lich-hen">Tất cả lịch hẹn <svg class="ic-sm" aria-hidden="true"><use href="#i-arrow-right"/></svg></a></div>
+        <ul class="list">
+          <li class="list-row"><span class="avatar h1" aria-hidden="true">HN</span><div class="body"><div class="name">Đặng Hải Nam</div><div class="sub">Xem phòng 402 · Hôm nay 21/11/2026, 16:00</div></div><span class="tag tag-warning"><svg class="ic-sm" aria-hidden="true"><use href="#i-clock"/></svg>Chờ xác nhận</span><button class="btn btn-secondary btn-sm">Xác nhận</button></li>
+          <li class="list-row"><span class="avatar h2" aria-hidden="true">TN</span><div class="body"><div class="name">Bùi Thảo Nguyên</div><div class="sub">Xem phòng 402 · 22/11/2026, 17:00</div></div><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Đã xác nhận</span><span style="width:96px"></span></li>
+          <li class="list-row"><span class="avatar h5" aria-hidden="true">BN</span><div class="body"><div class="name">Ngô Bảo Ngọc</div><div class="sub">Xem phòng 402 · 24/11/2026, 19:00</div></div><span class="tag tag-warning"><svg class="ic-sm" aria-hidden="true"><use href="#i-clock"/></svg>Chờ xác nhận</span><button class="btn btn-secondary btn-sm">Xác nhận</button></li>
+        </ul>
+      </section>
+      <section class="card c-4" aria-labelledby="ph">
+        <div class="card-head"><h2 class="h2" id="ph">Phòng</h2><span class="t-meta">12 phòng</span></div>
+        <div class="hbars">
+          <div class="hbar"><span class="hbar-label">Đang thuê</span><span class="hbar-value">9</span><div class="hbar-track"><div class="hbar-fill" style="width:75%"></div></div></div>
+          <div class="hbar"><span class="hbar-label">Trống</span><span class="hbar-value">2</span><div class="hbar-track"><div class="hbar-fill warm" style="width:16.7%"></div></div></div>
+          <div class="hbar"><span class="hbar-label">Ngưng khai thác</span><span class="hbar-value">1</span><div class="hbar-track"><div class="hbar-fill" style="width:8.3%;background:var(--ma-chart-3)"></div></div></div>
+        </div>
+        <p class="t-sm t-2" style="margin-top:16px">Phòng trống: <b class="t-strong" style="color:var(--ma-text-primary)">401</b> (đã có hợp đồng chờ ký từ 27/11) và <b class="t-strong" style="color:var(--ma-text-primary)">402</b> (3 lịch hẹn xem).</p>
+      </section>
+    </div>
+  </main>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/shell.js"></script>
+</body>
+</html>

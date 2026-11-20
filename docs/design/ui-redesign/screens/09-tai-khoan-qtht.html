@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tài khoản — Quản trị hệ thống · MiniApart</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<style>
+  .menu { position: absolute; right: 8px; top: 44px; z-index: 5; width: 232px; background: var(--ma-bg-card); border-radius: 16px; box-shadow: var(--ma-shadow-md); padding: 6px; text-align: left; }
+  .menu button { display: flex; width: 100%; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border: 0; background: none; border-radius: 10px; font: 500 14px/1 var(--ma-font-ui); color: var(--ma-text-primary); cursor: pointer; }
+  .menu button:hover, .menu button.is-hover { background: var(--ma-paper-1); }
+  .menu .danger { color: var(--ma-urgent); }
+  @media (max-width: 767px) { .menu button { height: 44px; } }
+  .menu hr { border: 0; border-top: 1px solid var(--ma-line-100); margin: 4px 0; }
+</style>
+</head>
+<body>
+<!-- Màn khung (9) QTHT — Tài khoản — 1440×900. Dữ liệu: GET /api/nguoi-dung (70 tài khoản), /api/toa-nha.
+     Một hành động chính: Tạo tài khoản. Khoá nằm trong menu hàng (không còn 2 nút Sửa/Khoá lặp ở mọi dòng). -->
+<div class="app">
+  <aside class="sidebar" data-role="QTHT" data-active="/tai-khoan" data-user="Phạm Minh Quân|Quản trị hệ thống"></aside>
+  <main class="main">
+    <header class="topbar">
+      <div class="title-block">
+        <h1 class="h1">Tài khoản</h1>
+        <p class="sub">70 tài khoản đang hoạt động · tài khoản đã phát sinh dữ liệu chỉ khoá, không xoá</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Tạo tài khoản</button>
+      </div>
+    </header>
+    <section class="card" aria-labelledby="ds">
+      <h2 class="sr-only" id="ds">Danh sách tài khoản</h2>
+      <div class="table-toolbar">
+        <label class="input-wrap" style="width:240px"><span class="sr-only">Tìm theo tên hoặc số điện thoại</span><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><input class="input" type="search" placeholder="Tìm tên, số điện thoại…"></label>
+        <div class="row-wrap" role="group" aria-label="Lọc theo vai trò" style="margin-left:8px">
+          <button class="chip" aria-pressed="true">Tất cả <span class="n">70</span></button>
+          <button class="chip" aria-pressed="false">Người thuê <span class="n">55</span></button>
+          <button class="chip" aria-pressed="false">Quản lý <span class="n">7</span></button>
+          <button class="chip" aria-pressed="false">Chủ sở hữu <span class="n">3</span></button>
+          <button class="chip" aria-pressed="false">Thợ <span class="n">3</span></button>
+          <button class="chip" aria-pressed="false">Quản trị <span class="n">2</span></button>
+        </div>
+        <label class="sr-only" for="tt">Trạng thái</label>
+        <select class="select push" id="tt" style="width:168px;height:36px"><option>Mọi trạng thái</option><option>Hoạt động</option><option>Đã khoá</option></select>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr>
+            <th aria-sort="ascending"><button class="th-sort">Người dùng<svg class="ic-sm" aria-hidden="true"><use href="#i-sort-up"/></svg></button></th>
+            <th><button class="th-sort">Vai trò</button></th>
+            <th>Toà được giao</th>
+            <th>Trạng thái</th>
+            <th class="num"><span class="sr-only">Thao tác</span></th>
+          </tr></thead>
+          <tbody>
+            <tr><td><div class="td-person"><span class="avatar sm h5" aria-hidden="true">PH</span><div><div class="td-main">Nguyễn Hoàng Phúc</div><div class="td-sub">0999 000 011</div></div></div></td><td><span class="tag tag-neutral">Chủ sở hữu</span></td><td>An Nhiên Residence, Mộc Lan Home, Bình Minh Riverside</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hoạt động</span></td><td class="num"><div class="td-acts"><button class="btn btn-ghost btn-sm">Sửa</button><button class="icon-btn sm" aria-label="Thao tác khác cho Nguyễn Hoàng Phúc"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><div class="td-person"><span class="avatar sm h1" aria-hidden="true">NM</span><div><div class="td-main">Trần Ngọc Mai</div><div class="td-sub">0999 000 012</div></div></div></td><td><span class="tag tag-neutral">Chủ sở hữu</span></td><td>Nhà Xanh Cầu Giấy, Phố Nhỏ Studio, Vườn Nắng Apartment</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hoạt động</span></td><td class="num"><div class="td-acts"><button class="btn btn-ghost btn-sm">Sửa</button><button class="icon-btn sm" aria-label="Thao tác khác cho Trần Ngọc Mai"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr class="is-selected"><td><div class="td-person"><span class="avatar sm h2" aria-hidden="true">TH</span><div><div class="td-main">Vũ Thu Hà</div><div class="td-sub">0999 000 020</div></div></div></td><td><span class="tag tag-neutral">Quản lý toà nhà</span></td><td>An Nhiên Residence</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hoạt động</span></td><td class="num" style="position:relative"><div class="td-acts"><button class="btn btn-ghost btn-sm">Sửa</button><button class="icon-btn sm is-hover" aria-label="Thao tác khác cho Vũ Thu Hà" aria-expanded="true"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div>
+              <div class="menu" role="menu" aria-label="Thao tác cho Vũ Thu Hà"><button role="menuitem" class="is-hover"><svg class="ic" aria-hidden="true"><use href="#i-building"/></svg>Đổi toà được giao</button><button role="menuitem"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg>Gửi lại mã kích hoạt</button><hr><button role="menuitem" class="danger"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>Khoá tài khoản…</button></div></td></tr>
+            <tr><td><div class="td-person"><span class="avatar sm h3" aria-hidden="true">QH</span><div><div class="td-main">Lê Quốc Huy</div><div class="td-sub">0999 000 031</div></div></div></td><td><span class="tag tag-neutral">Thợ sửa chữa</span></td><td>An Nhiên Residence, Mộc Lan Home, Bình Minh Riverside</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hoạt động</span></td><td class="num"><div class="td-acts"><button class="btn btn-ghost btn-sm">Sửa</button><button class="icon-btn sm" aria-label="Thao tác khác cho Lê Quốc Huy"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><div class="td-person"><span class="avatar sm h4" aria-hidden="true">VT</span><div><div class="td-main">Đặng Văn Thành</div><div class="td-sub">0999 000 032</div></div></div></td><td><span class="tag tag-neutral">Thợ sửa chữa</span></td><td>Nhà Xanh Cầu Giấy, Phố Nhỏ Studio, Vườn Nắng Apartment</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hoạt động</span></td><td class="num"><div class="td-acts"><button class="btn btn-ghost btn-sm">Sửa</button><button class="icon-btn sm" aria-label="Thao tác khác cho Đặng Văn Thành"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><div class="td-person"><span class="avatar sm h5" aria-hidden="true">MQ</span><div><div class="td-main">Phạm Minh Quân</div><div class="td-sub">0999 000 001 · bạn</div></div></div></td><td><span class="tag tag-neutral">Quản trị hệ thống</span></td><td class="t-3">Toàn hệ thống</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hoạt động</span></td><td class="num"><div class="td-acts"><button class="btn btn-ghost btn-sm">Sửa</button><button class="icon-btn sm" aria-label="Thao tác khác cho Phạm Minh Quân"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><div class="td-person"><span class="avatar sm h1" aria-hidden="true">QH</span><div><div class="td-main">Trần Quang Huy</div><div class="td-sub">0999 100 001</div></div></div></td><td><span class="tag tag-neutral">Người thuê</span></td><td>Phòng 101 · An Nhiên Residence</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hoạt động</span></td><td class="num"><div class="td-acts"><button class="btn btn-ghost btn-sm">Sửa</button><button class="icon-btn sm" aria-label="Thao tác khác cho Trần Quang Huy"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><div class="td-person"><span class="avatar sm h2" aria-hidden="true">TT</span><div><div class="td-main">Lê Thu Trang</div><div class="td-sub">0999 100 002</div></div></div></td><td><span class="tag tag-neutral">Người thuê</span></td><td>Phòng 102 · An Nhiên Residence</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hoạt động</span></td><td class="num"><div class="td-acts"><button class="btn btn-ghost btn-sm">Sửa</button><button class="icon-btn sm" aria-label="Thao tác khác cho Lê Thu Trang"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pager"><span>1–8 trong 70 tài khoản</span><span class="push"></span><button class="pg" aria-label="Trang trước" disabled><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-left"/></svg></button><button class="pg" aria-current="page">1</button><button class="pg">2</button><button class="pg">3</button><span class="t-3" style="padding:0 6px">…</span><button class="pg">9</button><button class="pg" aria-label="Trang sau"><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-right"/></svg></button></div>
+    </section>
+  </main>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/shell.js"></script>
+</body>
+</html>

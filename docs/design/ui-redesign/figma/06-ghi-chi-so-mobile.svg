@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="390" height="847" viewBox="0 0 390 847">
+<title>Ghi chỉ số — An Nhiên Residence · MiniApart</title>
+<defs><style>@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 400; font-display: swap; src: url('../assets/fonts/archivo-latin-400.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/archivo-latin-500.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 600; font-display: swap; src: url('../assets/fonts/archivo-latin-600.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/archivo-latin-700.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 400; font-display: swap; src: url('../assets/fonts/archivo-vietnamese-400.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/archivo-vietnamese-500.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 600; font-display: swap; src: url('../assets/fonts/archivo-vietnamese-600.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/archivo-vietnamese-700.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }</style></defs>
+<rect data-name="nền trang" x="0" y="0" width="390" height="847" fill="#F4F2EE"/>
+<rect data-name="m-top" x="0" y="0" width="390" height="64" fill="#F4F2EE"/>
+<g data-name="icon" transform="translate(30 22) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"></path></g></g>
+<text x="72" y="28.08" font-family="Archivo" font-size="18" font-weight="600" letter-spacing="-0.18" fill="#1C1B19" xml:space="preserve">Ghi chỉ số</text>
+<text x="72" y="46.93" font-family="Archivo" font-size="13" font-weight="400" letter-spacing="-0.18" fill="#6B655F" xml:space="preserve">An Nhiên Residence · kỳ 11/2026</text>
+<g data-name="icon" transform="translate(348 22) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></g></g>
+<text x="16" y="79.4" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">Đã ghi</text>
+<text x="58.58" y="79.4" font-family="Archivo" font-size="14" font-weight="600" fill="#1C1B19" xml:space="preserve">16/18</text>
+<text x="97.94" y="79.4" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">công tơ</text>
+<text x="244.16" y="79.4" font-family="Archivo" font-size="14" font-weight="400" fill="#6B655F" xml:space="preserve">còn 303 · Điện, Nước</text>
+<rect data-name="Đã ghi 16 trên 18 công tơ" x="16" y="93" width="358" height="8" rx="4" fill="#EFECE7"/>
+<rect data-name="span" x="16" y="93" width="318.25" height="8" rx="4" fill="#0D9488"/>
+<rect data-name="Phòng 203, đã ghi" x="16" y="115" width="65.91" height="44" rx="12" fill="#E7F5EC"/>
+<g data-name="icon" transform="translate(26 129) scale(0.66667)"><g fill="none" stroke="#166534" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></g></g>
+<text x="46" y="141.75" font-family="Archivo" font-size="15" font-weight="600" fill="#166534" xml:space="preserve">203</text>
+<rect data-name="Phòng 301, đã ghi" x="89.91" y="115" width="65.91" height="44" rx="12" fill="#E7F5EC"/>
+<g data-name="icon" transform="translate(99.91 129) scale(0.66667)"><g fill="none" stroke="#166534" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></g></g>
+<text x="119.91" y="141.75" font-family="Archivo" font-size="15" font-weight="600" fill="#166534" xml:space="preserve">301</text>
+<rect data-name="Phòng 302, đã ghi" x="163.81" y="115" width="65.91" height="44" rx="12" fill="#E7F5EC"/>
+<g data-name="icon" transform="translate(173.81 129) scale(0.66667)"><g fill="none" stroke="#166534" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></g></g>
+<text x="193.81" y="141.75" font-family="Archivo" font-size="15" font-weight="600" fill="#166534" xml:space="preserve">302</text>
+<rect data-name="rchip" x="237.72" y="115" width="56" height="44" rx="12" fill="#1C1B19"/>
+<text x="252.77" y="141.75" font-family="Archivo" font-size="15" font-weight="600" fill="#FFFFFF" xml:space="preserve">303</text>
+<rect data-name="Phòng 101, đã ghi" x="301.72" y="115" width="65.91" height="44" rx="12" fill="#E7F5EC"/>
+<g data-name="icon" transform="translate(311.72 129) scale(0.66667)"><g fill="none" stroke="#166534" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></g></g>
+<text x="331.72" y="141.75" font-family="Archivo" font-size="15" font-weight="600" fill="#166534" xml:space="preserve">101</text>
+<rect data-name="m-card" x="16" y="175" width="358" height="372" rx="20" fill="#FFFFFF"/>
+<text x="32" y="211.28" font-family="Archivo" font-size="18" font-weight="600" fill="#1C1B19" xml:space="preserve">Phòng 303</text>
+<text x="32" y="231.72" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">Ngô Hải Nam · tầng 3</text>
+<rect data-name="Loại công tơ" x="240.34" y="191" width="117.66" height="48" rx="12" fill="#F7F5F2"/>
+<rect data-name="button" x="242.34" y="193" width="53.75" height="44" rx="9" fill="#FFFFFF"/>
+<text x="254.34" y="219.4" font-family="Archivo" font-size="14" font-weight="600" fill="#1C1B19" xml:space="preserve">Điện</text>
+<text x="310.09" y="219.4" font-family="Archivo" font-size="14" font-weight="500" fill="#57534E" xml:space="preserve">Nước</text>
+<text x="34" y="266.4" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">Chỉ số kỳ trước</text>
+<text x="299.86" y="266.4" font-family="Archivo" font-size="14" font-weight="600" fill="#1C1B19" xml:space="preserve">416 kWh</text>
+<rect data-name="cs" x="32.5" y="280.5" width="325" height="71" rx="15.5" fill="#FFFFFF" stroke="#B42318" stroke-width="1"/>
+<text x="51" y="330" font-family="Archivo" font-size="40" font-weight="600" letter-spacing="-0.4" fill="#1C1B19" xml:space="preserve">590</text>
+<text x="307.38" y="321.1" font-family="Archivo" font-size="16" font-weight="500" fill="#6B655F" xml:space="preserve">kWh</text>
+<text x="32" y="387.4" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">Tiêu thụ</text>
+<text x="90.02" y="387.3" font-family="Archivo" font-size="28" font-weight="600" letter-spacing="-0.56" fill="#92400E" xml:space="preserve">174</text>
+<text x="144.75" y="387.4" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">kWh · TB 3 kỳ 104 kWh</text>
+<rect data-name="cs-warn" x="32" y="405" width="326" height="66" rx="16" fill="#FDF1DC"/>
+<g data-name="icon" transform="translate(44 418) scale(0.83333)"><g fill="none" stroke="#92400E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 15.5H3z"></path><path d="M12 10v4.5M12 17.2h.01"></path></g></g>
+<text x="76" y="432.4" font-family="Archivo" font-size="14" font-weight="600" fill="#7A350C" xml:space="preserve">Cao gấp 1,7 lần trung bình.</text>
+<text x="249.78" y="432.4" font-family="Archivo" font-size="14" font-weight="400" fill="#7A350C" xml:space="preserve">Kiểm tra lại số</text>
+<text x="76" y="453.4" font-family="Archivo" font-size="14" font-weight="400" fill="#7A350C" xml:space="preserve">hoặc chụp ảnh công tơ để lưu kèm.</text>
+<rect data-name="btn" x="32.5" y="483.5" width="325" height="47" rx="13.5" fill="#FFFFFF" stroke="#D6D2CB" stroke-width="1"/>
+<g data-name="icon" transform="translate(116.7 497) scale(0.83333)"><g fill="none" stroke="#1C1B19" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a2 2 0 0 1 2-2h2L9.5 4h5L16 6.5h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path><circle cx="12" cy="13" r="3.5"></circle></g></g>
+<text x="144.7" y="512.1" font-family="Archivo" font-size="16" font-weight="600" fill="#1C1B19" xml:space="preserve">Chụp ảnh công tơ</text>
+<rect data-name="pad-wrap" x="0" y="535" width="390" height="312" rx="20" fill="#F7F5F2"/>
+<rect data-name="key" x="12" y="545" width="116.66" height="52" rx="14" fill="#FFFFFF"/>
+<text x="63.98" y="578.7" font-family="Archivo" font-size="22" font-weight="600" fill="#1C1B19" xml:space="preserve">1</text>
+<rect data-name="key" x="136.66" y="545" width="116.67" height="52" rx="14" fill="#FFFFFF"/>
+<text x="188.64" y="578.7" font-family="Archivo" font-size="22" font-weight="600" fill="#1C1B19" xml:space="preserve">2</text>
+<rect data-name="key" x="261.33" y="545" width="116.66" height="52" rx="14" fill="#FFFFFF"/>
+<text x="313.31" y="578.7" font-family="Archivo" font-size="22" font-weight="600" fill="#1C1B19" xml:space="preserve">3</text>
+<rect data-name="key" x="12" y="605" width="116.66" height="52" rx="14" fill="#FFFFFF"/>
+<text x="63.97" y="638.7" font-family="Archivo" font-size="22" font-weight="600" fill="#1C1B19" xml:space="preserve">4</text>
+<rect data-name="key" x="136.66" y="605" width="116.67" height="52" rx="14" fill="#FFFFFF"/>
+<text x="188.66" y="638.7" font-family="Archivo" font-size="22" font-weight="600" fill="#1C1B19" xml:space="preserve">5</text>
+<rect data-name="key" x="261.33" y="605" width="116.66" height="52" rx="14" fill="#FFFFFF"/>
+<text x="313.31" y="638.7" font-family="Archivo" font-size="22" font-weight="600" fill="#1C1B19" xml:space="preserve">6</text>
+<rect data-name="key" x="12" y="665" width="116.66" height="52" rx="14" fill="#FFFFFF"/>
+<text x="63.98" y="698.7" font-family="Archivo" font-size="22" font-weight="600" fill="#1C1B19" xml:space="preserve">7</text>
+<rect data-name="key" x="136.66" y="665" width="116.67" height="52" rx="14" fill="#FFFFFF"/>
+<text x="188.64" y="698.7" font-family="Archivo" font-size="22" font-weight="600" fill="#1C1B19" xml:space="preserve">8</text>
+<rect data-name="key" x="261.33" y="665" width="116.66" height="52" rx="14" fill="#FFFFFF"/>
+<text x="313.33" y="698.7" font-family="Archivo" font-size="22" font-weight="600" fill="#1C1B19" xml:space="preserve">9</text>
+<rect data-name="Dấu thập phân" x="12" y="725" width="116.66" height="52" rx="14" fill="#EFECE7"/>
+<text x="67.92" y="756.1" font-family="Archivo" font-size="16" font-weight="600" fill="#1C1B19" xml:space="preserve">,</text>
+<rect data-name="key" x="136.66" y="725" width="116.67" height="52" rx="14" fill="#FFFFFF"/>
+<text x="188.66" y="758.7" font-family="Archivo" font-size="22" font-weight="600" fill="#1C1B19" xml:space="preserve">0</text>
+<rect data-name="Xoá một số" x="261.33" y="725" width="116.66" height="52" rx="14" fill="#EFECE7"/>
+<g data-name="icon" transform="translate(309.66 741) scale(0.83333)"><g fill="none" stroke="#1C1B19" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 5.5h11a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-11L3.5 12z"></path><path d="M11.5 9.5l5 5M16.5 9.5l-5 5"></path></g></g>
+<rect data-name="btn" x="12.5" y="785.5" width="365" height="47" rx="13.5" fill="#0F766E"/>
+<text x="80.36" y="814.1" font-family="Archivo" font-size="16" font-weight="600" fill="#FFFFFF" xml:space="preserve">Lưu, sang công tơ nước 303</text>
+<g data-name="icon" transform="translate(289.63 799) scale(0.83333)"><g fill="none" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12h15M14 6.5l5.5 5.5-5.5 5.5"></path></g></g>
+</svg>

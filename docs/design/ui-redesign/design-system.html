@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hệ thiết kế MiniApart — token &amp; component</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/components.css">
+<style>
+  /* Bố cục riêng của trang trưng bày */
+  .ds { max-width: 1240px; margin: 0 auto; padding: 32px 24px 96px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .ds-nav { position: sticky; top: 0; z-index: 30; background: var(--ma-bg-page); display: flex; gap: 4px; flex-wrap: wrap; padding: 12px 0; }
+  .ds-nav a { font: 500 14px/1 var(--ma-font-ui); color: var(--ma-text-secondary); padding: 10px 12px; border-radius: 10px; min-height: 36px; display: inline-flex; align-items: center; }
+  .ds-nav a:hover { background: var(--ma-paper-3); text-decoration: none; color: var(--ma-text-primary); }
+  .ds h2.sec { font: 600 24px/1.2 var(--ma-font-ui); letter-spacing: -0.01em; margin: 32px 0 4px; scroll-margin-top: 72px; }
+  .ds .lead { color: var(--ma-text-secondary); max-width: 760px; }
+  .sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .sw div { border-radius: 16px; overflow: hidden; background: var(--ma-bg-card); }
+  .sw i { display: block; height: 64px; }
+  .sw p { padding: 10px 12px; font: var(--ma-text-caption); color: var(--ma-text-secondary); }
+  .sw b { display: block; font: 600 13px/1.4 var(--ma-font-ui); color: var(--ma-text-primary); }
+  .states { display: grid; grid-template-columns: 140px repeat(7, minmax(0, 1fr)); gap: 12px 10px; align-items: center; }
+  .states .h { font: var(--ma-text-caption); color: var(--ma-text-muted); }
+  .ty-row { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 16px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--ma-line-100); }
+  .box-demo { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+  .box-demo div { background: var(--ma-chart-1-fill); border-radius: 4px; }
+  .icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+  .icons div { display: grid; justify-items: center; gap: 8px; padding: 14px 6px; border-radius: 14px; background: var(--ma-bg-sunken); font: 12px/1.2 var(--ma-font-ui); color: var(--ma-text-secondary); text-align: center; }
+  .icons svg { width: 24px; height: 24px; color: var(--ma-text-primary); }
+  .phone { width: 100%; max-width: 390px; border-radius: 28px; background: var(--ma-bg-page); padding: 12px; position: relative; overflow: hidden; outline: 1px solid var(--ma-line-200); }
+  .phone .bottom-nav { position: static; border-radius: 0 0 18px 18px; }
+  .demo-shell { display: grid; grid-template-columns: 256px 72px minmax(0, 1fr); gap: 16px; align-items: start; background: var(--ma-paper-3); padding: 16px; border-radius: 28px; }
+  .demo-shell .sidebar { position: static; height: auto; }
+  .grid-demo { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+  .grid-demo span { height: 48px; background: var(--ma-chart-1-fill); border-radius: 8px; display: grid; place-items: center; font: 12px var(--ma-font-ui); color: var(--ma-brand-primary-hover); }
+  .grid-demo.m { grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 358px; }
+  code { font: 500 13px/1.4 var(--ma-font-ui); background: var(--ma-paper-3); padding: 2px 6px; border-radius: 6px; }
+  @media (max-width: 900px) { .states { grid-template-columns: 1fr 1fr; } .states .h { display: none; } .demo-shell { grid-template-columns: minmax(0, 1fr); } .demo-shell .sidebar.is-collapsed { display: none; } }
+  @media (max-width: 767px) { .ds { padding: 20px 16px 64px; } .ds header { flex-direction: column; align-items: flex-start; gap: 16px; } .ds-nav a { min-height: 44px; } .ty-row { grid-template-columns: minmax(0, 1fr); gap: 4px; } .grid-demo span, .icons div { font-size: 13px; } .grid-demo { gap: 6px; } .ds .grid > [class*="c-"] { grid-column: 1 / -1; } .phone { padding: 8px; } .demo-shell { padding: 8px; } .ds .grid[style*="1fr 1fr"] { grid-template-columns: minmax(0, 1fr) !important; } .seg button { height: 44px; } .toast .t-act { min-height: 44px; } .switch { min-height: 44px; } .demo-shell .sidebar { display: none; } .demo-shell::before { content: 'Sidebar chỉ hiện từ 1024px; trên điện thoại dùng bottom-nav.'; font: 13px/1.4 var(--ma-font-ui); color: var(--ma-text-secondary); } }
+</style>
+</head>
+<body>
+<div class="ds">
+  <header class="spread" style="align-items:flex-end">
+    <div>
+      <div class="row" style="gap:10px;margin-bottom:16px"><span class="logo" aria-hidden="true">M</span><span class="sb-name">MiniApart</span></div>
+      <h1 class="h1" style="font-size:36px">Hệ thiết kế — bản tổng quan</h1>
+      <p class="lead" style="margin-top:8px">Một hướng duy nhất: nền kem ấm, sidebar và thẻ trắng bo 24px tách bằng khoảng trắng, số liệu chữ to thẳng cột, teal cho thương hiệu và dữ liệu chính, amber chỉ để nhấn dữ liệu cần chú ý. Mọi chữ một font Archivo đủ dấu tiếng Việt.</p>
+    </div>
+    <a class="btn btn-secondary" href="screens/03-dashboard-chu.html">Xem màn khung<svg class="ic-sm" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+  </header>
+  <nav class="ds-nav" aria-label="Mục lục trang">
+    <a href="#mau">Màu</a><a href="#chu">Chữ</a><a href="#khung">Bố cục</a><a href="#icon">Icon</a><a href="#nut">Nút</a><a href="#form">Biểu mẫu</a><a href="#trangthai">Tag · chip</a><a href="#the">Card · KPI</a><a href="#bieudo">Biểu đồ</a><a href="#bang">Bảng</a><a href="#dieuhuong">Điều hướng</a><a href="#phanhoi">Phản hồi</a>
+  </nav>
+
+  <!-- ===== MÀU ===== -->
+  <h2 class="sec" id="mau">Màu</h2>
+  <p class="lead">Số đo tương phản là tỷ lệ WCAG 2.x đo bằng <code>tools/contrast.py</code>. Chữ thường ≥ 4,5:1; viền điều khiển và đồ hoạ ≥ 3:1.</p>
+  <div class="sw">
+    <div><i style="background:#F4F2EE;box-shadow:inset 0 -1px 0 #E7E3DD"></i><p><b>Nền trang</b>--ma-bg-page · #F4F2EE</p></div>
+    <div><i style="background:#FFFFFF;box-shadow:inset 0 0 0 1px #E7E3DD"></i><p><b>Thẻ</b>--ma-bg-card · #FFFFFF</p></div>
+    <div><i style="background:#F7F5F2"></i><p><b>Sunken</b>--ma-bg-sunken · #F7F5F2</p></div>
+    <div><i style="background:#EFECE7"></i><p><b>Neutral tint</b>--ma-paper-3 · #EFECE7</p></div>
+    <div><i style="background:#1C1B19"></i><p><b>Mực chính</b>--ma-text-primary · 17,21:1</p></div>
+    <div><i style="background:#57534E"></i><p><b>Mực phụ</b>--ma-text-secondary · 7,63:1</p></div>
+    <div><i style="background:#6B655F"></i><p><b>Mực mờ</b>--ma-text-muted · 5,75:1 (5,14 trên nền)</p></div>
+    <div><i style="background:#8E8880"></i><p><b>Viền ô nhập</b>--ma-border-strong · 3,51:1</p></div>
+    <div><i style="background:#E7E3DD"></i><p><b>Kẻ hàng</b>--ma-border-default</p></div>
+    <div><i style="background:#0F766E"></i><p><b>Brand teal</b>--ma-brand-primary · chữ trắng 5,47:1</p></div>
+    <div><i style="background:#115E59"></i><p><b>Brand hover</b>--ma-brand-primary-hover · 7,58:1</p></div>
+    <div><i style="background:#E6F2F0"></i><p><b>Brand tint</b>--ma-brand-accent-light</p></div>
+    <div><i style="background:#D97706"></i><p><b>Amber dữ liệu</b>--ma-accent-warm · đồ hoạ 3,19:1</p></div>
+    <div><i style="background:#92400E"></i><p><b>Amber chữ</b>--ma-accent-warm-text · 7,09:1</p></div>
+    <div><i style="background:#FDF1DC"></i><p><b>Amber tint</b>--ma-accent-warm-tint</p></div>
+    <div><i style="background:#0D9488"></i><p><b>Chart 1</b>--ma-chart-1 · 3,74:1</p></div>
+    <div><i style="background:#E7F5EC"></i><p><b>Success</b>chữ #166534 · 6,34:1</p></div>
+    <div><i style="background:#FDF1DC"></i><p><b>Warning</b>chữ #92400E · 6,34:1</p></div>
+    <div><i style="background:#FDECEA"></i><p><b>Danger</b>chữ #B42318 · 5,75:1</p></div>
+    <div><i style="background:#EAF0FC"></i><p><b>Info</b>chữ #1E4FC2 · 6,22:1</p></div>
+  </div>
+
+  <!-- ===== CHỮ ===== -->
+  <h2 class="sec" id="chu">Chữ</h2>
+  <p class="lead">Archivo (OFL 1.1), 4 độ đậm 400/500/600/700, hai subset latin + vietnamese đóng gói cục bộ. Mọi số dùng <code>tabular-nums</code>. Không còn chữ mono và chữ IN HOA giãn cách.</p>
+  <section class="card">
+    <div class="ty-row"><span class="t-meta">Số KPI · 600 44/1.05</span><span style="font:var(--ma-text-hero);letter-spacing:-0.02em">173.450.000 ₫</span></div>
+    <div class="ty-row"><span class="t-meta">Tiêu đề màn · 600 28/1.2</span><span class="h1">Hợp đồng sắp hết hạn</span></div>
+    <div class="ty-row"><span class="t-meta">Tiêu đề thẻ · 600 20/1.3</span><span class="h2">Nợ quá hạn nhiều nhất</span></div>
+    <div class="ty-row"><span class="t-meta">Thân · 400 15/1.55</span><span>Ăn ở tầng ba, phòng ở tầng bốn — ằẳẵặ ơờởỡợ ưừửữự đĐ, giá 1.888.000 ₫, ngày 05/12/2026.</span></div>
+    <div class="ty-row"><span class="t-meta">Thân nhỏ · 400 14/1.5</span><span class="t-sm">Kỳ 11/2026 · chốt số ngày 25/11/2026 · Nguyễn Thị Hường, Đỗ Mạnh Dũng</span></div>
+    <div class="ty-row"><span class="t-meta">Chú thích · 400 13/1.45</span><span class="t-meta">Cập nhật 01:29 · trễ 139 ngày</span></div>
+    <div class="ty-row"><span class="t-meta">Ô chỉ số · 600 40</span><span style="font:var(--ma-text-meter)">1.183,5 kWh</span></div>
+    <div class="ty-row" style="border:0"><span class="t-meta">Số thẳng cột</span><span style="display:grid;grid-template-columns:auto;justify-items:end;width:max-content;gap:2px"><span>17.676.000 ₫</span><span>1.111.111 ₫</span><span>364.800 ₫</span></span></div>
+  </section>
+
+  <!-- ===== KHUNG ===== -->
+  <h2 class="sec" id="khung">Khoảng cách · bo góc · bóng · lưới</h2>
+  <div class="grid">
+    <section class="card c-6"><h3 class="h3">Khoảng cách bậc 4/8</h3><div class="box-demo" style="margin-top:16px">
+      <div style="width:4px;height:4px"></div><div style="width:8px;height:8px"></div><div style="width:12px;height:12px"></div><div style="width:16px;height:16px"></div><div style="width:20px;height:20px"></div><div style="width:24px;height:24px"></div><div style="width:32px;height:32px"></div><div style="width:40px;height:40px"></div><div style="width:48px;height:48px"></div></div>
+      <p class="t-meta" style="margin-top:12px">--ma-space-1…9 = 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 px. Khe lưới 16, đệm thẻ 24.</p></section>
+    <section class="card c-6"><h3 class="h3">Bo góc</h3><div class="row-wrap" style="margin-top:16px;gap:12px">
+      <span style="width:56px;height:56px;border-radius:8px;background:var(--ma-paper-3);display:grid;place-items:center" class="t-meta">8</span>
+      <span style="width:56px;height:56px;border-radius:12px;background:var(--ma-paper-3);display:grid;place-items:center" class="t-meta">12</span>
+      <span style="width:56px;height:56px;border-radius:16px;background:var(--ma-paper-3);display:grid;place-items:center" class="t-meta">16</span>
+      <span style="width:56px;height:56px;border-radius:24px;background:var(--ma-paper-3);display:grid;place-items:center" class="t-meta">24</span>
+      <span style="width:88px;height:40px;border-radius:999px;background:var(--ma-paper-3);display:grid;place-items:center" class="t-meta">pill</span></div>
+      <p class="t-meta" style="margin-top:12px">Thẻ 24 · khối trong thẻ 16 · nút/ô nhập 12 · tag/chip pill.</p></section>
+    <section class="card c-6"><h3 class="h3">Độ nổi</h3><div class="row-wrap" style="margin-top:16px;gap:16px;background:var(--ma-bg-page);padding:16px;border-radius:16px">
+      <span class="card" style="padding:16px;min-width:120px"><b class="t-sm t-strong">Thẻ nằm yên</b><span class="t-meta">không bóng, không viền</span></span>
+      <span class="card" style="padding:16px;min-width:120px;box-shadow:var(--ma-shadow-md)"><b class="t-sm t-strong">Menu · toast</b><span class="t-meta">--ma-shadow-md</span></span>
+      <span class="card" style="padding:16px;min-width:120px;box-shadow:var(--ma-shadow-lg)"><b class="t-sm t-strong">Modal</b><span class="t-meta">--ma-shadow-lg</span></span></div></section>
+    <section class="card c-6"><h3 class="h3">Focus &amp; chuyển động</h3>
+      <div class="row-wrap" style="margin-top:16px;gap:12px"><button class="btn btn-secondary is-focus">Vòng focus 2px teal, cách 2px</button></div>
+      <p class="t-meta" style="margin-top:12px">Bấm 120ms · hover 160ms · mở menu/modal 220ms, đóng 160ms · easing <code>cubic-bezier(.23,1,.32,1)</code>. <code>prefers-reduced-motion</code>: bỏ dịch chuyển, chỉ giữ đổi màu/độ mờ ≤120ms.</p></section>
+    <section class="card c-12"><h3 class="h3">Lưới</h3>
+      <p class="t-meta" style="margin:6px 0 12px">Desktop 1440: lề 16 · sidebar 256 · khe 16 · vùng nội dung 1136 = 12 cột × 80 + 11 × 16. Thu gọn sidebar 72px ở 1024–1279. Mobile: 4 cột, lề 16, khe 12. Breakpoint: 390 · 768 · 1024 · 1280 · 1440.</p>
+      <div class="grid-demo"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span></div>
+      <div class="grid-demo m" style="margin-top:12px"><span>1</span><span>2</span><span>3</span><span>4</span></div></section>
+  </div>
+
+  <!-- ===== ICON ===== -->
+  <h2 class="sec" id="icon">Icon</h2>
+  <p class="lead">Một bộ tự vẽ, lưới 24, nét 1,75, đầu tròn. Mỗi mục menu một icon riêng, đúng nghĩa. Nút chỉ có icon luôn có <code>aria-label</code>.</p>
+  <div class="card"><div class="icons" id="iconGrid"></div></div>
+
+  <!-- ===== NÚT ===== -->
+  <h2 class="sec" id="nut">Nút</h2>
+  <p class="lead">Mỗi màn chỉ một nút chính (teal). Desktop cao 40, nút trong bảng 36, mobile 48. Trạng thái tắt vẫn đọc được và kèm lý do.</p>
+  <section class="card">
+    <div class="states">
+      <span></span><span class="h">Mặc định</span><span class="h">Hover</span><span class="h">Focus</span><span class="h">Đang bấm</span><span class="h">Tắt</span><span class="h">Đang tải</span><span class="h">Lỗi</span>
+      <span class="t-strong t-sm">Chính</span><button class="btn btn-primary">Lưu</button><button class="btn btn-primary is-hover">Lưu</button><button class="btn btn-primary is-focus">Lưu</button><button class="btn btn-primary is-active">Lưu</button><button class="btn btn-primary" aria-disabled="true">Lưu</button><button class="btn btn-primary is-loading" aria-label="Đang lưu">Lưu</button><span class="error-text"><svg class="ic-sm" aria-hidden="true"><use href="#i-alert"/></svg>Chưa lưu được, thử lại</span>
+      <span class="t-strong t-sm">Phụ</span><button class="btn btn-secondary">Xuất Excel</button><button class="btn btn-secondary is-hover">Xuất Excel</button><button class="btn btn-secondary is-focus">Xuất Excel</button><button class="btn btn-secondary is-active">Xuất Excel</button><button class="btn btn-secondary" disabled>Xuất Excel</button><button class="btn btn-secondary is-loading" aria-label="Đang xuất">Xuất Excel</button><span class="t-meta">—</span>
+      <span class="t-strong t-sm">Ghost</span><button class="btn btn-ghost">Xem</button><button class="btn btn-ghost is-hover">Xem</button><button class="btn btn-ghost is-focus">Xem</button><button class="btn btn-ghost is-active">Xem</button><button class="btn btn-ghost" disabled>Xem</button><button class="btn btn-ghost is-loading" aria-label="Đang mở">Xem</button><span class="t-meta">—</span>
+      <span class="t-strong t-sm">Nguy hiểm</span><button class="btn btn-danger">Khoá</button><button class="btn btn-danger is-hover">Khoá</button><button class="btn btn-danger is-focus">Khoá</button><button class="btn btn-danger is-active">Khoá</button><button class="btn btn-danger" disabled>Khoá</button><button class="btn btn-danger is-loading" aria-label="Đang khoá">Khoá</button><span class="t-meta">—</span>
+    </div>
+    <div class="row-wrap" style="margin-top:20px;gap:12px"><button class="btn btn-primary btn-sm">Cỡ 36</button><button class="btn btn-primary">Cỡ 40</button><button class="btn btn-primary btn-touch">Cỡ 48 mobile</button>
+      <button class="icon-btn" aria-label="Thêm thao tác"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button><button class="icon-btn boxed" aria-label="Thông báo"><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg></button><button class="icon-btn touch boxed" aria-label="Gọi điện"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></button>
+      <span class="t-meta">Nút tắt: dùng <code>aria-disabled</code> để vẫn focus được và đọc lý do ngay bên cạnh.</span></div>
+  </section>
+
+  <!-- ===== BIỂU MẪU ===== -->
+  <h2 class="sec" id="form">Biểu mẫu</h2>
+  <div class="grid">
+    <section class="card c-7"><h3 class="h3" style="margin-bottom:16px">Input · Select</h3>
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:16px">
+        <div class="field"><label class="label" for="f1">Mặc định</label><input class="input" id="f1" placeholder="Ví dụ: Nguyễn Văn An"></div>
+        <div class="field"><label class="label" for="f2">Hover</label><input class="input is-hover" id="f2" value="Trần Quang Huy"></div>
+        <div class="field"><label class="label" for="f3">Focus</label><input class="input is-focus" id="f3" value="0999 000 011"></div>
+        <div class="field"><label class="label" for="f4">Tắt</label><input class="input" id="f4" value="An Nhiên Residence" disabled><p class="help">Toà được giao bởi Quản trị hệ thống</p></div>
+        <div class="field"><label class="label" for="f5">Lỗi</label><input class="input" id="f5" value="3.200.00" aria-invalid="true" aria-describedby="f5e"><p class="error-text" id="f5e"><svg class="ic-sm" aria-hidden="true"><use href="#i-alert"/></svg>Giá thuê phải là số tròn nghìn, ví dụ 3.200.000</p></div>
+        <div class="field"><label class="label" for="f6">Select</label><select class="select" id="f6"><option>Kỳ 11/2026 · đang mở</option><option>Kỳ 10/2026 · đã chốt</option></select></div>
+        <div class="field" style="grid-column:1/-1"><label class="label" for="f7">Có icon · tìm kiếm</label><div class="input-wrap"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><input class="input" id="f7" type="search" placeholder="Tìm phòng, người thuê…"></div></div>
+      </div></section>
+    <section class="card c-5"><h3 class="h3" style="margin-bottom:16px">MeterInput (điện thoại)</h3>
+      <div class="field"><label class="label" for="m1">Chỉ số điện mới · phòng 302</label><div class="meter-wrap"><input class="meter-input" id="m1" inputmode="decimal" value="515"><span class="unit-tag">kWh</span></div><p class="help">Kỳ trước 412 · tiêu thụ <b class="t-strong" style="color:var(--ma-text-primary)">103 kWh</b> (TB 103)</p></div>
+      <div class="field" style="margin-top:16px"><label class="label" for="m2">Bất thường</label><div class="meter-wrap"><input class="meter-input" id="m2" inputmode="decimal" value="590" aria-invalid="true" aria-describedby="m2e"><span class="unit-tag">kWh</span></div><p class="error-text" id="m2e"><svg class="ic-sm" aria-hidden="true"><use href="#i-alert"/></svg>Tiêu thụ 174 kWh, gấp 1,7 lần trung bình</p></div>
+      <div class="keypad" style="margin-top:16px;background:var(--ma-bg-sunken);padding:8px;border-radius:16px"><button class="key">1</button><button class="key">2</button><button class="key">3</button><button class="key fn" aria-label="Dấu thập phân">,</button><button class="key">0</button><button class="key fn" aria-label="Xoá một số"><svg class="ic" aria-hidden="true"><use href="#i-backspace"/></svg></button></div></section>
+    <section class="card c-12"><h3 class="h3" style="margin-bottom:8px">Checkbox · Switch</h3>
+      <div class="row-wrap" style="gap:24px">
+        <label class="check"><input type="checkbox"> Chưa chọn</label><label class="check"><input type="checkbox" checked> Đã chọn</label><label class="check"><input type="checkbox" class="ind"> Chọn một phần</label><label class="check"><input type="checkbox" disabled> Tắt</label>
+        <label class="switch"><input type="checkbox" role="switch"> Gửi nhắc nợ tự động</label><label class="switch"><input type="checkbox" role="switch" checked> Bắt buộc ảnh công tơ</label><label class="switch"><input type="checkbox" role="switch" disabled> Tắt</label>
+      </div></section>
+  </div>
+
+  <!-- ===== TRẠNG THÁI ===== -->
+  <h2 class="sec" id="trangthai">StatusTag · Chip</h2>
+  <section class="card">
+    <div class="row-wrap" style="gap:10px">
+      <span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hiệu lực</span>
+      <span class="tag tag-warning"><svg class="ic-sm" aria-hidden="true"><use href="#i-clock"/></svg>Sắp hết hạn</span>
+      <span class="tag tag-danger"><svg class="ic-sm" aria-hidden="true"><use href="#i-alert"/></svg>Quá hạn</span>
+      <span class="tag tag-info"><svg class="ic-sm" aria-hidden="true"><use href="#i-edit"/></svg>Chờ ký</span>
+      <span class="tag tag-neutral"><svg class="ic-sm" aria-hidden="true"><use href="#i-x-circle"/></svg>Đã thanh lý</span>
+      <span class="tag tag-brand"><svg class="ic-sm" aria-hidden="true"><use href="#i-door"/></svg>Còn trống</span>
+    </div>
+    <p class="t-meta" style="margin:12px 0 20px">Luôn có icon + chữ; không bao giờ chỉ dùng màu. Chữ thường, không IN HOA, không mono.</p>
+    <div class="row-wrap" role="group" aria-label="Chip lọc mẫu" data-toggle="chips">
+      <button class="chip" aria-pressed="true">Tất cả <span class="n">11</span></button>
+      <button class="chip" aria-pressed="false">Hiệu lực <span class="n">9</span></button>
+      <button class="chip is-hover" aria-pressed="false">Hover</button>
+      <button class="chip is-focus" aria-pressed="false">Focus</button>
+      <button class="chip" disabled>Tắt</button>
+      <span class="chip warm"><svg class="ic-sm" aria-hidden="true"><use href="#i-wrench"/></svg>12 sự cố đang mở</span>
+    </div>
+  </section>
+
+  <!-- ===== THẺ ===== -->
+  <h2 class="sec" id="the">Card · KPI · Gauge · thẻ nhỏ</h2>
+  <div class="grid">
+    <section class="card c-4"><h3 class="h2">Thực thu</h3><p class="kpi-value">376.130.000<span class="unit">₫</span></p><p class="kpi-desc">Đã thu <b>66,8%</b> trên 563.147.000 ₫ phát hành.</p><div class="card-foot"><a class="link-more" href="#">Báo cáo doanh thu <svg class="ic-sm" aria-hidden="true"><use href="#i-arrow-right"/></svg></a></div></section>
+    <section class="card c-4" style="align-items:center;text-align:center"><h3 class="h2">Tỷ lệ lấp đầy</h3><div class="gauge" role="img" aria-label="Lấp đầy 75%"><svg viewBox="0 0 240 132" aria-hidden="true"><path d="M20 120 A100 100 0 0 1 220 120" fill="none" stroke="var(--ma-chart-track)" stroke-width="18" stroke-linecap="round"/><path d="M20 120 A100 100 0 0 1 220 120" fill="none" stroke="var(--ma-chart-1)" stroke-width="18" stroke-linecap="round" stroke-dasharray="235.6 400"/></svg><div class="gauge-value">75%<small>27/36 phòng</small></div></div></section>
+    <div class="c-4 minis" style="grid-template-columns:1fr 1fr">
+      <section class="card" style="padding:20px"><h3 class="mini-label">Toà thu nhiều nhất</h3><p class="mini-value">Bình Minh</p><p class="mini-sub">137.972.000 ₫</p></section>
+      <section class="card" style="padding:20px"><h3 class="mini-label">Đang tải</h3><div class="skel skel-kpi" style="margin-top:24px;width:80%;height:30px"></div><div class="skel skel-line" style="margin-top:8px"></div></section>
+    </div>
+  </div>
+
+  <!-- ===== BIỂU ĐỒ ===== -->
+  <h2 class="sec" id="bieudo">Biểu đồ (SVG tự dựng, không thư viện)</h2>
+  <div class="grid">
+    <section class="card c-5"><div class="card-head"><h3 class="h2">Vùng</h3><span class="t-meta">thực thu 07–10/2026</span></div>
+      <div class="chart-scroll" tabindex="0" role="region" aria-label="Biểu đồ, cuộn ngang trên điện thoại"><svg class="chart" viewBox="0 0 420 180" role="img" aria-label="Biểu đồ vùng mẫu">
+        <defs><linearGradient id="fadeA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0D9488" stop-opacity="0.22"/><stop offset="1" stop-color="#0D9488" stop-opacity="0"/></linearGradient></defs>
+        <line class="grid-line" x1="36" x2="416" y1="10" y2="10"/><line class="grid-line" x1="36" x2="416" y1="80" y2="80"/><line class="base-line" x1="36" x2="416" y1="150" y2="150"/>
+        <text x="0" y="14">100 tr</text><text x="6" y="84">50 tr</text><text x="24" y="154">0</text>
+        <path d="M36 150 L131 118 L226 18 L321 18 L416 18 L416 150 Z" fill="url(#fadeA)"/><path d="M36 150 L131 118 L226 18 L321 18 L416 18" fill="none" stroke="var(--ma-chart-1)" stroke-width="2.5" stroke-linejoin="round"/>
+        <text x="36" y="172" text-anchor="middle">06</text><text x="131" y="172" text-anchor="middle">07</text><text x="226" y="172" text-anchor="middle">08</text><text x="321" y="172" text-anchor="middle">09</text><text x="412" y="172" text-anchor="end">10</text>
+      </svg></div></section>
+    <section class="card c-4"><div class="card-head"><h3 class="h2">Cột</h3><span class="t-meta">điện theo kỳ, kWh</span></div>
+      <div class="chart-scroll" tabindex="0" role="region" aria-label="Biểu đồ, cuộn ngang trên điện thoại"><svg class="chart" viewBox="0 0 320 180" role="img" aria-label="Biểu đồ cột mẫu: 3.288 kWh mỗi kỳ">
+        <line class="grid-line" x1="40" x2="316" y1="10" y2="10"/><line class="grid-line" x1="40" x2="316" y1="80" y2="80"/><line class="base-line" x1="40" x2="316" y1="150" y2="150"/>
+        <text x="0" y="14">4.000</text><text x="0" y="84">2.000</text><text x="28" y="154">0</text>
+        <rect x="56" y="65" width="36" height="85" rx="4" fill="var(--ma-chart-3)"/><rect x="108" y="65" width="36" height="85" rx="4" fill="var(--ma-chart-3)"/><rect x="160" y="65" width="36" height="85" rx="4" fill="var(--ma-chart-3)"/><rect x="212" y="65" width="36" height="85" rx="4" fill="var(--ma-chart-3)"/><rect x="264" y="65" width="36" height="85" rx="4" fill="var(--ma-chart-1)"/>
+        <text x="74" y="172" text-anchor="middle">07</text><text x="126" y="172" text-anchor="middle">08</text><text x="178" y="172" text-anchor="middle">09</text><text x="230" y="172" text-anchor="middle">10</text><text x="282" y="172" text-anchor="middle">11</text>
+      </svg></div></section>
+    <section class="card c-3"><div class="card-head"><h3 class="h2">Thanh ngang</h3></div>
+      <div class="hbars"><div class="hbar"><span class="hbar-label">Mộc Lan</span><span class="hbar-value">1.246</span><div class="hbar-track"><div class="hbar-fill" style="width:100%"></div></div></div><div class="hbar"><span class="hbar-label">Bình Minh</span><span class="hbar-value">1.036</span><div class="hbar-track"><div class="hbar-fill" style="width:83%"></div></div></div><div class="hbar"><span class="hbar-label">An Nhiên</span><span class="hbar-value">1.006</span><div class="hbar-track"><div class="hbar-fill warm" style="width:81%"></div></div></div></div>
+      <p class="t-meta" style="margin-top:12px">Màu phẳng thay gradient của mẫu; số in kèm.</p></section>
+  </div>
+
+  <!-- ===== BẢNG ===== -->
+  <h2 class="sec" id="bang">Table · List-row</h2>
+  <section class="card">
+    <div class="table-toolbar"><label class="input-wrap" style="width:260px"><span class="sr-only">Tìm</span><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><input class="input" type="search" placeholder="Tìm phòng, người thuê…"></label>
+      <div class="row-wrap" role="group" aria-label="Lọc" data-toggle="chips"><button class="chip" aria-pressed="true">Tất cả <span class="n">4</span></button><button class="chip" aria-pressed="false">Quá hạn <span class="n">2</span></button></div></div>
+    <div class="table-wrap"><table class="table" id="demoTable">
+      <thead><tr><th style="width:44px"><label class="check"><input type="checkbox" class="ind" aria-label="Chọn tất cả"></label></th><th aria-sort="ascending"><button class="th-sort" data-sort>Phòng<svg class="ic-sm" aria-hidden="true"><use href="#i-sort-up"/></svg></button></th><th><button class="th-sort" data-sort>Người thuê</button></th><th class="num"><button class="th-sort" data-sort>Còn nợ</button></th><th>Trạng thái</th><th class="num"><span class="sr-only">Thao tác</span></th></tr></thead>
+      <tbody>
+        <tr><td><label class="check"><input type="checkbox" aria-label="Chọn 101"></label></td><td class="td-main">101</td><td><div class="td-person"><span class="avatar sm h1" aria-hidden="true">QH</span>Trần Quang Huy</div></td><td class="num t-money">1.895.000 ₫</td><td><span class="tag tag-danger"><svg class="ic-sm" aria-hidden="true"><use href="#i-alert"/></svg>Quá hạn</span></td><td class="num"><button class="icon-btn sm" aria-label="Thao tác cho phòng 101"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></td></tr>
+        <tr class="is-hover"><td><label class="check"><input type="checkbox" aria-label="Chọn 102"></label></td><td class="td-main">102</td><td><div class="td-person"><span class="avatar sm h2" aria-hidden="true">TT</span>Lê Thu Trang <span class="t-meta">(hover)</span></div></td><td class="num t-money">0 ₫</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Đã trả</span></td><td class="num"><button class="icon-btn sm" aria-label="Thao tác cho phòng 102"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></td></tr>
+        <tr class="is-selected"><td><label class="check"><input type="checkbox" checked aria-label="Chọn 201"></label></td><td class="td-main">201</td><td><div class="td-person"><span class="avatar sm h3" aria-hidden="true">NH</span>Hoàng Ngọc Hà <span class="t-meta">(đã chọn)</span></div></td><td class="num t-money">3.476.000 ₫</td><td><span class="tag tag-danger"><svg class="ic-sm" aria-hidden="true"><use href="#i-alert"/></svg>Quá hạn</span></td><td class="num"><button class="icon-btn sm" aria-label="Thao tác cho phòng 201"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></td></tr>
+        <tr><td><label class="check"><input type="checkbox" aria-label="Chọn 202"></label></td><td class="td-main">202</td><td><div class="td-person"><span class="avatar sm h4" aria-hidden="true">TA</span>Vũ Tuấn Anh</div></td><td class="num t-3">—</td><td><span class="tag tag-neutral"><svg class="ic-sm" aria-hidden="true"><use href="#i-clock"/></svg>Chưa phát hành</span></td><td class="num"><button class="icon-btn sm" aria-label="Thao tác cho phòng 202"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></td></tr>
+      </tbody></table></div>
+    <div class="pager"><span>1–4 trong 60</span><span class="push"></span><button class="pg" aria-label="Trang trước"><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-left"/></svg></button><button class="pg" aria-current="page">1</button><button class="pg">2</button><button class="pg">3</button><button class="pg" aria-label="Trang sau"><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-right"/></svg></button></div>
+  </section>
+  <section class="card" style="max-width:560px">
+    <h3 class="h2" style="margin-bottom:12px">List-row có avatar</h3>
+    <ul class="list">
+      <li class="list-row"><span class="avatar h1" aria-hidden="true">QH</span><div class="body"><div class="name">Nguyễn Quang Huy</div><div class="sub">Bình Minh Riverside · 201</div></div><div class="end"><div class="t-money">17.676.000 ₫</div><div class="t-meta">trễ 139 ngày</div></div></li>
+      <li class="list-row is-selected"><span class="avatar h2" aria-hidden="true">TA</span><div class="body"><div class="name">Hoàng Tuấn Anh (đã chọn)</div><div class="sub">Bình Minh Riverside · 302</div></div><div class="acts"><button class="icon-btn sm" aria-label="Gọi"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></button><button class="icon-btn sm" aria-label="Nhắn nhắc nợ"><svg class="ic" aria-hidden="true"><use href="#i-message"/></svg></button><span class="sep" aria-hidden="true"></span><button class="icon-btn sm" aria-label="Thêm"><svg class="ic" aria-hidden="true"><use href="#i-more-v"/></svg></button></div></li>
+      <li class="list-row is-hover"><span class="avatar h5" aria-hidden="true">NQ</span><div class="body"><div class="name">Lê Nhật Quang (hover)</div><div class="sub">Mộc Lan Home · 201</div></div><div class="end"><div class="t-money">16.168.000 ₫</div></div></li>
+    </ul>
+  </section>
+
+  <!-- ===== ĐIỀU HƯỚNG ===== -->
+  <h2 class="sec" id="dieuhuong">Sidebar · TopBar · Breadcrumb · Tabs · Bottom-nav</h2>
+  <div class="demo-shell">
+    <aside class="sidebar" data-role="CHU" data-active="/bao-cao/tieu-thu" data-user="Nguyễn Hoàng Phúc|Chủ sở hữu"></aside>
+    <aside class="sidebar is-collapsed" data-role="QUAN_LY" data-active="/ghi-chi-so" data-user="Vũ Thu Hà|Quản lý"></aside>
+    <div class="stack">
+      <div class="card" style="padding:16px 20px">
+        <nav class="crumbs" aria-label="Vị trí"><a href="#">Báo cáo</a><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-right"/></svg><span aria-current="page">Tiêu thụ điện nước</span></nav>
+        <div class="topbar" style="min-height:auto"><div class="title-block"><div class="h1">Tiêu thụ điện nước</div><p class="sub">3 toà · kỳ 07–11/2026</p></div>
+          <div class="topbar-actions"><label class="input-wrap" style="width:220px"><span class="sr-only">Tìm</span><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><input class="input pill" placeholder="Tìm…"></label><button class="icon-btn boxed badge-dot" data-count="9" aria-label="Thông báo, 9 chưa đọc"><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg></button></div></div>
+      </div>
+      <div class="card" style="padding:12px 20px 20px">
+        <div class="tabs" role="tablist" data-toggle="tabs"><button class="tab" role="tab" aria-selected="true">Điện <span class="n">3.288</span></button><button class="tab" role="tab" aria-selected="false">Nước <span class="n">178</span></button><button class="tab is-hover" role="tab" aria-selected="false">Khu vực chung</button></div>
+        <div class="row" style="margin-top:16px"><div class="seg" role="group" aria-label="Khoảng" data-toggle="seg"><button aria-pressed="false">Tháng này</button><button aria-pressed="true">6 tháng</button><button aria-pressed="false">12 tháng</button></div></div>
+      </div>
+      <div class="phone"><p class="t-meta" style="padding:4px 4px 12px">Bottom-nav mobile, tối đa 5 mục (Người thuê)</p><nav class="bottom-nav" data-role="NGUOI_THUE" data-active="/tieu-thu"></nav></div>
+      <div class="phone"><p class="t-meta" style="padding:4px 4px 12px">Thợ — 4 mục, có số việc</p><nav class="bottom-nav" data-role="THO" data-active="/viec-cua-toi"></nav></div>
+    </div>
+  </div>
+
+  <!-- ===== PHẢN HỒI ===== -->
+  <h2 class="sec" id="phanhoi">Modal · Toast · Banner · trạng thái rỗng / tải / lỗi / không quyền</h2>
+  <div class="grid">
+    <div class="c-6"><div class="scrim inline"><div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="mt" aria-describedby="md">
+      <div class="modal-icon"><svg class="ic-lg" aria-hidden="true"><use href="#i-lock"/></svg></div>
+      <h3 class="h2" id="mt">Khoá tài khoản Vũ Thu Hà?</h3>
+      <p class="t-2" id="md">Người này sẽ không đăng nhập được nữa. Dữ liệu đã ghi vẫn giữ nguyên; có thể mở khoá lại bất cứ lúc nào.</p>
+      <div class="modal-acts"><button class="btn btn-secondary">Huỷ</button><button class="btn btn-danger">Khoá tài khoản</button></div></div></div></div>
+    <div class="c-6 stack">
+      <div class="toast" role="status"><svg class="ic" aria-hidden="true"><use href="#i-check-circle"/></svg><div><div class="t-strong">Đã lưu chỉ số phòng 302</div><div class="t-sub">Tự chuyển sang phòng 303</div></div><button class="t-act">Hoàn tác</button></div>
+      <div class="toast error" role="alert"><svg class="ic" aria-hidden="true"><use href="#i-x-circle"/></svg><div><div class="t-strong">Mất kết nối, chưa gửi được</div><div class="t-sub">Đã lưu trên máy, sẽ tự gửi khi có sóng</div></div><button class="t-act">Thử lại</button></div>
+      <div class="banner banner-info"><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg><div>Kỳ 11/2026 chốt số ngày <b>25/11/2026</b>. Còn 4 công tơ chưa ghi.</div><a class="b-act t-strong hit" href="#">Ghi ngay</a></div>
+      <div class="banner banner-warning"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg><div>Hợp đồng phòng 303 hết hạn sau <b>11 ngày</b>.</div></div>
+      <div class="banner banner-danger"><svg class="ic" aria-hidden="true"><use href="#i-x-circle"/></svg><div><b>60 hoá đơn quá hạn</b>, tổng 173.450.000 ₫.</div></div>
+      <div class="banner banner-success"><svg class="ic" aria-hidden="true"><use href="#i-check-circle"/></svg><div>Đã chốt kỳ 10/2026 · phát hành 9 hoá đơn.</div></div>
+    </div>
+    <section class="card c-3"><div class="empty"><div class="ill"><svg class="ic-lg" aria-hidden="true"><use href="#i-wrench"/></svg></div><h3 class="h3">Chưa có việc nào</h3><p class="t-sm">Khi quản lý giao việc sửa chữa, việc sẽ hiện ở đây.</p></div></section>
+    <section class="card c-3" aria-busy="true"><h3 class="h3">Đang tải</h3><div class="skel skel-kpi" style="margin-top:16px"></div><div class="skel skel-line" style="margin-top:12px"></div><div class="skel skel-line" style="margin-top:8px;width:70%"></div><div class="skel skel-line" style="margin-top:8px;width:50%"></div></section>
+    <section class="card c-3"><div class="empty"><div class="ill" style="background:var(--ma-urgent-bg);color:var(--ma-urgent)"><svg class="ic-lg" aria-hidden="true"><use href="#i-alert"/></svg></div><h3 class="h3">Không tải được công nợ</h3><p class="t-sm">Số liệu đúng lần cuối lúc 01:29.</p><button class="btn btn-secondary btn-sm" style="margin-top:8px"><svg class="ic-sm" aria-hidden="true"><use href="#i-refresh"/></svg>Thử lại</button></div></section>
+    <section class="card c-3"><div class="empty"><div class="ill"><svg class="ic-lg" aria-hidden="true"><use href="#i-lock"/></svg></div><h3 class="h3">Bạn không có quyền xem trang này</h3><p class="t-sm">Trang dành cho Chủ sở hữu. Liên hệ Quản trị hệ thống nếu cần.</p><a class="btn btn-ghost btn-sm" href="#" style="margin-top:8px">Về Nhắc việc</a></div></section>
+  </div>
+</div>
+<script src="assets/icons.js"></script>
+<script src="assets/shell.js"></script>
+<script>
+  // Trang xem thử bấm được: chip, tab, segmented, sort, checkbox một phần. Không gọi mạng.
+  document.querySelectorAll('.ind').forEach((c) => (c.indeterminate = true));
+  document.getElementById('iconGrid').innerHTML = Object.keys(window.MA_ICONS).map((k) => `<div><svg aria-hidden="true"><use href="#i-${k}"/></svg>${k}</div>`).join('');
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    const g = b.closest('[data-toggle]');
+    if (g && g.dataset.toggle === 'chips' && b.classList.contains('chip')) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true');
+    if (g && g.dataset.toggle === 'tabs') g.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', t === b));
+    if (g && g.dataset.toggle === 'seg') g.querySelectorAll('button').forEach((t) => t.setAttribute('aria-pressed', t === b));
+    if (b.hasAttribute('data-sort')) {
+      const th = b.closest('th'), asc = th.getAttribute('aria-sort') !== 'ascending';
+      th.closest('tr').querySelectorAll('th').forEach((x) => { x.removeAttribute('aria-sort'); x.querySelector('svg')?.remove(); });
+      th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
+      b.insertAdjacentHTML('beforeend', `<svg class="ic-sm" aria-hidden="true"><use href="#i-sort-${asc ? 'up' : 'down'}"/></svg>`);
+    }
+  });
+</script>
+</body>
+</html>

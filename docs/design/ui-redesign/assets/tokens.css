@@ -1,0 +1,254 @@
+/* ==========================================================================
+   MiniApart — token đề xuất (bản overlay)
+   Dùng ĐÚNG tên --ma-* đang có trong frontend/src/tokens/*.css, chỉ đổi giá trị,
+   để sau khi Chủ tịch duyệt có thể thay bằng MỘT file overlay. Tên mới chỉ thêm
+   khi app chưa có (đánh dấu "MỚI"). Bảng ánh xạ đầy đủ: 02-he-thong-thiet-ke.md.
+   Giữ nguyên 2 giá trị test repo đang khoá: --ma-paper-1 = #F9F7F6, --ma-font-ui chứa Archivo.
+   ========================================================================== */
+
+/* Font: Archivo (OFL 1.1) đóng gói cục bộ, tách 2 subset latin + vietnamese.
+   Bản woff2 hiện có trong repo THIẾU glyph tiếng Việt (ă ơ ư đ ₫, dấu nặng) nên đang rơi về font hệ thống. */
+@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/archivo-latin-400.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/archivo-latin-500.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/archivo-latin-600.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/archivo-latin-700.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/archivo-vietnamese-400.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }
+@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/archivo-vietnamese-500.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }
+@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/archivo-vietnamese-600.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }
+@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/archivo-vietnamese-700.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }
+
+:root {
+  /* ---------- Nền (colors.css) ---------- */
+  --ma-paper-0: #FFFFFF;
+  --ma-paper-1: #F9F7F6;              /* test repo khoá giá trị này; dùng cho hover hàng */
+  --ma-paper-2: #F7F5F2;              /* sunken: giếng trong thẻ, ô nhập */
+  --ma-paper-3: #EFECE7;              /* neutral tint: chip, nav hover */
+
+  --ma-bg-page: #F4F2EE;              /* nền kem ấm ngoài cùng (theo mẫu) */
+  --ma-bg-card: #FFFFFF;
+  --ma-bg-card-hover: #FFFFFF;
+  --ma-bg-nav: #FFFFFF;               /* sidebar là một thẻ trắng nổi trên nền kem */
+  --ma-bg-sunken: #F7F5F2;
+  --ma-bg-nav-active: #E6F2F0;
+  --ma-bg-inverse: #1C1B19;
+  --ma-bg-row-selected: #EEF6F4;      /* MỚI: hàng được chọn (bảng, danh sách) */
+
+  /* Không dùng kính mờ: giữ tên cho component cũ, giá trị đặc */
+  --ma-bg-glass: #FFFFFF;
+  --ma-bg-glass-subtle: #F7F5F2;
+  --ma-bg-glass-overlay: rgba(28, 27, 25, 0.45);
+  --ma-backdrop-blur: 0px;
+  --ma-backdrop-blur-sm: 0px;
+  /* Không dùng gradient trang trí: giữ tên, giá trị phẳng */
+  --ma-gradient-subtle: #F4F2EE;
+  --ma-gradient-brand: #0F766E;
+
+  /* ---------- Thương hiệu ---------- */
+  --ma-brand-primary: #0F766E;        /* trước là #0F172A (navy) — nút chính nay là teal */
+  --ma-brand-primary-hover: #115E59;
+  --ma-brand-accent: #0F766E;
+  --ma-brand-accent-hover: #115E59;
+  --ma-brand-accent-light: #E6F2F0;
+  --ma-brand-accent-surface: #E6F2F0;
+  --ma-brand-blue: #1E4FC2;           /* chỉ dùng cho trạng thái "thông tin" */
+  --ma-brand-blue-hover: #1A43A6;
+  --ma-brand-blue-light: #EAF0FC;
+  --ma-accent-warm: #D97706;          /* MỚI: amber — điểm nhấn dữ liệu, tiết chế */
+  --ma-accent-warm-text: #92400E;     /* MỚI: amber dùng làm chữ (7.09:1 trên trắng) */
+  --ma-accent-warm-tint: #FDF1DC;     /* MỚI */
+
+  /* ---------- Mực ---------- */
+  --ma-ink-900: #1C1B19;
+  --ma-ink-600: #57534E;
+  --ma-ink-500: #6B655F;
+  --ma-ink-400: #8E8880;              /* chỉ cho viền điều khiển/đồ hoạ, KHÔNG cho chữ */
+  --ma-ink-300: #D6D2CB;
+  --ma-ink-screen-title: #1C1B19;
+
+  --ma-text-primary: #1C1B19;         /* 17.21:1 trên trắng */
+  --ma-text-secondary: #57534E;       /* 7.63:1 */
+  --ma-text-muted: #6B655F;           /* 5.75:1 trên trắng, 5.14:1 trên nền kem */
+  --ma-text-disabled: #8E8880;        /* chỉ kèm biểu tượng/lý do, không mang nghĩa một mình */
+  --ma-text-on-inverse: #FFFFFF;
+  --ma-text-secondary-on-inverse: #D6D2CB;
+  --ma-text-link: #0F766E;            /* MỚI */
+
+  /* ---------- Viền ---------- */
+  --ma-line-100: #F1EEE9;
+  --ma-line-200: #E7E3DD;
+  --ma-line-300: #D6D2CB;
+  --ma-line-600: #8E8880;
+  --ma-border-default: #E7E3DD;       /* kẻ hàng trong thẻ; thẻ KHÔNG có viền */
+  --ma-border-subtle: #F1EEE9;
+  --ma-border-dashed: #D6D2CB;
+  --ma-border-strong: #8E8880;        /* viền ô nhập: 3.51:1 (WCAG 1.4.11) */
+  --ma-border-inverse: #3A3834;
+
+  /* ---------- Trạng thái (luôn đi kèm biểu tượng + chữ) ---------- */
+  --ma-red-600: #B42318;   --ma-red-100: #FDECEA;   --ma-red-border: #F6C9C4;
+  --ma-amber-600: #92400E; --ma-amber-500: #D97706; --ma-amber-100: #FDF1DC; --ma-amber-border: #F5D9A8;
+  --ma-green-700: #166534; --ma-green-600: #15803D; --ma-green-100: #E7F5EC; --ma-green-border: #BFE3CB;
+
+  --ma-urgent: var(--ma-red-600);         --ma-urgent-bg: var(--ma-red-100);       --ma-urgent-border: var(--ma-red-border);
+  --ma-waiting: var(--ma-amber-600);      --ma-waiting-border: var(--ma-amber-500);
+  --ma-waiting-bg: var(--ma-amber-100);   --ma-waiting-border-subtle: var(--ma-amber-border);
+  --ma-done: var(--ma-green-600);         --ma-done-bg: var(--ma-green-100);
+  --ma-done-text: var(--ma-green-700);    --ma-done-border: var(--ma-green-border);
+  --ma-vacant: var(--ma-brand-accent);
+
+  --ma-status-urgent: var(--ma-urgent);   --ma-status-urgent-light: var(--ma-urgent-bg);   --ma-status-urgent-border: var(--ma-urgent-border);
+  --ma-status-done: var(--ma-done-text);  --ma-status-done-light: var(--ma-done-bg);       --ma-status-done-border: var(--ma-done-border);
+  --ma-status-error: var(--ma-urgent);
+  --ma-status-warning: var(--ma-waiting); --ma-status-warning-light: var(--ma-waiting-bg); --ma-status-warning-border: var(--ma-waiting-border-subtle);
+  --ma-status-info: #1E4FC2;              --ma-status-info-light: #EAF0FC;                 --ma-status-info-border: #C9D7F5;
+  --ma-status-neutral: #57534E;           --ma-status-neutral-light: #EFECE7;              /* MỚI */
+  --ma-primary-default: var(--ma-brand-primary);
+
+  /* ---------- Dữ liệu biểu đồ (MỚI) ---------- */
+  --ma-chart-1: #0D9488;              /* chuỗi chính: doanh thu, lấp đầy (3.74:1) */
+  --ma-chart-1-fill: rgba(13, 148, 136, 0.14);
+  --ma-chart-2: #D97706;              /* chuỗi chú ý: công nợ, bất thường (3.19:1) */
+  --ma-chart-2-fill: rgba(217, 119, 6, 0.14);
+  --ma-chart-3: #8E8880;              /* so sánh/kỳ trước — 3,51:1 trên card (WCAG 1.4.11), luôn in số kèm */
+  --ma-chart-track: #EFECE7;
+  --ma-chart-grid: #ECE8E2;
+
+  /* ---------- Focus ---------- */
+  --ma-focus-ring: #0F766E;
+  --ma-focus-halo: rgba(15, 118, 110, 0.18);
+  --ma-focus-outline: 2px solid #0F766E;   /* MỚI: dùng với outline-offset 2px */
+
+  /* ---------- Chữ (typography.css) ---------- */
+  --ma-font-ui: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Bỏ chữ mono khỏi nhãn/số/trạng thái: trỏ tên cũ về Archivo, số dùng tabular-nums. */
+  --ma-font-mono: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --ma-text-hero: 600 44px/1.05 var(--ma-font-ui);          /* số KPI lớn */
+  --ma-text-screen-title: 600 28px/1.2 var(--ma-font-ui);
+  --ma-text-block-title: 600 20px/1.3 var(--ma-font-ui);    /* tiêu đề thẻ */
+  --ma-text-task-name: 500 16px/1.4 var(--ma-font-ui);
+  --ma-text-body: 400 15px/1.55 var(--ma-font-ui);
+  --ma-text-body-sm: 400 14px/1.5 var(--ma-font-ui);
+  --ma-text-caption: 400 13px/1.45 var(--ma-font-ui);
+  --ma-text-figure: 600 24px/1.15 var(--ma-font-ui);
+  --ma-text-figure-sm: 600 16px/1.3 var(--ma-font-ui);
+  --ma-text-figure-lg: 600 32px/1.1 var(--ma-font-ui);
+  --ma-text-room-no: 600 16px/1.2 var(--ma-font-ui);
+  --ma-text-syslabel: 500 13px/1.4 var(--ma-font-ui);       /* hết chữ IN HOA giãn cách */
+  --ma-text-badge: 500 13px/1.2 var(--ma-font-ui);
+  --ma-text-meter: 600 40px/1.1 var(--ma-font-ui);          /* MỚI: ô nhập chỉ số trên điện thoại */
+
+  --ma-tracking-title: -0.015em;
+  --ma-tracking-block: -0.01em;
+  --ma-tracking-figure: -0.02em;
+  --ma-tracking-syslabel: 0;
+  --ma-tracking-navgroup: 0;
+
+  --ma-text-min-desktop: 12px;
+  --ma-text-min-mobile: 13px;
+
+  /* ---------- Khoảng cách (spacing.css) — bậc 4/8 ---------- */
+  --ma-space-1: 4px;
+  --ma-space-2: 8px;
+  --ma-space-3: 12px;
+  --ma-space-4: 16px;
+  --ma-space-5: 20px;
+  --ma-space-6: 24px;
+  --ma-space-7: 32px;
+  --ma-space-8: 40px;
+  --ma-space-9: 48px;
+  --space-xs: 4px; --space-sm: 8px; --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px;
+
+  --ma-bento-gap: 16px;
+  --ma-bento-gap-lg: 24px;
+  --ma-bento-padding: 24px;
+
+  --ma-nav-width: 256px;
+  --ma-nav-width-collapsed: 72px;    /* MỚI */
+  --ma-topbar-height: 64px;
+  --ma-breadcrumb-height: 32px;
+  --ma-task-column-width: 486px;
+  --ma-bottom-nav-height: 64px;      /* MỚI */
+
+  /* Cỡ điều khiển — bám thang repo: tối thiểu 36 desktop, 44 mobile */
+  --ma-hit-desktop: 36px;
+  --ma-hit-mobile: 44px;
+  --ma-control-h: 40px;              /* MỚI: nút/ô nhập desktop */
+  --ma-control-h-sm: 36px;           /* MỚI: nút phụ trong bảng, chip */
+  --ma-control-h-touch: 48px;        /* MỚI: nút/ô nhập mobile */
+  --ma-control-h-meter: 72px;        /* MỚI: ô chỉ số */
+
+  --ma-bp-desktop: 1280px;
+  --ma-bp-tablet: 768px;
+  --ma-bp-mobile: 360px;
+
+  /* ---------- Bo góc, viền, bóng (borders.css) ---------- */
+  --ma-radius-xs: 6px;
+  --ma-radius-sm: 8px;
+  --ma-radius: 12px;                 /* nút, ô nhập */
+  --ma-radius-md: 16px;              /* khối trong thẻ */
+  --ma-radius-lg: 20px;
+  --ma-radius-xl: 24px;              /* thẻ (theo mẫu) */
+  --ma-radius-pill: 9999px;
+
+  --ma-border-width: 1px;
+  --ma-border-width-strong: 1.5px;
+  --ma-border-width-rule: 1px;
+
+  --ma-icon-stroke: 1.75px;
+  --ma-icon-size: 20px;
+  --ma-icon-viewbox: 24;
+
+  --ma-flag-inset: inset 0 -3px 0;
+  --ma-nav-active-inset: none;
+
+  /* Thẻ nằm yên không bóng; chỉ thứ nổi (menu, toast, modal) mới có bóng */
+  --ma-shadow-xs: none;
+  --ma-shadow-sm: none;
+  --ma-shadow: none;
+  --ma-shadow-md: 0 8px 24px rgba(28, 27, 25, 0.10);       /* menu, popover, toast */
+  --ma-shadow-lg: 0 24px 48px rgba(28, 27, 25, 0.16);      /* modal */
+  --ma-shadow-xl: 0 24px 48px rgba(28, 27, 25, 0.16);
+  --ma-shadow-hover: none;
+  --ma-shadow-focus: 0 0 0 3px rgba(15, 118, 110, 0.18);
+  --ma-shadow-frame: none;
+  --ma-shadow-bento: none;
+  --ma-shadow-bento-hover: none;
+  --ma-shadow-glass: none;
+
+  /* ---------- Chuyển động (motion.css) ---------- */
+  --ma-dur-press: 120ms;
+  --ma-dur-fast: 160ms;
+  --ma-dur-normal: 220ms;
+  --ma-dur-slow: 300ms;
+  --ma-dur-inline-error: 160ms;
+  --ma-dur-dialog-in: 220ms;
+  --ma-dur-dialog-out: 160ms;
+  --ma-dur-page: 0ms;                /* không diễn hoạt khi đổi trang */
+  --ma-dur-row-flash: 600ms;
+  --ma-dur-toast-in: 220ms;
+  --ma-toast-life: 4s;
+  --ma-toast-life-undo: 9s;
+  --ma-ease: ease;
+  --ma-ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
+  --ma-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ma-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ma-transition-subtle: background-color var(--ma-dur-fast) var(--ma-ease), color var(--ma-dur-fast) var(--ma-ease), border-color var(--ma-dur-fast) var(--ma-ease);
+  --ma-transition-smooth: transform var(--ma-dur-normal) var(--ma-ease-out), opacity var(--ma-dur-normal) var(--ma-ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    /* Giữ đổi màu/độ mờ ngắn để hiểu trạng thái; bỏ mọi dịch chuyển */
+    --ma-dur-press: 0ms;
+    --ma-dur-fast: 120ms;
+    --ma-dur-inline-error: 120ms;
+    --ma-dur-normal: 120ms;
+    --ma-dur-slow: 120ms;
+    --ma-dur-dialog-in: 120ms;
+    --ma-dur-dialog-out: 0ms;
+    --ma-dur-toast-in: 120ms;
+    --ma-dur-row-flash: 0ms;
+    --ma-transition-smooth: opacity 120ms linear;
+  }
+}

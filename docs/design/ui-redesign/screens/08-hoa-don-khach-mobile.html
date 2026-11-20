@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hoá đơn của tôi · MiniApart</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<style>
+  .due { font: 600 40px/1.05 var(--ma-font-ui); letter-spacing: -0.02em; margin-top: 8px; }
+  .line { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 0; }
+  .line + .line { border-top: 1px solid var(--ma-line-100); }
+  .line .tile { width: 36px; height: 36px; border-radius: 10px; background: transparent; display: grid; place-items: center; color: var(--ma-text-secondary); }
+  .line .nm { font: 500 15px/1.3 var(--ma-font-ui); }
+  .line .f { font: var(--ma-text-caption); color: var(--ma-text-muted); margin-top: 2px; }
+  .line .amt { font: 600 15px/1.3 var(--ma-font-ui); text-align: right; white-space: nowrap; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 14px; border-top: 1px solid var(--ma-line-200); margin-top: 4px; }
+  .qr { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 16px; align-items: center; }
+  .qr svg.code { width: 132px; height: 132px; background: #fff; border-radius: 12px; padding: 8px; border: 1px solid var(--ma-line-200); }
+</style>
+</head>
+<body>
+<!-- Màn khung (8) Khách thuê — Hoá đơn của tôi — MOBILE 390×844 (chụp toàn trang). Dữ liệu: GET /api/cong/hoa-don-moi-nhat, /api/cong/hoa-don
+     (người thuê 0999100001 Trần Quang Huy, phòng 101). Mã QR là hình minh hoạ, KHÔNG phải mã chuyển khoản thật; số tài khoản che.
+     Ghi chú dữ liệu: backend trả "Tien phong (29/29 ngay)" không dấu và hạn thanh toán 05/10 trước ngày phát hành 25/10 — xem 01-phan-tich.md. -->
+<div class="m-app">
+  <header class="m-top">
+    <div class="h-title">Hoá đơn của tôi<div class="h-sub">Phòng 101 · An Nhiên Residence</div></div>
+    <button class="icon-btn touch badge-dot" data-count="8" aria-label="Thông báo, 8 chưa đọc"><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg></button>
+  </header>
+  <div class="m-body">
+    <section class="m-card" aria-labelledby="ky">
+      <div class="spread"><h1 class="h3" id="ky">Kỳ 10/2026</h1><span class="tag tag-danger"><svg class="ic-sm" aria-hidden="true"><use href="#i-alert"/></svg>Quá hạn</span></div>
+      <p class="t-sm t-2" style="margin-top:12px">Còn phải trả</p>
+      <p class="due">1.895.000<span class="unit" style="font-size:20px">₫</span></p>
+      <div class="progress" style="margin-top:14px" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" aria-label="Đã trả 50%"><span style="width:50%"></span></div>
+      <p class="t-sm t-2" style="margin-top:8px">Đã trả 1.895.000 ₫ trên 3.790.000 ₫ · hạn 05/10/2026</p>
+      <button class="btn btn-primary btn-touch btn-block" style="margin-top:16px"><svg class="ic" aria-hidden="true"><use href="#i-qr"/></svg>Thanh toán bằng QR</button>
+    </section>
+
+    <section class="m-card" aria-labelledby="ck">
+      <h2 class="h3" id="ck">Chuyển khoản</h2>
+      <div class="qr" style="margin-top:12px">
+        <svg class="code" viewBox="0 0 29 29" role="img" aria-label="Mã QR minh hoạ cho nội dung chuyển khoản DEMO-P1-1-2026-10" shape-rendering="crispEdges">
+          <path fill="#1C1B19" d="M0 0h7v7H0zM1 1v5h5V1zM2 2h3v3H2zM22 0h7v7h-7zM23 1v5h5V1zM24 2h3v3h-3zM0 22h7v7H0zM1 23v5h5v-5zM2 24h3v3H2zM9 0h1v1H9zM11 0h2v1h-2zM14 1h1v2h-1zM9 2h3v1H9zM16 0h2v2h-2zM19 1h1v3h-1zM10 4h2v2h-2zM13 4h3v1h-3zM17 4h1v2h-1zM8 7h1v1H8zM10 8h2v1h-2zM13 7h2v2h-2zM16 8h3v1h-3zM20 8h2v2h-2zM24 8h1v1h-1zM26 9h3v1h-3zM0 9h2v1H0zM3 9h2v2H3zM6 10h3v1H6zM1 12h3v1H1zM5 12h1v2H5zM8 12h2v2H8zM11 11h3v2h-3zM15 10h1v3h-1zM17 11h3v1h-3zM21 12h2v2h-2zM25 11h2v1h-2zM27 13h2v2h-2zM0 15h2v1H0zM3 15h3v1H3zM7 15h2v2H7zM10 15h1v1h-1zM12 14h2v3h-2zM15 15h3v1h-3zM19 14h1v2h-1zM22 15h3v1h-3zM2 18h3v1H2zM6 18h1v2H6zM9 18h2v1H9zM12 19h3v1h-3zM16 17h2v2h-2zM20 18h2v1h-2zM23 17h1v3h-1zM25 18h3v1h-3zM9 21h2v2H9zM12 22h1v2h-1zM14 21h3v1h-3zM18 21h2v2h-2zM21 22h3v1h-3zM25 21h1v2h-1zM27 22h2v1h-2zM9 25h3v1H9zM13 25h2v2h-2zM16 24h1v3h-1zM18 26h3v1h-3zM22 25h2v2h-2zM25 26h2v3h-2zM28 25h1v2h-1zM10 27h2v2h-2zM14 28h2v1h-2zM19 28h2v1h-2z"/>
+        </svg>
+        <div class="t-sm" style="display:grid;gap:8px">
+          <div><div class="t-3">Ngân hàng</div><div class="t-strong">MB · mã 970422</div></div>
+          <div><div class="t-3">Số tài khoản</div><div class="t-strong">•••• •••• 0000</div></div>
+        </div>
+      </div>
+      <div class="spread card-sunken" style="margin-top:12px;padding:8px 8px 8px 14px"><div class="t-sm"><div class="t-3">Nội dung chuyển khoản</div><div class="t-strong">DEMO-P1-1-2026-10</div></div><button class="btn btn-ghost btn-sm"><svg class="ic-sm" aria-hidden="true"><use href="#i-copy"/></svg>Sao chép</button></div>
+    </section>
+
+    <section class="m-card" aria-labelledby="ct">
+      <div class="spread"><h2 class="h3" id="ct">Chi tiết khoản</h2><span class="t-meta">26/09 – 25/10/2026</span></div>
+      <div style="margin-top:4px">
+        <div class="line"><span class="tile"><svg class="ic" aria-hidden="true"><use href="#i-door"/></svg></span><div><div class="nm">Tiền phòng</div><div class="f">29/29 ngày</div></div><div class="amt">3.200.000 ₫</div></div>
+        <div class="line"><span class="tile"><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg></span><div><div class="nm">Điện sinh hoạt</div><div class="f">288 → 384 = 96 kWh × 3.800 ₫</div></div><div class="amt">364.800 ₫</div></div>
+        <div class="line"><span class="tile"><svg class="ic" aria-hidden="true"><use href="#i-droplet"/></svg></span><div><div class="nm">Nước sạch</div><div class="f">15 → 20 = 5 m³ × 25.000 ₫</div></div><div class="amt">125.000 ₫</div></div>
+        <div class="line"><span class="tile"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg></span><div><div class="nm">Vệ sinh khu vực chung</div><div class="f">2 người × 50.000 ₫</div></div><div class="amt">100.000 ₫</div></div>
+        <div class="line"><span class="tile"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg></span><div><div class="nm">Internet cáp quang</div><div class="f">Miễn phí</div></div><div class="amt t-3">0 ₫</div></div>
+        <div class="line"><span class="tile"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></span><div><div class="nm">Làm tròn</div></div><div class="amt">200 ₫</div></div>
+      </div>
+      <div class="total"><span class="t-strong">Tổng kỳ này</span><span style="font:600 20px/1 var(--ma-font-ui)">3.790.000 ₫</span></div>
+    </section>
+
+    <section class="m-card" aria-labelledby="ls">
+      <div class="spread"><h2 class="h3" id="ls">Kỳ trước còn nợ</h2><a class="link-more brand" href="#/lich-su" style="font-size:14px">Lịch sử</a></div>
+      <ul class="list" style="margin-top:4px">
+        <li class="list-row" style="min-height:56px"><div class="body"><div class="name">Kỳ 09/2026</div><div class="sub">Hạn 05/09/2026 · đã trả 1.895.000 ₫</div></div><div class="end"><div class="t-money">1.895.000 ₫</div><div class="t-meta t-danger">quá hạn</div></div></li>
+        <li class="list-row" style="min-height:56px"><div class="body"><div class="name">Kỳ 08/2026</div><div class="sub">Hạn 05/08/2026 · đã trả 1.895.000 ₫</div></div><div class="end"><div class="t-money">1.895.000 ₫</div><div class="t-meta t-danger">quá hạn</div></div></li>
+      </ul>
+    </section>
+  </div>
+  <nav class="bottom-nav" data-role="NGUOI_THUE" data-active="/hoa-don-cua-toi"></nav>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/shell.js"></script>
+</body>
+</html>

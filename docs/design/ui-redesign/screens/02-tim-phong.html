@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tìm phòng trống · MiniApart</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<style>
+  .pub { max-width: 1440px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+  .pub-nav { display: flex; align-items: center; gap: 32px; height: 64px; padding: 0 8px; }
+  .pub-nav nav { display: flex; gap: 24px; font: 500 15px/1 var(--ma-font-ui); }
+  .pub-nav nav a { color: var(--ma-text-secondary); }
+  .pub-nav nav a[aria-current] { color: var(--ma-text-primary); }
+  .hero { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 16px; }
+  .hero-text { background: var(--ma-bg-card); border-radius: var(--ma-radius-xl); padding: 48px; display: flex; flex-direction: column; justify-content: center; }
+  .hero-text h1 { font: 600 44px/1.1 var(--ma-font-ui); letter-spacing: -0.02em; max-width: 560px; }
+  .hero-photo { border-radius: var(--ma-radius-xl); overflow: hidden; min-height: 400px; }
+  .hero-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .searchbar { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: end; margin-top: 32px; background: var(--ma-bg-sunken); border-radius: 20px; padding: 12px; }
+  .rooms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .room { background: var(--ma-bg-card); border-radius: var(--ma-radius-xl); padding: 12px 12px 20px; display: flex; flex-direction: column; }
+  .room img { aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; width: 100%; }
+  .room .price { font: 600 22px/1.2 var(--ma-font-ui); letter-spacing: -0.01em; margin-top: 16px; padding: 0 8px; }
+  .room .meta { padding: 0 8px; }
+  .room .amen { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 8px 0; }
+  .room .amen span { font: 500 13px/1 var(--ma-font-ui); color: var(--ma-text-secondary); background: var(--ma-bg-sunken); padding: 7px 10px; border-radius: 999px; }
+  .room .foot { margin-top: auto; padding: 16px 8px 0; }
+  @media (max-width: 1023px) { .hero { grid-template-columns: 1fr; } .rooms { grid-template-columns: repeat(2, 1fr); } .searchbar { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .rooms { grid-template-columns: 1fr; } .hero-text { padding: 24px; } .hero-text h1 { font-size: 32px; } .pub-nav nav { display: none; } .searchbar { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<!-- Màn khung (2) Trang công khai tìm phòng — 1440 (chụp toàn trang). Dữ liệu: GET /api/public/phong, /api/public/toa-nha
+     (12 phòng trống ở 6 toà). Một hành động chính: Tìm phòng. Nút "Đặt lịch xem" trên thẻ là nút phụ. -->
+<div class="pub">
+  <header class="pub-nav">
+    <a class="row hit" href="#" style="gap:10px;color:inherit;text-decoration:none"><span class="logo" aria-hidden="true">M</span><span class="sb-name">MiniApart</span></a>
+    <nav aria-label="Trang công khai"><a class="hit" href="#" aria-current="page">Tìm phòng</a><a class="hit" href="#toa">Toà nhà</a><a class="hit" href="#lich">Đặt lịch xem</a></nav>
+    <a class="btn btn-secondary push" href="01-dang-nhap.html">Đăng nhập</a>
+  </header>
+
+  <section class="hero" aria-labelledby="h">
+    <div class="hero-text">
+      <h1 id="h">Phòng trống, giá rõ từng khoản điện nước</h1>
+      <p class="t-body t-2" style="margin-top:16px;max-width:520px;font-size:17px">12 phòng đang trống ở 6 toà tại Hà Nội, TP. Hồ Chí Minh và Đà Nẵng. Xem đơn giá điện, nước, dịch vụ trước khi đến xem phòng.</p>
+      <form class="searchbar" role="search" aria-label="Tìm phòng">
+        <div class="field"><label class="label" for="kv">Khu vực</label><select class="select" id="kv" style="background-color:var(--ma-bg-card)"><option>Tất cả thành phố</option><option>Hà Nội</option><option>TP. Hồ Chí Minh</option><option>Đà Nẵng</option></select></div>
+        <div class="field"><label class="label" for="gia">Giá tối đa</label><select class="select" id="gia" style="background-color:var(--ma-bg-card)"><option>Không giới hạn</option><option>4.000.000 ₫</option><option>4.500.000 ₫</option><option>5.000.000 ₫</option></select></div>
+        <div class="field"><label class="label" for="loai">Loại phòng</label><select class="select" id="loai" style="background-color:var(--ma-bg-card)"><option>Tất cả</option><option>Studio nội thất</option><option>Phòng cơ bản</option></select></div>
+        <button class="btn btn-primary" type="submit"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>Tìm phòng</button>
+      </form>
+    </div>
+    <figure class="hero-photo"><img src="../assets/img/moclan_studio_go.webp" alt="Studio nội thất gỗ, Mộc Lan Home"></figure>
+  </section>
+
+  <section aria-labelledby="kq" style="padding-top:24px">
+    <div class="spread" style="margin-bottom:16px;padding:0 8px">
+      <div><h2 class="h2" id="kq">12 phòng trống</h2><p class="t-sm t-3" style="margin-top:4px">Sắp xếp theo giá thấp đến cao · cập nhật 21/11/2026</p></div>
+      <div class="row-wrap" role="group" aria-label="Lọc nhanh">
+        <button class="chip" aria-pressed="true">Còn trống</button>
+        <button class="chip" aria-pressed="false">Có điều hoà</button>
+        <button class="chip" aria-pressed="false">Từ 30 m²</button>
+        <button class="chip" aria-pressed="false">Chỗ để xe</button>
+        <button class="chip" aria-pressed="false"><svg class="ic-sm" aria-hidden="true"><use href="#i-filter"/></svg>Bộ lọc khác</button>
+      </div>
+    </div>
+    <div class="rooms">
+      <article class="room"><img src="../assets/img/annhien_studio_noi_that.webp" alt="Phòng 401, An Nhiên Residence"><p class="price">3.600.000 ₫<span class="unit">/tháng</span></p><div class="meta"><h3 class="h3">An Nhiên Residence · Phòng 401</h3><p class="t-sm t-3">Studio nội thất · 30 m² · phố Duy Tân, Hà Nội</p></div><div class="amen"><span>Điều hoà</span><span>Bình nóng lạnh</span><span>Tủ quần áo</span></div><div class="foot"><a class="btn btn-secondary btn-block" href="#lich">Đặt lịch xem</a></div></article>
+      <article class="room"><img src="../assets/img/nhaxanh_studio_gon.webp" alt="Phòng 401, Nhà Xanh Cầu Giấy"><p class="price">3.850.000 ₫<span class="unit">/tháng</span></p><div class="meta"><h3 class="h3">Nhà Xanh Cầu Giấy · Phòng 401</h3><p class="t-sm t-3">Studio nội thất · 30 m² · phố Trần Thái Tông, Hà Nội</p></div><div class="amen"><span>Điều hoà</span><span>Bình nóng lạnh</span><span>Tủ quần áo</span></div><div class="foot"><a class="btn btn-secondary btn-block" href="#lich">Đặt lịch xem</a></div></article>
+      <article class="room"><img src="../assets/img/annhien_co_ban.webp" alt="Phòng 402, An Nhiên Residence"><p class="price">4.000.000 ₫<span class="unit">/tháng</span></p><div class="meta"><h3 class="h3">An Nhiên Residence · Phòng 402</h3><p class="t-sm t-3">Phòng cơ bản · 35 m² · phố Duy Tân, Hà Nội</p></div><div class="amen"><span>Điều hoà</span><span>Bình nóng lạnh</span><span>Tủ quần áo</span></div><div class="foot"><a class="btn btn-secondary btn-block" href="#lich">Đặt lịch xem</a></div></article>
+      <article class="room"><img src="../assets/img/moclan_studio_go.webp" alt="Phòng 401, Mộc Lan Home"><p class="price">4.100.000 ₫<span class="unit">/tháng</span></p><div class="meta"><h3 class="h3">Mộc Lan Home · Phòng 401</h3><p class="t-sm t-3">Studio nội thất · 30 m² · phố Nguyễn Văn Cừ, Hà Nội</p></div><div class="amen"><span>Điều hoà</span><span>Bình nóng lạnh</span><span>Tủ quần áo</span></div><div class="foot"><a class="btn btn-secondary btn-block" href="#lich">Đặt lịch xem</a></div></article>
+      <article class="room"><img src="../assets/img/nhaxanh_co_ban.webp" alt="Phòng 402, Nhà Xanh Cầu Giấy"><p class="price">4.250.000 ₫<span class="unit">/tháng</span></p><div class="meta"><h3 class="h3">Nhà Xanh Cầu Giấy · Phòng 402</h3><p class="t-sm t-3">Phòng cơ bản · 35 m² · phố Trần Thái Tông, Hà Nội</p></div><div class="amen"><span>Điều hoà</span><span>Bình nóng lạnh</span><span>Tủ quần áo</span></div><div class="foot"><a class="btn btn-secondary btn-block" href="#lich">Đặt lịch xem</a></div></article>
+      <article class="room"><img src="../assets/img/phonho_studio_gon.webp" alt="Phòng 401, Phố Nhỏ Studio"><p class="price">4.350.000 ₫<span class="unit">/tháng</span></p><div class="meta"><h3 class="h3">Phố Nhỏ Studio · Phòng 401</h3><p class="t-sm t-3">Studio nội thất · 30 m² · phố Lê Văn Sỹ, TP. HCM</p></div><div class="amen"><span>Điều hoà</span><span>Bình nóng lạnh</span><span>Tủ quần áo</span></div><div class="foot"><a class="btn btn-secondary btn-block" href="#lich">Đặt lịch xem</a></div></article>
+      <article class="room"><img src="../assets/img/moclan_co_ban.webp" alt="Phòng 402, Mộc Lan Home"><p class="price">4.500.000 ₫<span class="unit">/tháng</span></p><div class="meta"><h3 class="h3">Mộc Lan Home · Phòng 402</h3><p class="t-sm t-3">Phòng cơ bản · 35 m² · phố Nguyễn Văn Cừ, Hà Nội</p></div><div class="amen"><span>Điều hoà</span><span>Bình nóng lạnh</span><span>Tủ quần áo</span></div><div class="foot"><a class="btn btn-secondary btn-block" href="#lich">Đặt lịch xem</a></div></article>
+      <article class="room"><img src="../assets/img/binhminh_cua_so_lon.webp" alt="Phòng 401, Bình Minh Riverside"><p class="price">4.600.000 ₫<span class="unit">/tháng</span></p><div class="meta"><h3 class="h3">Bình Minh Riverside · Phòng 401</h3><p class="t-sm t-3">Studio nội thất · 30 m² · đường Nguyễn Hữu Thọ, TP. HCM</p></div><div class="amen"><span>Điều hoà</span><span>Bình nóng lạnh</span><span>Tủ quần áo</span></div><div class="foot"><a class="btn btn-secondary btn-block" href="#lich">Đặt lịch xem</a></div></article>
+    </div>
+    <div class="row" style="justify-content:center;padding:24px 0 8px"><button class="btn btn-ghost">Xem thêm 4 phòng từ 4.750.000 ₫<svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-down"/></svg></button></div>
+  </section>
+</div>
+<script src="../assets/icons.js"></script>
+</body>
+</html>

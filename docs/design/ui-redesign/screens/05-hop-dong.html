@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hợp đồng — Chủ sở hữu · MiniApart</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+</head>
+<body>
+<!-- Màn khung (5) Danh sách Hợp đồng dạng BẢNG — 1440×900. Dữ liệu: GET /api/hop-dong?toaNhaId=3 (11 hợp đồng, An Nhiên Residence).
+     Thay cho các thẻ viền dày cao ~100px. Một hành động chính: Tạo hợp đồng. -->
+<div class="app">
+  <aside class="sidebar" data-role="CHU" data-active="/hop-dong" data-user="Nguyễn Hoàng Phúc|Chủ sở hữu"></aside>
+  <main class="main">
+    <header class="topbar">
+      <div class="title-block">
+        <nav class="crumbs" aria-label="Vị trí"><a href="#/toa-nha">Toà nhà</a><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-right"/></svg><span aria-current="page">An Nhiên Residence</span></nav>
+        <h1 class="h1">Hợp đồng</h1>
+        <p class="sub">9 đang hiệu lực · tổng tiền thuê 30.400.000 ₫/tháng · tiền cọc đang giữ 60.800.000 ₫</p>
+      </div>
+      <div class="topbar-actions">
+        <label class="sr-only" for="toa">Toà nhà</label>
+        <select class="select" id="toa" style="width:220px"><option>An Nhiên Residence</option><option>Mộc Lan Home</option><option>Bình Minh Riverside</option></select>
+        <button class="btn btn-secondary"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>Xuất Excel</button>
+        <button class="btn btn-primary"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Tạo hợp đồng</button>
+      </div>
+    </header>
+
+    <section class="card" aria-labelledby="bang">
+      <h2 class="sr-only" id="bang">Danh sách hợp đồng</h2>
+      <div class="table-toolbar">
+        <label class="input-wrap" style="width:300px"><span class="sr-only">Tìm theo phòng hoặc người thuê</span><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><input class="input" type="search" placeholder="Tìm phòng, người thuê…"></label>
+        <div class="row-wrap" role="group" aria-label="Lọc theo trạng thái" style="margin-left:8px">
+          <button class="chip" aria-pressed="true">Tất cả <span class="n">11</span></button>
+          <button class="chip" aria-pressed="false">Hiệu lực <span class="n">9</span></button>
+          <button class="chip" aria-pressed="false">Sắp hết hạn <span class="n">1</span></button>
+          <button class="chip" aria-pressed="false">Chờ ký <span class="n">1</span></button>
+          <button class="chip" aria-pressed="false">Đã thanh lý <span class="n">1</span></button>
+        </div>
+        <button class="btn btn-ghost btn-sm push"><svg class="ic-sm" aria-hidden="true"><use href="#i-filter"/></svg>Lọc thêm</button>
+      </div>
+      <div class="bulkbar" role="status"><span>Đã chọn 1 hợp đồng</span><button class="btn btn-ghost btn-sm">Gửi nhắc gia hạn</button><button class="btn btn-ghost btn-sm">In PDF</button><button class="icon-btn sm push" aria-label="Bỏ chọn"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr>
+            <th style="width:44px"><label class="check"><input type="checkbox" aria-label="Chọn tất cả"><span class="sr-only">Chọn tất cả</span></label></th>
+            <th aria-sort="ascending"><button class="th-sort">Phòng<svg class="ic-sm" aria-hidden="true"><use href="#i-sort-up"/></svg></button></th>
+            <th><button class="th-sort">Người thuê</button></th>
+            <th><button class="th-sort">Thời hạn</button></th>
+            <th class="num"><button class="th-sort">Giá thuê</button></th>
+            <th class="num"><button class="th-sort">Tiền cọc</button></th>
+            <th>Trạng thái</th>
+            <th class="num"><span class="sr-only">Thao tác</span></th>
+          </tr></thead>
+          <tbody>
+            <tr><td><label class="check"><input type="checkbox" aria-label="Chọn phòng 101"></label></td><td class="td-main">101</td><td><div class="td-person"><span class="avatar sm h1" aria-hidden="true">QH</span>Trần Quang Huy</div></td><td>01/05/2026 – 20/05/2027<div class="td-sub">còn 180 ngày</div></td><td class="num t-money">3.200.000 ₫</td><td class="num">6.400.000 ₫</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hiệu lực</span></td><td class="num"><div class="td-acts"><a class="btn btn-ghost btn-sm" href="#hd-1">Xem</a><button class="icon-btn sm" aria-label="Thao tác khác cho phòng 101"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><label class="check"><input type="checkbox" aria-label="Chọn phòng 102"></label></td><td class="td-main">102</td><td><div class="td-person"><span class="avatar sm h2" aria-hidden="true">TT</span>Lê Thu Trang</div></td><td>01/05/2026 – 20/05/2027<div class="td-sub">còn 180 ngày</div></td><td class="num t-money">3.600.000 ₫</td><td class="num">7.200.000 ₫</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hiệu lực</span></td><td class="num"><div class="td-acts"><a class="btn btn-ghost btn-sm" href="#hd-2">Xem</a><button class="icon-btn sm" aria-label="Thao tác khác cho phòng 102"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><label class="check"><input type="checkbox" aria-label="Chọn phòng 103"></label></td><td class="td-main">103</td><td><div class="td-person"><span class="avatar sm h5" aria-hidden="true">ĐM</span>Phạm Đức Minh</div></td><td>01/05/2026 – 20/05/2027<div class="td-sub">còn 180 ngày</div></td><td class="num t-money">4.000.000 ₫</td><td class="num">8.000.000 ₫</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hiệu lực</span></td><td class="num"><div class="td-acts"><a class="btn btn-ghost btn-sm" href="#hd-3">Xem</a><button class="icon-btn sm" aria-label="Thao tác khác cho phòng 103"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><label class="check"><input type="checkbox" aria-label="Chọn phòng 201"></label></td><td class="td-main">201</td><td><div class="td-person"><span class="avatar sm h3" aria-hidden="true">NH</span>Hoàng Ngọc Hà</div></td><td>01/05/2026 – 20/05/2027<div class="td-sub">còn 180 ngày</div></td><td class="num t-money">2.800.000 ₫</td><td class="num">5.600.000 ₫</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hiệu lực</span></td><td class="num"><div class="td-acts"><a class="btn btn-ghost btn-sm" href="#hd-4">Xem</a><button class="icon-btn sm" aria-label="Thao tác khác cho phòng 201"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><label class="check"><input type="checkbox" aria-label="Chọn phòng 202"></label></td><td class="td-main">202</td><td><div class="td-person"><span class="avatar sm h4" aria-hidden="true">TA</span>Vũ Tuấn Anh</div></td><td>01/05/2026 – 20/05/2027<div class="td-sub">còn 180 ngày</div></td><td class="num t-money">3.200.000 ₫</td><td class="num">6.400.000 ₫</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hiệu lực</span></td><td class="num"><div class="td-acts"><a class="btn btn-ghost btn-sm" href="#hd-5">Xem</a><button class="icon-btn sm" aria-label="Thao tác khác cho phòng 202"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><label class="check"><input type="checkbox" aria-label="Chọn phòng 203"></label></td><td class="td-main">203</td><td><div class="td-person"><span class="avatar sm h1" aria-hidden="true">KL</span>Đặng Khánh Linh</div></td><td>01/05/2026 – 20/05/2027<div class="td-sub">còn 180 ngày</div></td><td class="num t-money">3.600.000 ₫</td><td class="num">7.200.000 ₫</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hiệu lực</span></td><td class="num"><div class="td-acts"><a class="btn btn-ghost btn-sm" href="#hd-6">Xem</a><button class="icon-btn sm" aria-label="Thao tác khác cho phòng 203"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><label class="check"><input type="checkbox" aria-label="Chọn phòng 301"></label></td><td class="td-main">301</td><td><div class="td-person"><span class="avatar sm h2" aria-hidden="true">GB</span>Bùi Gia Bảo</div></td><td>01/05/2026 – 20/05/2027<div class="td-sub">còn 180 ngày</div></td><td class="num t-money">4.000.000 ₫</td><td class="num">8.000.000 ₫</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hiệu lực</span></td><td class="num"><div class="td-acts"><a class="btn btn-ghost btn-sm" href="#hd-7">Xem</a><button class="icon-btn sm" aria-label="Thao tác khác cho phòng 301"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><label class="check"><input type="checkbox" aria-label="Chọn phòng 302"></label></td><td class="td-main">302</td><td><div class="td-person"><span class="avatar sm h5" aria-hidden="true">TH</span>Đỗ Thanh Hương</div></td><td>01/05/2026 – 20/05/2027<div class="td-sub">còn 180 ngày</div></td><td class="num t-money">2.800.000 ₫</td><td class="num">5.600.000 ₫</td><td><span class="tag tag-success"><svg class="ic-sm" aria-hidden="true"><use href="#i-check"/></svg>Hiệu lực</span></td><td class="num"><div class="td-acts"><a class="btn btn-ghost btn-sm" href="#hd-8">Xem</a><button class="icon-btn sm" aria-label="Thao tác khác cho phòng 302"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr class="is-selected"><td><label class="check"><input type="checkbox" checked aria-label="Chọn phòng 303"></label></td><td class="td-main">303</td><td><div class="td-person"><span class="avatar sm h3" aria-hidden="true">HN</span>Ngô Hải Nam</div></td><td>01/05/2026 – 02/12/2026<div class="td-sub t-warm" style="color:var(--ma-accent-warm-text)">còn 11 ngày</div></td><td class="num t-money">3.200.000 ₫</td><td class="num">6.400.000 ₫</td><td><span class="tag tag-warning"><svg class="ic-sm" aria-hidden="true"><use href="#i-clock"/></svg>Sắp hết hạn</span></td><td class="num"><div class="td-acts"><a class="btn btn-ghost btn-sm" href="#hd-11">Gia hạn</a><button class="icon-btn sm" aria-label="Thao tác khác cho phòng 303"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><label class="check"><input type="checkbox" aria-label="Chọn phòng 401"></label></td><td class="td-main">401</td><td><div class="td-person"><span class="avatar sm h4" aria-hidden="true">TN</span>Dương Thảo Nguyên</div></td><td>27/11/2026 – 20/05/2027<div class="td-sub">bắt đầu sau 6 ngày</div></td><td class="num t-money">3.600.000 ₫</td><td class="num">7.200.000 ₫</td><td><span class="tag tag-info"><svg class="ic-sm" aria-hidden="true"><use href="#i-edit"/></svg>Chờ ký</span></td><td class="num"><div class="td-acts"><a class="btn btn-ghost btn-sm" href="#hd-10">Ghi nhận ký</a><button class="icon-btn sm" aria-label="Thao tác khác cho phòng 401"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+            <tr><td><label class="check"><input type="checkbox" aria-label="Chọn phòng 402"></label></td><td class="td-main t-3">402</td><td><div class="td-person t-3"><span class="avatar sm h4" aria-hidden="true">NQ</span>Đinh Nhật Quang</div></td><td class="t-3">01/05/2026 – 20/05/2027<div class="td-sub">đã thanh lý</div></td><td class="num t-3">4.000.000 ₫</td><td class="num t-3">8.000.000 ₫</td><td><span class="tag tag-neutral"><svg class="ic-sm" aria-hidden="true"><use href="#i-x-circle"/></svg>Đã thanh lý</span></td><td class="num"><div class="td-acts"><a class="btn btn-ghost btn-sm" href="#hd-9">Xem</a><button class="icon-btn sm" aria-label="Thao tác khác cho phòng 402"><svg class="ic" aria-hidden="true"><use href="#i-more-h"/></svg></button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pager"><span>1–11 trong 11 hợp đồng</span><span class="push"></span><button class="pg" aria-label="Trang trước" disabled><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-left"/></svg></button><button class="pg" aria-current="page">1</button><button class="pg" aria-label="Trang sau" disabled><svg class="ic-sm" aria-hidden="true"><use href="#i-chevron-right"/></svg></button></div>
+    </section>
+  </main>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/shell.js"></script>
+</body>
+</html>
