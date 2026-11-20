@@ -1,0 +1,63 @@
+# Stack demo có dữ liệu cho PRJ1, tách hẳn khỏi docker-compose.yml (DB trống) và khỏi mọi project khác.
+#   Khởi động:  docker compose -f docker-compose.demo.yml up -d --build
+#   Mở web:     http://localhost:5190
+#   Tắt:        docker compose -f docker-compose.demo.yml down        (giữ dữ liệu)
+#   Xoá sạch:   docker compose -f docker-compose.demo.yml down -v     (mất dữ liệu demo, seed lại ở lần chạy sau)
+# Cần .env có JWT_SECRET và ANH_LINK_SECRET (scripts/init-local.ps1 tạo).
+# Dữ liệu 100% giả lập, do PresentationDemoSeeder sinh khi backend khởi động lần đầu.
+# Tài khoản (mật khẩu DemoOnly2026!): chủ 0999000011, quản lý 0999000020, thợ 0999000031, khách thuê 0999100001, QTHT 0999000001.
+# Postgres không publish cổng ra máy host.
+name: miniapart-prj1demo
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: miniapart_demo_prj1
+      POSTGRES_USER: miniapart
+      POSTGRES_PASSWORD: miniapart-demo-local
+    volumes:
+      - demo_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U miniapart -d miniapart_demo_prj1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/miniapart_demo_prj1
+      SPRING_DATASOURCE_USERNAME: miniapart
+      SPRING_DATASOURCE_PASSWORD: miniapart-demo-local
+      SPRING_FLYWAY_URL: jdbc:postgresql://postgres:5432/miniapart_demo_prj1
+      SPRING_FLYWAY_USER: miniapart
+      SPRING_FLYWAY_PASSWORD: miniapart-demo-local
+      JWT_SECRET: ${JWT_SECRET:?Run scripts/init-local.ps1 first}
+      ANH_LINK_SECRET: ${ANH_LINK_SECRET:?Run scripts/init-local.ps1 first}
+      ANH_STORAGE_ROOT: /var/lib/miniapart/private-attachments
+      SPRING_PROFILES_ACTIVE: local,presentation-demo
+      APP_ACTIVATION_DELIVERY_LOCAL_ENABLED: "true"
+      # Ghim ngày seed: không ghim thì sang ngày mới seeder báo "another reference date" và backend không lên.
+      # Muốn dữ liệu tươi theo ngày: down -v, đổi ngày này, up lại.
+      SPRING_APPLICATION_JSON: >-
+        {"app":{"presentation-demo":{"enabled":true,"expected-database":"miniapart_demo_prj1","reference-date":"2026-11-20","password":"DemoOnly2026!"}}}
+    volumes:
+      - demo_attachments:/var/lib/miniapart/private-attachments
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5190:80"
+
+volumes:
+  demo_pg:
+  demo_attachments:
