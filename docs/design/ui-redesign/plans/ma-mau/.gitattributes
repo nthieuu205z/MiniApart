@@ -1,0 +1,24 @@
+# Mọi file văn bản lưu LF trong repo và trên đĩa (kể cả Windows có core.autocrlf=true).
+* text=auto eol=lf
+
+# Script chỉ chạy trên Windows cần CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Nhị phân: không đổi dòng, không diff văn bản.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.zip binary
+*.jar binary
