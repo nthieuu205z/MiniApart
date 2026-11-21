@@ -1,6 +1,6 @@
 :root {
   --ma-font-ui: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --ma-font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  --ma-font-mono: var(--ma-font-ui); /* không còn chữ mono: giữ tên token cho CSS cũ, trỏ về Archivo */
 
   /* Cấp chữ — px, khớp đúng màn #42 đã chốt */
   --ma-text-screen-title: 700 24px/1.15 var(--ma-font-ui);
