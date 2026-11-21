@@ -23,7 +23,6 @@ export function Figure({ value, unit, total, tone = 'primary', size = 'md', styl
   return (
     <span
       style={{
-        fontFamily: 'var(--ma-font-mono)',
         fontSize: sizes[size],
         fontWeight: 600,
         letterSpacing: 'var(--ma-tracking-figure)',

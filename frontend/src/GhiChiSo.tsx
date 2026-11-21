@@ -65,7 +65,6 @@ const styleSoDo = {
   borderRadius: 'var(--ma-radius)',
   background: 'var(--ma-bg-card)',
   color: 'var(--ma-text-primary)',
-  fontFamily: 'var(--ma-font-mono)',
   fontSize: 17,
 }
 
@@ -834,7 +833,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <SysLabel>GHI CHỈ SỐ ĐIỆN NƯỚC</SysLabel>
+            <SysLabel>Ghi chỉ số điện nước</SysLabel>
             <h1
               id="meter-title"
               style={{
@@ -851,7 +850,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
             </p>
           </div>
           <div style={{ display: 'grid', gap: 'var(--ma-space-1)', textAlign: 'right' }} aria-label="Tiến độ ghi chỉ số">
-            <SysLabel>TIẾN ĐỘ</SysLabel>
+            <SysLabel>Tiến độ</SysLabel>
             <Figure value={tienDo} unit="phòng" size="md" />
           </div>
         </header>
@@ -928,7 +927,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
               }}
             >
               <div>
-                <SysLabel>CHỐT SỐ LIỆU KỲ</SysLabel>
+                <SysLabel>Chốt số liệu kỳ</SysLabel>
                 <h2 id="meter-close-title" style={{ margin: 'var(--ma-space-1) 0 0', font: 'var(--ma-text-block-title)', letterSpacing: 'var(--ma-tracking-title)' }}>
                   Chốt kỳ
                 </h2>
@@ -949,7 +948,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
               <p style={styleThongBao}>Đang tải phòng còn thiếu…</p>
             ) : danhSachPhongChuaGhiChiSo.length > 0 ? (
               <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
-                <StatusTag tone="urgent">PHÒNG CÒN THIẾU</StatusTag>
+                <StatusTag tone="urgent">Phòng còn thiếu</StatusTag>
                 <p style={styleThongBao}>Phòng còn thiếu</p>
                 <div style={{ display: 'grid', gap: 'var(--ma-space-1)' }}>
                   {danhSachPhongChuaGhiChiSo.map((phong) => (
@@ -1013,11 +1012,10 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
                       }}
                     >
                       <div>
-                        <SysLabel>TẦNG {phong.tang}</SysLabel>
+                        <SysLabel>Tầng {phong.tang}</SysLabel>
                         <h2
                           style={{
                             margin: 'var(--ma-space-1) 0 var(--ma-space-2)',
-                            fontFamily: 'var(--ma-font-mono)',
                             fontSize: 'clamp(26px, 7vw, 34px)',
                             lineHeight: 1,
                             letterSpacing: 'var(--ma-tracking-figure)',
@@ -1026,7 +1024,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
                           Phòng {phong.soPhong}
                         </h2>
                         <StatusTag tone={phongDaGhi ? 'done' : 'urgent'}>
-                          {phongDaGhi ? 'ĐÃ GHI' : 'CHƯA GHI'}
+                          {phongDaGhi ? 'Đã ghi' : 'Chưa ghi'}
                         </StatusTag>
                       </div>
                       <RoomCell
@@ -1061,7 +1059,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
                         const canhBaoTieuThu = thongBaoChiSo ? null : taoCanhBaoTieuThu(mucTieuThu, dichVu)
                         const daGhi = Boolean(dichVu.chiSoCuoi)
                         const trangThaiDichVu = thongBaoChiSo || canhBaoTieuThu ? 'urgent' : daGhi ? 'done' : 'neutral'
-                        const nhanTrangThaiDichVu = thongBaoChiSo ? 'KIỂM TRA CHỈ SỐ' : canhBaoTieuThu ? 'CAO BẤT THƯỜNG' : daGhi ? 'ĐÃ GHI' : 'CHƯA GHI'
+                        const nhanTrangThaiDichVu = thongBaoChiSo ? 'Kiểm tra chỉ số' : canhBaoTieuThu ? 'Cao bất thường' : daGhi ? 'Đã ghi' : 'Chưa ghi'
                         const luuBiChan = chiSoBiKhoa || (kyDaChot && !lyDoSua.trim()) || dangLuu === key || !giaTri || (coThayCongTo && (!chiSoThayCongTo.chiSoCuoiCongToCu || !chiSoThayCongTo.chiSoDauCongToMoi)) || Boolean(thongBaoChiSo) || Boolean(canhBaoTieuThu)
                         const lyDoChanLuu = chiSoBiKhoa
                           ? 'Kỳ này đã chốt, không thể sửa chỉ số.'
@@ -1096,7 +1094,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
                               <div style={{ display: 'grid', gap: 'var(--ma-space-1)', minWidth: 0 }}>
                                 <strong style={{ fontSize: 16 }}>{dichVu.tenDichVu}</strong>
                                 <span style={{ color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)' }}>
-                                  Chỉ số đầu: <span style={{ fontFamily: 'var(--ma-font-mono)' }}>{dichVu.chiSoDau}</span>
+                                  Chỉ số đầu: <span>{dichVu.chiSoDau}</span>
                                 </span>
                               </div>
                               <StatusTag tone={trangThaiDichVu}>{nhanTrangThaiDichVu}</StatusTag>
@@ -1137,7 +1135,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
                             </MeterInput>
 
                             {mucTieuThu ? (
-                              <p style={{ margin: 0, fontFamily: 'var(--ma-font-mono)', fontSize: 13, color: 'var(--ma-text-primary)' }}>
+                              <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-primary)' }}>
                                 Mức tiêu thụ: {mucTieuThu} {dichVu.donVi}
                               </p>
                             ) : null}
@@ -1241,7 +1239,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
                                   background: 'var(--ma-urgent-bg)',
                                 }}
                               >
-                                <StatusTag tone="urgent">CAO BẤT THƯỜNG</StatusTag>
+                                <StatusTag tone="urgent">Cao bất thường</StatusTag>
                                 <p style={{ ...styleThongBao, color: 'var(--ma-urgent)' }}>{canhBaoTieuThu.thongBao}</p>
                                 <Button
                                   variant="secondary"

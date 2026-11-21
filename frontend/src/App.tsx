@@ -224,7 +224,6 @@ const styleNutChonDemo: CSSProperties = {
 }
 
 const styleSoDemo: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
   fontSize: 11,
   color: 'var(--ma-text-secondary)',
 }
@@ -916,7 +915,7 @@ function App() {
               ) : (
                 <div style={{ display: 'grid', gap: 'var(--ma-space-6)' }}>
                   <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
-                    <SysLabel>THÔNG TIN PHIÊN</SysLabel>
+                    <SysLabel>Thông tin phiên</SysLabel>
                     <p style={{ ...styleDoanMoTa, color: 'var(--ma-text-primary)' }}>
                       Xin chào, {nguoiDung.hoTen}
                     </p>
@@ -945,7 +944,7 @@ function App() {
 
                   {['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && (
                     <div style={{ display: 'grid', gap: 'var(--ma-space-4)', marginTop: 'var(--ma-space-2)' }}>
-                      <SysLabel>LỐI TẮT PHÂN HỆ VẬN HÀNH</SysLabel>
+                      <SysLabel>Lối tắt phân hệ vận hành</SysLabel>
                       <div
                         style={{
                           display: 'grid',
@@ -967,7 +966,7 @@ function App() {
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 14, fontWeight: 700 }}>📋 Hợp đồng & Hồ sơ</span>
-                            <span style={{ fontSize: 11, fontFamily: 'var(--ma-font-mono)', background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>5 BƯỚC</span>
+                            <span style={{ fontSize: 11, background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>5 BƯỚC</span>
                           </div>
                           <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
                             Quy trình chốt hồ sơ bất biến, phụ lục bàn giao tài sản phòng, điều khoản mẫu và xuất file PDF văn bản ký kết.
@@ -996,7 +995,7 @@ function App() {
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 14, fontWeight: 700 }}>👥 Người thuê & Cư trú</span>
-                            <span style={{ fontSize: 11, fontFamily: 'var(--ma-font-mono)', background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>2 CỘT</span>
+                            <span style={{ fontSize: 11, background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>2 CỘT</span>
                           </div>
                           <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
                             Danh bạ khách thuê thông minh, tra cứu CCCD, trạng thái duyệt cư trú tạm trú và liên kết phòng đang ở.
@@ -1025,7 +1024,7 @@ function App() {
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 14, fontWeight: 700 }}>💳 Hoá đơn & Thu tiền</span>
-                            <span style={{ fontSize: 11, fontFamily: 'var(--ma-font-mono)', background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>VIETQR</span>
+                            <span style={{ fontSize: 11, background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>VIETQR</span>
                           </div>
                           <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
                             Sổ quỹ đối soát thu tiền đa kênh, lập hoá đơn hằng tháng, ghi nhận phiếu thu cọc và quyết toán phòng.
@@ -1062,7 +1061,7 @@ function App() {
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 14, fontWeight: 700 }}>🏢 Sơ đồ Phòng & Toà</span>
-                            <span style={{ fontSize: 11, fontFamily: 'var(--ma-font-mono)', background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>SƠ ĐỒ TẦNG</span>
+                            <span style={{ fontSize: 11, background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>Sơ đồ tầng</span>
                           </div>
                           <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
                             Sơ đồ mặt bằng phòng theo tầng, trực quan hoá phòng trống / đang thuê / bảo trì và tài sản gắn phòng.

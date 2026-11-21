@@ -33,13 +33,13 @@ export function PrimaryTaskBlock({ meta, title, chips, body, primaryAction, seco
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <Glyph name="cong-to" size={12} color="var(--ma-text-secondary-on-inverse)" />
-        <SysLabel tone="onInverse" style={{ fontSize: 10, letterSpacing: "0.12em" }}>{meta}</SysLabel>
+        <SysLabel tone="onInverse">{meta}</SysLabel>
       </div>
       <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: "-0.025em", marginTop: 9 }}>{title}</div>
       {chips && chips.length ? (
         <div style={{ display: "flex", gap: 7, marginTop: 11 }}>
           {chips.map((c) => (
-            <span key={c} style={{ fontFamily: "var(--ma-font-mono)", fontSize: 13, border: "1px solid var(--ma-border-inverse)", borderRadius: "var(--ma-radius-sm)", padding: "5px 10px" }}>
+            <span key={c} style={{ fontSize: 13, border: "1px solid var(--ma-border-inverse)", borderRadius: "var(--ma-radius-sm)", padding: "5px 10px" }}>
               {c}
             </span>
           ))}

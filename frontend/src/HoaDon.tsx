@@ -24,7 +24,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
   const [lichSu, setLichSu] = useState<ThongTinHoaDonLichSu[]>([])
   const previousRequest = useRef('')
   const variant = mobile ? 'mobile' : 'desktop'
-  const maTruyVet = cheDoNguoiThue ? 'HOÁ ĐƠN CỦA TÔI' : cheDoCongNo ? 'ĐỐI SOÁT CÔNG NỢ' : 'QUẢN LÝ HOÁ ĐƠN'
+  const maTruyVet = cheDoNguoiThue ? 'Hoá đơn của tôi' : cheDoCongNo ? 'Đối soát công nợ' : 'Quản lý hoá đơn'
 
   useEffect(() => {
     let mounted = true

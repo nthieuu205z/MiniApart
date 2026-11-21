@@ -37,8 +37,8 @@ export function BuildingSection({ label, floors, columns = 6, showStairs = true,
     <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0, ...(style || {}) }} {...rest}>
       {label ? (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, minWidth: 0, paddingBottom: 2 }}>
-          <SysLabel style={{ fontSize: 10, letterSpacing: "0.12em" }}>{label}</SysLabel>
-          <SysLabel style={{ fontSize: 10, letterSpacing: "0.12em" }}>Sân thượng</SysLabel>
+          <SysLabel>{label}</SysLabel>
+          <SysLabel>Sân thượng</SysLabel>
         </div>
       ) : null}
       <div
@@ -53,7 +53,6 @@ export function BuildingSection({ label, floors, columns = 6, showStairs = true,
         <section key={floor.name} className="room-floor-section" data-testid="room-floor-section" aria-labelledby={`floor-title-${floor.name}`} style={{ display: "grid", gridTemplateColumns: grid, gap: 6, minWidth: 0, alignItems: "stretch" }}>
           <div
             style={{
-              fontFamily: "var(--ma-font-mono)",
               fontSize: 12,
               fontWeight: 600,
               color: "var(--ma-text-secondary)",

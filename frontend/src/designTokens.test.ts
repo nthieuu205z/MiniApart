@@ -5,6 +5,8 @@ import components from './design/components.css?raw'
 import colors from './tokens/colors.css?raw'
 import typography from './tokens/typography.css?raw'
 
+const nguon = import.meta.glob<string>(['./**/*.tsx', '!./**/*.test.tsx'], { query: '?raw', import: 'default', eager: true })
+
 describe('MiniApart design tokens', () => {
   beforeEach(() => {
     const style = document.createElement('style')
@@ -31,4 +33,18 @@ describe('MiniApart design tokens', () => {
     const found = (components.match(/#[0-9a-fA-F]{3,8}/g) ?? []).map((h) => h.toLowerCase())
     expect(found.filter((h) => !allowed.has(h))).toEqual([])
   })
+  // Thiết kế: không chữ mono, không IN HOA giãn cách. Có lý do chính đáng (mã vạch…) thì thêm vào đây kèm chú thích.
+  const duocPhep: Record<string, string[]> = {}
+  const camTheoQuyTac: Array<[string, RegExp]> = [
+    ['IBM Plex Mono', /IBM Plex Mono/],
+    ['--ma-font-mono', /--ma-font-mono/],
+    ["textTransform: 'uppercase'", /textTransform:\s*['"]uppercase['"]/],
+    ['letterSpacing dương (giãn cách)', /letterSpacing:\s*['"](?:0?\.\d+|[1-9]\d*(?:\.\d+)?)(?:em|px)['"]/],
+  ]
+  for (const [ten, mau] of camTheoQuyTac) {
+    it(`không file .tsx nào (trừ test) còn ${ten}`, () => {
+      const viPham = Object.entries(nguon).filter(([file, text]) => mau.test(text) && !(duocPhep[file] ?? []).includes(ten)).map(([file]) => file)
+      expect(viPham).toEqual([])
+    })
+  }
 })

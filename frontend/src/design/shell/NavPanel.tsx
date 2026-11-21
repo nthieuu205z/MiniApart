@@ -95,7 +95,7 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
       {item.icon ? <Icon name={item.icon} /> : <Glyph name={item.glyph} size={variant === 'bar' ? 16 : 15} strokeWidth={1.5} color={item.active ? 'var(--ma-brand-accent)' : 'var(--ma-text-secondary)'} />}
       <span style={variant === 'bar' ? { minWidth: 0, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } : { minWidth: 0 }}>{variant === 'bar' ? item.shortLabel ?? item.label : item.label}</span>
       {item.count ? (
-        <span style={{ marginLeft: variant === 'bar' ? 0 : 'auto', fontFamily: 'var(--ma-font-mono)', fontSize: 11, fontWeight: 700, color: item.countTone === 'waiting' ? 'var(--ma-waiting)' : 'var(--ma-urgent)' }}>
+        <span style={{ marginLeft: variant === 'bar' ? 0 : 'auto', fontSize: 11, fontWeight: 700, color: item.countTone === 'waiting' ? 'var(--ma-waiting)' : 'var(--ma-urgent)' }}>
           {item.count}
         </span>
       ) : null}

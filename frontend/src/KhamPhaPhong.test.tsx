@@ -136,7 +136,7 @@ describe('KhamPhaPhong (Public Visitor Portal)', () => {
     })
 
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('BẢNG BIỂU PHÍ DỊCH VỤ NIÊM YẾT')
+      expect(container.textContent).toContain('Bảng biểu phí dịch vụ niêm yết')
       expect(container.textContent).toContain('Điện sinh hoạt')
       expect(container.textContent).toContain('3.500 đ / kWh')
     })

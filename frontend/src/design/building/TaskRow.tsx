@@ -34,7 +34,7 @@ export function TaskRow({ glyph, glyphColor = 'var(--ma-ink-600)', meta, metaTon
     >
       <Glyph name={glyph} color={glyphColor} size={17} strokeWidth={1.7} />
       <div style={{ minWidth: 0 }}>
-        <SysLabel tone={metaTone} style={{ letterSpacing: "0.09em" }}>{meta}</SysLabel>
+        <SysLabel tone={metaTone}>{meta}</SysLabel>
         <div style={{ fontSize: 15.5, fontWeight: 600, marginTop: 5 }}>{title}</div>
         {detail ? (
           <div style={{ fontSize: 12.5, color: "var(--ma-text-secondary)", marginTop: 3, lineHeight: 1.45 }}>{detail}</div>

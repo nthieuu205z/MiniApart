@@ -55,7 +55,6 @@ type Settlement = { tongHoaDonCuoi: string; daThuCoc: string; congNo: string; kh
 const quickPresetButtonStyle: CSSProperties = {
   padding: '6px 12px',
   fontSize: 12,
-  fontFamily: 'var(--ma-font-mono)',
   fontWeight: 600,
   borderRadius: 'var(--ma-radius-pill)',
   border: '1px solid var(--ma-brand-accent)',
@@ -523,7 +522,7 @@ export default function HopDongThaoTac({
               Hệ thống hỗ trợ phím tắt 1-chạm để tự động điền thời hạn, tiền cọc và biểu phí dịch vụ.
             </p>
           </div>
-          <span style={{ fontSize: 12, fontFamily: 'var(--ma-font-mono)', background: 'var(--ma-brand-accent-light)', color: 'var(--ma-brand-accent)', padding: '4px 10px', borderRadius: 'var(--ma-radius-pill)', fontWeight: 600 }}>
+          <span style={{ fontSize: 12, background: 'var(--ma-brand-accent-light)', color: 'var(--ma-brand-accent)', padding: '4px 10px', borderRadius: 'var(--ma-radius-pill)', fontWeight: 600 }}>
             Tiện ích 1-chạm
           </span>
         </div>
@@ -662,14 +661,14 @@ export default function HopDongThaoTac({
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--ma-border-subtle)', paddingBottom: 12 }}>
             <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>Tóm tắt Hợp đồng & Chi phí kỳ đầu</span>
-            <span style={{ fontFamily: 'var(--ma-font-mono)', fontSize: 11, background: 'var(--ma-brand-accent-light)', color: 'var(--ma-brand-accent)', padding: '3px 10px', borderRadius: 'var(--ma-radius-pill)', fontWeight: 600 }}>
+            <span style={{ fontSize: 11, background: 'var(--ma-brand-accent-light)', color: 'var(--ma-brand-accent)', padding: '3px 10px', borderRadius: 'var(--ma-radius-pill)', fontWeight: 600 }}>
               {form.ngayKetThuc ? 'ĐÃ ĐẶT HẠN' : 'CHỜ CHỌN THỜI HẠN'}
             </span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 16, minWidth: 0 }}>
             <div>
-              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>PHÒNG THUÊ</div>
+              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>PHÒNG THUÊ</div>
               <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4 }}>
                 {phongChon ? `Phòng ${phongChon.soPhong} (Tầng ${phongChon.tang})` : '— Chưa chọn phòng —'}
               </div>
@@ -679,7 +678,7 @@ export default function HopDongThaoTac({
             </div>
 
             <div>
-              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>NGƯỜI THUÊ</div>
+              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>NGƯỜI THUÊ</div>
               <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4 }}>
                 {nguoiThueChon ? nguoiThueChon.hoTen : '— Chưa chọn khách —'}
               </div>
@@ -689,8 +688,8 @@ export default function HopDongThaoTac({
             </div>
 
             <div>
-              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>THỜI HẠN THUÊ</div>
-              <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4, fontFamily: 'var(--ma-font-mono)' }}>
+              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>THỜI HẠN THUÊ</div>
+              <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4 }}>
                 {form.ngayBatDau} → {form.ngayKetThuc || '...'}
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--ma-text-secondary)', marginTop: 2 }}>
@@ -699,8 +698,8 @@ export default function HopDongThaoTac({
             </div>
 
             <div>
-              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>TỔNG TIỀN ĐẦU KỲ (THUÊ + CỌC)</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--ma-done-text)', fontFamily: 'var(--ma-font-mono)', fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
+              <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>TỔNG TIỀN ĐẦU KỲ (THUÊ + CỌC)</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--ma-done-text)', fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
                 {dinhDangTien(String(tongThanhToanDauKy))} đ
               </div>
               <div style={{ fontSize: 12, color: 'var(--ma-text-secondary)', marginTop: 2 }}>
@@ -766,7 +765,7 @@ export default function HopDongThaoTac({
                     />
                   </div>
                 ) : (
-                  <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>
+                  <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>
                     Bảng giá chuẩn
                   </span>
                 )}
@@ -833,7 +832,7 @@ export default function HopDongThaoTac({
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                 <div>
-                  <span style={{ fontFamily: 'var(--ma-font-mono)', fontSize: 12, color: 'var(--ma-brand-accent)', fontWeight: 700 }}>
+                  <span style={{ fontSize: 12, color: 'var(--ma-brand-accent)', fontWeight: 700 }}>
                     HỢP ĐỒNG #{contract.id}
                   </span>
                   <h3 style={{ margin: '2px 0 0', font: 'var(--ma-text-task-name)' }}>
@@ -857,20 +856,20 @@ export default function HopDongThaoTac({
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))', gap: 14, minWidth: 0 }}>
                 <div style={{ background: 'var(--ma-bg-card)', padding: '10px 14px', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
-                  <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>THỜI HẠN HIỆU LỰC</div>
+                  <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>THỜI HẠN HIỆU LỰC</div>
                   <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2 }}>{contract.ngayBatDau} → {contract.ngayKetThuc}</div>
                 </div>
 
                 <div style={{ background: 'var(--ma-bg-card)', padding: '10px 14px', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
-                  <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>GIÁ THUÊ / THÁNG</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ma-brand-accent)', fontFamily: 'var(--ma-font-mono)', marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>GIÁ THUÊ / THÁNG</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ma-brand-accent)', marginTop: 2 }}>
                     {dinhDangTien(contract.giaThue)} đ
                   </div>
                 </div>
 
                 <div style={{ background: 'var(--ma-bg-card)', padding: '10px 14px', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
-                  <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>TIỀN ĐẶT CỌC</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ma-ink-900)', fontFamily: 'var(--ma-font-mono)', marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>TIỀN ĐẶT CỌC</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ma-ink-900)', marginTop: 2 }}>
                     {dinhDangTien(contract.tienCoc)} đ
                   </div>
                 </div>
@@ -1048,7 +1047,6 @@ export default function HopDongThaoTac({
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontFamily: 'var(--ma-font-mono)',
                         fontSize: 11,
                         fontWeight: 700,
                         background: activeStep === st.id ? 'var(--ma-brand-accent)' : 'var(--ma-line-200)',
@@ -1380,21 +1378,21 @@ export default function HopDongThaoTac({
                 <div style={{ display: 'grid', gap: 16 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 12, minWidth: 0 }}>
                     <div style={{ padding: '12px 14px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)' }}>
-                      <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>GIÁ THUÊ HỢP ĐỒNG</div>
+                      <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>GIÁ THUÊ HỢP ĐỒNG</div>
                       <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--ma-brand-accent)', marginTop: 2 }}>
                         {dinhDangTien(contract.giaThue)} đ/tháng
                       </div>
                     </div>
 
                     <div style={{ padding: '12px 14px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)' }}>
-                      <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>TIỀN CỌC THỎA THUẬN</div>
+                      <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>TIỀN CỌC THỎA THUẬN</div>
                       <div style={{ fontSize: 18, fontWeight: 800, marginTop: 2 }}>
                         {dinhDangTien(contract.tienCoc)} đ
                       </div>
                     </div>
 
                     <div style={{ padding: '12px 14px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)' }}>
-                      <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>TIỀN CỌC THỰC THU (SỔ CÁI)</div>
+                      <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>TIỀN CỌC THỰC THU (SỔ CÁI)</div>
                       <div style={{ fontSize: 18, fontWeight: 800, color: Number(hoSo?.tienCocThucThu || '0') >= Number(contract.tienCoc) ? 'var(--ma-status-done)' : 'var(--ma-status-urgent)', marginTop: 2 }}>
                         {dinhDangTien(hoSo?.tienCocThucThu || '0')} đ
                       </div>
@@ -1598,7 +1596,7 @@ export default function HopDongThaoTac({
                   <Field title="Nội dung điều khoản hợp đồng (12 điều khoản chuẩn mực vận hành)">
                     <textarea
                       rows={12}
-                      style={{ ...fieldStyle, fontFamily: 'var(--ma-font-mono)', fontSize: 12, lineHeight: 1.6 }}
+                      style={{ ...fieldStyle, fontSize: 12, lineHeight: 1.6 }}
                       disabled={hoSo?.daCoHoSoChot}
                       value={dossierForm.dieuKhoanTuyBien || ''}
                       onChange={(e) => setDossierForm({ ...dossierForm, dieuKhoanTuyBien: e.target.value })}
@@ -1795,7 +1793,7 @@ export default function HopDongThaoTac({
                               >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                   <strong>Phụ lục số {pl.soPhuLuc}: {pl.tieuDe}</strong>
-                                  <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>
+                                  <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>
                                     Hiệu lực: {pl.ngayHieuLuc}
                                   </span>
                                 </div>
@@ -2385,7 +2383,7 @@ export default function HopDongThaoTac({
 
                 <div style={{ marginTop: 12, padding: '12px 16px', background: '#FFFFFF', borderRadius: 'var(--ma-radius)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 15, fontWeight: 700 }}>Tiền cọc hoàn lại cho khách:</span>
-                  <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--ma-done-text)', fontFamily: 'var(--ma-font-mono)' }}>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--ma-done-text)' }}>
                     {settlement.hoanCoc} đ
                   </span>
                 </div>

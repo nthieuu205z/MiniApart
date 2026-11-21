@@ -151,7 +151,7 @@ dd {
 
 .ma-worker-task-heading h2 {
   margin: 0;
-  font: 700 clamp(40px, 14vw, 56px)/0.95 var(--ma-font-mono);
+  font: 700 clamp(40px, 14vw, 56px)/0.95 var(--ma-font-ui);
   letter-spacing: -0.045em;
   overflow-wrap: anywhere;
 }

@@ -709,7 +709,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                     <SysLabel>Thông tin liên hệ</SysLabel>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 13.5 }}>
                       <div style={{ background: 'var(--ma-bg-sunken)', padding: 10, borderRadius: 6 }}>
-                        <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)', textTransform: 'uppercase' }}>Người báo hỏng</div>
+                        <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)' }}>Người báo hỏng</div>
                         <strong>{chiTietData.nguoiBaoHoTen}</strong>
                         <div>
                           <a href={`tel:${chiTietData.nguoiBaoSoDienThoai}`} style={{ color: 'var(--ma-brand-primary, #2563EB)' }}>
@@ -719,7 +719,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                       </div>
 
                       <div style={{ background: 'var(--ma-bg-sunken)', padding: 10, borderRadius: 6 }}>
-                        <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)', textTransform: 'uppercase' }}>
+                        <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)' }}>
                           Người liên hệ thực tế {chiTietData.laNguoiDungTenHopDong ? '(Đứng tên HĐ)' : ''}
                         </div>
                         <strong>{chiTietData.nguoiLienHeHoTen}</strong>
@@ -732,7 +732,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
 
                       {chiTietData.quanLyPhuTrachHoTen ? (
                         <div style={{ background: 'var(--ma-bg-sunken)', padding: 10, borderRadius: 6 }}>
-                          <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)', textTransform: 'uppercase' }}>Quản lý phụ trách</div>
+                          <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)' }}>Quản lý phụ trách</div>
                           <strong>{chiTietData.quanLyPhuTrachHoTen}</strong>
                           <div>
                             <a href={`tel:${chiTietData.quanLyPhuTrachSoDienThoai}`} style={{ color: 'var(--ma-brand-primary, #2563EB)' }}>
@@ -1120,7 +1120,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
           <div id="printable-voucher-congviec" ref={voucherRef} style={{ background: '#ffffff', color: '#0f172a', width: 'min(92%, 760px)', maxHeight: '90vh', overflowY: 'auto', borderRadius: 12, padding: 32, boxShadow: 'var(--ma-shadow-lg)' }} tabIndex={-1}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0f172a', paddingBottom: 16, marginBottom: 20 }}>
               <div>
-                <h2 id="voucher-title" style={{ margin: '0 0 4px', fontSize: 22, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <h2 id="voucher-title" style={{ margin: '0 0 4px', fontSize: 22 }}>
                   Phiếu chi phí & Thanh toán sửa chữa
                 </h2>
                 <div style={{ fontSize: 13, color: '#475569' }}>

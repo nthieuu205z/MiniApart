@@ -617,7 +617,7 @@ function ChiTietPhongModal({
       >
         <div style={styleModalHeader}>
           <div>
-            <SysLabel>MINH BẠCH CHI PHÍ · TOÀ NHÀ {phong.tenToaNha}</SysLabel>
+            <SysLabel>Minh bạch chi phí · toà nhà {phong.tenToaNha}</SysLabel>
             <h3 id="modal-chitiet-title" style={styleModalTitle}>
               Thông tin phòng {phong.soPhong}
             </h3>
@@ -649,10 +649,10 @@ function ChiTietPhongModal({
           {/* Tiền thuê phòng */}
           <div style={styleHopGiaChinh}>
             <div>
-              <span style={{ fontSize: 12, fontFamily: 'var(--ma-font-mono)', color: 'var(--ma-text-secondary)' }}>
-                TIỀN THUÊ CỐ ĐỊNH HẰNG THÁNG
+              <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>
+                Tiền thuê cố định hằng tháng
               </span>
-              <div style={{ fontSize: 26, fontWeight: 700, fontFamily: 'var(--ma-font-mono)', color: 'var(--ma-ink-900)' }}>
+              <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--ma-ink-900)' }}>
                 {dinhDangTien(phong.giaThueMacDinh)}
                 <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--ma-text-secondary)' }}> / tháng</span>
               </div>
@@ -665,7 +665,7 @@ function ChiTietPhongModal({
 
           {/* Bảng biểu phí dịch vụ */}
           <div style={{ marginTop: 'var(--ma-space-4)' }}>
-            <h4 style={styleTieuDePhu}>BẢNG BIỂU PHÍ DỊCH VỤ NIÊM YẾT</h4>
+            <h4 style={styleTieuDePhu}>Bảng biểu phí dịch vụ niêm yết</h4>
             <p style={{ margin: '0 0 var(--ma-space-2)', fontSize: 12, color: 'var(--ma-text-secondary)' }}>
               Cam kết thu đúng theo đồng hồ công tơ riêng và biểu giá niêm yết của toà nhà, không tự ý tăng giá.
             </p>
@@ -687,7 +687,7 @@ function ChiTietPhongModal({
                         <strong>{dv.tenDichVu}</strong>
                       </td>
                       <td style={styleTd}>{dv.loaiThu === 'DONG_HO' ? 'Theo chỉ số công tơ' : dv.loaiThu === 'CO_DINH' ? 'Phí cố định/tháng' : dv.loaiThu}</td>
-                      <td style={{ ...styleTd, fontFamily: 'var(--ma-font-mono)', fontWeight: 700 }}>
+                      <td style={{ ...styleTd, fontWeight: 700 }}>
                         {dv.cheDoGia === 'BAC_THANG'
                           ? 'Theo biểu giá bậc thang'
                           : dv.donGia != null
@@ -710,7 +710,7 @@ function ChiTietPhongModal({
 
           {/* Tiền ích phòng */}
           <div style={{ marginTop: 'var(--ma-space-5)' }}>
-            <h4 style={styleTieuDePhu}>TIỆN ÍCH & TRANG THIẾT BỊ SẴN CÓ TRONG PHÒNG</h4>
+            <h4 style={styleTieuDePhu}>Tiện ích & trang thiết bị sẵn có trong phòng</h4>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 'var(--ma-space-2)' }}>
               {phong.tienIch && phong.tienIch.length > 0 ? (
                 phong.tienIch.map((ti, idx) => (
@@ -727,7 +727,7 @@ function ChiTietPhongModal({
           {/* Mô tả chi tiết */}
           {phong.moTa && (
             <div style={{ marginTop: 'var(--ma-space-5)' }}>
-              <h4 style={styleTieuDePhu}>MÔ TẢ CHI TIẾT</h4>
+              <h4 style={styleTieuDePhu}>Mô tả chi tiết</h4>
               <p style={{ margin: 'var(--ma-space-2) 0 0', lineHeight: 1.6, fontSize: 14 }}>
                 {phong.moTa}
               </p>
@@ -784,7 +784,7 @@ function DatLichModal({
       >
         <div style={styleModalHeader}>
           <div>
-            <SysLabel>ĐẶT LỊCH HẸN TRỰC TIẾP</SysLabel>
+            <SysLabel>Đặt lịch hẹn trực tiếp</SysLabel>
             <h3 id="modal-datlich-title" style={styleModalTitle}>
               Hẹn xem phòng {phong.soPhong} - {phong.tenToaNha}
             </h3>
@@ -806,12 +806,12 @@ function DatLichModal({
           <div style={styleModalBody}>
             <div style={styleHopThanhCong}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
-              <SysLabel>YÊU CẦU ĐÃ ĐƯỢC TIẾP NHẬN</SysLabel>
+              <SysLabel>Yêu cầu đã được tiếp nhận</SysLabel>
               <h3 style={{ margin: '8px 0', fontSize: 18, color: 'var(--ma-done-text)' }}>
                 Đặt lịch xem phòng thành công!
               </h3>
               {thongBaoLich.lichHenId && (
-                <p style={{ fontFamily: 'var(--ma-font-mono)', fontSize: 13, margin: '4px 0' }}>
+                <p style={{ fontSize: 13, margin: '4px 0' }}>
                   Mã lịch hẹn: <strong>#{thongBaoLich.lichHenId}</strong>
                 </p>
               )}
@@ -866,7 +866,7 @@ function DatLichModal({
                     value={formLichHen.soDienThoai}
                     onChange={(e) => onChangeForm({ ...formLichHen, soDienThoai: e.target.value })}
                   />
-                  <span style={{ fontSize: 12, color: 'var(--ma-text-muted)', fontFamily: 'var(--ma-font-mono)' }}>
+                  <span style={{ fontSize: 12, color: 'var(--ma-text-muted)' }}>
                     Quản lý toà nhà sẽ gọi xác nhận qua số này
                   </span>
                 </div>
@@ -971,7 +971,6 @@ const styleCardPhong: CSSProperties = {
 }
 
 const styleTagTienIchLon: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
   fontSize: 12,
   padding: '5px 12px',
   background: 'var(--ma-brand-accent-light)',
@@ -1068,10 +1067,8 @@ const styleHopGiaChinh: CSSProperties = {
 
 const styleTieuDePhu: CSSProperties = {
   margin: '0 0 var(--ma-space-2)',
-  fontFamily: 'var(--ma-font-mono)',
   fontSize: 12,
   fontWeight: 700,
-  letterSpacing: '0.06em',
   color: 'var(--ma-ink-900)',
 }
 
@@ -1085,10 +1082,8 @@ const styleTh: CSSProperties = {
   textAlign: 'left',
   padding: '10px 12px',
   borderBottom: '2px solid var(--ma-border-default)',
-  fontFamily: 'var(--ma-font-mono)',
   fontSize: 11,
   color: 'var(--ma-text-secondary)',
-  letterSpacing: '0.04em',
   fontWeight: 700,
 }
 

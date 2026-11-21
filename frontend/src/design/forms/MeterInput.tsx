@@ -41,7 +41,6 @@ export function MeterInput({
       <label style={{ fontSize: 12, fontWeight: 600, fontFamily: "var(--ma-font-ui)" }}>{label}</label>
       <div
         style={{
-          fontFamily: "var(--ma-font-mono)",
           fontSize: 17,
           background: "var(--ma-bg-card)",
           borderRadius: 0,

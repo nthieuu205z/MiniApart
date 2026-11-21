@@ -5,7 +5,7 @@ export interface SysLabelProps extends React.HTMLAttributes<HTMLSpanElement> {
   children?: React.ReactNode
 }
 
-/** Nhãn hệ thống: mono, chữ hoa, giãn 0.11em. Dùng cho tiêu đề cột, nhãn cụm số liệu, nhóm menu. */
+/** Nhãn hệ thống: chữ thường 13px đậm, không giãn cách. Dùng cho tiêu đề cột, nhãn cụm số liệu, nhóm menu. */
 export function SysLabel({ tone = 'secondary', children, style, ...rest }: SysLabelProps): React.ReactElement {
   const colors: Record<NonNullable<SysLabelProps['tone']>, string> = {
     secondary: 'var(--ma-text-secondary)',
@@ -17,11 +17,8 @@ export function SysLabel({ tone = 'secondary', children, style, ...rest }: SysLa
   return (
     <span
       style={{
-        fontFamily: "var(--ma-font-mono)",
-        fontSize: 10.5,
-        fontWeight: 700,
-        letterSpacing: "var(--ma-tracking-syslabel)",
-        textTransform: "uppercase",
+        fontSize: 13,
+        fontWeight: 600,
         color: colors[tone],
         ...(style || {}),
       }}

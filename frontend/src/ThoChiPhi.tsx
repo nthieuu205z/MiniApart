@@ -679,7 +679,6 @@ const styles: Record<string, CSSProperties> = {
     fontSize: '0.75rem',
     fontWeight: 700,
     color: '#64748b',
-    letterSpacing: '0.05em',
   },
   voucherDocCode: {
     fontSize: '1.05rem',
@@ -708,7 +707,6 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 700,
     fontSize: '1rem',
     color: '#1e3a8a',
-    letterSpacing: '0.02em',
   },
   brandAddress: {
     fontSize: '0.8rem',
@@ -730,7 +728,6 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 800,
     color: '#0f172a',
     margin: '0 0 4px 0',
-    letterSpacing: '0.03em',
   },
   sheetSubtitle: {
     textAlign: 'center',
@@ -757,7 +754,6 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 700,
     fontSize: '0.8rem',
     color: '#1e3a8a',
-    letterSpacing: '0.03em',
     marginBottom: '4px',
   },
   sheetInfoRow: {
