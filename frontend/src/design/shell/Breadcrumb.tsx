@@ -25,7 +25,7 @@ export function Breadcrumb({ items, style, ...rest }: BreadcrumbProps): React.Re
     >
       {items.map((it, i) => (
         <Fragment key={it}>
-          {i > 0 ? <span style={{ color: "var(--ma-border-dashed)" }}>›</span> : null}
+          {i > 0 ? <span style={{ color: "var(--ma-text-muted)" }}>›</span> : null}
           <span style={i === items.length - 1 ? { fontWeight: 700, color: "var(--ma-text-primary)" } : undefined}>{it}</span>
         </Fragment>
       ))}
