@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ApiError, fetchHoaDonQuanLy, fetchKyThanhToan, fetchToaNha, type ThongTinHoaDonQuanLy, type ThongTinToaNha, type ThongTinKyThanhToan } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
 import { useDialogTrap } from './design/feedback/useDialogTrap'
-import { ScreenHeader, ScreenNotice, ScreenSurface } from './design/layout/Screen'
-import { SysLabel } from './design/core/SysLabel'
 import { Button } from './design/core/Button'
+import { Icon } from './design/core/Icon'
+import { Card } from './design/layout/Card'
+import { DataTable, type DataTableChip, type DataTableColumn } from './design/table/DataTable'
 import { bulkInvoice, type BulkResult } from './financeApi'
 
 type Props = { token: string; mobile?: boolean; vaiTro?: string }
@@ -126,90 +127,63 @@ export default function HoaDonQuanLy({ token, mobile = false }: Props): React.Re
     return mapTrangThaiHoaDon(boLoc.trangThai).nhan
   }, [boLoc.trangThai])
 
-  return (
-    <ScreenSurface data-testid="manager-invoice-screen" data-layout-variant={variant} aria-labelledby="manager-invoice-title">
-      <ScreenHeader>
-        <SysLabel>QUẢN LÝ THU TIỀN & HOÁ ĐƠN</SysLabel>
-        <h3 id="manager-invoice-title" style={{ margin: '8px 0 0' }}>Danh sách hoá đơn quản lý</h3>
-        <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>Danh sách hoá đơn theo toà nhà và trạng thái vận hành.</p>
-      </ScreenHeader>
+  const tongConLai = visible.reduce((t, h) => t + Number(h.conLai), 0)
+  const kyChon = ky.find((k) => k.id === kyId)
+  const cot = useMemo(() => cotHoaDon(boLoc.toaNhaId), [boLoc.toaNhaId])
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: mobile ? '1fr' : 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 16,
-          alignItems: 'end',
-          margin: '16px 0',
-        }}
-      >
-        <label style={styleField}>Toà nhà
-          <select
-            data-invoice-building-select
-            value={boLoc.toaNhaId ?? ''}
-            onChange={(event) => setBoLoc((current) => ({ ...current, toaNhaId: soNguyenDuong(event.target.value) }))}
-            style={styleInput}
-          >
+  return (
+    <section data-testid="manager-invoice-screen" data-layout-variant={variant} aria-labelledby="manager-invoice-title" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
+      <header className="topbar">
+        <div className="title-block">
+          <h1 className="h1" id="manager-invoice-title">Hoá đơn</h1>
+          <p className="sub" data-invoice-active-filter>Đang lọc: {tieuDeBoLoc} · {visible.length} hoá đơn · còn phải thu {dinhDangTien(tongConLai)} ₫</p>
+        </div>
+        <div className="topbar-actions">
+          <label className="sr-only" htmlFor="hoa-don-toa">Toà nhà</label>
+          <select id="hoa-don-toa" className="select" data-invoice-building-select style={{ width: 220 }} value={boLoc.toaNhaId ?? ''} onChange={(event) => setBoLoc((current) => ({ ...current, toaNhaId: soNguyenDuong(event.target.value) }))}>
             <option value="">Chọn toà nhà</option>
             {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
           </select>
-        </label>
+        </div>
+      </header>
 
-        <label style={styleField}>Trạng thái
-          <select aria-label="Lọc trạng thái hoá đơn" value={boLoc.trangThai} onChange={(event) => setBoLoc((value) => ({ ...value, trangThai: event.target.value }))} style={styleInput}>
-            <option value="">Tất cả trạng thái</option>
-            <option value="NO_QUA_HAN">Nợ quá hạn</option>
-            <option value="NHAP">Bản nháp</option>
-            <option value="DA_PHAT_HANH">Đã phát hành</option>
-            <option value="DA_THU_MOT_PHAN">Đã thu một phần</option>
-            <option value="DA_THANH_TOAN">Đã thanh toán</option>
-            <option value="QUA_HAN">Quá hạn</option>
-            <option value="DA_HUY">Đã huỷ</option>
-          </select>
-        </label>
-
-        <label style={styleField}>Kỳ thanh toán
-          <select aria-label="Lọc kỳ hoá đơn" value={kyId ?? ''} onChange={(event) => { setKyId(event.target.value ? Number(event.target.value) : null); setResult(null) }} style={styleInput}>
-            <option value="">Tất cả kỳ</option>
-            {ky.map((value) => <option key={value.id} value={value.id}>{value.thang}/{value.nam} · {value.trangThai}</option>)}
-          </select>
-        </label>
-      </div>
-
-      {loiKy ? <p role="status">{loiKy}</p> : null}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Button
-            blocked={busy || kyId === null}
-            blockedReason={busy ? 'Đang xử lý hoá đơn hàng loạt…' : kyId === null ? 'Cần chọn kỳ thanh toán' : undefined}
-            onClick={() => void runBulk('tao-hang-loat')}
-          >
-            Tạo hoá đơn nháp hàng loạt
-          </Button>
-          <Button
-            variant="secondary"
-            blocked={busy || kyId === null}
-            blockedReason={busy ? 'Đang xử lý hoá đơn hàng loạt…' : kyId === null ? 'Cần chọn kỳ thanh toán' : undefined}
-            onClick={() => setXacNhanPhatHanh(true)}
-          >
+      <Card>
+        <div className="row-wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
+          <label className="field" style={{ flex: '1 1 180px', maxWidth: 260 }}><span className="label">Kỳ thanh toán</span>
+            <select aria-label="Lọc kỳ hoá đơn" className="select" value={kyId ?? ''} onChange={(event) => { setKyId(event.target.value ? Number(event.target.value) : null); setResult(null) }}>
+              <option value="">Tất cả kỳ</option>
+              {ky.map((value) => <option key={value.id} value={value.id}>{value.thang}/{value.nam} · {value.trangThai}</option>)}
+            </select>
+          </label>
+          <label className="field" style={{ flex: '1 1 180px', maxWidth: 260 }}><span className="label">Trạng thái</span>
+            <select aria-label="Lọc trạng thái hoá đơn" className="select" value={boLoc.trangThai} onChange={(event) => setBoLoc((value) => ({ ...value, trangThai: event.target.value }))}>
+              <option value="">Tất cả trạng thái</option>
+              <option value="NO_QUA_HAN">Nợ quá hạn</option>
+              <option value="NHAP">Bản nháp</option>
+              <option value="DA_PHAT_HANH">Đã phát hành</option>
+              <option value="DA_THU_MOT_PHAN">Đã thu một phần</option>
+              <option value="DA_THANH_TOAN">Đã thanh toán</option>
+              <option value="QUA_HAN">Quá hạn</option>
+              <option value="DA_HUY">Đã huỷ</option>
+            </select>
+          </label>
+          <span className="push" />
+          <Button variant="secondary" blocked={busy || kyId === null} onClick={() => setXacNhanPhatHanh(true)}>
             Phát hành hoá đơn trong kỳ
           </Button>
+          <Button blocked={busy || kyId === null} onClick={() => void runBulk('tao-hang-loat')}>
+            <Icon name="plus" />Tạo hoá đơn nháp hàng loạt
+          </Button>
         </div>
-        {busy ? (
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-waiting)' }}>
-            ⏳ Hệ thống đang xử lý hoá đơn hàng loạt, vui lòng chờ…
-          </p>
-        ) : kyId === null && boLoc.toaNhaId !== null ? (
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)' }}>
-            💡 Chọn một kỳ thanh toán cụ thể để thực hiện tạo nháp hoặc phát hành hoá đơn hàng loạt.
-          </p>
-        ) : null}
-      </div>
+        {busy ? <p className="t-sm" style={{ margin: '10px 0 0' }}><Icon name="clock" size="sm" /> Hệ thống đang xử lý hoá đơn hàng loạt, vui lòng chờ…</p>
+          : kyId === null && boLoc.toaNhaId !== null ? <p className="t-sm" style={{ margin: '10px 0 0' }}><Icon name="info" size="sm" /> Chọn một kỳ thanh toán cụ thể để tạo nháp hoặc phát hành hoá đơn hàng loạt.</p> : null}
+      </Card>
+
+      {loiKy ? <p role="status" className="alert alert-danger"><Icon name="alert" />{loiKy}</p> : null}
 
       {xacNhanPhatHanh && (
         <XacNhanPhatHanhModal
-          kyTen={ky.find((k) => k.id === kyId) ? `${ky.find((k) => k.id === kyId)!.thang}/${ky.find((k) => k.id === kyId)!.nam}` : ''}
+          kyTen={kyChon ? `${kyChon.thang}/${kyChon.nam}` : ''}
           onClose={() => setXacNhanPhatHanh(false)}
           onConfirm={() => {
             setXacNhanPhatHanh(false)
@@ -219,22 +193,12 @@ export default function HoaDonQuanLy({ token, mobile = false }: Props): React.Re
       )}
 
       {result ? (
-        <div
-          role="status"
-          style={{
-            padding: '14px 18px',
-            background: 'var(--ma-bg-sunken)',
-            border: '1px solid var(--ma-border-default)',
-            borderRadius: 'var(--ma-radius)',
-            display: 'grid',
-            gap: 8,
-          }}
-        >
-          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--ma-done-text)' }}>
-            ✓ Đã xử lý: Tạo mới {result.soHoaDonTaoMoi ?? 0} hoá đơn · Phát hành {result.soHoaDonDaPhatHanh ?? 0} hoá đơn · Đã có sẵn: {result.soHoaDonDaTonTai ?? result.soHoaDonDaOTrangThaiKhac ?? 0}
+        <div role="status" className="alert alert-success" style={{ display: 'grid', gap: 8 }}>
+          <div style={{ fontWeight: 600 }}>
+            <Icon name="check-circle" /> Đã xử lý: Tạo mới {result.soHoaDonTaoMoi ?? 0} hoá đơn · Phát hành {result.soHoaDonDaPhatHanh ?? 0} hoá đơn · Đã có sẵn: {result.soHoaDonDaTonTai ?? result.soHoaDonDaOTrangThaiKhac ?? 0}
           </div>
           {result.lyDoBoQua && result.lyDoBoQua.length > 0 && (
-            <details style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>
+            <details>
               <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
                 Xem chi tiết {result.lyDoBoQua.length} phòng được bỏ qua
               </summary>
@@ -250,119 +214,65 @@ export default function HoaDonQuanLy({ token, mobile = false }: Props): React.Re
         </div>
       ) : null}
 
-      <p data-invoice-active-filter style={styleActiveFilter}>Đang lọc: {tieuDeBoLoc}</p>
-      {dangTai ? <p aria-live="polite">Đang tải danh sách hoá đơn…</p>
-        : loi ? <div role="alert"><ScreenNotice tone="urgent">{loi}</ScreenNotice></div>
+      {dangTai ? <EmptyState kind="loading" title="Đang tải danh sách hoá đơn…" />
+        : loi ? <div role="alert"><EmptyState kind="error" title={loi} /></div>
           : boLoc.toaNhaId === null ? <EmptyState title="Chọn một toà nhà để xem hoá đơn." />
             : visible.length === 0 ? <EmptyState title="Không có hoá đơn phù hợp bộ lọc." />
-              : <div data-invoice-list={variant} style={styleList}>{visible.map((hoaDon) => <HoaDonQuanLyRow key={hoaDon.hoaDonId} toaNhaId={boLoc.toaNhaId!} hoaDon={hoaDon} />)}</div>}
-    </ScreenSurface>
+              : (
+                <Card data-invoice-list={variant}>
+                  <DataTable
+                    rows={visible}
+                    columns={cot}
+                    getRowId={(h) => h.hoaDonId}
+                    chips={CHIP.filter((c) => visible.some(c.match))}
+                    timTheo={(h) => `${h.maHoaDon} ${h.soPhong} ${h.nguoiThue}`}
+                    searchLabel="Tìm mã hoá đơn, phòng, người thuê"
+                    noun="hoá đơn"
+                    pageSize={20}
+                    rowProps={(h) => ({ 'data-invoice-row': String(h.hoaDonId) })}
+                  />
+                </Card>
+              )}
+    </section>
   )
 }
 
-function HoaDonQuanLyRow({ toaNhaId, hoaDon }: { toaNhaId: number; hoaDon: ThongTinHoaDonQuanLy }): React.ReactElement {
-  const href = hoaDon.kyId === null
-    ? null
-    : `/hoa-don?toaNhaId=${toaNhaId}&kyId=${hoaDon.kyId}&hoaDonId=${hoaDon.hoaDonId}`
-  const status = mapTrangThaiHoaDon(hoaDon.trangThai)
-  return (
-    <article data-invoice-row={hoaDon.hoaDonId} style={styleRow}>
-      <div style={styleRowMain}>
-        {href ? <a data-invoice-detail-link href={href} style={styleLink}>{hoaDon.maHoaDon}</a> : <strong data-invoice-without-period>{hoaDon.maHoaDon}</strong>}
-        <strong>Phòng {hoaDon.soPhong} · {hoaDon.nguoiThue}</strong>
-        <span style={styleMuted}>Hạn thanh toán: {dinhDangNgayIso(hoaDon.hanThanhToan)}</span>
-        {href ? null : <span style={styleMuted}>Hoá đơn quyết toán không thuộc kỳ thanh toán.</span>}
-      </div>
-      <StatusTag tone={status.tone}>{status.nhan}</StatusTag>
-      <div style={styleMoney}>
-        <span>Tổng: {dinhDangTien(hoaDon.tongTien)} ₫</span>
-        <strong style={{ color: Number(hoaDon.conLai) > 0 ? 'var(--ma-urgent)' : 'var(--ma-done-text)' }}>
-          Còn lại: {dinhDangTien(hoaDon.conLai)} ₫
-        </strong>
-      </div>
-      {href ? (
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <a
-            href={href}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 'var(--ma-radius)',
-              background: 'var(--ma-bg-card)',
-              color: 'var(--ma-brand-accent)',
-              border: '1px solid var(--ma-border-strong)',
-              fontWeight: 600,
-              fontSize: 12.5,
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Chi tiết →
-          </a>
-        </div>
-      ) : null}
-    </article>
-  )
+const CHIP: DataTableChip<ThongTinHoaDonQuanLy>[] = ['NHAP', 'DA_PHAT_HANH', 'DA_THU_MOT_PHAN', 'QUA_HAN', 'DA_THANH_TOAN', 'DA_HUY']
+  .map((ma) => ({ key: ma, label: mapTrangThaiHoaDon(ma).nhan, match: (h: ThongTinHoaDonQuanLy) => h.trangThai === ma }))
+
+function cotHoaDon(toaNhaId: number | null): DataTableColumn<ThongTinHoaDonQuanLy>[] {
+  const duongDan = (h: ThongTinHoaDonQuanLy) => (h.kyId === null || toaNhaId === null ? null : `/hoa-don?toaNhaId=${toaNhaId}&kyId=${h.kyId}&hoaDonId=${h.hoaDonId}`)
+  return [
+    {
+      key: 'ma', label: 'Hoá đơn', sortable: true, sortValue: (h) => h.maHoaDon,
+      render: (h) => {
+        const href = duongDan(h)
+        return <>
+          {href ? <a data-invoice-detail-link href={href} className="td-main" style={{ color: 'var(--ma-brand-accent)', textDecoration: 'none' }}>{h.maHoaDon}</a> : <strong className="td-main" data-invoice-without-period>{h.maHoaDon}</strong>}
+          {href ? null : <div className="td-sub">Hoá đơn quyết toán không thuộc kỳ thanh toán.</div>}
+        </>
+      },
+    },
+    { key: 'phong', label: 'Phòng', sortable: true, sortValue: (h) => h.soPhong, render: (h) => <span className="td-main">{h.soPhong}</span> },
+    { key: 'nguoiThue', label: 'Người thuê', the: 'tieu-de', sortable: true, sortValue: (h) => h.nguoiThue, render: (h) => <span title={h.nguoiThue}>{h.nguoiThue}</span> },
+    { key: 'han', label: 'Hạn thanh toán', sortable: true, sortValue: (h) => h.hanThanhToan, render: (h) => dinhDangNgayIso(h.hanThanhToan) },
+    { key: 'tong', label: 'Tổng', align: 'num', sortable: true, sortValue: (h) => Number(h.tongTien), render: (h) => <>{dinhDangTien(h.tongTien)} ₫</> },
+    {
+      key: 'conLai', label: 'Còn lại', align: 'num', sortable: true, sortValue: (h) => Number(h.conLai),
+      render: (h) => <span className="t-money" style={{ color: Number(h.conLai) > 0 ? 'var(--ma-urgent)' : 'var(--ma-done-text)' }}>{dinhDangTien(h.conLai)} ₫</span>,
+    },
+    { key: 'trangThai', label: 'Trạng thái', render: (h) => { const t = mapTrangThaiHoaDon(h.trangThai); return <StatusTag tone={t.tone}>{t.nhan}</StatusTag> } },
+    {
+      key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong',
+      render: (h) => { const href = duongDan(h); return href ? <div className="td-acts"><a className="btn btn-ghost btn-sm" href={href}>Chi tiết</a></div> : null },
+    },
+  ]
 }
 
 function soNguyenDuong(value: string | null): number | null {
   if (value === null || !/^[1-9]\d*$/.test(value)) return null
   const parsed = Number(value)
   return Number.isSafeInteger(parsed) ? parsed : null
-}
-
-const styleList: CSSProperties = { display: 'grid', gap: 12 }
-const styleRow: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 14rem), 1fr))',
-  alignItems: 'center',
-  gap: 16,
-  padding: '16px 20px',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 'var(--ma-radius-md)',
-  boxShadow: 'var(--ma-shadow-sm)',
-  background: 'var(--ma-bg-card)',
-  minWidth: 0,
-  transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
-}
-const styleRowMain: CSSProperties = { display: 'grid', gap: 4, minWidth: 0, overflowWrap: 'anywhere' }
-const styleMoney: CSSProperties = {
-  display: 'grid',
-  gap: 4,
-  justifyItems: 'end',
-  color: 'var(--ma-text-secondary)',
-  textAlign: 'right',
-  fontFamily: 'var(--ma-font-mono)',
-  fontVariantNumeric: 'tabular-nums',
-  fontSize: 13,
-}
-const styleMuted: CSSProperties = { color: 'var(--ma-text-secondary)', fontSize: 13 }
-const styleField: CSSProperties = { display: 'grid', gap: 6, width: '100%', fontSize: 13, fontWeight: 600, color: 'var(--ma-text-secondary)' }
-const styleInput: CSSProperties = {
-  minHeight: 'var(--ma-hit-mobile)',
-  padding: '10px 14px',
-  border: '1px solid var(--ma-border-strong)',
-  borderRadius: 'var(--ma-radius)',
-  background: 'var(--ma-bg-card)',
-  color: 'var(--ma-text-primary)',
-  font: 'inherit',
-  boxShadow: 'var(--ma-shadow-sm)',
-}
-const styleLink: CSSProperties = {
-  color: 'var(--ma-brand-accent)',
-  fontFamily: 'var(--ma-font-mono)',
-  fontWeight: 700,
-  textDecoration: 'none',
-  fontSize: 14,
-}
-const styleActiveFilter: CSSProperties = {
-  margin: 0,
-  padding: '10px 14px',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 'var(--ma-radius)',
-  background: 'var(--ma-bg-sunken)',
-  color: 'var(--ma-text-primary)',
-  fontWeight: 600,
-  fontSize: 13.5,
 }
 
 function XacNhanPhatHanhModal({
@@ -414,7 +324,7 @@ function XacNhanPhatHanhModal({
           Xác nhận phát hành hoá đơn kỳ {kyTen}?
         </h4>
         <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>
-          Toàn bộ hoá đơn dự thảo trong kỳ của toà nhà sẽ được chuyển sang trạng thái <strong>ĐÃ PHÁT HÀNH</strong>. Khách thuê sẽ nhìn thấy hoá đơn và có thể tiến hành thanh toán.
+          Toàn bộ hoá đơn dự thảo trong kỳ của toà nhà sẽ được chuyển sang trạng thái <strong>Đã phát hành</strong>. Khách thuê sẽ nhìn thấy hoá đơn và có thể tiến hành thanh toán.
         </p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <Button variant="secondary" onClick={onClose} style={{ minHeight: 40 }}>
