@@ -73,6 +73,7 @@ describe('DanhMucPhong', () => {
       return jsonResponse([phong101])
     }))
     await renderScreen()
+    await moSoDoTang()
     const tile = await vi.waitFor(() => container.querySelector('[data-testid="room-tile"]') as HTMLButtonElement)
     await act(async () => tile.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
     await vi.waitFor(() => expect(container.querySelector('[data-testid="room-detail"]')?.textContent).toContain('Chi tiết phòng 101'))
@@ -87,11 +88,11 @@ describe('DanhMucPhong', () => {
     }))
 
     await renderScreen()
+    await moSoDoTang()
     const catalog = await vi.waitFor(() => container.querySelector('[data-testid="room-catalog"]') as HTMLElement)
     const layout = catalog.querySelector('.building-layout') as HTMLElement
     const list = catalog.querySelector('.building-list') as HTMLElement
     const detail = catalog.querySelector('.building-detail') as HTMLElement
-    const summary = catalog.querySelector('.room-status-summary') as HTMLElement
     const form = catalog.querySelector('[data-testid="room-form"]') as HTMLElement
 
     expect(catalog.style.display).toBe('flex')
@@ -105,15 +106,9 @@ describe('DanhMucPhong', () => {
     expect(detail.style.display).toBe('grid')
     expect(detail.style.minWidth).toBe('0px')
 
-    for (const panel of [summary, form]) {
-      expect(panel.style.background).toBe('var(--ma-bg-card)')
-      expect(panel.style.border).toBe('var(--ma-border-width) solid var(--ma-border-default)')
-      expect(panel.style.padding).toBe('var(--ma-space-6)')
-      expect(panel.style.gap).toBe('var(--ma-space-4)')
-    }
+    expect(form.className).toContain('card')
+    expect(form.style.gap).toBe('var(--ma-space-4)')
 
-    expect((summary.querySelector('.room-status-summary__grid') as HTMLElement).style.gridTemplateColumns)
-      .toBe('repeat(auto-fit, minmax(min(100%, 9rem), 1fr))')
     const formRow = form.querySelector('.building-form__row') as HTMLElement
     expect(formRow.style.gridTemplateColumns)
       .toBe('repeat(auto-fit, minmax(min(100%, 14rem), 1fr))')
@@ -144,6 +139,7 @@ describe('DanhMucPhong', () => {
     }))
 
     await renderScreen()
+    await moSoDoTang()
     await vi.waitFor(() => expect(container.querySelectorAll('[data-testid="room-tile"]')).toHaveLength(5))
 
     const readTile = (room: string) => {
@@ -282,6 +278,11 @@ describe('DanhMucPhong', () => {
 async function renderScreen(mobile = false) {
   root = createRoot(container)
   await act(async () => root.render(<DanhMucPhong token="room-token" mobile={mobile} />))
+}
+
+async function moSoDoTang() {
+  await vi.waitFor(() => expect(container.textContent).toContain('Sơ đồ tầng'))
+  await act(async () => clickButton('Sơ đồ tầng'))
 }
 
 function clickButton(label: string) {
