@@ -52,7 +52,7 @@ export function BieuDoCot({ nhan, chuoi, tieuDe, thuocTinhNhom, moTaNhom, dinhDa
   const rongCot = Math.min(itCot ? 56 : 28, (bocNhom * 0.78) / Math.max(1, chuoi.length))
   const nhomRong = rongCot * chuoi.length
   const buoc = Math.max(1, Math.ceil((n * 64) / (rong - KHUNG.trai - KHUNG.phai)))
-  const ghiSo = itCot && rongCot >= 40
+  const ghiSo = itCot && rongCot >= 28
   const trucY = (m: number) => (m === 0 ? '0' : dinhDang(m))
   return (
     <div ref={khung}>

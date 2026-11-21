@@ -180,6 +180,27 @@ describe('ChiPhiBaoTriBaoCao', () => {
     expect(container!.textContent).toContain('Thiếu bên chịu chi phí')
     expect(container!.textContent).toContain('Chưa ghi nhận chi phí')
   })
+  it('Lô D: chip lọc đếm theo thiếu chi phí / bên chịu và lọc dòng bảng', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/toa-nha') return jsonResponse([{ id: 1, ten: 'Toà A' }])
+      if (url === '/api/toa-nha/1/phong') return jsonResponse([])
+      if (url.startsWith('/api/bao-cao/chi-phi-bao-tri?')) return jsonResponse(baoCao())
+      throw new Error(`Unexpected fetch: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    await act(async () => {
+      root = createRoot(container!)
+      root.render(<ChiPhiBaoTriBaoCao token="report-token" />)
+    })
+    await vi.waitFor(() => expect(container!.querySelectorAll('[data-maintenance-cost-row]')).toHaveLength(3))
+    const chip = (nhan: string) => Array.from(container!.querySelectorAll('button.chip')).find((b) => b.textContent?.startsWith(nhan)) as HTMLButtonElement
+    expect(chip('Thiếu chi phí').textContent).toBe('Thiếu chi phí1')
+    expect(chip('Chủ nhà').textContent).toBe('Chủ nhà1')
+    await act(async () => chip('Thiếu chi phí').click())
+    expect(container!.querySelectorAll('[data-maintenance-cost-row]')).toHaveLength(1)
+    expect(container!.querySelector('[data-maintenance-cost-row="42"]')).not.toBeNull()
+  })
 })
 
 function baoCao() {

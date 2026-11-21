@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import {
   ApiError,
   fetchChiPhiBaoTriBaoCao,
@@ -14,8 +14,13 @@ import {
 } from './api'
 import { dinhDangTien } from './design/core/format'
 import { EmptyState } from './design/feedback/EmptyState'
-import { ScreenHeader, ScreenNotice, ScreenSurface, TableCell, TableFrame, TableHeadCell } from './design/layout/Screen'
-import { SysLabel } from './design/core/SysLabel'
+import { Icon } from './design/core/Icon'
+import { StatusTag } from './design/core/StatusTag'
+import { Card } from './design/layout/Card'
+import { Field, Input, Select } from './design/forms/Field'
+import { DataTable } from './design/table/DataTable'
+import { BieuDoCot } from './design/charts/BieuDoCot'
+import { BaoCaoDangTai, BaoCaoLoi, DauBaoCao, ThanhLoc, gioTinh } from './baoCaoChung'
 import ExcelExportButton from './ExcelExportButton'
 
 type Props = { token: string; mobile?: boolean }
@@ -108,63 +113,51 @@ export default function ChiPhiBaoTriBaoCao({ token, mobile = false }: Props): Re
     return () => window.removeEventListener('popstate', docLaiBoLocTuLichSu)
   }, [])
 
-  if (dangTai && !baoCao) {
-    return <ScreenSurface data-testid="maintenance-cost-report-screen" data-layout-variant={variant} aria-busy="true" aria-live="polite">Đang tải báo cáo chi phí bảo trì…</ScreenSurface>
-  }
-  if (loi && !baoCao) {
-    return (
-      <ScreenSurface data-testid="maintenance-cost-report-screen" data-layout-variant={variant} role="alert">
-        <SysLabel>BÁO CÁO CHI PHÍ BẢO TRÌ</SysLabel>
-        <ScreenNotice tone="urgent">{loi}</ScreenNotice>
-      </ScreenSurface>
-    )
-  }
+  if (dangTai && !baoCao) return <BaoCaoDangTai testid="maintenance-cost-report-screen" variant={variant} nhan="Đang tải báo cáo chi phí bảo trì…" />
+  if (loi && !baoCao) return <BaoCaoLoi testid="maintenance-cost-report-screen" variant={variant} loi={loi} />
   if (!baoCao) {
-    return <ScreenSurface data-testid="maintenance-cost-report-screen" data-layout-variant={variant}><EmptyState title="Chưa có báo cáo chi phí bảo trì để hiển thị." /></ScreenSurface>
+    return <div data-testid="maintenance-cost-report-screen" data-layout-variant={variant}><EmptyState title="Chưa có báo cáo chi phí bảo trì để hiển thị." /></div>
   }
+
+  const tomTat = (key: string, nhan: string, giaTri: string, ghiChu: string, canhBao = false) => (
+    <article key={key} data-maintenance-cost-summary={key} className="card">
+      <h2 className="h3" style={{ color: 'var(--ma-text-secondary)', fontWeight: 500 }}>{nhan}</h2>
+      <p className={`kpi-value${canhBao ? ' t-danger' : ''}`} style={SO_KPI}>{giaTri}</p>
+      <p className="kpi-desc" style={{ marginTop: 8 }}>{ghiChu}</p>
+    </article>
+  )
 
   return (
-    <ScreenSurface data-testid="maintenance-cost-report-screen" data-layout-variant={variant} aria-labelledby="maintenance-cost-report-title">
-      <ScreenHeader action={<ExcelExportButton token={token} report="chi-phi-bao-tri" filters={boLoc} loading={dangTai} />}>
-        <SysLabel>BÁO CÁO CHI PHÍ BẢO TRÌ</SysLabel>
-        <h3 id="maintenance-cost-report-title" style={{ margin: '8px 0 0' }}>Chi phí bảo trì</h3>
-        <p style={styleMuted}>Chi phí lấy từ yêu cầu sửa chữa, tách theo bên chịu chi phí và không cộng lại khoản phát sinh hoá đơn.</p>
-      </ScreenHeader>
+    <div data-testid="maintenance-cost-report-screen" data-layout-variant={variant} aria-labelledby="maintenance-cost-report-title" className="stack">
+      <DauBaoCao
+        id="maintenance-cost-report-title"
+        tieuDe="Chi phí bảo trì"
+        moTa="Chi phí lấy từ yêu cầu sửa chữa, tách theo bên chịu chi phí và không cộng lại khoản phát sinh hoá đơn."
+        action={<ExcelExportButton token={token} report="chi-phi-bao-tri" filters={boLoc} loading={dangTai} />}
+      />
 
       <BoLoc boLoc={boLoc} toaNha={toaNha} phong={phong} dangTai={dangTaiBoLoc} onChange={setBoLoc} />
-      {loiBoLoc ? <ScreenNotice tone="urgent">{loiBoLoc}</ScreenNotice> : null}
-      {dangTai ? <ScreenNotice live>Đang cập nhật báo cáo chi phí bảo trì…</ScreenNotice> : null}
-      {loi ? <ScreenNotice tone="urgent">{loi}</ScreenNotice> : null}
+      {loiBoLoc ? <p className="alert alert-danger" role="alert"><Icon name="alert" />{loiBoLoc}</p> : null}
+      {dangTai ? <p className="t-2" role="status" aria-live="polite">Đang cập nhật báo cáo chi phí bảo trì…</p> : null}
+      {loi ? <p className="alert alert-danger" role="alert"><Icon name="alert" />{loi}</p> : null}
 
-      <section aria-label="Tổng hợp chi phí bảo trì" style={styleSummary}>
-        <article data-maintenance-cost-summary="owner" style={styleSummaryCard}>
-          <SysLabel>Chủ nhà</SysLabel>
-          <strong style={styleSummaryValue}>{hienThiTongTien(baoCao.tongChiPhiChuNha)}</strong>
-          <span style={styleMuted}>Chi phí đã ghi nhận</span>
-        </article>
-        <article data-maintenance-cost-summary="tenant" style={styleSummaryCard}>
-          <SysLabel>Người thuê</SysLabel>
-          <strong style={styleSummaryValue}>{hienThiTongTien(baoCao.tongChiPhiNguoiThue)}</strong>
-          <span style={styleMuted}>Nguồn sửa chữa, tính một lần</span>
-        </article>
-        <article data-maintenance-cost-summary="missing" style={styleSummaryCard}>
-          <SysLabel>Chưa ghi nhận</SysLabel>
-          <strong style={styleSummaryValue}>{baoCao.soDongThieuChiPhi}</strong>
-          <span style={styleMuted}>Dòng giữ nguyên trạng thái thiếu chi phí</span>
-        </article>
+      <section aria-label="Tổng hợp chi phí bảo trì" className="grid" style={{ gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'repeat(3, minmax(0, 1fr))' }}>
+        {tomTat('owner', 'Chủ nhà', hienThiTongTien(baoCao.tongChiPhiChuNha), 'Chi phí đã ghi nhận')}
+        {tomTat('tenant', 'Người thuê', hienThiTongTien(baoCao.tongChiPhiNguoiThue), 'Nguồn sửa chữa, tính một lần')}
+        {tomTat('missing', 'Chưa ghi nhận', String(baoCao.soDongThieuChiPhi), 'Dòng giữ nguyên trạng thái thiếu chi phí', baoCao.soDongThieuChiPhi > 0)}
       </section>
 
       {baoCao.cacDong.length === 0 && baoCao.bieuDo.length === 0 ? (
-        <EmptyState title="Không có chi phí bảo trì phù hợp bộ lọc." body="Các yêu cầu chưa có chi phí vẫn được giữ khi có dữ liệu báo cáo." />
+        <div className="card"><EmptyState title="Không có chi phí bảo trì phù hợp bộ lọc." body="Các yêu cầu chưa có chi phí vẫn được giữ khi có dữ liệu báo cáo." /></div>
       ) : (
         <>
           <BieuDoChiPhi points={baoCao.bieuDo} />
-          <BangChiPhi rows={baoCao.cacDong} mobile={mobile} />
-          {baoCao.cacNhom.length > 0 ? <BangNhom groups={baoCao.cacNhom} mobile={mobile} /> : null}
+          <BangChiPhi rows={baoCao.cacDong} />
+          {baoCao.cacNhom.length > 0 ? <BangNhom groups={baoCao.cacNhom} /> : null}
         </>
       )}
-      <p style={{ ...styleMuted, margin: 0 }}>Tính lúc {baoCao.tinhLuc}. Bảng và biểu đồ dùng cùng một ảnh chụp dữ liệu.</p>
-    </ScreenSurface>
+      <p className="t-meta" style={{ margin: 0 }}>Tính lúc {gioTinh(baoCao.tinhLuc)}. Bảng và biểu đồ dùng cùng một ảnh chụp dữ liệu.</p>
+    </div>
   )
 }
 
@@ -182,149 +175,126 @@ function BoLoc({
   onChange: (value: BoLocChiPhiBaoTriBaoCao) => void
 }): React.ReactElement {
   return (
-    <section aria-label="Bộ lọc báo cáo chi phí bảo trì" style={styleFilterGrid}>
-      <label style={styleField}>
-        <span>Toà nhà</span>
-        <select
+    <ThanhLoc nhan="Bộ lọc báo cáo chi phí bảo trì">
+      <Field label="Toà nhà">
+        <Select
           aria-label="Lọc chi phí bảo trì theo toà nhà"
           value={boLoc.toaNhaId === null ? '' : String(boLoc.toaNhaId)}
           onChange={(event) => onChange({ ...boLoc, toaNhaId: event.target.value ? Number(event.target.value) : null, phongId: null })}
-          style={styleInput}
         >
           <option value="">Tất cả toà được phân quyền</option>
           {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
-        </select>
-      </label>
-      <label style={styleField}>
-        <span>Phòng</span>
-        <select
+        </Select>
+      </Field>
+      <Field label="Phòng">
+        <Select
           aria-label="Lọc chi phí bảo trì theo phòng"
           value={boLoc.phongId === null ? '' : String(boLoc.phongId)}
           disabled={boLoc.toaNhaId === null || dangTai}
           onChange={(event) => onChange({ ...boLoc, phongId: event.target.value ? Number(event.target.value) : null })}
-          style={styleInput}
         >
           <option value="">Tất cả phòng</option>
           {phong.map((item) => item.id === null ? null : <option key={item.id} value={item.id}>Phòng {item.soPhong}</option>)}
-        </select>
-      </label>
-      <label style={styleField}>
-        <span>Từ ngày</span>
-        <input aria-label="Từ ngày chi phí bảo trì" type="date" value={boLoc.tuNgay} onChange={(event) => onChange({ ...boLoc, tuNgay: event.target.value })} style={styleInput} />
-      </label>
-      <label style={styleField}>
-        <span>Đến ngày</span>
-        <input aria-label="Đến ngày chi phí bảo trì" type="date" value={boLoc.denNgay} onChange={(event) => onChange({ ...boLoc, denNgay: event.target.value })} style={styleInput} />
-      </label>
-    </section>
+        </Select>
+      </Field>
+      <Field label="Từ ngày">
+        <Input aria-label="Từ ngày chi phí bảo trì" type="date" value={boLoc.tuNgay} onChange={(event) => onChange({ ...boLoc, tuNgay: event.target.value })} />
+      </Field>
+      <Field label="Đến ngày">
+        <Input aria-label="Đến ngày chi phí bảo trì" type="date" value={boLoc.denNgay} onChange={(event) => onChange({ ...boLoc, denNgay: event.target.value })} />
+      </Field>
+    </ThanhLoc>
   )
 }
 
 function BieuDoChiPhi({ points }: { points: ThongTinDiemChiPhiBaoTriBaoCao[] }): React.ReactElement {
-  const max = useMemo(() => points.reduce((current, point) => {
-    const values = [point.chiPhiChuNha, point.chiPhiNguoiThue]
-      .filter((value): value is string => value !== null)
-      .map(soTienCent)
-    return values.reduce((inner, value) => value > inner ? value : inner, current)
-  }, 0n), [points])
-
+  const so = (v: string | null) => (v === null ? null : Number(v))
   return (
-    <section data-maintenance-cost-chart aria-labelledby="maintenance-cost-chart-title" style={styleChart}>
-      <div>
-        <SysLabel>BIỂU ĐỒ CÙNG ẢNH CHỤP</SysLabel>
-        <h4 id="maintenance-cost-chart-title" style={{ margin: '6px 0 0' }}>Chi phí theo tháng</h4>
-      </div>
-      <div role="list" aria-label="Biểu đồ chi phí bảo trì theo tháng" style={styleChartRows}>
-        {points.map((point) => <DiemBieuDo key={point.thang} point={point} max={max} />)}
-      </div>
-      <div style={styleLegend} aria-label="Chú giải bên chịu chi phí">
-        <span><i aria-hidden="true" style={{ ...styleLegendDot, background: 'var(--ma-ink-screen-title)' }} />Chủ nhà</span>
-        <span><i aria-hidden="true" style={{ ...styleLegendDot, background: 'var(--ma-waiting)' }} />Người thuê</span>
-      </div>
-    </section>
+    <Card
+      data-maintenance-cost-chart
+      aria-labelledby="maintenance-cost-chart-title"
+      title={<span id="maintenance-cost-chart-title">Chi phí theo tháng</span>}
+      action={<div className="legend" aria-label="Chú giải bên chịu chi phí"><span><i style={{ background: 'var(--ma-chart-1)' }} />Chủ nhà</span><span><i style={{ background: 'var(--ma-chart-2)' }} />Người thuê</span></div>}
+    >
+      <BieuDoCot
+        tieuDe="Biểu đồ cột chi phí bảo trì theo tháng, tách chủ nhà và người thuê"
+        nhan={points.map((p) => p.nhan)}
+        chuoi={[
+          { ten: 'Chủ nhà', mau: 'var(--ma-chart-1)', giaTri: points.map((p) => so(p.chiPhiChuNha)) },
+          { ten: 'Người thuê', mau: 'var(--ma-chart-2)', giaTri: points.map((p) => so(p.chiPhiNguoiThue)) },
+        ]}
+        thuocTinhNhom={(i) => ({ 'data-maintenance-cost-chart-point': points[i].thang })}
+        moTaNhom={(i) => `${points[i].nhan}: ${points[i].soDongThieuChiPhi} dòng thiếu chi phí, ${points[i].soDongThieuBenChiuChiPhi} dòng thiếu bên chịu chi phí`}
+      />
+      <p className="t-meta" style={{ margin: '8px 0 0' }}>Dấu “—”: chưa ghi nhận chi phí (khác với 0 ₫).</p>
+    </Card>
   )
 }
 
-function DiemBieuDo({ point, max }: { point: ThongTinDiemChiPhiBaoTriBaoCao; max: bigint }): React.ReactElement {
+function BangChiPhi({ rows }: { rows: ThongTinDongChiPhiBaoTriBaoCao[] }): React.ReactElement {
+  const thieuChiPhi = (r: ThongTinDongChiPhiBaoTriBaoCao) => r.chiPhi === null
+  const thieuBen = (r: ThongTinDongChiPhiBaoTriBaoCao) => r.chiPhi !== null && !r.coChiPhi
+  const coBen = (r: ThongTinDongChiPhiBaoTriBaoCao, ben: ThongTinDongChiPhiBaoTriBaoCao['benChiuChiPhi']) => r.chiPhi !== null && r.coChiPhi && r.benChiuChiPhi === ben
+  const tien = (r: ThongTinDongChiPhiBaoTriBaoCao, ben: ThongTinDongChiPhiBaoTriBaoCao['benChiuChiPhi']) => (coBen(r, ben) ? `${dinhDangTien(r.chiPhi!)} ₫` : '—')
   return (
-    <div data-maintenance-cost-chart-point={point.thang} role="listitem" aria-label={`${point.nhan}: ${point.soDongThieuChiPhi} dòng thiếu chi phí, ${point.soDongThieuBenChiuChiPhi} dòng thiếu bên chịu chi phí`} style={styleChartRow}>
-      <span style={styleChartLabel}>{point.nhan}</span>
-      <div style={{ display: 'grid', gap: 5, minWidth: 0 }}>
-        <ThanhBieuDo label="Chủ nhà" value={point.chiPhiChuNha} max={max} color="var(--ma-ink-screen-title)" />
-        <ThanhBieuDo label="Người thuê" value={point.chiPhiNguoiThue} max={max} color="var(--ma-waiting)" />
-      </div>
-    </div>
+    <Card data-maintenance-cost-table aria-labelledby="maintenance-cost-table-title" title={<span id="maintenance-cost-table-title">Chi tiết yêu cầu theo toà, hạng mục, tháng và phòng</span>}>
+      <DataTable
+        rows={rows}
+        getRowId={(r) => r.yeuCauId}
+        noun="yêu cầu"
+        searchLabel="Tìm toà, phòng, hạng mục"
+        timTheo={(r) => `${r.tenToaNha} ${r.soPhong} ${r.hangMuc} ${r.yeuCauId}`}
+        rowProps={(r) => ({ 'data-maintenance-cost-row': String(r.yeuCauId) })}
+        chips={[
+          { key: 'thieu-chi-phi', label: 'Thiếu chi phí', match: thieuChiPhi },
+          { key: 'thieu-ben', label: 'Thiếu bên chịu', match: thieuBen },
+          { key: 'chu-nha', label: 'Chủ nhà', match: (r) => coBen(r, 'CHU_NHA') },
+          { key: 'nguoi-thue', label: 'Người thuê', match: (r) => coBen(r, 'NGUOI_THUE') },
+        ]}
+        columns={[
+          { key: 'toa', label: 'Toà / phòng', sortable: true, sortValue: (r) => `${r.tenToaNha} ${r.soPhong}`, render: (r) => <><b>{r.tenToaNha}</b><div className="t-meta">Phòng {r.soPhong}</div></> },
+          { key: 'hm', label: 'Tháng / hạng mục', sortable: true, sortValue: (r) => r.thang, render: (r) => <><b>{r.hangMuc}</b><div className="t-meta">{r.nhanThang}</div></> },
+          {
+            key: 'yc',
+            label: 'Yêu cầu',
+            render: (r) => <><a href={r.lienKet} onClick={dieuHuongLienKet} style={styleLink}>Yêu cầu #{r.yeuCauId}</a><div className="t-meta">{r.tenTrangThai}</div></>,
+          },
+          { key: 'chu', label: 'Chủ nhà', align: 'num', render: (r) => tien(r, 'CHU_NHA') },
+          { key: 'thue', label: 'Người thuê', align: 'num', render: (r) => tien(r, 'NGUOI_THUE') },
+          {
+            key: 'tt',
+            label: 'Trạng thái chi phí',
+            render: (r) => (
+              <>
+                <StatusTag tone={thieuChiPhi(r) || thieuBen(r) ? 'waiting' : 'done'}>{r.tenTrangThaiChiPhi}</StatusTag>
+                {thieuBen(r) ? <div className="t-meta">Nguồn: {dinhDangTien(r.chiPhi!)} ₫</div> : null}
+              </>
+            ),
+          },
+        ]}
+      />
+    </Card>
   )
 }
 
-function ThanhBieuDo({ label, value, max, color }: { label: string; value: string | null; max: bigint; color: string }): React.ReactElement {
-  const width = value === null || max <= 0n ? 0 : Number((soTienCent(value) * 100n) / max)
+function BangNhom({ groups }: { groups: ThongTinNhomChiPhiBaoTriBaoCao[] }): React.ReactElement {
+  const tien = (v: string | null) => (v === null ? 'Chưa ghi nhận' : `${dinhDangTien(v)} ₫`)
   return (
-    <div aria-label={`${label}: ${value === null ? 'Chưa ghi nhận' : `${dinhDangTien(value)} đồng`}`} style={styleBarRow}>
-      <span style={styleBarLabel}>{label}</span>
-      <div aria-hidden="true" style={styleBarTrack}><div style={{ width: `${width}%`, height: '100%', background: color, minWidth: width > 0 ? 3 : 0 }} /></div>
-      <strong style={styleBarValue}>{value === null ? 'Chưa ghi nhận' : `${dinhDangTien(value)} ₫`}</strong>
-    </div>
-  )
-}
-
-function BangChiPhi({ rows, mobile }: { rows: ThongTinDongChiPhiBaoTriBaoCao[]; mobile: boolean }): React.ReactElement {
-  return (
-    <section data-maintenance-cost-table aria-labelledby="maintenance-cost-table-title" style={{ display: 'grid', gap: 10 }}>
-      <div>
-        <SysLabel>BẢNG ĐỐI SOÁT</SysLabel>
-        <h4 id="maintenance-cost-table-title" style={{ margin: '6px 0 0' }}>Chi tiết yêu cầu theo toà, hạng mục, tháng và phòng</h4>
-      </div>
-      <TableFrame minWidth={mobile ? 1040 : 1080}>
-        <caption className="sr-only">Bảng chi phí bảo trì theo yêu cầu sửa chữa và bên chịu chi phí</caption>
-        <thead>
-          <tr>
-            <TableHeadCell>Toà / phòng</TableHeadCell>
-            <TableHeadCell>Tháng / hạng mục</TableHeadCell>
-            <TableHeadCell>Yêu cầu</TableHeadCell>
-            <TableHeadCell align="right">Chủ nhà</TableHeadCell>
-            <TableHeadCell align="right">Người thuê</TableHeadCell>
-            <TableHeadCell>Trạng thái chi phí</TableHeadCell>
-          </tr>
-        </thead>
-        <tbody>{rows.map((row) => <DongChiPhi key={row.yeuCauId} row={row} />)}</tbody>
-      </TableFrame>
-    </section>
-  )
-}
-
-function DongChiPhi({ row }: { row: ThongTinDongChiPhiBaoTriBaoCao }): React.ReactElement {
-  const coChiPhi = row.chiPhi !== null && row.coChiPhi
-  const coChiPhiNhungThieuBen = row.chiPhi !== null && !row.coChiPhi
-  const hienThiChuNha = coChiPhi && row.benChiuChiPhi === 'CHU_NHA' ? `${dinhDangTien(row.chiPhi!)} ₫` : '—'
-  const hienThiNguoiThue = coChiPhi && row.benChiuChiPhi === 'NGUOI_THUE' ? `${dinhDangTien(row.chiPhi!)} ₫` : '—'
-  return (
-    <tr data-maintenance-cost-row={row.yeuCauId}>
-      <TableCell header><span style={{ display: 'block' }}>{row.tenToaNha}</span><span style={styleMuted}>Phòng {row.soPhong}</span></TableCell>
-      <TableCell><strong>{row.hangMuc}</strong><span style={{ display: 'block', color: 'var(--ma-text-secondary)', fontSize: 12, marginTop: 3 }}>{row.nhanThang}</span></TableCell>
-      <TableCell><a href={row.lienKet} onClick={dieuHuongLienKet} style={styleLink}>Yêu cầu #{row.yeuCauId}</a><span style={{ display: 'block', color: 'var(--ma-text-secondary)', fontSize: 12, marginTop: 3 }}>{row.tenTrangThai}</span></TableCell>
-      <TableCell align="right">{hienThiChuNha}</TableCell>
-      <TableCell align="right">{hienThiNguoiThue}</TableCell>
-      <TableCell>
-        <span style={row.chiPhi === null ? styleMissing : undefined}>{row.tenTrangThaiChiPhi}</span>
-        {coChiPhiNhungThieuBen ? <span style={{ display: 'block', color: 'var(--ma-text-secondary)', fontSize: 12, marginTop: 3 }}>Nguồn: {dinhDangTien(row.chiPhi!)} ₫</span> : null}
-      </TableCell>
-    </tr>
-  )
-}
-
-function BangNhom({ groups, mobile }: { groups: ThongTinNhomChiPhiBaoTriBaoCao[]; mobile: boolean }): React.ReactElement {
-  return (
-    <section data-maintenance-cost-groups aria-labelledby="maintenance-cost-groups-title" style={{ display: 'grid', gap: 10 }}>
-      <div>
-        <SysLabel>NHÓM ĐỐI SOÁT</SysLabel>
-        <h4 id="maintenance-cost-groups-title" style={{ margin: '6px 0 0' }}>Tổng hợp theo hạng mục và phòng</h4>
-      </div>
-      <TableFrame minWidth={mobile ? 920 : 960}>
-        <thead><tr><TableHeadCell>Toà / phòng</TableHeadCell><TableHeadCell>Tháng / hạng mục</TableHeadCell><TableHeadCell align="right">Chủ nhà</TableHeadCell><TableHeadCell align="right">Người thuê</TableHeadCell><TableHeadCell align="right">Dòng</TableHeadCell></tr></thead>
-        <tbody>{groups.map((group) => <tr data-maintenance-cost-group-row={group.thang} key={`${group.toaNhaId}-${group.phongId}-${group.hangMuc}-${group.thang}`}><TableCell header>{group.tenToaNha} · {group.soPhong}</TableCell><TableCell>{group.nhan} · {group.hangMuc}</TableCell><TableCell align="right">{group.chiPhiChuNha === null ? 'Chưa ghi nhận' : `${dinhDangTien(group.chiPhiChuNha)} ₫`}</TableCell><TableCell align="right">{group.chiPhiNguoiThue === null ? 'Chưa ghi nhận' : `${dinhDangTien(group.chiPhiNguoiThue)} ₫`}</TableCell><TableCell align="right">{group.soDong}<span style={{ display: 'block', color: 'var(--ma-text-secondary)', fontSize: 12 }}>{group.soDongThieuChiPhi} thiếu chi phí · {group.soDongThieuBenChiuChiPhi} thiếu bên</span></TableCell></tr>)}</tbody>
-      </TableFrame>
-    </section>
+    <Card data-maintenance-cost-groups aria-labelledby="maintenance-cost-groups-title" title={<span id="maintenance-cost-groups-title">Tổng hợp theo hạng mục và phòng</span>}>
+      <DataTable
+        rows={groups}
+        getRowId={(g) => `${g.toaNhaId}-${g.phongId}-${g.hangMuc}-${g.thang}`}
+        noun="nhóm"
+        rowProps={(g) => ({ 'data-maintenance-cost-group-row': g.thang })}
+        columns={[
+          { key: 'toa', label: 'Toà / phòng', render: (g) => <b>{g.tenToaNha} · {g.soPhong}</b> },
+          { key: 'hm', label: 'Tháng / hạng mục', render: (g) => `${g.nhan} · ${g.hangMuc}` },
+          { key: 'chu', label: 'Chủ nhà', align: 'num', render: (g) => tien(g.chiPhiChuNha) },
+          { key: 'thue', label: 'Người thuê', align: 'num', render: (g) => tien(g.chiPhiNguoiThue) },
+          { key: 'dong', label: 'Dòng', align: 'num', render: (g) => <>{g.soDong}<div className="t-meta">{g.soDongThieuChiPhi} thiếu chi phí · {g.soDongThieuBenChiuChiPhi} thiếu bên</div></> },
+        ]}
+      />
+    </Card>
   )
 }
 
@@ -373,33 +343,10 @@ function soNguyenDuong(value: string | null): number | null {
   return Number.isSafeInteger(parsed) ? parsed : null
 }
 
-function soTienCent(value: string): bigint {
-  const match = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(value.trim())
-  if (!match) return 0n
-  const cent = BigInt(match[2]) * 100n + BigInt((match[3] ?? '').padEnd(2, '0'))
-  return match[1] === '-' ? -cent : cent
-}
-
 function thongBaoLoi(reason: unknown, fallback: string): string {
   return reason instanceof ApiError ? reason.message : fallback
 }
 
-const styleMuted: CSSProperties = { margin: '4px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.5 }
-const styleFilterGrid: CSSProperties = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 190px), 1fr))', padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
-const styleField: CSSProperties = { display: 'grid', gap: 6, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
-const styleInput: CSSProperties = { width: '100%', minWidth: 0, maxWidth: '100%', minHeight: 'var(--ma-hit-mobile)', padding: '0 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 0, background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)', boxSizing: 'border-box' }
-const styleSummary: CSSProperties = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 190px), 1fr))' }
-const styleSummaryCard: CSSProperties = { display: 'grid', gap: 8, minWidth: 0, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }
-const styleSummaryValue: CSSProperties = { fontFamily: 'var(--ma-font-mono)', fontSize: 'clamp(20px, 3vw, 28px)', overflowWrap: 'anywhere' }
-const styleChart: CSSProperties = { display: 'grid', gap: 14, minWidth: 0, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }
-const styleChartRows: CSSProperties = { display: 'grid', gap: 12, minWidth: 0 }
-const styleChartRow: CSSProperties = { display: 'grid', gap: 8, gridTemplateColumns: '72px minmax(0, 1fr)', alignItems: 'center', minWidth: 0 }
-const styleChartLabel: CSSProperties = { fontFamily: 'var(--ma-font-mono)', fontSize: 12, color: 'var(--ma-text-secondary)' }
-const styleBarRow: CSSProperties = { display: 'grid', gridTemplateColumns: '72px minmax(0, 1fr) auto', alignItems: 'center', gap: 8, minWidth: 0 }
-const styleBarLabel: CSSProperties = { color: 'var(--ma-text-secondary)', fontSize: 12 }
-const styleBarTrack: CSSProperties = { minWidth: 0, height: 10, background: 'var(--ma-bg-sunken)', border: '1px solid var(--ma-border-subtle)' }
-const styleBarValue: CSSProperties = { minWidth: 90, textAlign: 'right', fontFamily: 'var(--ma-font-mono)', fontSize: 12, whiteSpace: 'nowrap' }
-const styleLegend: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 14, color: 'var(--ma-text-secondary)', fontSize: 12 }
-const styleLegendDot: CSSProperties = { display: 'inline-block', width: 10, height: 10, marginRight: 5 }
-const styleLink: CSSProperties = { display: 'inline-flex', alignItems: 'center', minHeight: 'var(--ma-hit-mobile)', color: 'var(--ma-text-primary)', fontWeight: 800, textDecoration: 'underline', textUnderlineOffset: 3 }
-const styleMissing: CSSProperties = { color: 'var(--ma-urgent-text)' }
+const SO_KPI = { fontSize: 'clamp(26px, 2.6vw, 34px)', margin: '8px 0 0' } as const
+// Giữ inline: test khoá vùng chạm của liên kết nguồn.
+const styleLink: CSSProperties = { display: 'inline-flex', alignItems: 'center', minHeight: 'var(--ma-hit-mobile)', color: 'var(--ma-text-link)', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }
