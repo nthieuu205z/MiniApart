@@ -37,6 +37,12 @@ const removedGroups = {
     '@media (min-width: 720px)',
     '@media (prefers-color-scheme: dark)',
   ],
+  'table container, consumption bar, topbar notification, and redundant heading reset (now owned by design/base.css and components)': [
+    '.ma-table-container',
+    '.ma-consumption-bar',
+    '.ma-topbar-notification',
+    'h1,\nh2,\np {',
+  ],
 } as const
 
 describe('Ticket 08 legacy stylesheet cleanup', () => {

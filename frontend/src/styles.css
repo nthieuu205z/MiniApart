@@ -57,43 +57,10 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 
-.ma-table-container {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
 @media print {
   .ma-no-print {
     display: none !important;
   }
-}
-
-/* Normalize the browser's heading/paragraph default block margin for screens
- * assembled from the design primitives. Individual components own all other
- * presentation. */
-h1,
-h2,
-p {
-  margin-top: 0;
-}
-
-.ma-consumption-bar {
-  transition: background-color var(--ma-dur-press) linear, border-color var(--ma-dur-press) linear;
-}
-
-.ma-consumption-bar:hover {
-  background: var(--ma-bg-sunken) !important;
-}
-
-.ma-consumption-bar:focus-visible {
-  outline: 3px solid var(--ma-focus-ring);
-  outline-offset: 2px;
-}
-
-.ma-topbar-notification:focus-visible {
-  outline: 3px solid var(--ma-focus-ring);
-  outline-offset: 2px;
 }
 
 dl,
