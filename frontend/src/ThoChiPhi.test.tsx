@@ -146,7 +146,7 @@ describe('ThoChiPhi Component', () => {
     })
 
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('Hồ sơ Báo giá & Quyết toán công thợ')
+      expect(container.textContent).toContain('Báo giá & thanh toán')
       expect(container.textContent).toContain('450.000') // Tổng giá trị đã chốt
       expect(container.textContent).toContain('1 đơn 0đ (bảo hành)')
       expect(container.textContent).toContain('SC-20261101-001')
@@ -205,5 +205,24 @@ describe('ThoChiPhi Component', () => {
       expect(container.textContent).toContain('CƯ DÂN NGHIỆM THU')
       expect(container.textContent).toContain('QUẢN LÝ PHÊ DUYỆT')
     })
+  })
+  it('mobile: thẻ việc có 3 ô tiền, nút Xem phiếu; chip lọc đếm đúng', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
+      if (url.startsWith('/api/tho/tong-quan')) return new Response(JSON.stringify({ danhSachToa: [] }), { status: 200 })
+      if (url.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(mockJobList), { status: 200 })
+      throw new Error(`Unexpected ${url}`)
+    }))
+    root = createRoot(container)
+    await act(async () => {
+      root.render(<ThoChiPhi token="worker-token" mobile />)
+    })
+    await vi.waitFor(() => expect(container.querySelectorAll('article.m-card').length).toBe(mockJobList.length))
+    const the = container.querySelector('article[aria-label="SC-20261101-001"]')
+    expect(the?.querySelectorAll('.fact').length).toBe(3)
+    expect(the?.textContent).toContain('Đã hết nợ')
+    expect(Array.from(the?.querySelectorAll('button') ?? []).some((b) => b.textContent?.includes('Xem phiếu'))).toBe(true)
+    const chipBaoHanh = Array.from(container.querySelectorAll('button.chip')).find((b) => b.textContent?.startsWith('Bảo hành'))
+    expect(chipBaoHanh?.querySelector('.n')?.textContent).toBe(String(mockJobList.filter((r) => r.trangThaiBaoGia === 'DA_DUYET' && Number(r.giaTriBaoGia || 0) === 0).length))
   })
 })

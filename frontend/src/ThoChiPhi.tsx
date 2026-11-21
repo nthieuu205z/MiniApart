@@ -10,7 +10,10 @@ import {
 import { dinhDangTien } from './design/core/format'
 import { Button } from './design/core/Button'
 import { StatusTag } from './design/core/StatusTag'
-import { SysLabel } from './design/core/SysLabel'
+import { Icon } from './design/core/Icon'
+import { FilterChip } from './design/forms/FilterChip'
+import { Card } from './design/layout/Card'
+import { DataTable, type DataTableColumn } from './design/table/DataTable'
 import { EmptyState } from './design/feedback/EmptyState'
 import { useDialogTrap } from './design/feedback/useDialogTrap'
 
@@ -28,8 +31,9 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
 
   // Filters
   const [toaNhaId, setToaNhaId] = useState<number | undefined>(undefined)
-  const [locThanhToan, setLocThanhToan] = useState<'TAT_CA' | 'DA_TRA_DU' | 'TRA_MOT_PHAN' | 'CHUA_TRA' | 'BAO_HANH_0D' | 'CHUA_BAO_GIA'>('TAT_CA')
+  const [locChip, setLocChip] = useState('TAT_CA')
   const [tuKhoa, setTuKhoa] = useState('')
+  const [soHienThi, setSoHienThi] = useState(10)
 
   // Voucher modal state
   const [voucherData, setVoucherData] = useState<ChungTuThanhToanTho | null>(null)
@@ -64,39 +68,18 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
     setDangTai(true)
     setLoiTai(null)
     try {
-      const rows = await fetchThoCongViec(token, {
-        toaNhaId,
-        tuKhoa: tuKhoa.trim() || undefined,
-      })
+      const rows = await fetchThoCongViec(token, { toaNhaId })
       setDanhSach(rows)
     } catch (err: unknown) {
       setLoiTai(err instanceof Error ? err.message : 'Không thể tải danh sách chi phí')
     } finally {
       setDangTai(false)
     }
-  }, [token, toaNhaId, tuKhoa])
+  }, [token, toaNhaId])
 
   useEffect(() => {
     taiDuLieu()
   }, [taiDuLieu])
-
-  // Client filtering on payment category
-  const danhSachLoc = useMemo(() => {
-    return danhSach.filter((row) => {
-      const giaTri = Number(row.giaTriBaoGia || 0)
-      const daTra = Number(row.daThanhToan || 0)
-      const conLai = Number(row.conPhaiTra || 0)
-      const coBaoGiaDuyet = row.trangThaiBaoGia === 'DA_DUYET'
-
-      if (locThanhToan === 'TAT_CA') return true
-      if (locThanhToan === 'CHUA_BAO_GIA') return !coBaoGiaDuyet
-      if (locThanhToan === 'BAO_HANH_0D') return coBaoGiaDuyet && giaTri === 0
-      if (locThanhToan === 'DA_TRA_DU') return coBaoGiaDuyet && giaTri > 0 && conLai <= 0
-      if (locThanhToan === 'TRA_MOT_PHAN') return coBaoGiaDuyet && daTra > 0 && conLai > 0
-      if (locThanhToan === 'CHUA_TRA') return coBaoGiaDuyet && giaTri > 0 && daTra === 0
-      return true
-    })
-  }, [danhSach, locThanhToan])
 
   // Metrics
   const tongMetrics = useMemo(() => {
@@ -139,284 +122,223 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
     window.print()
   }
 
-  return (
-    <div style={styles.container}>
-      {/* Page Header */}
-      <div style={styles.header}>
-        <div>
-          <div style={styles.badgeRow}>
-            <SysLabel tone="primary">BÁO GIÁ & THANH TOÁN</SysLabel>
-            <span style={styles.headerSubtitle}>Quản lý chi phí vật tư, công thợ & chứng từ đối soát</span>
-          </div>
-          <h1 style={styles.headerTitle}>Hồ sơ Báo giá & Quyết toán công thợ</h1>
-        </div>
-        <div style={styles.headerActions}>
-          <Button variant="secondary" onClick={taiDuLieu} blocked={dangTai}>
-            {dangTai ? 'Đang làm mới...' : '↻ Làm mới dữ liệu'}
-          </Button>
-        </div>
-      </div>
+  const timDuoc = useMemo(() => {
+    const k = tuKhoa.trim().toLowerCase()
+    return k ? danhSach.filter((r) => [r.maYeuCau, r.toaNha, r.soPhong, r.hangMuc, r.moTa].filter(Boolean).join(' ').toLowerCase().includes(k)) : danhSach
+  }, [danhSach, tuKhoa])
+  const danhSachLoc = useMemo(() => timDuoc.filter((r) => khop(r, locChip)), [timDuoc, locChip])
 
-      {/* KPI Cards */}
-      <div style={styles.kpiGrid}>
-        <div style={styles.kpiCard}>
-          <span style={styles.kpiLabel}>TỔNG GIÁ TRỊ ĐÃ CHỐT</span>
-          <div style={styles.kpiValueHighlight}>{dinhDangTien(tongMetrics.tongChot)}</div>
-          <span style={styles.kpiHint}>Tính trên các phiên bản báo giá đã được duyệt</span>
+  const cot: DataTableColumn<ThongTinViecThoRow>[] = [
+    {
+      key: 'viec',
+      label: 'Mã việc & hạng mục',
+      render: (row) => (
+        <>
+          <div style={{ fontWeight: 600 }}>{row.maYeuCau}</div>
+          <div>{row.hangMuc}</div>
+          {row.moTa ? <div className="t-meta" style={{ ...styleCat, maxWidth: 200 }} title={row.moTa}>{row.moTa}</div> : null}
+        </>
+      ),
+      sortValue: (row) => row.maYeuCau,
+      sortable: true,
+    },
+    { key: 'phong', label: 'Toà / phòng', render: (row) => <div style={{ minWidth: 120 }}><div>{row.soPhong} (T{row.tang})</div><div className="t-meta">{row.toaNha}</div></div> },
+    {
+      key: 'trangThai',
+      label: 'Trạng thái việc & báo giá',
+      render: (row) => (
+        <div style={{ display: 'grid', gap: 6, justifyItems: 'start' }}>
+          <StatusTag tone={tongTrangThai(row)}>{row.tenTrangThaiHieuLuc || row.tenTrangThai}</StatusTag>
+          {baoGiaTag(row)}
+          {tinhHang(row).daDuyet ? tienDoTag(row) : null}
         </div>
-        <div style={styles.kpiCard}>
-          <span style={styles.kpiLabel}>TIỀN ĐÃ NHẬN</span>
-          <div style={{ ...styles.kpiValueHighlight, color: 'var(--color-success, #16a34a)' }}>
-            {dinhDangTien(tongMetrics.tongDaNhan)}
-          </div>
-          <span style={styles.kpiHint}>Tổng giao dịch thanh toán quản lý đã xác nhận</span>
-        </div>
-        <div style={styles.kpiCard}>
-          <span style={styles.kpiLabel}>CÒN PHẢI TRẢ (CÔNG NỢ)</span>
-          <div
-            style={{
-              ...styles.kpiValueHighlight,
-              color: tongMetrics.tongConNo > 0 ? 'var(--color-warning, #ea580c)' : 'var(--color-muted, #64748b)',
-            }}
-          >
-            {dinhDangTien(tongMetrics.tongConNo)}
-          </div>
-          <span style={styles.kpiHint}>Khoản thợ được nhận sau khi nghiệm thu</span>
-        </div>
-        <div style={styles.kpiCard}>
-          <span style={styles.kpiLabel}>ĐƠN ĐÃ ĐỐI SOÁT XONG</span>
-          <div style={styles.kpiValueCount}>
-            <span style={{ color: 'var(--color-success, #16a34a)', fontWeight: 700 }}>{tongMetrics.soDonDaTraDu}</span>
-            <span style={{ fontSize: '0.85rem', color: 'var(--color-muted, #64748b)', fontWeight: 'normal' }}>
-              {' '}+ {tongMetrics.soDonBaoHanh} đơn 0đ (bảo hành)
-            </span>
-          </div>
-          <span style={styles.kpiHint}>Không còn công nợ phát sinh</span>
-        </div>
-      </div>
-
-      {/* Filter Toolbar */}
-      <div style={styles.filterBar}>
-        <div style={styles.searchBox}>
-          <input
-            type="text"
-            placeholder="Tìm theo mã việc, tòa, phòng, nội dung..."
-            value={tuKhoa}
-            onChange={(e) => setTuKhoa(e.target.value)}
-            style={styles.searchInput}
-          />
-          {tuKhoa && (
-            <button type="button" onClick={() => setTuKhoa('')} style={styles.clearBtn} aria-label="Xóa từ khóa">
-              ✕
-            </button>
+      ),
+    },
+    {
+      key: 'giaTri',
+      label: 'Giá trị duyệt',
+      align: 'num',
+      sortValue: (row) => tinhHang(row).giaTri,
+      sortable: true,
+      render: (row) => {
+        const h = tinhHang(row)
+        return !h.daDuyet ? <span className="t-2">—</span> : h.giaTri === 0 ? <StatusTag tone="neutral">0 đ (Bảo hành)</StatusTag> : <b>{dinhDangTien(h.giaTri)}</b>
+      },
+    },
+    {
+      key: 'daNhan',
+      label: 'Đã nhận',
+      align: 'num',
+      render: (row) => { const h = tinhHang(row); return h.daTra > 0 ? <b style={{ color: 'var(--ma-done-text)' }}>{dinhDangTien(h.daTra)}</b> : <span className="t-2">0 đ</span> },
+    },
+    {
+      key: 'conLai',
+      label: 'Còn lại',
+      align: 'num',
+      sortValue: (row) => tinhHang(row).conLai,
+      sortable: true,
+      render: (row) => {
+        const h = tinhHang(row)
+        return !h.daDuyet ? <span className="t-2">—</span> : h.conLai > 0 ? <b style={{ color: 'var(--ma-urgent)' }}>{dinhDangTien(h.conLai)}</b> : <span style={{ color: 'var(--ma-done-text)' }}>Đã hết nợ</span>
+      },
+    },
+    {
+      key: 'thaoTac',
+      label: 'Thao tác',
+      the: 'hanh-dong',
+      render: (row) => (
+        <div style={{ display: 'grid', gap: 4, justifyItems: 'start' }}>
+          {tinhHang(row).daDuyet && (
+            <Button variant="secondary" size="sm" onClick={() => moChungTu(row.id)} blocked={dangTaiVoucher} style={{ minHeight: 44 }}>
+              Xem phiếu
+            </Button>
+          )}
+          {onNavigateToTicket && (
+            <Button variant="text" size="sm" onClick={() => onNavigateToTicket(row.id)} style={{ minHeight: 44 }}>
+              Chi tiết →
+            </Button>
           )}
         </div>
+      ),
+    },
+  ]
 
-        <select
-          value={toaNhaId ?? ''}
-          onChange={(e) => setToaNhaId(e.target.value ? Number(e.target.value) : undefined)}
-          style={styles.select}
-          aria-label="Chọn tòa nhà"
-        >
-          <option value="">Tất cả tòa nhà</option>
-          {danhSachToa.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.ten}
-            </option>
-          ))}
-        </select>
+  return (
+    <div style={{ padding: mobile ? 0 : '24px 20px', maxWidth: 1360, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 16 }}>
+      <div className="spread" style={{ alignItems: 'flex-start' }}>
+        <div>
+          <h1 style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Báo giá & thanh toán</h1>
+          <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)' }}>Chi phí vật tư, công thợ & chứng từ đối soát</div>
+        </div>
+        <button type="button" className="icon-btn boxed" aria-label="Làm mới dữ liệu" title="Làm mới dữ liệu" aria-disabled={dangTai || undefined} onClick={() => { if (!dangTai) taiDuLieu() }}>
+          <Icon name="refresh" />
+        </button>
+      </div>
 
-        <div style={styles.tabPills}>
-          {[
-            { id: 'TAT_CA', label: 'Tất cả' },
-            { id: 'DA_TRA_DU', label: 'Đã nhận đủ' },
-            { id: 'TRA_MOT_PHAN', label: 'Trả một phần' },
-            { id: 'CHUA_TRA', label: 'Chưa thanh toán' },
-            { id: 'BAO_HANH_0D', label: 'Bảo hành (0đ)' },
-            { id: 'CHUA_BAO_GIA', label: 'Chưa chốt giá' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setLocThanhToan(tab.id as typeof locThanhToan)}
-              style={{
-                ...styles.tabPill,
-                ...(locThanhToan === tab.id ? styles.tabPillActive : {}),
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+      <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'minmax(0, 1fr) minmax(0, 1fr)' : 'repeat(4, minmax(0, 1fr))', gap: mobile ? 8 : 16 }}>
+        <Card style={mobile ? { gridColumn: '1 / -1' } : undefined}>
+          <span className="t-sm t-2">Còn phải trả (công nợ)</span>
+          <div className="kpi-value" style={{ color: tongMetrics.tongConNo > 0 ? 'var(--ma-urgent)' : undefined }}>
+            {dinhDangTien(tongMetrics.tongConNo)}<span className="unit">đ</span>
+          </div>
+          <div className="kpi-desc" style={{ marginTop: 8 }}>Khoản thợ được nhận sau khi nghiệm thu</div>
+        </Card>
+        <div style={styleO}>
+          <span style={styleNhan}>Giá trị đã chốt</span>
+          <b style={styleSo}>{dinhDangTien(tongMetrics.tongChot)}</b>
+          <span style={styleMoTa}>Tính trên các phiên bản báo giá đã được duyệt</span>
+        </div>
+        <div style={styleO}>
+          <span style={styleNhan}>Tiền đã nhận</span>
+          <b style={{ ...styleSo, color: 'var(--ma-done-text)' }}>{dinhDangTien(tongMetrics.tongDaNhan)}</b>
+          <span style={styleMoTa}>Tổng giao dịch thanh toán quản lý đã xác nhận</span>
+        </div>
+        <div style={{ ...styleO, ...(mobile ? { gridColumn: '1 / -1' } : {}) }}>
+          <span style={styleNhan}>Đơn đã đối soát xong</span>
+          <b style={styleSo}>
+            {tongMetrics.soDonDaTraDu}
+            <span className="t-sm t-2" style={{ fontWeight: 400, marginLeft: 6 }}>+ {tongMetrics.soDonBaoHanh} đơn 0đ (bảo hành)</span>
+          </b>
+          <span style={styleMoTa}>Không còn công nợ phát sinh</span>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      {dangTai && (
-        <div style={styles.loadingBox}>
-          <div style={styles.spinner} />
-          <span>Đang tải danh sách báo giá & thanh toán...</span>
-        </div>
-      )}
 
-      {loiTai && (
-        <div style={styles.errorBanner}>
-          <span>{loiTai}</span>
-          <Button variant="secondary" onClick={taiDuLieu} style={{ marginLeft: 12 }}>
-            Thử lại
-          </Button>
-        </div>
-      )}
+      {dangTai && <EmptyState kind="loading" title="Đang tải danh sách báo giá & thanh toán" />}
 
-      {!dangTai && !loiTai && danhSachLoc.length === 0 && (
+      {loiTai && <EmptyState kind="error" title="Không thể tải danh sách chi phí" body={loiTai} actionLabel="Thử lại" actionSize="md" onAction={taiDuLieu} />}
+
+      {!dangTai && !loiTai && danhSach.length === 0 && (
         <EmptyState
           title="Không tìm thấy bản ghi nào"
-          body={
-            tuKhoa || toaNhaId || locThanhToan !== 'TAT_CA'
-              ? 'Thử thay đổi bộ lọc hoặc xóa từ khóa tìm kiếm để xem danh sách.'
-              : 'Hiện tại bạn chưa có yêu cầu sửa chữa nào có hồ sơ báo giá.'
-          }
+          body={toaNhaId ? 'Thử đổi toà nhà để xem danh sách.' : 'Hiện tại bạn chưa có yêu cầu sửa chữa nào có hồ sơ báo giá.'}
         />
       )}
 
-      {!dangTai && !loiTai && danhSachLoc.length > 0 && (
-        <>
-          {/* Desktop Table View */}
-          <div style={styles.tableCard}>
-            <table style={styles.table}>
-              <thead>
-                <tr style={styles.thRow}>
-                  <th style={styles.th}>MÃ VIỆC & HẠNG MỤC</th>
-                  <th style={styles.th}>TÒA / PHÒNG</th>
-                  <th style={styles.th}>TRẠNG THÁI VIỆC</th>
-                  <th style={styles.th}>TÌNH TRẠNG BÁO GIÁ</th>
-                  <th style={{ ...styles.th, textAlign: 'right' }}>GIÁ TRỊ DUYỆT</th>
-                  <th style={{ ...styles.th, textAlign: 'right' }}>ĐÃ NHẬN</th>
-                  <th style={{ ...styles.th, textAlign: 'right' }}>CÒN LẠI</th>
-                  <th style={styles.th}>TIẾN ĐỘ CHI TRẢ</th>
-                  <th style={{ ...styles.th, textAlign: 'center' }}>THAO TÁC</th>
-                </tr>
-              </thead>
-              <tbody>
-                {danhSachLoc.map((row) => {
-                  const giaTri = Number(row.giaTriBaoGia || 0)
-                  const daTra = Number(row.daThanhToan || 0)
-                  const conLai = Number(row.conPhaiTra || 0)
-                  const daDuyet = row.trangThaiBaoGia === 'DA_DUYET'
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+        <select
+        className="select"
+        value={toaNhaId ?? ''}
+        onChange={(e) => setToaNhaId(e.target.value ? Number(e.target.value) : undefined)}
+        aria-label="Chọn tòa nhà"
+        style={{ flex: mobile ? undefined : '0 0 220px' }}
+      >
+        <option value="">Tất cả tòa nhà</option>
+        {danhSachToa.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.ten}
+          </option>
+        ))}
+      </select>
+        {danhSach.length > 0 && !loiTai && (
+          <>
+            <label className="input-wrap" style={{ flex: mobile ? '1 1 100%' : '0 1 320px' }}>
+              <span className="sr-only">Tìm theo mã việc, tòa, phòng, nội dung</span>
+              <Icon name="search" />
+              <input className="input" type="search" placeholder="Tìm theo mã việc, tòa, phòng, nội dung…" value={tuKhoa} onChange={(e) => { setTuKhoa(e.target.value); setSoHienThi(10) }} />
+            </label>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2, maxWidth: '100%' }}>
+              {CHIP_THANH_TOAN.map(([key, label]) => (
+                <FilterChip key={key} active={locChip === key} count={timDuoc.filter((r) => khop(r, key)).length} onClick={() => { setLocChip(key); setSoHienThi(10) }}>
+                  {label}
+                </FilterChip>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
-                  return (
-                    <tr key={row.id} style={styles.tr}>
-                      <td style={styles.td}>
-                        <div style={styles.ticketCode}>{row.maYeuCau}</div>
-                        <div style={styles.ticketTitle}>{row.hangMuc}</div>
-                        <div style={styles.ticketDesc}>{row.moTa}</div>
-                      </td>
-                      <td style={styles.td}>
-                        <div style={styles.roomBadge}>
-                          {row.soPhong} (T{row.tang})
-                        </div>
-                        <div style={styles.buildingName}>{row.toaNha}</div>
-                      </td>
-                      <td style={styles.td}>
-                        <StatusTag
-                          tone={
-                            row.trangThaiHieuLuc === 'DA_DONG'
-                              ? 'done'
-                              : row.trangThaiHieuLuc === 'DANG_XU_LY'
-                              ? 'waiting'
-                              : row.trangThaiHieuLuc === 'CHO_XAC_NHAN'
-                              ? 'waiting'
-                              : 'neutral'
-                          }
-                        >
-                          {row.tenTrangThaiHieuLuc || row.tenTrangThai}
-                        </StatusTag>
-                      </td>
-                      <td style={styles.td}>
-                        {daDuyet ? (
-                          <StatusTag tone="done">Đã duyệt hiệu lực</StatusTag>
-                        ) : row.trangThaiBaoGia === 'CHO_DUYET' ? (
-                          <StatusTag tone="waiting">Chờ quản lý duyệt</StatusTag>
-                        ) : row.trangThaiBaoGia === 'TU_CHOI' ? (
-                          <StatusTag tone="urgent">Bị từ chối</StatusTag>
-                        ) : row.trangThaiBaoGia === 'NHAP' ? (
-                          <StatusTag tone="draft">Bản nháp</StatusTag>
-                        ) : (
-                          <span style={styles.textMuted}>Chưa tạo báo giá</span>
-                        )}
-                      </td>
-                      <td style={{ ...styles.td, textAlign: 'right' }}>
-                        {daDuyet ? (
-                          giaTri === 0 ? (
-                            <span style={styles.zeroCostBadge}>0 đ (Bảo hành)</span>
-                          ) : (
-                            <span style={styles.valApproved}>{dinhDangTien(giaTri)}</span>
-                          )
-                        ) : (
-                          <span style={styles.textMuted}>—</span>
-                        )}
-                      </td>
-                      <td style={{ ...styles.td, textAlign: 'right' }}>
-                        {daTra > 0 ? (
-                          <span style={styles.valPaid}>{dinhDangTien(daTra)}</span>
-                        ) : (
-                          <span style={styles.textMuted}>0 đ</span>
-                        )}
-                      </td>
-                      <td style={{ ...styles.td, textAlign: 'right' }}>
-                        {daDuyet ? (
-                          conLai > 0 ? (
-                            <span style={styles.valRemain}>{dinhDangTien(conLai)}</span>
-                          ) : (
-                            <span style={styles.valSettled}>Đã hết nợ</span>
-                          )
-                        ) : (
-                          <span style={styles.textMuted}>—</span>
-                        )}
-                      </td>
-                      <td style={styles.td}>
-                        {daDuyet ? (
-                          giaTri === 0 ? (
-                            <StatusTag tone="neutral">Đối soát 0đ</StatusTag>
-                          ) : conLai <= 0 ? (
-                            <StatusTag tone="done">Đã thanh toán đủ</StatusTag>
-                          ) : daTra > 0 ? (
-                            <StatusTag tone="waiting">Đã trả 1 phần</StatusTag>
-                          ) : (
-                            <StatusTag tone="urgent">Chưa thanh toán</StatusTag>
-                          )
-                        ) : (
-                          <span style={styles.textMuted}>Chưa duyệt</span>
-                        )}
-                      </td>
-                      <td style={{ ...styles.td, textAlign: 'center' }}>
-                        <div style={styles.actionCell}>
-                          {daDuyet && (
-                            <Button
-                              variant="secondary"
-                              onClick={() => moChungTu(row.id)}
-                              blocked={dangTaiVoucher}
-                              style={styles.btnSmall}
-                            >
-                              📄 Xem phiếu
-                            </Button>
-                          )}
-                          {onNavigateToTicket && (
-                            <Button
-                              variant="text"
-                              onClick={() => onNavigateToTicket(row.id)}
-                              style={styles.btnSmall}
-                            >
-                              Chi tiết đơn →
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+      {!dangTai && !loiTai && danhSach.length > 0 && (
+        <>
+          {danhSachLoc.length === 0 ? (
+            <EmptyState kind="filtered" title="Không có việc nào khớp bộ lọc" body="Đổi nhóm thanh toán hoặc xoá từ khoá để xem lại danh sách." actionLabel="Xoá bộ lọc" onAction={() => { setLocChip('TAT_CA'); setTuKhoa('') }} />
+          ) : mobile ? (
+            <>
+              {danhSachLoc.slice(0, soHienThi).map((row) => {
+                const h = tinhHang(row)
+                return (
+                  <article key={row.id} className="m-card" style={{ display: 'grid', gap: 10 }} aria-label={row.maYeuCau}>
+                    <div className="spread">
+                      <StatusTag tone={tongTrangThai(row)}>{row.tenTrangThaiHieuLuc || row.tenTrangThai}</StatusTag>
+                      <span className="t-meta">{row.maYeuCau}</span>
+                    </div>
+                    <h2 className="h3" style={{ margin: 0, fontSize: 18 }}>{row.hangMuc}</h2>
+                    <div className="t-sm t-2" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Icon name="pin" size="sm" />
+                      <span style={styleCat} title={`${row.toaNha} · Phòng ${row.soPhong} · Tầng ${row.tang}`}>{row.toaNha} · Phòng {row.soPhong} · Tầng {row.tang}</span>
+                    </div>
+                    {h.daDuyet ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+                        <div className="fact"><div className="k">Giá trị</div><div className="v">{h.giaTri === 0 ? '0 đ' : dinhDangTien(h.giaTri)}</div></div>
+                        <div className="fact"><div className="k">Đã nhận</div><div className="v" style={{ color: h.daTra > 0 ? 'var(--ma-done-text)' : undefined }}>{dinhDangTien(h.daTra)}</div></div>
+                        <div className="fact"><div className="k">Còn lại</div><div className="v" style={{ color: h.conLai > 0 ? 'var(--ma-urgent)' : undefined }}>{h.conLai > 0 ? dinhDangTien(h.conLai) : 'Đã hết nợ'}</div></div>
+                      </div>
+                    ) : null}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {baoGiaTag(row)}
+                      {h.daDuyet ? tienDoTag(row) : null}
+                      {h.daDuyet && h.giaTri === 0 ? <StatusTag tone="neutral">0 đ (Bảo hành)</StatusTag> : null}
+                    </div>
+                    {(h.daDuyet || onNavigateToTicket) ? (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {h.daDuyet ? <Button variant="secondary" className="btn-touch" style={{ flex: 1 }} onClick={() => moChungTu(row.id)} blocked={dangTaiVoucher}>Xem phiếu</Button> : null}
+                        {onNavigateToTicket ? <Button variant="text" className="btn-touch" style={{ flex: h.daDuyet ? '0 0 auto' : 1 }} onClick={() => onNavigateToTicket(row.id)}>Chi tiết đơn →</Button> : null}
+                      </div>
+                    ) : null}
+                  </article>
+                )
+              })}
+              {danhSachLoc.length > soHienThi ? (
+                <Button variant="secondary" className="btn-touch" onClick={() => setSoHienThi((n) => n + 10)}>
+                  Xem thêm ({danhSachLoc.length - soHienThi} việc)
+                </Button>
+              ) : null}
+            </>
+          ) : (
+            <Card>
+              <DataTable rows={danhSachLoc} columns={cot} getRowId={(r) => r.id} noun="việc" pageSize={10} rowLabel={(r) => r.maYeuCau} />
+            </Card>
+          )}
         </>
       )}
 
@@ -660,270 +582,62 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
   )
 }
 
+const CHIP_THANH_TOAN: ReadonlyArray<readonly [string, string]> = [
+  ['TAT_CA', 'Tất cả'],
+  ['DA_TRA_DU', 'Đã nhận đủ'],
+  ['TRA_MOT_PHAN', 'Trả một phần'],
+  ['CHUA_TRA', 'Chưa thanh toán'],
+  ['BAO_HANH_0D', 'Bảo hành (0đ)'],
+  ['CHUA_BAO_GIA', 'Chưa chốt giá'],
+]
+
+function tinhHang(row: ThongTinViecThoRow) {
+  return {
+    giaTri: Number(row.giaTriBaoGia || 0),
+    daTra: Number(row.daThanhToan || 0),
+    conLai: Number(row.conPhaiTra || 0),
+    daDuyet: row.trangThaiBaoGia === 'DA_DUYET',
+  }
+}
+
+function tongTrangThai(row: ThongTinViecThoRow): 'done' | 'waiting' | 'neutral' {
+  return row.trangThaiHieuLuc === 'DA_DONG' ? 'done' : row.trangThaiHieuLuc === 'DANG_XU_LY' || row.trangThaiHieuLuc === 'CHO_XAC_NHAN' ? 'waiting' : 'neutral'
+}
+
+function baoGiaTag(row: ThongTinViecThoRow): React.ReactElement {
+  return row.trangThaiBaoGia === 'DA_DUYET' ? <StatusTag tone="done">Đã duyệt hiệu lực</StatusTag>
+    : row.trangThaiBaoGia === 'CHO_DUYET' ? <StatusTag tone="waiting">Chờ quản lý duyệt</StatusTag>
+    : row.trangThaiBaoGia === 'TU_CHOI' ? <StatusTag tone="urgent">Bị từ chối</StatusTag>
+    : row.trangThaiBaoGia === 'NHAP' ? <StatusTag tone="draft">Bản nháp</StatusTag>
+    : <span className="t-2">Chưa tạo báo giá</span>
+}
+
+function tienDoTag(row: ThongTinViecThoRow): React.ReactElement {
+  const h = tinhHang(row)
+  return !h.daDuyet ? <span className="t-2">Chưa duyệt</span>
+    : h.giaTri === 0 ? <StatusTag tone="neutral">Đối soát 0đ</StatusTag>
+    : h.conLai <= 0 ? <StatusTag tone="done">Đã thanh toán đủ</StatusTag>
+    : h.daTra > 0 ? <StatusTag tone="waiting">Đã trả 1 phần</StatusTag>
+    : <StatusTag tone="urgent">Chưa thanh toán</StatusTag>
+}
+
+function khop(row: ThongTinViecThoRow, loc: string): boolean {
+  const { giaTri, daTra, conLai, daDuyet } = tinhHang(row)
+  if (loc === 'CHUA_BAO_GIA') return !daDuyet
+  if (loc === 'BAO_HANH_0D') return daDuyet && giaTri === 0
+  if (loc === 'DA_TRA_DU') return daDuyet && giaTri > 0 && conLai <= 0
+  if (loc === 'TRA_MOT_PHAN') return daDuyet && daTra > 0 && conLai > 0
+  if (loc === 'CHUA_TRA') return daDuyet && giaTri > 0 && daTra === 0
+  return true
+}
+
+const styleO: CSSProperties = { background: 'var(--ma-bg-card)', borderRadius: 16, padding: 14, display: 'grid', gap: 2, alignContent: 'start', minWidth: 0 }
+const styleSo: CSSProperties = { display: 'block', font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.02em' }
+const styleNhan: CSSProperties = { font: '500 14px/1.3 var(--ma-font-ui)' }
+const styleMoTa: CSSProperties = { font: 'var(--ma-text-caption)', color: 'var(--ma-text-secondary)' }
+const styleCat: CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 360 }
+
 const styles: Record<string, CSSProperties> = {
-  container: {
-    padding: '24px',
-    maxWidth: 1360,
-    margin: '0 auto',
-    fontFamily: 'inherit',
-    color: 'var(--color-text, #0f172a)',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '24px',
-    flexWrap: 'wrap',
-    gap: '12px',
-  },
-  badgeRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginBottom: '6px',
-  },
-  headerSubtitle: {
-    fontSize: '0.85rem',
-    color: 'var(--color-muted, #64748b)',
-  },
-  headerTitle: {
-    fontSize: '1.65rem',
-    fontWeight: 700,
-    margin: 0,
-    color: 'var(--color-heading, #0f172a)',
-  },
-  headerActions: {
-    display: 'flex',
-    gap: '8px',
-  },
-  kpiGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-    gap: '16px',
-    marginBottom: '24px',
-  },
-  kpiCard: {
-    background: '#ffffff',
-    borderRadius: '8px',
-    padding: '16px 20px',
-    border: '1px solid #e2e8f0',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-  },
-  kpiLabel: {
-    fontSize: '0.75rem',
-    fontWeight: 700,
-    color: '#64748b',
-    letterSpacing: '0.04em',
-    marginBottom: '8px',
-  },
-  kpiValueHighlight: {
-    fontSize: '1.5rem',
-    fontWeight: 700,
-    color: '#0f172a',
-    marginBottom: '6px',
-  },
-  kpiValueCount: {
-    fontSize: '1.35rem',
-    marginBottom: '6px',
-  },
-  kpiHint: {
-    fontSize: '0.8rem',
-    color: '#94a3b8',
-  },
-  filterBar: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '12px',
-    alignItems: 'center',
-    marginBottom: '20px',
-    background: '#f8fafc',
-    padding: '12px 16px',
-    borderRadius: '8px',
-    border: '1px solid #e2e8f0',
-  },
-  searchBox: {
-    position: 'relative',
-    flex: '1 1 260px',
-    minWidth: 200,
-  },
-  searchInput: {
-    width: '100%',
-    padding: '8px 30px 8px 12px',
-    borderRadius: '6px',
-    border: '1px solid #cbd5e1',
-    fontSize: '0.875rem',
-    boxSizing: 'border-box',
-    outline: 'none',
-  },
-  clearBtn: {
-    position: 'absolute',
-    right: '8px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#94a3b8',
-    fontSize: '0.9rem',
-  },
-  select: {
-    padding: '8px 12px',
-    borderRadius: '6px',
-    border: '1px solid #cbd5e1',
-    fontSize: '0.875rem',
-    background: '#ffffff',
-    outline: 'none',
-  },
-  tabPills: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '6px',
-  },
-  tabPill: {
-    padding: '6px 12px',
-    borderRadius: '16px',
-    border: '1px solid #cbd5e1',
-    background: '#ffffff',
-    fontSize: '0.8rem',
-    cursor: 'pointer',
-    color: '#475569',
-    transition: 'all 0.15s ease',
-  },
-  tabPillActive: {
-    background: '#2563eb',
-    color: '#ffffff',
-    borderColor: '#2563eb',
-    fontWeight: 600,
-  },
-  loadingBox: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '48px 0',
-    color: '#64748b',
-    gap: '12px',
-  },
-  spinner: {
-    width: '32px',
-    height: '32px',
-    border: '3px solid #e2e8f0',
-    borderTopColor: '#2563eb',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-  },
-  errorBanner: {
-    padding: '12px 16px',
-    borderRadius: '8px',
-    background: '#fef2f2',
-    border: '1px solid #fecaca',
-    color: '#b91c1c',
-    marginBottom: '16px',
-    display: 'flex',
-    alignItems: 'center',
-  },
-  tableCard: {
-    background: '#ffffff',
-    borderRadius: '8px',
-    border: '1px solid #e2e8f0',
-    overflowX: 'auto',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    textAlign: 'left',
-    fontSize: '0.875rem',
-  },
-  thRow: {
-    background: '#f8fafc',
-    borderBottom: '1px solid #e2e8f0',
-  },
-  th: {
-    padding: '12px 16px',
-    fontSize: '0.75rem',
-    fontWeight: 700,
-    color: '#64748b',
-    letterSpacing: '0.04em',
-    whiteSpace: 'nowrap',
-  },
-  tr: {
-    borderBottom: '1px solid #f1f5f9',
-    transition: 'background 0.15s ease',
-  },
-  td: {
-    padding: '14px 16px',
-    verticalAlign: 'middle',
-  },
-  ticketCode: {
-    fontFamily: 'monospace',
-    fontWeight: 600,
-    color: '#2563eb',
-    fontSize: '0.8rem',
-  },
-  ticketTitle: {
-    fontWeight: 600,
-    color: '#0f172a',
-    marginTop: '2px',
-  },
-  ticketDesc: {
-    fontSize: '0.8rem',
-    color: '#64748b',
-    marginTop: '2px',
-    maxWidth: '240px',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  },
-  roomBadge: {
-    fontWeight: 600,
-    color: '#0f172a',
-  },
-  buildingName: {
-    fontSize: '0.8rem',
-    color: '#64748b',
-    marginTop: '2px',
-  },
-  valApproved: {
-    fontWeight: 600,
-    color: '#0f172a',
-  },
-  valPaid: {
-    fontWeight: 600,
-    color: '#16a34a',
-  },
-  valRemain: {
-    fontWeight: 600,
-    color: '#ea580c',
-  },
-  valSettled: {
-    fontSize: '0.8rem',
-    color: '#16a34a',
-  },
-  zeroCostBadge: {
-    background: '#f1f5f9',
-    color: '#475569',
-    padding: '2px 8px',
-    borderRadius: '4px',
-    fontSize: '0.8rem',
-  },
-  textMuted: {
-    color: '#94a3b8',
-    fontSize: '0.85rem',
-  },
-  actionCell: {
-    display: 'flex',
-    gap: '6px',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnSmall: {
-    fontSize: '0.8rem',
-    padding: '4px 10px',
-  },
-  // Modal styles
   modalOverlay: {
     position: 'fixed',
     top: 0,

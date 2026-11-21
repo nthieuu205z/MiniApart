@@ -1,12 +1,12 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import { ApiError, fetchHopDongCuaNguoiThue, fetchHoSoHopDong, type ThongTinHopDong, type HopDongHoSoDto } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
-import { Figure } from './design/core/Figure'
 import { StatusTag } from './design/core/StatusTag'
-import { SysLabel } from './design/core/SysLabel'
 import { Button } from './design/core/Button'
+import { Icon, type IconName } from './design/core/Icon'
 import { EmptyState } from './design/feedback/EmptyState'
-import { MetaGrid, MetaItem, ScreenHeader, ScreenNotice, ScreenSurface, TableCell, TableFrame, TableHeadCell } from './design/layout/Screen'
+import { Card } from './design/layout/Card'
+import { DataTable } from './design/table/DataTable'
 import { downloadManagementFile } from './managementApi'
 
 type Props = {
@@ -19,6 +19,13 @@ type TrangThaiHienThi = {
   nhan: string
   thongBao: string
   tone: 'neutral' | 'urgent' | 'closed'
+}
+
+const BANNER: Record<TrangThaiHienThi['key'], { cls: string; icon: IconName }> = {
+  far: { cls: 'banner-success', icon: 'check-circle' },
+  warning: { cls: 'banner-warning', icon: 'clock' },
+  expired: { cls: 'banner-danger', icon: 'alert' },
+  settled: { cls: 'banner-info', icon: 'info' },
 }
 
 export default function HopDongNguoiThue({ token, mobile = false }: Props) {
@@ -49,56 +56,71 @@ export default function HopDongNguoiThue({ token, mobile = false }: Props) {
     }
   }, [soLanTaiLai, token])
 
+  const khung = { 'data-testid': 'tenant-contract-screen', 'data-layout-variant': variant }
+
   if (dangTai) {
-    return (
-      <ScreenSurface data-testid="tenant-contract-screen" data-layout-variant={variant} aria-busy="true" aria-live="polite">
-        Đang tải thông tin hợp đồng…
-      </ScreenSurface>
-    )
+    return <div {...khung}><EmptyState kind="loading" title="Đang tải thông tin hợp đồng" /></div>
   }
 
   if (loi) {
     return (
-      <ScreenSurface data-testid="tenant-contract-screen" data-layout-variant={variant} role="alert">
-        <SysLabel>HỢP ĐỒNG THUÊ CỦA TÔI</SysLabel>
-        <ScreenNotice tone="urgent">{loi}</ScreenNotice>
-        <Button data-retry-tenant-contract variant="secondary" onClick={() => setSoLanTaiLai((count) => count + 1)}>
-          Thử lại
-        </Button>
-      </ScreenSurface>
+      <div {...khung} role="alert">
+        <Card>
+          <EmptyState kind="error" title="Không thể tải thông tin hợp đồng" body={loi} />
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Button data-retry-tenant-contract variant="secondary" onClick={() => setSoLanTaiLai((count) => count + 1)}>
+              Thử lại
+            </Button>
+          </div>
+        </Card>
+      </div>
     )
   }
 
   return (
-    <ScreenSurface data-testid="tenant-contract-screen" data-layout-variant={variant} aria-labelledby="tenant-contract-title">
-      <ScreenHeader>
-        <SysLabel>HỢP ĐỒNG THUÊ CỦA TÔI</SysLabel>
-        <h3 id="tenant-contract-title" style={{ margin: '8px 0 0' }}>Hợp đồng của tôi</h3>
-        <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>
+    <section {...khung} aria-labelledby="tenant-contract-title" style={{ display: 'grid', gap: 12, minWidth: 0 }}>
+      <div>
+        <h1 id="tenant-contract-title" style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Hợp đồng của tôi</h1>
+        <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)', marginTop: 2 }}>
           Thông tin chỉ đọc của các hợp đồng thuộc hồ sơ người thuê này. Cảnh báo hết hạn được tính theo ngày hiện tại.
-        </p>
-      </ScreenHeader>
+        </div>
+      </div>
 
       {hopDongs.length === 0 ? (
-        <EmptyState
-          data-contract-empty
-          title="Chưa có hợp đồng nào"
-          body="Hợp đồng sẽ xuất hiện tại đây sau khi hồ sơ của bạn được gắn với một hợp đồng thuê. Đây không phải lỗi kết nối."
-        />
+        <Card>
+          <EmptyState
+            data-contract-empty
+            title="Chưa có hợp đồng nào"
+            body="Hợp đồng sẽ xuất hiện tại đây sau khi hồ sơ của bạn được gắn với một hợp đồng thuê. Đây không phải lỗi kết nối."
+          />
+        </Card>
       ) : mobile ? (
         <div data-contract-list="mobile" style={{ display: 'grid', gap: 12 }}>
           {hopDongs.map((hopDong) => <HopDongCard key={hopDong.id} hopDong={hopDong} token={token} />)}
         </div>
       ) : (
-        <HopDongTable hopDongs={hopDongs} token={token} />
+        <Card><HopDongTable hopDongs={hopDongs} token={token} /></Card>
       )}
-    </ScreenSurface>
+    </section>
   )
+}
+
+function useTaiPdf(token: string) {
+  const [dangTai, setDangTai] = useState<number | null>(null)
+  const tai = async (id: number) => {
+    setDangTai(id)
+    try {
+      await downloadManagementFile(token, `/api/hop-dong/${id}/xuat-pdf`, `hop-dong-${id}.pdf`)
+    } finally {
+      setDangTai(null)
+    }
+  }
+  return { dangTai, tai }
 }
 
 function HopDongCard({ hopDong, token }: { hopDong: ThongTinHopDong; token: string }) {
   const trangThai = xacDinhTrangThai(hopDong)
-  const [busy, setBusy] = useState(false)
+  const { dangTai, tai } = useTaiPdf(token)
   const [hoSo, setHoSo] = useState<HopDongHoSoDto | null>(null)
 
   useEffect(() => {
@@ -108,176 +130,120 @@ function HopDongCard({ hopDong, token }: { hopDong: ThongTinHopDong; token: stri
   }, [hopDong.id, token])
 
   return (
-    <article data-contract-card={hopDong.id} style={styleTheHopDong}>
-      <header style={styleHangTieuDe}>
-        <div style={{ display: 'grid', gap: 4, minWidth: 0 }}>
-          <strong>Phòng {hopDong.soPhong}</strong>
-          <span style={{ color: 'var(--ma-text-secondary)' }}>
-            {dinhDangNgayIso(hopDong.ngayBatDau)} → {dinhDangNgayIso(hopDong.ngayKetThuc)}
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {hoSo?.trangThaiTaiLieu ? (
-            <StatusTag
-              tone={
-                hoSo.trangThaiTaiLieu === 'DA_GHI_NHAN_KY'
-                  ? 'done'
-                  : hoSo.trangThaiTaiLieu === 'DA_CHOT'
-                  ? 'waiting'
-                  : 'urgent'
-              }
-            >
-              {hoSo.trangThaiTaiLieu === 'DA_GHI_NHAN_KY'
-                ? 'Đã ký giấy'
-                : hoSo.trangThaiTaiLieu === 'DA_CHOT'
-                ? 'Đã chốt'
-                : 'Bản dự thảo'}
-            </StatusTag>
-          ) : (
-            <StatusTag tone="neutral">Hồ sơ lịch sử</StatusTag>
-          )}
+    <Card data-contract-card={hopDong.id} style={{ gap: 14 }}>
+      <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <h2 className="h2" style={{ margin: 0 }}>Phòng {hopDong.soPhong}</h2>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <TheTaiLieu hoSo={hoSo} />
           <StatusTag tone={trangThai.tone}>{trangThai.nhan}</StatusTag>
         </div>
       </header>
 
       <ThongBaoTrangThai trangThai={trangThai} />
-      <ThongTinHopDong hopDong={hopDong} />
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-        <Button
-          variant="secondary"
-          blocked={busy}
-          onClick={async () => {
-            setBusy(true)
-            try {
-              await downloadManagementFile(token, `/api/hop-dong/${hopDong.id}/xuat-pdf`, `hop-dong-${hopDong.id}.pdf`)
-            } finally {
-              setBusy(false)
-            }
-          }}
-        >
-          📄 Tải hợp đồng PDF
-        </Button>
+      <div className="facts">
+        <div className="fact"><div className="k">Bắt đầu</div><div className="v">{dinhDangNgayIso(hopDong.ngayBatDau)}</div></div>
+        <div className="fact"><div className="k">Kết thúc</div><div className="v">{dinhDangNgayIso(hopDong.ngayKetThuc)}</div></div>
+        <div className="fact"><div className="k">Giá thuê</div><div className="v">{dinhDangTien(hopDong.giaThue)} ₫</div></div>
+        <div className="fact"><div className="k">Tiền cọc thoả thuận</div><div className="v">{dinhDangTien(hopDong.tienCoc)} ₫</div></div>
       </div>
-    </article>
+
+      <div>
+        <h3 className="h3" style={{ margin: '0 0 4px' }}>Dịch vụ áp dụng</h3>
+        <DanhSachDichVu hopDong={hopDong} />
+      </div>
+
+      <Button className="btn-touch btn-block" blocked={dangTai === hopDong.id} onClick={() => tai(hopDong.id)}>
+        <Icon name="download" /> Tải hợp đồng PDF
+      </Button>
+    </Card>
   )
+}
+
+function TheTaiLieu({ hoSo }: { hoSo: HopDongHoSoDto | null }) {
+  if (!hoSo?.trangThaiTaiLieu) return <StatusTag tone="neutral">Hồ sơ lịch sử</StatusTag>
+  return hoSo.trangThaiTaiLieu === 'DA_GHI_NHAN_KY'
+    ? <StatusTag tone="done">Đã ký giấy</StatusTag>
+    : hoSo.trangThaiTaiLieu === 'DA_CHOT'
+      ? <StatusTag tone="waiting">Đã chốt</StatusTag>
+      : <StatusTag tone="urgent">Bản dự thảo</StatusTag>
 }
 
 function HopDongTable({ hopDongs, token }: { hopDongs: ThongTinHopDong[]; token: string }) {
-  const [busyId, setBusyId] = useState<number | null>(null)
-
+  const { dangTai, tai } = useTaiPdf(token)
   return (
-    <TableFrame minWidth={820}>
-      <thead>
-        <tr>
-          <TableHeadCell>Phòng / thời hạn</TableHeadCell>
-          <TableHeadCell>Trạng thái</TableHeadCell>
-          <TableHeadCell>Giá thuê / cọc</TableHeadCell>
-          <TableHeadCell>Dịch vụ áp dụng</TableHeadCell>
-          <TableHeadCell>Thao tác</TableHeadCell>
-        </tr>
-      </thead>
-      <tbody>
-        {hopDongs.map((hopDong) => {
-          const trangThai = xacDinhTrangThai(hopDong)
-          return (
-            <tr key={hopDong.id} data-contract-row={hopDong.id}>
-              <TableCell header>
-                <div style={{ display: 'grid', gap: 4 }}>
-                  <strong>Phòng {hopDong.soPhong}</strong>
-                  <span style={{ color: 'var(--ma-text-secondary)', fontWeight: 400 }}>
-                    {dinhDangNgayIso(hopDong.ngayBatDau)} → {dinhDangNgayIso(hopDong.ngayKetThuc)}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell><ThongBaoTrangThai trangThai={trangThai} compact /></TableCell>
-              <TableCell><ThongTinTien hopDong={hopDong} /></TableCell>
-              <TableCell><DanhSachDichVu hopDong={hopDong} /></TableCell>
-              <TableCell>
-                <Button
-                  variant="secondary"
-                  blocked={busyId === hopDong.id}
-                  onClick={async () => {
-                    setBusyId(hopDong.id)
-                    try {
-                      await downloadManagementFile(token, `/api/hop-dong/${hopDong.id}/xuat-pdf`, `hop-dong-${hopDong.id}.pdf`)
-                    } finally {
-                      setBusyId(null)
-                    }
-                  }}
-                  style={{ minHeight: 32, fontSize: 12 }}
-                >
-                  📄 Tải PDF
-                </Button>
-              </TableCell>
-            </tr>
-          )
-        })}
-      </tbody>
-    </TableFrame>
-  )
-}
-
-function ThongTinHopDong({ hopDong }: { hopDong: ThongTinHopDong }) {
-  return (
-    <div style={{ display: 'grid', gap: 12 }}>
-      <MetaGrid>
-        <MetaItem label="Thời gian thuê">
-          {dinhDangNgayIso(hopDong.ngayBatDau)} → {dinhDangNgayIso(hopDong.ngayKetThuc)}
-        </MetaItem>
-        <MetaItem label="Giá thuê">
-          <Figure value={dinhDangTien(hopDong.giaThue)} unit="₫" size="sm" />
-        </MetaItem>
-        <MetaItem label="Tiền cọc thoả thuận">
-          <Figure value={dinhDangTien(hopDong.tienCoc)} unit="₫" size="sm" />
-        </MetaItem>
-      </MetaGrid>
-      <div style={{ padding: 12, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)' }}>
-        <strong>Dịch vụ áp dụng</strong>
-        <DanhSachDichVu hopDong={hopDong} />
-      </div>
-    </div>
-  )
-}
-
-function ThongTinTien({ hopDong }: { hopDong: ThongTinHopDong }) {
-  return (
-    <div style={{ display: 'grid', gap: 4 }}>
-      <span>Thuê: <Figure value={dinhDangTien(hopDong.giaThue)} unit="₫" size="xs" /></span>
-      <span>Tiền cọc thoả thuận: <Figure value={dinhDangTien(hopDong.tienCoc)} unit="₫" size="xs" /></span>
-    </div>
+    <DataTable
+      rows={hopDongs}
+      getRowId={(h) => h.id}
+      noun="hợp đồng"
+      rowProps={(h) => ({ 'data-contract-row': String(h.id) })}
+      columns={[
+        {
+          key: 'phong',
+          label: 'Phòng / thời hạn',
+          render: (h) => (
+            <div style={{ display: 'grid', gap: 2 }}>
+              <strong>Phòng {h.soPhong}</strong>
+              <span className="t-sm t-2">{dinhDangNgayIso(h.ngayBatDau)} → {dinhDangNgayIso(h.ngayKetThuc)}</span>
+            </div>
+          ),
+        },
+        { key: 'tt', label: 'Trạng thái', render: (h) => <ThongBaoTrangThai trangThai={xacDinhTrangThai(h)} compact /> },
+        {
+          key: 'tien',
+          label: 'Giá thuê / cọc',
+          render: (h) => (
+            <div style={{ display: 'grid', gap: 2, whiteSpace: 'nowrap' }}>
+              <span>Thuê: <b>{dinhDangTien(h.giaThue)} ₫</b></span>
+              <span>Tiền cọc thoả thuận: <b>{dinhDangTien(h.tienCoc)} ₫</b></span>
+            </div>
+          ),
+        },
+        { key: 'dv', label: 'Dịch vụ áp dụng', render: (h) => <DanhSachDichVu hopDong={h} /> },
+        {
+          key: 'pdf',
+          label: 'Thao tác',
+          the: 'hanh-dong',
+          render: (h) => (
+            <Button variant="secondary" size="sm" blocked={dangTai === h.id} onClick={() => tai(h.id)}>
+              <Icon name="download" /> Tải PDF
+            </Button>
+          ),
+        },
+      ]}
+    />
   )
 }
 
 function DanhSachDichVu({ hopDong }: { hopDong: ThongTinHopDong }) {
   if (hopDong.dichVuApDung.length === 0) {
-    return <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)' }}>Không có dịch vụ áp dụng riêng.</p>
+    return <p className="t-sm t-2" style={{ margin: '4px 0 0' }}>Không có dịch vụ áp dụng riêng.</p>
   }
 
   return (
-    <ul style={{ display: 'grid', gap: 4, margin: '8px 0 0', paddingLeft: 18 }}>
+    <div style={{ display: 'grid' }}>
       {hopDong.dichVuApDung.map((dichVu) => (
-        <li key={dichVu.dichVuId}>
-          {dichVu.tenDichVu} · {dinhDangTien(dichVu.donGiaApDung)} ₫
-        </li>
+        <div key={dichVu.dichVuId} className="t-sm" style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--ma-line-100)' }}>
+          <span>{dichVu.tenDichVu}</span>
+          <b style={{ whiteSpace: 'nowrap' }}>{dinhDangTien(dichVu.donGiaApDung)} ₫</b>
+        </div>
       ))}
-    </ul>
+    </div>
   )
 }
 
 function ThongBaoTrangThai({ trangThai, compact = false }: { trangThai: TrangThaiHienThi; compact?: boolean }) {
+  const b = BANNER[trangThai.key]
   return (
-    <p
+    <div
       data-contract-status={trangThai.key}
       role={trangThai.key === 'warning' || trangThai.key === 'expired' ? 'alert' : undefined}
-      style={{
-        ...styleThongBao,
-        ...(compact ? { margin: 0, padding: '8px 10px' } : {}),
-        ...(trangThai.key === 'warning' || trangThai.key === 'expired' ? styleThongBaoCanhBao : {}),
-      }}
+      className={`banner ${b.cls}`}
+      style={compact ? { padding: '8px 12px' } : undefined}
     >
-      {trangThai.thongBao}
-    </p>
+      <Icon name={b.icon} size="sm" />
+      <span>{trangThai.thongBao}</span>
+    </div>
   )
 }
 
@@ -315,35 +281,4 @@ function xacDinhTrangThai(hopDong: ThongTinHopDong): TrangThaiHienThi {
     thongBao: `Hợp đồng còn hiệu lực đến ${dinhDangNgayIso(hopDong.ngayKetThuc)}.`,
     tone: 'neutral',
   }
-}
-
-const styleTheHopDong: CSSProperties = {
-  display: 'grid',
-  gap: 14,
-  padding: 16,
-  border: '1px solid var(--ma-border-default)',
-  background: 'var(--ma-bg-card)',
-  minWidth: 0,
-}
-
-const styleHangTieuDe: CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  justifyContent: 'space-between',
-  gap: 12,
-  flexWrap: 'wrap',
-}
-
-const styleThongBao: CSSProperties = {
-  margin: 0,
-  padding: '10px 12px',
-  borderLeft: '3px solid var(--ma-border-strong)',
-  background: 'var(--ma-bg-sunken)',
-  lineHeight: 1.55,
-}
-
-const styleThongBaoCanhBao: CSSProperties = {
-  borderLeftColor: 'var(--ma-urgent)',
-  color: 'var(--ma-urgent)',
-  background: 'var(--ma-urgent-bg)',
 }
