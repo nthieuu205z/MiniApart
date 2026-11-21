@@ -35,3 +35,55 @@
 - Test: thêm `HoSoNguoiThue.test.tsx` (5), `TuanThuVanHanh.test.tsx` (5); sửa test Tài khoản, Phòng, App, stylesCleanup theo UI mới. `tsc` sạch, 45 file / 318 test xanh, build qua.
 - Ảnh nghiệm thu (1440/1024/390, app thật 5190): overflow 0, belowHit 0. Còn lệch: ô phòng "Trống" ở sơ đồ mobile 3,23:1 (RoomCell, design system — chưa sửa); Tài khoản 1024 / Nhật ký 1024 / Cư trú / An toàn / Người thuê 1024 chưa chụp lại sau lần sửa cuối.
 - Tab Biên bản bàn giao của Tài sản chỉ kiểm bằng test (cần `hopDongId`, màn Phòng không truyền).
+
+## Lô 03-Z — bật reset, dọn styles.css, guard cấm cũ, nghiệm thu 44 mục (`ui/z1`, 22/11/2026)
+- `design/base.css` đã bật; `styles.css` gỡ `.ma-table-container`, `.ma-consumption-bar`, `.ma-topbar-notification`, reset h1/h2/p thừa; guard cấm `IBM Plex Mono`, `--ma-font-mono`, `textTransform: uppercase`, `letterSpacing` dương trong `.tsx` (designTokens.test.ts); gỡ @font-face + 4 woff2 Plex.
+- Nghiệm thu 88 ảnh (44 mục × 1440/390) + 8 ảnh 1024: overflow 0, belowHit 0, contrast.below 0, không Plex. `textBelowFloor` còn lại: chỉ nhãn bottom-nav / breadcrumb 12px ở 390.
+- Nợ còn: bảng Hợp đồng / Sự cố ở 1024 cắt cột cuối trong khung cuộn; chữ IN HOA viết cứng trong HopDongThaoTac, phiếu in ThoChiPhi, QuanLyTaiSanPhong (danh mục), QuanLyDashboard; Nhật ký thao tác hiện chuỗi kỹ thuật thô.
+
+| # | Mục | Role | 1440 sau (ov/hit/contrast/text<) | 390 sau | 1440 trước | 390 trước |
+|--|--|--|--|--|--|--|
+| 1 | /dang-nhap | công khai | 0/0/0/0 | 0/0/0/0 | 0/0/0/0 | 0/0/0/0 |
+| 2 | /kham-pha | công khai | 0/0/0/0 | 0/0/0/0 | 0/0/0/0 | 0/0/0/0 |
+| 3 | /nhat-ky-thao-tac | QTHT | 0/0/0/0 | 0/0/0/5 | 0/0/0/0 | 0/0/0/5 |
+| 4 | /tai-khoan | QTHT | 0/0/0/0 | 0/0/0/5 | 0/0/0/0 | 0/0/0/5 |
+| 5 | /toa-nha | QTHT | 0/0/0/0 | 0/0/0/5 | 0/0/0/0 | 0/0/0/5 |
+| 6 | /an-toan | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 7 | /bao-cao | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 8 | /bao-cao/chi-phi-bao-tri | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 9 | /bao-cao/tieu-thu | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 10 | /cong-no | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 11 | /cu-tru | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 12 | /dich-vu | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 13 | /ghi-chi-so | CHU | 0/0/0/0 | 0/0/0/5 | 0/0/0/22 | 0/0/0/5 |
+| 14 | /hoa-don | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 15 | /hop-dong | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 16 | /lich-hen | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 17 | /nguoi-thue | CHU | 0/0/0/0 | 0/0/0/7 | 0/0/0/0 | 0/0/0/7 |
+| 18 | /nhat-ky-thao-tac | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 19 | /su-co | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 20 | /thu-tien | CHU | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 21 | /toa-nha | CHU | 0/0/0/0 | 0/0/0/7 | 0/0/0/0 | 0/0/0/7 |
+| 22 | /tong-quan | CHU | 0/0/0/0 | 0/0/0/5 | 0/0/0/0 | 0/0/0/5 |
+| 23 | /an-toan?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 24 | /cu-tru?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 25 | /dich-vu?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 26 | /ghi-chi-so?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/5 | 0/0/0/22 | 0/0/0/5 |
+| 27 | /hoa-don?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 28 | /hop-dong?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 29 | /lich-hen?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 30 | /nguoi-thue?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 31 | /nhac-viec?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/7 | 0/0/0/0 | 0/0/0/8 |
+| 32 | /phong?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/3/11 |
+| 33 | /su-co?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 34 | /thong-bao?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 35 | /thu-tien?toaNhaId=3 | QUAN_LY | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 36 | /tho/chi-phi | THO | 0/0/0/0 | 0/0/0/7 | 0/0/0/0 | 0/0/0/7 |
+| 37 | /tho/tong-quan | THO | 0/0/0/0 | 0/0/0/4 | 0/0/0/0 | 0/0/0/4 |
+| 38 | /thong-bao | THO | 0/0/0/0 | 0/0/0/6 | 0/0/0/0 | 0/0/0/6 |
+| 39 | /viec-cua-toi | THO | 0/0/0/0 | 0/0/0/6 | 0/0/0/0 | 0/0/0/6 |
+| 40 | /bao-hong | NGUOI_THUE | 0/0/0/0 | 0/0/0/7 | 0/0/0/0 | 0/0/0/7 |
+| 41 | /hoa-don-cua-toi | NGUOI_THUE | 0/0/0/0 | 0/0/0/8 | 0/0/0/5 | 0/0/0/8 |
+| 42 | /hop-dong | NGUOI_THUE | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 43 | /lich-su | NGUOI_THUE | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+| 44 | /tieu-thu | NGUOI_THUE | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
