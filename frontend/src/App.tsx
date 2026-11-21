@@ -873,14 +873,14 @@ function App() {
                 gap: laManHinhHep ? 10 : undefined,
                 flexWrap: laManHinhHep ? 'nowrap' : 'wrap',
                 height: 'auto',
-                minHeight: 'var(--ma-topbar-height)',
+                minHeight: hienThiDashboardChu && !laManHinhHep ? 48 : 'var(--ma-topbar-height)',
               }}
             />
-            {tieuDeTheChinh === 'Tổng quan' ? null : <Breadcrumb className="ma-no-print" items={duongDanPhanCap} style={{ padding: laManHinhHep ? '7px 16px' : undefined }} />}
+            {tieuDeTheChinh === 'Tổng quan' || hienThiDashboardChu ? null : <Breadcrumb className="ma-no-print" items={duongDanPhanCap} style={{ padding: laManHinhHep ? '7px 16px' : undefined }} />}
           </>
         ) : null}
 
-        <section style={hienThiGhiChiSo ? styleVungNoiDungKhongDem : styleVungNoiDung}>
+        <section style={hienThiGhiChiSo ? styleVungNoiDungKhongDem : hienThiDashboardChu && !laManHinhHep ? { ...styleVungNoiDung, padding: '0 16px 24px', gap: 16 } : styleVungNoiDung}>
           {healthError ? (
             <div role="alert" style={{ marginBottom: 'var(--ma-space-4)' }}>
               <BlockedNotice title="Mất kết nối máy chủ" reason={healthError} />
