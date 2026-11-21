@@ -1,0 +1,32 @@
+
+# Brief coder — Plan 03 (áp thiết kế UI MiniApart vào màn thật)
+
+Bạn là coder (Sonnet). Làm ĐÚNG task được giao trong plan của bạn, không làm thêm. Trước khi code: đọc TRỌN plan của bạn + `docs/design/ui-redesign/plans/00-nen-gitattributes-va-component.md` (mục Tiêu chí nghiệm thu chung) + ảnh đích trong `docs/design/ui-redesign/screens/png/` + HTML tương ứng trong `screens/` + `assets/components.css`. Plan 00 (component nền) ĐÃ merge vào nhánh gốc của bạn: `design/components.css`, `design/core/{Button,StatusTag,Icon}`, `design/forms/{FilterChip,Field}`, `design/layout/Card`, `design/feedback/EmptyState`, `design/shell/{NavPanel,TopBar}`, `design/table/{bangDuLieu.ts,DataTable.tsx}`. Dùng lại, đừng viết song song. Baseline (cập nhật theo nhánh gốc của bạn): 43 file / 302 test xanh, `npx tsc -b` sạch, build qua.
+
+Môi trường: Windows, git-bash; tool native dùng đường dẫn `C:/...`. Mỗi coder một worktree riêng (đã tạo, trên nhánh riêng); các coder khác chạy SONG SONG ở worktree khác, KHÔNG đụng file ngoài danh sách File của task bạn (đặc biệt `App.tsx`, `App.test.tsx`, `design/**` chỉ sửa nếu task ghi rõ). Cần thêm gì ở `design/**` (vd 1 class CSS thiếu): thêm vào CHÍNH file/màn của bạn hoặc báo cáo lại, đừng sửa component chung.
+Bước đầu: `cd <worktree>/frontend && npm ci --no-audit --no-fund`.
+
+Luật:
+- Mỗi task một commit nhỏ, message tiếng Việt `feat(ui): ...`. `git add` đúng file. KHÔNG push, KHÔNG merge, KHÔNG đổi nhánh, KHÔNG sửa backend/compose/token.
+- Giữ props/state/handler/`data-*`/`data-testid` mà test cũ dùng; chỉ đổi JSX/CSS theo plan. Test cũ chỉ được sửa đúng chỗ plan cho phép (đổi chữ theo thiết kế); mọi thay đổi test cũ phải nêu trong báo cáo kèm lý do. Không xoá test.
+- Không thêm thư viện. Không hex màu trong CSS/TS mới (dùng `var(--ma-*)`); guard `designTokens.test.ts`, `stylesCleanup.test.ts`.
+- Sau mỗi task: `npx tsc -b`, `npm test` (toàn bộ), `npm run build` — đều phải xanh.
+- Chụp ảnh nghiệm thu từ APP THẬT: stack demo http://localhost:5190 có dữ liệu (backend thật; CHỈ đọc). Cách: trong worktree của bạn tạo `frontend/.env.local` với `VITE_BACKEND_URL=http://localhost:5190` (file đã gitignore), chạy `npx vite --port <CỔNG CỦA BẠN>` nền, rồi
+  `MA_DEMO_PASSWORD=<xem dòng "Tài khoản (mật khẩu …)" đầu docker-compose.demo.yml> MA_APP_URL=http://localhost:<cổng> node docs/design/ui-redesign/tools/app-shot.mjs <jobs.json> <thư mục ra>`.
+  LƯU Ý tool: mỗi lần chạy chỉ 1 job có `role` (job thứ hai bị kẹt ở trang đăng nhập) → chạy mỗi job một lần trong vòng lặp. Thư mục ảnh: `C:/Users/nthieuu05/AppData/Local/hermes/profiles/bot-nthieuu/cache/scratch/evidence/<tên task>/` (KHÔNG commit ảnh, KHÔNG ghi mật khẩu vào file/commit). Sau khi chụp, TỰ MỞ ảnh bằng công cụ xem ảnh, so với ảnh đích, sửa lỗi nhìn thấy (chữ cắt, chồng lấn, lệch, icon sai nghĩa, nút thừa) rồi chụp lại — lặp tới khi đạt. Đọc `qa.json`: horizontalOverflow=0, belowHit rỗng (mobile ≥44px, desktop ≥36px), contrast.below rỗng. Chỗ nào còn vi phạm do thành phần dùng chung ngoài task: ghi tên phần tử + lý do vào báo cáo.
+- Tắt vite khi xong (`powershell -c "Get-Process node | Where-Object {$_.Id -eq <pid>} | Stop-Process -Force"`).
+- Không POST/PUT/DELETE vào backend (app-shot chỉ POST đăng nhập). Không bấm nút nghiệp vụ trong ảnh nghiệm thu.
+- Sau 3 lần sửa không xong một lỗi: dừng và báo.
+- Báo cáo cuối: từng task → commit sha, số test trước/sau, lệnh + kết quả THẬT, đường dẫn ảnh nghiệm thu, danh sách test cũ đã sửa + lý do, chỗ lệch plan, chỗ chưa kiểm. Không bịa kết quả; chưa làm được thì nói thẳng.
+
+
+CẬP NHẬT sau đợt 01/02 (đã gộp vào nhánh gốc của bạn): khung điều hướng mới (sidebar nhóm + bottom-nav + header mobile), màn Hợp đồng dùng `DataTable` (ĐÃ DUYỆT, đừng đổi hành vi), Dashboard Chủ, Nhắc việc, Ghi chỉ số, Thợ, Hoá đơn khách. `design/charts/*` (BieuDoVung, Gauge, ThanhXepHang) đã có. Ledger + nợ: `docs/design/ui-redesign/progress.md`. Plan nguồn lô: `docs/design/ui-redesign/plans/03-man-con-lai.md` (đọc TRỌN mục "Khuôn mỗi task" + mục lô của bạn). Quy tắc chung mọi màn: đúng MỘT nút chính; trạng thái luôn có icon + chữ; không chữ mono, không IN HOA giãn cách; rỗng/đang tải/lỗi dùng `EmptyState`; KHÔNG mất cột/số liệu nào màn cũ đang hiện; màn chưa có test thì viết test render tối thiểu TRƯỚC khi đổi (chạy xanh trên code cũ rồi mới đổi). Đây là đợt "chạy hết" — làm đủ mọi task của lô, không bỏ task vì cỡ; gặp việc quá 400 dòng diff thì tách commit.
+Cổng vite + ảnh: mỗi coder một cổng riêng (ghi trong phần của bạn). Ảnh mỗi màn ở 1440 / 1024 / 390 (mobile-first thì 390 + 1440), role đúng bảng SĐT: QTHT 0999000001, CHU 0999000011, QUAN_LY 0999000020 (toà id 3 An Nhiên), THO 0999000031, NGUOI_THUE 0999100001; công khai role=null. Bắt buộc: tự mở ảnh, so với màn khung đại diện (xem `screen-inventory.md`) + tiêu chuẩn chất lượng của `screens/png/05-hop-dong.png` và `03-dashboard-chu.png`, sửa, chụp lại. Lỗi hay gặp đã biết: sr-only không đặt trực tiếp lên `<table>` (bọc div); tên dài phải có ellipsis + `title`; thẻ cùng hàng cao bằng nhau; không để thẻ rỗng; đừng thêm thẻ ngoài thiết kế.
+
+Lô 03-0 (`ui/z0`) ĐÃ gộp vào nhánh gốc của bạn: `ManagementShared`/`TableFrame` đã mang diện mạo mới; `DataTable` đã có: icon tìm kiếm, phân trang đẹp, `rowProps` (gắn `data-*` lên `<tr>`), `defaultChip`, dạng thẻ mobile qua `data-label`. Đọc `design/table/DataTable.tsx` để biết props thật trước khi dùng; thiếu gì cho màn của bạn thì dùng cách cục bộ hoặc báo cáo, KHÔNG sửa `DataTable`/`components.css`/shell chung (đang có các lô khác chạy song song).
+Các lô khác chạy song song ở worktree khác — chỉ sửa file của lô bạn (liệt kê trong plan 03 bảng lô + task). `App.tsx` chỉ sửa nếu lô của bạn ghi rõ (lô A: màn đăng nhập).
+
+## Phần của bạn: Lô D — báo cáo: D1 Báo cáo tổng quan, D2 Tiêu thụ (đối soát công tơ tổng đầy đủ ở đây), D3 Chi phí bảo trì
+Worktree: `C:/Users/nthieuu05/Documents/PRJ/MiniApart-d-bao-cao` (nhánh `ui/d-bao-cao`). Cổng vite của bạn: 5304.
+Plan 03 mục 'Lô D'. File: `BaoCaoTongQuan.tsx`, `TieuThuBaoCao.tsx`, `ChiPhiBaoTriBaoCao.tsx`, (+ `ExcelExportButton` giữ là nút phụ). Biểu đồ dùng `design/charts/*` đã có (`BieuDoVung`, `Gauge`, `ThanhXepHang`); cần thêm biểu đồ cột thì thêm file MỚI trong `design/charts/` (không sửa file chung). Ảnh: CHU `/bao-cao`, `/bao-cao/tieu-thu`, `/bao-cao/chi-phi-bao-tri` — 1440 + 390.
+Làm TUẦN TỰ từng màn (mỗi màn một commit), báo cáo cuối theo từng màn.
