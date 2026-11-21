@@ -62,3 +62,18 @@ export function tieuThuTheoToaKyGanNhat(
   }
   return { nhanKy: moiNhat.nhanKy, donVi: moiNhat.donVi, toa: [...theoToa.values()].sort((a, b) => b.tong - a.tong) }
 }
+
+export type ThangTaiChinh = { nhan: string; thucThu: number | string; doanhThuPhatHanh: number | string }
+
+/**
+ * Hai chuỗi cho biểu đồ doanh thu. Tháng trước tháng đầu có số liệu = null (chưa có số, không phải 0);
+ * tháng đang mở mà cả hai đều 0 cũng null (khỏi vẽ đoạn nét đứt rơi về 0) và `thangChuaCoSo` ghi nhãn để chú thích.
+ */
+export function chuoiDoanhThu(thang: readonly ThangTaiChinh[], nhanThangNay: string) {
+  const dauCoSo = thang.findIndex((t) => Number(t.thucThu) > 0 || Number(t.doanhThuPhatHanh) > 0)
+  const cuoi = thang.at(-1)
+  const dangMo = cuoi?.nhan === nhanThangNay
+  const cuoiTrong = dangMo && dauCoSo >= 0 && dauCoSo < thang.length - 1 && Number(cuoi.thucThu) === 0 && Number(cuoi.doanhThuPhatHanh) === 0
+  const lay = (khoa: 'thucThu' | 'doanhThuPhatHanh') => thang.map((t, i) => (dauCoSo < 0 || i < dauCoSo || (cuoiTrong && i === thang.length - 1) ? null : Number(t[khoa])))
+  return { dauCoSo, thucThu: lay('thucThu'), phatHanh: lay('doanhThuPhatHanh'), kyCuoiDangMo: dangMo && !cuoiTrong, thangChuaCoSo: cuoiTrong ? cuoi.nhan : null }
+}

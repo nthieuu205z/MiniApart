@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ThongTinDongTieuThuBaoCao, ThongTinKhoanNoBaoCao } from './api'
-import { nhomNoQuaHanTheoNguoiThue, tieuThuTheoToaKyGanNhat } from './dashboardTongHop'
+import { chuoiDoanhThu, nhomNoQuaHanTheoNguoiThue, tieuThuTheoToaKyGanNhat } from './dashboardTongHop'
 
 function no(nguoiThueId: number, conLai: string, soNgayQuaHan: number, extra: Partial<ThongTinKhoanNoBaoCao> = {}): ThongTinKhoanNoBaoCao {
   return {
@@ -69,5 +69,27 @@ describe('tieuThuTheoToaKyGanNhat', () => {
 
   it('không có số liệu thì trả rỗng, không ném lỗi', () => {
     expect(tieuThuTheoToaKyGanNhat([tt(1, 2026, 10, null)])).toEqual({ nhanKy: null, donVi: null, toa: [] })
+  })
+})
+
+describe('chuoiDoanhThu', () => {
+  const t = (nhan: string, thucThu: number, doanhThuPhatHanh: number) => ({ nhan, thucThu, doanhThuPhatHanh })
+  const thang = [t('09/2026', 0, 0), t('10/2026', 80, 100), t('11/2026', 0, 0)]
+
+  it('tháng đang mở mà cả hai chuỗi bằng 0: để trống (null), không nét đứt, có ghi chú', () => {
+    const r = chuoiDoanhThu(thang, '11/2026')
+    expect(r.thucThu).toEqual([null, 80, null])
+    expect(r.phatHanh).toEqual([null, 100, null])
+    expect(r.kyCuoiDangMo).toBe(false)
+    expect(r.thangChuaCoSo).toBe('11/2026')
+  })
+
+  it('tháng đang mở có số thì vẫn là kỳ cuối đang mở; tháng cuối đã chốt bằng 0 vẫn vẽ 0', () => {
+    expect(chuoiDoanhThu([t('10/2026', 80, 100), t('11/2026', 5, 0)], '11/2026')).toMatchObject({ kyCuoiDangMo: true, thangChuaCoSo: null })
+    expect(chuoiDoanhThu(thang, '12/2026')).toMatchObject({ thucThu: [null, 80, 0], kyCuoiDangMo: false, thangChuaCoSo: null })
+  })
+
+  it('không tháng nào có số: dauCoSo = -1', () => {
+    expect(chuoiDoanhThu([t('11/2026', 0, 0)], '11/2026').dauCoSo).toBe(-1)
   })
 })

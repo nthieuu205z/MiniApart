@@ -1,10 +1,13 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { Icon } from '../core/Icon'
 import { apDungBang, demTheoChip, doiSapXep, type ChieuSapXep } from './bangDuLieu'
 
 export type DataTableColumn<T> = {
   key: string
   label: string
   align?: 'num'
+  /** Dạng thẻ mobile: 'tieu-de' = nằm dòng đầu thẻ (cột đầu mặc định); 'hanh-dong' = cuối thẻ, không nhãn. Cột còn lại thành cặp nhãn–giá trị. */
+  the?: 'tieu-de' | 'hanh-dong'
   sortable?: boolean
   render: (row: T) => ReactNode
   /** Giá trị để sắp xếp; thiếu thì coi là ô rỗng (xuống cuối). */
@@ -26,11 +29,15 @@ export type DataTableProps<T> = {
   noun?: string
   pageSize?: number
   rowLabel?: (row: T) => string
+  /** Thuộc tính gắn lên <tr> (vd data-contract-row). */
+  rowProps?: (row: T) => Record<string, string>
+  /** Khoá chip bật sẵn khi mở trang. */
+  defaultChip?: string
 }
 
-export function DataTable<T>({ rows, columns, getRowId, chips = [], timTheo, searchLabel = 'Tìm', bulkActions, noun = 'dòng', pageSize = 10, rowLabel }: DataTableProps<T>) {
+export function DataTable<T>({ rows, columns, getRowId, chips = [], timTheo, searchLabel = 'Tìm', bulkActions, noun = 'dòng', pageSize = 10, rowLabel, rowProps, defaultChip }: DataTableProps<T>) {
   const [tuKhoa, setTuKhoa] = useState('')
-  const [chip, setChip] = useState<string | null>(null)
+  const [chip, setChip] = useState<string | null>(defaultChip ?? null)
   const [sapXep, setSapXep] = useState<{ cot: string; chieu: ChieuSapXep } | null>(null)
   const [trang, setTrang] = useState(1)
   const [chon, setChon] = useState<Set<string | number>>(new Set())
@@ -48,11 +55,11 @@ export function DataTable<T>({ rows, columns, getRowId, chips = [], timTheo, sea
 
   return <div>
     {(timTheo || chips.length > 0) && <div className="table-toolbar">
-      {timTheo && <label className="input-wrap"><span className="sr-only">{searchLabel}</span><input className="input" type="search" placeholder={`${searchLabel}…`} value={tuKhoa} onChange={(e) => { setTuKhoa(e.target.value); setTrang(1) }} /></label>}
+      {timTheo && <label className="input-wrap"><span className="sr-only">{searchLabel}</span><Icon name="search" /><input className="input" type="search" placeholder={`${searchLabel}…`} value={tuKhoa} onChange={(e) => { setTuKhoa(e.target.value); setTrang(1) }} /></label>}
       {chips.map((c) => <button key={c.key} type="button" className="chip" aria-pressed={chip === c.key} onClick={() => { setChip(chip === c.key ? null : c.key); setTrang(1) }}>{c.label}<span className="n">{dem[c.key]}</span></button>)}
     </div>}
     {bulkActions && daChon.length > 0 && <div className="bulkbar" role="status"><span>Đã chọn {daChon.length} {noun}</span>{bulkActions.map((a) => <button key={a.label} type="button" className="btn btn-ghost btn-sm" onClick={() => a.onClick(daChon)}>{a.label}</button>)}<button type="button" className="icon-btn sm push" aria-label="Bỏ chọn" onClick={() => setChon(new Set())}>×</button></div>}
-    <div className="table-wrap"><table className="table">
+    <div className="table-wrap table-wrap-cards"><table className="table table-cards">
       <thead><tr>
         {bulkActions && <th style={{ width: 44 }}><label className="check"><input type="checkbox" aria-label="Chọn tất cả" checked={tatCaTrang} onChange={(e) => doiChon(kq.hienThi.map(getRowId), e.target.checked)} /></label></th>}
         {columns.map((c) => <th key={c.key} className={c.align} aria-sort={c.sortable ? (sapXep?.cot === c.key ? sapXep.chieu : 'none') : undefined}>
@@ -61,16 +68,16 @@ export function DataTable<T>({ rows, columns, getRowId, chips = [], timTheo, sea
       </tr></thead>
       <tbody>{kq.hienThi.map((r) => {
         const id = getRowId(r)
-        return <tr key={id} className={chon.has(id) ? 'is-selected' : undefined}>
-          {bulkActions && <td><label className="check"><input type="checkbox" aria-label={`Chọn ${rowLabel?.(r) ?? id}`} checked={chon.has(id)} onChange={(e) => doiChon([id], e.target.checked)} /></label></td>}
-          {columns.map((c) => <td key={c.key} className={c.align}>{c.render(r)}</td>)}
+        return <tr key={id} className={chon.has(id) ? 'is-selected' : undefined} {...rowProps?.(r)}>
+          {bulkActions && <td data-the="tieu-de"><label className="check"><input type="checkbox" aria-label={`Chọn ${rowLabel?.(r) ?? id}`} checked={chon.has(id)} onChange={(e) => doiChon([id], e.target.checked)} /></label></td>}
+          {columns.map((c, i) => <td key={c.key} className={c.align} data-label={c.label} data-the={c.the ?? (i === 0 ? 'tieu-de' : undefined)}>{c.render(r)}</td>)}
         </tr>
       })}</tbody>
     </table></div>
     <div className="pager"><span>{kq.tu}–{kq.den} trong {kq.tongSauLoc} {noun}</span><span className="push" />
-      <button type="button" className="pg" aria-label="Trang trước" disabled={kq.trang <= 1} onClick={() => setTrang(kq.trang - 1)}>‹</button>
+      <button type="button" className="pg" aria-label="Trang trước" disabled={kq.trang <= 1} onClick={() => setTrang(kq.trang - 1)}><Icon name="chevron-left" /></button>
       {Array.from({ length: kq.soTrang }, (_, i) => i + 1).map((p) => <button key={p} type="button" className="pg" aria-current={p === kq.trang ? 'page' : undefined} onClick={() => setTrang(p)}>{p}</button>)}
-      <button type="button" className="pg" aria-label="Trang sau" disabled={kq.trang >= kq.soTrang} onClick={() => setTrang(kq.trang + 1)}>›</button>
+      <button type="button" className="pg" aria-label="Trang sau" disabled={kq.trang >= kq.soTrang} onClick={() => setTrang(kq.trang + 1)}><Icon name="chevron-right" /></button>
     </div>
   </div>
 }

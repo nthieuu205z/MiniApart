@@ -19,7 +19,7 @@ import { EmptyState } from './design/feedback/EmptyState'
 import { BieuDoVung } from './design/charts/BieuDoVung'
 import { Gauge } from './design/charts/Gauge'
 import { ThanhXepHang } from './design/charts/ThanhXepHang'
-import { nhomNoQuaHanTheoNguoiThue, tieuThuTheoToaKyGanNhat } from './dashboardTongHop'
+import { chuoiDoanhThu, nhomNoQuaHanTheoNguoiThue, tieuThuTheoToaKyGanNhat } from './dashboardTongHop'
 
 type Props = {
   token: string
@@ -149,9 +149,7 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
     const doLonNhom = nhomLon.soLuong === tongQuaHan ? 'tất cả' : nhomLon.soLuong * 2 > tongQuaHan ? 'phần lớn' : 'nhiều nhất'
     const noQuaHan = congNo ? nhomNoQuaHanTheoNguoiThue(congNo, theoNgay ? 'ngay' : 'tien', 5) : null
     const thang = d.taiChinhTheoThang
-    // Tháng trước tháng đầu tiên có số liệu là null (chưa có số), không phải doanh thu 0.
-    const dauCoSo = thang.findIndex((t) => Number(t.thucThu) > 0 || Number(t.doanhThuPhatHanh) > 0)
-    const coSo = (i: number, v: number | string) => (dauCoSo < 0 || i < dauCoSo ? null : Number(v))
+    const dt = chuoiDoanhThu(thang, nhanThangNay())
     // API trả so sánh mọi toà kể cả khi đã chọn một toà: lọc lại theo bộ lọc để khối không lệch với số trên đầu trang.
     const soSanh = d.soSanhToaNha.filter((t) => !toaNhaId || t.toaNhaId === toaNhaId)
     const toaDauTien = [...soSanh].sort((a, b) => Number(b.thucThu) - Number(a.thucThu))[0]
@@ -232,19 +230,20 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
             title="Doanh thu theo tháng"
             action={<div className="legend"><span><i style={{ background: 'var(--ma-chart-1)' }} />Thực thu</span><span><i style={{ background: 'var(--ma-chart-3)' }} />Phát hành</span></div>}
           >
-            {dauCoSo < 0 ? <EmptyState title="Chưa có số liệu doanh thu trong kỳ này." /> : (
+            {dt.dauCoSo < 0 ? <EmptyState title="Chưa có số liệu doanh thu trong kỳ này." /> : (
               <div className="chart-scroll" tabIndex={0} role="region" aria-label="Biểu đồ doanh thu, cuộn ngang trên điện thoại">
                 <BieuDoVung
-                  kyCuoiDangMo={thang.at(-1)?.nhan === nhanThangNay()}
+                  kyCuoiDangMo={dt.kyCuoiDangMo}
                   tieuDe="Biểu đồ vùng: thực thu và doanh thu phát hành theo tháng"
                   nhan={thang.map((t) => t.nhan.replace(/\/20(\d\d)$/, '/$1'))}
                   chuoi={[
-                    { ten: 'Thực thu', mau: 'var(--ma-chart-1)', giaTri: thang.map((t, i) => coSo(i, t.thucThu)) },
-                    { ten: 'Phát hành', mau: 'var(--ma-chart-3)', giaTri: thang.map((t, i) => coSo(i, t.doanhThuPhatHanh)) },
+                    { ten: 'Thực thu', mau: 'var(--ma-chart-1)', giaTri: dt.thucThu },
+                    { ten: 'Phát hành', mau: 'var(--ma-chart-3)', giaTri: dt.phatHanh },
                   ]}
                 />
               </div>
             )}
+            {dt.thangChuaCoSo ? <p className="t-meta">Chưa có số kỳ {dt.thangChuaCoSo}.</p> : null}
           </Card>
           <div className="minis" style={{ gridTemplateColumns: '1.3fr 1.3fr 0.8fr' }}>
             <Card style={{ padding: 20 }}>

@@ -1,53 +1,19 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useState, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react'
 import { fetchToaNha, type ThongTinToaNha } from './api'
 import { Button } from './design/core/Button'
+import { Icon } from './design/core/Icon'
+import { Field as DesignField } from './design/forms/Field'
 
-export const fieldStyle: CSSProperties = { minHeight: 44, width: '100%', minWidth: 0, border: '1px solid var(--ma-border-strong)', borderRadius: 'var(--ma-radius)', background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', padding: '10px 14px', font: 'inherit', boxShadow: 'var(--ma-shadow-sm)' }
+export const fieldStyle: CSSProperties = { minHeight: 44, width: '100%', minWidth: 0, border: '1px solid var(--ma-border-strong)', borderRadius: 'var(--ma-radius)', background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', padding: '10px 14px', font: 'var(--ma-text-body)' } // giống .input (inline vì 83 chỗ dùng style=)
 export const gridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,230px),1fr))', gap: 14, minWidth: 0, maxWidth: '100%' }
-export const panelStyle: CSSProperties = { display: 'grid', gap: 16, padding: 'clamp(14px, 3.5vw, 22px)', border: '1px solid var(--ma-border-default)', borderRadius: 'var(--ma-radius-md)', boxShadow: 'var(--ma-shadow-sm)', background: 'var(--ma-bg-card)', minWidth: 0, overflowWrap: 'anywhere' }
+export const panelStyle: CSSProperties = { display: 'grid', gap: 16, padding: 'clamp(16px, 3.5vw, 24px)', borderRadius: 'var(--ma-radius-xl)', background: 'var(--ma-bg-card)', minWidth: 0, overflowWrap: 'anywhere' }
 export const rowStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }
-export function Field({ title, children }: { title: string; children: ReactNode }) { return <label style={{ display: 'grid', gap: 6, minWidth: 0, fontSize: 13, fontWeight: 600, color: 'var(--ma-text-secondary)' }}><span>{title}</span>{children}</label> }
+export function Field({ title, children }: { title: string; children: ReactNode }) { return <DesignField label={title}>{children as ReactElement<HTMLAttributes<HTMLElement>>}</DesignField> }
 export function Feedback({ error, success }: { error?: string | null; success?: string | null }) {
   return (
     <>
-      {error ? (
-        <p
-          role="alert"
-          style={{
-            margin: '8px 0',
-            padding: '10px 14px',
-            background: 'var(--ma-urgent-bg)',
-            border: '1px solid var(--ma-urgent)',
-            borderRadius: 'var(--ma-radius)',
-            color: 'var(--ma-urgent)',
-            fontSize: 13.5,
-            lineHeight: 1.5,
-            fontWeight: 500,
-            overflowWrap: 'anywhere',
-          }}
-        >
-          {error}
-        </p>
-      ) : null}
-      {success ? (
-        <p
-          role="status"
-          style={{
-            margin: '8px 0',
-            padding: '10px 14px',
-            background: 'var(--ma-done-bg)',
-            border: '1px solid var(--ma-done)',
-            borderRadius: 'var(--ma-radius)',
-            color: 'var(--ma-done-text)',
-            fontSize: 13.5,
-            lineHeight: 1.5,
-            fontWeight: 500,
-            overflowWrap: 'anywhere',
-          }}
-        >
-          {success}
-        </p>
-      ) : null}
+      {error ? <p role="alert" className="alert alert-danger"><Icon name="alert" />{error}</p> : null}
+      {success ? <p role="status" className="alert alert-success"><Icon name="check-circle" />{success}</p> : null}
     </>
   )
 }
@@ -69,5 +35,5 @@ export function useBuildings(token: string) {
   return { buildings, buildingId, setBuildingId, error }
 }
 export function BuildingSelect({ buildings, value, onChange }: { buildings: ThongTinToaNha[]; value: number | null; onChange: (id: number | null) => void }) { return <Field title="Toà nhà"><select style={fieldStyle} value={value ?? ''} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}><option value="">Chọn toà nhà</option>{buildings.map((b) => <option key={b.id} value={b.id}>{b.ten}</option>)}</select></Field> }
-export function SaveButton({ busy, children = 'Lưu thay đổi' }: { busy: boolean; children?: ReactNode }) { return <Button type="submit" blocked={busy} blockedReason={busy ? 'Đang lưu, vui lòng chờ.' : undefined}>{children}</Button> }
+export function SaveButton({ busy, children = 'Lưu thay đổi' }: { busy: boolean; children?: ReactNode }) { return <Button variant="primary" type="submit" blocked={busy} blockedReason={busy ? 'Đang lưu, vui lòng chờ.' : undefined}>{children}</Button> }
 export function today() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }) }
