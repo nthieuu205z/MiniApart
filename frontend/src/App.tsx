@@ -39,6 +39,7 @@ import HoSoNguoiThue from './HoSoNguoiThue'
 import HopDongThaoTac from './HopDongThaoTac'
 import DichVuVaKy from './DichVuVaKy'
 import QuanLySuaChua from './QuanLySuaChua'
+import BaoHongKhach from './BaoHongKhach'
 import TaiKhoanTruyCap from './TaiKhoanTruyCap'
 import ThuTien from './ThuTien'
 import { AnToanVanHanh, CuTruVanHanh, NhatKyVanHanh } from './TuanThuVanHanh'
@@ -807,7 +808,7 @@ function App() {
           ) : token && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && duongDanHienTai === '/thu-tien' ? (
             <ThuTien token={token} mobile={laManHinhHep} vaiTro={nguoiDung.vaiTro} />
           ) : token && nguoiDung.vaiTro === 'NGUOI_THUE' && duongDanHienTai === '/bao-hong' ? (
-            <QuanLySuaChua token={token} tenant />
+            <BaoHongKhach token={token} />
           ) : token && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && duongDanHienTai === '/an-toan' ? (
             <AnToanVanHanh token={token} vaiTro={nguoiDung.vaiTro} />
           ) : token && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && duongDanHienTai === '/cu-tru' ? (
