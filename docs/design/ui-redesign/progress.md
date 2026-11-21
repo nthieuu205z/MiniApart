@@ -23,3 +23,8 @@
 ## CHỜ (quota)
 - Lúc ghi: phiên Claude còn 20% (reset sau ~2h16m), tuần còn 29% (reset sau ~2 ngày 23 giờ).
 - TIẾP: plan 03 — lô 03-0 trước, rồi lô A–F song song (6 worktree/nhánh `ui/03-a…f`), rồi lô 03-Z. Brief mẫu: `plans/briefs/*.md` (đợt 01/02) + `plans/03-man-con-lai.md`.
+
+## Vòng 2 màn Tổng quan Chủ (21/11/2026, `ui/w7-chu2` đã gộp)
+- Chủ tịch: màn Tổng quan "không ổn, làm lại"; màn Hợp đồng OK.
+- Làm lại: 1973 → 1221px cao ở 1440; bỏ 4 thẻ thừa; đầu trang 1 hàng; biểu đồ tháng chưa có số = trống; sidebar Chủ vừa 17 mục ở 900px. 302 test xanh. Ảnh: `evidence/dot-02/`. QA 1440/900: overflow 0, belowHit 0, contrast 0 mục.
+- Nợ còn lại: đoạn nét đứt tháng đang mở rơi về 0 (11/2026 chưa có số) trông như doanh thu sụp — nên để trống tháng đang mở khi cả hai chuỗi bằng 0 (hoặc chỉ ghi chú "chưa có số").
