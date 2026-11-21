@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import {
   fetchBaoGiaYeuCau,
   fetchThanhToanYeuCau,
@@ -14,6 +14,19 @@ import {
 import { dinhDangTien } from './design/core/format'
 import { Button } from './design/core/Button'
 import { StatusTag } from './design/core/StatusTag'
+import { Icon } from './design/core/Icon'
+import { Field } from './design/forms/Field'
+import { EmptyState } from './design/feedback/EmptyState'
+import { Feedback } from './ManagementShared'
+
+const TRANG_THAI_BAO_GIA = {
+  DA_DUYET: { tone: 'done', nhan: 'Đã duyệt hiệu lực' },
+  CHO_DUYET: { tone: 'waiting', nhan: 'Chờ duyệt' },
+  TU_CHOI: { tone: 'urgent', nhan: 'Đã từ chối' },
+  BI_THAY_THE: { tone: 'closed', nhan: 'Đã bị thay thế' },
+} as const
+const PHUONG_THUC: Record<string, string> = { CHUYEN_KHOAN: 'Chuyển khoản', TIEN_MAT: 'Tiền mặt' }
+const num = { textAlign: 'right', fontVariantNumeric: 'tabular-nums' } as const
 
 export type QuanLyBaoGiaVaThanhToanProps = {
   token: string
@@ -148,210 +161,101 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId }: QuanLyBaoGiaVaThanh
     }
   }
 
-  if (dangTai) {
-    return <div style={{ fontSize: 13, color: '#64748b', padding: '8px 0' }}>Đang tải thông tin báo giá & thanh toán...</div>
-  }
+  if (dangTai) return <EmptyState kind="loading" title="Đang tải báo giá và thanh toán" />
 
   return (
-    <div style={styles.cardContainer}>
-      <div style={styles.header}>
-        <span style={styles.title}>Quản lý Báo giá & Chi phí thợ</span>
-        {baoGiaHieuLuc && (
-          <Button variant="secondary" onClick={handleXemChungTu} style={styles.btnSm}>
-            📄 Xem phiếu chi phí & thanh toán
-          </Button>
-        )}
+    <div className="card-sunken stack" data-testid="bao-gia-thanh-toan">
+      <div className="row-wrap" style={{ justifyContent: 'space-between' }}>
+        <h3 className="h3">Báo giá và chi phí thợ</h3>
+        {baoGiaHieuLuc && <Button variant="secondary" size="sm" onClick={handleXemChungTu}><Icon name="receipt" />Xem phiếu chi phí và thanh toán</Button>}
       </div>
 
-      {loi && <div style={styles.error}>{loi}</div>}
-      {thongBao && <div style={styles.success}>{thongBao}</div>}
+      <Feedback error={loi} success={thongBao} />
 
-      {/* Quote section */}
-      <div style={{ marginTop: 8 }}>
-        {danhSachBaoGia.length === 0 ? (
-          <div style={styles.mutedText}>Thợ chưa gửi báo giá cho yêu cầu này.</div>
-        ) : (
-          <div style={{ display: 'grid', gap: 10 }}>
-            {danhSachBaoGia.map((bg) => (
-              <div
-                key={bg.id}
-                style={{
-                  ...styles.quoteItem,
-                  ...(bg.trangThai === 'DA_DUYET' ? styles.quoteItemApproved : {}),
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {danhSachBaoGia.length === 0 ? (
+        <p className="t-sm" style={{ color: 'var(--ma-text-secondary)' }}>Thợ chưa gửi báo giá cho yêu cầu này.</p>
+      ) : (
+        <div className="stack">
+          {danhSachBaoGia.map((bg) => {
+            const tt = TRANG_THAI_BAO_GIA[bg.trangThai as keyof typeof TRANG_THAI_BAO_GIA] ?? { tone: 'draft', nhan: 'Bản nháp' }
+            return (
+              <div key={bg.id} className="stack" style={{ gap: 8, paddingBottom: 12, borderBottom: '1px solid var(--ma-line-100)' }}>
+                <div className="row-wrap" style={{ justifyContent: 'space-between' }}>
+                  <div className="row-wrap">
                     <strong>Báo giá v{bg.phienBan} ({bg.maBaoGia})</strong>
-                    <StatusTag
-                      tone={
-                        bg.trangThai === 'DA_DUYET'
-                          ? 'done'
-                          : bg.trangThai === 'CHO_DUYET'
-                          ? 'waiting'
-                          : bg.trangThai === 'TU_CHOI'
-                          ? 'urgent'
-                          : bg.trangThai === 'BI_THAY_THE'
-                          ? 'closed'
-                          : 'draft'
-                      }
-                    >
-                      {bg.trangThai === 'DA_DUYET'
-                        ? 'Đã duyệt hiệu lực'
-                        : bg.trangThai === 'CHO_DUYET'
-                        ? 'Chờ duyệt'
-                        : bg.trangThai === 'TU_CHOI'
-                        ? 'Đã từ chối'
-                        : bg.trangThai === 'BI_THAY_THE'
-                        ? 'Đã bị thay thế'
-                        : 'Bản nháp'}
-                    </StatusTag>
+                    <StatusTag tone={tt.tone}>{tt.nhan}</StatusTag>
                   </div>
-                  <span style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>
-                    {bg.tongTien === 0 ? '0 đ (Bảo hành)' : `${dinhDangTien(bg.tongTien)} đ`}
-                  </span>
+                  <strong style={num}>{bg.tongTien === 0 ? '0 đ (Bảo hành)' : `${dinhDangTien(bg.tongTien)} đ`}</strong>
                 </div>
-
-                {bg.moTa && <div style={{ fontSize: 12.5, color: '#475569', marginTop: 4 }}>{bg.moTa}</div>}
-
-                {/* Items */}
+                {bg.moTa && <p className="t-sm" style={{ color: 'var(--ma-text-secondary)' }}>{bg.moTa}</p>}
                 {bg.dongBaoGia && bg.dongBaoGia.length > 0 && (
-                  <div style={{ marginTop: 6, fontSize: 12 }}>
-                    <table style={styles.itemTable}>
-                      <thead>
-                        <tr style={{ background: '#f8fafc', color: '#64748b' }}>
-                          <th style={{ padding: '4px 8px', textAlign: 'left' }}>Hạng mục</th>
-                          <th style={{ padding: '4px 8px', textAlign: 'center' }}>SL</th>
-                          <th style={{ padding: '4px 8px', textAlign: 'right' }}>Đơn giá</th>
-                          <th style={{ padding: '4px 8px', textAlign: 'right' }}>Thành tiền</th>
-                        </tr>
-                      </thead>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="table">
+                      <thead><tr><th>Hạng mục</th><th className="num">SL</th><th className="num">Đơn giá</th><th className="num">Thành tiền</th></tr></thead>
                       <tbody>
                         {bg.dongBaoGia.map((d, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '4px 8px' }}>{d.tenHangMuc}</td>
-                            <td style={{ padding: '4px 8px', textAlign: 'center' }}>{d.soLuong} {d.donVi}</td>
-                            <td style={{ padding: '4px 8px', textAlign: 'right' }}>{dinhDangTien(d.donGia)}</td>
-                            <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600 }}>{dinhDangTien(d.thanhTien)}</td>
+                          <tr key={idx}>
+                            <td>{d.tenHangMuc}</td>
+                            <td className="num">{d.soLuong} {d.donVi}</td>
+                            <td className="num">{dinhDangTien(d.donGia)}</td>
+                            <td className="num"><strong>{dinhDangTien(d.thanhTien)}</strong></td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 )}
-
-                {bg.lyDoTuChoi && (
-                  <div style={{ fontSize: 12, color: '#b91c1c', marginTop: 4, fontStyle: 'italic' }}>
-                    Lý do từ chối: {bg.lyDoTuChoi}
-                  </div>
-                )}
-
-                {/* Manager actions if CHO_DUYET */}
+                {bg.lyDoTuChoi && <p className="t-sm" style={{ color: 'var(--ma-urgent)' }}>Lý do từ chối: {bg.lyDoTuChoi}</p>}
                 {bg.trangThai === 'CHO_DUYET' && (
-                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                    <Button
-                      variant="primary"
-                      onClick={() => handleDuyet(bg.id)}
-                      blocked={dangXuLy}
-                      style={styles.btnSm}
-                    >
-                      ✓ Phê duyệt báo giá
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => {
-                        setTuChoiBaoGiaId(bg.id)
-                        setLyDoTuChoi('')
-                      }}
-                      blocked={dangXuLy}
-                      style={styles.btnSm}
-                    >
-                      ✕ Từ chối / Yêu cầu sửa
-                    </Button>
+                  <div className="row-wrap">
+                    <Button variant="primary" size="sm" onClick={() => handleDuyet(bg.id)} blocked={dangXuLy}><Icon name="check" />Phê duyệt báo giá</Button>
+                    <Button variant="secondary" size="sm" onClick={() => { setTuChoiBaoGiaId(bg.id); setLyDoTuChoi('') }} blocked={dangXuLy}><Icon name="x" />Từ chối, yêu cầu sửa</Button>
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            )
+          })}
+        </div>
+      )}
 
-      {/* Reject Modal / prompt */}
       {tuChoiBaoGiaId && (
-        <div style={styles.promptBox}>
-          <label style={{ fontSize: 12.5, fontWeight: 600, color: '#b91c1c' }}>
-            Lý do từ chối báo giá (thợ sẽ thấy lý do này để chỉnh sửa lại):
-          </label>
-          <input
-            type="text"
-            value={lyDoTuChoi}
-            onChange={(e) => setLyDoTuChoi(e.target.value)}
-            placeholder="Ví dụ: Giá vật tư quá cao, cần khảo sát lại..."
-            style={styles.input}
-          />
-          <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-            <Button variant="primary" onClick={handleTuChoi} blocked={dangXuLy} style={styles.btnSm}>
-              Xác nhận từ chối
-            </Button>
-            <Button variant="secondary" onClick={() => setTuChoiBaoGiaId(null)} style={styles.btnSm}>
-              Hủy
-            </Button>
+        <div className="stack" style={{ gap: 10 }}>
+          <Field label="Lý do từ chối (thợ sẽ thấy lý do này để chỉnh lại báo giá)">
+            <input className="input" type="text" value={lyDoTuChoi} onChange={(e) => setLyDoTuChoi(e.target.value)} placeholder="Ví dụ: giá vật tư quá cao, cần khảo sát lại" />
+          </Field>
+          <div className="row-wrap">
+            <Button variant="secondary" size="sm" onClick={handleTuChoi} blocked={dangXuLy}>Xác nhận từ chối</Button>
+            <Button variant="text" size="sm" onClick={() => setTuChoiBaoGiaId(null)}>Không từ chối</Button>
           </div>
         </div>
       )}
 
-      {/* Payments section if approved quote exists */}
       {baoGiaHieuLuc && (
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="stack" style={{ gap: 10 }}>
+          <div className="row-wrap" style={{ justifyContent: 'space-between' }}>
             <div>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>Tiến độ thanh toán cho thợ</span>
-              <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-                Đã duyệt: <strong>{dinhDangTien(tongGiaTri)} đ</strong> · Đã trả:{' '}
-                <strong style={{ color: '#16a34a' }}>{dinhDangTien(tongDaTra)} đ</strong> · Còn lại:{' '}
-                <strong style={{ color: conPhaiTra > 0 ? '#ea580c' : '#16a34a' }}>{dinhDangTien(conPhaiTra)} đ</strong>
-              </div>
+              <strong>Tiến độ thanh toán cho thợ</strong>
+              <p className="t-sm" style={{ color: 'var(--ma-text-secondary)', marginTop: 2 }}>
+                Đã duyệt: <strong>{dinhDangTien(tongGiaTri)} đ</strong> · Đã trả: <strong style={{ color: 'var(--ma-done-text)' }}>{dinhDangTien(tongDaTra)} đ</strong> · Còn lại: <strong style={{ color: conPhaiTra > 0 ? 'var(--ma-waiting)' : 'var(--ma-done-text)' }}>{dinhDangTien(conPhaiTra)} đ</strong>
+              </p>
             </div>
-
             {conPhaiTra > 0 && !hienFormThanhToan && (
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setHienFormThanhToan(true)
-                  setSoTienTra(String(conPhaiTra))
-                }}
-                style={styles.btnSm}
-              >
-                + Ghi nhận trả thợ
-              </Button>
+              <Button variant="secondary" size="sm" onClick={() => { setHienFormThanhToan(true); setSoTienTra(String(conPhaiTra)) }}><Icon name="plus" />Ghi nhận trả thợ</Button>
             )}
           </div>
 
-          {/* Payment records */}
           {danhSachThanhToan.length > 0 && (
-            <div style={{ marginTop: 8, fontSize: 12 }}>
-              <table style={styles.itemTable}>
-                <thead>
-                  <tr style={{ background: '#f8fafc', color: '#64748b' }}>
-                    <th style={{ padding: '4px 8px', textAlign: 'left' }}>Thời điểm</th>
-                    <th style={{ padding: '4px 8px', textAlign: 'left' }}>Mã GD</th>
-                    <th style={{ padding: '4px 8px', textAlign: 'left' }}>Phương thức</th>
-                    <th style={{ padding: '4px 8px', textAlign: 'left' }}>Tham chiếu</th>
-                    <th style={{ padding: '4px 8px', textAlign: 'right' }}>Số tiền</th>
-                  </tr>
-                </thead>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="table">
+                <thead><tr><th>Thời điểm</th><th>Mã GD</th><th>Phương thức</th><th>Tham chiếu</th><th className="num">Số tiền</th></tr></thead>
                 <tbody>
                   {danhSachThanhToan.map((tt) => (
-                    <tr key={tt.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '4px 8px' }}>{new Date(tt.xacNhanLuc).toLocaleDateString('vi-VN')}</td>
-                      <td style={{ padding: '4px 8px', fontFamily: 'monospace' }}>{tt.maThanhToan}</td>
-                      <td style={{ padding: '4px 8px' }}>
-                        {tt.phuongThuc === 'CHUYEN_KHOAN' ? 'Chuyển khoản' : tt.phuongThuc === 'TIEN_MAT' ? 'Tiền mặt' : '0đ'}
-                      </td>
-                      <td style={{ padding: '4px 8px' }}>{tt.maThamChieu || '—'}</td>
-                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#16a34a' }}>
-                        {dinhDangTien(tt.soTien)} đ
-                      </td>
+                    <tr key={tt.id}>
+                      <td>{new Date(tt.xacNhanLuc).toLocaleDateString('vi-VN')}</td>
+                      <td>{tt.maThanhToan}</td>
+                      <td>{PHUONG_THUC[tt.phuongThuc] ?? '0đ'}</td>
+                      <td>{tt.maThamChieu || '—'}</td>
+                      <td className="num"><strong style={{ color: 'var(--ma-done-text)' }}>{dinhDangTien(tt.soTien)} đ</strong></td>
                     </tr>
                   ))}
                 </tbody>
@@ -359,85 +263,48 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId }: QuanLyBaoGiaVaThanh
             </div>
           )}
 
-          {/* Form ghi nhận thanh toán */}
           {hienFormThanhToan && (
-            <form onSubmit={handleGhiNhanThanhToan} style={styles.payForm}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>
-                Ghi nhận thanh toán cho thợ (Hạn mức còn lại: {dinhDangTien(conPhaiTra)} đ)
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
-                <div>
-                  <label style={styles.fieldLabel}>Số tiền (đ):</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max={conPhaiTra}
-                    step="1000"
-                    required
-                    value={soTienTra}
-                    onChange={(e) => setSoTienTra(e.target.value)}
-                    style={styles.input}
-                  />
-                </div>
-                <div>
-                  <label style={styles.fieldLabel}>Hình thức:</label>
-                  <select
-                    value={phuongThuc}
-                    onChange={(e) => setPhuongThuc(e.target.value as PhuongThucThanhToanTho)}
-                    style={styles.select}
-                  >
+            <form onSubmit={handleGhiNhanThanhToan} className="stack">
+              <strong>Ghi nhận thanh toán cho thợ (còn lại tối đa {dinhDangTien(conPhaiTra)} đ)</strong>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))', gap: 12 }}>
+                <Field label="Số tiền (đ)">
+                  <input className="input" type="number" min="1" max={conPhaiTra} step="1000" required value={soTienTra} onChange={(e) => setSoTienTra(e.target.value)} />
+                </Field>
+                <Field label="Hình thức">
+                  <select className="select" value={phuongThuc} onChange={(e) => setPhuongThuc(e.target.value as PhuongThucThanhToanTho)}>
                     <option value="CHUYEN_KHOAN">Chuyển khoản</option>
                     <option value="TIEN_MAT">Tiền mặt</option>
                   </select>
-                </div>
-                <div>
-                  <label style={styles.fieldLabel}>Mã tham chiếu GD:</label>
-                  <input
-                    type="text"
-                    placeholder="Mã UNC / bill..."
-                    value={maThamChieu}
-                    onChange={(e) => setMaThamChieu(e.target.value)}
-                    style={styles.input}
-                  />
-                </div>
+                </Field>
+                <Field label="Mã tham chiếu giao dịch">
+                  <input className="input" type="text" placeholder="Mã UNC hoặc số bill" value={maThamChieu} onChange={(e) => setMaThamChieu(e.target.value)} />
+                </Field>
               </div>
-              <div style={{ marginTop: 8 }}>
-                <label style={styles.fieldLabel}>Ghi chú:</label>
-                <input
-                  type="text"
-                  placeholder="Ghi chú nội bộ..."
-                  value={ghiChuThanhToan}
-                  onChange={(e) => setGhiChuThanhToan(e.target.value)}
-                  style={styles.input}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                <Button type="submit" variant="primary" blocked={dangXuLy} style={styles.btnSm}>
-                  Lưu giao dịch thanh toán
-                </Button>
-                <Button variant="secondary" onClick={() => setHienFormThanhToan(false)} style={styles.btnSm}>
-                  Hủy
-                </Button>
+              <Field label="Ghi chú nội bộ">
+                <input className="input" type="text" value={ghiChuThanhToan} onChange={(e) => setGhiChuThanhToan(e.target.value)} />
+              </Field>
+              <div className="row-wrap">
+                <Button type="submit" variant="primary" size="sm" blocked={dangXuLy}>Lưu giao dịch thanh toán</Button>
+                <Button variant="text" size="sm" onClick={() => setHienFormThanhToan(false)}>Không ghi nhận</Button>
               </div>
             </form>
           )}
         </div>
       )}
 
-      {/* Voucher modal */}
       {chungTu && (
-        <div style={styles.voucherModal}>
-          <div style={styles.voucherBox}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <span style={{ fontWeight: 700, fontSize: 15 }}>Chứng từ {chungTu.maChungTu}</span>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <Button onClick={() => window.print()} style={styles.btnSm}>🖨 In</Button>
-                <Button variant="secondary" onClick={() => setChungTu(null)} style={styles.btnSm}>Đóng</Button>
+        <div role="dialog" aria-modal="true" aria-label={`Chứng từ ${chungTu.maChungTu}`} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="card" style={{ maxWidth: 520, width: '90%', gap: 12 }}>
+            <div className="row-wrap" style={{ justifyContent: 'space-between' }}>
+              <h3 className="h2">Chứng từ {chungTu.maChungTu}</h3>
+              <div className="row-wrap">
+                <Button variant="secondary" size="sm" onClick={() => window.print()}><Icon name="download" />In</Button>
+                <Button variant="text" size="sm" onClick={() => setChungTu(null)}>Đóng</Button>
               </div>
             </div>
-            <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+            <div className="t-sm stack" style={{ gap: 6 }}>
               <div><strong>Hạng mục:</strong> {chungTu.hangMuc}</div>
-              <div><strong>Tòa / Phòng:</strong> {chungTu.toaNha} - Phòng {chungTu.soPhong}</div>
+              <div><strong>Toà / Phòng:</strong> {chungTu.toaNha} - Phòng {chungTu.soPhong}</div>
               <div><strong>Thợ phụ trách:</strong> {chungTu.tenTho} ({chungTu.sdtTho})</div>
               <div><strong>Tổng chi phí duyệt:</strong> {dinhDangTien(chungTu.tongTienBaoGia)} đ</div>
               <div><strong>Đã thanh toán:</strong> {dinhDangTien(chungTu.tongDaTra)} đ</div>
@@ -448,126 +315,4 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId }: QuanLyBaoGiaVaThanh
       )}
     </div>
   )
-}
-
-const styles: Record<string, CSSProperties> = {
-  cardContainer: {
-    marginTop: 12,
-    padding: '12px 14px',
-    background: '#f8fafc',
-    borderRadius: 8,
-    border: '1px solid #e2e8f0',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 13.5,
-    fontWeight: 700,
-    color: '#1e3a8a',
-  },
-  btnSm: {
-    fontSize: 12,
-    padding: '4px 10px',
-  },
-  error: {
-    fontSize: 12,
-    color: '#b91c1c',
-    background: '#fef2f2',
-    padding: '6px 10px',
-    borderRadius: 4,
-    marginBottom: 6,
-  },
-  success: {
-    fontSize: 12,
-    color: '#15803d',
-    background: '#f0fdf4',
-    padding: '6px 10px',
-    borderRadius: 4,
-    marginBottom: 6,
-  },
-  mutedText: {
-    fontSize: 12.5,
-    color: '#94a3b8',
-    fontStyle: 'italic',
-  },
-  quoteItem: {
-    background: '#ffffff',
-    border: '1px solid #e2e8f0',
-    borderRadius: 6,
-    padding: '10px 12px',
-  },
-  quoteItemApproved: {
-    borderColor: '#86efac',
-    background: '#f0fdf4',
-  },
-  itemTable: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    background: '#ffffff',
-    border: '1px solid #e2e8f0',
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  promptBox: {
-    marginTop: 8,
-    padding: 10,
-    background: '#fff1f2',
-    border: '1px solid #fecdd3',
-    borderRadius: 6,
-  },
-  payForm: {
-    marginTop: 10,
-    padding: 12,
-    background: '#ffffff',
-    border: '1px solid #cbd5e1',
-    borderRadius: 6,
-  },
-  fieldLabel: {
-    display: 'block',
-    fontSize: 12,
-    fontWeight: 600,
-    color: '#475569',
-    marginBottom: 2,
-  },
-  input: {
-    width: '100%',
-    padding: '6px 8px',
-    fontSize: 12.5,
-    border: '1px solid #cbd5e1',
-    borderRadius: 4,
-    boxSizing: 'border-box',
-  },
-  select: {
-    width: '100%',
-    padding: '6px 8px',
-    fontSize: 12.5,
-    border: '1px solid #cbd5e1',
-    borderRadius: 4,
-    boxSizing: 'border-box',
-    background: '#ffffff',
-  },
-  voucherModal: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0,0,0,0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  },
-  voucherBox: {
-    background: '#ffffff',
-    padding: 24,
-    borderRadius: 8,
-    maxWidth: 500,
-    width: '90%',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-  },
 }
