@@ -33,7 +33,7 @@ describe('BangViecVanHanh', () => {
         nhomViec: [
           group('NO_QUA_HAN', 'Nợ quá hạn', 2, 'CAN_XU_LY', '/hoa-don?toaNhaId=1&trangThai=QUA_HAN'),
           group('THIEU_CHI_SO', 'Thiếu chỉ số sau ngày chốt', 0, 'DA_XONG', '/ghi-chi-so?toaNhaId=1'),
-          group('HOP_DONG_SAP_HET_HAN', 'Hợp đồng sắp hết hạn', 1, 'CAN_XU_LY', '/hop-dong?toaNhaId=1&sapHetHan=true'),
+          { ...group('HOP_DONG_SAP_HET_HAN', 'Hợp đồng sắp hết hạn', 1, 'CAN_XU_LY', '/hop-dong?toaNhaId=1&sapHetHan=true'), khanCap: false },
           group('SU_CO_TON_DONG', 'Sự cố tồn đọng trên 48 giờ', 0, 'DA_XONG', '/su-co?toaNhaId=1&boLoc=TON_DONG_QUA_48_GIO'),
           { ma: 'PCCC', tieuDe: 'Kiểm tra PCCC', soLuong: null, trangThai: 'CHUA_SAN_SANG', tenTrangThai: 'Chưa triển khai nguồn kiểm tra PCCC', khanCap: false, lienKet: null },
         ],
@@ -46,7 +46,10 @@ describe('BangViecVanHanh', () => {
 
     await vi.waitFor(() => expect(container.querySelectorAll('[data-dashboard-group]')).toHaveLength(5))
     expect(container.querySelector('[data-dashboard-group="NO_QUA_HAN"]')?.textContent).toContain('2')
-    expect(container.querySelector('[data-dashboard-group="NO_QUA_HAN"]')?.textContent).toContain('Cần xử lý')
+    expect(container.querySelector('[data-dashboard-group="NO_QUA_HAN"]')?.textContent).toContain('Khẩn')
+    expect(container.textContent).toContain('2 việc cần xử lý · 2 đã xong')
+    expect(container.querySelector('[data-dashboard-group="HOP_DONG_SAP_HET_HAN"]')?.textContent).toContain('Cần xử lý')
+    expect(container.querySelector('[data-dashboard-group="HOP_DONG_SAP_HET_HAN"] [data-dashboard-link]')?.textContent).toBe('Gia hạn')
     expect(container.querySelector('[data-dashboard-group="THIEU_CHI_SO"]')?.textContent).toContain('Đã xong')
     expect(container.querySelector('[data-dashboard-group="PCCC"]')?.textContent).toContain('Chưa triển khai nguồn kiểm tra PCCC')
     expect(container.querySelector('[data-dashboard-group="PCCC"] [data-dashboard-link]')).toBeNull()

@@ -4,15 +4,18 @@ import {
   fetchDashboardQuanLy,
   fetchToaNha,
   capNhatCanhBaoTieuThu,
+  capNhatTrangThaiLichHen,
+  fetchKyThanhToan,
   ghiChiSoDungChung,
   type ThongTinDashboardQuanLy as DashboardData,
   type ThongTinToaNha,
 } from './api'
-import { dinhDangTien, dinhDangSo } from './design/core/format'
+import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Button } from './design/core/Button'
+import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
-import { SysLabel } from './design/core/SysLabel'
-import { ScreenHeader, ScreenNotice, ScreenSurface } from './design/layout/Screen'
+import { Card } from './design/layout/Card'
+import { ScreenNotice } from './design/layout/Screen'
 import { EmptyState } from './design/feedback/EmptyState'
 import { useDialogTrap } from './design/feedback/useDialogTrap'
 import { BangViecVanHanh } from './BangViecVanHanh'
@@ -29,6 +32,8 @@ export function QuanLyDashboard({ token, mobile = false }: Props): React.ReactEl
   const [dangTai, setDangTai] = useState(true)
   const [loi, setLoi] = useState<string | null>(null)
   const [soLanTaiLai, setSoLanTaiLai] = useState(0)
+  const [ngayChot, setNgayChot] = useState<string | null>(null)
+  const [loiLichHen, setLoiLichHen] = useState<string | null>(null)
 
   // Dialog xử lý cảnh báo
   const [canhBaoDangChon, setCanhBaoDangChon] = useState<DashboardData['canhBaoDienNuoc'][number] | null>(null)
@@ -101,6 +106,29 @@ export function QuanLyDashboard({ token, mobile = false }: Props): React.ReactEl
       mounted = false
     }
   }, [token, toaNhaId, soLanTaiLai])
+
+  // Ngày chốt số của kỳ đang mở: chỉ để hiện trên tiêu đề, lỗi thì bỏ qua phần "chốt số ngày".
+  const dashToaNhaId = dashboard?.toaNhaId
+  const kyHienTaiId = dashboard?.congToChuaGhi.kyHienTaiId
+  useEffect(() => {
+    setNgayChot(null)
+    if (!dashToaNhaId || !kyHienTaiId) return undefined
+    let mounted = true
+    fetchKyThanhToan(token, dashToaNhaId)
+      .then((ky) => { if (mounted) setNgayChot(ky.find((k) => k.id === kyHienTaiId)?.ngayKetThuc ?? null) })
+      .catch(() => undefined)
+    return () => { mounted = false }
+  }, [token, dashToaNhaId, kyHienTaiId])
+
+  const xacNhanLichHen = async (id: number) => {
+    setLoiLichHen(null)
+    try {
+      await capNhatTrangThaiLichHen(token, id, 'DA_XAC_NHAN')
+      setSoLanTaiLai((n) => n + 1)
+    } catch (err: unknown) {
+      setLoiLichHen(err instanceof ApiError ? err.message : 'Không thể xác nhận lịch hẹn.')
+    }
+  }
 
   const dieuHuongToi = (duongDan: string) => {
     window.location.href = duongDan
@@ -199,397 +227,239 @@ export function QuanLyDashboard({ token, mobile = false }: Props): React.ReactEl
   }
 
   const kpi = dashboard?.kpi
+  const cong = dashboard?.congToChuaGhi
+  const tenToa = toaNhaList.find((t) => t.id === (toaNhaId ?? dashboard?.toaNhaId))?.ten ?? dashboard?.tenToaNha ?? ''
+  const conNgay = ngayChot ? Math.ceil((new Date(`${ngayChot}T23:59:59`).getTime() - Date.now()) / 86_400_000) : null
+  // Máy chủ trả "Kỳ 11/2026 - <tên toà>": chỉ lấy phần kỳ cho tiêu đề.
+  const tenKy = (cong?.tenKyHienTai ?? '').split(' - ')[0]
+  const tieuDePhu = [
+    tenToa,
+    tenKy ? `${tenKy.replace(/^Kỳ/, 'kỳ')} đang mở` : null,
+    ngayChot ? `chốt số ngày ${dinhDangNgayIso(ngayChot)}${conNgay !== null && conNgay >= 0 ? ` (còn ${conNgay} ngày)` : ''}` : null,
+  ].filter(Boolean).join(' · ')
+  const soChuaGhi = cong?.soCongToChuaGhi ?? 0
+  const congTo = cong?.danhSachChuaGhi ?? []
+  const laDiemDoChung = (d: (typeof congTo)[number]) => d.loaiDiemDo === 'KHU_VUC_CHUNG' || d.loaiDiemDo === 'CHUNG'
+  const diemDoChungDauTien = congTo.find(laDiemDoChung)
+  const phanTram = (n: number, tong: number) => (tong > 0 ? Math.min(100, (n / tong) * 100) : 0)
 
   return (
-    <ScreenSurface
+    <section
       data-testid="manager-dashboard-screen"
       data-layout-variant={mobile ? 'mobile' : 'desktop'}
       aria-labelledby="manager-dashboard-title"
-      style={{ minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}
+      className="stack"
+      style={{ minWidth: 0, maxWidth: '100%', gap: 16 }}
     >
-      <ScreenHeader>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <SysLabel>DASHBOARD VẬN HÀNH</SysLabel>
-            <h2 id="manager-dashboard-title" style={{ margin: '6px 0 2px', fontSize: mobile ? 22 : 28 }}>
-              Bảng điều hành & nhắc việc vận hành
-            </h2>
-            <p style={{ margin: 0, color: 'var(--ma-text-secondary)', fontSize: 14 }}>
-              Cảnh báo tiêu thụ, công nợ quá hạn, công tơ cần ghi và sự cố trong các toà nhà được phân công.
-            </p>
-          </div>
-          {dashboard?.thoiDiemCapNhat ? (
-            <div style={{ fontSize: 12, color: 'var(--ma-text-secondary)', textAlign: 'right' }}>
-              Cập nhật lúc: <strong style={{ fontFamily: 'var(--ma-font-mono)' }}>{dinhDangGio(dashboard.thoiDiemCapNhat)}</strong>
-              <Button
-                variant="secondary"
-                size="sm"
-                style={{ marginLeft: 8 }}
-                onClick={() => setSoLanTaiLai((n) => n + 1)}
-              >
-                Làm mới
-              </Button>
-            </div>
-          ) : null}
+      <style>{CSS_QUAN_LY}</style>
+      <header className="topbar" style={{ flexWrap: 'wrap' }}>
+        <div className="title-block" style={{ flex: '1 1 260px' }}>
+          <h1 className="h1" id="manager-dashboard-title">Nhắc việc</h1>
+          {tieuDePhu ? <p className="sub">{tieuDePhu}</p> : null}
         </div>
-      </ScreenHeader>
-
-      {/* FILTER: TOÀ NHÀ PHÂN CÔNG */}
-      <section
-        aria-label="Bộ lọc toà nhà quản lý"
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 12,
-          alignItems: 'center',
-          padding: '12px 16px',
-          background: 'var(--ma-bg-card)',
-          border: '1px solid var(--ma-border-default)',
-          borderRadius: 8,
-          marginBottom: 16,
-        }}
-      >
-        <label style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: mobile ? '100%' : 320 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>Toà nhà phân công:</span>
+        <div className="topbar-actions" style={{ flexWrap: 'wrap' }}>
+          <label className="sr-only" htmlFor="quan-ly-chon-toa">Chọn toà nhà quản lý</label>
           <select
+            id="quan-ly-chon-toa"
+            className="select"
+            style={{ width: mobile ? '100%' : 220 }}
             value={toaNhaId ?? ''}
             onChange={(e) => setToaNhaId(e.target.value ? Number(e.target.value) : null)}
-            style={{ ...styleInput, flex: 1 }}
             aria-label="Chọn toà nhà quản lý"
           >
             <option value="">Tất cả toà được phân công</option>
             {toaNhaList.map((tn) => (
-              <option key={tn.id} value={tn.id}>
-                {tn.ten}
-              </option>
+              <option key={tn.id} value={tn.id}>{tn.ten}</option>
             ))}
           </select>
-        </label>
-      </section>
+          {dashboard?.thoiDiemCapNhat ? (
+            <Button variant="text" size="sm" onClick={() => setSoLanTaiLai((n) => n + 1)} title={`Cập nhật lúc ${dinhDangGio(dashboard.thoiDiemCapNhat)}`}>
+              <Icon name="refresh" size="sm" />Làm mới
+            </Button>
+          ) : null}
+          {soChuaGhi > 0 ? (
+            <a className="btn btn-primary" href={taoUrlDieuHuong('/ghi-chi-so', { toaNhaId: toaNhaId ?? dashboard?.toaNhaId })}>
+              <Icon name="meter" />Ghi {soChuaGhi} công tơ còn thiếu
+            </a>
+          ) : null}
+        </div>
+      </header>
 
-      {/* ERROR NOTICE */}
       {loi ? (
-        <div role="alert" style={{ marginBottom: 16 }}>
+        <div role="alert">
           <ScreenNotice tone="urgent">{loi}</ScreenNotice>
         </div>
       ) : null}
 
-      {/* SUCCESS NOTICE */}
       {thongBaoThanhCong ? (
-        <div
-          role="status"
-          style={{
-            padding: '10px 14px',
-            marginBottom: 16,
-            background: 'var(--ma-green-100, #ecfdf5)',
-            color: 'var(--ma-green-700, #047857)',
-            borderRadius: 6,
-            border: '1px solid var(--ma-green-600, #059669)',
-            fontSize: 14,
-            fontWeight: 500,
-          }}
-        >
-          {thongBaoThanhCong}
-        </div>
+        <div role="status" className="banner banner-success">{thongBaoThanhCong}</div>
       ) : null}
 
-      {/* LOADING STATE */}
       {dangTai && !dashboard ? (
         <p aria-live="polite" style={{ padding: 24, textAlign: 'center', color: 'var(--ma-text-secondary)' }}>
           Đang tải dữ liệu điều hành vận hành…
         </p>
       ) : null}
 
-      {dashboard && kpi ? (
-        <div style={{ display: 'grid', gap: 20 }}>
-          {/* OPERATIONAL KPI CARDS */}
-          <section
-            aria-label="Chỉ số vận hành hàng ngày"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: 12,
-            }}
-          >
-            {/* Card 1: Khoản còn phải thu & Quá hạn */}
-            <article
-              style={{ ...styleKpiCard, borderColor: kpi.soHoaDonQuaHan > 0 ? 'var(--ma-border-warning, #f59e0b)' : 'var(--ma-border-default)' }}
-              onClick={() => dieuHuongToi(taoUrlDieuHuong('/hoa-don', { toaNhaId, trangThai: 'NO_QUA_HAN' }))}
-              title="Xem danh sách hoá đơn quá hạn"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={styleKpiLabel}>Cần thu hồi nợ</span>
-                {kpi.soHoaDonQuaHan > 0 ? <StatusTag tone="urgent">{kpi.soHoaDonQuaHan} quá hạn</StatusTag> : <StatusTag tone="done">Đủ</StatusTag>}
-              </div>
-              <strong style={{ ...styleKpiValue, color: kpi.soHoaDonQuaHan > 0 ? 'var(--ma-urgent)' : 'inherit' }}>
-                {dinhDangTien(kpi.khoanConPhaiThu)} <span style={{ fontSize: 13, fontWeight: 400 }}>₫</span>
-              </strong>
-              <div style={styleKpiSub}>Quá hạn: {dinhDangTien(kpi.tienQuaHan)} ₫</div>
-            </article>
-
-            {/* Card 2: Phòng trống & Đang sửa */}
-            <article
-              style={styleKpiCard}
-              onClick={() => dieuHuongToi(taoUrlDieuHuong('/phong', { toaNhaId }))}
-              title="Xem danh mục phòng"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={styleKpiLabel}>Hiện trạng phòng</span>
-                <StatusTag tone="waiting">{kpi.soPhongTrong} trống</StatusTag>
-              </div>
-              <strong style={styleKpiValue}>
-                {kpi.soPhongDangThue} <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--ma-text-secondary)' }}>/ {kpi.tongSoPhong} thuê</span>
-              </strong>
-              <div style={styleKpiSub}>{kpi.soPhongDangSua} phòng đang sửa chữa</div>
-            </article>
-
-            {/* Card 3: Công tơ chưa ghi */}
-            <article
-              style={{ ...styleKpiCard, borderColor: kpi.soCongToChuaGhi > 0 ? 'var(--ma-urgent)' : 'var(--ma-border-default)' }}
-              onClick={() => dieuHuongToi(taoUrlDieuHuong('/ghi-chi-so', { toaNhaId }))}
-              title="Mở màn hình ghi chỉ số"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={styleKpiLabel}>Công tơ chưa ghi</span>
-                {kpi.soCongToChuaGhi > 0 ? <StatusTag tone="urgent">{kpi.soCongToChuaGhi} chưa ghi</StatusTag> : <StatusTag tone="done">Hoàn thành</StatusTag>}
-              </div>
-              <strong style={{ ...styleKpiValue, color: kpi.soCongToChuaGhi > 0 ? 'var(--ma-urgent)' : 'inherit' }}>
-                {kpi.soCongToChuaGhi} <span style={{ fontSize: 13, fontWeight: 400 }}>điểm đo</span>
-              </strong>
-              <div style={styleKpiSub}>{dashboard.congToChuaGhi.tenKyHienTai}</div>
-            </article>
-
-            {/* Card 4: Sự cố cần xử lý */}
-            <article
-              style={styleKpiCard}
-              onClick={() => dieuHuongToi(taoUrlDieuHuong('/su-co', { toaNhaId }))}
-              title="Xem danh sách sự cố"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={styleKpiLabel}>Sự cố bảo trì</span>
-                {kpi.soSuCoCanXuLy > 0 ? <StatusTag tone="urgent">{kpi.soSuCoCanXuLy} đang mở</StatusTag> : <StatusTag tone="done">Không có</StatusTag>}
-              </div>
-              <strong style={styleKpiValue}>{kpi.soSuCoCanXuLy} sự cố</strong>
-              <div style={styleKpiSub}>Cần thợ hoặc quản lý kiểm tra</div>
-            </article>
-
-            {/* Card 5: Cảnh báo điện nước đang mở */}
-            <article
-              style={{ ...styleKpiCard, borderColor: kpi.soCanhBaoDienNuocDangMo > 0 ? 'var(--ma-border-warning, #f59e0b)' : 'var(--ma-border-default)' }}
-              title="Cảnh báo tiêu thụ bất thường"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={styleKpiLabel}>Cảnh báo điện nước</span>
-                {kpi.soCanhBaoDienNuocDangMo > 0 ? <StatusTag tone="urgent">{kpi.soCanhBaoDienNuocDangMo} cảnh báo</StatusTag> : <StatusTag tone="done">Bình thường</StatusTag>}
-              </div>
-              <strong style={{ ...styleKpiValue, color: kpi.soCanhBaoDienNuocDangMo > 0 ? 'var(--ma-urgent)' : 'inherit' }}>
-                {kpi.soCanhBaoDienNuocDangMo} vụ việc
-              </strong>
-              <div style={styleKpiSub}>So với baseline 3 kỳ trước</div>
-            </article>
-          </section>
-
-          {/* SECTION 1: CẢNH BÁO TIÊU THỤ ĐIỆN NƯỚC BẤT THƯỜNG */}
-          <section style={styleSectionCard} aria-labelledby="anomaly-alerts-title">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div>
-                <SysLabel>ƯU TIÊN XỬ LÝ</SysLabel>
-                <h3 id="anomaly-alerts-title" style={{ margin: '4px 0 0', fontSize: 18 }}>
-                  Cảnh báo bất thường điện nước & thất thoát
-                </h3>
-              </div>
-              <span style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>
-                {dashboard.canhBaoDienNuoc.length} cảnh báo được ghi nhận
-              </span>
-            </div>
-
-            {dashboard.canhBaoDienNuoc.length === 0 ? (
-              <EmptyState title="Không có cảnh báo tiêu thụ" body="Toàn bộ điểm đo và công tơ khu vực chung hoạt động trong ngưỡng bình thường." />
-            ) : (
-              <div style={{ display: 'grid', gap: 12 }}>
-                {dashboard.canhBaoDienNuoc.map((cb) => (
-                  <article
-                    key={cb.id}
-                    style={{
-                      display: 'grid',
-                      gap: 8,
-                      padding: 14,
-                      background: 'var(--ma-bg-sunken, #f8fafc)',
-                      border: `1px solid ${cb.trangThai === 'MOI_PHAT_HIEN' ? 'var(--ma-urgent, #dc2626)' : 'var(--ma-border-default)'}`,
-                      borderRadius: 6,
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <strong style={{ fontSize: 15 }}>{cb.tenToaNha}</strong>
-                          <span style={{ color: 'var(--ma-text-secondary)' }}>·</span>
-                          <span style={{ fontWeight: 600 }}>{cb.tenDiemDo || (cb.soPhong ? `Phòng ${cb.soPhong}` : 'Khu vực chung')}</span>
-                          <span style={{ color: 'var(--ma-text-secondary)' }}>·</span>
-                          <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>{cb.tenKy}</span>
-                        </div>
-                        <p style={{ margin: '6px 0 0', fontSize: 14, color: 'var(--ma-text-primary)', lineHeight: 1.5 }}>
-                          {cb.lyDo}
-                        </p>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <StatusTag
-                          tone={
-                            cb.trangThai === 'MOI_PHAT_HIEN'
-                              ? 'urgent'
-                              : cb.trangThai === 'DANG_KIEM_TRA'
-                              ? 'waiting'
-                              : 'done'
-                          }
-                        >
-                          {cb.trangThai === 'MOI_PHAT_HIEN'
-                            ? 'Mới phát hiện'
-                            : cb.trangThai === 'DANG_KIEM_TRA'
-                            ? 'Đang kiểm tra'
-                            : 'Đã xử lý'}
-                        </StatusTag>
-                      </div>
-                    </div>
-
-                    {cb.ghiChuXuLy ? (
-                      <div style={{ fontSize: 12, color: 'var(--ma-text-secondary)', background: 'var(--ma-bg-card)', padding: '6px 10px', borderRadius: 4 }}>
-                        <strong>Ghi chú xử lý:</strong> {cb.ghiChuXuLy} {cb.nguoiXacNhan ? `(bởi ${cb.nguoiXacNhan})` : ''}
-                      </div>
-                    ) : null}
-
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          if (cb.diemDoId) {
-                            moDialogGhiSoChung({
-                              viTriId: cb.diemDoId,
-                              tenViTri: cb.tenDiemDo || 'Điểm đo chung',
-                              toaNhaId: cb.toaNhaId,
-                              tenToaNha: cb.tenToaNha,
-                              tenDichVu: cb.loaiDichVu === 'DIEN' ? 'Điện' : 'Nước',
-                              donVi: cb.loaiDichVu === 'DIEN' ? 'kWh' : 'm³',
-                              loaiDiemDo: 'CHUNG',
-                              kyId: cb.kyId,
-                            })
-                          } else {
-                            dieuHuongToi(cb.duongDanHanhDong || `/ghi-chi-so?toaNhaId=${cb.toaNhaId}`)
-                          }
-                        }}
-                      >
-                        Xem chỉ số
-                      </Button>
-                      <Button variant="primary" size="sm" onClick={() => moDialogXuLy(cb)}>
-                        {cb.trangThai === 'MOI_PHAT_HIEN' ? 'Xác nhận kiểm tra' : 'Cập nhật xử lý'}
-                      </Button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* SECTION 2: BẢNG VIỆC VẬN HÀNH HÀNG NGÀY (REUSING BangViecVanHanh) */}
-          <section style={styleSectionCard}>
-            <SysLabel>CÔNG VIỆC HÀNG NGÀY</SysLabel>
-            <h3 style={{ margin: '4px 0 14px', fontSize: 18 }}>Bảng việc vận hành toà nhà</h3>
+      {dashboard && kpi && cong ? (
+        <div className="grid">
+          <div className="c-8 stack" style={{ minWidth: 0 }}>
             <BangViecVanHanh token={token} mobile={mobile} toaNhaId={toaNhaId} />
-          </section>
 
-          {/* SECTION 3: CÔNG TƠ CHƯA GHI CHỈ SỐ & ĐỐI SOÁT */}
-          <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 16 }}>
-            {/* Công tơ chưa ghi */}
-            <section style={styleSectionCard} aria-labelledby="unrecorded-meters-title">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div>
-                  <SysLabel>TIẾN ĐỘ CHỐT SỐ</SysLabel>
-                  <h4 id="unrecorded-meters-title" style={{ margin: '4px 0 0', fontSize: 16 }}>
-                    Điểm đo chưa ghi chỉ số ({dashboard.congToChuaGhi.tenKyHienTai})
-                  </h4>
-                </div>
-                <Button variant="secondary" size="sm" onClick={() => dieuHuongToi(taoUrlDieuHuong('/ghi-chi-so', { toaNhaId }))}>
-                  Mở ghi số
-                </Button>
-              </div>
-
-              {dashboard.congToChuaGhi.danhSachChuaGhi.length === 0 ? (
-                <EmptyState title="Đã ghi đủ chỉ số" body="Tất cả các phòng và điểm đo chung trong kỳ đang mở đã được ghi chỉ số đầy đủ." />
+            <Card
+              aria-labelledby="anomaly-alerts-title"
+              title={<span id="anomaly-alerts-title">Cảnh báo bất thường điện nước</span>}
+              action={<span className="t-meta">{dashboard.canhBaoDienNuoc.length} cảnh báo được ghi nhận</span>}
+            >
+              {dashboard.canhBaoDienNuoc.length === 0 ? (
+                <EmptyState title="Không có cảnh báo tiêu thụ" body="Toàn bộ điểm đo và công tơ khu vực chung hoạt động trong ngưỡng bình thường." />
               ) : (
-                <div style={{ maxHeight: 240, overflowY: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid var(--ma-border-default)' }}>
-                        <th style={{ padding: '6px 4px' }}>Vị trí</th>
-                        <th style={{ padding: '6px 4px' }}>Toà nhà</th>
-                        <th style={{ padding: '6px 4px' }}>Dịch vụ</th>
-                        <th style={{ padding: '6px 4px', textAlign: 'right' }}>Thao tác</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dashboard.congToChuaGhi.danhSachChuaGhi.map((d, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid var(--ma-border-subtle)' }}>
-                          <td style={{ padding: '6px 4px', fontWeight: 600 }}>{d.tenViTri}</td>
-                          <td style={{ padding: '6px 4px', color: 'var(--ma-text-secondary)' }}>{d.tenToaNha}</td>
-                          <td style={{ padding: '6px 4px' }}>{d.tenDichVu}</td>
-                          <td style={{ padding: '6px 4px', textAlign: 'right' }}>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => {
-                                if (d.loaiDiemDo === 'KHU_VUC_CHUNG' || d.loaiDiemDo === 'CHUNG') {
-                                  moDialogGhiSoChung(d)
-                                } else {
-                                  dieuHuongToi(taoUrlDieuHuong('/ghi-chi-so', { toaNhaId: d.toaNhaId }))
-                                }
-                              }}
-                            >
-                              Ghi ngay
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <ul className="list">
+                  {dashboard.canhBaoDienNuoc.map((cb) => (
+                    <li key={cb.id} className="list-row" style={{ alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                      <span className="avatar sm h1" aria-hidden="true"><Icon name={cb.loaiDichVu === 'DIEN' ? 'bolt' : 'droplet'} size="sm" /></span>
+                      <div className="body" style={{ minWidth: 200 }}>
+                        <div className="name" style={{ whiteSpace: 'normal' }}>
+                          {cb.tenToaNha} · {cb.tenDiemDo || (cb.soPhong ? `Phòng ${cb.soPhong}` : 'Khu vực chung')} · {cb.tenKy}
+                        </div>
+                        <div className="sub" style={{ whiteSpace: 'normal' }}>{cb.lyDo}</div>
+                        {cb.ghiChuXuLy ? (
+                          <div className="sub" style={{ whiteSpace: 'normal' }}>
+                            <strong>Ghi chú xử lý:</strong> {cb.ghiChuXuLy} {cb.nguoiXacNhan ? `(bởi ${cb.nguoiXacNhan})` : ''}
+                          </div>
+                        ) : null}
+                      </div>
+                      <StatusTag tone={cb.trangThai === 'MOI_PHAT_HIEN' ? 'urgent' : cb.trangThai === 'DANG_KIEM_TRA' ? 'waiting' : 'done'}>
+                        {cb.trangThai === 'MOI_PHAT_HIEN' ? 'Mới phát hiện' : cb.trangThai === 'DANG_KIEM_TRA' ? 'Đang kiểm tra' : 'Đã xử lý'}
+                      </StatusTag>
+                      <div className="row" style={{ gap: 8 }}>
+                        <Button
+                          variant="text"
+                          size="sm"
+                          onClick={() => {
+                            if (cb.diemDoId) {
+                              moDialogGhiSoChung({
+                                viTriId: cb.diemDoId,
+                                tenViTri: cb.tenDiemDo || 'Điểm đo chung',
+                                toaNhaId: cb.toaNhaId,
+                                tenToaNha: cb.tenToaNha,
+                                tenDichVu: cb.loaiDichVu === 'DIEN' ? 'Điện' : 'Nước',
+                                donVi: cb.loaiDichVu === 'DIEN' ? 'kWh' : 'm³',
+                                loaiDiemDo: 'CHUNG',
+                                kyId: cb.kyId,
+                              })
+                            } else {
+                              dieuHuongToi(cb.duongDanHanhDong || `/ghi-chi-so?toaNhaId=${cb.toaNhaId}`)
+                            }
+                          }}
+                        >
+                          Xem chỉ số
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => moDialogXuLy(cb)}>
+                          {cb.trangThai === 'MOI_PHAT_HIEN' ? 'Xác nhận kiểm tra' : 'Cập nhật xử lý'}
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               )}
-            </section>
+            </Card>
 
-            {/* Lịch hẹn sắp tới */}
-            <section style={styleSectionCard} aria-labelledby="schedule-title">
-              <SysLabel>LỊCH HẸN & CƯ TRÚ</SysLabel>
-              <h4 id="schedule-title" style={{ margin: '4px 0 12px', fontSize: 16 }}>
-                Lịch xem phòng & nhận trả phòng sắp tới
-              </h4>
-
+            <Card
+              aria-labelledby="schedule-title"
+              title={<span id="schedule-title">Lịch hẹn xem phòng</span>}
+              action={<a className="link-more" href="/lich-hen">Tất cả lịch hẹn <Icon name="arrow-right" size="sm" /></a>}
+            >
+              {loiLichHen ? <div role="alert"><ScreenNotice tone="urgent">{loiLichHen}</ScreenNotice></div> : null}
               {dashboard.lichHenSapToi.length === 0 ? (
                 <EmptyState title="Chưa có lịch hẹn" body="Không có lịch hẹn xem phòng hoặc bàn giao nào sắp tới." />
               ) : (
-                <div style={{ display: 'grid', gap: 8 }}>
-                  {dashboard.lichHenSapToi.map((lh) => (
-                    <div
-                      key={lh.id}
-                      style={{
-                        padding: '8px 10px',
-                        background: 'var(--ma-bg-sunken, #f8fafc)',
-                        border: '1px solid var(--ma-border-subtle)',
-                        borderRadius: 6,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{lh.hoTen} · {lh.soDienThoai}</div>
-                        <div style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>{lh.soPhong}</div>
+                <ul className="list">
+                  {dashboard.lichHenSapToi.map((lh, i) => (
+                    <li key={lh.id} className="list-row" style={{ flexWrap: 'wrap' }}>
+                      <span className={`avatar h${(i % 5) + 1}`} aria-hidden="true">{chuCaiDau(lh.hoTen)}</span>
+                      <div className="body" style={{ minWidth: 160 }}>
+                        <div className="name" style={{ whiteSpace: 'normal' }}>{lh.hoTen} · {lh.soDienThoai}</div>
+                        <div className="sub" style={{ whiteSpace: 'normal' }}>Xem phòng {lh.soPhong} · {dinhDangNgayGio(lh.thoiGian)}</div>
                       </div>
-                      <StatusTag tone="waiting">{dinhDangNgayGio(lh.thoiGian)}</StatusTag>
-                    </div>
+                      {lh.trangThai === 'CHO_XAC_NHAN' ? <StatusTag tone="waiting">Chờ xác nhận</StatusTag>
+                        : lh.trangThai === 'DA_XAC_NHAN' ? <StatusTag tone="done">Đã xác nhận</StatusTag>
+                          : <StatusTag tone="neutral">{lh.trangThai}</StatusTag>}
+                      {lh.trangThai === 'CHO_XAC_NHAN' ? (
+                        <Button variant="secondary" size="sm" onClick={() => void xacNhanLichHen(lh.id)}>Xác nhận</Button>
+                      ) : null}
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
-            </section>
+            </Card>
+          </div>
+
+          <div className="c-4 stack" style={{ minWidth: 0 }}>
+            <Card title="Còn phải thu">
+              <p className="kpi-value" style={{ fontSize: 36, color: kpi.soHoaDonQuaHan > 0 ? 'var(--ma-urgent)' : undefined }}>
+                {dinhDangTien(kpi.khoanConPhaiThu)}<span className="unit">₫</span>
+              </p>
+              <p className="kpi-desc">
+                {kpi.soHoaDonQuaHan > 0
+                  ? `${kpi.soHoaDonQuaHan} hoá đơn quá hạn, tổng ${dinhDangTien(kpi.tienQuaHan)} ₫.`
+                  : 'Không có hoá đơn quá hạn.'}
+              </p>
+              <div className="card-foot">
+                <a className="link-more" href={taoUrlDieuHuong('/hoa-don', { toaNhaId, trangThai: 'NO_QUA_HAN' })}>Xem hoá đơn quá hạn <Icon name="arrow-right" size="sm" /></a>
+              </div>
+            </Card>
+
+            <Card
+              aria-labelledby="unrecorded-meters-title"
+              title={<span id="unrecorded-meters-title">Công tơ {tenKy.replace(/^Kỳ/, 'kỳ')}</span>}
+              action={<span className="t-strong">{cong.soCongToDaGhi}/{cong.tongSoCongTo}</span>}
+            >
+              <div className="progress" role="progressbar" aria-valuenow={cong.soCongToDaGhi} aria-valuemin={0} aria-valuemax={cong.tongSoCongTo} aria-label={`Đã ghi ${cong.soCongToDaGhi} trên ${cong.tongSoCongTo} công tơ`}>
+                <span style={{ width: `${phanTram(cong.soCongToDaGhi, cong.tongSoCongTo)}%` }} />
+              </div>
+              {congTo.length === 0 ? (
+                <p className="t-sm t-2" style={{ marginTop: 14 }}>Đã ghi đủ chỉ số trong kỳ đang mở.</p>
+              ) : (
+                <>
+                  <p className="t-sm t-2" style={{ margin: '14px 0 10px' }}>Còn thiếu</p>
+                  <div className="meters">
+                    {congTo.slice(0, 8).map((d, i) => (
+                      <span key={`${d.viTriId}-${d.tenDichVu}-${i}`} className="meter-chip" title={d.tenToaNha}>
+                        <Icon name={d.tenDichVu.startsWith('Nước') ? 'droplet' : 'bolt'} />
+                        <span className="meter-chip-text">{d.tenViTri.replace(/^Phòng\s+/i, '')} · {d.tenDichVu.split(' ')[0]}</span>
+                      </span>
+                    ))}
+                  </div>
+                  {congTo.length > 8 ? <p className="t-sm t-2" style={{ marginTop: 10 }}>và {congTo.length - 8} công tơ khác</p> : null}
+                  {diemDoChungDauTien ? (
+                    <div style={{ marginTop: 14 }}>
+                      <Button variant="secondary" size="sm" onClick={() => moDialogGhiSoChung(diemDoChungDauTien)}>
+                        Ghi ngay điểm đo chung
+                      </Button>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </Card>
+
+            <Card title="Phòng" action={<span className="t-meta">{dashboard.coCauPhong.tongSo} phòng</span>} aria-labelledby={undefined}>
+              <div className="hbars">
+                {([
+                  ['Đang thuê', dashboard.coCauPhong.dangThue, undefined],
+                  ['Trống', dashboard.coCauPhong.trong, 'warm'],
+                  ['Đã cọc', dashboard.coCauPhong.daCoc, undefined],
+                  ['Đang sửa', dashboard.coCauPhong.dangSua, undefined],
+                  ['Ngưng khai thác', dashboard.coCauPhong.ngung, undefined],
+                ] as const).filter(([, n], i) => i < 2 || n > 0).map(([nhan, n, tone]) => (
+                  <div className="hbar" key={nhan}>
+                    <span className="hbar-label">{nhan}</span>
+                    <span className="hbar-value">{n}</span>
+                    <div className="hbar-track"><div className={`hbar-fill${tone ? ` ${tone}` : ''}`} style={{ width: `${phanTram(n, dashboard.coCauPhong.tongSo)}%` }} /></div>
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
         </div>
       ) : null}
@@ -763,7 +633,7 @@ export function QuanLyDashboard({ token, mobile = false }: Props): React.ReactEl
           </div>
         </div>
       ) : null}
-    </ScreenSurface>
+    </section>
   )
 }
 
@@ -781,44 +651,12 @@ const styleInput: React.CSSProperties = {
   fontSize: 14,
 }
 
-const styleKpiCard: React.CSSProperties = {
-  display: 'grid',
-  gap: 4,
-  padding: '12px 14px',
-  background: 'var(--ma-bg-card)',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 8,
-  cursor: 'pointer',
-}
-
-const styleKpiLabel: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 600,
-  color: 'var(--ma-text-secondary)',
-  textTransform: 'uppercase',
-  letterSpacing: 0.5,
-}
-
-const styleKpiValue: React.CSSProperties = {
-  fontSize: 20,
-  fontWeight: 700,
-  fontFamily: 'var(--ma-font-mono)',
-}
-
-const styleKpiSub: React.CSSProperties = {
-  fontSize: 12,
-  color: 'var(--ma-text-secondary)',
-  marginTop: 2,
-}
-
-const styleSectionCard: React.CSSProperties = {
-  padding: 16,
-  background: 'var(--ma-bg-card)',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 8,
-  minWidth: 0,
-  overflowX: 'auto',
-}
+const CSS_QUAN_LY = `
+.meters { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; }
+.meter-chip { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--ma-bg-sunken); font: 500 14px/1.3 var(--ma-font-ui); min-width: 0; }
+.meter-chip .ic { color: var(--ma-accent-warm); flex: none; }
+.meter-chip-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+`
 
 const styleModalBackdrop: React.CSSProperties = {
   position: 'fixed',
@@ -858,8 +696,12 @@ function dinhDangGio(iso: string): string {
 function dinhDangNgayGio(iso: string): string {
   try {
     const d = new Date(iso)
-    return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+    return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   } catch {
     return iso
   }
+}
+
+function chuCaiDau(ten: string): string {
+  return ten.trim().split(/\s+/).slice(-2).map((t) => t[0]?.toUpperCase() ?? '').join('')
 }
