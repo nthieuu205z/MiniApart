@@ -27,7 +27,7 @@ describe('MiniApart design tokens', () => {
   it('components.css không chứa reset toàn cục và chỉ có hex chép từ design', () => {
     expect(components).not.toMatch(/^(body \{|h1, h2)/m)
     // Hex còn lại là màu cố định của design (trên nền tối/avatar/banner); hex mới phải thêm vào đây có chủ đích.
-    const allowed = new Set(['#fff', '#932015', '#fdf1dc', '#92400e', '#eaf0fc', '#1e4fc2', '#f3e8e2', '#8a3b12', '#efece7', '#57534e', '#e7f5ec', '#166534', '#8fd3c8', '#f6a49b', '#1a3e96', '#7a350c', '#8e1c13'])
+    const allowed = new Set(['#fff', '#932015', '#fdf1dc', '#92400e', '#eaf0fc', '#1e4fc2', '#f3e8e2', '#8a3b12', '#efece7', '#57534e', '#e7f5ec', '#166534', '#8fd3c8', '#f6a49b', '#1a3e96', '#7a350c', '#8e1c13', '#e6f2f0', '#115e59'])
     const found = (components.match(/#[0-9a-fA-F]{3,8}/g) ?? []).map((h) => h.toLowerCase())
     expect(found.filter((h) => !allowed.has(h))).toEqual([])
   })
