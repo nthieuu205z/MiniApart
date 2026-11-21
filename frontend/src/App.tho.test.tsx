@@ -83,6 +83,7 @@ describe('App worker entry point (V2)', () => {
   })
 
   afterEach(async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 })
     await act(async () => root?.unmount())
     container.remove()
     clearStoredToken()
@@ -178,5 +179,32 @@ describe('App worker entry point (V2)', () => {
       expect(window.location.pathname).toBe('/thong-bao')
       expect(container.querySelector('[data-testid="notification-screen"]')).not.toBeNull()
     })
+  })
+
+  it('shows a 4-tab bottom-nav at 390px with "Báo giá" short label, full aria-label, no "Thêm"', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 })
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
+      if (url === '/api/health') return jsonResponse({ status: 'UP', database: 'UP' })
+      if (url === '/api/auth/me') return jsonResponse({ id: 4, hoTen: 'Lê Quốc Huy', soDienThoai: '0999000031', vaiTro: 'THO', tenVaiTro: 'Thợ sửa chữa' })
+      if (url.startsWith('/api/tho/')) return jsonResponse(url.includes('tong-quan') ? mockTongQuanData : [])
+      if (url === '/api/thong-bao') return jsonResponse({ thongBao: [], soChuaDoc: 0 })
+      throw new Error(`Unexpected request ${url}`)
+    }))
+    storeToken('worker-token')
+    root = createRoot(container)
+    await act(async () => root.render(<App />))
+
+    const bar = await vi.waitFor(() => {
+      const element = container.querySelector('[data-testid="mobile-nav-bar"]')
+      expect(element).not.toBeNull()
+      return element as HTMLElement
+    })
+    const link = bar.querySelector('a[href="/tho/chi-phi"]') as HTMLAnchorElement
+    expect(bar.querySelectorAll('a')).toHaveLength(4)
+    expect(link.textContent?.trim()).toBe('Báo giá')
+    expect(link.getAttribute('aria-label')).toBe('Báo giá & thanh toán')
+    expect([...bar.querySelectorAll('button')].some((b) => b.textContent === 'Thêm')).toBe(false)
+    expect(container.querySelector('[data-testid="topbar-logout"]')?.getAttribute('aria-label')).toBe('Đăng xuất')
   })
 })

@@ -22,7 +22,7 @@ export interface NavItem {
 }
 
 export interface NavGroup {
-  /** "Hàng ngày" · "Tiền" · "Toà nhà" — giữ đúng ba nhóm và đúng thứ tự này cho vai trò Quản lý. */
+  /** "Hàng ngày" · "Tiền" · "Toà nhà" — giữ đúng ba nhóm và đúng thứ tự này cho vai trò Quản lý. Chuỗi rỗng = nhóm không nhãn. */
   label: string
   items: NavItem[]
 }
@@ -37,11 +37,13 @@ export interface NavPanelProps extends React.HTMLAttributes<HTMLElement> {
   groups: NavGroup[]
   user?: { initials: string; name: string; role: string }
   mobile?: boolean
+  /** Sidebar thu gọn còn icon (≥768 và <1280). */
+  collapsed?: boolean
   onLogout?: () => void
 }
 
 /** Menu dọc chia ba nhóm: Hàng ngày / Tiền / Toà nhà. Thứ tự nhóm phản ánh nhịp công việc thật. */
-export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nhà', groups, user, mobile = false, onLogout, className, style, ...rest }: NavPanelProps): React.ReactElement {
+export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nhà', groups, user, mobile = false, collapsed = false, onLogout, className, style, ...rest }: NavPanelProps): React.ReactElement {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
   const allItems = groups.flatMap((group) => group.items)
   // ≤ 5 mục: hiện hết, không có "Thêm"; nhiều hơn: 4 mục + "Thêm".
@@ -62,9 +64,9 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
         alignContent: 'center',
         gap: 3,
         minWidth: 0,
-        minHeight: 'var(--ma-hit-mobile)',
+        minHeight: 'var(--ma-bottom-nav-height)',
         padding: '5px 3px',
-        fontSize: 11,
+        fontSize: 12,
         lineHeight: 1.1,
         textAlign: 'center',
         textDecoration: 'none',
@@ -102,7 +104,7 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
 
   return (
     <nav
-      className={[mobile ? '' : 'sidebar', className].filter(Boolean).join(' ') || undefined}
+      className={[mobile ? '' : 'sidebar', !mobile && collapsed ? 'is-collapsed' : '', className].filter(Boolean).join(' ') || undefined}
       data-navigation-layout={mobile ? 'bottom' : 'side'}
       style={{
         ...(mobile ? {
@@ -118,6 +120,7 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
           borderTop: '1px solid var(--ma-border-default)',
         } : {
           width: 'var(--ma-nav-width)',
+          overflow: 'hidden',
         }),
         ...(mobile ? { background: 'var(--ma-bg-nav)', display: 'flex', flexDirection: 'column' } : {}),
         fontFamily: 'var(--ma-font-ui)',
@@ -157,7 +160,7 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
                   background: 'transparent',
                   color: 'var(--ma-text-secondary)',
                   fontFamily: 'var(--ma-font-ui)',
-                  fontSize: 11,
+                  fontSize: 12,
                   lineHeight: 1.1,
                   textAlign: 'center',
                   overflow: 'hidden',
@@ -192,30 +195,6 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
               }}
             >
               {overflowItems.map((item) => renderMobileItem(item, 'more'))}
-              {onLogout ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMoreOpen(false)
-                    onLogout()
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '8px 10px',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: 'var(--ma-urgent, #c0392b)',
-                    background: 'transparent',
-                    border: 0,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  Đăng xuất
-                </button>
-              ) : null}
             </div>
           ) : null}
         </>
@@ -229,38 +208,41 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
             </div>
           </div>
 
-          {groups.map((g) => (
-            <div key={g.label} style={{ display: 'grid', gap: 2 }}>
-              {g.label ? <div className="sb-label">{g.label}</div> : null}
-              {g.items.map((it) => (
-                <a
-                  key={it.label}
-                  className="nav-item"
-                  href={it.href || '#'}
-                  aria-current={it.active ? 'page' : undefined}
-                  style={{ minHeight: 'var(--ma-hit-mobile)', marginLeft: it.depth === 1 ? 20 : undefined }}
-                >
-                  {it.icon ? <Icon name={it.icon} /> : <Glyph name={it.glyph} size={16} strokeWidth={it.active ? 2 : 1.6} />}
-                  <span>{it.label}</span>
-                  {it.count ? (
-                    <b
-                      className="count"
-                      aria-label={`${it.count} việc cần xử lý`}
-                      style={it.countTone === 'waiting' ? { background: 'var(--ma-waiting-bg)', color: 'var(--ma-waiting)' } : undefined}
-                    >
-                      {it.count}
-                    </b>
-                  ) : null}
-                </a>
-              ))}
-            </div>
-          ))}
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'grid', gap: 2, alignContent: 'start' }}>
+            {groups.map((g) => (
+              <div key={g.label || 'chung'} style={{ display: 'grid', gap: 2 }}>
+                {g.label ? <div className="sb-label">{g.label}</div> : null}
+                {g.items.map((it) => (
+                  <a
+                    key={it.label}
+                    className="nav-item"
+                    href={it.href || '#'}
+                    aria-current={it.active ? 'page' : undefined}
+                    aria-label={collapsed ? it.label : undefined}
+                    title={collapsed ? it.label : undefined}
+                    style={{ minHeight: collapsed ? 'var(--ma-hit-mobile)' : undefined, marginLeft: it.depth === 1 ? 32 : undefined }}
+                  >
+                    {it.depth === 1 ? null : it.icon ? <Icon name={it.icon} /> : <Glyph name={it.glyph} size={16} strokeWidth={it.active ? 2 : 1.6} />}
+                    <span>{it.label}</span>
+                    {it.count ? (
+                      <b
+                        className="count"
+                        aria-label={`${it.count} việc cần xử lý`}
+                        style={it.countTone === 'waiting' ? { background: 'var(--ma-waiting-bg)', color: 'var(--ma-waiting)' } : undefined}
+                      >
+                        {it.count}
+                      </b>
+                    ) : null}
+                  </a>
+                ))}
+              </div>
+            ))}
+          </div>
 
           {user ? (
             <>
-              <div className="sb-spacer" />
-              <div className="sb-user">
-                <span className="avatar sm h4" aria-hidden="true">{user.initials}</span>
+              <div className="sb-user" style={{ marginTop: 8, flex: 'none' }}>
+                {collapsed ? null : <span className="avatar sm h4" aria-hidden="true">{user.initials}</span>}
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div className="name" title={user.name}>{user.name}</div>
                   <div className="t-meta" title={user.role}>{user.role}</div>

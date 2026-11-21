@@ -38,7 +38,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'CHU',
       tenVaiTro: 'Chủ sở hữu',
     },
-    menuLabels: ['Tổng quan', 'Toà nhà', 'Người thuê', 'Hợp đồng', 'Dịch vụ và kỳ', 'Ghi chỉ số', 'Cư trú', 'Lịch hẹn', 'Hoá đơn', 'Thu tiền', 'Công nợ', 'Báo cáo', 'Tiêu thụ điện nước', 'Chi phí bảo trì', 'Sự cố', 'An toàn', 'Nhật ký thao tác'],
+    menuLabels: ['Tổng quan', 'Toà nhà', 'Người thuê', 'Hợp đồng', 'Cư trú', 'Lịch hẹn', 'Sự cố', 'An toàn', 'Dịch vụ và kỳ', 'Ghi chỉ số', 'Hoá đơn', 'Thu tiền', 'Công nợ', 'Báo cáo', 'Tiêu thụ điện nước', 'Chi phí bảo trì', 'Nhật ký thao tác'],
   },
   {
     nguoiDung: {
@@ -48,7 +48,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'QUAN_LY',
       tenVaiTro: 'Quản lý toà nhà',
     },
-    menuLabels: ['Nhắc việc', 'Ghi chỉ số', 'Hoá đơn', 'Thu tiền', 'Phòng', 'Hợp đồng', 'Người thuê', 'Dịch vụ và kỳ', 'Cư trú', 'Lịch hẹn', 'Sự cố', 'An toàn', 'Thông báo'],
+    menuLabels: ['Nhắc việc', 'Ghi chỉ số', 'Lịch hẹn', 'Sự cố', 'Hoá đơn', 'Thu tiền', 'Dịch vụ và kỳ', 'Phòng', 'Hợp đồng', 'Người thuê', 'Cư trú', 'An toàn', 'Thông báo'],
   },
   {
     nguoiDung: {

@@ -50,6 +50,7 @@ import { Breadcrumb } from './design/shell/Breadcrumb'
 import { NavPanel, type NavGroup } from './design/shell/NavPanel'
 import { TopBar } from './design/shell/TopBar'
 import type { GlyphName } from './design/core/GlyphName'
+import type { IconName } from './design/core/Icon'
 import { layMenuTheoVaiTro, xacDinhTrangTheoVaiTro } from './roleNavigation'
 
 const styleTrang: CSSProperties = {
@@ -186,8 +187,13 @@ const styleKhungUngDungDesktop: CSSProperties = {
   ...styleTrang,
   display: 'grid',
   gridTemplateColumns: 'var(--ma-nav-width) minmax(0, 1fr)',
+  gap: 'var(--ma-space-4)',
+  padding: 'var(--ma-space-4)',
   overflowX: 'clip',
 }
+
+// Thu gọn: ghi đè biến độ rộng để cột lưới và sidebar cùng co về 72px mà không đổi giá trị inline.
+const styleKhungUngDungThuGon = { ...styleKhungUngDungDesktop, '--ma-nav-width': 'var(--ma-nav-width-collapsed)' } as CSSProperties
 
 const styleKhungUngDungMobile: CSSProperties = {
   ...styleTrang,
@@ -204,7 +210,7 @@ const styleCotNoiDung: CSSProperties = {
 
 const styleCotNoiDungMobile: CSSProperties = {
   ...styleCotNoiDung,
-  paddingBottom: 'calc(var(--ma-hit-mobile) + var(--ma-space-6))',
+  paddingBottom: 'calc(var(--ma-bottom-nav-height) + var(--ma-space-4))',
 }
 
 const styleVungNoiDung: CSSProperties = {
@@ -311,6 +317,7 @@ function App() {
   const phienBanTaiThongBao = useRef(0)
   const [duongDanHienTai, setDuongDanHienTai] = useState(() => layDuongDanHienTai())
   const [laManHinhHep, setLaManHinhHep] = useState(() => kiemTraManHinhHep())
+  const [laManHinhThuGon, setLaManHinhThuGon] = useState(() => kiemTraManHinhThuGon())
   const [cheDoKhach, setCheDoKhach] = useState<'KHAM_PHA' | 'DANG_NHAP'>(() => {
     if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
       return typeof window !== 'undefined' && window.location.pathname === '/kham-pha' ? 'KHAM_PHA' : 'DANG_NHAP'
@@ -435,6 +442,7 @@ function App() {
 
     function dongBoKichThuoc() {
       setLaManHinhHep(kiemTraManHinhHep())
+      setLaManHinhThuGon(kiemTraManHinhThuGon())
     }
 
     window.addEventListener('resize', dongBoKichThuoc)
@@ -826,7 +834,7 @@ function App() {
   const duongDanPhanCap = taoDuongDanPhanCap(nguoiDung.tenVaiTro, tieuDeTheChinh)
 
   return (
-    <main className="ma-app-shell" style={laManHinhHep ? styleKhungUngDungMobile : styleKhungUngDungDesktop}>
+    <main className="ma-app-shell" style={laManHinhHep ? styleKhungUngDungMobile : laManHinhThuGon ? styleKhungUngDungThuGon : styleKhungUngDungDesktop}>
       <NavPanel
         className="ma-no-print"
         mobile={laManHinhHep}
@@ -838,12 +846,12 @@ function App() {
           name: nguoiDung.hoTen,
           role: nguoiDung.tenVaiTro,
         }}
+        collapsed={laManHinhThuGon}
         onLogout={handleLogout}
         onClick={handleNavClick}
         style={{
           width: laManHinhHep ? '100%' : 'var(--ma-nav-width)',
           minWidth: 0,
-          borderRight: laManHinhHep ? undefined : '1px solid var(--ma-border-default)',
         }}
       />
 
@@ -857,17 +865,18 @@ function App() {
               periodStatus={thongTinTopBar.periodStatus}
               notifications={soThongBaoChuaDoc ?? undefined}
               notificationHref={['CHU', 'QUAN_LY', 'THO', 'NGUOI_THUE'].includes(nguoiDung.vaiTro) ? '/thong-bao' : undefined}
-              onLogout={handleLogout}
+              onLogout={laManHinhHep ? handleLogout : undefined}
+              compact={laManHinhHep}
               onClick={handleNavClick}
               style={{
                 padding: laManHinhHep ? '10px 16px' : undefined,
                 gap: laManHinhHep ? 10 : undefined,
-                flexWrap: 'wrap',
+                flexWrap: laManHinhHep ? 'nowrap' : 'wrap',
                 height: 'auto',
                 minHeight: 'var(--ma-topbar-height)',
               }}
             />
-            <Breadcrumb className="ma-no-print" items={duongDanPhanCap} style={{ padding: laManHinhHep ? '7px 16px' : undefined }} />
+            {tieuDeTheChinh === 'Tổng quan' ? null : <Breadcrumb className="ma-no-print" items={duongDanPhanCap} style={{ padding: laManHinhHep ? '7px 16px' : undefined }} />}
           </>
         ) : null}
 
@@ -1243,6 +1252,10 @@ function kiemTraManHinhHep() {
   return window.innerWidth < 768
 }
 
+function kiemTraManHinhThuGon() {
+  return typeof window !== 'undefined' && window.innerWidth < 1280
+}
+
 function taoThongTinTopBar(vaiTro: string): { building: string; period: string; periodStatus?: string } {
   const period = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'long' }).format(new Date())
   return {
@@ -1270,6 +1283,9 @@ function taoNhomDieuHuong(vaiTro: string, duongDanHienTai: string): NavGroup[] {
           href: muc.duongDan,
           active: duongDanHienTai === muc.duongDan,
           glyph: GLYPH_THEO_DUONG_DAN[muc.duongDan] ?? 'o-vuong',
+          icon: layIconDieuHuong(vaiTro, muc.duongDan),
+          shortLabel: NHAN_NGAN_BOTTOM_NAV[muc.duongDan],
+          depth: DUONG_DAN_MUC_CON.includes(muc.duongDan) ? (1 as const) : undefined,
         })),
     }))
     .filter((nhom) => nhom.items.length > 0)
@@ -1283,6 +1299,24 @@ function layChuCaiDau(hoTen: string) {
     .map((tu) => tu[0]?.toUpperCase() ?? '')
     .join('')
 }
+
+// Icon theo assets/shell.js. /thong-bao khác nhau theo vai trò (Quản lý: loa, Thợ: chuông).
+const ICON_THEO_DUONG_DAN: Record<string, IconName> = {
+  '/tong-quan': 'dashboard', '/nhac-viec': 'dashboard', '/tho/tong-quan': 'dashboard',
+  '/toa-nha': 'building', '/nguoi-thue': 'users', '/hop-dong': 'contract', '/cu-tru': 'home', '/lich-hen': 'calendar',
+  '/su-co': 'wrench', '/viec-cua-toi': 'wrench', '/bao-hong': 'wrench', '/an-toan': 'shield',
+  '/dich-vu': 'layers', '/ghi-chi-so': 'meter', '/hoa-don': 'receipt', '/hoa-don-cua-toi': 'receipt',
+  '/thu-tien': 'wallet', '/tho/chi-phi': 'wallet', '/cong-no': 'debt', '/bao-cao': 'chart',
+  '/nhat-ky-thao-tac': 'history', '/lich-su': 'history', '/tieu-thu': 'bolt', '/phong': 'door', '/tai-khoan': 'key',
+}
+
+function layIconDieuHuong(vaiTro: string, duongDan: string): IconName | undefined {
+  if (duongDan === '/thong-bao') return vaiTro === 'THO' ? 'bell' : 'megaphone'
+  return ICON_THEO_DUONG_DAN[duongDan]
+}
+
+const NHAN_NGAN_BOTTOM_NAV: Record<string, string> = { '/hoa-don-cua-toi': 'Hoá đơn', '/tho/chi-phi': 'Báo giá' }
+const DUONG_DAN_MUC_CON = ['/bao-cao/tieu-thu', '/bao-cao/chi-phi-bao-tri']
 
 const GLYPH_THEO_DUONG_DAN: Record<string, GlyphName> = {
   '/tai-khoan': 'gap',
@@ -1317,14 +1351,15 @@ const NHOM_DIEU_HUONG_THEO_VAI_TRO: Record<string, Array<{ label: string, duongD
     { label: 'Theo dõi', duongDan: ['/nhat-ky-thao-tac'] },
   ],
   CHU: [
-    { label: 'Tổng quan', duongDan: ['/tong-quan', '/toa-nha', '/nguoi-thue', '/hop-dong', '/dich-vu', '/ghi-chi-so', '/cu-tru', '/lich-hen'] },
-    { label: 'Tiền', duongDan: ['/hoa-don', '/thu-tien', '/cong-no', '/bao-cao', '/bao-cao/tieu-thu', '/bao-cao/chi-phi-bao-tri'] },
-    { label: 'Vận hành', duongDan: ['/su-co', '/an-toan', '/nhat-ky-thao-tac'] },
+    { label: '', duongDan: ['/tong-quan'] },
+    { label: 'Vận hành', duongDan: ['/toa-nha', '/nguoi-thue', '/hop-dong', '/cu-tru', '/lich-hen', '/su-co', '/an-toan'] },
+    { label: 'Tiền', duongDan: ['/dich-vu', '/ghi-chi-so', '/hoa-don', '/thu-tien', '/cong-no'] },
+    { label: 'Theo dõi', duongDan: ['/bao-cao', '/bao-cao/tieu-thu', '/bao-cao/chi-phi-bao-tri', '/nhat-ky-thao-tac'] },
   ],
   QUAN_LY: [
-    { label: 'Hàng ngày', duongDan: ['/nhac-viec', '/ghi-chi-so'] },
-    { label: 'Tiền', duongDan: ['/hoa-don', '/thu-tien'] },
-    { label: 'Toà nhà', duongDan: ['/phong', '/hop-dong', '/nguoi-thue', '/dich-vu', '/cu-tru', '/lich-hen', '/su-co', '/an-toan', '/thong-bao'] },
+    { label: 'Hàng ngày', duongDan: ['/nhac-viec', '/ghi-chi-so', '/lich-hen', '/su-co'] },
+    { label: 'Tiền', duongDan: ['/hoa-don', '/thu-tien', '/dich-vu'] },
+    { label: 'Toà nhà', duongDan: ['/phong', '/hop-dong', '/nguoi-thue', '/cu-tru', '/an-toan', '/thong-bao'] },
   ],
   THO: [
     { label: 'Bàn làm việc', duongDan: ['/tho/tong-quan', '/viec-cua-toi', '/tho/chi-phi', '/thong-bao'] },
