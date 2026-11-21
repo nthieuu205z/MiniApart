@@ -7,13 +7,16 @@ import {
   guiDuyetBaoGia,
   baoXongViecTho,
   fetchThoChungTu,
+  fetchThoTongQuan,
+  type KpiTho,
   type ThongTinViecThoRow,
   type ChiTietViecTho,
   type ChungTuThanhToanTho,
 } from './workerDashboardApi'
-import { fetchLienKetAnh } from './api'
+import { fetchCurrentUser, fetchLienKetAnh } from './api'
 import { dinhDangTien } from './design/core/format'
 import { Button } from './design/core/Button'
+import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
 import { SysLabel } from './design/core/SysLabel'
 import { EmptyState } from './design/feedback/EmptyState'
@@ -64,6 +67,11 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
   const [dangXuLyHanhDong, setDangXuLyHanhDong] = useState(false)
   const [thongBaoThanhCong, setThongBaoThanhCong] = useState<string | null>(null)
 
+  // Mobile: tóm tắt (KPI, tên thợ, số toà) lấy một lần; lỗi thì bỏ qua, danh sách vẫn dùng được.
+  const [tomTat, setTomTat] = useState<{ kpi?: KpiTho; hoTen?: string; soToa?: number }>({})
+  const [hienTim, setHienTim] = useState(false)
+  const moFormBaoGiaRef = useRef(false)
+
   // Voucher modal state
   const [voucherData, setVoucherData] = useState<ChungTuThanhToanTho | null>(null)
 
@@ -92,13 +100,31 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
+  useEffect(() => {
+    if (!mobile) return
+    let active = true
+    Promise.allSettled([fetchThoTongQuan(token), fetchCurrentUser(token)]).then(([tq, nd]) => {
+      if (!active) return
+      setTomTat({
+        kpi: tq.status === 'fulfilled' ? tq.value.kpi : undefined,
+        soToa: tq.status === 'fulfilled' ? tq.value.danhSachToa.length : undefined,
+        hoTen: nd.status === 'fulfilled' ? nd.value.hoTen : undefined,
+      })
+    })
+    return () => {
+      active = false
+    }
+  }, [mobile, token])
+
+  // Mobile tải đủ mọi nhóm một lần để đếm số trên tab; desktop vẫn để máy chủ lọc theo tab.
+  const nhomTai = mobile ? 'TAT_CA' : nhomTab
   const taiDanhSach = useCallback(async () => {
     setDangTai(true)
     setLoiTai(null)
     try {
       const rows = await fetchThoCongViec(token, {
         toaNhaId,
-        nhom: nhomTab,
+        nhom: nhomTai,
         mucDo: mucDo || undefined,
         tuKhoa: tuKhoa || undefined,
       })
@@ -108,7 +134,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
     } finally {
       setDangTai(false)
     }
-  }, [token, toaNhaId, nhomTab, mucDo, tuKhoa])
+  }, [token, toaNhaId, nhomTai, mucDo, tuKhoa])
 
   useEffect(() => {
     void taiDanhSach()
@@ -134,6 +160,10 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
           setGhiChuKhaoSatForm(detail.ghiChuKhaoSat ?? '')
           setKetQuaSuaChuaForm(detail.ketQuaSuaChua ?? '')
           setDangTaiChiTiet(false)
+          if (moFormBaoGiaRef.current) {
+            moFormBaoGiaRef.current = false
+            setHienFormBaoGia(true)
+          }
 
           // Fetch photo urls
           const allPhotoIds = [...detail.anhTruocIds, ...detail.anhSauIds]
@@ -165,6 +195,20 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
     const url = new URL(window.location.href)
     url.searchParams.set('yeuCauId', String(id))
     window.history.pushState({}, '', url.toString())
+  }
+
+  async function handleNutChinh(row: ThongTinViecThoRow, hanhDong: HanhDongChinh) {
+    if (hanhDong === 'LAP_BAO_GIA') moFormBaoGiaRef.current = true
+    if (hanhDong === 'NHAN_VIEC') {
+      try {
+        await capNhatKhaoSat(token, row.id, '')
+        void taiDanhSach()
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : 'Lỗi khi nhận việc')
+        return
+      }
+    }
+    moChiTiet(row.id)
   }
 
   function dongChiTiet() {
@@ -268,9 +312,55 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
     return Array.from(map.entries()).map(([id, ten]) => ({ id, ten }))
   }, [danhSach])
 
+  const nhomCuaViec = (r: ThongTinViecThoRow): NhomMobile =>
+    r.trangThaiHieuLuc === 'CHO_XAC_NHAN' ? 'CHO_XAC_NHAN' : r.trangThaiHieuLuc === 'DA_DONG' || r.trangThaiHieuLuc === 'DA_HUY' ? 'LICH_SU' : 'DANG_LAM'
+  const demNhom = (nhom: NhomMobile) => danhSach.filter((r) => nhomCuaViec(r) === nhom).length
+  const dsMobile = danhSach.filter((r) => nhomCuaViec(r) === (nhomTab === 'TAT_CA' ? 'DANG_LAM' : nhomTab))
+  const soMoiGiao = danhSach.filter((r) => r.trangThaiHieuLuc === 'DA_PHAN_CONG').length
+  const tyLe = tomTat.kpi?.tyLeHoanThanh
+
   return (
-    <div style={{ padding: mobile ? '16px 12px' : '24px 20px', maxWidth: 1240, margin: '0 auto', display: 'grid', gap: 20 }} data-testid="worker-jobs-screen">
-      {/* Header & Tabs */}
+    <div style={{ padding: mobile ? 0 : '24px 20px', maxWidth: 1240, margin: '0 auto', display: 'grid', gap: 20 }} data-testid="worker-jobs-screen">
+      {mobile ? (
+        <>
+          <div className="spread" style={{ alignItems: 'flex-start' }}>
+            <div>
+              <h1 style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Công việc</h1>
+              <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)' }}>
+                {[tomTat.hoTen, tomTat.soToa !== undefined ? `${tomTat.soToa} toà được giao` : undefined].filter(Boolean).join(' · ')}
+              </div>
+            </div>
+            <button type="button" className="icon-btn touch" aria-label="Tìm việc" aria-expanded={hienTim} onClick={() => setHienTim((v) => !v)}>
+              <Icon name="search" />
+            </button>
+          </div>
+          <div style={styleTomTat} aria-label="Tóm tắt">
+            <div style={styleOTomTat}>
+              <b style={styleSoTomTat}>{tomTat.kpi?.dangXuLy ?? '–'}</b>
+              <span style={styleNhanTomTat}>Đang làm</span>
+            </div>
+            <div style={styleOTomTat}>
+              <b style={styleSoTomTat}>{soMoiGiao}</b>
+              <span style={styleNhanTomTat}>Mới giao</span>
+            </div>
+            <div style={styleOTomTat}>
+              <b style={styleSoTomTat}>{tyLe ? `${tyLe.daHoanThanh}/${tyLe.tongDuocGiao}` : '–'}</b>
+              <span style={styleNhanTomTat}>Xong kỳ này</span>
+            </div>
+          </div>
+          <div className="tabs" role="tablist" aria-label="Lọc công việc">
+            {([
+              ['DANG_LAM', 'Đang mở'],
+              ['CHO_XAC_NHAN', 'Chờ xác nhận'],
+              ['LICH_SU', 'Đã xong'],
+            ] as const).map(([key, label]) => (
+              <button key={key} type="button" role="tab" className="tab" style={{ padding: '0 6px', gap: 6, fontSize: 14 }} aria-selected={nhomTab === key} onClick={() => setNhomTab(key)}>
+                {label} <span className="n">{demNhom(key)}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
       <div style={{ display: 'grid', gap: 14, borderBottom: '1px solid var(--ma-border-default)', paddingBottom: 16 }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
@@ -301,6 +391,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                 onClick={() => setNhomTab(tab.key as typeof nhomTab)}
                 style={{
                   padding: '8px 16px',
+                  minHeight: 36,
                   borderRadius: 8,
                   border: active ? '2px solid var(--ma-brand-primary, #2563EB)' : '1px solid var(--ma-border-default)',
                   background: active ? 'rgba(37, 99, 235, 0.08)' : 'var(--ma-bg-card)',
@@ -317,8 +408,10 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
           })}
         </div>
       </div>
+      )}
 
       {/* Filter and Search Bar */}
+      {!mobile || hienTim ? (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
         <input
           type="search"
@@ -367,6 +460,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
           <option value="KHAN_CAP">Khẩn cấp</option>
         </select>
       </div>
+      ) : null}
 
       {/* Main List / Table */}
       {dangTai ? (
@@ -377,7 +471,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
         <div style={{ padding: 24, textAlign: 'center', background: 'var(--ma-urgent-bg)', color: 'var(--ma-urgent)' }}>
           {loiTai}
         </div>
-      ) : danhSach.length === 0 ? (
+      ) : (mobile ? dsMobile : danhSach).length === 0 ? (
         <EmptyState
           title="Không tìm thấy công việc nào"
           body="Không có việc sửa chữa nào phù hợp với bộ lọc hiện tại của bạn."
@@ -385,47 +479,65 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
       ) : mobile ? (
         /* Mobile Card Layout */
         <div style={{ display: 'grid', gap: 12 }}>
-          {danhSach.map((row) => (
-            <div
-              key={row.id}
-              onClick={() => moChiTiet(row.id)}
-              style={styleMobileCard}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && moChiTiet(row.id)}
-              data-testid={`worker-task-row-${row.id}`}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <span style={{ fontWeight: 700, fontSize: 15 }}>{row.maYeuCau}</span>
-                <StatusTag tone={row.mucDo === 'KHAN_CAP' ? 'urgent' : row.mucDo === 'GAP' ? 'waiting' : 'neutral'}>
-                  {row.tenMucDo}
-                </StatusTag>
-              </div>
-
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>
-                  {row.toaNha} · P.{row.soPhong}
+          {dsMobile.map((row) => {
+            const nutChinh = nutChinhCuaViec(row)
+            const phong = row.soPhong.replace(/^P\.?\s*/i, '')
+            return (
+              <article
+                key={row.id}
+                className="m-card"
+                onClick={() => moChiTiet(row.id)}
+                style={styleViecMobile}
+                aria-labelledby={`viec-${row.id}`}
+                data-testid={`worker-task-row-${row.id}`}
+              >
+                <div className="spread">
+                  {row.trangThaiHieuLuc === 'DANG_XU_LY' ? (
+                    <span className="tag tag-info">
+                      <Icon name="hammer" size="sm" />
+                      {row.tenTrangThaiHieuLuc}
+                    </span>
+                  ) : (
+                    <StatusTag tone={row.trangThaiHieuLuc === 'DA_PHAN_CONG' ? 'waiting' : row.trangThaiHieuLuc === 'DA_DONG' ? 'done' : 'neutral'}>
+                      {row.trangThaiHieuLuc === 'DA_PHAN_CONG' ? 'Mới giao' : row.tenTrangThaiHieuLuc}
+                    </StatusTag>
+                  )}
+                  <span style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)' }}>
+                    {row.maYeuCau} · {ngayNganGon(row.taoLuc)}
+                  </span>
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)', marginTop: 2 }}>{row.hangMuc}</div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, color: 'var(--ma-text-secondary)' }}>
-                <span>Liên hệ: {row.nguoiLienHeHoTen}</span>
-                <StatusTag tone={row.trangThaiHieuLuc === 'DA_DONG' ? 'done' : row.trangThaiHieuLuc === 'CHO_XAC_NHAN' ? 'waiting' : 'neutral'}>
-                  {row.tenTrangThaiHieuLuc}
-                </StatusTag>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid var(--ma-border-default)', fontSize: 12 }}>
-                <span>
-                  Báo giá: <strong>{row.giaTriBaoGia ? `${dinhDangTien(row.giaTriBaoGia)} đ` : 'Chưa có'}</strong>
-                </span>
-                <Button variant="secondary" style={{ height: 32, padding: '0 12px', fontSize: 12 }}>
-                  Chi tiết →
-                </Button>
-              </div>
-            </div>
-          ))}
+                <h2 className="h3" id={`viec-${row.id}`} style={{ margin: 0, fontSize: 18 }}>
+                  {row.hangMuc}
+                </h2>
+                <p style={styleNoiLamViec}>
+                  <Icon name="pin" size="sm" />
+                  {row.toaNha} · Phòng {phong} · Tầng {row.tang}
+                </p>
+                {row.moTa ? <p className="t-sm t-2" style={styleMoTaNgan}>{row.moTa}</p> : null}
+                <div style={styleHangNut}>
+                  <a
+                    className="icon-btn touch boxed"
+                    href={`tel:${row.soDienThoaiLienHe}`}
+                    aria-label={`Gọi ${row.nguoiLienHeHoTen}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Icon name="phone" />
+                  </a>
+                  <Button
+                    variant={nutChinh.hanhDong === 'BAO_XONG' ? 'primary' : 'secondary'}
+                    className="btn-touch"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void handleNutChinh(row, nutChinh.hanhDong)
+                    }}
+                  >
+                    {nutChinh.hanhDong === 'BAO_XONG' ? <Icon name="check" /> : null}
+                    {nutChinh.nhan}
+                  </Button>
+                </div>
+              </article>
+            )
+          })}
         </div>
       ) : (
         /* Desktop Wide Table Layout */
@@ -1131,6 +1243,25 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
   )
 }
 
+type NhomMobile = 'DANG_LAM' | 'CHO_XAC_NHAN' | 'LICH_SU'
+type HanhDongChinh = 'NHAN_VIEC' | 'LAP_BAO_GIA' | 'BAO_XONG' | 'XEM'
+
+/** Đúng một nút chính trên thẻ, theo trạng thái việc và báo giá. */
+function nutChinhCuaViec(r: ThongTinViecThoRow): { hanhDong: HanhDongChinh; nhan: string } {
+  if (r.trangThaiHieuLuc === 'DA_PHAN_CONG') return { hanhDong: 'NHAN_VIEC', nhan: 'Nhận việc & khảo sát' }
+  if (r.trangThaiHieuLuc === 'DANG_XU_LY') {
+    if (r.trangThaiBaoGia === 'DA_DUYET') return { hanhDong: 'BAO_XONG', nhan: 'Báo xong' }
+    if (r.trangThaiBaoGia === 'NHAP' || r.trangThaiBaoGia === 'CHO_DUYET') return { hanhDong: 'XEM', nhan: 'Xem báo giá' }
+    return { hanhDong: 'LAP_BAO_GIA', nhan: 'Lập báo giá' }
+  }
+  return { hanhDong: 'XEM', nhan: 'Xem chi tiết' }
+}
+
+function ngayNganGon(iso: string): string {
+  const d = new Date(iso)
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
 function dichTrangThaiBaoGia(tt: string): string {
   switch (tt) {
     case 'NHAP': return 'Bản nháp'
@@ -1172,16 +1303,25 @@ const styleSelect: CSSProperties = {
   fontSize: 13.5,
 }
 
-const styleMobileCard: CSSProperties = {
-  background: 'var(--ma-bg-card)',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 10,
-  padding: 14,
-  display: 'grid',
-  gap: 10,
-  boxShadow: 'var(--ma-shadow-sm)',
-  cursor: 'pointer',
+const styleViecMobile: CSSProperties = { display: 'grid', gap: 10, cursor: 'pointer' }
+
+const styleNoiLamViec: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  margin: 0,
+  font: '500 14px/1.35 var(--ma-font-ui)',
+  color: 'var(--ma-text-secondary)',
 }
+
+const styleMoTaNgan: CSSProperties = { margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }
+
+const styleHangNut: CSSProperties = { display: 'grid', gridTemplateColumns: '48px minmax(0, 1fr)', gap: 8, marginTop: 4 }
+
+const styleTomTat: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }
+const styleOTomTat: CSSProperties = { background: 'var(--ma-bg-card)', borderRadius: 16, padding: 12 }
+const styleSoTomTat: CSSProperties = { display: 'block', font: '600 24px/1.1 var(--ma-font-ui)', letterSpacing: '-0.02em' }
+const styleNhanTomTat: CSSProperties = { font: 'var(--ma-text-caption)', color: 'var(--ma-text-secondary)' }
 
 const styleDrawerOverlay: CSSProperties = {
   position: 'fixed',

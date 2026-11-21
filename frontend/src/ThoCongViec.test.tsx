@@ -224,4 +224,62 @@ describe('ThoCongViec Component', () => {
       expect(container.textContent).toContain('Không tìm thấy công việc nào')
     })
   })
+
+  it('mobile: mỗi thẻ có đúng 1 nút chính theo trạng thái và số điện thoại bấm được', async () => {
+    const dong = (id: number, trangThaiHieuLuc: string, extra: object) => ({
+      ...mockJobList[0],
+      id,
+      maYeuCau: `SC-${id}`,
+      trangThai: trangThaiHieuLuc,
+      trangThaiHieuLuc,
+      tenTrangThaiHieuLuc: trangThaiHieuLuc,
+      ...extra,
+    })
+    const ds = [
+      dong(1, 'DA_PHAN_CONG', { giaTriBaoGia: undefined, trangThaiBaoGia: undefined }),
+      dong(2, 'DANG_XU_LY', { giaTriBaoGia: undefined, trangThaiBaoGia: undefined }),
+      dong(3, 'DANG_XU_LY', { trangThaiBaoGia: 'DA_DUYET' }),
+    ]
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
+      if (url.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(ds), { status: 200 })
+      throw new Error(`Unexpected ${url}`)
+    }))
+
+    root = createRoot(container)
+    await act(async () => {
+      root.render(<ThoCongViec token="worker-token" mobile />)
+    })
+
+    await vi.waitFor(() => expect(container.querySelectorAll('article').length).toBe(3))
+    const nhanNut = ds.map((d) => {
+      const nut = container.querySelectorAll(`[data-testid="worker-task-row-${d.id}"] .btn`)
+      expect(nut.length).toBe(1)
+      return nut[0].textContent
+    })
+    expect(nhanNut).toEqual(['Nhận việc & khảo sát', 'Lập báo giá', 'Báo xong'])
+    const tel = container.querySelector('a[href^="tel:"]')
+    expect(tel?.getAttribute('href')).toBe('tel:0987654321')
+  })
+
+  it('mobile: tab đếm theo nhóm và chỉ hiện việc của nhóm đang chọn', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
+      if (url.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(mockJobList), { status: 200 })
+      throw new Error(`Unexpected ${url}`)
+    }))
+
+    root = createRoot(container)
+    await act(async () => {
+      root.render(<ThoCongViec token="worker-token" mobile />)
+    })
+
+    await vi.waitFor(() => expect(container.querySelectorAll('article').length).toBe(1))
+    expect(Array.from(container.querySelectorAll('.tab')).map((t) => t.textContent)).toEqual(['Đang mở 1', 'Chờ xác nhận 0', 'Đã xong 1'])
+    await act(async () => {
+      ;(container.querySelectorAll('.tab')[2] as HTMLButtonElement).click()
+    })
+    expect(container.querySelector('[data-testid="worker-task-row-102"]')).not.toBeNull()
+    expect(container.querySelector('[data-testid="worker-task-row-101"]')).toBeNull()
+  })
 })
