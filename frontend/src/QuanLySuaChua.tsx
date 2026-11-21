@@ -4,8 +4,14 @@ import { managementRequest, type Worker } from './managementApi'
 import { BuildingSelect, Field, Feedback, SaveButton, fieldStyle, gridStyle, panelStyle, rowStyle, useAction, useBuildings } from './ManagementShared'
 import { Button } from './design/core/Button'
 import { QuanLyBaoGiaVaThanhToan } from './QuanLyBaoGiaVaThanhToan'
+import SuCoQuanLy from './SuCoQuanLy'
 
+// Quản lý → SuCoQuanLy (danh sách → chi tiết). Nhánh tenant giữ nguyên bên dưới (lô A làm A3).
 export default function QuanLySuaChua({ token, tenant = false }: { token: string; tenant?: boolean }) {
+  return tenant ? <QuanLySuaChuaKhach token={token} tenant /> : <SuCoQuanLy token={token} />
+}
+
+function QuanLySuaChuaKhach({ token, tenant = false }: { token: string; tenant?: boolean }) {
   const building = useBuildingsForRepair(token, tenant)
   const [rows,setRows]=useState<ThongTinYeuCauSuaChua[]>([])
   const [workers,setWorkers]=useState<Worker[]>([])

@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   capNhatTrangThaiLichHen,
   fetchPublicLichHen,
@@ -7,30 +7,50 @@ import {
   type ThongTinToaNha,
 } from './api'
 import { Button } from './design/core/Button'
+import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
-import { SysLabel } from './design/core/SysLabel'
+import { EmptyState } from './design/feedback/EmptyState'
+import { Card } from './design/layout/Card'
+import { Feedback } from './ManagementShared'
 
 type Props = {
   token: string
   mobile?: boolean
 }
 
-const TRANG_THAI_MAPPING: Record<string, { nhan: string; tone: 'waiting' | 'done' | 'urgent' | 'neutral' }> = {
-  CHO_XAC_NHAN: { nhan: 'CHỜ XÁC NHẬN', tone: 'urgent' },
-  DA_XAC_NHAN: { nhan: 'ĐÃ XÁC NHẬN', tone: 'waiting' },
-  DA_XEM: { nhan: 'ĐÃ XEM PHÒNG', tone: 'done' },
-  HUY: { nhan: 'ĐÃ HUỶ', tone: 'neutral' },
+const TRANG_THAI_MAPPING: Record<string, { nhan: string; tone: 'waiting' | 'done' | 'urgent' | 'neutral' | 'closed' }> = {
+  CHO_XAC_NHAN: { nhan: 'Chờ xác nhận', tone: 'urgent' },
+  DA_XAC_NHAN: { nhan: 'Đã xác nhận', tone: 'waiting' },
+  DA_XEM: { nhan: 'Đã xem phòng', tone: 'done' },
+  HUY: { nhan: 'Đã huỷ', tone: 'closed' },
 }
+const LOC = ['TAT_CA', 'CHO_XAC_NHAN', 'DA_XAC_NHAN', 'DA_XEM', 'HUY']
+const AVATAR = ['h1', 'h2', 'h3', 'h4', 'h5']
+const pad = (n: number) => String(n).padStart(2, '0')
 
 function dinhDangThoiGian(isoStr: string | null | undefined): string {
   if (!isoStr) return '—'
   const d = new Date(isoStr)
   if (isNaN(d.getTime())) return isoStr
-  const pad = (n: number) => String(n).padStart(2, '0')
   return `${pad(d.getHours())}:${pad(d.getMinutes())} - ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`
 }
 
-export default function QuanLyLichHen({ token, mobile = false }: Props) {
+const gio = (iso: string) => { const d = new Date(iso); return isNaN(d.getTime()) ? iso : `${pad(d.getHours())}:${pad(d.getMinutes())}` }
+const ngayKhoa = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+const khoaCuaLich = (iso: string) => { const d = new Date(iso); return isNaN(d.getTime()) ? 'khac' : ngayKhoa(d) }
+const chuCaiDau = (ten: string) => ten.trim().split(/\s+/).slice(-2).map((t) => t[0]?.toUpperCase() ?? '').join('')
+
+function nhanNgay(khoa: string): string {
+  const [y, m, d] = khoa.split('-')
+  if (!d) return 'Chưa rõ ngày'
+  const mai = new Date(); mai.setDate(mai.getDate() + 1)
+  const ngay = `${d}/${m}/${y}`
+  if (khoa === ngayKhoa(new Date())) return `Hôm nay · ${ngay}`
+  if (khoa === ngayKhoa(mai)) return `Ngày mai · ${ngay}`
+  return ngay
+}
+
+export default function QuanLyLichHen({ token }: Props) {
   const [danhSachLichHen, setDanhSachLichHen] = useState<LichHenXemPhong[]>([])
   const [danhSachToaNha, setDanhSachToaNha] = useState<ThongTinToaNha[]>([])
   const [dangTai, setDangTai] = useState(true)
@@ -64,6 +84,7 @@ export default function QuanLyLichHen({ token, mobile = false }: Props) {
   async function xuLyDoiTrangThai(id: number, trangThaiMoi: string) {
     try {
       await capNhatTrangThaiLichHen(token, id, trangThaiMoi)
+      setLoi(null)
       setThongBao('Đã cập nhật trạng thái lịch hẹn.')
       setDanhSachLichHen((prev) =>
         prev.map((lh) => (lh.id === id ? { ...lh, trangThai: trangThaiMoi } : lh))
@@ -74,400 +95,97 @@ export default function QuanLyLichHen({ token, mobile = false }: Props) {
     }
   }
 
-  const danhSachLoc = danhSachLichHen.filter((lh) => {
-    if (locTrangThai !== 'TAT_CA' && lh.trangThai !== locTrangThai) return false
-    return true
-  })
-
   const soChoXacNhan = danhSachLichHen.filter((lh) => lh.trangThai === 'CHO_XAC_NHAN').length
+  const dem = (tt: string) => (tt === 'TAT_CA' ? danhSachLichHen.length : danhSachLichHen.filter((lh) => lh.trangThai === tt).length)
+
+  // Hôm nay + sắp tới xếp tăng dần (việc cần làm trước); ngày đã qua xếp giảm dần phía sau.
+  const nhomTheoNgay = useMemo(() => {
+    const homNay = ngayKhoa(new Date())
+    const map = new Map<string, LichHenXemPhong[]>()
+    for (const lh of danhSachLichHen.filter((x) => locTrangThai === 'TAT_CA' || x.trangThai === locTrangThai)) {
+      const k = khoaCuaLich(lh.thoiGianHen)
+      map.set(k, [...(map.get(k) ?? []), lh])
+    }
+    const khoa = [...map.keys()]
+    const sapToi = khoa.filter((k) => k >= homNay).sort()
+    const daQua = khoa.filter((k) => k < homNay).sort().reverse()
+    return [...sapToi, ...daQua].map((k) => ({ khoa: k, ds: map.get(k)!.sort((a, b) => a.thoiGianHen.localeCompare(b.thoiGianHen)) }))
+  }, [danhSachLichHen, locTrangThai])
 
   return (
-    <div style={styleKhungChinh}>
-      {/* Tiêu đề & Thông tin dẫn nhập */}
-      <div style={styleTieuDeManHinh}>
-        <div>
-          <SysLabel>TIẾP NHẬN KHÁCH VÃNG LAI</SysLabel>
-          <h2 style={styleTieuDeH2}>Lịch Hẹn Xem Phòng Trực Tuyến</h2>
-          <p style={{ margin: '4px 0 0', color: 'var(--ma-text-secondary)', fontSize: 13 }}>
-            Danh sách khách đặt hẹn xem phòng từ trang chủ công khai. Quản lý cần gọi xác nhận trước khi khách đến.
-          </p>
+    <section style={{ display: 'grid', gap: 16, minWidth: 0 }} aria-labelledby="lich-hen-title">
+      <header className="topbar">
+        <div className="title-block">
+          <h1 className="h1" id="lich-hen-title">Lịch hẹn</h1>
+          <p className="sub">{soChoXacNhan} lịch hẹn mới cần gọi xác nhận · {danhSachLichHen.length} lịch hẹn xem phòng từ trang khám phá</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--ma-space-3)' }}>
-          <span style={styleHuyHieuCho}>
-            {soChoXacNhan} lịch hẹn mới cần gọi
-          </span>
-          <Button variant="secondary" size="sm" onClick={() => taiDuLieu()}>
-            Làm mới ↻
-          </Button>
-        </div>
-      </div>
-
-      {thongBao && (
-        <div style={styleThongBaoThanhCong}>
-          {thongBao}
-        </div>
-      )}
-
-      {/* Bộ lọc */}
-      <div style={styleThanhBoLoc}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, fontFamily: 'var(--ma-font-mono)', color: 'var(--ma-text-secondary)' }}>
-            TOÀ NHÀ:
-          </span>
-          <select
-            style={styleSelect}
-            value={locToaNhaId}
-            onChange={(e) => setLocToaNhaId(e.target.value === '' ? '' : Number(e.target.value))}
-          >
+        <div className="topbar-actions">
+          <label className="sr-only" htmlFor="lich-hen-toa">Toà nhà</label>
+          <select id="lich-hen-toa" className="select" style={{ width: 220 }} value={locToaNhaId} onChange={(e) => setLocToaNhaId(e.target.value === '' ? '' : Number(e.target.value))}>
             <option value="">Tất cả toà nhà</option>
-            {danhSachToaNha.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.ten}
-              </option>
-            ))}
+            {danhSachToaNha.map((t) => <option key={t.id} value={t.id}>{t.ten}</option>)}
           </select>
+          <Button variant="secondary" onClick={() => taiDuLieu()}><Icon name="history" />Làm mới</Button>
         </div>
+      </header>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, fontFamily: 'var(--ma-font-mono)', color: 'var(--ma-text-secondary)' }}>
-            TRẠNG THÁI:
-          </span>
-          {['TAT_CA', 'CHO_XAC_NHAN', 'DA_XAC_NHAN', 'DA_XEM', 'HUY'].map((tt) => {
-            const active = locTrangThai === tt
-            const nhan =
-              tt === 'TAT_CA'
-                ? 'Tất cả'
-                : TRANG_THAI_MAPPING[tt]?.nhan || tt
-            return (
-              <button
-                key={tt}
-                type="button"
-                onClick={() => setLocTrangThai(tt)}
-                style={{
-                  ...styleChipButton,
-                  background: active ? 'var(--ma-ink-900)' : 'var(--ma-bg-card)',
-                  color: active ? '#FFFFFF' : 'var(--ma-text-primary)',
-                  fontWeight: active ? 700 : 400,
-                }}
-              >
-                {nhan}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      <Feedback error={!dangTai && danhSachLichHen.length ? loi : null} success={thongBao} />
 
-      {/* Danh sách lịch hẹn */}
-      {dangTai ? (
-        <div style={styleKhungThongBao}>Đang tải danh sách lịch hẹn…</div>
-      ) : loi ? (
-        <div style={{ ...styleKhungThongBao, color: 'var(--ma-urgent)' }}>{loi}</div>
-      ) : danhSachLoc.length === 0 ? (
-        <div style={styleKhungThongBao}>
-          <SysLabel>KHÔNG CÓ LỊCH HẸN</SysLabel>
-          <p style={{ marginTop: 8, color: 'var(--ma-text-secondary)' }}>
-            Chưa có lịch hẹn xem phòng nào phù hợp với bộ lọc hiện tại.
-          </p>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gap: 'var(--ma-space-4)' }}>
-          {danhSachLoc.map((lh) => {
-            const tt = TRANG_THAI_MAPPING[lh.trangThai] || { nhan: lh.trangThai, tone: 'neutral' }
-
-            return (
-              <div key={lh.id} style={styleCardLichHen} data-testid={`lich-hen-item-${lh.id}`}>
-                <div style={styleCardLichTop}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={styleMaHen}>#{lh.id}</span>
-                      <StatusTag tone={tt.tone}>{tt.nhan}</StatusTag>
-                      <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>
-                        Tạo lúc: {dinhDangThoiGian(lh.taoLuc)}
-                      </span>
-                    </div>
-                    <div style={styleTenKhach}>
-                      {lh.hoTen}
-                    </div>
-                  </div>
-
-                  <div style={styleThoiGianHenKhoi}>
-                    <span style={{ fontSize: 11, fontFamily: 'var(--ma-font-mono)', color: 'var(--ma-text-secondary)' }}>
-                      THỜI GIAN HẸN XEM:
-                    </span>
-                    <span style={styleGioHen}>
-                      ⏰ {dinhDangThoiGian(lh.thoiGianHen)}
-                    </span>
-                  </div>
-                </div>
-
-                <div style={styleChiTietLichGrid}>
-                  <div>
-                    <span style={styleNhanNho}>PHÒNG QUAN TÂM</span>
-                    <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--ma-font-mono)', marginTop: 2 }}>
-                      Phòng {lh.soPhong} · {lh.tenToaNha}
-                    </div>
-                  </div>
-
-                  <div>
-                    <span style={styleNhanNho}>SỐ ĐIỆN THOẠI KHÁCH</span>
-                    <div style={{ marginTop: 2 }}>
-                      <a href={`tel:${lh.soDienThoai}`} style={styleLinkSdt}>
-                        📞 {lh.soDienThoai}
-                      </a>
-                    </div>
-                  </div>
-
-                  {lh.email && (
-                    <div>
-                      <span style={styleNhanNho}>EMAIL LIÊN HỆ</span>
-                      <div style={{ fontSize: 13, marginTop: 2 }}>
-                        ✉ {lh.email}
-                      </div>
-                    </div>
-                  )}
-
-                  {lh.ghiChu && (
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <span style={styleNhanNho}>GHI CHÚ CỦA KHÁCH:</span>
-                      <div style={styleGhiChuKhach}>
-                        "{lh.ghiChu}"
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Thao tác chuyển đổi trạng thái */}
-                <div style={styleThaoTacHang}>
-                  <div style={{ fontSize: 12, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>
-                    Cập nhật tiến trình tiếp khách:
-                  </div>
-
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {lh.trangThai === 'CHO_XAC_NHAN' && (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => xuLyDoiTrangThai(lh.id, 'DA_XAC_NHAN')}
-                      >
-                        ✓ Đã gọi xác nhận
-                      </Button>
-                    )}
-
-                    {lh.trangThai === 'DA_XAC_NHAN' && (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => xuLyDoiTrangThai(lh.id, 'DA_XEM')}
-                      >
-                        ✓ Khách đã xem phòng
-                      </Button>
-                    )}
-
-                    {lh.trangThai !== 'HUY' && lh.trangThai !== 'DA_XEM' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => xuLyDoiTrangThai(lh.id, 'HUY')}
-                      >
-                        Huỷ lịch hẹn
-                      </Button>
-                    )}
-
-                    {lh.trangThai === 'HUY' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => xuLyDoiTrangThai(lh.id, 'CHO_XAC_NHAN')}
-                      >
-                        Khôi phục lại
-                      </Button>
-                    )}
-                  </div>
-                </div>
+      {dangTai ? <EmptyState kind="loading" title="Đang tải danh sách lịch hẹn" />
+        : loi && !danhSachLichHen.length ? <EmptyState kind="error" title={loi} actionLabel="Tải lại" onAction={() => taiDuLieu()} />
+          : (
+            <Card>
+              <div className="table-toolbar" role="group" aria-label="Lọc theo trạng thái">
+                {LOC.map((tt) => (
+                  <button key={tt} type="button" className="chip" aria-pressed={locTrangThai === tt} onClick={() => setLocTrangThai(tt)}>
+                    {tt === 'TAT_CA' ? 'Tất cả' : TRANG_THAI_MAPPING[tt].nhan}<span className="n">{dem(tt)}</span>
+                  </button>
+                ))}
               </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
+
+              {nhomTheoNgay.length === 0 ? (
+                <EmptyState
+                  kind={danhSachLichHen.length ? 'filtered' : 'first'}
+                  title={danhSachLichHen.length ? 'Không có lịch hẹn ở trạng thái này.' : 'Chưa có lịch hẹn xem phòng nào.'}
+                  body={danhSachLichHen.length ? undefined : 'Khi khách đặt lịch xem phòng ở trang Khám phá, lịch hẹn sẽ hiện ở đây.'}
+                  actionLabel={danhSachLichHen.length ? 'Xem tất cả lịch hẹn' : undefined}
+                  onAction={() => setLocTrangThai('TAT_CA')}
+                />
+              ) : nhomTheoNgay.map(({ khoa, ds }) => (
+                <div key={khoa} className="stack" style={{ gap: 4, marginTop: 8 }}>
+                  <h2 className="h3" style={{ padding: '8px 12px 0' }}>{nhanNgay(khoa)} <span className="t-meta">· {ds.length} lịch</span></h2>
+                  {ds.map((lh) => {
+                    const tt = TRANG_THAI_MAPPING[lh.trangThai] || { nhan: lh.trangThai, tone: 'neutral' as const }
+                    return (
+                      <article key={lh.id} data-testid={`lich-hen-item-${lh.id}`} className="list-row" style={{ flexWrap: 'wrap', alignItems: 'flex-start', borderBottom: '1px solid var(--ma-line-100)', borderRadius: 0 }}>
+                        <span className={`avatar ${AVATAR[lh.id % AVATAR.length]}`} aria-hidden="true">{chuCaiDau(lh.hoTen)}</span>
+                        <div className="body" style={{ flex: '1 1 220px', display: 'grid', gap: 4 }}>
+                          <div className="row-wrap">
+                            <strong>{lh.hoTen}</strong>
+                            <StatusTag tone={tt.tone}>{tt.nhan}</StatusTag>
+                          </div>
+                          <div className="t-sm" style={{ color: 'var(--ma-text-secondary)' }}>
+                            Xem Phòng {lh.soPhong} · {lh.tenToaNha} · <strong style={{ color: 'var(--ma-text-primary)' }}>{gio(lh.thoiGianHen)}</strong> <span className="t-meta">(đặt lúc {dinhDangThoiGian(lh.taoLuc)})</span>
+                          </div>
+                          <div className="row-wrap t-sm">
+                            <a href={`tel:${lh.soDienThoai}`} style={{ color: 'var(--ma-text-link)', display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44 }}><Icon name="phone" />{lh.soDienThoai}</a>
+                            {lh.email && <span style={{ color: 'var(--ma-text-secondary)' }}>{lh.email}</span>}
+                          </div>
+                          {lh.ghiChu && <p className="t-sm card-sunken" style={{ padding: '8px 12px' }}>Ghi chú của khách: “{lh.ghiChu}”</p>}
+                        </div>
+                        <div className="row-wrap" style={{ flex: 'none' }}>
+                          {lh.trangThai === 'CHO_XAC_NHAN' && <Button variant="secondary" size="sm" onClick={() => xuLyDoiTrangThai(lh.id, 'DA_XAC_NHAN')}><Icon name="phone" />Đã gọi xác nhận</Button>}
+                          {lh.trangThai === 'DA_XAC_NHAN' && <Button variant="secondary" size="sm" onClick={() => xuLyDoiTrangThai(lh.id, 'DA_XEM')}><Icon name="check" />Khách đã xem phòng</Button>}
+                          {lh.trangThai !== 'HUY' && lh.trangThai !== 'DA_XEM' && <Button variant="text" size="sm" onClick={() => xuLyDoiTrangThai(lh.id, 'HUY')}>Huỷ lịch hẹn</Button>}
+                          {lh.trangThai === 'HUY' && <Button variant="secondary" size="sm" onClick={() => xuLyDoiTrangThai(lh.id, 'CHO_XAC_NHAN')}>Khôi phục lại</Button>}
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              ))}
+            </Card>
+          )}
+    </section>
   )
 }
-
-const styleKhungChinh: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 'var(--ma-space-6)',
-  maxWidth: '80rem',
-  width: '100%',
-  margin: '0 auto',
-  padding: 'clamp(var(--ma-space-4), 3vw, var(--ma-space-8))',
-}
-
-const styleTieuDeManHinh: CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  justifyContent: 'space-between',
-  flexWrap: 'wrap',
-  gap: 'var(--ma-space-4)',
-  paddingBottom: 'var(--ma-space-5)',
-  borderBottom: 'var(--ma-border-width-rule) solid var(--ma-ink-900)',
-}
-
-const styleTieuDeH2: CSSProperties = {
-  margin: 'var(--ma-space-2) 0 0',
-  fontSize: 'clamp(22px, 4vw, 32px)',
-  letterSpacing: 'var(--ma-tracking-title)',
-  fontWeight: 700,
-}
-
-const styleHuyHieuCho: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 12,
-  fontWeight: 700,
-  padding: '4px 12px',
-  background: 'var(--ma-urgent-bg)',
-  color: 'var(--ma-urgent)',
-  border: '1px solid var(--ma-urgent)',
-  borderRadius: 'var(--ma-radius-pill)',
-}
-
-const styleThongBaoThanhCong: CSSProperties = {
-  padding: 'var(--ma-space-3) var(--ma-space-4)',
-  background: 'var(--ma-done-bg)',
-  color: 'var(--ma-done-text)',
-  border: '1px solid var(--ma-done)',
-  borderRadius: 'var(--ma-radius)',
-  fontSize: 13,
-  fontFamily: 'var(--ma-font-mono)',
-}
-
-const styleThanhBoLoc: CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: 'var(--ma-space-4)',
-  padding: 'var(--ma-space-4)',
-  background: 'var(--ma-bg-card)',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 'var(--ma-radius-md)',
-  boxShadow: 'var(--ma-shadow-sm)',
-}
-
-const styleSelect: CSSProperties = {
-  minHeight: 36,
-  padding: '4px 10px',
-  border: '1px solid var(--ma-border-strong)',
-  background: 'var(--ma-bg-card)',
-  color: 'var(--ma-text-primary)',
-  fontFamily: 'var(--ma-font-ui)',
-  fontSize: 13,
-  borderRadius: 'var(--ma-radius)',
-}
-
-const styleChipButton: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 11,
-  padding: '4px 10px',
-  border: '1px solid var(--ma-border-dashed)',
-  cursor: 'pointer',
-  borderRadius: 'var(--ma-radius-pill)',
-  transition: 'all 0.15s ease',
-}
-
-const styleKhungThongBao: CSSProperties = {
-  border: '1px dashed var(--ma-border-dashed)',
-  background: 'var(--ma-bg-card)',
-  borderRadius: 'var(--ma-radius-md)',
-  padding: 'var(--ma-space-8)',
-  textAlign: 'center',
-}
-
-const styleCardLichHen: CSSProperties = {
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 'var(--ma-radius-md)',
-  boxShadow: 'var(--ma-shadow-sm)',
-  background: 'var(--ma-bg-card)',
-  padding: 'var(--ma-space-5)',
-  display: 'grid',
-  gap: 'var(--ma-space-4)',
-  transition: 'box-shadow 0.2s ease',
-}
-
-const styleCardLichTop: CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'flex-start',
-  flexWrap: 'wrap',
-  gap: 'var(--ma-space-3)',
-  borderBottom: '1px solid var(--ma-border-subtle)',
-  paddingBottom: 'var(--ma-space-3)',
-}
-
-const styleMaHen: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 14,
-  fontWeight: 700,
-  color: 'var(--ma-ink-900)',
-}
-
-const styleTenKhach: CSSProperties = {
-  fontSize: 18,
-  fontWeight: 700,
-}
-
-const styleThoiGianHenKhoi: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-end',
-  gap: 2,
-}
-
-const styleGioHen: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 14,
-  fontWeight: 700,
-  color: 'var(--ma-ink-900)',
-}
-
-const styleChiTietLichGrid: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-  gap: 'var(--ma-space-4)',
-}
-
-const styleNhanNho: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 10,
-  letterSpacing: '0.06em',
-  color: 'var(--ma-text-secondary)',
-}
-
-const styleLinkSdt: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 15,
-  fontWeight: 700,
-  color: 'var(--ma-ink-900)',
-  textDecoration: 'none',
-}
-
-const styleGhiChuKhach: CSSProperties = {
-  padding: 'var(--ma-space-3)',
-  background: 'var(--ma-bg-sunken)',
-  borderLeft: '3px solid var(--ma-ink-900)',
-  borderRadius: '0 var(--ma-radius) var(--ma-radius) 0',
-  fontSize: 13,
-  fontStyle: 'italic',
-  marginTop: 4,
-}
-
-const styleThaoTacHang: CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  flexWrap: 'wrap',
-  gap: 'var(--ma-space-3)',
-  paddingTop: 'var(--ma-space-3)',
-  borderTop: '1px dashed var(--ma-border-dashed)',
-}
-

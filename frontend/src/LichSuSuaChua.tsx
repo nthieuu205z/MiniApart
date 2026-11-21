@@ -13,8 +13,10 @@ import {
 } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { EmptyState } from './design/feedback/EmptyState'
-import { SysLabel } from './design/core/SysLabel'
-import { ScreenHeader, ScreenNotice, ScreenSurface } from './design/layout/Screen'
+import { StatusTag } from './design/core/StatusTag'
+import { Field } from './design/forms/Field'
+import { Card } from './design/layout/Card'
+import { Feedback } from './ManagementShared'
 
 type Props = { token: string; mobile?: boolean }
 
@@ -112,73 +114,76 @@ export function LichSuSuaChua({ token, mobile = false }: Props): React.ReactElem
   }
 
   return (
-    <ScreenSurface data-testid="repair-history-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'} aria-labelledby="repair-history-title">
-      <ScreenHeader>
-        <SysLabel>LỊCH SỬ BẢO TRÌ</SysLabel>
-        <h3 id="repair-history-title" style={{ margin: '8px 0 0' }}>Lịch sử sửa chữa</h3>
-        <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)' }}>Tra cứu theo toà, phòng hoặc hạng mục. Không phải báo cáo theo kỳ.</p>
-      </ScreenHeader>
+    <Card data-testid="repair-history-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'} aria-labelledby="repair-history-title">
+      <div className="stack">
+        <div>
+          <h2 className="h2" id="repair-history-title">Lịch sử sửa chữa</h2>
+          <p className="t-sm" style={{ color: 'var(--ma-text-secondary)', marginTop: 4 }}>Tra cứu theo toà, phòng hoặc hạng mục. Không phải báo cáo theo kỳ.</p>
+        </div>
 
-      <section aria-label="Bộ lọc lịch sử sửa chữa" style={styleBoLoc}>
-        <label style={styleNhan}>Toà nhà
-          <select name="toaNhaId" value={boLoc.toaNhaId} onChange={(event) => capNhatBoLoc({ toaNhaId: event.target.value, phongId: '' })} style={styleInput}>
-            <option value="">Tất cả toà được phân quyền</option>
-            {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
-          </select>
-        </label>
-        <label style={styleNhan}>Phòng
-          <select name="phongId" value={boLoc.phongId} disabled={!boLoc.toaNhaId} onChange={(event) => capNhatBoLoc({ phongId: event.target.value })} style={styleInput}>
-            <option value="">Tất cả phòng</option>
-            {phong.map((item) => <option key={item.id} value={item.id ?? ''}>Phòng {item.soPhong}</option>)}
-          </select>
-        </label>
-        <label style={styleNhan}>Hạng mục
-          <input name="hangMuc" value={boLoc.hangMuc} onChange={(event) => capNhatBoLoc({ hangMuc: event.target.value })} placeholder="Ví dụ: Điện" style={styleInput} />
-        </label>
-        <label style={styleCheckbox}><input type="checkbox" checked={boLoc.hienThiDaHuy} onChange={(event) => capNhatBoLoc({ hienThiDaHuy: event.target.checked })} /> Hiện yêu cầu đã huỷ</label>
-        <label style={styleCheckbox}>
-          <input
-            data-repair-filter-over-48-hours
-            type="checkbox"
-            checked={boLoc.boLocVanHanh === 'TON_DONG_QUA_48_GIO'}
-            onChange={(event) => capNhatBoLoc({ boLocVanHanh: event.target.checked ? 'TON_DONG_QUA_48_GIO' : '' })}
-          />
-          Chỉ hiện tồn đọng quá 48 giờ
-        </label>
-      </section>
+        <section aria-label="Bộ lọc lịch sử sửa chữa" style={styleBoLoc}>
+          <Field label="Toà nhà">
+            <select className="select" name="toaNhaId" value={boLoc.toaNhaId} onChange={(event) => capNhatBoLoc({ toaNhaId: event.target.value, phongId: '' })}>
+              <option value="">Tất cả toà được phân quyền</option>
+              {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
+            </select>
+          </Field>
+          <Field label="Phòng">
+            <select className="select" name="phongId" value={boLoc.phongId} disabled={!boLoc.toaNhaId} onChange={(event) => capNhatBoLoc({ phongId: event.target.value })}>
+              <option value="">Tất cả phòng</option>
+              {phong.map((item) => <option key={item.id} value={item.id ?? ''}>Phòng {item.soPhong}</option>)}
+            </select>
+          </Field>
+          <Field label="Hạng mục">
+            <input className="input" name="hangMuc" value={boLoc.hangMuc} onChange={(event) => capNhatBoLoc({ hangMuc: event.target.value })} placeholder="Ví dụ: Điện" />
+          </Field>
+          <div style={styleCheckboxes}>
+            <label className="check" style={styleCheckbox}><input type="checkbox" checked={boLoc.hienThiDaHuy} onChange={(event) => capNhatBoLoc({ hienThiDaHuy: event.target.checked })} /> Hiện yêu cầu đã huỷ</label>
+            <label className="check" style={styleCheckbox}>
+              <input
+                data-repair-filter-over-48-hours
+                type="checkbox"
+                checked={boLoc.boLocVanHanh === 'TON_DONG_QUA_48_GIO'}
+                onChange={(event) => capNhatBoLoc({ boLocVanHanh: event.target.checked ? 'TON_DONG_QUA_48_GIO' : '' })}
+              />
+              Chỉ hiện tồn đọng quá 48 giờ
+            </label>
+          </div>
+        </section>
 
-      {boLoc.boLocVanHanh === 'TON_DONG_QUA_48_GIO' ? (
-        <p data-active-repair-filter style={styleActiveFilter}>Đang lọc: Tồn đọng quá 48 giờ</p>
-      ) : null}
+        {boLoc.boLocVanHanh === 'TON_DONG_QUA_48_GIO' ? (
+          <p data-active-repair-filter className="row-wrap"><StatusTag tone="waiting">Đang lọc: Tồn đọng quá 48 giờ</StatusTag></p>
+        ) : null}
 
-      {yeuCauId !== undefined
-        ? dangTaiChiTiet ? <p aria-live="polite">Đang tải chi tiết yêu cầu sửa chữa…</p>
-          : loiChiTiet ? <div role="alert"><ScreenNotice tone="urgent">{loiChiTiet}</ScreenNotice></div>
-            : chiTiet ? <ChiTietSuaChua yeuCau={chiTiet} mobile={mobile} /> : null
-        : !coBoLoc ? <EmptyState data-repair-history-first-empty title="Chọn ít nhất một bộ lọc để tra cứu lịch sử sửa chữa." body="Kết quả sẽ chỉ hiển thị trong phạm vi toà nhà bạn được phân quyền." />
-        : dangTai ? <p aria-live="polite">Đang tải lịch sử sửa chữa…</p>
-          : loi ? <div role="alert"><ScreenNotice tone="urgent">{loi}</ScreenNotice></div>
-              : ketQua?.yeuCau.length === 0 ? <EmptyState data-repair-history-filter-empty title="Không có yêu cầu sửa chữa phù hợp bộ lọc." body="Hãy đổi toà, phòng hoặc hạng mục để tra cứu lại." />
-                : ketQua ? <KetQuaLichSu ketQua={ketQua} mobile={mobile} /> : null}
-    </ScreenSurface>
+        {yeuCauId !== undefined
+          ? dangTaiChiTiet ? <EmptyState kind="loading" title="Đang tải chi tiết yêu cầu sửa chữa" />
+            : loiChiTiet ? <Feedback error={loiChiTiet} />
+              : chiTiet ? <ChiTietSuaChua yeuCau={chiTiet} mobile={mobile} /> : null
+          : !coBoLoc ? <EmptyState data-repair-history-first-empty title="Chọn ít nhất một bộ lọc để tra cứu lịch sử sửa chữa." body="Kết quả sẽ chỉ hiển thị trong phạm vi toà nhà bạn được phân quyền." />
+          : dangTai ? <EmptyState kind="loading" title="Đang tải lịch sử sửa chữa" />
+            : loi ? <EmptyState kind="error" title={loi} />
+                : ketQua?.yeuCau.length === 0 ? <EmptyState kind="filtered" data-repair-history-filter-empty title="Không có yêu cầu sửa chữa phù hợp bộ lọc." body="Hãy đổi toà, phòng hoặc hạng mục để tra cứu lại." />
+                  : ketQua ? <KetQuaLichSu ketQua={ketQua} mobile={mobile} /> : null}
+      </div>
+    </Card>
   )
 }
 
 function KetQuaLichSu({ ketQua, mobile }: { ketQua: ThongTinLichSuSuaChua; mobile: boolean }) {
-  return <section style={{ display: 'grid', gap: 16 }}>
-    <div style={styleTong} aria-label="Tổng chi phí sửa chữa">
+  return <section className="stack">
+    <div className="row-wrap card-sunken" style={{ gap: 24 }} aria-label="Tổng chi phí sửa chữa">
       <strong>Chủ nhà chịu: {dinhDangTien(ketQua.tongChiPhiChuNha)} ₫</strong>
       <strong>Người thuê chịu: {dinhDangTien(ketQua.tongChiPhiNguoiThue)} ₫</strong>
     </div>
-    <div style={mobile ? { display: 'grid', gap: 10 } : styleBang}>
+    <div>
       {ketQua.yeuCau.map((item) => <article key={item.id} data-repair-history-item={item.id} style={mobile ? styleDongMobile : styleDong}>
         <div style={styleDongChinh}>
           <strong>Phòng {item.soPhong} · {item.hangMuc}</strong>
-          <span>{item.moTa}</span>
+          <span className="t-sm" style={{ color: 'var(--ma-text-secondary)' }}>{item.moTa}</span>
         </div>
-        <span>{item.toaNha} · {dinhDangNgayIso(ngayDiaPhuongTuInstant(item.taoLuc))}</span>
-        <span>{item.tenTrangThai}</span>
-        <span>{item.chiPhi === null ? 'Chưa ghi chi phí' : `${dinhDangTien(item.chiPhi)} ₫`}{item.benChiuChiPhi ? ` · ${item.benChiuChiPhi === 'CHU_NHA' ? 'Chủ nhà chịu' : 'Người thuê chịu'}` : ''}</span>
+        <span className="t-sm">{item.toaNha} · {dinhDangNgayIso(ngayDiaPhuongTuInstant(item.taoLuc))}</span>
+        <span><StatusTag tone={item.trangThai === 'DA_DONG' ? 'done' : item.trangThai === 'DA_HUY' ? 'closed' : 'waiting'}>{item.tenTrangThai}</StatusTag></span>
+        <span className="t-sm">{item.chiPhi === null ? 'Chưa ghi chi phí' : `${dinhDangTien(item.chiPhi)} ₫`}{item.benChiuChiPhi ? ` · ${item.benChiuChiPhi === 'CHU_NHA' ? 'Chủ nhà chịu' : 'Người thuê chịu'}` : ''}</span>
       </article>)}
     </div>
   </section>
@@ -186,10 +191,9 @@ function KetQuaLichSu({ ketQua, mobile }: { ketQua: ThongTinLichSuSuaChua; mobil
 
 function ChiTietSuaChua({ yeuCau, mobile }: { yeuCau: ThongTinYeuCauSuaChua; mobile: boolean }): React.ReactElement {
   return (
-    <section data-repair-detail={yeuCau.id} aria-label={`Chi tiết yêu cầu sửa chữa ${yeuCau.id}`} style={{ ...styleTong, display: 'grid', gap: 10, gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))' }}>
+    <section data-repair-detail={yeuCau.id} aria-label={`Chi tiết yêu cầu sửa chữa ${yeuCau.id}`} className="card-sunken" style={{ display: 'grid', gap: 10, gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))' }}>
       <div style={{ display: 'grid', gap: 5 }}>
-        <SysLabel>CHI TIẾT SỰ CỐ</SysLabel>
-        <h4 style={{ margin: 0 }}>Yêu cầu #{yeuCau.id} · {yeuCau.hangMuc}</h4>
+        <h3 className="h3">Yêu cầu #{yeuCau.id} · {yeuCau.hangMuc}</h3>
         <strong>{yeuCau.moTa}</strong>
       </div>
       <div style={{ display: 'grid', gap: 5 }}>
@@ -260,13 +264,9 @@ function dongBoBoLocVaoUrl(boLoc: BoLocTrang) {
   window.history.replaceState({}, '', `/su-co${query.toString() ? `?${query}` : ''}`)
 }
 
-const styleBoLoc: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 12rem), 1fr))', gap: 12 }
-const styleNhan: CSSProperties = { display: 'grid', gap: 6, font: 'var(--ma-text-body)' }
-const styleInput: CSSProperties = { minHeight: 'var(--ma-hit-mobile)', padding: '8px 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 'var(--ma-radius)', background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'inherit' }
+const styleBoLoc: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 12rem), 1fr))', gap: 12, alignItems: 'end' }
+const styleCheckboxes: CSSProperties = { display: 'grid', gap: 4, gridColumn: '1 / -1' }
 const styleCheckbox: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, minHeight: 'var(--ma-hit-mobile)', font: 'var(--ma-text-body)' }
-const styleActiveFilter: CSSProperties = { margin: 0, padding: '10px 12px', borderLeft: '4px solid var(--ma-ink-900)', background: 'var(--ma-bg-sunken)', fontWeight: 700 }
-const styleTong: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 16, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)' }
-const styleBang: CSSProperties = { display: 'grid', gap: 1, border: '1px solid var(--ma-border-default)' }
-const styleDong: CSSProperties = { display: 'grid', gridTemplateColumns: 'minmax(12rem, 1fr) repeat(3, minmax(8rem, auto))', gap: 12, padding: 14, background: 'var(--ma-bg-card)', borderBottom: '1px solid var(--ma-border-subtle)', alignItems: 'center', minWidth: 0 }
+const styleDong: CSSProperties = { display: 'grid', gridTemplateColumns: 'minmax(12rem, 1fr) repeat(3, minmax(8rem, auto))', gap: 12, padding: '14px 0', borderBottom: '1px solid var(--ma-line-100)', alignItems: 'center', minWidth: 0 }
 const styleDongMobile: CSSProperties = { ...styleDong, gridTemplateColumns: 'minmax(0, 1fr)', gap: 8, overflowWrap: 'anywhere' }
 const styleDongChinh: CSSProperties = { display: 'grid', gap: 4, minWidth: 0, overflowWrap: 'anywhere' }

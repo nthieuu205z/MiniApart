@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   ApiError,
   danhDauThongBaoDaDoc,
@@ -18,9 +18,12 @@ import {
   type YeuCauThongBaoChung,
 } from './api'
 import { Button } from './design/core/Button'
+import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
-import { SysLabel } from './design/core/SysLabel'
 import { EmptyState } from './design/feedback/EmptyState'
+import { Field } from './design/forms/Field'
+import { Card } from './design/layout/Card'
+import { Feedback } from './ManagementShared'
 
 export type ThongBaoProps = {
   token: string
@@ -39,6 +42,7 @@ export function ThongBao({ token, mobile = false, vaiTro, onUnreadCountChange }:
   const [dangDanhDau, setDangDanhDau] = useState<Set<string>>(() => new Set())
   const [loiHanhDong, setLoiHanhDong] = useState<string | null>(null)
   const [anhUrls, setAnhUrls] = useState<Record<number, string>>({})
+  const [moSoan, setMoSoan] = useState(false)
   const anhUrlsRef = useRef<Record<number, string>>({})
 
   const taiHopThongBao = useCallback(async () => {
@@ -108,68 +112,40 @@ export function ThongBao({ token, mobile = false, vaiTro, onUnreadCountChange }:
   }
 
   const soChuaDoc = hopThongBao?.soChuaDoc ?? 0
+  const coQuyenSoan = vaiTro === 'CHU' || vaiTro === 'QUAN_LY'
 
   return (
     <div
       className="ma-notification-screen"
       data-testid="notification-screen"
       aria-busy={dangTai || undefined}
-      style={{
-        minHeight: '100%',
-        minWidth: 0,
-        display: 'grid',
-        gap: 'var(--ma-space-7)',
-        alignContent: 'start',
-        ...(mobile ? { paddingBottom: 'var(--ma-space-8)' } : {}),
-      }}
+      style={{ minHeight: '100%', minWidth: 0, display: 'grid', gap: 16, alignContent: 'start' }}
     >
-      <header className="ma-notification-header" style={{ display: 'grid', gap: 'var(--ma-space-3)', paddingBottom: 'var(--ma-space-5)', borderBottom: '2px solid var(--ma-ink-900)' }}>
-        <SysLabel tone="primary">TRUNG TÂM THÔNG BÁO</SysLabel>
-        <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between', gap: 'var(--ma-space-5)', flexWrap: 'wrap' }}>
-          <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
-            <h1 style={{ margin: 0, font: 'var(--ma-text-screen-title)', letterSpacing: 'var(--ma-tracking-title)' }}>{dangXemLuuTru ? 'Kho lưu trữ' : 'Thông báo'}</h1>
-            <p style={{ margin: 0, color: 'var(--ma-text-secondary)', font: 'var(--ma-text-body)' }}>
-              {dangXemLuuTru ? 'Lịch sử được giữ lại sau khi thông báo hết hạn.' : 'Cập nhật về việc sửa chữa, hoá đơn và vận hành toà nhà.'}
-            </p>
-          </div>
-          {hopThongBao && !dangXemLuuTru ? (
-            <span
-              data-testid="notification-unread-count"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                minHeight: 'var(--ma-hit-mobile)',
-                padding: '0 var(--ma-space-4)',
-                border: '1px solid',
-                borderColor: soChuaDoc > 0 ? 'var(--ma-urgent)' : 'var(--ma-border-default)',
-                background: soChuaDoc > 0 ? 'var(--ma-urgent-bg)' : 'var(--ma-bg-sunken)',
-                color: soChuaDoc > 0 ? 'var(--ma-urgent)' : 'var(--ma-text-secondary)',
-                font: 'var(--ma-text-caption)',
-                fontWeight: 700,
-              }}
-            >
-              {soChuaDoc} chưa đọc
-            </span>
-          ) : null}
+      <header className="topbar ma-notification-header">
+        <div className="title-block">
+          <h1 className="h1">{dangXemLuuTru ? 'Kho lưu trữ' : 'Thông báo'}</h1>
+          <p className="sub">{dangXemLuuTru ? 'Lịch sử được giữ lại sau khi thông báo hết hạn.' : 'Cập nhật về việc sửa chữa, hoá đơn và vận hành toà nhà.'}</p>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--ma-space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
-          <Button variant={dangXemLuuTru ? 'secondary' : 'primary'} size="sm" onClick={() => setDangXemLuuTru(false)}>
-            Hộp thư
-          </Button>
-          <Button variant={dangXemLuuTru ? 'primary' : 'secondary'} size="sm" onClick={() => setDangXemLuuTru(true)}>
-            Kho lưu trữ
-          </Button>
-          {!dangXemLuuTru && (vaiTro === 'CHU' || vaiTro === 'QUAN_LY') ? <ThongBaoChungForm token={token} mobile={mobile} /> : null}
+        <div className="topbar-actions">
+          {hopThongBao && !dangXemLuuTru ? (
+            <StatusTag data-testid="notification-unread-count" role="status" aria-live="polite" aria-atomic="true" tone={soChuaDoc > 0 ? 'urgent' : 'neutral'} icon="bell">
+              {soChuaDoc} chưa đọc
+            </StatusTag>
+          ) : null}
+          {!dangXemLuuTru && coQuyenSoan && !moSoan ? <Button data-testid="open-common-notification" variant="primary" onClick={() => setMoSoan(true)}><Icon name="megaphone" />Soạn thông báo chung</Button> : null}
         </div>
       </header>
 
+      <div className="table-toolbar" role="group" aria-label="Hộp thông báo" style={{ marginBottom: 0 }}>
+        <button type="button" className="chip" aria-pressed={!dangXemLuuTru} onClick={() => setDangXemLuuTru(false)}>Hộp thư</button>
+        <button type="button" className="chip" aria-pressed={dangXemLuuTru} onClick={() => setDangXemLuuTru(true)}>Kho lưu trữ</button>
+      </div>
+
+      {!dangXemLuuTru && coQuyenSoan && moSoan ? <ThongBaoChungForm token={token} mobile={mobile} onDong={() => setMoSoan(false)} /> : null}
+
       {dangTai ? (
-        <section data-testid="notification-loading" aria-label="Đang tải hộp thông báo" style={{ display: 'grid', gap: 'var(--ma-space-4)' }}>
-          <div aria-hidden="true" style={{ height: 96, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }} />
-          <p style={{ margin: 0, color: 'var(--ma-text-secondary)', font: 'var(--ma-text-body)' }} aria-live="polite">Đang tải thông báo…</p>
+        <section data-testid="notification-loading" aria-label="Đang tải hộp thông báo">
+          <EmptyState kind="loading" title="Đang tải thông báo" />
         </section>
       ) : loiTai ? (
         <EmptyState
@@ -189,76 +165,70 @@ export function ThongBao({ token, mobile = false, vaiTro, onUnreadCountChange }:
           body={dangXemLuuTru ? 'Thông báo hết hạn sẽ được giữ lại tại đây.' : 'Các cập nhật mới sẽ xuất hiện ở đây.'}
         />
       ) : (
-        <section aria-label={dangXemLuuTru ? 'Danh sách thông báo lưu trữ' : 'Danh sách thông báo'} className="ma-notification-list" style={{ display: 'grid', gap: 'var(--ma-space-4)' }}>
-          {hopThongBao.thongBao.map((thongBao) => (
-            <article
-              key={thongBao.maThamChieu}
-              data-testid="notification-item"
-              data-read={thongBao.daDoc ? 'true' : 'false'}
-              style={{
-                display: 'grid',
-                gap: 'var(--ma-space-4)',
-                minWidth: 0,
-                padding: 'var(--ma-space-6)',
-                border: '1px solid var(--ma-border-default)',
-                borderLeft: `4px solid ${dangXemLuuTru ? 'var(--ma-border-strong)' : thongBao.daDoc ? 'var(--ma-border-default)' : 'var(--ma-urgent)'}`,
-                background: 'var(--ma-bg-card)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--ma-space-4)', flexWrap: 'wrap' }}>
-                <div style={{ display: 'grid', gap: 'var(--ma-space-2)', minWidth: 0 }}>
-                  <StatusTag tone={dangXemLuuTru ? 'neutral' : thongBao.daDoc ? 'neutral' : 'urgent'}>
-                    {dangXemLuuTru ? 'Đã lưu trữ' : thongBao.daDoc ? 'Đã đọc' : 'Chưa đọc'}
-                  </StatusTag>
-                  <h2 style={{ margin: 0, font: 'var(--ma-text-block-title)', overflowWrap: 'anywhere' }}>{thongBao.tieuDe}</h2>
-                </div>
-                <div style={{ display: 'grid', gap: 'var(--ma-space-1)', justifyItems: 'end', color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)', whiteSpace: 'nowrap' }}>
-                  <time dateTime={thongBao.taoLuc}>{dinhDangThoiGian(thongBao.taoLuc)}</time>
-                  {thongBao.hetHanLuc ? <time dateTime={thongBao.hetHanLuc}>Hết hạn: {dinhDangThoiGian(thongBao.hetHanLuc)}</time> : null}
-                </div>
-              </div>
+        <Card>
+          <section aria-label={dangXemLuuTru ? 'Danh sách thông báo lưu trữ' : 'Danh sách thông báo'} className="ma-notification-list stack" style={{ gap: 0 }}>
+            {hopThongBao.thongBao.map((thongBao) => {
+              const chuaDoc = !dangXemLuuTru && !thongBao.daDoc
+              return (
+                <article
+                  key={thongBao.maThamChieu}
+                  data-testid="notification-item"
+                  data-read={thongBao.daDoc ? 'true' : 'false'}
+                  className="list-row"
+                  style={{ alignItems: 'flex-start', padding: '16px 8px', borderRadius: 0, borderBottom: '1px solid var(--ma-line-100)' }}
+                >
+                  <span className={`avatar ${chuaDoc ? 'h1' : 'h4'}`} aria-hidden="true"><Icon name={dangXemLuuTru ? 'history' : 'bell'} /></span>
+                  <div className="body" style={{ display: 'grid', gap: 8 }}>
+                    <div className="row-wrap" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div className="row-wrap" style={{ minWidth: 0 }}>
+                        <h2 className="h3" style={{ overflowWrap: 'anywhere', fontWeight: chuaDoc ? 700 : 500 }}>{thongBao.tieuDe}</h2>
+                        <StatusTag tone={dangXemLuuTru ? 'closed' : thongBao.daDoc ? 'done' : 'urgent'} icon={dangXemLuuTru ? 'history' : thongBao.daDoc ? 'check' : 'bell'}>
+                          {dangXemLuuTru ? 'Đã lưu trữ' : thongBao.daDoc ? 'Đã đọc' : 'Chưa đọc'}
+                        </StatusTag>
+                      </div>
+                      <div className="t-meta" style={{ display: 'grid', justifyItems: 'end' }}>
+                        <time dateTime={thongBao.taoLuc}>{dinhDangThoiGian(thongBao.taoLuc)}</time>
+                        {thongBao.hetHanLuc ? <time dateTime={thongBao.hetHanLuc}>Hết hạn: {dinhDangThoiGian(thongBao.hetHanLuc)}</time> : null}
+                      </div>
+                    </div>
 
-              <p style={{ margin: 0, color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)', lineHeight: 1.6, overflowWrap: 'anywhere' }}>
-                {thongBao.noiDung}
-              </p>
+                    <p style={{ overflowWrap: 'anywhere', lineHeight: 1.6 }}>{thongBao.noiDung}</p>
 
-              {thongBao.anh?.length ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 'var(--ma-space-3)' }} aria-label="Ảnh đính kèm">
-                  {thongBao.anh.map((image) => anhUrls[image.id] ? (
-                    <img key={image.id} src={anhUrls[image.id]} alt="Đính kèm thông báo" style={{ display: 'block', width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', border: '1px solid var(--ma-border-default)' }} />
-                  ) : <span key={image.id} style={{ color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)' }}>Ảnh không còn khả dụng</span>)}
-                </div>
-              ) : null}
+                    {thongBao.anh?.length ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 220px))', gap: 12 }} aria-label="Ảnh đính kèm">
+                        {thongBao.anh.map((image) => anhUrls[image.id] ? (
+                          <img key={image.id} src={anhUrls[image.id]} alt="Đính kèm thông báo" style={{ display: 'block', width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 'var(--ma-radius-md)' }} />
+                        ) : <span key={image.id} className="t-meta">Ảnh không còn khả dụng</span>)}
+                      </div>
+                    ) : null}
 
-              {!dangXemLuuTru && !thongBao.daDoc ? (
-                <div style={{ display: 'grid', gap: 'var(--ma-space-3)', justifyItems: 'start' }}>
-                  <Button
-                    data-testid="mark-read"
-                    variant="secondary"
-                    size="sm"
-                    blocked={dangDanhDau.has(thongBao.maThamChieu)}
-                    onClick={() => void xuLyDanhDauDaDoc(thongBao)}
-                    style={{ minHeight: 'var(--ma-hit-mobile)' }}
-                  >
-                    {dangDanhDau.has(thongBao.maThamChieu) ? 'Đang cập nhật…' : 'Đánh dấu đã đọc'}
-                  </Button>
-                  {loiHanhDong === thongBao.maThamChieu ? (
-                    <span role="alert" style={{ color: 'var(--ma-urgent)', font: 'var(--ma-text-caption)' }}>
-                      Không thể cập nhật thông báo. Thử lại sau.
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
-            </article>
-          ))}
-        </section>
+                    {chuaDoc ? (
+                      <div className="row-wrap">
+                        <Button
+                          data-testid="mark-read"
+                          variant="secondary"
+                          size="sm"
+                          blocked={dangDanhDau.has(thongBao.maThamChieu)}
+                          onClick={() => void xuLyDanhDauDaDoc(thongBao)}
+                          style={{ minHeight: 'var(--ma-hit-mobile)' }}
+                        >
+                          {dangDanhDau.has(thongBao.maThamChieu) ? 'Đang cập nhật…' : 'Đánh dấu đã đọc'}
+                        </Button>
+                        {loiHanhDong === thongBao.maThamChieu ? <Feedback error="Không thể cập nhật thông báo. Thử lại sau." /> : null}
+                      </div>
+                    ) : null}
+                  </div>
+                </article>
+              )
+            })}
+          </section>
+        </Card>
       )}
     </div>
   )
 }
 
-function ThongBaoChungForm({ token, mobile }: { token: string; mobile: boolean }) {
-  const [mo, setMo] = useState(false)
+function ThongBaoChungForm({ token, mobile, onDong }: { token: string; mobile: boolean; onDong: () => void }) {
   const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
   const [phong, setPhong] = useState<ThongTinPhong[]>([])
   const [toaNhaId, setToaNhaId] = useState('')
@@ -276,7 +246,6 @@ function ThongBaoChungForm({ token, mobile }: { token: string; mobile: boolean }
   const khoaChongLapRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!mo) return
     let mounted = true
     void fetchToaNha(token).then((items) => {
       if (!mounted) return
@@ -286,10 +255,10 @@ function ThongBaoChungForm({ token, mobile }: { token: string; mobile: boolean }
       if (mounted) setLoi(reason instanceof Error ? reason.message : 'Không thể tải toà nhà.')
     })
     return () => { mounted = false }
-  }, [mo, token])
+  }, [token])
 
   useEffect(() => {
-    if (!mo || !toaNhaId || phamVi !== 'PHONG') return
+    if (!toaNhaId || phamVi !== 'PHONG') return
     let mounted = true
     void fetchPhong(token, Number(toaNhaId)).then((items) => {
       if (mounted) setPhong(items.filter((item) => item.id !== null))
@@ -297,17 +266,13 @@ function ThongBaoChungForm({ token, mobile }: { token: string; mobile: boolean }
       if (mounted) setLoi(reason instanceof Error ? reason.message : 'Không thể tải danh sách phòng.')
     })
     return () => { mounted = false }
-  }, [mo, phamVi, toaNhaId, token])
+  }, [phamVi, toaNhaId, token])
 
   useEffect(() => {
     setXemTruoc(null)
     setThanhCong(null)
     khoaChongLapRef.current = null
   }, [hetHan, noiDung, phongIds, phamVi, tang, tieuDe, toaNhaId, tep])
-
-  if (!mo) {
-    return <Button data-testid="open-common-notification" variant="secondary" size="sm" onClick={() => setMo(true)}>Soạn thông báo chung</Button>
-  }
 
   const payload = (): YeuCauThongBaoChung => ({
     toaNhaId: Number(toaNhaId),
@@ -353,88 +318,62 @@ function ThongBaoChungForm({ token, mobile }: { token: string; mobile: boolean }
     }
   }
 
+  const cot2 = (rong = false) => (rong && !mobile ? { gridColumn: '1 / -1' } : undefined)
+
   return (
-    <section aria-label="Soạn thông báo chung" style={{ gridColumn: '1 / -1', display: 'grid', gap: 'var(--ma-space-5)', padding: 'var(--ma-space-5)', border: '1px solid var(--ma-border-strong)', background: 'var(--ma-bg-sunken)', minWidth: 0 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 'var(--ma-space-3)', flexWrap: 'wrap' }}>
-        <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
-          <SysLabel tone="primary">GỬI THÔNG BÁO</SysLabel>
-          <h2 style={{ margin: 0, font: 'var(--ma-text-block-title)' }}>Soạn thông báo chung</h2>
-          <p style={{ margin: 0, color: 'var(--ma-text-secondary)', font: 'var(--ma-text-body)' }}>Xem trước số phòng nhận trước khi gửi. Người nhận được chụp tại thời điểm gửi.</p>
-        </div>
-        <Button variant="text" size="sm" onClick={() => setMo(false)}>Đóng</Button>
-      </div>
-      <form onSubmit={xemTruocForm} style={{ display: 'grid', gap: 'var(--ma-space-4)', gridTemplateColumns: mobile ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
-        <label style={styleNhanTruong}>Toà nhà
-          <select value={toaNhaId} onChange={(event) => setToaNhaId(event.target.value)} style={styleOTruong} required>
+    <Card title="Soạn thông báo chung" aria-label="Soạn thông báo chung" action={<Button variant="text" size="sm" onClick={onDong}><Icon name="x" />Đóng</Button>}>
+      <p className="t-sm" style={{ color: 'var(--ma-text-secondary)', marginBottom: 16 }}>Xem trước số phòng nhận trước khi gửi. Người nhận được chụp tại thời điểm gửi.</p>
+      <form onSubmit={xemTruocForm} style={{ display: 'grid', gap: 16, gridTemplateColumns: mobile ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
+        <Field label="Toà nhà">
+          <select className="select" value={toaNhaId} onChange={(event) => setToaNhaId(event.target.value)} required>
             <option value="">Chọn toà nhà</option>
             {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
           </select>
-        </label>
-        <label style={styleNhanTruong}>Phạm vi
-          <select value={phamVi} onChange={(event) => { setPhamVi(event.target.value as typeof phamVi); setPhongIds([]) }} style={styleOTruong}>
+        </Field>
+        <Field label="Phạm vi">
+          <select className="select" value={phamVi} onChange={(event) => { setPhamVi(event.target.value as typeof phamVi); setPhongIds([]) }}>
             <option value="TOA_NHA">Toàn toà</option>
             <option value="TANG">Theo tầng</option>
             <option value="PHONG">Chọn phòng</option>
           </select>
-        </label>
-        {phamVi === 'TANG' ? <label style={styleNhanTruong}>Tầng
-          <input type="number" min="1" value={tang} onChange={(event) => setTang(event.target.value)} style={styleOTruong} required />
-        </label> : null}
-        {phamVi === 'PHONG' ? <fieldset style={{ ...styleNhanTruong, border: 0, padding: 0, margin: 0, gridColumn: mobile ? undefined : '1 / -1' }}>
-          <legend style={{ fontWeight: 700 }}>Phòng nhận thông báo</legend>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(9rem, 1fr))', gap: 'var(--ma-space-2)' }}>
-            {phong.map((item) => item.id === null ? null : <label key={item.id} style={{ display: 'flex', gap: 'var(--ma-space-2)', alignItems: 'center', minHeight: 'var(--ma-hit-mobile)' }}>
+        </Field>
+        {phamVi === 'TANG' ? <Field label="Tầng">
+          <input className="input" type="number" min="1" value={tang} onChange={(event) => setTang(event.target.value)} required />
+        </Field> : null}
+        {phamVi === 'PHONG' ? <fieldset className="field" style={{ border: 0, padding: 0, margin: 0, ...cot2(true) }}>
+          <legend className="label" style={{ padding: 0, marginBottom: 6 }}>Phòng nhận thông báo</legend>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(9rem, 1fr))', gap: 4 }}>
+            {phong.map((item) => item.id === null ? null : <label key={item.id} className="check" style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 'var(--ma-hit-mobile)' }}>
               <input type="checkbox" checked={phongIds.includes(item.id)} onChange={() => setPhongIds((current) => current.includes(item.id!) ? current.filter((id) => id !== item.id) : [...current, item.id!])} />
               Phòng {item.soPhong}
             </label>)}
           </div>
         </fieldset> : null}
-        <label style={{ ...styleNhanTruong, gridColumn: mobile ? undefined : '1 / -1' }}>Tiêu đề
-          <input value={tieuDe} onChange={(event) => setTieuDe(event.target.value)} style={styleOTruong} required maxLength={255} />
-        </label>
-        <label style={{ ...styleNhanTruong, gridColumn: mobile ? undefined : '1 / -1' }}>Nội dung
-          <textarea value={noiDung} onChange={(event) => setNoiDung(event.target.value)} style={{ ...styleOTruong, minHeight: 120, resize: 'vertical' }} required />
-        </label>
-        <label style={styleNhanTruong}>Hạn kết thúc
-          <input type="datetime-local" value={hetHan} onChange={(event) => setHetHan(event.target.value)} style={styleOTruong} required />
-        </label>
-        <label style={styleNhanTruong}>Ảnh đính kèm <span style={{ color: 'var(--ma-text-secondary)', font: 'var(--ma-text-caption)' }}>(tuỳ chọn)</span>
-          <input type="file" accept="image/png,image/jpeg" onChange={(event) => setTep(event.target.files?.[0] ?? null)} style={{ ...styleOTruong, padding: 'var(--ma-space-2)' }} />
-        </label>
-        <div style={{ display: 'flex', gap: 'var(--ma-space-3)', flexWrap: 'wrap', gridColumn: mobile ? undefined : '1 / -1' }}>
-          <Button type="submit" variant="secondary" blocked={dangTai}>{dangTai ? 'Đang xử lý…' : 'Xem trước người nhận'}</Button>
-          {xemTruoc ? <Button type="button" variant="primary" blocked={dangTai || xemTruoc.soNguoiNhan === 0} onClick={() => void guiForm()}>Gửi thông báo</Button> : null}
+        <div style={cot2(true)}><Field label="Tiêu đề">
+          <input className="input" value={tieuDe} onChange={(event) => setTieuDe(event.target.value)} required maxLength={255} />
+        </Field></div>
+        <div style={cot2(true)}><Field label="Nội dung">
+          <textarea className="input" style={{ height: 'auto', minHeight: 120, resize: 'vertical' }} value={noiDung} onChange={(event) => setNoiDung(event.target.value)} required />
+        </Field></div>
+        <Field label="Hạn kết thúc">
+          <input className="input" type="datetime-local" value={hetHan} onChange={(event) => setHetHan(event.target.value)} required />
+        </Field>
+        <Field label="Ảnh đính kèm (tuỳ chọn)">
+          <input className="input" type="file" accept="image/png,image/jpeg" onChange={(event) => setTep(event.target.files?.[0] ?? null)} />
+        </Field>
+        <div className="row-wrap" style={cot2(true)}>
+          <Button type="submit" variant={xemTruoc ? 'secondary' : 'primary'} blocked={dangTai}>{dangTai ? 'Đang xử lý…' : 'Xem trước người nhận'}</Button>
+          {xemTruoc ? <Button type="button" variant="primary" blocked={dangTai || xemTruoc.soNguoiNhan === 0} blockedReason={xemTruoc.soNguoiNhan === 0 ? 'Chưa có tài khoản nào nhận được thông báo này.' : undefined} onClick={() => void guiForm()}>Gửi thông báo</Button> : null}
         </div>
       </form>
-      {xemTruoc ? <div role="status" style={{ display: 'grid', gap: 'var(--ma-space-2)', padding: 'var(--ma-space-4)', border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }}>
+      {xemTruoc ? <div role="status" className="card-sunken stack" style={{ gap: 4, marginTop: 16 }}>
         <strong>Đối tượng nhận</strong>
         <span>{xemTruoc.soNguoiNhan} tài khoản · {xemTruoc.soPhongNhan} phòng</span>
-        <span style={{ color: 'var(--ma-text-secondary)' }}>{xemTruoc.soPhongKhongCoTaiKhoan} phòng chưa có tài khoản hoạt động</span>
+        <span className="t-sm" style={{ color: 'var(--ma-text-secondary)' }}>{xemTruoc.soPhongKhongCoTaiKhoan} phòng chưa có tài khoản hoạt động</span>
       </div> : null}
-      {loi ? <span role="alert" style={{ color: 'var(--ma-urgent)', font: 'var(--ma-text-caption)' }}>{loi}</span> : null}
-      {thanhCong ? <span role="status" style={{ color: 'var(--ma-done-text)', font: 'var(--ma-text-caption)' }}>{thanhCong}</span> : null}
-    </section>
+      <Feedback error={loi} success={thanhCong} />
+    </Card>
   )
-}
-
-const styleNhanTruong: CSSProperties = {
-  display: 'grid',
-  gap: 'var(--ma-space-2)',
-  minWidth: 0,
-  font: 'var(--ma-text-body)',
-  color: 'var(--ma-text-primary)',
-}
-
-const styleOTruong: CSSProperties = {
-  width: '100%',
-  minWidth: 0,
-  minHeight: 'var(--ma-hit-mobile)',
-  padding: 'var(--ma-space-3) var(--ma-space-4)',
-  border: '1px solid var(--ma-border-strong)',
-  borderRadius: 'var(--ma-radius)',
-  background: 'var(--ma-bg-card)',
-  color: 'var(--ma-text-primary)',
-  font: 'var(--ma-text-body)',
 }
 
 function dinhDangThoiGian(iso: string) {
