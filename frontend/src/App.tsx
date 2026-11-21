@@ -50,7 +50,7 @@ import { Breadcrumb } from './design/shell/Breadcrumb'
 import { NavPanel, type NavGroup } from './design/shell/NavPanel'
 import { TopBar } from './design/shell/TopBar'
 import type { GlyphName } from './design/core/GlyphName'
-import type { IconName } from './design/core/Icon'
+import { Icon, type IconName } from './design/core/Icon'
 import { layMenuTheoVaiTro, xacDinhTrangTheoVaiTro } from './roleNavigation'
 
 const styleTrang: CSSProperties = {
@@ -68,86 +68,47 @@ const styleKhungKhach: CSSProperties = {
   alignContent: 'start',
 }
 
-const styleGridKhach: CSSProperties = {
-  display: 'grid',
-  gap: 'var(--ma-space-6)',
-  maxWidth: 440,
-  margin: '24px auto 0',
-  width: '100%',
-  gridTemplateColumns: 'minmax(0, 1fr)',
-}
-
 const styleGridKhachDesktop: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'minmax(320px, 1.15fr) minmax(360px, 1fr)',
-  maxWidth: 920,
-  margin: '20px auto 0',
+  gridTemplateColumns: 'minmax(0, 520px) minmax(0, 1fr)',
+  gap: 16,
   width: '100%',
-  borderRadius: 'var(--ma-radius-lg, 12px)',
-  overflow: 'hidden',
-  boxShadow: 'var(--ma-shadow-md)',
-  border: '1px solid var(--ma-border-default)',
-  background: 'var(--ma-bg-card)',
-}
-
-const styleLoginShowcase: CSSProperties = {
-  position: 'relative',
-  background: 'var(--ma-ink-900)',
-  minHeight: 460,
-  overflow: 'hidden',
-}
-
-const styleLoginShowcaseImg: CSSProperties = {
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover',
-  display: 'block',
-  opacity: 0.85,
-}
-
-const styleLoginShowcaseOverlay: CSSProperties = {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  background: 'linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.45) 50%, rgba(15, 23, 42, 0.7) 100%)',
-  padding: '36px 32px',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'flex-start',
-}
-
-const styleLogoHieuSmall: CSSProperties = {
-  width: 32,
-  height: 32,
-  background: '#ffffff',
-  color: 'var(--ma-ink-900)',
-  fontFamily: 'var(--ma-font-mono)',
-  fontWeight: 800,
-  fontSize: 16,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: 6,
-}
-
-const styleShowcaseBadge: CSSProperties = {
-  backgroundColor: 'rgba(15, 23, 42, 0.75)',
-  color: '#ffffff',
-  fontSize: 10,
-  fontFamily: 'var(--ma-font-mono)',
-  fontWeight: 600,
-  padding: '2px 7px',
-  borderRadius: 4,
-  backdropFilter: 'blur(4px)',
-  letterSpacing: '0.04em',
+  minHeight: 'calc(100vh - 32px)',
 }
 
 const styleGridKhachManHinhHep: CSSProperties = {
-  ...styleGridKhach,
-  margin: '12px auto 0',
+  display: 'grid',
   gridTemplateColumns: 'minmax(0, 1fr)',
+  gap: 16,
+  width: '100%',
+}
+
+const styleDangNhapThe: CSSProperties = {
+  background: 'var(--ma-bg-card)',
+  borderRadius: 'var(--ma-radius-xl)',
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
+}
+
+const styleDangNhapAnh: CSSProperties = {
+  position: 'relative',
+  margin: 0,
+  borderRadius: 'var(--ma-radius-xl)',
+  overflow: 'hidden',
+  minHeight: 480,
+}
+
+const styleDangNhapChuThich: CSSProperties = {
+  position: 'absolute',
+  left: 24,
+  right: 24,
+  bottom: 24,
+  display: 'flex',
+  gap: 12,
+  alignItems: 'flex-end',
+  justifyContent: 'space-between',
+  flexWrap: 'wrap',
 }
 
 const styleThe: CSSProperties = {
@@ -161,26 +122,6 @@ const styleThe: CSSProperties = {
 const styleTheNoiDung: CSSProperties = {
   ...styleThe,
   padding: 'clamp(18px, 4vw, 30px)',
-}
-
-const styleNhanTruong: CSSProperties = {
-  display: 'grid',
-  gap: 'var(--ma-space-2)',
-  minWidth: 0,
-  font: 'var(--ma-text-body)',
-  color: 'var(--ma-text-primary)',
-}
-
-const styleONhap: CSSProperties = {
-  width: '100%',
-  minWidth: 0,
-  minHeight: 'var(--ma-hit-mobile)',
-  padding: 'var(--ma-space-3) var(--ma-space-4)',
-  border: '1px solid var(--ma-border-strong)',
-  borderRadius: 'var(--ma-radius)',
-  background: 'var(--ma-bg-card)',
-  color: 'var(--ma-text-primary)',
-  font: 'var(--ma-text-body)',
 }
 
 const styleKhungUngDungDesktop: CSSProperties = {
@@ -311,6 +252,7 @@ function App() {
   const [dangTaiPhien, setDangTaiPhien] = useState(true)
   const [dangDangNhap, setDangDangNhap] = useState(false)
   const [moTroGiupTaiKhoan, setMoTroGiupTaiKhoan] = useState(false)
+  const [hienMatKhau, setHienMatKhau] = useState(false)
   const [nguoiDung, setNguoiDung] = useState<ThongTinNguoiDung | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [soThongBaoChuaDoc, setSoThongBaoChuaDoc] = useState<number | null>(null)
@@ -689,140 +631,112 @@ function App() {
 
     return (
       <main style={styleKhungKhach}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: laManHinhHep ? 440 : 920, margin: '0 auto', width: '100%' }}>
-          <button
-            type="button"
-            onClick={() => setCheDoKhach('KHAM_PHA')}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--ma-text-secondary)',
-              fontFamily: 'var(--ma-font-mono)',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              padding: '4px 0',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            ← Khám phá phòng trống
-          </button>
-          <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>
-            MiniApart
-          </span>
-        </div>
-
         <section style={laManHinhHep ? styleGridKhachManHinhHep : styleGridKhachDesktop}>
-          {/* Cột minh họa không gian toà nhà trên desktop */}
-          {!laManHinhHep && (
-            <div style={styleLoginShowcase}>
-              <img
-                src="/rooms/annhien_studio_noi_that.webp"
-                alt="Không gian căn hộ MiniApart"
-                style={styleLoginShowcaseImg}
-              />
-              <div style={styleLoginShowcaseOverlay}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={styleLogoHieuSmall}>M</div>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em' }}>MiniApart</span>
+          <div style={{ ...styleDangNhapThe, padding: laManHinhHep ? '24px 20px' : '40px 56px' }} aria-labelledby="auth-title">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div className="logo" aria-hidden="true">M</div>
+                <span style={{ font: 'var(--ma-text-body)', fontWeight: 700 }}>MiniApart</span>
+              </div>
+              <Button variant="text" onClick={() => setCheDoKhach('KHAM_PHA')}>
+                ← Khám phá phòng trống
+              </Button>
+            </div>
+
+            <div style={{ margin: 'auto 0', padding: laManHinhHep ? '24px 0' : '32px 0' }}>
+              <h1 id="auth-title" className="h1" style={{ margin: 0 }}>Đăng nhập</h1>
+              <p style={{ ...styleDoanMoTa, marginTop: 8 }}>Dùng số điện thoại đã đăng ký với ban quản lý toà nhà.</p>
+
+              {healthError && (
+                <div role="alert" style={{ marginTop: 16 }}>
+                  <BlockedNotice title="Mất kết nối máy chủ" reason={healthError} />
                 </div>
-                <h3 style={{ margin: '0 0 10px', fontSize: 21, fontWeight: 700, color: '#ffffff', lineHeight: 1.35 }}>
-                  Nền tảng quản lý vận hành chung cư mini & nhà trọ
-                </h3>
-                <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255, 255, 255, 0.85)', lineHeight: 1.6 }}>
-                  Minh bạch hoá số liệu dịch vụ, kiểm soát hợp đồng chặt chẽ và kết nối người thuê nhanh chóng.
+              )}
+
+              {dangTaiPhien ? (
+                <p style={{ ...styleDoanMoTa, marginTop: 24 }} aria-live="polite">
+                  Đang kiểm tra phiên đăng nhập…
                 </p>
-                <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end', paddingTop: 16 }}>
-                  <span style={styleShowcaseBadge}>Ảnh minh họa</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div
-            style={{
-              ...styleTheNoiDung,
-              display: 'grid',
-              gap: 'var(--ma-space-5)',
-              padding: laManHinhHep ? '28px 24px' : '36px 36px',
-            }}
-            aria-labelledby="auth-title"
-          >
-            <div style={{ textAlign: 'center', display: 'grid', gap: 4 }}>
-              <h1 id="app-title" style={{ margin: 0, font: 'var(--ma-text-screen-title)', fontSize: 26, letterSpacing: '-0.02em' }}>
-                MiniApart
-              </h1>
-              <p style={{ ...styleDoanMoTa, fontSize: 13.5 }}>
-                Quản lý vận hành chung cư mini & nhà trọ
-              </p>
-            </div>
-
-            {healthError && (
-              <div role="alert">
-                <BlockedNotice
-                  title="Mất kết nối máy chủ"
-                  reason={healthError}
-                />
-              </div>
-            )}
-
-            {dangTaiPhien ? (
-              <p style={{ ...styleDoanMoTa, textAlign: 'center' }} aria-live="polite">
-                Đang kiểm tra phiên đăng nhập…
-              </p>
-            ) : (
-              <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 'var(--ma-space-4)' }}>
-                <label style={styleNhanTruong}>
-                  <span>Số điện thoại</span>
-                  <input
-                    value={form.soDienThoai}
-                    onChange={(event) => setForm((current) => ({ ...current, soDienThoai: event.target.value }))}
-                    placeholder="0900000003"
-                    autoComplete="username"
-                    required
-                    style={styleONhap}
-                  />
-                </label>
-
-                <label style={styleNhanTruong}>
-                  <span>Mật khẩu</span>
-                  <input
-                    type="password"
-                    value={form.matKhau}
-                    onChange={(event) => setForm((current) => ({ ...current, matKhau: event.target.value }))}
-                    placeholder="Nhập mật khẩu"
-                    autoComplete="current-password"
-                    required
-                    style={styleONhap}
-                  />
-                </label>
-
-                {authError ? (
-                  <div role="alert">
-                    <BlockedNotice title="Đăng nhập không thành công" reason={authError} />
+              ) : (
+                <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 20, marginTop: 32 }}>
+                  <div className="field">
+                    <label className="label" htmlFor="dn-sdt">Số điện thoại</label>
+                    <div className="input-wrap">
+                      <Icon name="phone" />
+                      <input
+                        id="dn-sdt"
+                        className="input input-touch"
+                        inputMode="tel"
+                        value={form.soDienThoai}
+                        onChange={(event) => setForm((current) => ({ ...current, soDienThoai: event.target.value }))}
+                        autoComplete="username"
+                        required
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <p style={{ ...styleDoanMoTa, fontSize: 12.5 }}>Nhập số điện thoại và mật khẩu được cấp để tiếp tục.</p>
-                )}
 
-                <Button
-                  type="submit"
-                  blocked={dangDangNhap}
-                  style={{ minHeight: 'var(--ma-hit-mobile)', justifyContent: 'center', width: '100%', marginTop: 4 }}
-                >
-                  {dangDangNhap ? 'Đang đăng nhập…' : 'Đăng nhập'}
-                </Button>
+                  <div className="field">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                      <label className="label" htmlFor="dn-mk">Mật khẩu</label>
+                      <Button variant="text" size="sm" onClick={() => setMoTroGiupTaiKhoan(true)}>Quên mật khẩu?</Button>
+                    </div>
+                    <div className="input-wrap">
+                      <Icon name="lock" />
+                      <input
+                        id="dn-mk"
+                        className="input input-touch"
+                        type={hienMatKhau ? 'text' : 'password'}
+                        value={form.matKhau}
+                        onChange={(event) => setForm((current) => ({ ...current, matKhau: event.target.value }))}
+                        autoComplete="current-password"
+                        required
+                        aria-invalid={authError ? true : undefined}
+                        aria-describedby={authError ? 'dn-mk-loi' : undefined}
+                        style={{ paddingRight: 52 }}
+                      />
+                      <button type="button" className="icon-btn trail" aria-label={hienMatKhau ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={hienMatKhau} onClick={() => setHienMatKhau((v) => !v)}>
+                        <Icon name={hienMatKhau ? 'eye-off' : 'eye'} />
+                      </button>
+                    </div>
+                    {authError ? (
+                      <p className="error-text" id="dn-mk-loi" role="alert">
+                        <Icon name="alert" size="sm" />
+                        {authError}
+                      </p>
+                    ) : null}
+                  </div>
 
-                <div style={{ textAlign: 'center', marginTop: 4 }}>
-                  <Button variant="text" type="button" onClick={() => setMoTroGiupTaiKhoan(true)}>
-                    Kích hoạt tài khoản / Quên mật khẩu
+                  <Button
+                    type="submit"
+                    blocked={dangDangNhap}
+                    style={{ minHeight: 'var(--ma-control-h-touch)', justifyContent: 'center', width: '100%' }}
+                  >
+                    {dangDangNhap ? 'Đang đăng nhập…' : 'Đăng nhập'}
                   </Button>
-                </div>
-              </form>
-            )}
+                </form>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gap: 4, justifyItems: 'start' }}>
+              <p className="t-meta" style={{ margin: 0 }}>Chưa có tài khoản? Ban quản lý toà nhà sẽ gửi mã kích hoạt qua số điện thoại của bạn.</p>
+              <Button variant="text" size="sm" style={{ marginLeft: -12 }} onClick={() => setMoTroGiupTaiKhoan(true)}>Kích hoạt tài khoản</Button>
+            </div>
           </div>
+
+          {!laManHinhHep && (
+            <figure style={styleDangNhapAnh}>
+              <img src="/rooms/annhien_studio_noi_that.webp" alt="Phòng studio nội thất, An Nhiên Residence" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <figcaption style={styleDangNhapChuThich}>
+                <div style={{ background: 'var(--ma-bg-card)', borderRadius: 20, padding: '16px 20px', maxWidth: 360 }}>
+                  <p style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>Một nơi cho cả chủ nhà, quản lý, thợ và người thuê</p>
+                  <p style={{ ...styleDoanMoTa, margin: '6px 0 0' }}>Hoá đơn, chỉ số điện nước, hợp đồng và sự cố — cùng một sổ, cùng một số liệu.</p>
+                </div>
+                <span className="tag tag-neutral" style={{ background: 'var(--ma-bg-card)', flex: 'none' }}>
+                  <Icon name="pin" size="sm" />An Nhiên Residence · Hà Nội
+                </span>
+              </figcaption>
+            </figure>
+          )}
         </section>
       </main>
     )
