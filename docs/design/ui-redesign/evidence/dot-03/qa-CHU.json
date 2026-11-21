@@ -1,0 +1,219 @@
+[
+ {
+  "name": "chu-tq-1440",
+  "path": "/tong-quan",
+  "role": "CHU",
+  "w": 1440,
+  "png": "C:\\Users\\nthieuu05\\AppData\\Local\\hermes\\profiles\\bot-nthieuu\\cache\\scratch\\final-review\\chu-tq-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 33,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 205,
+    "minRatio": 4.9,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 600",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1170
+  }
+ },
+ {
+  "name": "chu-hd-1440",
+  "path": "/hop-dong?toaNhaId=3",
+  "role": "CHU",
+  "w": 1440,
+  "png": "C:\\Users\\nthieuu05\\AppData\\Local\\hermes\\profiles\\bot-nthieuu\\cache\\scratch\\final-review\\chu-hd-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 57,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 207,
+    "minRatio": 4.9,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1139
+  }
+ },
+ {
+  "name": "chu-hoadon-1440",
+  "path": "/hoa-don?toaNhaId=3",
+  "role": "CHU",
+  "w": 1440,
+  "png": "C:\\Users\\nthieuu05\\AppData\\Local\\hermes\\profiles\\bot-nthieuu\\cache\\scratch\\final-review\\chu-hoadon-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 76,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 264,
+    "minRatio": 4.9,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1840
+  }
+ },
+ {
+  "name": "chu-bc-1440",
+  "path": "/bao-cao",
+  "role": "CHU",
+  "w": 1440,
+  "png": "C:\\Users\\nthieuu05\\AppData\\Local\\hermes\\profiles\\bot-nthieuu\\cache\\scratch\\final-review\\chu-bc-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 26,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 100,
+    "minRatio": 4.9,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1360
+  }
+ },
+ {
+  "name": "chu-phong-1440",
+  "path": "/phong?toaNhaId=3",
+  "role": "CHU",
+  "w": 1440,
+  "png": "C:\\Users\\nthieuu05\\AppData\\Local\\hermes\\profiles\\bot-nthieuu\\cache\\scratch\\final-review\\chu-phong-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 21,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 39,
+    "minRatio": 4.9,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 900
+  }
+ },
+ {
+  "name": "chu-nt-1440",
+  "path": "/nguoi-thue",
+  "role": "CHU",
+  "w": 1440,
+  "png": "C:\\Users\\nthieuu05\\AppData\\Local\\hermes\\profiles\\bot-nthieuu\\cache\\scratch\\final-review\\chu-nt-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 42,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 145,
+    "minRatio": 4.9,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1079
+  }
+ }
+]

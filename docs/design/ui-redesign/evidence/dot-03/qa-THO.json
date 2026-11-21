@@ -1,0 +1,90 @@
+[
+ {
+  "name": "tho-390",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 390,
+  "png": "C:\\Users\\nthieuu05\\AppData\\Local\\hermes\\profiles\\bot-nthieuu\\cache\\scratch\\final-review\\tho-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 40,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12px \"Tổng quan\"",
+    "12px \"Công việc\"",
+    "12px \"Báo giá\"",
+    "12px \"Thông báo\"",
+    "12px \"Thợ sửa chữa\"",
+    "12px \"›\""
+   ],
+   "contrast": {
+    "textNodesChecked": 204,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 600",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 4135
+  }
+ },
+ {
+  "name": "tho-cp-390",
+  "path": "/tho/chi-phi",
+  "role": "THO",
+  "w": 390,
+  "png": "C:\\Users\\nthieuu05\\AppData\\Local\\hermes\\profiles\\bot-nthieuu\\cache\\scratch\\final-review\\tho-cp-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 27,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12px \"Tổng quan\"",
+    "12px \"Công việc\"",
+    "12px \"Báo giá\"",
+    "12px \"Thông báo\"",
+    "12px \"Thợ sửa chữa\"",
+    "12px \"›\"",
+    "12px \"Báo giá & thanh toán\""
+   ],
+   "contrast": {
+    "textNodesChecked": 152,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 600",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 3280
+  }
+ }
+]

@@ -1,0 +1,39 @@
+[
+ {
+  "name": "qtht-tk-1440",
+  "path": "/tai-khoan",
+  "role": "QTHT",
+  "w": 1440,
+  "png": "C:\\Users\\nthieuu05\\AppData\\Local\\hermes\\profiles\\bot-nthieuu\\cache\\scratch\\final-review\\qtht-tk-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 43,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 120,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 600",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 959
+  }
+ }
+]

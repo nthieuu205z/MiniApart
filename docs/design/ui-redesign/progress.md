@@ -87,3 +87,19 @@
 | 42 | /hop-dong | NGUOI_THUE | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
 | 43 | /lich-su | NGUOI_THUE | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
 | 44 | /tieu-thu | NGUOI_THUE | 0/0/0/0 | 0/0/0/8 | 0/0/0/0 | 0/0/0/8 |
+
+## Chốt đợt thi công (22/11/2026)
+- `feat/ui-tokens` gộp toàn bộ: overlay token, plan 00–03, vòng 2 Tổng quan Chủ, lô 03-Z. `tsc` sạch, 55 file / 358 test xanh, build qua (JS 798,30 kB, CSS 49,61 kB; không còn font Plex).
+- Stack 5190 chạy build này. Ảnh kiểm độc lập của controller (17 ảnh, từ app thật): `evidence/dot-03/` — overflow 0, belowHit 0, contrast 0 ở cả 17; 390 còn `textBelowFloor` 5–8 mục = nhãn bottom-nav/breadcrumb 12px.
+- Bảng 44 mục trước/sau/final: mục "Lô 03-Z" phía trên.
+- Chưa gộp vào `main`, chưa push (chờ Chủ tịch chỉ nơi push).
+
+## Nợ còn lại (cần quyết hoặc đợt sau)
+1. 1024px: bảng Hợp đồng và Sự cố cắt cột cuối trong khung cuộn — cần quyết có làm `DataTable` responsive không.
+2. Nhật ký thao tác hiện chuỗi thô (`THANH_LY_HOP_DONG`, JSON) — cần map sang chữ người đọc (cần quyết hành vi/dữ liệu).
+3. `/su-co`: khối "Lịch sử sửa chữa" bên dưới bảng chưa chuyển sang component thiết kế (checkbox/ô lọc trần, danh sách dài ~2000px).
+4. ~40 chuỗi IN HOA viết cứng trong `HopDongThaoTac.tsx`, phiếu in `ThoChiPhi.tsx`, danh mục `QuanLyTaiSanPhong.tsx`, `QuanLyDashboard.tsx` (guard không bắt vì không giãn cách).
+5. Nhãn bottom-nav/breadcrumb 12px ở 390 (probe sàn 13px).
+6. Ô nhập Ghi chỉ số desktop viền đen dày; bộ lọc trạng thái màn Báo hỏng khách 390 lệch phải.
+7. Figma mới có bản tổng quan v1 (9 màn SVG); chưa cập nhật theo bản đã code, chưa có component/Auto Layout.
+8. Backend B1–B13 (xem cuối plan 01–03). Nút `md` 44px vs spec 40px — chưa quyết.
