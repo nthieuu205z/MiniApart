@@ -107,6 +107,9 @@ describe('QuanLyDashboard', () => {
           lichHenSapToi: [],
         })
       }
+      if (url === '/api/toa-nha/4/ky-thanh-toan') {
+        return jsonResponse([{ id: 9, nam: 2026, thang: 10, ngayBatDau: '2026-10-01', ngayKetThuc: '2026-11-25', trangThai: 'DANG_MO' }])
+      }
       if (url.includes('/api/canh-bao-tieu-thu/1/trang-thai') && init?.method === 'POST') {
         alertUpdated = true
         return jsonResponse({ ok: true })
@@ -128,11 +131,12 @@ describe('QuanLyDashboard', () => {
     await vi.waitFor(() => expect(container.querySelector('[data-testid="manager-dashboard-screen"]')).not.toBeNull())
 
     // Verify operational KPIs
-    expect(container.textContent).toContain('Cần thu hồi nợ')
+    expect(container.textContent).toContain('Còn phải thu')
     expect(container.textContent).toContain('53.990.000')
-    expect(container.textContent).toContain('20 quá hạn')
-    expect(container.textContent).toContain('Công tơ chưa ghi')
-    expect(container.textContent).toContain('7 điểm đo')
+    expect(container.textContent).toContain('Công tơ kỳ 10/2026')
+    expect(container.textContent).toContain('17/24')
+    expect(container.textContent).toContain('Ghi 7 công tơ còn thiếu')
+    expect(container.textContent).toContain('chốt số ngày 25/11/2026')
 
     // Verify Anomaly Alert card
     expect(container.textContent).toContain('Cảnh báo bất thường điện nước')

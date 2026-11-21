@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { ApiError, fetchBangViecVanHanh, fetchToaNha, type ThongTinBangViecVanHanh as BangViecData, type ThongTinToaNha } from './api'
 import { EmptyState } from './design/feedback/EmptyState'
+import { Icon, type IconName } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
-import { SysLabel } from './design/core/SysLabel'
-import { ScreenHeader, ScreenNotice, ScreenSurface } from './design/layout/Screen'
+import { Card } from './design/layout/Card'
+import { ScreenNotice } from './design/layout/Screen'
 
 type Props = { token: string; mobile?: boolean; toaNhaId?: number | null }
 
@@ -67,18 +68,27 @@ export function BangViecVanHanh({ token, mobile = false, toaNhaId: propToaNhaId 
     return () => { mounted = false }
   }, [token, toaNhaId, isEmbedded])
 
+  const nhom = bangViec?.nhomViec ?? []
+  const canXuLy = nhom.filter((g) => g.trangThai !== 'DA_XONG' && g.trangThai !== 'CHUA_SAN_SANG').length
+  const daXong = nhom.filter((g) => g.trangThai === 'DA_XONG').length
+
   return (
-    <ScreenSurface data-testid="operational-dashboard-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'} aria-labelledby="operational-dashboard-title">
-      <ScreenHeader>
-        <SysLabel>NHẮC VIỆC VẬN HÀNH</SysLabel>
-        <h3 id="operational-dashboard-title" style={{ margin: '8px 0 0' }}>Bảng việc vận hành</h3>
-        <p style={{ margin: '8px 0 0', color: 'var(--ma-text-secondary)' }}>Các việc cần xử lý theo đúng phạm vi toà nhà được phân quyền.</p>
-      </ScreenHeader>
+    <Card
+      data-testid="operational-dashboard-screen"
+      data-layout-variant={mobile ? 'mobile' : 'desktop'}
+      aria-labelledby="operational-dashboard-title"
+      style={{ minWidth: 0 }}
+    >
+      <style>{CSS_VIEC}</style>
+      <div className="card-head">
+        <h2 className="h2" id="operational-dashboard-title">Việc của toà hôm nay</h2>
+        {bangViec ? <span className="t-meta">{canXuLy} việc cần xử lý · {daXong} đã xong</span> : null}
+      </div>
 
       {toaNha.length > 0 && (!isEmbedded || propToaNhaId === null) ? (
-        <label style={{ display: 'grid', gap: 6, maxWidth: 420 }}>
-          <span>Toà nhà</span>
-          <select value={toaNhaId ?? ''} onChange={(event) => setToaNhaId(Number(event.target.value))} style={styleInput}>
+        <label className="field" style={{ maxWidth: 420, marginBottom: 12 }}>
+          <span className="label">Toà nhà</span>
+          <select className="select" value={toaNhaId ?? ''} onChange={(event) => setToaNhaId(Number(event.target.value))}>
             {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
           </select>
         </label>
@@ -87,36 +97,41 @@ export function BangViecVanHanh({ token, mobile = false, toaNhaId: propToaNhaId 
       {dangTai ? <p aria-live="polite">Đang tải bảng việc vận hành…</p>
         : loi ? <div role="alert"><ScreenNotice tone="urgent">{loi}</ScreenNotice></div>
           : !bangViec ? <EmptyState title="Chưa có toà nhà được phân quyền." body="Bảng việc chỉ hiển thị trong phạm vi được máy chủ cấp quyền." />
-            : <section aria-label="Các nhóm việc vận hành" style={styleGrid}>
-              {bangViec.nhomViec.map((group) => <NhomViec key={group.ma} group={group} toaNhaId={bangViec.toaNhaId} />)}
-            </section>}
-    </ScreenSurface>
+            : <div aria-label="Các nhóm việc vận hành">
+              {nhom.map((group) => <NhomViec key={group.ma} group={group} toaNhaId={bangViec.toaNhaId} />)}
+            </div>}
+    </Card>
   )
 }
+
+const ICON_THEO_MA: Record<string, IconName> = { NO_QUA_HAN: 'receipt', HOP_DONG_SAP_HET_HAN: 'contract', SU_CO_TON_DONG: 'wrench', THIEU_CHI_SO: 'meter' }
+const NHAN_LIEN_KET: Record<string, string> = { NO_QUA_HAN: 'Mở danh sách', HOP_DONG_SAP_HET_HAN: 'Gia hạn', THIEU_CHI_SO: 'Ghi chỉ số', SU_CO_TON_DONG: 'Mở sự cố' }
 
 function NhomViec({ group, toaNhaId }: { group: BangViecData['nhomViec'][number]; toaNhaId: number }): React.ReactElement {
   const daXong = group.trangThai === 'DA_XONG'
   const chuaSanSang = group.trangThai === 'CHUA_SAN_SANG'
-  const lienKet = chuaSanSang
+  const khan = group.khanCap && !daXong && !chuaSanSang
+  const lienKet = chuaSanSang || daXong
     ? null
     : group.ma === 'NO_QUA_HAN'
       ? `/hoa-don?toaNhaId=${toaNhaId}&trangThai=NO_QUA_HAN`
       : group.lienKet
+  const tag = chuaSanSang ? <StatusTag tone="neutral">{group.tenTrangThai}</StatusTag>
+    : daXong ? <StatusTag tone="done">Đã xong</StatusTag>
+      : khan ? <StatusTag tone="urgent">Khẩn</StatusTag>
+        : <StatusTag tone="waiting">Cần xử lý</StatusTag>
   return (
-    <article data-dashboard-group={group.ma} style={styleCard} aria-label={`${group.tieuDe}: ${group.tenTrangThai}`}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'start' }}>
-        <div style={{ display: 'grid', gap: 8 }}>
-          <SysLabel>{group.ma}</SysLabel>
-          <h4 style={{ margin: 0, fontSize: 18 }}>{group.tieuDe}</h4>
+    <div data-dashboard-group={group.ma} className={`task${khan ? ' urgent' : ''}${daXong || chuaSanSang ? ' done' : ''}`} aria-label={`${group.tieuDe}: ${group.tenTrangThai}`}>
+      <span className="tile"><Icon name={ICON_THEO_MA[group.ma] ?? 'shield'} /></span>
+      <div>
+        <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
+          <h3 className="h3" style={{ color: 'inherit' }}>{group.tieuDe}</h3>
+          {tag}
         </div>
-        <strong style={{ fontFamily: 'var(--ma-font-mono)', fontSize: 28 }} aria-label={group.soLuong === null ? 'Chưa có nguồn dữ liệu' : `Số lượng ${group.soLuong}`}>
-          {group.soLuong ?? '—'}
-        </strong>
       </div>
-      <StatusTag tone={chuaSanSang ? 'waiting' : daXong ? 'done' : 'urgent'}>{group.tenTrangThai}</StatusTag>
-      {group.khanCap && !daXong ? <p style={styleUrgentText}>Ưu tiên xử lý ngay.</p> : null}
-      {lienKet ? <a data-dashboard-link href={lienKet} style={styleLink}>{daXong ? 'Xem lại bộ lọc' : 'Mở danh sách đã lọc'}</a> : null}
-    </article>
+      <span className="count" aria-label={group.soLuong === null ? 'Chưa có nguồn dữ liệu' : `Số lượng ${group.soLuong}`}>{group.soLuong ?? '—'}</span>
+      {lienKet ? <a data-dashboard-link className="btn btn-secondary btn-sm" href={lienKet}>{NHAN_LIEN_KET[group.ma] ?? 'Mở danh sách'}</a> : <span />}
+    </div>
   )
 }
 
@@ -126,8 +141,14 @@ function docToaNhaIdTuUrl(): number | null {
   return Number(value)
 }
 
-const styleGrid: React.CSSProperties = { display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))' }
-const styleCard: React.CSSProperties = { display: 'grid', gap: 14, padding: 18, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)', minHeight: 180 }
-const styleInput: React.CSSProperties = { minHeight: 'var(--ma-hit-mobile)', padding: '0 12px', border: '1px solid var(--ma-border-strong)', background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)' }
-const styleLink: React.CSSProperties = { color: 'var(--ma-text-primary)', fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3 }
-const styleUrgentText: React.CSSProperties = { margin: 0, color: 'var(--ma-text-primary)', fontWeight: 700 }
+const CSS_VIEC = `
+.task { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 14px 12px; border-radius: 16px; }
+.task + .task { border-top: 1px solid var(--ma-line-100); }
+.task:hover { background: var(--ma-paper-1); }
+.task .tile { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--ma-bg-sunken); color: var(--ma-text-secondary); }
+.task.urgent .tile { background: var(--ma-urgent-bg); color: var(--ma-urgent); }
+.task .count { font: 600 28px/1 var(--ma-font-ui); letter-spacing: -0.02em; min-width: 48px; text-align: right; }
+.task.done { color: var(--ma-text-secondary); }
+.task.done .count { font-weight: 500; }
+@media (max-width: 767px) { .task { grid-template-columns: 44px minmax(0, 1fr) auto; } .task > :last-child { grid-column: 2 / -1; justify-self: start; } .task > span:last-child:empty { display: none; } }
+`
