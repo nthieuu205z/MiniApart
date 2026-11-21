@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from './design/core/Button'
 import { Icon } from './design/core/Icon'
 import { dinhDangTien } from './design/core/format'
@@ -95,7 +95,3 @@ export default function FinancePaymentPanel({ token, hoaDonId, maHoaDon, conLai 
 }
 
 export function message(cause: unknown) { return cause instanceof Error ? cause.message : 'Không thể thực hiện thao tác.' }
-export const box: CSSProperties = { display: 'grid', gap: 12, padding: 18, border: '1px solid var(--ma-border-default)', borderRadius: 'var(--ma-radius-md)', background: 'var(--ma-bg-card)', boxShadow: 'var(--ma-shadow-sm)', minWidth: 0, transition: 'box-shadow 0.15s ease' }
-export const field: CSSProperties = { display: 'grid', gap: 6, fontSize: 13, fontWeight: 600, color: 'var(--ma-text-secondary)' }
-export const input: CSSProperties = { minHeight: 44, padding: '10px 14px', font: 'inherit', width: '100%', boxSizing: 'border-box', color: 'var(--ma-text-primary)', background: 'var(--ma-bg-card)', border: '1px solid var(--ma-border-strong)', borderRadius: 'var(--ma-radius)', boxShadow: 'var(--ma-shadow-sm)' }
-export const actions: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }
