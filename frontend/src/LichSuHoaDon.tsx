@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ApiError, fetchLichSuHoaDonCuaNguoiThue, type ThongTinHoaDonLichSu } from './api'
-import { dinhDangTien } from './design/core/format'
+import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Figure } from './design/core/Figure'
 import { StatusTag } from './design/core/StatusTag'
 import { SysLabel } from './design/core/SysLabel'
@@ -141,6 +141,55 @@ function DanhSachHoaDonDesktop({ lichSu }: { lichSu: ThongTinHoaDonLichSu[] }) {
         ))}
       </tbody>
     </TableFrame>
+  )
+}
+
+/** Khối "Kỳ trước còn nợ" của màn Hoá đơn khách thuê (mobile): tối đa 3 kỳ chưa trả hết, trừ hoá đơn đang xem. */
+export function KyTruocConNo({ lichSu, hienTaiId }: { lichSu: ThongTinHoaDonLichSu[]; hienTaiId: number }) {
+  const conNo = lichSu.filter((hoaDon) => hoaDon.hoaDonId !== hienTaiId && Number(hoaDon.conLai) > 0).slice(0, 3)
+  return (
+    <section className="m-card" aria-labelledby="ky-truoc-con-no" data-previous-debt>
+      <div className="spread">
+        <h2 className="h3" id="ky-truoc-con-no" style={{ margin: 0 }}>Kỳ trước còn nợ</h2>
+        <Button
+          variant="text"
+          data-view-invoice-history
+          onClick={() => {
+            window.history.pushState({}, '', '/lich-su')
+            window.dispatchEvent(new PopStateEvent('popstate'))
+          }}
+        >
+          Lịch sử
+        </Button>
+      </div>
+      {conNo.length === 0 ? (
+        <p className="t-sm t-2" style={{ margin: '4px 0 0' }}>Không có kỳ nào còn nợ.</p>
+      ) : (
+        <ul className="list" style={{ marginTop: 4, padding: 0, listStyle: 'none' }}>
+          {conNo.map((hoaDon) => (
+            <li key={hoaDon.hoaDonId}>
+              <button
+                type="button"
+                className="list-row"
+                data-previous-debt-invoice={hoaDon.hoaDonId}
+                aria-label={`Mở hoá đơn ${nhanKy(hoaDon)} phòng ${hoaDon.soPhong}`}
+                onClick={() => moHoaDon(hoaDon.hoaDonId)}
+                style={{ width: '100%', minHeight: 56, border: 0, background: 'transparent', font: 'inherit', textAlign: 'left', color: 'inherit', cursor: 'pointer' }}
+              >
+                <div className="body">
+                  <div className="name">{nhanKy(hoaDon)}</div>
+                  <div className="sub" style={{ whiteSpace: 'normal' }}>Hạn {dinhDangNgayIso(hoaDon.hanThanhToan)} · đã trả {dinhDangTien(hoaDon.daThu)} ₫</div>
+                </div>
+                <div className="end">
+                  <div className="t-money">{dinhDangTien(hoaDon.conLai)} ₫</div>
+                  <div className={`t-meta${hoaDon.trangThaiThanhToan === 'QUA_HAN' ? ' t-danger' : ''}`}>{nhanTrangThai(hoaDon.trangThaiThanhToan).toLocaleLowerCase('vi-VN')}</div>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 

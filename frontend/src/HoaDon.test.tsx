@@ -140,6 +140,60 @@ describe('HoaDon detail and print view', () => {
     expect(container.querySelector('table')).toBeNull()
   })
 
+  it('NFR-USA-01 tenant mobile shows the amount still due, previous debts, and never asks for a QR code', async () => {
+    const hoaDon = {
+      hoaDonId: 10, maHoaDon: 'DEMO-10', kyId: 8, hopDongId: 11, soPhong: '101', nguoiThue: 'Người thuê 101',
+      ngayPhatHanh: '2026-10-25', hanThanhToan: '2026-10-05', trangThai: 'QUA_HAN',
+      tongTien: '3790000.00', daThu: '1895000.00', conLai: '1895000.00',
+      cacDong: [
+        { tenKhoan: 'Điện sinh hoạt', chiSoDau: '288.00', chiSoCuoi: '384.00', soLuong: '96.00', donGia: '3800.00', thanhTien: '364800.00', loaiKhoan: 'DICH_VU', dienGiai: 'x', cacBac: [] },
+        { tenKhoan: 'Làm tròn', thanhTien: '-200.00', loaiKhoan: 'LAM_TRON', dienGiai: 'Làm tròn = -200.00', cacBac: [] },
+      ],
+    }
+    const lichSu = [
+      { hoaDonId: 10, maHoaDon: 'DEMO-10', toaNhaId: 3, kyId: 8, hopDongId: 11, nam: 2026, thang: 10, ngayBatDau: null, ngayKetThuc: null, soPhong: '101', maToa: 'AN', tenToaNha: 'An Nhiên Residence', ngayPhatHanh: '2026-10-25', hanThanhToan: '2026-10-05', trangThai: 'QUA_HAN', trangThaiThanhToan: 'QUA_HAN', hopDongTrangThai: 'HIEU_LUC', tongTien: '3790000.00', daThu: '1895000.00', conLai: '1895000.00' },
+      { hoaDonId: 9, maHoaDon: 'DEMO-9', toaNhaId: 3, kyId: 7, hopDongId: 11, nam: 2026, thang: 9, ngayBatDau: null, ngayKetThuc: null, soPhong: '101', maToa: 'AN', tenToaNha: 'An Nhiên Residence', ngayPhatHanh: '2026-09-25', hanThanhToan: '2026-09-05', trangThai: 'QUA_HAN', trangThaiThanhToan: 'QUA_HAN', hopDongTrangThai: 'HIEU_LUC', tongTien: '3790000.00', daThu: '1895000.00', conLai: '1895000.00' },
+      { hoaDonId: 8, maHoaDon: 'DEMO-8', toaNhaId: 3, kyId: 6, hopDongId: 11, nam: 2026, thang: 8, ngayBatDau: null, ngayKetThuc: null, soPhong: '101', maToa: 'AN', tenToaNha: 'An Nhiên Residence', ngayPhatHanh: '2026-08-25', hanThanhToan: '2026-08-05', trangThai: 'DA_THANH_TOAN', trangThaiThanhToan: 'DA_THANH_TOAN', hopDongTrangThai: 'HIEU_LUC', tongTien: '3790000.00', daThu: '3790000.00', conLai: '0.00' },
+    ]
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/cong/hoa-don') return new Response(JSON.stringify(lichSu), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify({ coHoaDon: true, hoaDon }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    root = createRoot(container)
+    await act(async () => root.render(<HoaDon token="tenant-token" cheDoNguoiThue mobile />))
+
+    await vi.waitFor(() => expect(container.querySelector('[data-previous-debt-invoice="9"]')).not.toBeNull())
+    expect(container.querySelector('[data-invoice-due]')?.textContent).toContain('1.895.000')
+    expect(container.textContent).toContain('Còn phải trả')
+    expect(container.textContent).toContain('Kỳ 10/2026')
+    expect(container.textContent).toContain('Quá hạn')
+    expect(container.textContent).toContain('288 → 384 = 96 × 3.800 ₫')
+    expect(container.querySelector('[data-previous-debt-invoice="10"]')).toBeNull()
+    expect(container.querySelector('[data-previous-debt-invoice="8"]')).toBeNull()
+    expect(fetchMock.mock.calls.some(([input]) => String(input).includes('ma-qr'))).toBe(false)
+  })
+
+  it('NFR-USA-01 tenant mobile still shows the invoice when the history request fails', async () => {
+    const hoaDon = {
+      hoaDonId: 10, maHoaDon: 'DEMO-10', kyId: 8, hopDongId: 11, soPhong: '101', nguoiThue: 'Người thuê 101',
+      ngayPhatHanh: '2026-08-31', hanThanhToan: '2026-09-07', trangThai: 'DA_PHAT_HANH',
+      tongTien: '1000.00', daThu: '0.00', conLai: '1000.00', cacDong: [],
+    }
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => String(input) === '/api/cong/hoa-don'
+      ? new Response(JSON.stringify({ message: 'lỗi' }), { status: 500, headers: { 'Content-Type': 'application/json' } })
+      : new Response(JSON.stringify({ coHoaDon: true, hoaDon }), { status: 200, headers: { 'Content-Type': 'application/json' } })))
+
+    root = createRoot(container)
+    await act(async () => root.render(<HoaDon token="tenant-token" cheDoNguoiThue mobile />))
+
+    await vi.waitFor(() => expect(container.querySelector('[data-invoice-due]')?.textContent).toContain('1.000'))
+    expect(container.textContent).toContain('Chưa đến hạn')
+    expect(container.textContent).toContain('Không có kỳ nào còn nợ.')
+  })
+
   it('FR-POR-02 renders labeled readings, consumption, unit price and amount for every invoice line', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
       coHoaDon: true,

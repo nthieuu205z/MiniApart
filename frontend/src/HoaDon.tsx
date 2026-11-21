@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { ApiError, fetchHoaDonChiTiet, fetchHoaDonCongNoChiTiet, fetchHoaDonCuaNguoiThue, fetchHoaDonMoiNhatCuaNguoiThue, fetchLienKetAnh, type ThongTinHoaDonChiTiet, type ThongTinDongHoaDon } from './api'
+import { ApiError, fetchHoaDonChiTiet, fetchHoaDonCongNoChiTiet, fetchHoaDonCuaNguoiThue, fetchHoaDonMoiNhatCuaNguoiThue, fetchLichSuHoaDonCuaNguoiThue, fetchLienKetAnh, type ThongTinHoaDonChiTiet, type ThongTinHoaDonLichSu, type ThongTinDongHoaDon } from './api'
 import { Button } from './design/core/Button'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Figure } from './design/core/Figure'
+import { Icon, type IconName } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
 import { SysLabel } from './design/core/SysLabel'
 import { EmptyState } from './design/feedback/EmptyState'
 import { HighlightNotice, MetaGrid, MetaItem, MeterImage, ScreenHeader, ScreenSurface, TableCell, TableFrame, TableHeadCell, TotalLine } from './design/layout/Screen'
 import InvoiceActions from './InvoiceActions'
 import FinancePaymentPanel from './FinancePaymentPanel'
+import { KyTruocConNo } from './LichSuHoaDon'
 
 type Props = { token: string; toaNhaId?: number; kyId?: number; hoaDonId?: number; mobile?: boolean; cheDoNguoiThue?: boolean; cheDoCongNo?: boolean; vaiTro?: string }
 
@@ -19,6 +21,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
   const [thongBaoRong, setThongBaoRong] = useState<string | null>(null)
   const [soLanTaiLai, setSoLanTaiLai] = useState(0)
   const [moThanhToan, setMoThanhToan] = useState(false)
+  const [lichSu, setLichSu] = useState<ThongTinHoaDonLichSu[]>([])
   const previousRequest = useRef('')
   const variant = mobile ? 'mobile' : 'desktop'
   const maTruyVet = cheDoNguoiThue ? 'HOÁ ĐƠN CỦA TÔI' : cheDoCongNo ? 'ĐỐI SOÁT CÔNG NỢ' : 'QUẢN LÝ HOÁ ĐƠN'
@@ -71,6 +74,18 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
     }
   }, [cheDoCongNo, cheDoNguoiThue, hoaDonId, kyId, soLanTaiLai, token, toaNhaId])
 
+  const manHinhNguoiThueMobile = mobile && cheDoNguoiThue
+
+  useEffect(() => {
+    if (!manHinhNguoiThueMobile) return
+    let mounted = true
+    // Lịch sử chỉ để vẽ khối "Kỳ trước còn nợ": lỗi thì bỏ khối, không chặn hoá đơn.
+    fetchLichSuHoaDonCuaNguoiThue(token)
+      .then((data) => { if (mounted && Array.isArray(data)) setLichSu(data) })
+      .catch(() => { if (mounted) setLichSu([]) })
+    return () => { mounted = false }
+  }, [manHinhNguoiThueMobile, token, soLanTaiLai])
+
   if (dangTai && !hoaDon) return <ScreenSurface data-layout-variant={variant} aria-busy="true" aria-live="polite">Đang tải hoá đơn…</ScreenSurface>
   if (loi) {
     return (
@@ -89,6 +104,8 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
       </ScreenSurface>
     )
   }
+
+  if (manHinhNguoiThueMobile) return <HoaDonNguoiThueMobile token={token} hoaDon={hoaDon} lichSu={lichSu} />
 
   const meta = (
     <>
@@ -159,6 +176,134 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
       {!cheDoNguoiThue ? <details className="ma-no-print" onToggle={(event) => setMoThanhToan(event.currentTarget.open)}><summary>Thu tiền, biên lai và bút toán đối ứng</summary>{moThanhToan ? <FinancePaymentPanel token={token} hoaDonId={hoaDon.hoaDonId} maHoaDon={hoaDon.maHoaDon} conLai={hoaDon.conLai} trangThai={hoaDon.trangThai} onChanged={() => setSoLanTaiLai((count) => count + 1)} /> : null}</details> : null}
     </ScreenSurface>
   )
+}
+
+const NHAN_TRANG_THAI: Record<string, [string, 'urgent' | 'done' | 'strong' | 'waiting' | 'closed']> = {
+  QUA_HAN: ['Quá hạn', 'urgent'],
+  DA_THANH_TOAN: ['Đã trả', 'done'],
+  DA_THU_MOT_PHAN: ['Đã trả một phần', 'waiting'],
+  DA_HUY: ['Đã huỷ', 'closed'],
+}
+
+function HoaDonNguoiThueMobile({ token, hoaDon, lichSu }: { token: string; hoaDon: ThongTinHoaDonChiTiet; lichSu: ThongTinHoaDonLichSu[] }) {
+  const trongLichSu = lichSu.find((muc) => muc.hoaDonId === hoaDon.hoaDonId)
+  const ky = trongLichSu?.thang != null && trongLichSu.nam != null
+    ? `${String(trongLichSu.thang).padStart(2, '0')}/${trongLichSu.nam}`
+    : hoaDon.ngayPhatHanh.slice(5, 7) + '/' + hoaDon.ngayPhatHanh.slice(0, 4)
+  const daTraHet = Number(hoaDon.conLai) <= 0
+  const [nhan, tone] = daTraHet ? NHAN_TRANG_THAI.DA_THANH_TOAN : NHAN_TRANG_THAI[hoaDon.trangThai] ?? ['Chưa đến hạn', 'strong']
+  const tiLeDaTra = Number(hoaDon.tongTien) > 0 ? Math.min(100, Math.max(0, (Number(hoaDon.daThu) / Number(hoaDon.tongTien)) * 100)) : 0
+
+  return (
+    <div
+      className="m-app invoice-screen invoice-screen--mobile"
+      data-testid="invoice-detail"
+      data-layout-variant="mobile"
+      aria-labelledby="invoice-title"
+      role="region"
+    >
+      <header className="m-top">
+        <div className="h-title">
+          <span id="invoice-title">Hoá đơn của tôi</span>
+          <div className="h-sub">Phòng {hoaDon.soPhong}{trongLichSu ? ` · ${trongLichSu.tenToaNha || `Toà ${trongLichSu.maToa}`}` : ''}</div>
+        </div>
+      </header>
+      <div className="m-body">
+        <section className="m-card" aria-labelledby="invoice-period" data-invoice-total>
+          <div className="spread">
+            <h1 className="h3" id="invoice-period" style={{ margin: 0 }}>Kỳ {ky}</h1>
+            <StatusTag tone={tone}>{nhan}</StatusTag>
+          </div>
+          <p className="t-sm t-2" style={{ margin: '12px 0 0' }}>Còn phải trả</p>
+          <p style={{ margin: '8px 0 0', font: '600 40px/1.05 var(--ma-font-ui)', letterSpacing: '-0.02em' }} data-invoice-due>
+            {dinhDangTien(hoaDon.conLai)}<span className="unit" style={{ fontSize: 20 }}>₫</span>
+          </p>
+          <div className="progress" style={{ marginTop: 14 }} role="progressbar" aria-valuenow={Math.round(tiLeDaTra)} aria-valuemin={0} aria-valuemax={100} aria-label={`Đã trả ${Math.round(tiLeDaTra)}%`}>
+            <span style={{ width: `${tiLeDaTra}%` }} />
+          </div>
+          <p className="t-sm t-2" style={{ margin: '8px 0 0' }}>
+            Đã trả {dinhDangTien(hoaDon.daThu)} ₫ trên {dinhDangTien(hoaDon.tongTien)} ₫ · hạn {dinhDangNgayIso(hoaDon.hanThanhToan)}
+          </p>
+        </section>
+
+        <section className="m-card" aria-labelledby="invoice-lines-title">
+          <h2 className="h3" id="invoice-lines-title" style={{ margin: 0 }}>Chi tiết khoản</h2>
+          {hoaDon.soNguoiO != null ? (
+            <p className="t-sm t-2" style={{ margin: '8px 0 0' }}>
+              Số người ở đã dùng để tính: <strong>{hoaDon.soNguoiO} người</strong>. Số hộ quy đổi: <strong>{hoaDon.soHoQuyDoi ?? '—'} hộ quy đổi</strong>.
+              {hoaDon.giaiThichSoHo ? ` ${hoaDon.giaiThichSoHo}.` : ' Quy tắc: 4 người được tính là 1 hộ.'}
+            </p>
+          ) : null}
+          <div data-mobile-invoice-lines style={{ marginTop: 4 }}>
+            {hoaDon.cacDong.length === 0 ? <EmptyState title="Hoá đơn chưa có khoản mục." /> : null}
+            {hoaDon.cacDong.map((dong, index) => <DongTienMobile key={`${dong.tenKhoan}-${index}`} token={token} dong={dong} tach={index > 0} />)}
+          </div>
+          <div className="spread" style={{ alignItems: 'baseline', paddingTop: 14, borderTop: '1px solid var(--ma-line-200)', marginTop: 4 }}>
+            <span className="t-strong">Tổng kỳ này</span>
+            <span style={{ font: '600 20px/1 var(--ma-font-ui)' }}>{dinhDangTien(hoaDon.tongTien)} ₫</span>
+          </div>
+        </section>
+
+        <KyTruocConNo lichSu={lichSu} hienTaiId={hoaDon.hoaDonId} />
+      </div>
+    </div>
+  )
+}
+
+function DongTienMobile({ token, dong, tach }: { token: string; dong: ThongTinDongHoaDon; tach: boolean }) {
+  const donGia = dong.donGia != null ? `${dinhDangTien(dong.donGia)} ₫` : dong.cacBac.length > 0 ? 'theo bậc thang' : null
+  const congThuc = dong.chiSoDau != null && dong.chiSoCuoi != null
+    ? `${boDuoi0(dong.chiSoDau)} → ${boDuoi0(dong.chiSoCuoi)} = ${boDuoi0(dong.soLuong ?? '')}${donGia ? ` × ${donGia}` : ''}`
+    : dong.soLuong != null && dong.donGia != null
+      ? `${boDuoi0(dong.soLuong)} × ${donGia}`
+      : dong.dienGiai
+  const am = dong.thanhTien.startsWith('-')
+  return (
+    <div
+      data-mobile-invoice-line={dong.tenKhoan}
+      data-invoice-rounding={laDongLamTron(dong) ? true : undefined}
+      style={{ padding: '12px 0', borderTop: tach ? '1px solid var(--ma-line-100)' : undefined, minWidth: 0 }}
+    >
+      <div style={{ display: 'grid', gridTemplateColumns: '36px minmax(0, 1fr) auto', gap: 12, alignItems: 'center' }}>
+        <span style={{ width: 36, height: 36, display: 'grid', placeItems: 'center', color: 'var(--ma-text-secondary)' }}><Icon name={bieuTuongKhoan(dong)} /></span>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ font: '500 15px/1.3 var(--ma-font-ui)', overflowWrap: 'anywhere' }}>{dong.tenKhoan}</div>
+          {congThuc ? <div className="t-meta" style={{ marginTop: 2, overflowWrap: 'anywhere' }}>{congThuc}</div> : null}
+        </div>
+        <div style={{ font: '600 15px/1.3 var(--ma-font-ui)', textAlign: 'right', whiteSpace: 'nowrap', color: am ? 'var(--ma-urgent)' : undefined }}>{dinhDangTien(dong.thanhTien)} ₫</div>
+      </div>
+      {laDongLamTron(dong) ? <RoundingExplanation /> : null}
+      {dong.anhCongToUrl ? <div style={{ marginTop: 8 }}><MeterImage imageId={dong.anhCongToId} onRefresh={dong.anhCongToId == null ? undefined : () => fetchLienKetAnh(token, dong.anhCongToId!)} src={dong.anhCongToUrl} alt={`Ảnh công tơ ${dong.tenKhoan}`} /></div> : null}
+      {dong.cacBac.length > 0 ? (
+        <div data-mobile-invoice-tiers style={{ display: 'grid', gap: 6, margin: '10px 0 0 48px' }}>
+          {dong.cacBac.map((bac) => (
+            <div key={`${dong.tenKhoan}-${bac.bac}`} className="t-meta" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 8 }}>
+              <span style={{ overflowWrap: 'anywhere' }}>
+                Bậc {bac.bac} · {boDuoi0(bac.soLuong)} × {dinhDangTien(bac.donGia)} ₫
+                <br />Khoảng {boDuoi0(bac.tuSoLuong)} – {bac.denSoLuong ? boDuoi0(bac.denSoLuong) : 'không giới hạn'} · định mức sau quy đổi {bac.dinhMucQuyDoi ? boDuoi0(bac.dinhMucQuyDoi) : 'không giới hạn'}
+              </span>
+              <b style={{ color: 'var(--ma-text-primary)', whiteSpace: 'nowrap' }}>{dinhDangTien(bac.thanhTien)} ₫</b>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+// "288.00" -> "288"; chỉ số công tơ không dùng dấu nhóm nghìn.
+function boDuoi0(giaTri: string) {
+  return giaTri.includes('.') ? giaTri.replace(/\.?0+$/, '') : giaTri
+}
+
+function bieuTuongKhoan(dong: ThongTinDongHoaDon): IconName {
+  const ten = dong.tenKhoan.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/đ/g, 'd')
+  if (laDongLamTron(dong) || ten.includes('lam tron')) return 'plus'
+  if (ten.includes('phong')) return 'door'
+  if (ten.includes('dien')) return 'bolt'
+  if (ten.includes('nuoc')) return 'droplet'
+  if (ten.includes('ve sinh') || ten.includes('nguoi')) return 'users'
+  return 'layers'
 }
 
 function MobileInvoiceLines({ token, lines, total }: { token: string; lines: ThongTinDongHoaDon[]; total: string }) {

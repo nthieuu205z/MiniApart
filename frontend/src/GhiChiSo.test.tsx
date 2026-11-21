@@ -601,6 +601,65 @@ describe('GhiChiSo mobile screen', () => {
       }),
     ))
   })
+
+  it('NFR-USA-01 mobile only warns when consumption exceeds the backend threshold, not a fixed 1.5 ratio', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/toa-nha') return jsonResponse([{ id: 1, ten: 'Toà A' }])
+      if (url === '/api/toa-nha/1/ky-thanh-toan') return jsonResponse([{ id: 8, nam: 2026, thang: 8, trangThai: 'DANG_MO' }])
+      if (url.endsWith('/thieu-chi-so')) return jsonResponse([])
+      return jsonResponse({
+        tongPhong: 1,
+        daGhi: 0,
+        phong: [{
+          id: 11,
+          soPhong: '101',
+          tang: 1,
+          dichVu: [{ id: 21, tenDichVu: 'Điện', donVi: 'kWh', chiSoDau: '100.00', thongTinCanhBaoTieuThu: { soKyLichSu: 3, trungBinhBaKyTruoc: '12.00', nguongCanhBao: '2.00' } }],
+        }],
+      })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await renderScreen(true)
+    const input = await vi.waitFor(() => container.querySelector('input[name="chiSoCuoi-11-21"]') as HTMLInputElement)
+
+    await act(async () => setInputValue(input, '121.60'))
+    expect(container.textContent).toContain('TB 3 kỳ 12 kWh')
+    expect(container.querySelector('[role="alert"]')).toBeNull()
+
+    await act(async () => setInputValue(input, '125'))
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('Cao gấp 2,1 lần trung bình.')
+  })
+
+  it('NFR-USA-01 mobile primary button names the next meter or room after saving', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      if (url === '/api/toa-nha') return jsonResponse([{ id: 1, ten: 'Toà A' }])
+      if (url === '/api/toa-nha/1/ky-thanh-toan') return jsonResponse([{ id: 8, nam: 2026, thang: 8, trangThai: 'DANG_MO' }])
+      if (url.endsWith('/thieu-chi-so')) return jsonResponse([])
+      if (url.endsWith('/chi-so') && init?.method === 'POST') return jsonResponse({ phongId: 11, dichVuId: 21, chiSoDau: '1240.00', chiSoCuoi: '1252.00', mucTieuThu: '12.00', coThayCongTo: false }, 201)
+      return jsonResponse({
+        tongPhong: 2,
+        daGhi: 0,
+        phong: [
+          { id: 11, soPhong: '101', tang: 1, dichVu: [{ id: 21, tenDichVu: 'Điện', donVi: 'kWh', chiSoDau: '1240.00' }, { id: 22, tenDichVu: 'Nước', donVi: 'm3', chiSoDau: '45.00' }] },
+          { id: 12, soPhong: '201', tang: 2, dichVu: [{ id: 21, tenDichVu: 'Điện', donVi: 'kWh', chiSoDau: '980.00' }] },
+        ],
+      })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await renderScreen(true)
+    const saveButton = await vi.waitFor(() => container.querySelector('button[data-save-key="11-21"]') as HTMLButtonElement)
+    expect(saveButton.textContent).toContain('Lưu, sang công tơ nước 101')
+
+    await act(async () => setInputValue(container.querySelector('input[name="chiSoCuoi-11-21"]') as HTMLInputElement, '1252'))
+    await act(async () => saveButton.click())
+
+    await vi.waitFor(() => expect(container.querySelector('button[data-save-key="11-22"]')?.textContent).toContain('Lưu, sang phòng 201'))
+    await vi.waitFor(() => expect(document.activeElement).toBe(container.querySelector('input[name="chiSoCuoi-11-22"]')))
+  })
 })
 
 async function renderScreen(mobile = false) {
