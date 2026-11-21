@@ -171,6 +171,7 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
                     noun="hợp đồng"
                     pageSize={20}
                     rowLabel={(h) => `phòng ${h.soPhong}`}
+                    rowProps={(h) => ({ 'data-contract-row': String(h.id) })}
                   />
                 </Card>
               )}
@@ -217,24 +218,7 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
   )
 }
 
-// Dưới 768px mỗi hàng bảng thành một thẻ; thead ẩn nên bỏ sắp xếp ở mobile.
-const CSS_THE_MOBILE = `@media (min-width: 768px) { .hd-bang .table td { white-space: nowrap } }
-@media (max-width: 767px) {
-  .hd-bang .table-wrap { overflow-x: visible; margin: 0; padding: 0 }
-  .hd-bang .table, .hd-bang tbody { display: block }
-  .hd-bang thead { display: none }
-  .hd-bang .table tbody tr:last-child td { border: 0 }
-  .hd-bang tbody tr { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px 12px; padding: 14px 0; border-bottom: 1px solid var(--ma-line-200) }
-  .hd-bang .table tbody td { display: block; height: auto; padding: 0; border: 0; text-align: left; white-space: normal }
-  .hd-bang td:nth-child(1) { grid-area: 1 / 1 }
-  .hd-bang td:nth-child(2) { grid-area: 1 / 2 }
-  .hd-bang td:nth-child(7) { grid-area: 1 / 3 }
-  .hd-bang td:nth-child(3), .hd-bang td:nth-child(4), .hd-bang td:nth-child(5), .hd-bang td:nth-child(6) { grid-column: 2 / 4 }
-  .hd-bang td:nth-child(5)::before { content: "Giá thuê: "; color: var(--ma-text-secondary) }
-  .hd-bang td:nth-child(6)::before { content: "Tiền cọc: "; color: var(--ma-text-secondary) }
-  .hd-bang td:nth-child(8) { grid-column: 2 / 4 }
-  .hd-bang td:nth-child(8) .td-acts { justify-content: flex-start }
-}`
+const CSS_THE_MOBILE = `@media (min-width: 768px) { .hd-bang .table td { white-space: nowrap } }`
 
 const CHIP: DataTableChip<ThongTinHopDong>[] = [
   { key: 'HIEU_LUC', label: 'Hiệu lực', match: (h) => h.trangThai === 'HIEU_LUC' },
@@ -262,9 +246,8 @@ function ghiChuThoiHan(h: ThongTinHopDong): string {
 
 function cotHopDong(xem: (id: number) => void): DataTableColumn<ThongTinHopDong>[] {
   return [
-    // DataTable chưa cho gắn thuộc tính lên <tr>, nên data-contract-row nằm ở ô Phòng.
-    { key: 'phong', label: 'Phòng', sortable: true, sortValue: (h) => h.soPhong, render: (h) => <span className="td-main" data-contract-row={h.id}>{h.soPhong}</span> },
-    { key: 'nguoiThue', label: 'Người thuê', sortable: true, sortValue: (h) => h.hoTenNguoiThue, render: (h) => <div className="td-person"><span className={`avatar sm h${(h.id % 5) + 1}`} aria-hidden="true">{chuCaiDau(h.hoTenNguoiThue)}</span>{h.hoTenNguoiThue}</div> },
+    { key: 'phong', label: 'Phòng', sortable: true, sortValue: (h) => h.soPhong, render: (h) => <span className="td-main">{h.soPhong}</span> },
+    { key: 'nguoiThue', label: 'Người thuê', the: 'tieu-de', sortable: true, sortValue: (h) => h.hoTenNguoiThue, render: (h) => <div className="td-person"><span className={`avatar sm h${(h.id % 5) + 1}`} aria-hidden="true">{chuCaiDau(h.hoTenNguoiThue)}</span>{h.hoTenNguoiThue}</div> },
     {
       key: 'thoiHan', label: 'Thời hạn', sortable: true, sortValue: (h) => h.ngayKetThuc,
       render: (h) => <>{dinhDangNgayIso(h.ngayBatDau)} – {dinhDangNgayIso(h.ngayKetThuc)}<div className="td-sub" style={h.sapHetHan ? { color: 'var(--ma-accent-warm-text)' } : undefined}>{ghiChuThoiHan(h)}</div></>,
@@ -273,7 +256,7 @@ function cotHopDong(xem: (id: number) => void): DataTableColumn<ThongTinHopDong>
     { key: 'tienCoc', label: 'Tiền cọc', align: 'num', sortable: true, sortValue: (h) => Number(h.tienCoc), render: (h) => <>{dinhDangTien(h.tienCoc)} ₫</> },
     { key: 'trangThai', label: 'Trạng thái', render: (h) => <StatusTag tone={tongTrangThai(h)}>{h.sapHetHan ? 'Sắp hết hạn' : h.tenTrangThai}</StatusTag> },
     {
-      key: 'thaoTac', label: 'Thao tác', align: 'num',
+      key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong',
       render: (h) => <div className="td-acts"><button type="button" className="btn btn-ghost btn-sm" onClick={() => xem(h.id)}>{h.sapHetHan ? 'Gia hạn' : h.trangThai === 'CHO_KY' ? 'Ghi nhận ký' : 'Xem'}</button></div>,
     },
   ]

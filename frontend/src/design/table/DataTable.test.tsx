@@ -62,4 +62,19 @@ describe('DataTable', () => {
     click(container.querySelector('input[aria-label="Chọn 1"]')!)
     expect(container.querySelector('.bulkbar')?.textContent).toContain('Đã chọn 1 hợp đồng')
   })
+
+  it('mỗi ô có data-label để thành thẻ mobile; cột đầu là tiêu đề', () => {
+    const o = [...container.querySelectorAll('tbody tr')[0].querySelectorAll('td')].filter((td) => td.hasAttribute('data-label'))
+    expect(o.map((td) => td.getAttribute('data-label'))).toEqual(['Phòng', 'Người thuê', 'Giá thuê'])
+    expect(o[0].getAttribute('data-the')).toBe('tieu-de')
+    expect(o[1].hasAttribute('data-the')).toBe(false)
+  })
+
+  it('rowProps gắn thuộc tính lên <tr>, defaultChip bật sẵn chip', () => {
+    act(() => root.unmount()); root = createRoot(container) // mount mới: defaultChip chỉ là giá trị khởi tạo
+    act(() => root.render(<DataTable rows={rows} columns={columns} getRowId={(r) => r.id} rowProps={(r) => ({ 'data-row': String(r.id) })} chips={[{ key: 'ok', label: 'Hiệu lực', match: (r) => r.ok }]} defaultChip="ok" />))
+    expect(container.querySelector('tbody tr')?.getAttribute('data-row')).toBe('1')
+    expect(container.querySelector('button.chip')?.getAttribute('aria-pressed')).toBe('true')
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
+  })
 })
