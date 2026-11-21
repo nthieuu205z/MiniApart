@@ -8,6 +8,9 @@ import { Figure } from './design/core/Figure'
 import { Glyph } from './design/core/Glyph'
 import { StatusTag } from './design/core/StatusTag'
 import { FilterChip } from './design/forms/FilterChip'
+import { EmptyState } from './design/feedback/EmptyState'
+import { Field, Input } from './design/forms/Field'
+import { Card } from './design/layout/Card'
 import { ConfirmDialog } from './design/feedback/ConfirmDialog'
 import { MeterInput } from './design/forms/MeterInput'
 import { MetaItem, TableCell, TableHeadCell } from './design/layout/Screen'
@@ -233,5 +236,23 @@ describe('MiniApart design components', () => {
     const chip = container.querySelector('button.chip')!
     expect(chip.getAttribute('aria-pressed')).toBe('true')
     expect(chip.textContent).toContain('9')
+  })
+
+  it('links Field error to the control with aria-describedby', async () => {
+    await act(async () => root.render(<Field label="Số điện thoại" error="Thiếu số"><Input /></Field>))
+    const input = container.querySelector('input')!
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    const err = container.querySelector('.error-text')!
+    expect(input.getAttribute('aria-describedby')).toBe(err.id)
+  })
+
+  it('renders EmptyState loading as a busy skeleton', async () => {
+    await act(async () => root.render(<EmptyState kind="loading" title="Đang tải" />))
+    expect(container.querySelector('[aria-busy="true"] .skel')).not.toBeNull()
+  })
+
+  it('renders Card title as h2', async () => {
+    await act(async () => root.render(<Card title="Thực thu">x</Card>))
+    expect(container.querySelector('h2')?.textContent).toBe('Thực thu')
   })
 })
