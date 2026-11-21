@@ -4,7 +4,7 @@ import { EmptyState } from './design/feedback/EmptyState'
 /** Khung chung 3 màn báo cáo (Lô D): đầu trang 1 hàng (tiêu đề + mô tả, nút phụ bên phải), các thẻ xếp lưới 12 cột. */
 export function DauBaoCao({ id, tieuDe, moTa, action }: { id: string; tieuDe: string; moTa: string; action: React.ReactNode }): React.ReactElement {
   return (
-    <header className="spread" style={{ alignItems: 'flex-start', flexWrap: 'wrap' }}>
+    <header className="spread" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
       <div style={{ minWidth: 0, flex: '1 1 320px' }}>
         <h1 className="h1" id={id}>{tieuDe}</h1>
         <p className="t-2" style={{ margin: '4px 0 0' }}>{moTa}</p>

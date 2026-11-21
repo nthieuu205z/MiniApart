@@ -1,4 +1,5 @@
 import './tokens/index.css'
+import './design/base.css'
 import './design/components.css'
 import './styles.css'
 
