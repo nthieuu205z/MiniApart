@@ -601,7 +601,7 @@ function App() {
       : hienThiBaoCaoCongNo
         ? 'Báo cáo công nợ'
       : hienThiBangViec
-        ? 'Bảng việc vận hành'
+        ? (duongDanHienTai === '/tong-quan' ? 'Tổng quan' : 'Nhắc việc')
       : hienThiLichSuSuaChua
         ? 'Lịch sử sửa chữa'
     : hienThiHoaDonNguoiThue && duongDanHienTai !== '/'
