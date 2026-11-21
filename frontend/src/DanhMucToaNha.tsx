@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState, type ReactNode } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   ApiError,
   capNhatToaNha,
@@ -9,7 +9,11 @@ import {
 } from "./api";
 import { Button } from "./design/core/Button";
 import { EmptyState } from "./design/feedback/EmptyState";
-import { StatStrip } from "./design/shell/StatStrip";
+import { Icon } from "./design/core/Icon";
+import { Field } from "./design/forms/Field";
+import { Card } from "./design/layout/Card";
+import { DataTable, type DataTableColumn } from "./design/table/DataTable";
+import { CSS_BANG_QUAN_TRI } from "./bangQuanTriChung";
 type Props = { token: string; vaiTro: string; mobile?: boolean };
 type Form = {
   id: number | null;
@@ -23,16 +27,6 @@ type Form = {
   tkNganHang: string;
   nguongThatThoat: string;
   batBuocAnhCongTo: boolean;
-};
-const input = {
-  width: "100%",
-  boxSizing: "border-box" as const,
-  minHeight: 44,
-  padding: "9px 10px",
-  border: "1px solid var(--ma-border-strong)",
-  background: "var(--ma-bg-card)",
-  color: "var(--ma-text-primary)",
-  font: "inherit",
 };
 export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) {
   const [ds, setDs] = useState<ThongTinToaNha[]>([]),
@@ -125,326 +119,150 @@ export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) 
       setSaving(false);
     }
   }
+  const cot: DataTableColumn<ThongTinToaNha>[] = [
+    { key: 'toa', label: 'Toà nhà', sortable: true, sortValue: (x) => x.ten, render: (x) => <div><div className="td-main bq-cat" title={x.ten}>{x.ten}</div><div className="td-sub">{x.maToa}</div></div> },
+    { key: 'diaChi', label: 'Địa chỉ', render: (x) => <span className="bq-toa" title={x.diaChi}>{x.diaChi}</span> },
+    { key: 'soTang', label: 'Số tầng', align: 'num', sortable: true, sortValue: (x) => x.soTang, render: (x) => x.soTang },
+    { key: 'chotSo', label: 'Chốt số', align: 'num', sortable: true, sortValue: (x) => x.ngayChotSo, render: (x) => `ngày ${x.ngayChotSo}` },
+    { key: 'nguong', label: 'Ngưỡng thất thoát', align: 'num', sortable: true, sortValue: (x) => Number(x.nguongThatThoat), render: (x) => x.nguongThatThoat },
+    { key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong', render: (x) => <div className="td-acts"><button type="button" className="btn btn-ghost btn-sm" aria-pressed={toa?.id === x.id} onClick={() => setChosen(x.id)}>Xem<span className="sr-only"> {x.ten}</span></button></div> },
+  ];
+  const tongTang = ds.reduce((n, x) => n + x.soTang, 0);
   return (
     <section
       className={`building-catalog building-catalog--${mobile ? "mobile" : "desktop"}`}
       data-testid="building-catalog"
       data-layout-variant={mobile ? "mobile" : "desktop"}
       aria-labelledby="building-management-title"
-      style={{
-        display: "grid",
-        gap: mobile ? 16 : 18,
-        maxWidth: 1280,
-        margin: "auto",
-        padding: mobile ? 0 : "clamp(12px,3vw,32px)",
-        minWidth: 0,
-        fontFamily: "var(--ma-font-ui)",
-      }}
+      style={{ display: "grid", gap: 16, minWidth: 0 }}
     >
-      <header
-        style={{
-          display: mobile ? "grid" : "flex",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
-          borderBottom: "2px solid var(--ma-ink-900)",
-          paddingBottom: 14,
-        }}
-      >
-        <div>
-          <small style={{ color: "var(--ma-text-secondary)", fontFamily: "var(--ma-font-mono)", fontSize: 11 }}>DANH MỤC CƠ SỞ</small>
-          <h3 id="building-management-title">Danh mục toà nhà</h3>
+      <style>{CSS_BANG_QUAN_TRI + CSS_TOA_NHA}</style>
+      <header className="topbar">
+        <div className="title-block">
+          <h1 className="h1" id="building-management-title">Toà nhà</h1>
+          <p className="sub">{loading ? "Đang tải…" : `${ds.length} toà được xem · tổng ${tongTang} tầng`}</p>
         </div>
-        {canCreate && (
-          <Button onClick={() => open()} style={{ minHeight: 44, width: mobile ? "100%" : undefined, justifyContent: mobile ? "center" : undefined }}>
-            Khai báo toà mới
-          </Button>
-        )}
+        {canCreate && <div className="topbar-actions"><Button onClick={() => open()}><Icon name="plus" />Khai báo toà mới</Button></div>}
       </header>
-      <p style={{ margin: 0, color: "var(--ma-text-secondary)" }}>
-        Máy chủ tự giới hạn danh sách theo quyền được xem. Ngày chốt số chỉ nhận
-        từ 1 đến 28 để tháng hai vẫn luôn có ngày chốt.
-      </p>
-      {error && (
-        <p role="alert" style={{ color: "var(--ma-urgent)" }}>
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p role="status" style={{ color: "var(--ma-done-text)" }}>
-          {notice}
-        </p>
-      )}
-      {!loading && ds.length > 0 && (
-        <StatStrip
-          stats={[
-            { label: "TOÀ ĐƯỢC XEM", value: ds.length },
-            {
-              label: "TỔNG SỐ TẦNG",
-              value: ds.reduce((n, x) => n + x.soTang, 0),
-            },
-          ]}
-          style={{ gridTemplateColumns: "repeat(2,minmax(0,1fr))" }}
+      {error && <div role="alert" className="alert alert-danger"><Icon name="alert" />{error}</div>}
+      {notice && <div role="status" className="alert alert-success"><Icon name="check-circle" />{notice}</div>}
+      {loading ? (
+        <EmptyState kind="loading" title="Đang tải danh sách toà nhà…" />
+      ) : ds.length === 0 ? (
+        <EmptyState
+          title="Chưa có toà nhà nào."
+          body="Khai báo toà đầu tiên để bắt đầu quản lý phòng."
+          actionLabel={canCreate ? "Khai báo toà mới" : undefined}
+          onAction={() => open()}
         />
+      ) : (
+        <Card className="bq-gon" data-mobile-building-list={mobile ? "true" : undefined}>
+          <DataTable
+            rows={ds}
+            columns={cot}
+            getRowId={(x) => x.id}
+            timTheo={(x) => `${x.ten} ${x.maToa} ${x.diaChi}`}
+            searchLabel="Tìm toà, mã, địa chỉ"
+            noun="toà nhà"
+            pageSize={10}
+            rowProps={(x) => ({ "data-building-row": String(x.id), className: toa?.id === x.id ? "bq-chon" : "" })}
+          />
+        </Card>
       )}
-      <div
-        data-mobile-building-list={mobile ? "true" : undefined}
-        style={{
-          display: "grid",
-          gridTemplateColumns: mobile ? "minmax(0,1fr)" : "repeat(auto-fit,minmax(min(100%,310px),1fr))",
-          gap: mobile ? 16 : 18,
-          minWidth: 0,
-        }}
-      >
-        <div style={{ display: "grid", gap: 8 }}>
-          {loading ? (
-            <p>Đang tải danh sách toà nhà…</p>
-          ) : ds.length === 0 ? (
-            <EmptyState
-              title="Chưa có toà nhà nào."
-              body="Khai báo toà đầu tiên để bắt đầu quản lý phòng."
-              actionLabel={canCreate ? "Khai báo toà mới" : undefined}
-              onAction={() => open()}
+      {toa && (
+        <Card title={toa.ten} action={
+          <Button
+            variant="secondary"
+            onClick={() => open(toa)}
+            style={{ maxWidth: "100%", minWidth: 0, whiteSpace: "normal", overflowWrap: "anywhere", textAlign: "center" }}
+          >
+            Sửa {toa.ten}
+          </Button>
+        }>
+          <dl className="bq-dl">
+            <div><dt>Mã toà</dt><dd>{toa.maToa}</dd></div>
+            <div><dt>Địa chỉ</dt><dd>{toa.diaChi}</dd></div>
+            <div><dt>Số tầng</dt><dd>{toa.soTang}</dd></div>
+            <div><dt>Ngày chốt số</dt><dd>ngày {toa.ngayChotSo} hằng tháng</dd></div>
+            <div><dt>Hạn thanh toán</dt><dd>{toa.soNgayHanTt} ngày</dd></div>
+            <div><dt>Ngưỡng thất thoát</dt><dd>{toa.nguongThatThoat}</dd></div>
+            <div><dt>BIN ngân hàng</dt><dd>{toa.maNganHang}</dd></div>
+            <div><dt>Tài khoản nhận tiền</dt><dd>{toa.tkNganHang}</dd></div>
+            <div><dt>Ảnh công tơ</dt><dd>{toa.batBuocAnhCongTo ? "Bắt buộc khi ghi chỉ số" : "Không bắt buộc"}</dd></div>
+          </dl>
+          <p className="t-sm">Ngày chốt số chỉ nhận từ 1 đến 28 để tháng hai vẫn luôn có ngày chốt. Máy chủ tự giới hạn danh sách theo quyền được xem.</p>
+        </Card>
+      )}
+      {form && (
+        <form data-testid="building-form" onSubmit={save} className="card" style={{ display: "grid", gap: 12 }}>
+          <h2 className="h2">{form.id === null ? "Khai báo toà nhà" : "Sửa toà nhà"}</h2>
+          <Field label="Mã toà">
+            <input className="input" required name="maToa" value={form.maToa} onChange={(e) => update("maToa", e.target.value)} />
+          </Field>
+          <Field label="Tên toà">
+            <input className="input" required name="ten" value={form.ten} onChange={(e) => update("ten", e.target.value)} />
+          </Field>
+          <Field label="Địa chỉ">
+            <textarea className="input" style={{ height: "auto", minHeight: 72, paddingTop: 10 }} required name="diaChi" value={form.diaChi} onChange={(e) => update("diaChi", e.target.value)} />
+          </Field>
+          <div style={{ display: "grid", gridTemplateColumns: mobile ? "minmax(0,1fr)" : "repeat(2,minmax(0,1fr))", gap: 12 }}>
+            <Field label="Số tầng">
+              <input className="input" required type="number" min="1" name="soTang" value={form.soTang} onChange={(e) => update("soTang", e.target.value)} />
+            </Field>
+            <Field label="Ngày chốt số (từ 1 đến 28)">
+              <input className="input" required type="number" min="1" max="28" name="ngayChotSo" value={form.ngayChotSo} onChange={(e) => update("ngayChotSo", e.target.value)} />
+            </Field>
+            <Field label="Hạn thanh toán">
+              <input className="input" required type="number" min="1" name="soNgayHanTt" value={form.soNgayHanTt} onChange={(e) => update("soNgayHanTt", e.target.value)} />
+            </Field>
+            <Field label="Ngưỡng thất thoát">
+              <input className="input" required type="number" min="0" step="0.01" name="nguongThatThoat" value={form.nguongThatThoat} onChange={(e) => update("nguongThatThoat", e.target.value)} />
+            </Field>
+          </div>
+          <Field label="BIN ngân hàng">
+            <input
+              className="input"
+              required
+              name="maNganHang"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              title="BIN ngân hàng phải gồm đúng 6 chữ số"
+              value={form.maNganHang}
+              onChange={(e) => update("maNganHang", e.target.value)}
             />
-          ) : (
-            ds.map((x) => (
-              <button
-                key={x.id}
-                type="button"
-                onClick={() => setChosen(x.id)}
-                aria-pressed={toa?.id === x.id}
-                style={{
-                  textAlign: "left",
-                  minHeight: 44,
-                  padding: 14,
-                  cursor: "pointer",
-                  font: "inherit",
-                  color: "var(--ma-text-primary)",
-                  background: "var(--ma-bg-card)",
-                  border:
-                    toa?.id === x.id
-                      ? "2px solid var(--ma-ink-900)"
-                      : "1px solid var(--ma-border-default)",
-                }}
-              >
-                <strong>{x.ten}</strong> <span>{x.maToa}</span>
-                <div>{x.diaChi}</div>
-                <small>
-                  Số tầng {x.soTang} · Chốt số ngày {x.ngayChotSo} · Ngưỡng{" "}
-                  {x.nguongThatThoat}
-                </small>
-              </button>
-            ))
-          )}
-        </div>
-        <div style={{ display: "grid", gap: 16 }}>
-          {toa ? (
-            <section
-              style={{
-                padding: 16,
-                border: "1px solid var(--ma-border-default)",
-                minWidth: 0,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 8,
-                  flexWrap: "wrap",
-                }}
-              >
-                <h4>Toà {toa.ten}</h4>
-                <Button
-                  variant="secondary"
-                  onClick={() => open(toa)}
-                  style={{
-                    minHeight: 44,
-                    maxWidth: "100%",
-                    minWidth: 0,
-                    whiteSpace: "normal",
-                    overflowWrap: "anywhere",
-                    textAlign: "center",
-                    width: mobile ? "100%" : undefined,
-                    justifyContent: mobile ? "center" : undefined,
-                  }}
-                >
-                  Sửa {toa.ten}
-                </Button>
-              </div>
-              <p>
-                Mã toà {toa.maToa} · {toa.diaChi}
-              </p>
-              <p>
-                Hạn thanh toán {toa.soNgayHanTt} ngày · BIN {toa.maNganHang} ·{" "}
-                Tài khoản nhận tiền {toa.tkNganHang}
-              </p>
-            </section>
-          ) : (
-            <EmptyState title="Chọn một toà nhà để xem chi tiết." />
-          )}
-          {form && (
-            <form
-              data-testid="building-form"
-              onSubmit={save}
-              style={{
-                display: "grid",
-                gap: 12,
-                padding: 16,
-                border: "1px solid var(--ma-border-default)",
-                minWidth: 0,
-              }}
-            >
-              <h4>{form.id === null ? "Khai báo toà nhà" : "Sửa toà nhà"}</h4>
-              <Field label="Mã toà">
-                <input
-                  required
-                  name="maToa"
-                  value={form.maToa}
-                  onChange={(e) => update("maToa", e.target.value)}
-                  style={input}
-                />
-              </Field>
-              <Field label="Tên toà">
-                <input
-                  required
-                  name="ten"
-                  value={form.ten}
-                  onChange={(e) => update("ten", e.target.value)}
-                  style={input}
-                />
-              </Field>
-              <Field label="Địa chỉ">
-                <textarea
-                  required
-                  name="diaChi"
-                  value={form.diaChi}
-                  onChange={(e) => update("diaChi", e.target.value)}
-                  style={input}
-                />
-              </Field>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: mobile ? "minmax(0,1fr)" : "repeat(2,minmax(0,1fr))",
-                  gap: 10,
-                }}
-              >
-                <Field label="Số tầng">
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    name="soTang"
-                    value={form.soTang}
-                    onChange={(e) => update("soTang", e.target.value)}
-                    style={input}
-                  />
-                </Field>
-                <Field label="Ngày chốt số">
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    max="28"
-                    name="ngayChotSo"
-                    value={form.ngayChotSo}
-                    onChange={(e) => update("ngayChotSo", e.target.value)}
-                    style={input}
-                  />
-                </Field>
-                <Field label="Hạn thanh toán">
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    name="soNgayHanTt"
-                    value={form.soNgayHanTt}
-                    onChange={(e) => update("soNgayHanTt", e.target.value)}
-                    style={input}
-                  />
-                </Field>
-                <Field label="Ngưỡng thất thoát">
-                  <input
-                    required
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    name="nguongThatThoat"
-                    value={form.nguongThatThoat}
-                    onChange={(e) => update("nguongThatThoat", e.target.value)}
-                    style={input}
-                  />
-                </Field>
-              </div>
-              <Field label="BIN ngân hàng">
-                <input
-                  required
-                  name="maNganHang"
-                  inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
-                  title="BIN ngân hàng phải gồm đúng 6 chữ số"
-                  value={form.maNganHang}
-                  onChange={(e) => update("maNganHang", e.target.value)}
-                  style={input}
-                />
-              </Field>
-              <Field label="Tài khoản ngân hàng nhận tiền">
-                <input
-                  required
-                  name="tkNganHang"
-                  inputMode="numeric"
-                  pattern="[0-9]{1,19}"
-                  maxLength={19}
-                  title="Số tài khoản phải gồm từ 1 đến 19 chữ số"
-                  value={form.tkNganHang}
-                  onChange={(e) => update("tkNganHang", e.target.value)}
-                  style={input}
-                />
-              </Field>
-              <label>
-                <input
-                  name="batBuocAnhCongTo"
-                  type="checkbox"
-                  checked={form.batBuocAnhCongTo}
-                  onChange={(e) => update("batBuocAnhCongTo", e.target.checked)}
-                />{" "}
-                Bắt buộc ảnh công tơ khi ghi chỉ số
-              </label>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: mobile ? "column-reverse" : undefined }}>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setForm(null);
-                    setError(null);
-                  }}
-                >
-                  Huỷ
-                </Button>
-                <Button type="submit" blocked={saving}>
-                  {saving
-                    ? "Đang lưu…"
-                    : form.id === null
-                      ? "Lưu toà nhà"
-                      : "Lưu thay đổi"}
-                </Button>
-              </div>
-            </form>
-          )}
-        </div>
-      </div>
+          </Field>
+          <Field label="Tài khoản ngân hàng nhận tiền">
+            <input
+              className="input"
+              required
+              name="tkNganHang"
+              inputMode="numeric"
+              pattern="[0-9]{1,19}"
+              maxLength={19}
+              title="Số tài khoản phải gồm từ 1 đến 19 chữ số"
+              value={form.tkNganHang}
+              onChange={(e) => update("tkNganHang", e.target.value)}
+            />
+          </Field>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44 }}>
+            <input name="batBuocAnhCongTo" type="checkbox" checked={form.batBuocAnhCongTo} onChange={(e) => update("batBuocAnhCongTo", e.target.checked)} />
+            Bắt buộc ảnh công tơ khi ghi chỉ số
+          </label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: mobile ? "column-reverse" : undefined }}>
+            <Button variant="secondary" onClick={() => { setForm(null); setError(null); }}>Huỷ</Button>
+            <Button type="submit" blocked={saving}>
+              {saving ? "Đang lưu…" : form.id === null ? "Lưu toà nhà" : "Lưu thay đổi"}
+            </Button>
+          </div>
+        </form>
+      )}
     </section>
   );
 }
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label style={{ display: "grid", gap: 6, fontSize: 13, fontWeight: 600 }}>
-      <span>{label}</span>
-      {children}
-    </label>
-  );
-}
+const CSS_TOA_NHA = `.bq-dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px 24px; margin: 0; }
+.bq-dl dt { font: var(--ma-text-caption); color: var(--ma-text-muted); }
+.bq-dl dd { margin: 2px 0 0; font: var(--ma-text-body); color: var(--ma-text-primary); overflow-wrap: anywhere; }`;
 function payload(f: Form): YeuCauToaNha {
   return {
     maToa: f.maToa,

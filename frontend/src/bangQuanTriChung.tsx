@@ -71,5 +71,6 @@ export const CSS_BANG_QUAN_TRI = `
 .bq-toa { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 26ch; }
 .bq-toolbar-phai { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 @media (min-width: 1360px) { .bq-the-loc > .bq-loc-phai { position: absolute; top: 24px; right: 24px; margin: 0; } .bq-the-loc .table-toolbar { padding-right: 164px; } .bq-the-loc .table-toolbar .input-wrap { width: 200px; } }
-@media (max-width: 767px) { .bq-menu { left: 16px; right: 16px !important; } .bq-loc-phai { margin-bottom: 8px; } }
+@media (min-width: 768px) { .table tr.bq-chon td { background: var(--ma-brand-accent-light); } }
+@media (max-width: 767px) { .bq-gon .table.table-cards tbody td:not([data-the]) { flex: 0 1 auto; } .bq-gon .table.table-cards tbody td[data-label="Địa chỉ"] { flex: 1 1 100%; } .bq-gon .bq-toa { display: inline; max-width: none; } .table.table-cards tbody tr.bq-chon { background: var(--ma-brand-accent-light); margin: 0 -12px; padding: 14px 12px; border-radius: var(--ma-radius-md); }  .bq-menu { left: 16px; right: 16px !important; } .bq-loc-phai { margin-bottom: 8px; } }
 `
