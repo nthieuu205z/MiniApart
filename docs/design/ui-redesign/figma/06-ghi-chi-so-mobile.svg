@@ -45,7 +45,7 @@
 <rect data-name="cs-warn" x="32" y="405" width="326" height="66" rx="16" fill="#FDF1DC"/>
 <g data-name="icon" transform="translate(44 418) scale(0.83333)"><g fill="none" stroke="#92400E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 15.5H3z"></path><path d="M12 10v4.5M12 17.2h.01"></path></g></g>
 <text x="76" y="432.4" font-family="Archivo" font-size="14" font-weight="600" fill="#7A350C" xml:space="preserve">Cao gấp 1,7 lần trung bình.</text>
-<text x="249.78" y="432.4" font-family="Archivo" font-size="14" font-weight="400" fill="#7A350C" xml:space="preserve">Kiểm tra lại số</text>
+<text x="256" y="432.4" font-family="Archivo" font-size="14" font-weight="400" fill="#7A350C" xml:space="preserve">Kiểm tra lại số</text>
 <text x="76" y="453.4" font-family="Archivo" font-size="14" font-weight="400" fill="#7A350C" xml:space="preserve">hoặc chụp ảnh công tơ để lưu kèm.</text>
 <rect data-name="btn" x="32.5" y="483.5" width="325" height="47" rx="13.5" fill="#FFFFFF" stroke="#D6D2CB" stroke-width="1"/>
 <g data-name="icon" transform="translate(116.7 497) scale(0.83333)"><g fill="none" stroke="#1C1B19" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a2 2 0 0 1 2-2h2L9.5 4h5L16 6.5h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path><circle cx="12" cy="13" r="3.5"></circle></g></g>

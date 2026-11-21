@@ -69,3 +69,6 @@ Mở thẳng bằng trình duyệt (không cần server, không cần mạng):
 - Chưa import thật vào Figma (không có đăng nhập Figma trong phiên này); SVG đã kiểm bằng render trình duyệt, lệch 0,42–2,05 % pixel.
 - Chưa thử trên điện thoại thật; khung 1024–1279 (sidebar thu gọn) mới có CSS + mẫu trong `design-system.html`, chưa có ảnh màn khung.
 - Ảnh phòng lấy từ `frontend/public/rooms/` (ảnh demo của repo).
+
+## Đã duyệt (21/11/2026)
+Chủ tịch duyệt bản tổng quan: chốt theo đề xuất cả 11 câu (mục 6 dùng ngưỡng backend `thongTinCanhBaoTieuThu` khi áp vào app; mục 10 không làm biến thể; mục 11 làm theo thứ tự a→d).
