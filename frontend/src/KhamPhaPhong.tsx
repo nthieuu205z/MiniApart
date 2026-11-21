@@ -11,7 +11,9 @@ import {
 import { Button } from './design/core/Button'
 import { FilterChip } from './design/forms/FilterChip'
 import { StatusTag } from './design/core/StatusTag'
+import { Icon } from './design/core/Icon'
 import { SysLabel } from './design/core/SysLabel'
+import { EmptyState } from './design/feedback/EmptyState'
 import { useDialogTrap } from './design/feedback/useDialogTrap'
 import { hasAllAmenities } from './roomAmenities'
 
@@ -161,14 +163,12 @@ export function HinhAnhPhong({
         data-testid="badge-nguon-anh"
         style={{
           position: 'absolute',
-          bottom: 6,
-          right: 8,
-          background: 'rgba(15, 23, 42, 0.75)',
-          backdropFilter: 'blur(4px)',
-          color: '#fff',
-          fontSize: 11,
-          fontFamily: 'var(--ma-font-mono)',
-          padding: '2px 8px',
+          bottom: 8,
+          left: 8,
+          background: 'var(--ma-bg-card)',
+          color: 'var(--ma-text-secondary)',
+          font: 'var(--ma-text-badge)',
+          padding: '3px 10px',
           borderRadius: 'var(--ma-radius-pill)',
         }}
       >
@@ -190,6 +190,9 @@ export default function KhamPhaPhong({ onChuyenDangNhap, manHinhHep = false }: P
   const [tienIchDaChon, setTienIchDaChon] = useState<string[]>([])
   const [tuKhoa, setTuKhoa] = useState<string>('')
   const [chiHienPhongTrong, setChiHienPhongTrong] = useState<boolean>(false)
+  const [loaiPhongChon, setLoaiPhongChon] = useState('')
+  const [soHienThi, setSoHienThi] = useState(12)
+  const ketQuaRef = useRef<HTMLElement>(null)
 
   // Modal Chi tiết & Biểu phí
   const [phongXemChiTiet, setPhongXemChiTiet] = useState<PublicPhong | null>(null)
@@ -209,6 +212,7 @@ export default function KhamPhaPhong({ onChuyenDangNhap, manHinhHep = false }: P
   const idSelectToa = useId()
   const idSelectGia = useId()
   const idInputTuKhoa = useId()
+  const idSelectLoai = useId()
 
   useEffect(() => {
     let mounted = true
@@ -258,6 +262,8 @@ export default function KhamPhaPhong({ onChuyenDangNhap, manHinhHep = false }: P
 
       if (chiHienPhongTrong && p.trangThai !== 'TRONG') return false
 
+      if (loaiPhongChon && p.loaiPhong !== loaiPhongChon) return false
+
       if (khoangGiaChon === 'DUOI_3_5') {
         if (p.giaThueMacDinh > 3500000) return false
       } else if (khoangGiaChon === '3_5_DEN_5') {
@@ -277,7 +283,7 @@ export default function KhamPhaPhong({ onChuyenDangNhap, manHinhHep = false }: P
 
       return true
     })
-  }, [danhSachPhong, toaNhaIdChon, chiHienPhongTrong, khoangGiaChon, tuKhoa])
+  }, [danhSachPhong, toaNhaIdChon, chiHienPhongTrong, khoangGiaChon, tuKhoa, loaiPhongChon])
 
   const danhSachLoc = useMemo(
     () => danhSachTheoBoLocChung.filter((phong) => hasAllAmenities(phong.tienIch, tienIchDaChon)),
@@ -332,365 +338,222 @@ export default function KhamPhaPhong({ onChuyenDangNhap, manHinhHep = false }: P
 
   const tongSoPhongTrong = danhSachPhong.filter((p) => p.trangThai === 'TRONG').length
 
+  const tatCaToaNha = danhSachToaNha.length
+  const cacLoaiPhong = [...new Set(danhSachPhong.map((p) => p.loaiPhong).filter((v): v is string => Boolean(v)))].sort()
+  const coBoLoc = toaNhaIdChon !== '' || khoangGiaChon !== 'TAT_CA' || tienIchDaChon.length > 0 || Boolean(tuKhoa) || chiHienPhongTrong || loaiPhongChon !== ''
+  const danhSachSapXep = [...danhSachLoc].sort((a, b) => Number(b.trangThai === 'TRONG') - Number(a.trangThai === 'TRONG') || a.giaThueMacDinh - b.giaThueMacDinh)
+  const soPhongTrongTrongKetQua = danhSachLoc.filter((p) => p.trangThai === 'TRONG').length
+  function datLaiBoLoc() {
+    setToaNhaIdChon('')
+    setKhoangGiaChon('TAT_CA')
+    setTienIchDaChon([])
+    setTuKhoa('')
+    setChiHienPhongTrong(false)
+    setLoaiPhongChon('')
+  }
+
   return (
     <div style={styleTrangPortal}>
-      {/* Header thanh điều hướng cổng công khai */}
-      <header style={styleHeaderPortal}>
-        <div style={styleHeaderContainer}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--ma-space-4)' }}>
-            <div style={styleLogoHieu}>M</div>
-            <div>
-              <div>
-                <SysLabel>CỔNG THÔNG TIN KHÁCH HÀNG</SysLabel>
-              </div>
-              <h1 style={styleBrandTitle}>MiniApart</h1>
-            </div>
+      <div style={{ maxWidth: 1408, margin: '0 auto', padding: manHinhHep ? '0 16px 32px' : '0 16px 48px', display: 'grid', gap: 16 }}>
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="logo" aria-hidden="true">M</div>
+            <span style={{ font: 'var(--ma-text-body)', fontWeight: 700 }}>MiniApart</span>
           </div>
+          <Button variant="secondary" onClick={onChuyenDangNhap} data-testid="btn-chuyen-dang-nhap">
+            Đăng nhập
+          </Button>
+        </header>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--ma-space-3)', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>
-              Đang có <strong>{tongSoPhongTrong}</strong> phòng trống sẵn sàng
-            </span>
-            <Button variant="primary" onClick={onChuyenDangNhap} data-testid="btn-chuyen-dang-nhap">
-              Đăng nhập →
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Banner - Tự động thu gọn trên mobile */}
-      <section style={{ ...styleHeroBanner, padding: manHinhHep ? '20px 16px 24px' : styleHeroBanner.padding }}>
-        <div style={{ ...styleHeroContent, display: 'grid', gridTemplateColumns: manHinhHep ? 'minmax(0, 1fr)' : 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: manHinhHep ? 20 : 36, alignItems: 'center' }}>
-          <div>
-            <SysLabel tone="onInverse" style={{ color: '#5EEAD4', fontSize: 11.5, letterSpacing: '0.08em', fontWeight: 700 }}>MINH BẠCH GIÁ THUÊ & BIỂU PHÍ</SysLabel>
-            <h2 style={{ ...styleHeroHeading, fontSize: manHinhHep ? 22 : styleHeroHeading.fontSize, margin: manHinhHep ? '8px 0 6px' : styleHeroHeading.margin }}>
-              Tìm Căn Hộ Dịch Vụ & Phòng Trọ Tiện Nghi
-            </h2>
-            <p style={{ ...styleHeroSub, fontSize: manHinhHep ? 13.5 : styleHeroSub.fontSize, lineHeight: 1.5 }}>
-              Xem chi tiết phòng trống, bảng giá điện nước niêm yết rõ ràng, không lo chi phí phát sinh ẩn. Đặt lịch xem phòng trực tiếp miễn phí trong 30 giây.
+        <section style={{ display: 'grid', gridTemplateColumns: manHinhHep ? 'minmax(0, 1fr)' : 'minmax(0, 1.5fr) minmax(0, 1fr)', gap: 16 }}>
+          <div className="card" style={{ padding: manHinhHep ? '24px 20px' : '48px 40px', gap: 16, justifyContent: 'center' }}>
+            <h1 className="h1" style={{ margin: 0, fontSize: manHinhHep ? 28 : 40, lineHeight: 1.1 }}>Phòng trống, giá rõ từng khoản điện nước</h1>
+            <p style={{ ...styleHeroSub, margin: 0 }}>
+              {tongSoPhongTrong} phòng đang trống ở {tatCaToaNha} toà nhà. Xem đơn giá điện, nước, dịch vụ trước khi đến xem phòng.
             </p>
-
-            {/* Dải thống kê toà nhà (Số liệu có căn cứ từ dữ liệu thực tế) */}
-            <div style={{ ...styleDaiThongKe, marginTop: manHinhHep ? 14 : styleDaiThongKe.marginTop, paddingTop: manHinhHep ? 8 : styleDaiThongKe.paddingTop, gap: manHinhHep ? 8 : styleDaiThongKe.gap }}>
-              <div style={{ ...styleThongKeItem, padding: manHinhHep ? '8px 14px' : styleThongKeItem.padding }}>
-                <span style={{ ...styleSoThongKe, fontSize: manHinhHep ? 22 : styleSoThongKe.fontSize }}>{danhSachToaNha.length}</span>
-                <span style={styleChuThongKe}>Toà nhà vận hành</span>
+            <p className="t-meta" style={{ margin: 0 }}>
+              Toà nhà vận hành <strong>{tatCaToaNha}</strong> · Phòng đang quản lý <strong>{danhSachPhong.length}</strong>
+            </p>
+            <div style={{ ...styleKhuVucBoLoc, gridTemplateColumns: manHinhHep ? 'minmax(0, 1fr)' : 'repeat(auto-fit, minmax(150px, 1fr))' }}>
+              <div className="field">
+                <label className="label" htmlFor={idSelectToa}>Khu vực (toà nhà)</label>
+                <select id={idSelectToa} className="select" value={toaNhaIdChon} onChange={(e) => setToaNhaIdChon(e.target.value === '' ? '' : Number(e.target.value))}>
+                  <option value="">Tất cả toà nhà</option>
+                  {danhSachToaNha.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.ten} ({t.soPhongTrong} phòng trống)
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div style={{ ...styleThongKeItem, padding: manHinhHep ? '8px 14px' : styleThongKeItem.padding }}>
-                <span style={{ ...styleSoThongKe, fontSize: manHinhHep ? 22 : styleSoThongKe.fontSize }}>{tongSoPhongTrong}</span>
-                <span style={styleChuThongKe}>Phòng trống ở ngay</span>
+              <div className="field">
+                <label className="label" htmlFor={idSelectGia}>Mức giá thuê</label>
+                <select id={idSelectGia} className="select" value={khoangGiaChon} onChange={(e) => setKhoangGiaChon(e.target.value)}>
+                  <option value="TAT_CA">Tất cả mức giá</option>
+                  <option value="DUOI_3_5">Dưới 3.500.000 đ/tháng</option>
+                  <option value="3_5_DEN_5">Từ 3.500.000 - 5.000.000 đ</option>
+                  <option value="TREN_5">Trên 5.000.000 đ/tháng</option>
+                </select>
               </div>
-              <div style={{ ...styleThongKeItem, padding: manHinhHep ? '8px 14px' : styleThongKeItem.padding }}>
-                <span style={{ ...styleSoThongKe, fontSize: manHinhHep ? 22 : styleSoThongKe.fontSize }}>{danhSachPhong.length}</span>
-                <span style={styleChuThongKe}>Phòng đang quản lý</span>
+              <div className="field">
+                <label className="label" htmlFor={idSelectLoai}>Loại phòng</label>
+                <select id={idSelectLoai} className="select" value={loaiPhongChon} onChange={(e) => setLoaiPhongChon(e.target.value)}>
+                  <option value="">Tất cả</option>
+                  {cacLoaiPhong.map((l) => <option key={l} value={l}>{l}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor={idInputTuKhoa}>Số phòng / địa chỉ</label>
+                <input id={idInputTuKhoa} type="text" className="input" placeholder="Ví dụ: 401, Duy Tân" value={tuKhoa} onChange={(e) => setTuKhoa(e.target.value)} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                <Button variant="primary" style={{ width: '100%', justifyContent: 'center', gap: 8 }} onClick={() => ketQuaRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })}>
+                  <Icon name="search" />Tìm phòng
+                </Button>
               </div>
             </div>
           </div>
 
-          {/* Cột ảnh minh hoạ Hero (Desktop) */}
           {!manHinhHep && (
-            <div style={{ position: 'relative', borderRadius: 'var(--ma-radius-md)', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.45)', border: '1px solid rgba(255, 255, 255, 0.15)' }}>
-              <img
-                src="/rooms/annhien_studio_ban_cong.webp"
-                alt="Không gian căn hộ mẫu MiniApart"
-                style={{ width: '100%', height: 260, objectFit: 'cover', display: 'block' }}
-              />
-              <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(6px)', padding: '4px 10px', borderRadius: 'var(--ma-radius-pill)', border: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--ma-done)' }} />
-                <span style={{ fontFamily: 'var(--ma-font-mono)', fontSize: 11.5, color: '#FFFFFF', fontWeight: 600 }}>Ảnh minh hoạ không gian căn hộ</span>
-              </div>
-            </div>
+            <figure style={{ position: 'relative', margin: 0, borderRadius: 'var(--ma-radius-xl)', overflow: 'hidden', minHeight: 360 }}>
+              <img src="/rooms/annhien_studio_ban_cong.webp" alt="Không gian căn hộ mẫu MiniApart" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <figcaption style={{ position: 'absolute', left: 16, bottom: 16 }}>
+                <span className="tag tag-neutral" style={{ background: 'var(--ma-bg-card)' }}>
+                  <Icon name="image" size="sm" />Ảnh minh hoạ không gian căn hộ
+                </span>
+              </figcaption>
+            </figure>
           )}
-        </div>
-      </section>
+        </section>
 
-      {/* Khu vực tìm kiếm & Bộ lọc */}
-      <section style={{ ...styleKhuVucBoLoc, margin: manHinhHep ? '-16px auto 0' : styleKhuVucBoLoc.margin, padding: manHinhHep ? '14px 14px' : styleKhuVucBoLoc.padding }}>
-        <div style={styleHangBoLoc}>
-          {/* Lọc toà nhà */}
-          <div style={styleNhomLoc}>
-            <label htmlFor={idSelectToa} style={styleLabelLoc}>
-              Toà nhà:
-            </label>
-            <select
-              id={idSelectToa}
-              style={styleSelect}
-              value={toaNhaIdChon}
-              onChange={(e) => setToaNhaIdChon(e.target.value === '' ? '' : Number(e.target.value))}
-            >
-              <option value="">-- Tất cả toà nhà ({danhSachToaNha.length}) --</option>
-              {danhSachToaNha.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.ten} ({t.soPhongTrong} phòng trống)
-                </option>
-              ))}
-            </select>
+        <main ref={ketQuaRef} style={{ display: 'grid', gap: 16, scrollMarginTop: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <h2 style={{ margin: 0, font: 'var(--ma-text-block-title)' }}>{danhSachLoc.length} phòng phù hợp</h2>
+              <p className="t-meta" style={{ margin: '2px 0 0' }}>
+                {soPhongTrongTrongKetQua} còn trống · Phòng trống trước, giá thấp đến cao · cập nhật {new Date().toLocaleDateString('vi-VN')}
+              </p>
+            </div>
+            {coBoLoc && (
+              <Button variant="secondary" size="sm" onClick={datLaiBoLoc}>
+                Đặt lại tất cả bộ lọc
+              </Button>
+            )}
           </div>
 
-          {/* Lọc khoảng giá */}
-          <div style={styleNhomLoc}>
-            <label htmlFor={idSelectGia} style={styleLabelLoc}>
-              Mức giá thuê:
-            </label>
-            <select
-              id={idSelectGia}
-              style={styleSelect}
-              value={khoangGiaChon}
-              onChange={(e) => setKhoangGiaChon(e.target.value)}
-            >
-              <option value="TAT_CA">Tất cả mức giá</option>
-              <option value="DUOI_3_5">Dưới 3.500.000 đ/tháng</option>
-              <option value="3_5_DEN_5">Từ 3.500.000 - 5.000.000 đ</option>
-              <option value="TREN_5">Trên 5.000.000 đ/tháng</option>
-            </select>
-          </div>
-
-          {/* Ô tìm kiếm từ khoá */}
-          <div style={{ ...styleNhomLoc, flex: 1, minWidth: 200 }}>
-            <label htmlFor={idInputTuKhoa} style={styleLabelLoc}>
-              Tìm theo số phòng / địa chỉ:
-            </label>
-            <input
-              id={idInputTuKhoa}
-              type="text"
-              style={styleInputSearch}
-              placeholder="Ví dụ: P.101, Hoà Bình, Đống Đa..."
-              value={tuKhoa}
-              onChange={(e) => setTuKhoa(e.target.value)}
-            />
-          </div>
-
-          {/* Nút chỉ xem phòng trống */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 2 }}>
-            <label style={styleCheckboxLabel}>
-              <input
-                type="checkbox"
-                checked={chiHienPhongTrong}
-                onChange={(e) => setChiHienPhongTrong(e.target.checked)}
-                style={{ cursor: 'pointer', width: 16, height: 16 }}
-              />
-              <span>Chỉ phòng trống ở ngay</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Chip lọc tiện ích */}
-        <div style={styleHangTienIch}>
-          <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)', alignSelf: 'center' }}>
-            TIỆN ÍCH TRANG BỊ:
-          </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <FilterChip active={chiHienPhongTrong} count={tongSoPhongTrong} onClick={() => setChiHienPhongTrong((v) => !v)}>Còn trống</FilterChip>
             {CAC_TIEN_ICH_PHO_BIEN.map((ti) => {
               const active = tienIchDaChon.includes(ti)
               const count = soPhongTheoTienIch.get(ti) ?? 0
               const disabled = !active && count === 0
               return (
-                <button
+                <FilterChip
                   key={ti}
-                  type="button"
-                  aria-pressed={active}
+                  active={active}
+                  count={count}
                   aria-label={`${ti} (${count} phòng)`}
-                  disabled={disabled}
+                  {...{ disabled }}
+                  style={disabled ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
                   onClick={() => toggleTienIch(ti)}
-                  style={{
-                    ...styleChipButton,
-                    background: active ? 'var(--ma-ink-900)' : 'var(--ma-bg-card)',
-                    color: active ? 'var(--ma-text-on-inverse)' : disabled ? 'var(--ma-text-muted)' : 'var(--ma-text-primary)',
-                    borderColor: active ? 'var(--ma-ink-900)' : 'var(--ma-border-dashed)',
-                    opacity: disabled ? 0.45 : 1,
-                    cursor: disabled ? 'not-allowed' : 'pointer',
-                  }}
                 >
-                  {ti} ({count}) {active ? '✓' : '+'}
-                </button>
+                  {ti}
+                </FilterChip>
               )
             })}
             {tienIchDaChon.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setTienIchDaChon([])}
-                style={{ ...styleChipButton, color: 'var(--ma-urgent)', borderColor: 'var(--ma-urgent)' }}
-              >
+              <Button variant="text" size="sm" onClick={() => setTienIchDaChon([])} style={{ color: 'var(--ma-urgent)' }}>
                 Xoá bộ lọc tiện ích (bỏ {tienIchDaChon.length})
-              </button>
+              </Button>
             )}
           </div>
-        </div>
-      </section>
 
-      {/* Kết quả danh sách phòng */}
-      <main style={styleDanhSachContainer}>
-        <div style={styleKetQuaThanh}>
-          <span style={{ fontFamily: 'var(--ma-font-mono)', fontSize: 13, color: 'var(--ma-text-secondary)' }}>
-            KẾT QUẢ: <strong>{danhSachLoc.length}</strong> phòng phù hợp
-          </span>
-          {(toaNhaIdChon !== '' || khoangGiaChon !== 'TAT_CA' || tienIchDaChon.length > 0 || tuKhoa || chiHienPhongTrong) && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setToaNhaIdChon('')
-                setKhoangGiaChon('TAT_CA')
-                setTienIchDaChon([])
-                setTuKhoa('')
-                setChiHienPhongTrong(false)
-              }}
-            >
-              Đặt lại tất cả bộ lọc
-            </Button>
+          {dangTai ? (
+            <EmptyState kind="loading" title="Đang tải danh mục phòng còn trống…" />
+          ) : loi ? (
+            <EmptyState kind="error" title="Chưa tải được danh sách phòng" body={loi} />
+          ) : danhSachLoc.length === 0 ? (
+            <EmptyState
+              kind="filtered"
+              title="Không tìm thấy phòng khớp với bộ lọc hiện tại"
+              body="Hãy thử bỏ bớt tiện ích lọc hoặc chọn mức giá rộng hơn để xem thêm phòng trống khác."
+              actionLabel="Đặt lại tất cả bộ lọc"
+              onAction={datLaiBoLoc}
+            />
+          ) : (
+            <>
+              <div style={styleGridPhong}>
+                {danhSachSapXep.slice(0, soHienThi).map((phong) => {
+                  const { label: nhanTrangThai, tone } = anhXaTrangThaiPhong(phong.trangThai)
+                  const dichVuTomTat = (phong.danhSachDichVu ?? []).slice(0, 2).map((dv) => `${dv.tenDichVu} ${dv.cheDoGia === 'BAC_THANG' ? 'bậc thang' : dv.donGia != null ? `${dinhDangTien(dv.donGia)}/${dv.donViTinh}` : 'chưa có giá'}`).join(' · ')
+                  const diaChi = phong.diaChiToaNha || 'Đang cập nhật địa chỉ'
+
+                  return (
+                    <article key={phong.id} style={styleCardPhong} data-testid={`card-phong-${phong.soPhong}`}>
+                      <div style={{ position: 'relative' }}>
+                        <HinhAnhPhong anhDaiDien={phong.anhDaiDien} tenToaNha={phong.tenToaNha} loaiPhong={phong.loaiPhong} soPhong={phong.soPhong} chieuCao={190} style={{ borderRadius: 16 }} />
+                        <StatusTag tone={tone} style={{ position: 'absolute', top: 8, left: 8, background: 'var(--ma-bg-card)' }}>{nhanTrangThai}</StatusTag>
+                      </div>
+                      <div style={{ display: 'grid', gap: 6, padding: '4px 6px 0' }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                          <div style={{ minWidth: 0 }}>
+                            <span style={{ font: 'var(--ma-text-figure)' }}>{dinhDangTien(phong.giaThueMacDinh)}</span>
+                            <span className="t-meta"> /tháng</span>
+                          </div>
+                        </div>
+                        <div style={styleTruncate} title={`${phong.tenToaNha} · Phòng ${phong.soPhong}`}>
+                          <strong style={{ font: 'var(--ma-text-task-name)' }}>{phong.tenToaNha} · Phòng {phong.soPhong}</strong>
+                        </div>
+                        <div className="t-sm" style={{ ...styleTruncate, color: 'var(--ma-text-secondary)' }} title={`${phong.loaiPhong || 'Studio'} · ${phong.dienTich} m² · Tầng ${phong.tang} · ${phong.sucChua} người`}>
+                          {phong.loaiPhong || 'Studio'} · {phong.dienTich} m² · Tầng {phong.tang} · {phong.sucChua} người
+                        </div>
+                        <div className="t-sm" style={{ ...styleTruncate, color: 'var(--ma-text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }} title={diaChi}>
+                          <Icon name="pin" size="sm" />
+                          <span style={styleTruncate}>{diaChi}</span>
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                          {phong.tienIch && phong.tienIch.length > 0 ? (
+                            <>
+                              {phong.tienIch.slice(0, 3).map((ti, idx) => <span key={idx} className="tag tag-neutral">{ti}</span>)}
+                              {phong.tienIch.length > 3 && <span className="tag tag-neutral">+{phong.tienIch.length - 3}</span>}
+                            </>
+                          ) : (
+                            <span className="t-meta">Đầy đủ tiện ích cơ bản</span>
+                          )}
+                        </div>
+                        {dichVuTomTat && <div className="t-meta" style={styleTruncate} title={dichVuTomTat}>{dichVuTomTat}</div>}
+                      </div>
+                      <div style={styleCardActions}>
+                        <Button
+                          variant="secondary"
+                          style={{ width: '100%', justifyContent: 'center' }}
+                          onClick={() => {
+                            setPhongDatLich(phong)
+                            setThongBaoLich(null)
+                          }}
+                          data-testid={`btn-dat-lich-${phong.soPhong}`}
+                        >
+                          Đặt lịch xem
+                        </Button>
+                        <Button variant="text" size="sm" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setPhongXemChiTiet(phong)} data-testid={`btn-xem-bieu-phi-${phong.soPhong}`}>
+                          Biểu phí & Tiện ích
+                        </Button>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+              {danhSachSapXep.length > soHienThi && (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <Button variant="text" onClick={() => setSoHienThi((n) => n + 12)}>
+                    Xem thêm {danhSachSapXep.length - soHienThi} phòng <Icon name="chevron-down" size="sm" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
-        </div>
-
-        {dangTai ? (
-          <div style={styleKhungThongBao}>
-            <p>Đang tải danh mục phòng còn trống…</p>
-          </div>
-        ) : loi ? (
-          <div style={{ ...styleKhungThongBao, borderColor: 'var(--ma-urgent)', color: 'var(--ma-urgent)' }}>
-            <p>{loi}</p>
-          </div>
-        ) : danhSachLoc.length === 0 ? (
-          <div style={styleKhungThongBao}>
-            <SysLabel>KHÔNG CÓ PHÒNG PHÙ HỢP</SysLabel>
-            <h3 style={{ margin: 'var(--ma-space-2) 0', fontSize: 18 }}>Không tìm thấy phòng khớp với bộ lọc hiện tại</h3>
-            <p style={{ color: 'var(--ma-text-secondary)', margin: 0 }}>
-              Hãy thử bỏ bớt tiện ích lọc hoặc chọn mức giá rộng hơn để xem thêm phòng trống khác.
-            </p>
-          </div>
-        ) : (
-          <div style={styleGridPhong}>
-            {danhSachLoc.map((phong) => {
-              const { label: nhanTrangThai, tone } = anhXaTrangThaiPhong(phong.trangThai)
-
-              return (
-                <article key={phong.id} style={styleCardPhong} data-testid={`card-phong-${phong.soPhong}`}>
-                  {/* Ảnh đại diện phòng: ưu tiên anhDaiDien từ API, fallback sang ảnh minh hoạ khi thiếu hoặc lỗi */}
-                  <HinhAnhPhong
-                    anhDaiDien={phong.anhDaiDien}
-                    tenToaNha={phong.tenToaNha}
-                    loaiPhong={phong.loaiPhong}
-                    soPhong={phong.soPhong}
-                    chieuCao={160}
-                  />
-
-                  {/* Thanh đỉnh thẻ phòng */}
-                  <div style={styleCardHeader}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--ma-space-2)', marginBottom: 4 }}>
-                        <span style={styleSoPhongHien}>{phong.soPhong}</span>
-                        <StatusTag tone={tone}>{nhanTrangThai}</StatusTag>
-                      </div>
-                      <div style={styleTenToaNha}>{phong.tenToaNha}</div>
-                    </div>
-                    <div style={styleGiaThueKhoi}>
-                      <span style={styleGiaSo}>{dinhDangTien(phong.giaThueMacDinh)}</span>
-                      <span style={styleGiaKy}>/ tháng</span>
-                    </div>
-                  </div>
-
-                  {/* Địa chỉ toà */}
-                  <div style={styleDiaChiHang}>
-                    <span style={{ fontFamily: 'var(--ma-font-mono)', fontSize: 11, color: 'var(--ma-text-muted)' }}>📍</span>
-                    <span style={styleDiaChiText}>{phong.diaChiToaNha || 'Đang cập nhật địa chỉ'}</span>
-                  </div>
-
-                  {/* Thông số kỹ thuật phòng */}
-                  <div style={styleThongSoKop}>
-                    <div style={styleThongSoCell}>
-                      <span style={styleThongSoNhan}>DIỆN TÍCH</span>
-                      <span style={styleThongSoGiaTri}>{phong.dienTich} m²</span>
-                    </div>
-                    <div style={styleThongSoCell}>
-                      <span style={styleThongSoNhan}>VỊ TRÍ</span>
-                      <span style={styleThongSoGiaTri}>Tầng {phong.tang}</span>
-                    </div>
-                    <div style={styleThongSoCell}>
-                      <span style={styleThongSoNhan}>SỨC CHỨA</span>
-                      <span style={styleThongSoGiaTri}>{phong.sucChua} người</span>
-                    </div>
-                    <div style={styleThongSoCell}>
-                      <span style={styleThongSoNhan}>LOẠI PHÒNG</span>
-                      <span style={styleThongSoGiaTri}>{phong.loaiPhong || 'Studio'}</span>
-                    </div>
-                  </div>
-
-                  {/* Mô tả ngắn */}
-                  {phong.moTa && (
-                    <p style={styleMoTaPhong}>
-                      {phong.moTa}
-                    </p>
-                  )}
-
-                  {/* Danh sách tiện ích có sẵn */}
-                  <div style={styleTienIchKhoi}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {phong.tienIch && phong.tienIch.length > 0 ? (
-                        phong.tienIch.slice(0, 6).map((ti, idx) => (
-                          <span key={idx} style={styleTagTienIch}>
-                            {ti}
-                          </span>
-                        ))
-                      ) : (
-                        <span style={{ fontSize: 11, color: 'var(--ma-text-muted)', fontFamily: 'var(--ma-font-mono)' }}>
-                          Đầy đủ tiện ích cơ bản
-                        </span>
-                      )}
-                      {phong.tienIch && phong.tienIch.length > 6 && (
-                        <span style={styleTagTienIch}>+{phong.tienIch.length - 6} tiện ích</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Tóm tắt biểu phí dịch vụ */}
-                  {phong.danhSachDichVu && phong.danhSachDichVu.length > 0 && (
-                    <div style={styleBieuPhiTomTat}>
-                      <span style={{ fontSize: 11, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)' }}>
-                        BIỂU PHÍ ĐI KÈM:
-                      </span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontSize: 12, marginTop: 4 }}>
-                        {phong.danhSachDichVu.slice(0, 3).map((dv) => (
-                          <span key={dv.id} style={{ color: 'var(--ma-text-secondary)' }}>
-                            • {dv.tenDichVu}:{' '}
-                            <strong>
-                              {dv.cheDoGia === 'BAC_THANG'
-                                ? 'Bậc thang'
-                                : dv.donGia != null
-                                ? dinhDangTien(dv.donGia)
-                                : 'Chưa có giá'}
-                            </strong>
-                            {dv.cheDoGia !== 'BAC_THANG' && dv.donGia != null ? `/${dv.donViTinh}` : ''}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Nút hành động */}
-                  <div style={styleCardActions}>
-                    <Button
-                      variant="secondary"
-                      onClick={() => setPhongXemChiTiet(phong)}
-                      data-testid={`btn-xem-bieu-phi-${phong.soPhong}`}
-                    >
-                      Biểu phí & Tiện ích
-                    </Button>
-                    <Button
-                      variant="primary"
-                      onClick={() => {
-                        setPhongDatLich(phong)
-                        setThongBaoLich(null)
-                      }}
-                      data-testid={`btn-dat-lich-${phong.soPhong}`}
-                    >
-                      Đặt lịch hẹn xem →
-                    </Button>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        )}
-      </main>
+        </main>
+      </div>
 
       {/* Modal 1: Chi tiết phòng & Bảng biểu phí dịch vụ công khai */}
       {phongXemChiTiet && (
@@ -1069,365 +932,42 @@ const styleTrangPortal: CSSProperties = {
   flexDirection: 'column',
 }
 
-const styleHeaderPortal: CSSProperties = {
-  borderBottom: '1px solid var(--ma-border-default)',
-  background: 'var(--ma-bg-card)',
-  position: 'sticky',
-  top: 0,
-  zIndex: 30,
-  boxShadow: 'var(--ma-shadow-sm)',
-}
-
-const styleHeaderContainer: CSSProperties = {
-  maxWidth: 1200,
-  margin: '0 auto',
-  padding: 'var(--ma-space-3) var(--ma-space-6)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  flexWrap: 'wrap',
-  gap: 'var(--ma-space-4)',
-}
-
-const styleLogoHieu: CSSProperties = {
-  width: 44,
-  height: 44,
-  background: 'var(--ma-ink-900)',
-  color: 'var(--ma-text-on-inverse)',
-  fontFamily: 'var(--ma-font-mono)',
-  fontWeight: 800,
-  fontSize: 22,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: 'var(--ma-radius-md)',
-  boxShadow: 'var(--ma-shadow-sm)',
-  border: '1px solid var(--ma-border-inverse)',
-}
-
-const styleBrandTitle: CSSProperties = {
-  margin: 0,
-  fontSize: 22,
-  fontWeight: 800,
-  letterSpacing: '-0.02em',
-  color: 'var(--ma-text-primary)',
-}
-
-const styleTagBadge: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 10,
-  fontWeight: 700,
-  padding: '2px 8px',
-  background: 'var(--ma-done-bg)',
-  color: 'var(--ma-done-text)',
-  letterSpacing: '0.05em',
-  borderRadius: 'var(--ma-radius-pill)',
-}
-
-const styleHeroBanner: CSSProperties = {
-  background: 'radial-gradient(ellipse at 80% 20%, rgba(13, 148, 136, 0.22) 0%, rgba(15, 23, 42, 0) 70%), var(--ma-ink-900)',
-  color: 'var(--ma-text-on-inverse)',
-  borderBottom: '1px solid var(--ma-line-200)',
-  padding: 'clamp(36px, 6vw, 68px) var(--ma-space-6) clamp(48px, 8vw, 84px)',
-}
-
-const styleHeroContent: CSSProperties = {
-  maxWidth: 1200,
-  margin: '0 auto',
-}
-
-const styleHeroHeading: CSSProperties = {
-  margin: 'var(--ma-space-3) 0 var(--ma-space-2)',
-  fontSize: 'clamp(28px, 4.5vw, 44px)',
-  letterSpacing: 'var(--ma-tracking-title)',
-  fontWeight: 800,
-  lineHeight: 1.2,
-  color: 'var(--ma-text-on-inverse)',
-}
-
 const styleHeroSub: CSSProperties = {
-  margin: 0,
-  maxWidth: 720,
-  fontSize: 'clamp(14px, 2vw, 16px)',
-  color: 'var(--ma-text-secondary-on-inverse)',
-  lineHeight: 1.6,
-}
-
-const styleDaiThongKe: CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: 'var(--ma-space-4)',
-  marginTop: 'var(--ma-space-6)',
-  paddingTop: 'var(--ma-space-4)',
-}
-
-const styleThongKeItem: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 2,
-  background: 'rgba(255, 255, 255, 0.07)',
-  backdropFilter: 'blur(8px)',
-  border: '1px solid rgba(255, 255, 255, 0.15)',
-  borderRadius: 'var(--ma-radius-md)',
-  padding: '10px 20px',
-}
-
-const styleSoThongKe: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontVariantNumeric: 'tabular-nums',
-  fontSize: 28,
-  fontWeight: 800,
-  color: 'var(--ma-text-on-inverse)',
-}
-
-const styleChuThongKe: CSSProperties = {
-  fontSize: 12,
-  fontFamily: 'var(--ma-font-mono)',
-  color: 'var(--ma-text-secondary-on-inverse)',
+  maxWidth: 560,
+  font: 'var(--ma-text-body)',
+  color: 'var(--ma-text-secondary)',
 }
 
 const styleKhuVucBoLoc: CSSProperties = {
-  maxWidth: 1200,
-  width: 'calc(100% - 24px)',
-  margin: '-32px auto 0',
-  padding: 'var(--ma-space-5) var(--ma-space-6)',
   display: 'grid',
-  gap: 'var(--ma-space-4)',
-  background: 'var(--ma-bg-card)',
-  borderRadius: 'var(--ma-radius-md)',
-  boxShadow: 'var(--ma-shadow-md)',
-  border: '1px solid var(--ma-border-default)',
-  position: 'relative',
-  zIndex: 10,
-  boxSizing: 'border-box',
+  gap: 12,
+  padding: 16,
+  marginTop: 8,
+  background: 'var(--ma-bg-sunken)',
+  borderRadius: 20,
 }
 
-const styleHangBoLoc: CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: 'var(--ma-space-4)',
-  alignItems: 'flex-start',
-}
-
-const styleNhomLoc: CSSProperties = {
-  display: 'grid',
-  gap: 6,
-}
-
-const styleLabelLoc: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 12.5,
-  fontWeight: 600,
-  color: 'var(--ma-text-secondary)',
-  letterSpacing: '0.04em',
-}
-
-const styleSelect: CSSProperties = {
-  minHeight: 42,
-  padding: '8px 14px',
-  border: '1px solid var(--ma-border-default)',
-  background: 'var(--ma-bg-page)',
-  color: 'var(--ma-text-primary)',
-  fontFamily: 'var(--ma-font-ui)',
-  fontSize: 13,
-  borderRadius: 'var(--ma-radius)',
-  outline: 'none',
-  transition: 'border-color 0.15s ease',
-}
-
-const styleInputSearch: CSSProperties = {
-  minHeight: 42,
-  padding: '8px 14px',
-  border: '1px solid var(--ma-border-default)',
-  background: 'var(--ma-bg-page)',
-  color: 'var(--ma-text-primary)',
-  fontFamily: 'var(--ma-font-ui)',
-  fontSize: 13,
-  borderRadius: 'var(--ma-radius)',
-  outline: 'none',
-  transition: 'border-color 0.15s ease',
-}
-
-const styleCheckboxLabel: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  fontSize: 13,
-  cursor: 'pointer',
-  minHeight: 42,
-  userSelect: 'none',
-  fontWeight: 500,
-}
-
-const styleHangTienIch: CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: 'var(--ma-space-2)',
-  paddingTop: 'var(--ma-space-3)',
-  borderTop: '1px dashed var(--ma-border-dashed)',
-}
-
-const styleChipButton: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 12.5,
-  padding: '5px 12px',
-  border: '1px solid var(--ma-border-default)',
-  cursor: 'pointer',
-  borderRadius: 'var(--ma-radius-pill)',
-  transition: 'all 0.15s ease',
-}
-
-const styleDanhSachContainer: CSSProperties = {
-  maxWidth: 1200,
-  width: '100%',
-  margin: 'var(--ma-space-6) auto 0',
-  padding: '0 var(--ma-space-6) var(--ma-space-8)',
-  flex: 1,
-}
-
-const styleKetQuaThanh: CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  paddingBottom: 'var(--ma-space-4)',
-  borderBottom: '1px solid var(--ma-border-default)',
-  marginBottom: 'var(--ma-space-6)',
-}
-
-const styleKhungThongBao: CSSProperties = {
-  border: '1px dashed var(--ma-border-dashed)',
-  background: 'var(--ma-bg-card)',
-  borderRadius: 'var(--ma-radius-md)',
-  padding: 'var(--ma-space-8)',
-  textAlign: 'center',
+const styleTruncate: CSSProperties = {
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  minWidth: 0,
 }
 
 const styleGridPhong: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-  gap: 'var(--ma-space-6)',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+  gap: 16,
 }
 
 const styleCardPhong: CSSProperties = {
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 'var(--ma-radius-md)',
   background: 'var(--ma-bg-card)',
-  boxShadow: 'var(--ma-shadow-sm)',
-  padding: 'var(--ma-space-5)',
+  borderRadius: 'var(--ma-radius-xl)',
+  padding: 12,
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--ma-space-3)',
-  transition: 'transform 0.18s ease, box-shadow 0.18s ease',
-}
-
-const styleCardHeader: CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'flex-start',
-  gap: 'var(--ma-space-3)',
-}
-
-const styleSoPhongHien: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 22,
-  fontWeight: 800,
-  color: 'var(--ma-text-primary)',
-}
-
-const styleTenToaNha: CSSProperties = {
-  fontFamily: 'var(--ma-font-ui)',
-  fontSize: 13,
-  fontWeight: 600,
-  color: 'var(--ma-text-secondary)',
-}
-
-const styleGiaThueKhoi: CSSProperties = {
-  textAlign: 'right',
-  display: 'flex',
-  flexDirection: 'column',
-}
-
-const styleGiaSo: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontVariantNumeric: 'tabular-nums',
-  fontSize: 20,
-  fontWeight: 800,
-  color: 'var(--ma-green-700)',
-}
-
-const styleGiaKy: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 12,
-  color: 'var(--ma-text-muted)',
-}
-
-const styleDiaChiHang: CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: 6,
-  fontSize: 12,
-  color: 'var(--ma-text-secondary)',
-}
-
-const styleDiaChiText: CSSProperties = {
-  lineHeight: 1.4,
-}
-
-const styleThongSoKop: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(4, 1fr)',
-  background: 'var(--ma-bg-sunken)',
-  border: '1px solid var(--ma-border-subtle)',
-  borderRadius: 'var(--ma-radius)',
-  padding: '8px 12px',
-  gap: 4,
-}
-
-const styleThongSoCell: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 2,
-}
-
-const styleThongSoNhan: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 11,
-  letterSpacing: '0.06em',
-  color: 'var(--ma-text-muted)',
-}
-
-const styleThongSoGiaTri: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontVariantNumeric: 'tabular-nums',
-  fontSize: 13,
-  fontWeight: 700,
-  color: 'var(--ma-text-primary)',
-}
-
-const styleMoTaPhong: CSSProperties = {
-  margin: 0,
-  fontSize: 13,
-  color: 'var(--ma-text-secondary)',
-  lineHeight: 1.5,
-  display: '-webkit-box',
-  WebkitLineClamp: 2,
-  WebkitBoxOrient: 'vertical',
-  overflow: 'hidden',
-}
-
-const styleTienIchKhoi: CSSProperties = {
-  marginTop: 2,
-}
-
-const styleTagTienIch: CSSProperties = {
-  fontFamily: 'var(--ma-font-mono)',
-  fontSize: 12,
-  padding: '3px 8px',
-  background: 'var(--ma-brand-accent-light)',
-  border: '1px solid var(--ma-brand-accent)',
-  borderRadius: 'var(--ma-radius-pill)',
-  color: 'var(--ma-brand-accent-hover)',
-  fontWeight: 600,
+  gap: 8,
+  minWidth: 0,
 }
 
 const styleTagTienIchLon: CSSProperties = {
@@ -1441,17 +981,11 @@ const styleTagTienIchLon: CSSProperties = {
   fontWeight: 600,
 }
 
-const styleBieuPhiTomTat: CSSProperties = {
-  paddingTop: 'var(--ma-space-3)',
-  borderTop: '1px dashed var(--ma-border-dashed)',
-}
-
 const styleCardActions: CSSProperties = {
   marginTop: 'auto',
-  paddingTop: 'var(--ma-space-3)',
+  padding: '8px 6px 4px',
   display: 'grid',
-  gridTemplateColumns: '1fr 1.2fr',
-  gap: 'var(--ma-space-2)',
+  gap: 4,
 }
 
 // Modal styles
