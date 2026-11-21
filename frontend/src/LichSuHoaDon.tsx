@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { ApiError, fetchLichSuHoaDonCuaNguoiThue, type ThongTinHoaDonLichSu } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
-import { Figure } from './design/core/Figure'
+import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
-import { SysLabel } from './design/core/SysLabel'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Button } from './design/core/Button'
-import { ScreenHeader, ScreenNotice, ScreenSurface, TableCell, TableFrame, TableHeadCell } from './design/layout/Screen'
+import { Card } from './design/layout/Card'
+import { DataTable } from './design/table/DataTable'
 
 type Props = { token: string; mobile?: boolean }
 
@@ -36,111 +36,127 @@ export default function LichSuHoaDon({ token, mobile = false }: Props) {
     }
   }, [soLanTaiLai, token])
 
+  const khung = { 'data-testid': 'invoice-history-screen', 'data-layout-variant': mobile ? 'mobile' : 'desktop' }
+
   if (dangTai) {
-    return <ScreenSurface data-testid="invoice-history-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'} aria-busy="true" aria-live="polite">Đang tải lịch sử hoá đơn…</ScreenSurface>
+    return <div {...khung}><EmptyState kind="loading" title="Đang tải lịch sử hoá đơn" /></div>
   }
 
   if (loi) {
     return (
-      <ScreenSurface data-testid="invoice-history-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'} role="alert">
-        <SysLabel>LỊCH SỬ HOÁ ĐƠN</SysLabel>
-        <ScreenNotice tone="urgent">{loi}</ScreenNotice>
-        <Button data-retry-invoice-history variant="secondary" onClick={() => setSoLanTaiLai((count) => count + 1)}>Thử lại</Button>
-      </ScreenSurface>
+      <div {...khung} role="alert">
+        <Card>
+          <EmptyState kind="error" title="Không thể tải lịch sử hoá đơn" body={loi} />
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Button data-retry-invoice-history variant="secondary" onClick={() => setSoLanTaiLai((count) => count + 1)}>Thử lại</Button>
+          </div>
+        </Card>
+      </div>
     )
   }
 
   return (
-    <ScreenSurface data-testid="invoice-history-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'} aria-labelledby="invoice-history-title">
-      <ScreenHeader>
-        <SysLabel>LỊCH SỬ HOÁ ĐƠN</SysLabel>
-        <h3 id="invoice-history-title" style={{ margin: '8px 0 0' }}>Lịch sử hoá đơn</h3>
-      </ScreenHeader>
+    <section {...khung} aria-labelledby="invoice-history-title" style={{ display: 'grid', gap: 12, minWidth: 0 }}>
+      <div>
+        <h1 id="invoice-history-title" style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Lịch sử hoá đơn</h1>
+        {lichSu.length > 0 ? (
+          <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)', marginTop: 2 }}>
+            {lichSu.length} kỳ gần nhất của các phòng bạn đã từng thuê, kỳ mới nhất ở trên.
+          </div>
+        ) : null}
+      </div>
 
       {lichSu.length === 0 ? (
-        <EmptyState
-          data-history-empty
-          title="Chưa có kỳ hoá đơn nào"
-          body="Hoá đơn sẽ xuất hiện tại đây sau khi kỳ thanh toán đầu tiên được phát hành. Đây không phải lỗi kết nối."
-        />
+        <Card>
+          <EmptyState
+            data-history-empty
+            title="Chưa có kỳ hoá đơn nào"
+            body="Hoá đơn sẽ xuất hiện tại đây sau khi kỳ thanh toán đầu tiên được phát hành. Đây không phải lỗi kết nối."
+          />
+        </Card>
+      ) : mobile ? (
+        <DanhSachHoaDonMobile lichSu={lichSu} />
       ) : (
-        <>
-          <p style={{ margin: 0, color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>
-            {lichSu.length} kỳ gần nhất của các phòng bạn đã từng thuê, kỳ mới nhất ở trên.
-          </p>
-          {mobile ? <DanhSachHoaDonMobile lichSu={lichSu} /> : <DanhSachHoaDonDesktop lichSu={lichSu} />}
-        </>
+        <Card><DanhSachHoaDonDesktop lichSu={lichSu} /></Card>
       )}
-    </ScreenSurface>
+    </section>
   )
 }
 
 function DanhSachHoaDonMobile({ lichSu }: { lichSu: ThongTinHoaDonLichSu[] }) {
   return (
-    <div data-history-list="mobile" style={{ display: 'grid', gap: 10 }}>
+    <div data-history-list="mobile" style={{ display: 'grid', gap: 12 }}>
       {lichSu.map((hoaDon) => <HoaDonHistoryCard key={hoaDon.hoaDonId} hoaDon={hoaDon} />)}
     </div>
   )
 }
 
 function HoaDonHistoryCard({ hoaDon }: { hoaDon: ThongTinHoaDonLichSu }) {
+  const tong = Number(hoaDon.tongTien)
+  const phanTram = tong > 0 ? Math.min(100, Math.max(0, (Number(hoaDon.daThu) / tong) * 100)) : 0
   return (
     <button
       type="button"
+      className="m-card"
       data-history-invoice={hoaDon.hoaDonId}
       aria-label={`Mở hoá đơn ${nhanKy(hoaDon)} phòng ${hoaDon.soPhong}`}
       onClick={() => moHoaDon(hoaDon.hoaDonId)}
-      style={{ display: 'grid', gap: 12, width: '100%', padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}
+      style={{ display: 'grid', gap: 12, width: '100%', border: 0, color: 'var(--ma-text-primary)', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{ display: 'grid', gap: 4, minWidth: 0 }}>
-          <strong>{nhanKy(hoaDon)}</strong>
-          <span style={{ color: 'var(--ma-text-secondary)' }}>Phòng {hoaDon.soPhong} · {nhanToaNha(hoaDon)}</span>
+        <div style={{ display: 'grid', gap: 2, minWidth: 0 }}>
+          <strong style={{ font: '600 18px/1.3 var(--ma-font-ui)' }}>{nhanKy(hoaDon)}</strong>
+          <span className="t-sm t-2">Phòng {hoaDon.soPhong} · {nhanToaNha(hoaDon)}</span>
         </div>
-        <Figure value={dinhDangTien(hoaDon.tongTien)} unit="₫" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--ma-text-muted)' }}>
+          <StatusTag tone={toneThanhToan(hoaDon.trangThaiThanhToan)}>{nhanTrangThai(hoaDon.trangThaiThanhToan)}</StatusTag>
+          <Icon name="chevron-right" />
+        </div>
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-        <StatusTag tone={toneThanhToan(hoaDon.trangThaiThanhToan)}>{nhanTrangThai(hoaDon.trangThaiThanhToan)}</StatusTag>
-        {hoaDon.hopDongTrangThai === 'DA_THANH_LY' ? <StatusTag tone="closed">Đã thanh lý</StatusTag> : null}
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
+        <span className="t-sm t-2">Tổng kỳ này</span>
+        <b style={{ font: '600 22px/1.2 var(--ma-font-ui)', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>{dinhDangTien(hoaDon.tongTien)} ₫</b>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, color: 'var(--ma-text-secondary)', fontSize: 13 }}>
+      <div className="progress" role="img" aria-label={`Đã thu ${Math.round(phanTram)}%`}><span style={{ width: `${phanTram}%` }} /></div>
+      <div className="t-sm t-2" style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
         <span>Đã thu {dinhDangTien(hoaDon.daThu)} ₫</span>
         <span>Còn lại {dinhDangTien(hoaDon.conLai)} ₫</span>
       </div>
+      {hoaDon.hopDongTrangThai === 'DA_THANH_LY' ? <div><StatusTag tone="closed">Đã thanh lý</StatusTag></div> : null}
     </button>
   )
 }
 
 function DanhSachHoaDonDesktop({ lichSu }: { lichSu: ThongTinHoaDonLichSu[] }) {
   return (
-    <TableFrame minWidth={760}>
-      <thead>
-        <tr>
-          <TableHeadCell>Kỳ / phòng</TableHeadCell>
-          <TableHeadCell>Thanh toán</TableHeadCell>
-          <TableHeadCell align="right">Tổng tiền</TableHeadCell>
-          <TableHeadCell align="right">Còn lại</TableHeadCell>
-          <TableHeadCell><span className="ma-visually-hidden">Mở</span></TableHeadCell>
-        </tr>
-      </thead>
-      <tbody>
-        {lichSu.map((hoaDon) => (
-          <tr key={hoaDon.hoaDonId} data-history-invoice={hoaDon.hoaDonId}>
-            <TableCell header>
-              <div style={{ display: 'grid', gap: 4 }}>
-                <span>{nhanKy(hoaDon)}</span>
-                <span style={{ color: 'var(--ma-text-secondary)', fontWeight: 400 }}>Phòng {hoaDon.soPhong} · {nhanToaNha(hoaDon)}</span>
-                {hoaDon.hopDongTrangThai === 'DA_THANH_LY' ? <StatusTag tone="closed">Đã thanh lý</StatusTag> : null}
-              </div>
-            </TableCell>
-            <TableCell><StatusTag tone={toneThanhToan(hoaDon.trangThaiThanhToan)}>{nhanTrangThai(hoaDon.trangThaiThanhToan)}</StatusTag></TableCell>
-            <TableCell align="right"><Figure value={dinhDangTien(hoaDon.tongTien)} unit="₫" /></TableCell>
-            <TableCell align="right">{dinhDangTien(hoaDon.conLai)} ₫</TableCell>
-            <TableCell align="right"><button type="button" data-open-history-invoice={hoaDon.hoaDonId} aria-label={`Mở hoá đơn ${nhanKy(hoaDon)} phòng ${hoaDon.soPhong}`} onClick={() => moHoaDon(hoaDon.hoaDonId)} style={{ minHeight: 44, padding: '8px 12px', border: '1px solid var(--ma-border-strong)', background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'inherit', fontWeight: 700, cursor: 'pointer' }}>Mở</button></TableCell>
-          </tr>
-        ))}
-      </tbody>
-    </TableFrame>
+    <DataTable
+      rows={lichSu}
+      getRowId={(h) => h.hoaDonId}
+      noun="kỳ"
+      rowProps={(h) => ({ 'data-history-invoice': String(h.hoaDonId) })}
+      columns={[
+        {
+          key: 'ky',
+          label: 'Kỳ / phòng',
+          render: (h) => (
+            <div style={{ display: 'grid', gap: 2 }}>
+              <strong>{nhanKy(h)}</strong>
+              <span className="t-sm t-2">Phòng {h.soPhong} · {nhanToaNha(h)}</span>
+              {h.hopDongTrangThai === 'DA_THANH_LY' ? <StatusTag tone="closed">Đã thanh lý</StatusTag> : null}
+            </div>
+          ),
+        },
+        { key: 'tt', label: 'Thanh toán', render: (h) => <StatusTag tone={toneThanhToan(h.trangThaiThanhToan)}>{nhanTrangThai(h.trangThaiThanhToan)}</StatusTag> },
+        { key: 'tong', label: 'Tổng tiền', align: 'num', render: (h) => <b style={{ whiteSpace: 'nowrap' }}>{dinhDangTien(h.tongTien)} ₫</b> },
+        { key: 'conLai', label: 'Còn lại', align: 'num', render: (h) => <span style={{ whiteSpace: 'nowrap' }}>{dinhDangTien(h.conLai)} ₫</span> },
+        {
+          key: 'mo',
+          label: 'Thao tác',
+          the: 'hanh-dong',
+          render: (h) => <Button variant="secondary" size="sm" data-open-history-invoice={h.hoaDonId} aria-label={`Mở hoá đơn ${nhanKy(h)} phòng ${h.soPhong}`} onClick={() => moHoaDon(h.hoaDonId)}>Mở</Button>,
+        },
+      ]}
+    />
   )
 }
 
