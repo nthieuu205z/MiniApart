@@ -2,10 +2,17 @@ import { useState } from 'react'
 import type * as React from 'react'
 import { Glyph } from '../core/Glyph'
 import type { GlyphName } from '../core/GlyphName'
+import { Icon, type IconName } from '../core/Icon'
 
 export interface NavItem {
   label: string
   glyph: GlyphName
+  /** Icon của bộ giao diện (sprite ui-icons); có thì dùng thay cho glyph. */
+  icon?: IconName
+  /** Nhãn ngắn cho bottom-nav; `label` vẫn là nhãn đầy đủ (aria-label). */
+  shortLabel?: string
+  /** Mục con thụt lề trong sidebar. */
+  depth?: 0 | 1
   href?: string
   active?: boolean
   /** Số việc tồn. Chỉ hiện khi > 0. */
@@ -34,16 +41,20 @@ export interface NavPanelProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 /** Menu dọc chia ba nhóm: Hàng ngày / Tiền / Toà nhà. Thứ tự nhóm phản ánh nhịp công việc thật. */
-export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nhà', groups, user, mobile = false, onLogout, style, ...rest }: NavPanelProps): React.ReactElement {
+export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nhà', groups, user, mobile = false, onLogout, className, style, ...rest }: NavPanelProps): React.ReactElement {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
   const allItems = groups.flatMap((group) => group.items)
-  const primaryItems = allItems.slice(0, 4)
-  const overflowItems = allItems.slice(4)
+  // ≤ 5 mục: hiện hết, không có "Thêm"; nhiều hơn: 4 mục + "Thêm".
+  const barLimit = allItems.length <= 5 ? 5 : 4
+  const primaryItems = allItems.slice(0, barLimit)
+  const overflowItems = allItems.slice(barLimit)
 
   const renderMobileItem = (item: NavItem, variant: 'bar' | 'more') => (
     <a
       key={item.label}
       href={item.href || '#'}
+      aria-current={item.active ? 'page' : undefined}
+      aria-label={item.shortLabel ? item.label : undefined}
       onClick={() => setMobileMoreOpen(false)}
       style={variant === 'bar' ? {
         display: 'grid',
@@ -79,8 +90,8 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
         overflowWrap: 'anywhere',
       }}
     >
-      <Glyph name={item.glyph} size={variant === 'bar' ? 16 : 15} strokeWidth={1.5} color={item.active ? 'var(--ma-brand-accent)' : 'var(--ma-text-secondary)'} />
-      <span style={variant === 'bar' ? { minWidth: 0, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } : { minWidth: 0 }}>{item.label}</span>
+      {item.icon ? <Icon name={item.icon} /> : <Glyph name={item.glyph} size={variant === 'bar' ? 16 : 15} strokeWidth={1.5} color={item.active ? 'var(--ma-brand-accent)' : 'var(--ma-text-secondary)'} />}
+      <span style={variant === 'bar' ? { minWidth: 0, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } : { minWidth: 0 }}>{variant === 'bar' ? item.shortLabel ?? item.label : item.label}</span>
       {item.count ? (
         <span style={{ marginLeft: variant === 'bar' ? 0 : 'auto', fontFamily: 'var(--ma-font-mono)', fontSize: 11, fontWeight: 700, color: item.countTone === 'waiting' ? 'var(--ma-waiting)' : 'var(--ma-urgent)' }}>
           {item.count}
@@ -91,6 +102,7 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
 
   return (
     <nav
+      className={[mobile ? '' : 'sidebar', className].filter(Boolean).join(' ') || undefined}
       data-navigation-layout={mobile ? 'bottom' : 'side'}
       style={{
         ...(mobile ? {
@@ -106,11 +118,8 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
           borderTop: '1px solid var(--ma-border-default)',
         } : {
           width: 'var(--ma-nav-width)',
-          borderRight: '1px solid var(--ma-border-default)',
         }),
-        background: 'var(--ma-bg-nav)',
-        display: 'flex',
-        flexDirection: 'column',
+        ...(mobile ? { background: 'var(--ma-bg-nav)', display: 'flex', flexDirection: 'column' } : {}),
         fontFamily: 'var(--ma-font-ui)',
         ...(style || {}),
       }}
@@ -159,195 +168,110 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
               </button>
               ) : null}
           </div>
-          <div
-            id="mobile-nav-more"
-            data-testid="mobile-nav-more"
-            hidden={!mobileMoreOpen}
-            style={{
-              display: mobileMoreOpen ? 'grid' : 'none',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 10rem), 1fr))',
-              gap: 6,
-              padding: 6,
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: '100%',
-              maxHeight: '70vh',
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              minWidth: 0,
-              background: 'var(--ma-bg-nav)',
-              border: '1px solid var(--ma-border-default)',
-              boxShadow: '0 -4px 12px rgba(22, 19, 16, 0.08)',
-            }}
-          >
-            {overflowItems.map((item) => renderMobileItem(item, 'more'))}
-            {onLogout ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMoreOpen(false)
-                  onLogout()
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '8px 10px',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: 'var(--ma-urgent, #c0392b)',
-                  background: 'transparent',
-                  border: 0,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                Đăng xuất
-              </button>
-            ) : null}
-          </div>
-        </>
-      ) : (
-        <>
-          <div style={{ padding: "18px 20px", display: "flex", alignItems: "center", gap: 11, borderBottom: "1px solid var(--ma-border-default)" }}>
-            <div style={{ width: 34, height: 34, borderRadius: "var(--ma-radius)", background: "var(--ma-brand-accent)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", flex: "none" }}>
-              <Glyph name="toa-nha" size={18} color="#FFFFFF" strokeWidth={1.8} />
-            </div>
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.15, color: "var(--ma-text-primary)" }}>{product}</div>
-              <div style={{ fontFamily: "var(--ma-font-mono)", fontSize: 10, letterSpacing: "0.08em", color: "var(--ma-text-muted)", marginTop: 2, textTransform: "uppercase" }}>
-                {subtitle}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ padding: "16px 0", display: "flex", flexDirection: "column", gap: 18 }}>
-            {groups.map((g) => (
-              <div key={g.label}>
-                <div style={{ fontFamily: "var(--ma-font-mono)", fontSize: 10.5, fontWeight: 700, letterSpacing: "var(--ma-tracking-navgroup)", color: "var(--ma-text-muted)", padding: "0 20px 8px", textTransform: "uppercase" }}>
-                  {g.label}
-                </div>
-                {g.items.map((it) => (
-                  <a
-                    key={it.label}
-                    href={it.href || "#"}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 11,
-                      padding: "9px 14px",
-                      margin: "2px 8px",
-                      borderRadius: "var(--ma-radius)",
-                      fontSize: 14,
-                      minHeight: "var(--ma-hit-mobile)",
-                      textDecoration: "none",
-                      fontWeight: it.active ? 600 : 500,
-                      color: it.active ? "var(--ma-brand-accent)" : "var(--ma-text-primary)",
-                      background: it.active ? "var(--ma-brand-accent-light)" : "transparent",
-                      boxShadow: it.active ? "inset 3px 0 0 var(--ma-brand-accent)" : undefined,
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    <Glyph name={it.glyph} size={16} strokeWidth={it.active ? 2 : 1.6} color={it.active ? "var(--ma-brand-accent)" : "var(--ma-text-secondary)"} />
-                    <span style={{ color: it.active ? "var(--ma-brand-accent)" : "var(--ma-text-primary)" }}>{it.label}</span>
-                    {it.count ? (
-                      <span style={{ marginLeft: "auto", fontFamily: "var(--ma-font-mono)", fontSize: 11, fontWeight: 700, color: it.countTone === "waiting" ? "var(--ma-waiting)" : "var(--ma-urgent)", background: it.countTone === "waiting" ? "var(--ma-waiting-bg)" : "var(--ma-urgent-bg)", padding: "2px 7px", borderRadius: "var(--ma-radius-pill)" }}>
-                        {it.count}
-                      </span>
-                    ) : null}
-                  </a>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          {user ? (
+          {overflowItems.length ? (
             <div
+              id="mobile-nav-more"
+              data-testid="mobile-nav-more"
+              hidden={!mobileMoreOpen}
               style={{
-                marginTop: "auto",
-                padding: "16px",
-                borderTop: "1px solid var(--ma-border-default)",
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-                background: "var(--ma-bg-card)",
+                display: mobileMoreOpen ? 'grid' : 'none',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 10rem), 1fr))',
+                gap: 6,
+                padding: 6,
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: '100%',
+                maxHeight: '70vh',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                minWidth: 0,
+                background: 'var(--ma-bg-nav)',
+                border: '1px solid var(--ma-border-default)',
+                boxShadow: '0 -4px 12px rgba(22, 19, 16, 0.08)',
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "var(--ma-radius-pill)",
-                    background: "var(--ma-brand-accent-light)",
-                    color: "var(--ma-brand-accent)",
-                    border: "1px solid var(--ma-brand-accent)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: "var(--ma-font-mono)",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
-                >
-                  {user.initials}
-                </div>
-                <div style={{ fontSize: 13, lineHeight: 1.4, minWidth: 0, flex: 1 }}>
-                  <div
-                    style={{
-                      fontWeight: 700,
-                      color: "var(--ma-text-primary)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                    title={user.name}
-                  >
-                    {user.name}
-                  </div>
-                  <div
-                    style={{
-                      color: "var(--ma-text-secondary)",
-                      fontSize: 12,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                    title={user.role}
-                  >
-                    {user.role}
-                  </div>
-                </div>
-              </div>
+              {overflowItems.map((item) => renderMobileItem(item, 'more'))}
               {onLogout ? (
                 <button
                   type="button"
-                  data-testid="nav-logout"
-                  onClick={onLogout}
+                  onClick={() => {
+                    setMobileMoreOpen(false)
+                    onLogout()
+                  }}
                   style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                    padding: "7px 12px",
-                    fontSize: 12.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '8px 10px',
+                    fontSize: 13,
                     fontWeight: 600,
-                    fontFamily: "var(--ma-font-ui)",
-                    background: "var(--ma-bg-sunken)",
-                    border: "1px solid var(--ma-border-default)",
-                    borderRadius: "var(--ma-radius)",
-                    cursor: "pointer",
-                    color: "var(--ma-text-secondary)",
-                    transition: "all 0.15s ease",
+                    color: 'var(--ma-urgent, #c0392b)',
+                    background: 'transparent',
+                    border: 0,
+                    cursor: 'pointer',
+                    textAlign: 'left',
                   }}
                 >
-                  <span>Đăng xuất</span>
+                  Đăng xuất
                 </button>
               ) : null}
             </div>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <div className="sb-brand">
+            <div className="logo" aria-hidden="true">M</div>
+            <div>
+              <div className="sb-name">{product}</div>
+              <div className="sb-scope">{subtitle}</div>
+            </div>
+          </div>
+
+          {groups.map((g) => (
+            <div key={g.label} style={{ display: 'grid', gap: 2 }}>
+              {g.label ? <div className="sb-label">{g.label}</div> : null}
+              {g.items.map((it) => (
+                <a
+                  key={it.label}
+                  className="nav-item"
+                  href={it.href || '#'}
+                  aria-current={it.active ? 'page' : undefined}
+                  style={{ minHeight: 'var(--ma-hit-mobile)', marginLeft: it.depth === 1 ? 20 : undefined }}
+                >
+                  {it.icon ? <Icon name={it.icon} /> : <Glyph name={it.glyph} size={16} strokeWidth={it.active ? 2 : 1.6} />}
+                  <span>{it.label}</span>
+                  {it.count ? (
+                    <b
+                      className="count"
+                      aria-label={`${it.count} việc cần xử lý`}
+                      style={it.countTone === 'waiting' ? { background: 'var(--ma-waiting-bg)', color: 'var(--ma-waiting)' } : undefined}
+                    >
+                      {it.count}
+                    </b>
+                  ) : null}
+                </a>
+              ))}
+            </div>
+          ))}
+
+          {user ? (
+            <>
+              <div className="sb-spacer" />
+              <div className="sb-user">
+                <span className="avatar sm h4" aria-hidden="true">{user.initials}</span>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="name" title={user.name}>{user.name}</div>
+                  <div className="t-meta" title={user.role}>{user.role}</div>
+                </div>
+                {onLogout ? (
+                  <button type="button" className="icon-btn sm" data-testid="nav-logout" aria-label="Đăng xuất" title="Đăng xuất" onClick={onLogout}>
+                    <Icon name="logout" />
+                  </button>
+                ) : null}
+              </div>
+            </>
           ) : null}
         </>
       )}

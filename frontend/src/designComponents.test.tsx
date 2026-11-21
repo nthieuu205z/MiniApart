@@ -10,6 +10,7 @@ import { StatusTag } from './design/core/StatusTag'
 import { FilterChip } from './design/forms/FilterChip'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Field, Input } from './design/forms/Field'
+import { NavPanel, type NavItem } from './design/shell/NavPanel'
 import { Card } from './design/layout/Card'
 import { ConfirmDialog } from './design/feedback/ConfirmDialog'
 import { MeterInput } from './design/forms/MeterInput'
@@ -254,5 +255,21 @@ describe('MiniApart design components', () => {
   it('renders Card title as h2', async () => {
     await act(async () => root.render(<Card title="Thực thu">x</Card>))
     expect(container.querySelector('h2')?.textContent).toBe('Thực thu')
+  })
+
+  const navItems = (n: number): NavItem[] =>
+    Array.from({ length: n }, (_, i) => ({ label: `Mục ${i + 1}`, glyph: 'toa-nha' as const, href: `/m${i + 1}`, active: i === 0 }))
+
+  it('bottom-nav shows all 5 items without the "Thêm" button', async () => {
+    await act(async () => root.render(<NavPanel mobile groups={[{ label: 'g', items: navItems(5) }]} />))
+    expect(container.querySelectorAll('[data-testid="mobile-nav-bar"] a')).toHaveLength(5)
+    expect(container.querySelector('[data-testid="mobile-nav-more"]')).toBeNull()
+    expect(container.querySelector('a[aria-current="page"]')).not.toBeNull()
+  })
+
+  it('bottom-nav keeps 4 items + "Thêm" when there are more than 5', async () => {
+    await act(async () => root.render(<NavPanel mobile groups={[{ label: 'g', items: navItems(6) }]} />))
+    expect(container.querySelectorAll('[data-testid="mobile-nav-bar"] a')).toHaveLength(4)
+    expect(container.querySelector('[data-testid="mobile-nav-more"]')).not.toBeNull()
   })
 })
