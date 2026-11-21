@@ -7,7 +7,7 @@ import { Card } from './design/layout/Card'
 import { FilterChip } from './design/forms/FilterChip'
 import { DataTable, type DataTableColumn, type DataTableChip } from './design/table/DataTable'
 import { EmptyState } from './design/feedback/EmptyState'
-import { ScreenNotice, ScreenSurface } from './design/layout/Screen'
+import { ScreenNotice } from './design/layout/Screen'
 import { downloadManagementFile } from './managementApi'
 import HopDongThaoTac from './HopDongThaoTac'
 
@@ -93,6 +93,8 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
     }
   }, [hienThiFormTao])
 
+  // DataTable chưa có sắp xếp mặc định: xếp Phòng tăng dần (số tự nhiên) trước khi đưa vào.
+  const hangSapXep = useMemo(() => [...hopDongsHienThi].sort((a, b) => a.soPhong.localeCompare(b.soPhong, 'vi', { numeric: true })), [hopDongsHienThi])
   const hieuLuc = hopDongs.filter((h) => h.trangThai === 'HIEU_LUC')
   const tongThue = hieuLuc.reduce((t, h) => t + Number(h.giaThue), 0)
   const tongCoc = hieuLuc.reduce((t, h) => t + Number(h.tienCoc), 0)
@@ -112,7 +114,8 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
   const cot = useMemo(() => cotHopDong(chonHopDong), [])
 
   return (
-    <ScreenSurface data-testid="manager-contract-screen" data-layout-variant={variant} aria-labelledby="manager-contract-title">
+    <section data-testid="manager-contract-screen" data-layout-variant={variant} aria-labelledby="manager-contract-title" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
+      <style>{CSS_THE_MOBILE}</style>
       <header className="topbar">
         <div className="title-block">
           <h1 className="h1" id="manager-contract-title">Hợp đồng</h1>
@@ -156,9 +159,9 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
           : boLoc.toaNhaId === null ? <EmptyState title="Chọn một toà nhà để xem hợp đồng." />
             : hopDongsHienThi.length === 0 ? <EmptyState title={boLoc.sapHetHan ? 'Không có hợp đồng sắp hết hạn.' : 'Chưa có hợp đồng nào trong toà nhà này.'} />
               : (
-                <Card data-contract-list={variant} style={{ marginTop: 16 }}>
+                <Card className="hd-bang" data-contract-list={variant}>
                   <DataTable
-                    rows={hopDongsHienThi}
+                    rows={hangSapXep}
                     columns={cot}
                     getRowId={(h) => h.id}
                     chips={chips}
@@ -210,9 +213,28 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
           />
         </div>
       )}
-    </ScreenSurface>
+    </section>
   )
 }
+
+// Dưới 768px mỗi hàng bảng thành một thẻ; thead ẩn nên bỏ sắp xếp ở mobile.
+const CSS_THE_MOBILE = `@media (min-width: 768px) { .hd-bang .table td { white-space: nowrap } }
+@media (max-width: 767px) {
+  .hd-bang .table-wrap { overflow-x: visible; margin: 0; padding: 0 }
+  .hd-bang .table, .hd-bang tbody { display: block }
+  .hd-bang thead { display: none }
+  .hd-bang .table tbody tr:last-child td { border: 0 }
+  .hd-bang tbody tr { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px 12px; padding: 14px 0; border-bottom: 1px solid var(--ma-line-200) }
+  .hd-bang .table tbody td { display: block; height: auto; padding: 0; border: 0; text-align: left; white-space: normal }
+  .hd-bang td:nth-child(1) { grid-area: 1 / 1 }
+  .hd-bang td:nth-child(2) { grid-area: 1 / 2 }
+  .hd-bang td:nth-child(7) { grid-area: 1 / 3 }
+  .hd-bang td:nth-child(3), .hd-bang td:nth-child(4), .hd-bang td:nth-child(5), .hd-bang td:nth-child(6) { grid-column: 2 / 4 }
+  .hd-bang td:nth-child(5)::before { content: "Giá thuê: "; color: var(--ma-text-secondary) }
+  .hd-bang td:nth-child(6)::before { content: "Tiền cọc: "; color: var(--ma-text-secondary) }
+  .hd-bang td:nth-child(8) { grid-column: 2 / 4 }
+  .hd-bang td:nth-child(8) .td-acts { justify-content: flex-start }
+}`
 
 const CHIP: DataTableChip<ThongTinHopDong>[] = [
   { key: 'HIEU_LUC', label: 'Hiệu lực', match: (h) => h.trangThai === 'HIEU_LUC' },
