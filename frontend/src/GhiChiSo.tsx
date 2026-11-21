@@ -13,6 +13,7 @@ import {
   type ThongTinToaNha,
 } from './api'
 import { Button } from './design/core/Button'
+import { Icon } from './design/core/Icon'
 import { Figure } from './design/core/Figure'
 import { StatusTag } from './design/core/StatusTag'
 import { SysLabel } from './design/core/SysLabel'
@@ -95,6 +96,21 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
   const [loi, setLoi] = useState<string | null>(null)
   const [lyDoSua, setLyDoSua] = useState('')
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const [chon, setChon] = useState<{ phongId: number, dichVuId: number } | null>(null)
+  const [yeuCauFocus, setYeuCauFocus] = useState<string | null>(null)
+  const [hienBoLoc, setHienBoLoc] = useState(false)
+
+  const phongDangChonId = chon?.phongId
+  useEffect(() => {
+    document.querySelector('[data-room-chip][aria-current]')?.scrollIntoView?.({ inline: 'center', block: 'nearest' })
+  }, [phongDangChonId, duLieu])
+
+  // Mobile chỉ render ô của công tơ đang chọn: focus phải chờ ô đó được mount.
+  useEffect(() => {
+    if (!yeuCauFocus) return
+    inputRefs.current[yeuCauFocus]?.focus()
+    setYeuCauFocus(null)
+  }, [yeuCauFocus, chon])
 
   useEffect(() => {
     let mounted = true
@@ -321,17 +337,24 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
 
   function focusPhong(phongId: number) {
     const phong = duLieu?.phong.find((item) => item.id === phongId)
-    const dichVuDauTien = phong?.dichVu[0]
+    const dichVuDauTien = phong?.dichVu.find((dichVu) => !dichVu.chiSoCuoi) ?? phong?.dichVu[0]
     if (!phong || !dichVuDauTien) return
-    inputRefs.current[khoa(phong.id, dichVuDauTien.id)]?.focus()
+    focusKhoa(phong.id, dichVuDauTien.id)
+  }
+
+  function focusKhoa(phongId: number, dichVuId: number) {
+    const key = khoa(phongId, dichVuId)
+    if (!mobile) {
+      inputRefs.current[key]?.focus()
+      return
+    }
+    setChon({ phongId, dichVuId })
+    setYeuCauFocus(key)
   }
 
   function focusTiepTheo(phongId: number, dichVuId: number) {
-    const danhSachKhoa = danhSachTangPhong.flatMap((phong) => phong.dichVu.map((dichVu) => khoa(phong.id, dichVu.id)))
-    const viTriHienTai = danhSachKhoa.indexOf(khoa(phongId, dichVuId))
-    const khoaTiepTheo = danhSachKhoa[viTriHienTai + 1]
-    if (!khoaTiepTheo) return
-    inputRefs.current[khoaTiepTheo]?.focus()
+    const tiepTheo = timCongToTiepTheo(danhSachTangPhong, phongId, dichVuId)
+    if (tiepTheo) focusKhoa(tiepTheo.phong.id, tiepTheo.dichVu.id)
   }
 
   const kyDaChot = kyDangChon?.trangThai === 'DA_CHOT'
@@ -358,6 +381,417 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
           style={{ padding: '8px 16px', flexWrap: 'wrap', height: 'auto', minHeight: 'var(--ma-topbar-height)' }}
         />
         <p style={{ margin: 0, padding: 'var(--ma-space-7) clamp(16px, 4vw, var(--ma-space-8))' }}>Đang tải toà nhà…</p>
+      </section>
+    )
+  }
+
+  if (mobile) {
+    const phongs = duLieu?.phong ?? []
+    const phongChon = phongs.find((phong) => phong.id === chon?.phongId)
+      ?? phongs.find((phong) => phong.dichVu.some((dichVu) => !dichVu.chiSoCuoi))
+      ?? phongs[0]
+    const dichVuChon = phongChon
+      ? (chon?.phongId === phongChon.id ? phongChon.dichVu.find((dichVu) => dichVu.id === chon.dichVuId) : undefined)
+        ?? phongChon.dichVu.find((dichVu) => !dichVu.chiSoCuoi)
+        ?? phongChon.dichVu[0]
+      : undefined
+    const tongCongTo = phongs.reduce((tong, phong) => tong + phong.dichVu.length, 0)
+    const daGhiCongTo = phongs.reduce((tong, phong) => tong + phong.dichVu.filter((dichVu) => Boolean(dichVu.chiSoCuoi)).length, 0)
+    const phongConThieu = phongs.filter((phong) => phong.dichVu.some((dichVu) => !dichVu.chiSoCuoi))
+    const nhanConLai = phongConThieu.length === 0
+      ? 'đã đủ'
+      : phongConThieu.length === 1
+        ? `còn ${phongConThieu[0].soPhong} · ${phongConThieu[0].dichVu.filter((dichVu) => !dichVu.chiSoCuoi).map((dichVu) => dichVu.tenDichVu).join(', ')}`
+        : `còn ${phongConThieu.length} phòng`
+
+    const key = phongChon && dichVuChon ? khoa(phongChon.id, dichVuChon.id) : ''
+    const giaTri = pendingValues[key] ?? ''
+    const coThayCongTo = dichVuChon ? (pendingReplacementFlags[key] ?? dichVuChon.coThayCongTo) : false
+    const chiSoThayCongTo = dichVuChon ? (pendingReplacementReadings[key] ?? {
+      chiSoCuoiCongToCu: dichVuChon.chiSoCuoiCongToCu ?? '',
+      chiSoDauCongToMoi: dichVuChon.chiSoDauCongToMoi ?? '',
+    }) : { chiSoCuoiCongToCu: '', chiSoDauCongToMoi: '' }
+    const anhDaChon = pendingPhotos[key]
+    const thongBaoChiSo = dichVuChon ? thongBaoChiSoLui(giaTri, dichVuChon.chiSoDau, coThayCongTo) : ''
+    const mucTieuThu = dichVuChon && !thongBaoChiSo ? tinhMucTieuThu(
+      giaTri,
+      dichVuChon.chiSoDau,
+      coThayCongTo ? chiSoThayCongTo.chiSoCuoiCongToCu : undefined,
+      coThayCongTo ? chiSoThayCongTo.chiSoDauCongToMoi : undefined,
+    ) : ''
+    const canhBaoTieuThu = dichVuChon && !thongBaoChiSo ? taoCanhBaoTieuThu(mucTieuThu, dichVuChon) : null
+    const luuBiChan = !dichVuChon || chiSoBiKhoa || (kyDaChot && !lyDoSua.trim()) || dangLuu === key || !giaTri
+      || (coThayCongTo && (!chiSoThayCongTo.chiSoCuoiCongToCu || !chiSoThayCongTo.chiSoDauCongToMoi)) || Boolean(thongBaoChiSo) || Boolean(canhBaoTieuThu)
+    const lyDoChanLuu = chiSoBiKhoa
+      ? 'Kỳ này đã chốt, không thể sửa chỉ số.'
+      : kyDaChot && !lyDoSua.trim()
+        ? 'Nhập lý do sửa kỳ đã chốt trước khi lưu.'
+        : canhBaoTieuThu
+          ? 'Cần xem lại và xác nhận cảnh báo trước khi lưu.'
+          : undefined
+    const tiepTheo = phongChon && dichVuChon ? timCongToTiepTheo(phongs, phongChon.id, dichVuChon.id) : null
+    const nhanLuu = dangLuu === key
+      ? 'Đang lưu…'
+      : !tiepTheo
+        ? 'Lưu chỉ số'
+        : tiepTheo.phong.id === phongChon?.id
+          ? `Lưu, sang công tơ ${tiepTheo.dichVu.tenDichVu.toLocaleLowerCase('vi-VN')} ${tiepTheo.phong.soPhong}`
+          : `Lưu, sang phòng ${tiepTheo.phong.soPhong}`
+    const donVi = dichVuChon?.donVi ?? ''
+
+    return (
+      <section
+        className="m-app"
+        style={{ ...styleTrang, paddingBottom: 'calc(var(--ma-bottom-nav-height) + 96px)' }}
+        aria-labelledby="meter-title"
+        data-testid="meter-screen"
+        data-layout-variant="mobile"
+      >
+        <header className="m-top">
+          <button
+            type="button"
+            className="icon-btn touch"
+            aria-label="Quay lại Nhắc việc"
+            onClick={() => {
+              window.history.pushState({}, '', '/nhac-viec')
+              window.dispatchEvent(new PopStateEvent('popstate'))
+            }}
+          >
+            <Icon name="chevron-left" />
+          </button>
+          <div className="h-title" style={{ fontSize: 18 }}>
+            <span id="meter-title">Ghi chỉ số</span>
+            <div className="h-sub">{nhanToaNha} · {kyDangChon ? `kỳ ${kyDangChon.thang}/${kyDangChon.nam}` : 'chưa chọn kỳ'}</div>
+          </div>
+          <button
+            type="button"
+            className="icon-btn touch"
+            aria-label="Chọn kỳ và toà"
+            aria-expanded={hienBoLoc}
+            onClick={() => setHienBoLoc((current) => !current)}
+          >
+            <Icon name="filter" />
+          </button>
+        </header>
+
+        <div className="m-body" data-mobile-meter-list="true">
+          {hienBoLoc ? (
+            <div className="m-card" style={{ display: 'grid', gap: 'var(--ma-space-4)' }}>
+              <label style={styleNhanTruong}>
+                <span>Toà nhà</span>
+                <select
+                  value={toaNhaId ?? ''}
+                  onChange={(event) => {
+                    setToaNhaId(Number(event.target.value))
+                    setKyId(null)
+                    setDuLieu(null)
+                    setChon(null)
+                  }}
+                  disabled={dangTaiKy || danhSachToaNha.length === 0}
+                  style={styleSelect}
+                >
+                  {danhSachToaNha.map((toa) => <option key={toa.id} value={toa.id}>{toa.ten}</option>)}
+                </select>
+              </label>
+              <label style={styleNhanTruong}>
+                <span>Kỳ thanh toán</span>
+                <select
+                  value={kyId ?? ''}
+                  onChange={(event) => {
+                    setKyId(Number(event.target.value))
+                    setChon(null)
+                  }}
+                  disabled={dangTaiChiSo || danhSachKy.length === 0}
+                  style={styleSelect}
+                >
+                  {danhSachKy.map((ky) => <option key={ky.id} value={ky.id}>{ky.thang}/{ky.nam}</option>)}
+                </select>
+              </label>
+            </div>
+          ) : null}
+
+          {dangTaiKy || dangTaiChiSo ? <p style={styleThongBao}>Đang tải dữ liệu chỉ số…</p> : null}
+          {loi ? <p className="banner banner-danger" role="alert" style={{ margin: 0 }}>{loi}</p> : null}
+
+          {duLieu ? <div aria-label="Tiến độ ghi chỉ số">
+            <div className="spread t-sm">
+              <span className="t-2">Đã ghi <b className="t-strong" style={{ color: 'var(--ma-text-primary)' }}>{daGhiCongTo}/{tongCongTo}</b> công tơ</span>
+              <span className="t-3">{nhanConLai}</span>
+            </div>
+            <div
+              className="progress"
+              style={{ marginTop: 8 }}
+              role="progressbar"
+              aria-valuenow={daGhiCongTo}
+              aria-valuemin={0}
+              aria-valuemax={tongCongTo}
+              aria-label={`Đã ghi ${daGhiCongTo} trên ${tongCongTo} công tơ`}
+            >
+              <span style={{ width: `${tongCongTo ? (daGhiCongTo / tongCongTo) * 100 : 0}%` }} />
+            </div>
+          </div> : null}
+
+          {!duLieu ? null : phongs.length === 0 ? (
+            <EmptyState
+              kind="first"
+              title="Không có phòng đủ điều kiện để ghi."
+              body="Toà này hiện chưa có phòng có dữ liệu công tơ trong kỳ đã chọn."
+            />
+          ) : (
+            <>
+              <nav
+                aria-label="Chọn phòng"
+                style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '2px 16px 4px', margin: '0 -16px', scrollbarWidth: 'none' }}
+              >
+                {phongs.map((phong) => {
+                  const xong = phong.dichVu.every((dichVu) => Boolean(dichVu.chiSoCuoi))
+                  const dangChon = phong.id === phongChon?.id
+                  return (
+                    <button
+                      key={phong.id}
+                      type="button"
+                      aria-current={dangChon ? 'true' : undefined}
+                      aria-label={`Phòng ${phong.soPhong}${xong ? ', đã ghi' : ''}`}
+                      data-room-chip={phong.id}
+                      className="chip touch"
+                      style={{
+                        minWidth: 56,
+                        justifyContent: 'center',
+                        gap: 4,
+                        border: 0,
+                        borderRadius: 12,
+                        fontWeight: 600,
+                        background: dangChon ? 'var(--ma-text-primary)' : xong ? 'var(--ma-done-bg)' : 'var(--ma-bg-card)',
+                        color: dangChon ? 'var(--ma-bg-card)' : xong ? 'var(--ma-done-text)' : 'var(--ma-text-primary)',
+                      }}
+                      onClick={() => {
+                        const dichVuDau = phong.dichVu.find((dichVu) => !dichVu.chiSoCuoi) ?? phong.dichVu[0]
+                        if (dichVuDau) setChon({ phongId: phong.id, dichVuId: dichVuDau.id })
+                      }}
+                    >
+                      {xong && !dangChon ? <Icon name="check" size="sm" /> : null}
+                      {phong.soPhong}
+                    </button>
+                  )
+                })}
+              </nav>
+
+              {phongChon && dichVuChon ? (
+                <section className="m-card" aria-labelledby="meter-room-title">
+                  <div className="spread">
+                    <div style={{ minWidth: 0 }}>
+                      <h2 className="h3" id="meter-room-title" style={{ fontSize: 18, margin: 0 }}>Phòng {phongChon.soPhong}</h2>
+                      <p className="t-meta" style={{ margin: 0 }}>Tầng {phongChon.tang}</p>
+                    </div>
+                    {phongChon.dichVu.length > 1 ? (
+                      <div className="seg" role="group" aria-label="Loại công tơ">
+                        {phongChon.dichVu.map((dichVu) => (
+                          <button
+                            key={dichVu.id}
+                            type="button"
+                            aria-pressed={dichVu.id === dichVuChon.id}
+                            onClick={() => setChon({ phongId: phongChon.id, dichVuId: dichVu.id })}
+                          >
+                            {dichVu.tenDichVu}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <StatusTag tone={dichVuChon.chiSoCuoi ? 'done' : 'neutral'}>{dichVuChon.tenDichVu}</StatusTag>
+                    )}
+                  </div>
+
+                  <div className="spread t-sm t-2" style={{ margin: '12px 2px 8px' }}>
+                    <span>Chỉ số kỳ trước</span>
+                    <b className="t-strong" style={{ color: 'var(--ma-text-primary)' }}>{gonSo(dichVuChon.chiSoDau)} {donVi}</b>
+                  </div>
+                  <label className="sr-only" htmlFor={`chiSoCuoi-${key}`}>{`Chỉ số ${dichVuChon.tenDichVu.toLocaleLowerCase('vi-VN')} mới, phòng ${phongChon.soPhong}`}</label>
+                  <div className="meter-wrap">
+                    <input
+                      ref={(element) => {
+                        inputRefs.current[key] = element
+                      }}
+                      className="meter-input"
+                      id={`chiSoCuoi-${key}`}
+                      name={`chiSoCuoi-${phongChon.id}-${dichVuChon.id}`}
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      value={giaTri}
+                      disabled={chiSoBiKhoa}
+                      aria-label={`Chỉ số mới phòng ${phongChon.soPhong}`}
+                      aria-invalid={Boolean(thongBaoChiSo) || Boolean(canhBaoTieuThu) || undefined}
+                      onChange={(event) => {
+                        const value = event.target.value
+                        setPendingValues((current) => ({ ...current, [key]: value }))
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key !== 'Enter') return
+                        event.preventDefault()
+                        void luuChiSo(phongChon.id, dichVuChon.id)
+                      }}
+                    />
+                    <span className="unit-tag">{donVi}</span>
+                  </div>
+                  {thongBaoChiSo ? <p style={{ ...styleThongBao, color: 'var(--ma-urgent)', marginTop: 8 }} role="alert">{thongBaoChiSo}</p> : null}
+
+                  {mucTieuThu ? (
+                    <div className="t-2 t-sm" style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                      <span>Tiêu thụ</span>
+                      <b className={canhBaoTieuThu ? 't-warm' : undefined} style={{ font: '600 28px/1 var(--ma-font-ui)', letterSpacing: '-0.02em', color: canhBaoTieuThu ? undefined : 'var(--ma-text-primary)' }}>{gonSo(mucTieuThu)}</b>
+                      <span>{donVi}{dichVuChon.thongTinCanhBaoTieuThu ? ` · TB 3 kỳ ${gonSo(dichVuChon.thongTinCanhBaoTieuThu.trungBinhBaKyTruoc)} ${donVi}` : ''}</span>
+                    </div>
+                  ) : null}
+
+                  {canhBaoTieuThu ? (
+                    <div className="banner banner-warning" role="alert" style={{ marginTop: 12, padding: 12 }}>
+                      <Icon name="alert" />
+                      <div style={{ display: 'grid', gap: 8, minWidth: 0 }}>
+                        <div><b>Cao gấp {gonSo(canhBaoTieuThu.gapLan, 1)} lần trung bình.</b> Kiểm tra lại số hoặc chụp ảnh công tơ để lưu kèm.</div>
+                        <Button
+                          variant="secondary"
+                          data-confirm-warning-key={key}
+                          blocked={dangLuu === key || chiSoBiKhoa}
+                          blockedReason={chiSoBiKhoa ? 'Kỳ này đã chốt, không thể xác nhận lại chỉ số.' : undefined}
+                          style={{ justifySelf: 'start' }}
+                          onClick={() => void luuChiSo(phongChon.id, dichVuChon.id, true)}
+                        >
+                          {dangLuu === key ? 'Đang lưu…' : 'Xác nhận và lưu'}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <label className="hit" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ma-space-3)', marginTop: 8 }}>
+                    <input
+                      name={`coThayCongTo-${phongChon.id}-${dichVuChon.id}`}
+                      type="checkbox"
+                      checked={coThayCongTo}
+                      disabled={chiSoBiKhoa}
+                      style={{ width: 20, height: 20, flex: 'none' }}
+                      onChange={(event) => {
+                        const checked = event.target.checked
+                        setPendingReplacementFlags((current) => ({ ...current, [key]: checked }))
+                      }}
+                    />
+                    <span>Công tơ đã thay</span>
+                  </label>
+                  {coThayCongTo ? (
+                    <div style={{ display: 'grid', gap: 'var(--ma-space-4)', marginBottom: 12 }}>
+                      <label style={styleNhanTruong}>
+                        <span>Chỉ số cuối công tơ cũ</span>
+                        <input
+                          name={`chiSoCuoiCongToCu-${phongChon.id}-${dichVuChon.id}`}
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          value={chiSoThayCongTo.chiSoCuoiCongToCu}
+                          disabled={chiSoBiKhoa}
+                          style={styleSoDo}
+                          onChange={(event) => {
+                            const value = event.target.value
+                            setPendingReplacementReadings((current) => ({ ...current, [key]: { ...chiSoThayCongTo, chiSoCuoiCongToCu: value } }))
+                          }}
+                        />
+                      </label>
+                      <label style={styleNhanTruong}>
+                        <span>Chỉ số đầu công tơ mới</span>
+                        <input
+                          name={`chiSoDauCongToMoi-${phongChon.id}-${dichVuChon.id}`}
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          value={chiSoThayCongTo.chiSoDauCongToMoi}
+                          disabled={chiSoBiKhoa}
+                          style={styleSoDo}
+                          onChange={(event) => {
+                            const value = event.target.value
+                            setPendingReplacementReadings((current) => ({ ...current, [key]: { ...chiSoThayCongTo, chiSoDauCongToMoi: value } }))
+                          }}
+                        />
+                      </label>
+                    </div>
+                  ) : null}
+
+                  <label className="btn btn-secondary btn-touch btn-block" style={{ marginTop: 4, cursor: 'pointer', position: 'relative' }}>
+                    <Icon name="camera" />
+                    Chụp ảnh công tơ
+                    <input
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                      name={`anhCongTo-${phongChon.id}-${dichVuChon.id}`}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      disabled={kyDaChot}
+                      onChange={(event) => {
+                        void chonAnhCongTo(key, event.target.files?.[0] ?? null)
+                      }}
+                    />
+                  </label>
+                  {anhDaChon ? <p style={{ ...styleThongBao, marginTop: 8 }}>Đã chọn ảnh: {anhDaChon.name}</p> : null}
+                </section>
+              ) : null}
+            </>
+          )}
+
+          {kyDangChon ? (
+            <section className="m-card" aria-labelledby="meter-close-title" style={{ display: 'grid', gap: 'var(--ma-space-4)' }}>
+              <div className="spread">
+                <h2 className="h3" id="meter-close-title" style={{ margin: 0 }}>Chốt kỳ</h2>
+                <Button
+                  variant="secondary"
+                  data-close-period
+                  blocked={dangChotKy || kyDaChot}
+                  blockedReason={kyDaChot ? 'Kỳ này đã chốt, không thể ghi thêm chỉ số.' : undefined}
+                  onClick={() => void chotKyDangChon()}
+                >
+                  {dangChotKy ? 'Đang chốt…' : 'Chốt kỳ'}
+                </Button>
+              </div>
+              {dangTaiPhongChuaGhiChiSo ? (
+                <p style={styleThongBao}>Đang tải phòng còn thiếu…</p>
+              ) : danhSachPhongChuaGhiChiSo.length > 0 ? (
+                <div style={{ display: 'grid', gap: 'var(--ma-space-1)' }}>
+                  <p style={styleThongBao}>Phòng còn thiếu</p>
+                  {danhSachPhongChuaGhiChiSo.map((phong) => (
+                    <Button
+                      key={phong.id}
+                      variant="text"
+                      size="sm"
+                      data-missing-room-key={phong.id}
+                      style={{ minHeight: 'var(--ma-hit-mobile)', justifyContent: 'flex-start' }}
+                      onClick={() => focusPhong(phong.id)}
+                    >
+                      Phòng {phong.soPhong} tầng {phong.tang}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <p style={styleThongBao}>Không còn phòng nào thiếu chỉ số.</p>
+              )}
+            </section>
+          ) : null}
+
+          {kyDaChot && vaiTro === 'CHU' ? <Field title="Lý do sửa chỉ số kỳ đã chốt (bắt buộc)"><textarea style={fieldStyle} value={lyDoSua} onChange={(event) => setLyDoSua(event.target.value)} /><span>Thay đổi được ghi nhật ký. Hoá đơn đã phát hành giữ nguyên số liệu.</span></Field> : null}
+        </div>
+
+        {phongChon && dichVuChon ? (
+          <div className="sticky-act">
+            {luuBiChan && lyDoChanLuu ? <p id={`ly-do-luu-${key}`} style={{ ...styleThongBao, marginBottom: 8 }}>{lyDoChanLuu}</p> : null}
+            <Button
+              variant="primary"
+              className="btn-touch btn-block"
+              data-save-key={key}
+              blocked={luuBiChan}
+              aria-describedby={luuBiChan && lyDoChanLuu ? `ly-do-luu-${key}` : undefined}
+              style={{ minHeight: 'var(--ma-control-h-touch)' }}
+              onClick={() => void luuChiSo(phongChon.id, dichVuChon.id)}
+            >
+              {nhanLuu}
+              {dangLuu === key ? null : <Icon name="arrow-right" />}
+            </Button>
+          </div>
+        ) : null}
       </section>
     )
   }
@@ -953,8 +1387,21 @@ function taoCanhBaoTieuThu(
 
   const gapTrungBinh = (mucTieuThuKyNay / trungBinhBaKyTruoc).toFixed(2)
   return {
+    gapLan: gapTrungBinh,
     thongBao: `Mức tiêu thụ kỳ này là ${mucTieuThu}, trung bình ba kỳ trước là ${thongTinCanhBao.trungBinhBaKyTruoc}, gấp ${gapTrungBinh} lần.`,
   }
+}
+
+function timCongToTiepTheo(phongs: ThongTinGhiChiSo['phong'], phongId: number, dichVuId: number) {
+  const danhSach = phongs.flatMap((phong) => phong.dichVu.map((dichVu) => ({ phong, dichVu })))
+  const viTri = danhSach.findIndex((muc) => muc.phong.id === phongId && muc.dichVu.id === dichVuId)
+  return viTri >= 0 ? danhSach[viTri + 1] ?? null : null
+}
+
+// "174.00" -> "174", "1.74" -> "1,7" (số kiểu Việt, bỏ đuôi 0 thừa)
+function gonSo(giaTri: string, toiDa = 2) {
+  const so = Number(giaTri)
+  return Number.isNaN(so) ? giaTri : so.toLocaleString('vi-VN', { maximumFractionDigits: toiDa })
 }
 
 function timDichVu(duLieu: ThongTinGhiChiSo | null, phongId: number, dichVuId: number) {
