@@ -131,6 +131,34 @@ describe('TieuThuBaoCao', () => {
     await vi.waitFor(() => expect(container!.textContent).toContain('Không có dữ liệu tiêu thụ phù hợp bộ lọc.'))
     expect(container!.textContent).not.toContain('0,00 kWh')
   })
+  it('Lô D: chọn toà thì hiện đối soát công tơ tổng đầy đủ; chip Thiếu chỉ số đếm đúng', async () => {
+    window.history.replaceState({}, '', '/bao-cao/tieu-thu?toaNhaId=1')
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/toa-nha') return jsonResponse([{ id: 1, ten: 'Toà A' }])
+      if (url === '/api/toa-nha/1/phong') return jsonResponse([])
+      if (url === '/api/toa-nha/1/ky-thanh-toan') return jsonResponse([])
+      if (url === '/api/bao-cao/tieu-thu?toaNhaId=1') return jsonResponse(baoCao())
+      if (url.startsWith('/api/dashboard/chu?toaNhaId=1')) {
+        return jsonResponse({ dienNuocDungChung: { khuVucChung: [], chiPhiUocTinh: 0, doiSoat: { trangThai: 'CANH_BAO_THAT_THOAT', mucTong: '1200.00', mucPhong: '1000.00', mucChungDoRieng: '100.00', chenhLech: '100.00', donVi: 'kWh', nguongChoPhep: '50.00', vuotNguong: true, ghiChu: 'Vượt ngưỡng', tenToaNha: 'Toà A', tenKy: 'Tháng 8/2040' } } })
+      }
+      throw new Error(`Unexpected fetch: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await act(async () => {
+      root = createRoot(container!)
+      root.render(<TieuThuBaoCao token="report-token" />)
+    })
+
+    await vi.waitFor(() => expect(container!.querySelector('[data-consumption-reconcile]')?.textContent).toContain('Cảnh báo thất thoát'))
+    const text = container!.querySelector('[data-consumption-reconcile]')!.textContent!
+    expect(text).toContain('1.200,00 kWh')
+    expect(text).toContain('1.000,00 kWh')
+    expect(text).toContain('100,00 kWh')
+    expect(text).toContain('Vượt ngưỡng')
+    expect(Array.from(container!.querySelectorAll('button.chip')).find((b) => b.textContent?.startsWith('Thiếu chỉ số'))?.textContent).toBe('Thiếu chỉ số1')
+  })
 })
 
 function baoCao() {

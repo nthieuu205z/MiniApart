@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ApiError,
+  fetchDashboardChu,
   fetchKyThanhToan,
   fetchPhong,
   fetchTieuThuBaoCao,
   fetchToaNha,
   type BoLocTieuThuBaoCao,
   type ThongTinDiemTieuThuBaoCao,
+  type ThongTinDashboardChu,
   type ThongTinDongTieuThuBaoCao,
   type ThongTinKyThanhToan,
   type ThongTinPhong,
@@ -14,8 +16,12 @@ import {
   type ThongTinTieuThuBaoCao,
 } from './api'
 import { EmptyState } from './design/feedback/EmptyState'
-import { ScreenHeader, ScreenNotice, ScreenSurface, TableCell, TableFrame, TableHeadCell } from './design/layout/Screen'
-import { SysLabel } from './design/core/SysLabel'
+import { Icon } from './design/core/Icon'
+import { StatusTag } from './design/core/StatusTag'
+import { Card } from './design/layout/Card'
+import { Field, Select } from './design/forms/Field'
+import { DataTable } from './design/table/DataTable'
+import { BaoCaoDangTai, BaoCaoLoi, DauBaoCao, ThanhLoc, gioTinh } from './baoCaoChung'
 import ExcelExportButton from './ExcelExportButton'
 
 type Props = { token: string; mobile?: boolean }
@@ -33,7 +39,19 @@ export default function TieuThuBaoCao({ token, mobile = false }: Props): React.R
   const [dangTaiBoLoc, setDangTaiBoLoc] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
   const [loiBoLoc, setLoiBoLoc] = useState<string | null>(null)
+  const [doiSoat, setDoiSoat] = useState<DoiSoatCongToTong | null | undefined>(undefined)
   const variant = mobile ? 'mobile' : 'desktop'
+
+  // Đối soát công tơ tổng lấy từ dashboard chủ (cùng nguồn với dòng "Cần chú ý"); lỗi chỉ làm trống khối này, không chặn báo cáo.
+  useEffect(() => {
+    let mounted = true
+    setDoiSoat(undefined)
+    if (boLoc.toaNhaId === null) return
+    fetchDashboardChu(token, boLoc.toaNhaId)
+      .then((d) => mounted && setDoiSoat(d.dienNuocDungChung.doiSoat))
+      .catch(() => mounted && setDoiSoat(null))
+    return () => { mounted = false }
+  }, [boLoc.toaNhaId, token])
 
   useEffect(() => {
     let mounted = true
@@ -113,48 +131,74 @@ export default function TieuThuBaoCao({ token, mobile = false }: Props): React.R
     return () => window.removeEventListener('popstate', docLaiBoLocTuLichSu)
   }, [])
 
-  if (dangTai && !baoCao) {
-    return <ScreenSurface data-testid="consumption-report-screen" data-layout-variant={variant} aria-busy="true" aria-live="polite">Đang tải báo cáo tiêu thụ…</ScreenSurface>
-  }
-  if (loi && !baoCao) {
-    return (
-      <ScreenSurface data-testid="consumption-report-screen" data-layout-variant={variant} role="alert">
-        <SysLabel>BÁO CÁO TIÊU THỤ</SysLabel>
-        <ScreenNotice tone="urgent">{loi}</ScreenNotice>
-      </ScreenSurface>
-    )
-  }
+  if (dangTai && !baoCao) return <BaoCaoDangTai testid="consumption-report-screen" variant={variant} nhan="Đang tải báo cáo tiêu thụ…" />
+  if (loi && !baoCao) return <BaoCaoLoi testid="consumption-report-screen" variant={variant} loi={loi} />
 
+  const trong = !baoCao || (baoCao.cacDong.length === 0 && baoCao.bieuDo.length === 0)
   return (
-    <ScreenSurface data-testid="consumption-report-screen" data-layout-variant={variant} aria-labelledby="consumption-report-title">
-      <ScreenHeader action={<ExcelExportButton token={token} report="tieu-thu" filters={boLoc} loading={dangTai} />}>
-        <SysLabel>BÁO CÁO TIÊU THỤ</SysLabel>
-        <h3 id="consumption-report-title" style={{ margin: '8px 0 0' }}>Tiêu thụ điện và nước</h3>
-        <p style={styleMuted}>Bảng và biểu đồ dùng cùng một ảnh chụp dữ liệu, tách riêng theo kWh và m³ để đối soát.</p>
-      </ScreenHeader>
-
-      <BoLoc
-        boLoc={boLoc}
-        toaNha={toaNha}
-        phong={phong}
-        ky={ky}
-        dangTai={dangTaiBoLoc}
-        onChange={setBoLoc}
+    <div data-testid="consumption-report-screen" data-layout-variant={variant} aria-labelledby="consumption-report-title" className="stack">
+      <DauBaoCao
+        id="consumption-report-title"
+        tieuDe="Tiêu thụ điện và nước"
+        moTa="Bảng và biểu đồ dùng cùng một ảnh chụp dữ liệu, tách riêng theo kWh và m³ để đối soát."
+        action={<ExcelExportButton token={token} report="tieu-thu" filters={boLoc} loading={dangTai} />}
       />
-      {loiBoLoc ? <ScreenNotice tone="urgent">{loiBoLoc}</ScreenNotice> : null}
-      {dangTai && baoCao ? <ScreenNotice live>Đang cập nhật báo cáo tiêu thụ…</ScreenNotice> : null}
-      {loi && baoCao ? <ScreenNotice tone="urgent">{loi}</ScreenNotice> : null}
 
-      {!baoCao || (baoCao.cacDong.length === 0 && baoCao.bieuDo.length === 0) ? (
-        <EmptyState title="Không có dữ liệu tiêu thụ phù hợp bộ lọc." body="Phòng chưa có chỉ số vẫn được giữ trong bảng khi có hợp đồng và dịch vụ theo chỉ số." />
+      <BoLoc boLoc={boLoc} toaNha={toaNha} phong={phong} ky={ky} dangTai={dangTaiBoLoc} onChange={setBoLoc} />
+      {loiBoLoc ? <p className="alert alert-danger" role="alert"><Icon name="alert" />{loiBoLoc}</p> : null}
+      {dangTai && baoCao ? <p className="t-2" role="status" aria-live="polite">Đang cập nhật báo cáo tiêu thụ…</p> : null}
+      {loi && baoCao ? <p className="alert alert-danger" role="alert"><Icon name="alert" />{loi}</p> : null}
+
+      <DoiSoatCongToTong toaNhaId={boLoc.toaNhaId} doiSoat={doiSoat} />
+
+      {trong ? (
+        <div className="card"><EmptyState title="Không có dữ liệu tiêu thụ phù hợp bộ lọc." body="Phòng chưa có chỉ số vẫn được giữ trong bảng khi có hợp đồng và dịch vụ theo chỉ số." /></div>
       ) : (
         <>
-          <BieuDoTieuThuBaoCao points={baoCao.bieuDo} />
-          <BangTieuThu rows={baoCao.cacDong} mobile={mobile} />
-          <p style={{ ...styleMuted, margin: 0 }}>Tính lúc {baoCao.tinhLuc}. Phòng thiếu chỉ số được hiển thị là chưa có dữ liệu, không quy đổi thành 0.</p>
+          <BieuDoTieuThuBaoCao points={baoCao.bieuDo} rows={baoCao.cacDong} />
+          <BangTieuThu rows={baoCao.cacDong} />
+          <p className="t-meta" style={{ margin: 0 }}>Tính lúc {gioTinh(baoCao.tinhLuc)}. Phòng thiếu chỉ số được hiển thị là chưa có dữ liệu, không quy đổi thành 0.</p>
         </>
       )}
-    </ScreenSurface>
+    </div>
+  )
+}
+
+type DoiSoatCongToTong = NonNullable<ThongTinDashboardChu['dienNuocDungChung']['doiSoat']>
+const NHAN_DOI_SOAT: Record<string, { nhan: string; tone: 'done' | 'urgent' | 'neutral' }> = {
+  KHOP_DOI_SOAT: { nhan: 'Khớp đối soát', tone: 'done' },
+  CANH_BAO_THAT_THOAT: { nhan: 'Cảnh báo thất thoát', tone: 'urgent' },
+}
+
+/** Đối soát công tơ tổng đầy đủ (dashboard chỉ còn một dòng "Cần chú ý"): công tơ tổng, tổng phòng, dùng chung đo riêng, chênh lệch so với ngưỡng. */
+function DoiSoatCongToTong({ toaNhaId, doiSoat }: { toaNhaId: number | null; doiSoat: DoiSoatCongToTong | null | undefined }): React.ReactElement {
+  const trangThai = doiSoat ? NHAN_DOI_SOAT[doiSoat.trangThai] ?? { nhan: 'Chưa đủ số liệu', tone: 'neutral' as const } : null
+  const so = (v: number | string | null, donVi: string) => (v === null ? 'Chưa có' : `${dinhDangSoDo(String(v))} ${donVi}`)
+  return (
+    <Card
+      data-consumption-reconcile
+      aria-labelledby="consumption-reconcile-title"
+      title={<span id="consumption-reconcile-title">Đối soát công tơ tổng{doiSoat?.tenToaNha ? ` · ${doiSoat.tenToaNha}` : ''}{doiSoat?.tenKy ? ` · ${doiSoat.tenKy}` : ''}</span>}
+      action={trangThai ? <StatusTag tone={trangThai.tone}>{trangThai.nhan}</StatusTag> : undefined}
+    >
+      {toaNhaId === null ? (
+        <p className="t-2" style={{ margin: 0 }}>Chọn một toà nhà ở bộ lọc để xem đối soát công tơ tổng của toà đó.</p>
+      ) : doiSoat === undefined ? (
+        <p className="t-2" style={{ margin: 0 }} role="status">Đang tải đối soát công tơ tổng…</p>
+      ) : doiSoat === null || doiSoat.trangThai === 'CHON_TOA_NHA' ? (
+        <p className="t-2" style={{ margin: 0 }}>Chưa có số đối soát công tơ tổng cho toà này.</p>
+      ) : (
+        <>
+          <div className="facts" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))' }}>
+            <div className="fact"><div className="k">Công tơ tổng</div><div className="v">{so(doiSoat.mucTong, doiSoat.donVi)}</div></div>
+            <div className="fact"><div className="k">Tổng các phòng</div><div className="v">{so(doiSoat.mucPhong, doiSoat.donVi)}</div></div>
+            <div className="fact"><div className="k">Dùng chung đo riêng</div><div className="v">{so(doiSoat.mucChungDoRieng, doiSoat.donVi)}</div></div>
+            <div className="fact"><div className="k">Chênh lệch (ngưỡng {so(doiSoat.nguongChoPhep, doiSoat.donVi)})</div><div className={`v${doiSoat.vuotNguong ? ' t-danger' : ''}`}>{so(doiSoat.chenhLech, doiSoat.donVi)}</div></div>
+          </div>
+          {doiSoat.ghiChu ? <p className="t-2" style={{ margin: '12px 0 0' }}>{doiSoat.ghiChu}</p> : null}
+        </>
+      )}
+    </Card>
   )
 }
 
@@ -174,152 +218,130 @@ function BoLoc({
   onChange: (value: BoLocTieuThuBaoCao) => void
 }): React.ReactElement {
   return (
-    <section aria-label="Bộ lọc báo cáo tiêu thụ" style={styleFilterGrid}>
-      <label style={styleField}>
-        <span>Toà nhà</span>
-        <select
+    <ThanhLoc nhan="Bộ lọc báo cáo tiêu thụ">
+      <Field label="Toà nhà">
+        <Select
           aria-label="Lọc tiêu thụ theo toà nhà"
           value={boLoc.toaNhaId === null ? '' : String(boLoc.toaNhaId)}
           onChange={(event) => onChange({ toaNhaId: event.target.value ? Number(event.target.value) : null, phongId: null, kyId: null })}
-          style={styleInput}
         >
           <option value="">Tất cả toà được phân quyền</option>
           {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
-        </select>
-      </label>
-      <label style={styleField}>
-        <span>Phòng</span>
-        <select
+        </Select>
+      </Field>
+      <Field label="Phòng">
+        <Select
           aria-label="Lọc tiêu thụ theo phòng"
           value={boLoc.phongId === null ? '' : String(boLoc.phongId)}
           disabled={boLoc.toaNhaId === null || dangTai}
           onChange={(event) => onChange({ ...boLoc, phongId: event.target.value ? Number(event.target.value) : null })}
-          style={styleInput}
         >
           <option value="">Tất cả phòng</option>
           {phong.map((item) => <option key={item.id ?? item.soPhong} value={item.id ?? ''}>Phòng {item.soPhong}</option>)}
-        </select>
-      </label>
-      <label style={styleField}>
-        <span>Kỳ thanh toán</span>
-        <select
+        </Select>
+      </Field>
+      <Field label="Kỳ thanh toán">
+        <Select
           aria-label="Lọc tiêu thụ theo kỳ"
           value={boLoc.kyId === null ? '' : String(boLoc.kyId)}
           disabled={boLoc.toaNhaId === null || dangTai}
           onChange={(event) => onChange({ ...boLoc, kyId: event.target.value ? Number(event.target.value) : null })}
-          style={styleInput}
         >
           <option value="">Tất cả kỳ</option>
           {ky.map((item) => <option key={item.id} value={item.id}>Kỳ {String(item.thang).padStart(2, '0')}/{item.nam}</option>)}
-        </select>
-      </label>
-    </section>
+        </Select>
+      </Field>
+    </ThanhLoc>
   )
 }
 
-function BieuDoTieuThuBaoCao({ points }: { points: ThongTinDiemTieuThuBaoCao[] }): React.ReactElement {
-  const maxTheoDonVi = useMemo(() => {
-    const max = new Map<string, bigint>()
-    points.forEach((point) => {
-      if (point.mucTieuThu === null) return
-      const value = soDoNho(point.mucTieuThu)
-      const current = max.get(point.donVi) ?? 0n
-      if (value > current) max.set(point.donVi, value)
-    })
-    return max
+/** Thanh ngang theo kỳ, tách một khối cho mỗi đơn vị (kWh / m³) — không trộn đơn vị trên cùng thang. */
+function BieuDoTieuThuBaoCao({ points, rows }: { points: ThongTinDiemTieuThuBaoCao[]; rows: ThongTinDongTieuThuBaoCao[] }): React.ReactElement {
+  // Điểm biểu đồ không mang tên toà; kỳ thuộc đúng một toà nên tra qua dòng bảng. Nhiều toà thì ghi tên toà để các kỳ trùng nhãn không lẫn.
+  const toaCuaKy = useMemo(() => new Map(rows.map((r) => [r.kyId, r.tenToaNha])), [rows])
+  const nhieuToa = new Set(toaCuaKy.values()).size > 1
+  const theoDonVi = useMemo(() => {
+    const nhom = new Map<string, ThongTinDiemTieuThuBaoCao[]>()
+    points.forEach((p) => nhom.set(p.donVi, [...(nhom.get(p.donVi) ?? []), p]))
+    return Array.from(nhom.entries())
   }, [points])
-
   return (
-    <section data-consumption-report-chart aria-labelledby="consumption-report-chart-title" style={styleChart}>
-      <div>
-        <SysLabel>BIỂU ĐỒ CÙNG ẢNH CHỤP</SysLabel>
-        <h4 id="consumption-report-chart-title" style={{ margin: '6px 0 0' }}>Mức tiêu thụ theo kỳ và đơn vị</h4>
-      </div>
-      <div role="list" aria-label="Biểu đồ tiêu thụ, tách riêng theo đơn vị" style={{ display: 'grid', gap: 10 }}>
-        {points.map((point, index) => (
-          <ThanhTieuThu key={`${point.kyId}-${point.donVi}-${index}`} point={point} max={maxTheoDonVi.get(point.donVi) ?? 0n} />
-        ))}
-      </div>
-      <div style={styleLegend} aria-label="Chú giải đơn vị">
-        {Array.from(new Set(points.map((point) => point.donVi))).map((unit) => (
-          <span key={unit}><i aria-hidden="true" style={{ ...styleLegendDot, background: mauTheoDonVi(unit) }} />{hienThiDonVi(unit)}</span>
-        ))}
-      </div>
+    <section data-consumption-report-chart aria-labelledby="consumption-report-chart-title" className="grid">
+      <h2 className="sr-only" id="consumption-report-chart-title">Mức tiêu thụ theo kỳ và đơn vị</h2>
+      {theoDonVi.map(([donVi, diem]) => {
+        const unit = hienThiDonVi(donVi)
+        const lon = diem.reduce((m, p) => (p.mucTieuThu === null ? m : Math.max(m, Number(p.mucTieuThu))), 0)
+        const laDien = diem[0].laDien
+        return (
+          <Card key={donVi} className={theoDonVi.length > 1 ? 'c-6' : 'c-12'} title={`${laDien ? 'Điện' : 'Nước'} theo kỳ (${unit})`}>
+            <div className="hbars" role="list" aria-label={`Biểu đồ tiêu thụ ${laDien ? 'điện' : 'nước'}, đơn vị ${unit}`}>
+              {diem.map((point, index) => {
+                const co = point.mucTieuThu !== null
+                const toa = nhieuToa ? toaCuaKy.get(point.kyId) : undefined
+                const nhanDiem = toa ? `${point.nhanKy} · ${toa}` : point.nhanKy
+                const chu = co ? `${dinhDangSoDo(point.mucTieuThu!)} ${unit}` : 'Chưa có chỉ số'
+                return (
+                  <div
+                    key={`${point.kyId}-${index}`}
+                    className="hbar"
+                    data-consumption-report-chart-point={point.donVi}
+                    role="listitem"
+                    aria-label={`${nhanDiem} · ${point.laDien ? 'Điện' : 'Nước'}: ${chu}`}
+                  >
+                    <span className="hbar-label" title={nhanDiem}>{nhanDiem}</span>
+                    <span className="hbar-value">{chu}</span>
+                    <div className="hbar-track"><div className={laDien ? 'hbar-fill' : 'hbar-fill warm'} style={{ width: `${co && lon > 0 ? Math.max(1, (Number(point.mucTieuThu) / lon) * 100) : 0}%` }} /></div>
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+        )
+      })}
     </section>
   )
 }
 
-function ThanhTieuThu({ point, max }: { point: ThongTinDiemTieuThuBaoCao; max: bigint }): React.ReactElement {
-  const value = point.mucTieuThu === null ? null : soDoNho(point.mucTieuThu)
-  const width = value === null || value <= 0n || max <= 0n ? 0 : Math.max(3, Number((value * 100n) / max))
-  const unit = hienThiDonVi(point.donVi)
+function BangTieuThu({ rows }: { rows: ThongTinDongTieuThuBaoCao[] }): React.ReactElement {
+  const thieu = (r: ThongTinDongTieuThuBaoCao) => !r.coDuLieu || r.mucTieuThu === null
   return (
-    <div
-      data-consumption-report-chart-point={point.donVi}
-      role="listitem"
-      aria-label={`${point.nhanKy} · ${point.laDien ? 'Điện' : 'Nước'}: ${value === null ? 'Chưa có chỉ số' : `${dinhDangSoDo(point.mucTieuThu!)} ${unit}`}`}
-      style={{ display: 'grid', gridTemplateColumns: 'minmax(74px, 5.5rem) minmax(0, 1fr) auto', alignItems: 'center', gap: 8, minWidth: 0, minHeight: 'var(--ma-hit-mobile)' }}
-    >
-      <span style={{ display: 'grid', gap: 2, minWidth: 0 }}>
-        <strong style={{ fontSize: 13 }}>{point.nhanKy}</strong>
-        <span style={{ color: 'var(--ma-text-secondary)', fontSize: 12 }}>{point.laDien ? 'Điện' : 'Nước'}</span>
-      </span>
-      <span aria-hidden="true" style={{ display: 'block', width: '100%', minWidth: 0, height: 16, background: 'var(--ma-bg-sunken)', border: '1px solid var(--ma-border-subtle)' }}>
-        <span style={{ display: 'block', width: `${width}%`, minWidth: width > 0 ? 4 : 0, height: '100%', background: mauTheoDonVi(point.donVi) }} />
-      </span>
-      <strong style={{ whiteSpace: 'nowrap', fontFamily: 'var(--ma-font-mono)', fontSize: 12 }}>{value === null ? 'Chưa có chỉ số' : `${dinhDangSoDo(point.mucTieuThu!)} ${unit}`}</strong>
-    </div>
-  )
-}
-
-function BangTieuThu({ rows, mobile }: { rows: ThongTinDongTieuThuBaoCao[]; mobile: boolean }): React.ReactElement {
-  return (
-    <section data-consumption-report-table aria-labelledby="consumption-report-table-title" style={{ display: 'grid', gap: 10 }}>
-      <div>
-        <SysLabel>BẢNG ĐỐI SOÁT</SysLabel>
-        <h4 id="consumption-report-table-title" style={{ margin: '6px 0 0' }}>Chi tiết phòng, kỳ và chỉ số</h4>
-      </div>
-      <TableFrame minWidth={mobile ? 760 : 900}>
-        <caption className="sr-only">Bảng tiêu thụ điện và nước theo phòng, kỳ và đơn vị</caption>
-        <thead>
-          <tr>
-            <TableHeadCell>Kỳ / phòng</TableHeadCell>
-            <TableHeadCell>Dịch vụ</TableHeadCell>
-            <TableHeadCell>Chỉ số</TableHeadCell>
-            <TableHeadCell align="right">Tiêu thụ</TableHeadCell>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => <DongTieuThu key={`${row.kyId}-${row.phongId}-${row.dichVuId}`} row={row} />)}
-        </tbody>
-      </TableFrame>
-    </section>
-  )
-}
-
-function DongTieuThu({ row }: { row: ThongTinDongTieuThuBaoCao }): React.ReactElement {
-  const unit = hienThiDonVi(row.donVi)
-  const value = row.coDuLieu && row.mucTieuThu !== null ? `${dinhDangSoDo(row.mucTieuThu)} ${unit}` : 'Chưa có chỉ số'
-  return (
-    <tr data-consumption-report-row={`${row.soPhong}-${row.kyId}-${row.laDien ? 'electricity' : 'water'}`}>
-      <TableCell header>
-        <span style={{ display: 'block' }}>{row.nhanKy}</span>
-        <span style={styleMuted}>Phòng {row.soPhong} · {row.tenToaNha}</span>
-      </TableCell>
-      <TableCell>
-        <strong>{row.tenDichVu}</strong>
-        <span style={{ display: 'block', color: 'var(--ma-text-secondary)', fontSize: 12, marginTop: 3 }}>{unit}</span>
-      </TableCell>
-      <TableCell>
-        {row.coDuLieu ? (
-          <>
-            <span style={{ display: 'block' }}>Đầu {row.chiSoDau} · cuối {row.chiSoCuoi}</span>
-            {row.coThayCongTo ? <span style={{ display: 'block', color: 'var(--ma-text-secondary)', fontSize: 12, marginTop: 3 }}>Công tơ cũ {row.chiSoCuoiCongToCu} · mới {row.chiSoDauCongToMoi}</span> : null}
-          </>
-        ) : <span style={{ color: 'var(--ma-text-secondary)' }}>Chưa có chỉ số đầu và cuối</span>}
-      </TableCell>
-      <TableCell align="right"><strong>{value}</strong></TableCell>
-    </tr>
+    <Card data-consumption-report-table aria-labelledby="consumption-report-table-title" title={<span id="consumption-report-table-title">Chi tiết phòng, kỳ và chỉ số</span>}>
+      <DataTable
+        rows={rows}
+        getRowId={(r) => `${r.kyId}-${r.phongId}-${r.dichVuId}`}
+        noun="dòng"
+        searchLabel="Tìm phòng, dịch vụ"
+        timTheo={(r) => `${r.soPhong} ${r.tenToaNha} ${r.tenDichVu} ${r.nhanKy}`}
+        rowProps={(r) => ({ 'data-consumption-report-row': `${r.soPhong}-${r.kyId}-${r.laDien ? 'electricity' : 'water'}` })}
+        chips={[
+          { key: 'dien', label: 'Điện', match: (r) => r.laDien },
+          { key: 'nuoc', label: 'Nước', match: (r) => !r.laDien },
+          { key: 'thieu', label: 'Thiếu chỉ số', match: thieu },
+        ]}
+        columns={[
+          { key: 'ky', label: 'Kỳ / phòng', sortable: true, sortValue: (r) => r.kyId, render: (r) => <><b>{r.nhanKy}</b><div className="t-meta">Phòng {r.soPhong} · {r.tenToaNha}</div></> },
+          { key: 'dv', label: 'Dịch vụ', render: (r) => <><b>{r.tenDichVu}</b><div className="t-meta">{hienThiDonVi(r.donVi)}</div></> },
+          {
+            key: 'chiso',
+            label: 'Chỉ số',
+            render: (r) => (r.coDuLieu ? (
+              <>
+                <div>Đầu {r.chiSoDau} · cuối {r.chiSoCuoi}</div>
+                {r.coThayCongTo ? <div className="t-meta">Công tơ cũ {r.chiSoCuoiCongToCu} · mới {r.chiSoDauCongToMoi}</div> : null}
+              </>
+            ) : <span className="t-2">Chưa có chỉ số đầu và cuối</span>),
+          },
+          {
+            key: 'tt',
+            label: 'Tiêu thụ',
+            align: 'num',
+            sortable: true,
+            sortValue: (r) => (thieu(r) ? null : Number(r.mucTieuThu)),
+            render: (r) => (thieu(r) ? <StatusTag tone="waiting">Chưa có chỉ số</StatusTag> : <b>{dinhDangSoDo(r.mucTieuThu!)} {hienThiDonVi(r.donVi)}</b>),
+          },
+        ]}
+      />
+    </Card>
   )
 }
 
@@ -356,22 +378,3 @@ function dinhDangSoDo(value: string): string {
   const integer = match[2].replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.')
   return `${match[1]}${integer},${(match[3] ?? '').padEnd(2, '0')}`
 }
-
-function soDoNho(value: string): bigint {
-  const match = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(value.trim())
-  if (!match) return 0n
-  const hundredths = BigInt(`${match[2]}${(match[3] ?? '').padEnd(2, '0')}`)
-  return match[1] === '-' ? -hundredths : hundredths
-}
-
-function mauTheoDonVi(unit: string): string {
-  return unit === 'm3' || unit === 'm³' ? 'var(--ma-waiting)' : 'var(--ma-ink-screen-title)'
-}
-
-const styleMuted: CSSProperties = { margin: '4px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.5 }
-const styleFilterGrid: CSSProperties = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
-const styleField: CSSProperties = { display: 'grid', gap: 6, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
-const styleInput: CSSProperties = { width: '100%', minWidth: 0, maxWidth: '100%', minHeight: 'var(--ma-hit-mobile)', padding: '0 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 0, background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)', boxSizing: 'border-box' }
-const styleChart: CSSProperties = { display: 'grid', gap: 14, minWidth: 0, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }
-const styleLegend: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 14, color: 'var(--ma-text-secondary)', fontSize: 12 }
-const styleLegendDot: CSSProperties = { display: 'inline-block', width: 10, height: 10, marginRight: 5 }
