@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   fetchTaiSanPhong,
   themTaiSanPhong,
@@ -16,6 +16,15 @@ import { SysLabel } from './design/core/SysLabel'
 import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
 import { dinhDangTien } from './design/core/format'
+import { Field } from './design/forms/Field'
+import { DataTable, type DataTableColumn } from './design/table/DataTable'
+
+const NHAN_ENUM: Record<string, string> = {
+  DIEN_LANH: 'Điện lạnh', NOI_THAT: 'Nội thất', DIEN_NUOC: 'Điện nước', DIEN_TU: 'Điện tử', GIA_DUNG: 'Gia dụng', AN_NINH: 'An ninh',
+  HOAT_DONG_TOT: 'Hoạt động tốt', HU_HONG: 'Hư hỏng', MOI: 'Mới',
+}
+// shortcut: giá trị lạ chỉ được đổi dấu gạch dưới, chưa có dấu tiếng Việt; thêm vào NHAN_ENUM khi gặp.
+const nhanEnum = (v: string) => NHAN_ENUM[v] ?? (/^[A-Z0-9_]+$/.test(v) ? v.charAt(0) + v.slice(1).toLowerCase().replace(/_/g, ' ') : v)
 
 function dinhDangSoTien(value: string | number | undefined | null): string {
   if (value === null || value === undefined || value === '') return '0'
@@ -305,20 +314,32 @@ export default function QuanLyTaiSanPhong({
     }
   }
 
+  const cotTaiSan: DataTableColumn<TaiSanPhong>[] = [
+    { key: 'ten', label: 'Tên tài sản / Thiết bị', sortable: true, sortValue: (ts) => ts.tenTaiSan, render: (ts) => <span className="td-main">{ts.tenTaiSan}</span> },
+    { key: 'loai', label: 'Phân loại', render: (ts) => <StatusTag tone="draft">{nhanEnum(ts.loaiTaiSan)}</StatusTag> },
+    { key: 'sl', label: 'SL', align: 'num', render: (ts) => ts.soLuong },
+    { key: 'tinhTrang', label: 'Tình trạng', render: (ts) => <StatusTag tone="neutral">{nhanEnum(ts.tinhTrang)}</StatusTag> },
+    { key: 'gia', label: 'Giá trị ước tính', align: 'num', sortable: true, sortValue: (ts) => Number(ts.giaTriUocTinh ?? 0), render: (ts) => ts.giaTriUocTinh ? <span className="t-money">{dinhDangSoTien(ts.giaTriUocTinh)} ₫</span> : '—' },
+    { key: 'ghiChu', label: 'Ghi chú', render: (ts) => <span className="bq-toa" title={ts.ghiChu ?? ''}>{ts.ghiChu || '—'}</span> },
+    { key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong', render: (ts) => <div className="td-acts"><Button variant="secondary" size="sm" blocked={dangLuu} onClick={() => handleXoaTaiSan(ts.id, ts.tenTaiSan)}>Xoá<span className="sr-only"> {ts.tenTaiSan}</span></Button></div> },
+  ]
+  type ChiTietLichSu = NonNullable<BienBanBanGiao['chiTiet']>[number] & { _k: number }
+  const cotChiTietBienBan = (traPhong: boolean): DataTableColumn<ChiTietLichSu>[] => [
+    { key: 'ten', label: 'Tài sản', render: (ct) => <span className="td-main">{ct.tenTaiSan}</span> },
+    { key: 'sl', label: 'SL', align: 'num', render: (ct) => ct.soLuong },
+    { key: 'giao', label: 'Tình trạng lúc giao', render: (ct) => ct.tinhTrangLucGiao || '—' },
+    ...(traPhong ? [
+      { key: 'tra', label: 'Tình trạng lúc trả', render: (ct: ChiTietLichSu) => ct.tinhTrangLucTra || '—' },
+      { key: 'khauTru', label: 'Khấu trừ', align: 'num' as const, render: (ct: ChiTietLichSu) => Number(ct.tienKhauTru) > 0 ? <strong style={{ color: 'var(--ma-urgent)' }}>{dinhDangSoTien(ct.tienKhauTru)} ₫</strong> : '0 ₫' },
+      { key: 'lyDo', label: 'Lý do', render: (ct: ChiTietLichSu) => ct.lyDoKhauTru || '—' },
+    ] : []),
+  ]
+
   return (
     <section
       data-testid="room-assets-section"
-      style={{
-        display: 'grid',
-        gap: 'var(--ma-space-4)',
-        background: 'var(--ma-bg-card)',
-        padding: mobile ? 'var(--ma-space-3)' : 'var(--ma-space-5)',
-        border: '1px solid var(--ma-border-default)',
-        borderRadius: 'var(--ma-radius)',
-        minWidth: 0,
-        maxWidth: '100%',
-        boxSizing: 'border-box',
-      }}
+      className="card-sunken"
+      style={{ display: 'grid', gap: 'var(--ma-space-4)', minWidth: 0, maxWidth: '100%' }}
     >
       <header
         style={{
@@ -333,7 +354,7 @@ export default function QuanLyTaiSanPhong({
       >
         <div>
           <SysLabel>QUẢN LÝ TÀI SẢN BÀN GIAO</SysLabel>
-          <h3 style={{ margin: '4px 0 0', font: 'var(--ma-text-task-name)' }}>
+          <h3 className="h3" style={{ margin: '4px 0 0' }}>
             Tiện nghi & Biên bản tài sản {soPhong ? `(Phòng ${soPhong})` : ''}
           </h3>
         </div>
@@ -341,9 +362,10 @@ export default function QuanLyTaiSanPhong({
           <Button
             type="button"
             variant={tab === 'DANH_MUC' ? 'primary' : 'secondary'}
+            aria-pressed={tab === 'DANH_MUC'}
             onClick={() => setTab('DANH_MUC')}
           >
-            📦 Danh mục ({danhSachTaiSan.length})
+            Danh mục ({danhSachTaiSan.length})
           </Button>
           {hopDongId ? (
             <Button
@@ -354,7 +376,7 @@ export default function QuanLyTaiSanPhong({
                 chuanBiKiemKe('NHAN_PHONG')
               }}
             >
-              📋 Biên bản bàn giao ({danhSachBienBan.length})
+              Biên bản bàn giao ({danhSachBienBan.length})
             </Button>
           ) : null}
         </div>
@@ -407,7 +429,7 @@ export default function QuanLyTaiSanPhong({
                 marginBottom: 6,
               }}
             >
-              ⚡ THÊM NHANH THIẾT BỊ PHỔ BIẾN:
+              THÊM NHANH THIẾT BỊ PHỔ BIẾN:
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {TAI_SAN_MAU.map((m) => (
@@ -415,15 +437,7 @@ export default function QuanLyTaiSanPhong({
                   key={m.ten}
                   type="button"
                   onClick={() => handleChonTaiSanMau(m)}
-                  style={{
-                    padding: '4px 10px',
-                    fontSize: 12,
-                    background: 'var(--ma-bg-sunken)',
-                    border: '1px solid var(--ma-border-default)',
-                    borderRadius: 4,
-                    cursor: 'pointer',
-                    color: 'var(--ma-text-primary)',
-                  }}
+                  className="chip"
                 >
                   + {m.ten}
                 </button>
@@ -438,88 +452,22 @@ export default function QuanLyTaiSanPhong({
               body="Chọn thiết bị mẫu phía trên hoặc nhập form bên dưới để thêm tiện nghi (Điều hoà, tủ lạnh, giường...) vào phòng."
             />
           ) : (
-            <div style={{ overflowX: 'auto', minWidth: 0, maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
-              <table
-                style={{
-                  width: '100%',
-                  minWidth: 480,
-                  borderCollapse: 'collapse',
-                  fontSize: 13,
-                  textAlign: 'left',
-                }}
-              >
-                <thead>
-                  <tr style={{ borderBottom: '2px solid var(--ma-ink-900)' }}>
-                    <th style={{ padding: '8px 6px' }}>Tên tài sản / Thiết bị</th>
-                    <th style={{ padding: '8px 6px' }}>Phân loại</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center' }}>SL</th>
-                    <th style={{ padding: '8px 6px' }}>Tình trạng</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'right' }}>Giá trị ước tính</th>
-                    <th style={{ padding: '8px 6px' }}>Ghi chú</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center' }}>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {danhSachTaiSan.map((ts) => (
-                    <tr
-                      key={ts.id}
-                      style={{ borderBottom: '1px solid var(--ma-border-subtle)' }}
-                    >
-                      <td style={{ padding: '8px 6px', fontWeight: 600 }}>{ts.tenTaiSan}</td>
-                      <td style={{ padding: '8px 6px' }}>
-                        <span
-                          style={{
-                            padding: '2px 6px',
-                            borderRadius: 4,
-                            fontSize: 11,
-                            background: 'var(--ma-bg-sunken)',
-                            border: '1px solid var(--ma-border-default)',
-                          }}
-                        >
-                          {ts.loaiTaiSan}
-                        </span>
-                      </td>
-                      <td style={{ padding: '8px 6px', textAlign: 'center' }}>{ts.soLuong}</td>
-                      <td style={{ padding: '8px 6px' }}>
-                        <StatusTag tone="neutral">{ts.tinhTrang}</StatusTag>
-                      </td>
-                      <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 500 }}>
-                        {ts.giaTriUocTinh ? `${dinhDangSoTien(ts.giaTriUocTinh)} ₫` : '—'}
-                      </td>
-                      <td
-                        style={{
-                          padding: '8px 6px',
-                          color: 'var(--ma-text-secondary)',
-                          fontSize: 12,
-                        }}
-                      >
-                        {ts.ghiChu || '—'}
-                      </td>
-                      <td style={{ padding: '8px 6px', textAlign: 'center' }}>
-                        <Button
-                          variant="secondary"
-                          blocked={dangLuu}
-                          onClick={() => handleXoaTaiSan(ts.id, ts.tenTaiSan)}
-                          style={{ minHeight: 28, padding: '2px 8px', fontSize: 11 }}
-                        >
-                          Xoá
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              rows={danhSachTaiSan}
+              columns={cotTaiSan}
+              getRowId={(ts) => ts.id}
+              noun="tài sản"
+              pageSize={10}
+              timTheo={(ts) => `${ts.tenTaiSan} ${ts.loaiTaiSan}`}
+              searchLabel="Tìm tên tài sản"
+            />
           )}
 
           {/* Form thêm tài sản */}
           <form
             onSubmit={handleThemTaiSan}
+            className="card"
             style={{
-              padding: 12,
-              background: 'var(--ma-bg-sunken)',
-              border: '1px solid var(--ma-border-default)',
-              borderRadius: 'var(--ma-radius)',
               display: 'grid',
               gap: 10,
               minWidth: 0,
@@ -537,23 +485,21 @@ export default function QuanLyTaiSanPhong({
                 maxWidth: '100%',
               }}
             >
-              <label style={{ display: 'grid', gap: 2, fontSize: 12 }}>
-                <span>Tên thiết bị *</span>
+              <Field label="Tên thiết bị *">
                 <input
                   required
-                  style={inputStyle}
+                  className="input"
                   value={bieuMauTaiSan.tenTaiSan}
                   onChange={(e) =>
                     setBieuMauTaiSan({ ...bieuMauTaiSan, tenTaiSan: e.target.value })
                   }
                   placeholder="Ví dụ: Tủ lạnh Samsung 180L"
                 />
-              </label>
+              </Field>
 
-              <label style={{ display: 'grid', gap: 2, fontSize: 12 }}>
-                <span>Loại tài sản</span>
+              <Field label="Loại tài sản">
                 <select
-                  style={inputStyle}
+                  className="input"
                   value={bieuMauTaiSan.loaiTaiSan}
                   onChange={(e) =>
                     setBieuMauTaiSan({ ...bieuMauTaiSan, loaiTaiSan: e.target.value })
@@ -565,33 +511,31 @@ export default function QuanLyTaiSanPhong({
                   <option value="GIA DỤNG">Gia dụng</option>
                   <option value="AN NINH">An ninh / Khác</option>
                 </select>
-              </label>
+              </Field>
 
-              <label style={{ display: 'grid', gap: 2, fontSize: 12 }}>
-                <span>Số lượng</span>
+              <Field label="Số lượng">
                 <input
                   type="number"
                   min="1"
                   required
-                  style={inputStyle}
+                  className="input"
                   value={bieuMauTaiSan.soLuong}
                   onChange={(e) =>
                     setBieuMauTaiSan({ ...bieuMauTaiSan, soLuong: Number(e.target.value) || 1 })
                   }
                 />
-              </label>
+              </Field>
 
-              <label style={{ display: 'grid', gap: 2, fontSize: 12 }}>
-                <span>Tình trạng</span>
+              <Field label="Tình trạng">
                 <input
-                  style={inputStyle}
+                  className="input"
                   value={bieuMauTaiSan.tinhTrang}
                   onChange={(e) =>
                     setBieuMauTaiSan({ ...bieuMauTaiSan, tinhTrang: e.target.value })
                   }
                   placeholder="Tốt / Mới 100%"
                 />
-              </label>
+              </Field>
             </div>
 
             <div
@@ -604,32 +548,30 @@ export default function QuanLyTaiSanPhong({
                 maxWidth: '100%',
               }}
             >
-              <label style={{ display: 'grid', gap: 2, fontSize: 12 }}>
-                <span>Giá trị ước tính (₫)</span>
+              <Field label="Giá trị ước tính (₫)">
                 <input
                   type="number"
                   min="0"
                   step="1000"
-                  style={inputStyle}
+                  className="input"
                   value={bieuMauTaiSan.giaTriUocTinh}
                   onChange={(e) =>
                     setBieuMauTaiSan({ ...bieuMauTaiSan, giaTriUocTinh: e.target.value })
                   }
                   placeholder="Ví dụ: 3500000"
                 />
-              </label>
+              </Field>
 
-              <label style={{ display: 'grid', gap: 2, fontSize: 12 }}>
-                <span>Ghi chú</span>
+              <Field label="Ghi chú">
                 <input
-                  style={inputStyle}
+                  className="input"
                   value={bieuMauTaiSan.ghiChu}
                   onChange={(e) =>
                     setBieuMauTaiSan({ ...bieuMauTaiSan, ghiChu: e.target.value })
                   }
                   placeholder="Kèm remote, dây nguồn..."
                 />
-              </label>
+              </Field>
 
               <Button
                 type="submit"
@@ -649,7 +591,7 @@ export default function QuanLyTaiSanPhong({
           {danhSachBienBan.length > 0 && (
             <div>
               <strong style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
-                📜 Lịch sử biên bản của hợp đồng #{hopDongId}:
+                Lịch sử biên bản của hợp đồng #{hopDongId}:
               </strong>
               <div style={{ display: 'grid', gap: 10 }}>
                 {danhSachBienBan.map((bb) => (
@@ -697,69 +639,13 @@ export default function QuanLyTaiSanPhong({
                     ) : null}
 
                     {/* Danh sách hạng mục bàn giao */}
-                    <div style={{ overflowX: 'auto', marginTop: 4 }}>
-                      <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
-                        <thead>
-                          <tr style={{ borderBottom: '1px solid var(--ma-border-default)' }}>
-                            <th style={{ padding: '4px 6px', textAlign: 'left' }}>Tài sản</th>
-                            <th style={{ padding: '4px 6px', textAlign: 'center' }}>SL</th>
-                            <th style={{ padding: '4px 6px', textAlign: 'left' }}>
-                              Tình trạng lúc giao
-                            </th>
-                            {bb.loaiBienBan === 'TRA_PHONG' && (
-                              <>
-                                <th style={{ padding: '4px 6px', textAlign: 'left' }}>
-                                  Tình trạng lúc trả
-                                </th>
-                                <th style={{ padding: '4px 6px', textAlign: 'right' }}>Khấu trừ</th>
-                                <th style={{ padding: '4px 6px', textAlign: 'left' }}>Lý do</th>
-                              </>
-                            )}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {bb.chiTiet.map((ct, idx) => (
-                            <tr
-                              key={ct.id ?? idx}
-                              style={{ borderBottom: '1px solid var(--ma-border-subtle)' }}
-                            >
-                              <td style={{ padding: '4px 6px', fontWeight: 600 }}>
-                                {ct.tenTaiSan}
-                              </td>
-                              <td style={{ padding: '4px 6px', textAlign: 'center' }}>
-                                {ct.soLuong}
-                              </td>
-                              <td style={{ padding: '4px 6px' }}>
-                                {ct.tinhTrangLucGiao || '—'}
-                              </td>
-                              {bb.loaiBienBan === 'TRA_PHONG' && (
-                                <>
-                                  <td style={{ padding: '4px 6px' }}>
-                                    {ct.tinhTrangLucTra || '—'}
-                                  </td>
-                                  <td
-                                    style={{
-                                      padding: '4px 6px',
-                                      textAlign: 'right',
-                                      color:
-                                        Number(ct.tienKhauTru) > 0
-                                          ? 'var(--ma-urgent)'
-                                          : 'inherit',
-                                      fontWeight: Number(ct.tienKhauTru) > 0 ? 600 : 400,
-                                    }}
-                                  >
-                                    {ct.tienKhauTru ? `${dinhDangSoTien(ct.tienKhauTru)} ₫` : '0 ₫'}
-                                  </td>
-                                  <td style={{ padding: '4px 6px', fontSize: 11 }}>
-                                    {ct.lyDoKhauTru || '—'}
-                                  </td>
-                                </>
-                              )}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <DataTable
+                      rows={bb.chiTiet.map((ct, idx) => ({ ...ct, _k: ct.id ?? idx }))}
+                      columns={cotChiTietBienBan(bb.loaiBienBan === 'TRA_PHONG')}
+                      getRowId={(ct) => ct._k}
+                      noun="hạng mục"
+                      pageSize={50}
+                    />
                   </article>
                 ))}
               </div>
@@ -787,7 +673,7 @@ export default function QuanLyTaiSanPhong({
                 gap: 10,
               }}
             >
-              <strong>✍️ Lập biên bản bàn giao thiết bị phòng #{hopDongId}</strong>
+              <strong>Lập biên bản bàn giao thiết bị phòng #{hopDongId}</strong>
               <div style={{ display: 'flex', gap: 6 }}>
                 <Button
                   type="button"
@@ -815,58 +701,53 @@ export default function QuanLyTaiSanPhong({
                 gap: 8,
               }}
             >
-              <label style={{ display: 'grid', gap: 2, fontSize: 12 }}>
-                <span>Ngày thực hiện</span>
+              <Field label="Ngày thực hiện">
                 <input
                   type="date"
                   required
-                  style={inputStyle}
+                  className="input"
                   value={ngayThucHien}
                   onChange={(e) => setNgayThucHien(e.target.value)}
                 />
-              </label>
+              </Field>
 
-              <label style={{ display: 'grid', gap: 2, fontSize: 12 }}>
-                <span>Ghi chú chung biên bản</span>
+              <Field label="Ghi chú chung biên bản">
                 <input
-                  style={inputStyle}
+                  className="input"
                   value={ghiChuBienBan}
                   onChange={(e) => setGhiChuBienBan(e.target.value)}
                   placeholder="Biên bản lập có sự chứng kiến của 2 bên..."
                 />
-              </label>
+              </Field>
             </div>
 
             {/* Bảng checklist kiểm kê */}
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
+              <table className="table">
                 <thead>
-                  <tr style={{ borderBottom: '2px solid var(--ma-ink-900)' }}>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>Tài sản</th>
-                    <th style={{ padding: '6px', textAlign: 'center', width: 50 }}>SL</th>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>Tình trạng bàn giao</th>
+                  <tr>
+                    <th>Tài sản</th>
+                    <th>SL</th>
+                    <th>Tình trạng bàn giao</th>
                     {loaiBienBan === 'TRA_PHONG' && (
                       <>
-                        <th style={{ padding: '6px', textAlign: 'left' }}>Tình trạng khi trả</th>
-                        <th style={{ padding: '6px', textAlign: 'right', width: 110 }}>
+                        <th>Tình trạng khi trả</th>
+                        <th>
                           Khấu trừ (₫)
                         </th>
-                        <th style={{ padding: '6px', textAlign: 'left' }}>Lý do khấu trừ</th>
+                        <th>Lý do khấu trừ</th>
                       </>
                     )}
                   </tr>
                 </thead>
                 <tbody>
                   {chiTietKiemKe.map((ct, idx) => (
-                    <tr
-                      key={ct.taiSanId || idx}
-                      style={{ borderBottom: '1px solid var(--ma-border-subtle)' }}
-                    >
-                      <td style={{ padding: '6px', fontWeight: 600 }}>{ct.tenTaiSan}</td>
-                      <td style={{ padding: '6px', textAlign: 'center' }}>{ct.soLuong}</td>
-                      <td style={{ padding: '6px' }}>
+                    <tr key={ct.taiSanId || idx}>
+                      <td>{ct.tenTaiSan}</td>
+                      <td>{ct.soLuong}</td>
+                      <td>
                         <input
-                          style={{ ...inputStyle, width: '100%' }}
+                          className="input"
                           value={ct.tinhTrangLucGiao}
                           onChange={(e) => {
                             const clone = [...chiTietKiemKe]
@@ -877,9 +758,9 @@ export default function QuanLyTaiSanPhong({
                       </td>
                       {loaiBienBan === 'TRA_PHONG' && (
                         <>
-                          <td style={{ padding: '6px' }}>
+                          <td>
                             <input
-                              style={{ ...inputStyle, width: '100%' }}
+                              className="input"
                               value={ct.tinhTrangLucTra}
                               placeholder="Còn tốt / Bị vỡ / Hỏng..."
                               onChange={(e) => {
@@ -889,12 +770,12 @@ export default function QuanLyTaiSanPhong({
                               }}
                             />
                           </td>
-                          <td style={{ padding: '6px' }}>
+                          <td>
                             <input
                               type="number"
                               min="0"
                               step="1000"
-                              style={{ ...inputStyle, width: 100, textAlign: 'right' }}
+                              className="input" style={{ minWidth: 110, textAlign: 'right' }}
                               value={ct.tienKhauTru}
                               onChange={(e) => {
                                 const clone = [...chiTietKiemKe]
@@ -903,9 +784,9 @@ export default function QuanLyTaiSanPhong({
                               }}
                             />
                           </td>
-                          <td style={{ padding: '6px' }}>
+                          <td>
                             <input
-                              style={{ ...inputStyle, width: '100%' }}
+                              className="input"
                               value={ct.lyDoKhauTru}
                               placeholder="Hư hỏng remote, nứt mặt kính..."
                               onChange={(e) => {
@@ -962,14 +843,3 @@ export default function QuanLyTaiSanPhong({
   )
 }
 
-const inputStyle: CSSProperties = {
-  padding: '6px 8px',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 'var(--ma-radius)',
-  background: 'var(--ma-bg-card)',
-  color: 'var(--ma-text-primary)',
-  fontSize: 13,
-  minWidth: 0,
-  width: '100%',
-  boxSizing: 'border-box',
-}

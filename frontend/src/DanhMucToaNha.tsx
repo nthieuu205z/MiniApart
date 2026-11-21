@@ -136,7 +136,7 @@ export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) 
       aria-labelledby="building-management-title"
       style={{ display: "grid", gap: 16, minWidth: 0 }}
     >
-      <style>{CSS_BANG_QUAN_TRI + CSS_TOA_NHA}</style>
+      <style>{CSS_BANG_QUAN_TRI}</style>
       <header className="topbar">
         <div className="title-block">
           <h1 className="h1" id="building-management-title">Toà nhà</h1>
@@ -260,9 +260,6 @@ export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) 
     </section>
   );
 }
-const CSS_TOA_NHA = `.bq-dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px 24px; margin: 0; }
-.bq-dl dt { font: var(--ma-text-caption); color: var(--ma-text-muted); }
-.bq-dl dd { margin: 2px 0 0; font: var(--ma-text-body); color: var(--ma-text-primary); overflow-wrap: anywhere; }`;
 function payload(f: Form): YeuCauToaNha {
   return {
     maToa: f.maToa,

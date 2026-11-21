@@ -60,6 +60,10 @@ export function MucMenu({ icon, nguyHiem, onClick, children }: { icon: 'edit' | 
 
 /** CSS cục bộ của lô B (không sửa components.css chung). Chỉ dùng token --ma-*. */
 export const CSS_BANG_QUAN_TRI = `
+.bq-dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px 24px; margin: 0; }
+.bq-dl dt { font: var(--ma-text-caption); color: var(--ma-text-muted); }
+.bq-dl dd { margin: 2px 0 0; font: var(--ma-text-body); color: var(--ma-text-primary); overflow-wrap: anywhere; }
+
 .bq-cat { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .bq-menu { position: fixed; z-index: 30; min-width: 220px; padding: 8px; border-radius: var(--ma-radius-md); background: var(--ma-bg-card); box-shadow: var(--ma-shadow-lg); display: grid; gap: 2px; }
 .bq-menu-item { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 0 12px; border: 0; border-radius: var(--ma-radius); background: transparent; color: var(--ma-text-primary); font: 500 15px/1.3 var(--ma-font-ui); cursor: pointer; text-align: left; }

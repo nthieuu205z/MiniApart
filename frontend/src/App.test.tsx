@@ -818,6 +818,10 @@ describe('App role navigation', () => {
     vi.stubGlobal('fetch', fetchMock)
     mountedApp = await mountAppAndLogin(quanLy.nguoiDung, '/phong', fetchMock)
 
+    await vi.waitFor(() => expect(mountedApp!.container.textContent).toContain('Sơ đồ tầng'))
+    await act(async () => {
+      ;[...mountedApp!.container.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Sơ đồ tầng')!.click()
+    })
     const floorMap = await vi.waitFor(() => {
       const element = mountedApp!.container.querySelector('[data-testid="room-floor-map"]')
       expect(element).not.toBeNull()
@@ -843,11 +847,10 @@ describe('App role navigation', () => {
     expect(floorMap.querySelectorAll('[data-testid="room-tile"]')).toHaveLength(20)
     expect(mountedApp.container.textContent).toContain('20 phòng')
 
-    const summaryCards = [...mountedApp.container.querySelectorAll('.room-status-chip')].map((card) => card.textContent?.replace(/\s+/g, ''))
-    expect(summaryCards).toEqual(['Trống5', 'Đangthuê7', 'Đangsửa4'])
+    expect(mountedApp.container.querySelector('.topbar .sub')?.textContent).toContain('5 trống · 7 đang thuê · 4 đang sửa')
 
     const roomDetailBeforeClick = mountedApp.container.querySelector('[data-testid="room-detail"]')
-    expect(roomDetailBeforeClick?.textContent).toContain('Chọn một ô phòng trong sơ đồ để xem chi tiết hiện tại của phòng đó.')
+    expect(roomDetailBeforeClick?.textContent).toContain('Chọn một phòng trong bảng hoặc sơ đồ để xem chi tiết hiện tại của phòng đó.')
     expect(roomDetailBeforeClick?.textContent).not.toContain('Chi tiết phòng 403')
     expect(roomDetailBeforeClick?.textContent).not.toContain('Lịch sử công tơ')
 
@@ -879,7 +882,7 @@ describe('App role navigation', () => {
     expect(roomDetail.textContent).toContain('Đã đặt cọc')
     expect(roomDetail.textContent).toContain('Gác xép')
     expect(roomDetail.textContent).toContain('31.50')
-    expect(roomDetail.textContent).toContain('5100000.00')
+    expect(roomDetail.textContent).toContain('5.100.000')
     expect(roomDetail.textContent).toContain('Chi tiết lấy trực tiếp từ danh sách phòng hiện có.')
     expect(roomDetail.textContent).not.toContain('Lịch sử công tơ')
   })

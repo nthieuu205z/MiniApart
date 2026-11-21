@@ -472,6 +472,7 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
                       <div><dt>Sức chứa</dt><dd>{phongDangXem.sucChua} người</dd></div>
                       <div><dt>Giá thuê mặc định</dt><dd>{dinhDangTien(phongDangXem.giaThueMacDinh)} ₫</dd></div>
                     </dl>
+                    <p className="t-sm">Chi tiết lấy trực tiếp từ danh sách phòng hiện có.</p>
                     {phongDangXem.id ? (
                       <div style={{ marginTop: 'var(--ma-space-4)' }}>
                         <QuanLyTaiSanPhong

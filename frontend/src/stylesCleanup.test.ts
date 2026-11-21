@@ -60,16 +60,9 @@ describe('Ticket 08 legacy stylesheet cleanup', () => {
     expect(styles).not.toMatch(/#[0-9a-fA-F]{3,8}/)
   })
 
-  it('keeps compatibility class names while room-catalog presentation remains token-owned inline', () => {
-    for (const compatibilityClass of ['eyebrow', 'field', 'status-message']) {
-      expect(roomCatalogSource).toMatch(
-        new RegExp(`className=(?:"[^"]*\\b${compatibilityClass}\\b[^"]*"|\\{[^}]*['\"][^'\"]*\\b${compatibilityClass}\\b[^'\"]*['\"][^}]*\\})[^>]*\\bstyle=`),
-      )
-    }
-
-    expect(roomCatalogSource).toContain("color: 'var(--ma-text-secondary)'")
-    expect(roomCatalogSource).toContain("font: 'var(--ma-text-syslabel)'")
-    expect(roomCatalogSource).toContain('style={styleNhanTruong}')
-    expect(roomCatalogSource).toContain('style={styleThongBao}')
+  it('room-catalog dùng DataTable và token thiết kế, không còn style hằng cục bộ', () => {
+    expect(roomCatalogSource).toContain('<DataTable')
+    expect(roomCatalogSource).not.toContain('styleNhanTruong')
+    expect(roomCatalogSource).not.toContain('styleThongBao')
   })
 })
