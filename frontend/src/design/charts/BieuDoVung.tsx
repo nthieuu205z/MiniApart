@@ -16,6 +16,8 @@ export function BieuDoVung({ nhan, chuoi, tieuDe, kyCuoiDangMo = false }: { nhan
   const tat = kyCuoiDangMo && nhan.length > 1
   const dayDu = chuoi.map((c) => duongVaVung(c.giaTri, tran, KHUNG))
   const ve = tat ? chuoi.map((c) => duongVaVung(c.giaTri.map((v, i) => (i === nhan.length - 1 ? null : v)), tran, KHUNG)) : dayDu
+  // Trục X chỉ ghi tháng có số liệu và tháng đang mở; tháng chưa có số (null ở mọi chuỗi) để trống.
+  const hienNhan = (i: number) => chuoi.some((c) => c.giaTri[i] !== null && c.giaTri[i] !== undefined) || (kyCuoiDangMo && i === nhan.length - 1)
   const day = dayDu[0]?.day ?? KHUNG.cao - KHUNG.duoi
   const yMoc = (m: number) => day - (tran > 0 ? (m / tran) * (day - KHUNG.tren) : 0)
   return (
@@ -42,9 +44,9 @@ export function BieuDoVung({ nhan, chuoi, tieuDe, kyCuoiDangMo = false }: { nhan
           const [a, b] = v.diem.slice(-2)
           return a && b ? <path key={chuoi[i].ten} d={`M${a.x} ${a.y} L${b.x} ${b.y}`} fill="none" strokeWidth={2} strokeDasharray="4 4" style={{ stroke: chuoi[i].mau }} /> : null
         }) : null}
-        {nhan.map((n, i) => (
-          <text key={n} x={dayDu[0]?.diem[i]?.x ?? 0} y={KHUNG.cao - 4} textAnchor="middle" style={CHU}>{n}</text>
-        ))}
+        {nhan.map((n, i) => (hienNhan(i) ? (
+          <text key={n} x={dayDu[0]?.xs[i] ?? 0} y={KHUNG.cao - 4} textAnchor="middle" style={CHU}>{n}</text>
+        ) : null))}
       </svg>
       <div className="sr-only"> {/* bọc div: bảng đặt trực tiếp sr-only vẫn tràn ra ngoài vì CSS không cắt được table */}
       <table>

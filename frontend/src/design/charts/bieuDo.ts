@@ -30,7 +30,7 @@ export function duongVaVung(giaTri: ReadonlyArray<number | null>, tranTruc: numb
   const cacDoan = doan.filter((d) => d.length > 0)
   const duong = cacDoan.map((d) => d.map((p, i) => `${i ? 'L' : 'M'}${r(p.x)} ${r(p.y)}`).join(' ')).join(' ')
   const vung = cacDoan.map((d) => `M${r(d[0].x)} ${r(day)} ${d.map((p) => `L${r(p.x)} ${r(p.y)}`).join(' ')} L${r(d[d.length - 1].x)} ${r(day)} Z`).join(' ')
-  return { diem, duong, vung, day }
+  return { diem, duong, vung, day, xs: giaTri.map((_, i) => x(i)) }
 }
 
 /** Cung gauge bán nguyệt 180° cho tỷ lệ 0–100 (kẹp biên). Trả path nền và path giá trị. */

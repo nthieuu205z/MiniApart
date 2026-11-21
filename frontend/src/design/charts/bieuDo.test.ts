@@ -28,6 +28,13 @@ describe('duongVaVung', () => {
     expect(r.duong.match(/M/g)).toHaveLength(2)
     expect(r.diem[2]).toBeNull()
   })
+  it('tháng đầu chưa có số (null): không vẽ từ đáy, nhưng vẫn giữ vị trí x của tháng đó', () => {
+    const r = duongVaVung([null, null, 10, 30], 30, k)
+    expect(r.diem.slice(0, 2)).toEqual([null, null])
+    expect(r.duong).toBe('M417.3 129.3 L600 12')
+    expect(r.duong.match(/M/g)).toHaveLength(1)
+    expect(r.xs[0]).toBe(52)
+  })
   it('một điểm duy nhất nằm giữa khung', () => {
     expect(duongVaVung([5], 10, k).diem[0]?.x).toBe(326)
   })
