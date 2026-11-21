@@ -1,53 +1,74 @@
-import { useEffect, useState, useId } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ApiError,
+  fetchCongNoBaoCao,
   fetchDashboardChu,
+  fetchHopDongQuanLy,
   fetchToaNha,
+  fetchTieuThuBaoCao,
   type ThongTinDashboardChu as DashboardData,
+  type ThongTinDongTieuThuBaoCao,
+  type ThongTinHopDong,
+  type ThongTinKhoanNoBaoCao,
   type ThongTinToaNha,
 } from './api'
-import { dinhDangTien, dinhDangSo } from './design/core/format'
+import { dinhDangNgayIso, dinhDangSo, dinhDangTien } from './design/core/format'
 import { Button } from './design/core/Button'
+import { Icon, type IconName } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
-import { SysLabel } from './design/core/SysLabel'
-import { ScreenHeader, ScreenNotice, ScreenSurface } from './design/layout/Screen'
-import { EmptyState } from './design/feedback/EmptyState'
-import { BangViecVanHanh } from './BangViecVanHanh'
+import { Card } from './design/layout/Card'
+import { BieuDoVung } from './design/charts/BieuDoVung'
+import { Gauge } from './design/charts/Gauge'
+import { ThanhXepHang } from './design/charts/ThanhXepHang'
+import { nhomNoQuaHanTheoNguoiThue, tieuThuTheoToaKyGanNhat } from './dashboardTongHop'
 
 type Props = {
   token: string
   mobile?: boolean
 }
 
-type TabKey = 'kinh-doanh' | 'dien-nuoc' | 'van-hanh'
-type PeriodQuickOption = '6_thang' | 'thang_nay' | 'thang_truoc' | '12_thang'
+type KyNhanh = '6_thang' | 'thang_nay' | 'thang_truoc' | '12_thang'
+const KY_NHANH: Array<[KyNhanh, string]> = [
+  ['6_thang', '6 tháng gần nhất'],
+  ['thang_nay', 'Tháng này'],
+  ['thang_truoc', 'Tháng trước'],
+  ['12_thang', '12 tháng'],
+]
+const AVATAR = ['h1', 'h2', 'h3', 'h4', 'h5']
+const NHAN_DOI_SOAT: Record<string, string> = {
+  KHOP_DOI_SOAT: 'Khớp đối soát',
+  CANH_BAO_THAT_THOAT: 'Cảnh báo thất thoát',
+  CHON_TOA_NHA: 'Cần chọn toà nhà',
+}
+const tien = (v: number | string) => `${dinhDangTien(v)} ₫`
+
+type HopDongTheoToa = ThongTinHopDong & { tenToa: string }
 
 export function ChuDashboard({ token, mobile = false }: Props): React.ReactElement {
   const [toaNhaList, setToaNhaList] = useState<ThongTinToaNha[]>([])
   const [toaNhaId, setToaNhaId] = useState<number | null>(() => docToaNhaIdTuUrl())
-  const [tab, setTab] = useState<TabKey>('kinh-doanh')
-  const [quickPeriod, setQuickPeriod] = useState<PeriodQuickOption>('6_thang')
+  const [kyNhanh, setKyNhanh] = useState<KyNhanh>('6_thang')
   const [tuNgay, setTuNgay] = useState(() => {
     const now = new Date()
     return layNgayDinhDang(new Date(now.getFullYear(), now.getMonth() - 5, 1))
   })
   const [denNgay, setDenNgay] = useState(() => layNgayDinhDang(new Date()))
   const [dashboard, setDashboard] = useState<DashboardData | null>(null)
+  const [congNo, setCongNo] = useState<ThongTinKhoanNoBaoCao[] | null>(null)
+  const [tieuThu, setTieuThu] = useState<ThongTinDongTieuThuBaoCao[] | null>(null)
+  const [hopDong, setHopDong] = useState<HopDongTheoToa[] | null>(null)
+  const [theoNgay, setTheoNgay] = useState(false)
   const [dangTai, setDangTai] = useState(true)
   const [loi, setLoi] = useState<string | null>(null)
-  const [hienBangDuLieu, setHienBangDuLieu] = useState(false)
   const [soLanTaiLai, setSoLanTaiLai] = useState(0)
+  const hep = useManHinhHep()
+  // Dưới 1280px lưới 12 cột chật (thẻ số lớn không vừa): chuyển sang lưới 2 cột như plan.
+  const cot = (rong: string) => (hep ? (rong === 'c-7' || rong === 'c-12' ? 'c-12' : 'c-6') : rong)
 
-  const tabId = useId()
-
-  // Load building list
   useEffect(() => {
     let mounted = true
     fetchToaNha(token)
-      .then((items) => {
-        if (!mounted) return
-        setToaNhaList(items)
-      })
+      .then((items) => mounted && setToaNhaList(items))
       .catch((err: unknown) => {
         if (mounted) setLoi(err instanceof ApiError ? err.message : 'Không thể tải danh sách toà nhà.')
       })
@@ -56,26 +77,22 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
     }
   }, [token])
 
-  // Handle Quick Period selection
-  const chonKyNhanh = (opt: PeriodQuickOption) => {
-    setQuickPeriod(opt)
+  const chonKyNhanh = (opt: KyNhanh) => {
+    setKyNhanh(opt)
     const now = new Date()
+    const ngay = (lech: number, d = 1) => layNgayDinhDang(new Date(now.getFullYear(), now.getMonth() + lech, d))
     if (opt === 'thang_nay') {
-      setTuNgay(layNgayDinhDang(new Date(now.getFullYear(), now.getMonth(), 1)))
-      setDenNgay(layNgayDinhDang(new Date(now.getFullYear(), now.getMonth() + 1, 0)))
+      setTuNgay(ngay(0))
+      setDenNgay(ngay(1, 0))
     } else if (opt === 'thang_truoc') {
-      setTuNgay(layNgayDinhDang(new Date(now.getFullYear(), now.getMonth() - 1, 1)))
-      setDenNgay(layNgayDinhDang(new Date(now.getFullYear(), now.getMonth(), 0)))
-    } else if (opt === '6_thang') {
-      setTuNgay(layNgayDinhDang(new Date(now.getFullYear(), now.getMonth() - 5, 1)))
-      setDenNgay(layNgayDinhDang(now))
-    } else if (opt === '12_thang') {
-      setTuNgay(layNgayDinhDang(new Date(now.getFullYear(), now.getMonth() - 11, 1)))
+      setTuNgay(ngay(-1))
+      setDenNgay(ngay(0, 0))
+    } else {
+      setTuNgay(ngay(opt === '6_thang' ? -5 : -11))
       setDenNgay(layNgayDinhDang(now))
     }
   }
 
-  // Load Dashboard Data with anti-stale protection
   useEffect(() => {
     let mounted = true
     setDangTai(true)
@@ -83,1013 +100,319 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
     setDashboard(null)
 
     const query = new URLSearchParams(window.location.search)
-    if (toaNhaId) {
-      query.set('toaNhaId', String(toaNhaId))
-    } else {
-      query.delete('toaNhaId')
-    }
+    if (toaNhaId) query.set('toaNhaId', String(toaNhaId))
+    else query.delete('toaNhaId')
     window.history.replaceState({}, '', `${window.location.pathname}?${query.toString()}`)
 
     fetchDashboardChu(token, toaNhaId, tuNgay, denNgay)
-      .then((data) => {
-        if (mounted) setDashboard(data)
-      })
+      .then((data) => mounted && setDashboard(data))
       .catch((err: unknown) => {
         if (mounted) setLoi(err instanceof ApiError ? err.message : 'Không thể tải dữ liệu dashboard.')
       })
-      .finally(() => {
-        if (mounted) setDangTai(false)
-      })
-
+      .finally(() => mounted && setDangTai(false))
     return () => {
       mounted = false
     }
   }, [token, toaNhaId, tuNgay, denNgay, soLanTaiLai])
 
-  const dieuHuongToi = (duongDan: string) => {
-    window.location.href = duongDan
-  }
-
-  const taoUrlDieuHuong = (duongDan: string, params?: Record<string, string | number | null | undefined>): string => {
-    if (!params) return duongDan
-    const sp = new URLSearchParams()
-    for (const [k, v] of Object.entries(params)) {
-      if (v !== null && v !== undefined && v !== '') {
-        sp.set(k, String(v))
-      }
+  // Ba nguồn bổ trợ tải độc lập: một nguồn lỗi chỉ làm trống khối của nó (null = chưa có số), không chặn cả màn.
+  useEffect(() => {
+    let mounted = true
+    const toa = toaNhaId ? toaNhaList.filter((t) => t.id === toaNhaId) : toaNhaList
+    setCongNo(null)
+    setTieuThu(null)
+    setHopDong(null)
+    fetchCongNoBaoCao(token, toaNhaId).then((r) => mounted && setCongNo(r.congNo), () => undefined)
+    fetchTieuThuBaoCao(token, { toaNhaId, phongId: null, kyId: null }).then((r) => mounted && setTieuThu(r.cacDong), () => undefined)
+    if (toa.length > 0) {
+      Promise.all(toa.map((t) => fetchHopDongQuanLy(token, t.id).then((ds) => ds.map((h) => ({ ...h, tenToa: t.ten })))))
+        .then((ds) => mounted && setHopDong(ds.flat()), () => undefined)
     }
-    const qs = sp.toString()
-    return qs ? `${duongDan}?${qs}` : duongDan
-  }
+    return () => {
+      mounted = false
+    }
+  }, [token, toaNhaId, toaNhaList, soLanTaiLai])
 
   const kpi = dashboard?.kpi
+  const duongDan = (path: string) => (toaNhaId ? `${path}?toaNhaId=${toaNhaId}` : path)
 
-  return (
-    <ScreenSurface
-      data-testid="owner-dashboard-screen"
-      data-layout-variant={mobile ? 'mobile' : 'desktop'}
-      aria-labelledby="owner-dashboard-title"
-      style={{ minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}
-    >
-      <ScreenHeader>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <SysLabel>DASHBOARD CHỦ NHÀ</SysLabel>
-            <h2 id="owner-dashboard-title" style={{ margin: '6px 0 2px', fontSize: mobile ? 22 : 28 }}>
-              Tổng quan kinh doanh & vận hành
-            </h2>
-            <p style={{ margin: 0, color: 'var(--ma-text-secondary)', fontSize: 14 }}>
-              Số liệu kinh doanh, dòng tiền thực thu, tỷ lệ lấp đầy và đối soát điện nước các toà nhà.
-            </p>
+  const noiDung = (d: DashboardData, k: DashboardData['kpi']) => {
+    const phatHanh = Number(k.doanhThuPhatHanh)
+    const daThu = phatHanh > 0 ? (Number(k.thucThu) / phatHanh) * 100 : 0
+    const tuoi = d.tuoiNo
+    const tren30 = tuoi.quaHanTren30.soLuong
+    const noQuaHan = congNo ? nhomNoQuaHanTheoNguoiThue(congNo, theoNgay ? 'ngay' : 'tien', 5) : null
+    const thang = d.taiChinhTheoThang
+    // API trả so sánh mọi toà kể cả khi đã chọn một toà: lọc lại theo bộ lọc để khối không lệch với số trên đầu trang.
+    const soSanh = d.soSanhToaNha.filter((t) => !toaNhaId || t.toaNhaId === toaNhaId)
+    const toaDauTien = [...soSanh].sort((a, b) => Number(b.thucThu) - Number(a.thucThu))[0]
+    const sapHet = (hopDong ?? []).filter((h) => h.sapHetHan).sort((a, b) => a.soNgayConLai - b.soNgayConLai)
+    const dien = tieuThu ? tieuThuTheoToaKyGanNhat(tieuThu) : null
+    const kyNuoc = d.tieuThuDienNuoc.nuoc.filter((n) => Number(n.tong) > 0)
+    const nuoc = kyNuoc.find((n) => n.nhan === dien?.nhanKy) ?? kyNuoc.at(-1)
+    const doiSoat = d.dienNuocDungChung.doiSoat
+    const tongDien = dien?.toa.reduce((s, t) => s + t.tong, 0) ?? 0
+    const cc = d.coCauPhong
+    return (
+      <div className="grid">
+        <Card className={cot('c-4')} title="Thực thu">
+          <p className="kpi-value">{dinhDangTien(k.thucThu)}<span className="unit">₫</span></p>
+          <p className="kpi-desc">Đã thu <b>{dinhDangSo(Math.round(daThu * 10) / 10)}%</b> trên {tien(k.doanhThuPhatHanh)} phát hành trong kỳ.</p>
+          <div className="card-foot"><a className="link-more" href={duongDan('/bao-cao')}>Báo cáo doanh thu <Icon name="arrow-right" size="sm" /></a></div>
+        </Card>
+        <Card className={cot('c-4')} title="Công nợ">
+          <p className={`kpi-value${Number(k.congNoHienTai) > 0 ? ' t-danger' : ''}`}>{dinhDangTien(k.congNoHienTai)}<span className="unit">₫</span></p>
+          <p className="kpi-desc">
+            <b>{k.soHoaDonQuaHan} hoá đơn</b> quá hạn
+            {k.soHoaDonQuaHan > 0 ? (tren30 === k.soHoaDonQuaHan ? ', tất cả đã trễ trên 30 ngày' : `, ${tren30} hoá đơn trễ trên 30 ngày`) : ''}.
+          </p>
+          <div className="card-foot"><a className="link-more" href={duongDan('/cong-no')}>Xem công nợ <Icon name="arrow-right" size="sm" /></a></div>
+        </Card>
+        <article className={`card ${cot('c-4')}`} style={{ alignItems: 'center', textAlign: 'center' }} onClick={() => { window.location.href = duongDan('/toa-nha') }} title="Xem danh mục toà nhà & phòng">
+          <h2 className="h2">Tỷ lệ lấp đầy</h2>
+          <Gauge
+            tyLe={Number(k.tyLeLapDay)}
+            nhan={`Lấp đầy ${dinhDangSo(k.tyLeLapDay)}%, ${k.soPhongDangThue} trên ${k.tongSoPhong} phòng đang thuê`}
+            chuThich={`${k.soPhongDangThue}/${k.tongSoPhong} phòng đang thuê`}
+          />
+          <div className="card-foot">
+            <a className="link-more" href={duongDan('/toa-nha')}>
+              {k.soPhongTrong} phòng trống{k.soPhongDangSua > 0 ? ` · ${k.soPhongDangSua} đang sửa` : ''} <Icon name="arrow-right" size="sm" />
+            </a>
           </div>
-          {dashboard?.thoiDiemCapNhat ? (
-            <div style={{ fontSize: 12, color: 'var(--ma-text-secondary)', textAlign: 'right' }}>
-              Cập nhật lúc: <strong style={{ fontFamily: 'var(--ma-font-mono)' }}>{dinhDangGio(dashboard.thoiDiemCapNhat)}</strong>
-              <Button
-                variant="secondary"
-                size="sm"
-                style={{ marginLeft: 8 }}
-                onClick={() => setSoLanTaiLai((n) => n + 1)}
-              >
-                Làm mới
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      </ScreenHeader>
+        </article>
 
-      {/* FILTER CONTROLS */}
-      <section
-        aria-label="Bộ lọc dashboard"
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 12,
-          alignItems: 'flex-end',
-          padding: '12px 16px',
-          background: 'var(--ma-bg-card)',
-          border: '1px solid var(--ma-border-default)',
-          borderRadius: 8,
-          marginBottom: 16,
-        }}
-      >
-        <label style={{ display: 'grid', gap: 4, minWidth: mobile ? '100%' : 240 }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Phạm vi toà nhà</span>
-          <select
-            value={toaNhaId ?? ''}
-            onChange={(e) => setToaNhaId(e.target.value ? Number(e.target.value) : null)}
-            style={styleInput}
-            aria-label="Chọn toà nhà xem dashboard"
-          >
-            <option value="">Tất cả toà được phân quyền</option>
-            {toaNhaList.map((tn) => (
-              <option key={tn.id} value={tn.id}>
-                {tn.ten}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div style={{ display: 'grid', gap: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Khoảng thời gian</span>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => chonKyNhanh('thang_nay')}
-              style={styleChip(quickPeriod === 'thang_nay')}
+        <Card
+          className={cot('c-5')}
+          title="Nợ quá hạn nhiều nhất"
+          action={
+            <select
+              className="select"
+              style={{ width: 'auto', height: 36, borderColor: 'transparent', backgroundColor: 'transparent', fontSize: 14, color: 'var(--ma-text-secondary)' }}
+              value={theoNgay ? 'ngay' : 'tien'}
+              onChange={(e) => setTheoNgay(e.target.value === 'ngay')}
+              aria-label="Sắp xếp nợ quá hạn"
             >
-              Tháng này
-            </button>
-            <button
-              type="button"
-              onClick={() => chonKyNhanh('thang_truoc')}
-              style={styleChip(quickPeriod === 'thang_truoc')}
-            >
-              Tháng trước
-            </button>
-            <button
-              type="button"
-              onClick={() => chonKyNhanh('6_thang')}
-              style={styleChip(quickPeriod === '6_thang')}
-            >
-              6 tháng gần nhất
-            </button>
-            <button
-              type="button"
-              onClick={() => chonKyNhanh('12_thang')}
-              style={styleChip(quickPeriod === '12_thang')}
-            >
-              12 tháng
-            </button>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginLeft: mobile ? 0 : 'auto', flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-            <span>Từ:</span>
-            <input
-              type="date"
-              value={tuNgay}
-              onChange={(e) => {
-                setTuNgay(e.target.value)
-                setQuickPeriod('6_thang')
-              }}
-              style={{ ...styleInput, padding: '4px 8px', fontSize: 13 }}
-            />
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-            <span>Đến:</span>
-            <input
-              type="date"
-              value={denNgay}
-              onChange={(e) => {
-                setDenNgay(e.target.value)
-                setQuickPeriod('6_thang')
-              }}
-              style={{ ...styleInput, padding: '4px 8px', fontSize: 13 }}
-            />
-          </label>
-        </div>
-      </section>
-
-      {/* ERROR NOTICE */}
-      {loi ? (
-        <div role="alert" style={{ marginBottom: 16 }}>
-          <ScreenNotice tone="urgent">{loi}</ScreenNotice>
-        </div>
-      ) : null}
-
-      {/* LOADING STATE */}
-      {dangTai && !dashboard ? (
-        <p aria-live="polite" style={{ padding: 24, textAlign: 'center', color: 'var(--ma-text-secondary)' }}>
-          Đang tổng hợp dữ liệu dashboard…
-        </p>
-      ) : null}
-
-      {dashboard && kpi ? (
-        <>
-          {/* TOP KPI CARDS */}
-          <section
-            aria-label="Chỉ số hoạt động chính"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: mobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
-              gap: 12,
-              marginBottom: 20,
-            }}
-          >
-            {/* Card 1: Doanh thu phát hành */}
-            <article
-              style={styleKpiCard}
-              onClick={() => dieuHuongToi(taoUrlDieuHuong('/bao-cao', { toaNhaId }))}
-              title="Xem báo cáo doanh thu chi tiết"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={styleKpiLabel}>Doanh thu phát hành</span>
-                <span style={styleKpiUnit}>₫</span>
-              </div>
-              <strong style={styleKpiValue}>{dinhDangTien(kpi.doanhThuPhatHanh)}</strong>
-              <div style={styleKpiSub}>Tổng hoá đơn phát hành trong kỳ</div>
-            </article>
-
-            {/* Card 2: Tiền thực thu */}
-            <article
-              style={styleKpiCard}
-              onClick={() => dieuHuongToi(taoUrlDieuHuong('/thu-tien', { toaNhaId }))}
-              title="Xem nhật ký thu tiền thực tế"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={styleKpiLabel}>Dòng tiền thực thu</span>
-                <StatusTag tone="done">Tiền về</StatusTag>
-              </div>
-              <strong style={{ ...styleKpiValue, color: 'var(--ma-accent)' }}>{dinhDangTien(kpi.thucThu)}</strong>
-              <div style={styleKpiSub}>Tổng tiền thu thực tế theo ngày nộp</div>
-            </article>
-
-            {/* Card 3: Công nợ hiện tại */}
-            <article
-              style={{ ...styleKpiCard, borderColor: Number(kpi.congNoHienTai) > 0 ? 'var(--ma-border-warning, #f59e0b)' : 'var(--ma-border-default)' }}
-              onClick={() => dieuHuongToi(taoUrlDieuHuong('/cong-no', { toaNhaId }))}
-              title="Xem danh sách công nợ chi tiết"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={styleKpiLabel}>Công nợ hiện tại</span>
-                {kpi.soHoaDonQuaHan > 0 ? <StatusTag tone="urgent">{kpi.soHoaDonQuaHan} quá hạn</StatusTag> : <StatusTag tone="done">Tốt</StatusTag>}
-              </div>
-              <strong style={{ ...styleKpiValue, color: Number(kpi.congNoHienTai) > 0 ? 'var(--ma-urgent)' : 'inherit' }}>
-                {dinhDangTien(kpi.congNoHienTai)}
-              </strong>
-              <div style={styleKpiSub}>Chưa thu tại thời điểm đối soát</div>
-            </article>
-
-            {/* Card 4: Tỷ lệ lấp đầy */}
-            <article
-              style={styleKpiCard}
-              onClick={() => dieuHuongToi(taoUrlDieuHuong('/toa-nha', { toaNhaId }))}
-              title="Xem danh mục toà nhà & phòng"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={styleKpiLabel}>Tỷ lệ lấp đầy</span>
-                <span style={styleKpiUnit}>%</span>
-              </div>
-              <strong style={{ ...styleKpiValue, color: 'var(--ma-brand-accent, #0D9488)' }}>{dinhDangSo(kpi.tyLeLapDay)}%</strong>
-              <div style={styleKpiSub}>
-                {kpi.soPhongDangThue} / {kpi.tongSoPhong} phòng đang thuê
-              </div>
-            </article>
-
-            {/* Card 5: Phòng trống */}
-            <article
-              style={styleKpiCard}
-              onClick={() => dieuHuongToi(taoUrlDieuHuong('/toa-nha', { toaNhaId }))}
-              title="Xem danh mục toà nhà & phòng"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={styleKpiLabel}>Phòng trống / Sửa</span>
-                <StatusTag tone="waiting">{kpi.soPhongTrong} trống</StatusTag>
-              </div>
-              <strong style={styleKpiValue}>
-                {kpi.soPhongTrong} <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--ma-text-secondary)' }}>/ {kpi.soPhongDangSua} sửa</span>
-              </strong>
-              <div style={styleKpiSub}>Sẵn sàng đón khách mới</div>
-            </article>
-
-            {/* Card 6: Chi phí bảo trì */}
-            <article
-              style={styleKpiCard}
-              onClick={() => dieuHuongToi(taoUrlDieuHuong('/bao-cao/chi-phi-bao-tri', { toaNhaId }))}
-              title="Xem báo cáo chi phí bảo trì"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={styleKpiLabel}>Chi phí bảo trì</span>
-                <span style={styleKpiUnit}>₫</span>
-              </div>
-              <strong style={styleKpiValue}>{dinhDangTien(kpi.chiPhiBaoTri)}</strong>
-              <div style={styleKpiSub}>{kpi.soSuCoDangMo} sự cố đang xử lý</div>
-            </article>
-          </section>
-
-          {/* TAB NAVIGATION */}
-          <nav
-            aria-label="Chuyển phân hệ dashboard"
-            style={{
-              display: 'flex',
-              gap: 8,
-              borderBottom: '2px solid var(--ma-border-default)',
-              marginBottom: 20,
-            }}
-          >
-            <button
-              id={`${tabId}-tab-kd`}
-              type="button"
-              role="tab"
-              aria-selected={tab === 'kinh-doanh'}
-              aria-controls={`${tabId}-panel-kd`}
-              onClick={() => setTab('kinh-doanh')}
-              style={styleTabBtn(tab === 'kinh-doanh')}
-            >
-              Kinh doanh & phòng
-            </button>
-            <button
-              id={`${tabId}-tab-dn`}
-              type="button"
-              role="tab"
-              aria-selected={tab === 'dien-nuoc'}
-              aria-controls={`${tabId}-panel-dn`}
-              onClick={() => setTab('dien-nuoc')}
-              style={styleTabBtn(tab === 'dien-nuoc')}
-            >
-              Điện nước & khu vực chung
-            </button>
-            <button
-              id={`${tabId}-tab-vh`}
-              type="button"
-              role="tab"
-              aria-selected={tab === 'van-hanh'}
-              aria-controls={`${tabId}-panel-vh`}
-              onClick={() => setTab('van-hanh')}
-              style={styleTabBtn(tab === 'van-hanh')}
-            >
-              Vận hành & việc cần làm
-            </button>
-          </nav>
-
-          {/* TAB 1: KINH DOANH & PHÒNG */}
-          {tab === 'kinh-doanh' ? (
-            <div id={`${tabId}-panel-kd`} role="tabpanel" aria-labelledby={`${tabId}-tab-kd`} style={{ display: 'grid', gap: 20 }}>
-              {/* Row 1: Tài chính theo tháng & Cơ cấu phòng */}
-              <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'minmax(0, 1.6fr) minmax(0, 1fr)', gap: 16 }}>
-                {/* Chart 1: Tài chính theo tháng */}
-                <section style={styleChartCard} aria-labelledby="chart-finance-title">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                    <div>
-                      <SysLabel>BIỂU ĐỒ TÀI CHÍNH</SysLabel>
-                      <h4 id="chart-finance-title" style={{ margin: '4px 0 0', fontSize: 16 }}>
-                        Doanh thu phát hành vs Dòng tiền thực thu
-                      </h4>
-                    </div>
-                    <Button variant="secondary" size="sm" onClick={() => setHienBangDuLieu((v) => !v)}>
-                      {hienBangDuLieu ? 'Xem biểu đồ' : 'Xem bảng'}
-                    </Button>
-                  </div>
-
-                  {hienBangDuLieu ? (
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
-                        <thead>
-                          <tr style={{ borderBottom: '2px solid var(--ma-border-default)' }}>
-                            <th style={{ padding: '8px 4px' }}>Tháng</th>
-                            <th style={{ padding: '8px 4px', textAlign: 'right' }}>Phát hành (₫)</th>
-                            <th style={{ padding: '8px 4px', textAlign: 'right' }}>Thực thu (₫)</th>
-                            <th style={{ padding: '8px 4px', textAlign: 'right' }}>Công nợ kỳ (₫)</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {dashboard.taiChinhTheoThang.map((row) => (
-                            <tr key={row.thang} style={{ borderBottom: '1px solid var(--ma-border-subtle)' }}>
-                              <td style={{ padding: '8px 4px', fontWeight: 600 }}>{row.nhan}</td>
-                              <td style={{ padding: '8px 4px', textAlign: 'right', fontFamily: 'var(--ma-font-mono)' }}>{dinhDangTien(row.doanhThuPhatHanh)}</td>
-                              <td style={{ padding: '8px 4px', textAlign: 'right', fontFamily: 'var(--ma-font-mono)', color: 'var(--ma-accent)' }}>{dinhDangTien(row.thucThu)}</td>
-                              <td style={{ padding: '8px 4px', textAlign: 'right', fontFamily: 'var(--ma-font-mono)', color: 'var(--ma-urgent)' }}>{dinhDangTien(row.congNo)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <BarChartFinance data={dashboard.taiChinhTheoThang} />
-                  )}
-
-                  <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 12, color: 'var(--ma-text-secondary)', flexWrap: 'wrap' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ width: 12, height: 12, background: 'var(--ma-primary, #1e3a8a)', borderRadius: 2 }} />
-                      Doanh thu phát hành (ngày phát hành)
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ width: 12, height: 12, background: 'var(--ma-accent, #0d9488)', borderRadius: 2 }} />
-                      Thực thu (ngày nộp tiền)
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ width: 12, height: 12, background: 'var(--ma-urgent, #dc2626)', borderRadius: 2 }} />
-                      Công nợ còn lại
-                    </span>
-                  </div>
-                </section>
-
-                {/* Chart 2: Cơ cấu trạng thái phòng */}
-                <section style={styleChartCard} aria-labelledby="chart-room-status-title">
-                  <SysLabel>CƠ CẤU PHÒNG</SysLabel>
-                  <h4 id="chart-room-status-title" style={{ margin: '4px 0 14px', fontSize: 16 }}>
-                    Hiện trạng khai thác căn hộ
-                  </h4>
-
-                  <RoomCompositionBar coCau={dashboard.coCauPhong} />
-
-                  <div style={{ display: 'grid', gap: 8, marginTop: 16 }}>
-                    <RoomLegendRow
-                      color="var(--ma-accent, #0d9488)"
-                      label="Đang thuê"
-                      count={dashboard.coCauPhong.dangThue}
-                      percent={dashboard.coCauPhong.tyLeDangThue}
-                    />
-                    <RoomLegendRow
-                      color="var(--ma-border-warning, #f59e0b)"
-                      label="Trống (sẵn sàng đón khách)"
-                      count={dashboard.coCauPhong.trong}
-                      percent={dashboard.coCauPhong.tyLeTrong}
-                    />
-                    <RoomLegendRow
-                      color="var(--ma-urgent, #dc2626)"
-                      label="Đang sửa chữa"
-                      count={dashboard.coCauPhong.dangSua}
-                      percent={dashboard.coCauPhong.tyLeDangSua}
-                    />
-                    <RoomLegendRow
-                      color="var(--ma-text-secondary, #64748b)"
-                      label="Ngừng khai thác / Khác"
-                      count={dashboard.coCauPhong.ngung}
-                      percent={dashboard.coCauPhong.tyLeNgung}
-                    />
-                  </div>
-                </section>
-              </div>
-
-              {/* Row 2: So sánh các toà nhà & Tuổi nợ */}
-              <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 16 }}>
-                {/* Chart 3: So sánh các toà */}
-                <section style={styleChartCard} aria-labelledby="chart-buildings-title">
-                  <SysLabel>SO SÁNH TOÀ NHÀ</SysLabel>
-                  <h4 id="chart-buildings-title" style={{ margin: '4px 0 14px', fontSize: 16 }}>
-                    Hiệu quả kinh doanh giữa các toà được cấp quyền
-                  </h4>
-
-                  {dashboard.soSanhToaNha.length === 0 ? (
-                    <EmptyState title="Chưa có toà nhà" body="Bạn chưa được phân quyền toà nhà nào." />
-                  ) : (
-                    <BuildingComparisonTable list={dashboard.soSanhToaNha} />
-                  )}
-                </section>
-
-                {/* Chart 4: Tuổi nợ */}
-                <section style={styleChartCard} aria-labelledby="chart-debt-aging-title">
-                  <SysLabel>PHÂN TÍCH THU HỒI</SysLabel>
-                  <h4 id="chart-debt-aging-title" style={{ margin: '4px 0 14px', fontSize: 16 }}>
-                    Tuổi nợ hoá đơn tại thời điểm đối soát
-                  </h4>
-
-                  <DebtAgingBuckets tuoiNo={dashboard.tuoiNo} />
-                </section>
-              </div>
-            </div>
-          ) : null}
-
-          {/* TAB 2: ĐIỆN NƯỚC & DÙNG CHUNG */}
-          {tab === 'dien-nuoc' ? (
-            <div id={`${tabId}-panel-dn`} role="tabpanel" aria-labelledby={`${tabId}-tab-dn`} style={{ display: 'grid', gap: 20 }}>
-              {/* Tiêu thụ điện & nước */}
-              <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16 }}>
-                {/* Điện */}
-                <section style={styleChartCard} aria-labelledby="chart-electricity-title">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <SysLabel>TIÊU THỤ ĐIỆN</SysLabel>
-                      <h4 id="chart-electricity-title" style={{ margin: '4px 0 0', fontSize: 16 }}>
-                        Điện năng tiêu thụ qua các kỳ
-                      </h4>
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ma-brand-accent, #0d9488)' }}>kWh</span>
-                  </div>
-                  <UtilityTrendBar series={dashboard.tieuThuDienNuoc.dien} donVi="kWh" color="var(--ma-brand-primary, #0f172a)" />
-                </section>
-
-                {/* Nước */}
-                <section style={styleChartCard} aria-labelledby="chart-water-title">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <SysLabel>TIÊU THỤ NƯỚC</SysLabel>
-                      <h4 id="chart-water-title" style={{ margin: '4px 0 0', fontSize: 16 }}>
-                        Khối lượng nước qua các kỳ
-                      </h4>
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ma-accent)' }}>m³</span>
-                  </div>
-                  <UtilityTrendBar series={dashboard.tieuThuDienNuoc.nuoc} donVi="m³" color="var(--ma-accent, #0d9488)" />
-                </section>
-              </div>
-
-              {/* Đối soát công tơ tổng & khu vực chung */}
-              <section style={styleChartCard} aria-labelledby="reconciliation-panel-title">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
-                  <div>
-                    <SysLabel>ĐỐI SOÁT & KHU VỰC CHUNG</SysLabel>
-                    <h4 id="reconciliation-panel-title" style={{ margin: '4px 0 0', fontSize: 18 }}>
-                      Đối soát công tơ tổng & Tiêu thụ khu vực chung
-                    </h4>
-                    {dashboard.dienNuocDungChung.doiSoat?.tenToaNha ? (
-                      <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 600, color: 'var(--ma-brand-primary, #0f172a)' }}>
-                        Toà nhà: {dashboard.dienNuocDungChung.doiSoat.tenToaNha} {dashboard.dienNuocDungChung.doiSoat.tenKy ? `· ${dashboard.dienNuocDungChung.doiSoat.tenKy}` : ''}
-                      </p>
-                    ) : null}
-                    <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ma-text-secondary)' }}>
-                      Công thức chuẩn: <code style={{ fontFamily: 'var(--ma-font-mono)', color: 'var(--ma-brand-primary, #0f172a)' }}>Chênh lệch = Công tơ tổng − Tổng phòng − Khu vực chung đo riêng</code>
-                    </p>
-                  </div>
-
-                  {dashboard.dienNuocDungChung.doiSoat ? (
-                    <StatusTag
-                      tone={
-                        dashboard.dienNuocDungChung.doiSoat.trangThai === 'KHOP_DOI_SOAT'
-                          ? 'done'
-                          : dashboard.dienNuocDungChung.doiSoat.trangThai === 'CANH_BAO_THAT_THOAT'
-                          ? 'urgent'
-                          : 'waiting'
-                      }
-                    >
-                      {dashboard.dienNuocDungChung.doiSoat.trangThai === 'KHOP_DOI_SOAT'
-                        ? 'Khớp đối soát'
-                        : dashboard.dienNuocDungChung.doiSoat.trangThai === 'CANH_BAO_THAT_THOAT'
-                        ? 'Cảnh báo thất thoát'
-                        : dashboard.dienNuocDungChung.doiSoat.trangThai === 'CHON_TOA_NHA'
-                        ? 'Cần chọn toà nhà'
-                        : 'Chưa đủ dữ liệu đối soát'}
-                    </StatusTag>
-                  ) : null}
-                </div>
-
-                {dashboard.dienNuocDungChung.doiSoat ? (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : 'repeat(4, minmax(0, 1fr))',
-                      gap: 12,
-                      padding: 12,
-                      background: 'var(--ma-bg-sunken, #f8fafc)',
-                      border: '1px solid var(--ma-border-subtle)',
-                      borderRadius: 6,
-                      marginBottom: 16,
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>Công tơ tổng</span>
-                      <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--ma-font-mono)' }}>
-                        {dashboard.dienNuocDungChung.doiSoat.mucTong !== null ? `${dinhDangSo(dashboard.dienNuocDungChung.doiSoat.mucTong)} ${dashboard.dienNuocDungChung.doiSoat.donVi}` : 'Chưa có'}
-                      </div>
-                    </div>
-                    <div>
-                      <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>Tổng tiêu thụ phòng</span>
-                      <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--ma-font-mono)' }}>
-                        {dashboard.dienNuocDungChung.doiSoat.mucPhong !== null ? `${dinhDangSo(dashboard.dienNuocDungChung.doiSoat.mucPhong)} ${dashboard.dienNuocDungChung.doiSoat.donVi}` : 'Chưa có'}
-                      </div>
-                    </div>
-                    <div>
-                      <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>Khu vực chung đo riêng</span>
-                      <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--ma-font-mono)' }}>
-                        {dashboard.dienNuocDungChung.doiSoat.mucChungDoRieng !== null ? `${dinhDangSo(dashboard.dienNuocDungChung.doiSoat.mucChungDoRieng)} ${dashboard.dienNuocDungChung.doiSoat.donVi}` : '0.00'}
-                      </div>
-                    </div>
-                    <div>
-                      <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>Chênh lệch đối soát</span>
-                      <div
-                        style={{
-                          fontSize: 16,
-                          fontWeight: 700,
-                          fontFamily: 'var(--ma-font-mono)',
-                          color: dashboard.dienNuocDungChung.doiSoat.vuotNguong ? 'var(--ma-urgent)' : 'var(--ma-accent)',
-                        }}
-                      >
-                        {dashboard.dienNuocDungChung.doiSoat.chenhLech !== null
-                          ? `${dinhDangSo(dashboard.dienNuocDungChung.doiSoat.chenhLech)} ${dashboard.dienNuocDungChung.doiSoat.donVi}`
-                          : '—'}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
-                {/* Danh sách các điểm đo khu vực chung */}
-                <h5 style={{ margin: '14px 0 8px', fontSize: 14 }}>Chi tiết các điểm đo khu vực chung</h5>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid var(--ma-border-default)' }}>
-                        <th style={{ padding: '8px 6px' }}>Mã công tơ</th>
-                        <th style={{ padding: '8px 6px' }}>Tên điểm đo</th>
-                        <th style={{ padding: '8px 6px' }}>Khu vực</th>
-                        <th style={{ padding: '8px 6px', textAlign: 'right' }}>Tiêu thụ</th>
-                        <th style={{ padding: '8px 6px', textAlign: 'right' }}>Đơn giá mua (₫)</th>
-                        <th style={{ padding: '8px 6px', textAlign: 'right' }}>Chi phí ước tính (₫)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dashboard.dienNuocDungChung.khuVucChung.map((kv) => (
-                        <tr key={kv.diemDoId} style={{ borderBottom: '1px solid var(--ma-border-subtle)' }}>
-                          <td style={{ padding: '8px 6px', fontFamily: 'var(--ma-font-mono)' }}>{kv.maCongTo}</td>
-                          <td style={{ padding: '8px 6px', fontWeight: 600 }}>{kv.tenCongTo}</td>
-                          <td style={{ padding: '8px 6px' }}>{anhXaKhuVuc(kv.khuVuc)}</td>
-                          <td style={{ padding: '8px 6px', textAlign: 'right', fontFamily: 'var(--ma-font-mono)' }}>
-                            {dinhDangSo(kv.mucTieuThu)} {kv.donVi}
-                          </td>
-                          <td style={{ padding: '8px 6px', textAlign: 'right', fontFamily: 'var(--ma-font-mono)' }}>{dinhDangTien(kv.donGiaMua)}</td>
-                          <td style={{ padding: '8px 6px', textAlign: 'right', fontFamily: 'var(--ma-font-mono)', fontWeight: 600 }}>{dinhDangTien(kv.chiPhi)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </div>
-          ) : null}
-
-          {/* TAB 3: VẬN HÀNH & VIỆC CẦN LÀM */}
-          {tab === 'van-hanh' ? (
-            <div id={`${tabId}-panel-vh`} role="tabpanel" aria-labelledby={`${tabId}-tab-vh`} style={{ display: 'grid', gap: 20 }}>
-              {/* Tái sử dụng Bảng việc vận hành */}
-              <section style={styleChartCard}>
-                <SysLabel>KHU HÀNH ĐỘNG</SysLabel>
-                <h4 style={{ margin: '4px 0 14px', fontSize: 18 }}>Việc cần xử lý ngay theo phạm vi toà nhà</h4>
-                <BangViecVanHanh token={token} mobile={mobile} toaNhaId={toaNhaId} />
-              </section>
-
-              {/* Chi phí bảo trì theo tháng */}
-              <section style={styleChartCard} aria-labelledby="maintenance-chart-title">
-                <SysLabel>LỊCH SỬ BẢO TRÌ</SysLabel>
-                <h4 id="maintenance-chart-title" style={{ margin: '4px 0 14px', fontSize: 16 }}>
-                  Chi phí bảo trì & sửa chữa đã nghiệm thu theo tháng
-                </h4>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid var(--ma-border-default)' }}>
-                        <th style={{ padding: '8px 6px' }}>Tháng</th>
-                        <th style={{ padding: '8px 6px', textAlign: 'right' }}>Số sự cố xử lý</th>
-                        <th style={{ padding: '8px 6px', textAlign: 'right' }}>Chi phí ghi nhận (₫)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dashboard.chiPhiBaoTri.map((item) => (
-                        <tr key={item.thang} style={{ borderBottom: '1px solid var(--ma-border-subtle)' }}>
-                          <td style={{ padding: '8px 6px', fontWeight: 600 }}>{item.nhan}</td>
-                          <td style={{ padding: '8px 6px', textAlign: 'right' }}>{item.soSuCo} sự cố</td>
-                          <td style={{ padding: '8px 6px', textAlign: 'right', fontFamily: 'var(--ma-font-mono)', fontWeight: 600 }}>
-                            {dinhDangTien(item.chiPhi)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </div>
-          ) : null}
-        </>
-      ) : null}
-    </ScreenSurface>
-  )
-}
-
-/* =========================================================================
- * HELPER CHART & PRESENTATIONAL SUBCOMPONENTS
- * ========================================================================= */
-
-function BarChartFinance({ data }: { data: DashboardData['taiChinhTheoThang'] }) {
-  const maxVal = Math.max(
-    ...data.map((d) => Math.max(Number(d.doanhThuPhatHanh), Number(d.thucThu), Number(d.congNo))),
-    1
-  )
-
-  return (
-    <div
-      role="group"
-      aria-label="Biểu đồ tài chính theo tháng"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${Math.max(data.length, 1)}, minmax(0, 1fr))`,
-        gap: 8,
-        alignItems: 'flex-end',
-        height: 180,
-        padding: '12px 4px 4px',
-        borderBottom: '1px solid var(--ma-border-default)',
-        minWidth: 0,
-      }}
-    >
-      {data.map((item) => {
-        const hPhatHanh = Math.max(Math.round((Number(item.doanhThuPhatHanh) / maxVal) * 100), 2)
-        const hThucThu = Math.max(Math.round((Number(item.thucThu) / maxVal) * 100), 2)
-        const hCongNo = Math.max(Math.round((Number(item.congNo) / maxVal) * 100), 2)
-
-        return (
-          <div key={item.thang} style={{ display: 'grid', justifyItems: 'center', gap: 4, height: '100%', alignItems: 'flex-end', minWidth: 0 }}>
-            <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: '100%', width: '100%', justifyContent: 'center' }}>
-              <div
-                title={`Phát hành: ${dinhDangTien(item.doanhThuPhatHanh)} ₫`}
-                style={{ width: '28%', height: `${hPhatHanh}%`, background: 'var(--ma-brand-primary, #0F172A)', borderRadius: '2px 2px 0 0' }}
-              />
-              <div
-                title={`Thực thu: ${dinhDangTien(item.thucThu)} ₫`}
-                style={{ width: '28%', height: `${hThucThu}%`, background: 'var(--ma-accent, #0d9488)', borderRadius: '2px 2px 0 0' }}
-              />
-              <div
-                title={`Công nợ: ${dinhDangTien(item.congNo)} ₫`}
-                style={{ width: '28%', height: `${hCongNo}%`, background: 'var(--ma-urgent, #dc2626)', borderRadius: '2px 2px 0 0' }}
-              />
-            </div>
-            <span style={{ fontSize: 11, color: 'var(--ma-text-secondary)', whiteSpace: 'nowrap' }}>{item.nhan}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function RoomCompositionBar({ coCau }: { coCau: DashboardData['coCauPhong'] }) {
-  return (
-    <div
-      role="group"
-      aria-label={`Cơ cấu phòng: ${coCau.dangThue} đang thuê, ${coCau.trong} trống, ${coCau.dangSua} đang sửa`}
-      style={{
-        display: 'flex',
-        height: 22,
-        borderRadius: 4,
-        overflow: 'hidden',
-        background: 'var(--ma-bg-sunken, #f1f5f9)',
-      }}
-    >
-      {Number(coCau.tyLeDangThue) > 0 ? (
-        <div
-          title={`Đang thuê: ${coCau.dangThue} phòng (${coCau.tyLeDangThue}%)`}
-          style={{ width: `${coCau.tyLeDangThue}%`, background: 'var(--ma-accent, #0d9488)' }}
-        />
-      ) : null}
-      {Number(coCau.tyLeTrong) > 0 ? (
-        <div
-          title={`Trống: ${coCau.trong} phòng (${coCau.tyLeTrong}%)`}
-          style={{ width: `${coCau.tyLeTrong}%`, background: 'var(--ma-border-warning, #f59e0b)' }}
-        />
-      ) : null}
-      {Number(coCau.tyLeDangSua) > 0 ? (
-        <div
-          title={`Đang sửa: ${coCau.dangSua} phòng (${coCau.tyLeDangSua}%)`}
-          style={{ width: `${coCau.tyLeDangSua}%`, background: 'var(--ma-urgent, #dc2626)' }}
-        />
-      ) : null}
-      {Number(coCau.tyLeNgung) > 0 ? (
-        <div
-          title={`Ngừng khai thác: ${coCau.ngung} phòng (${coCau.tyLeNgung}%)`}
-          style={{ width: `${coCau.tyLeNgung}%`, background: 'var(--ma-text-secondary, #64748b)' }}
-        />
-      ) : null}
-    </div>
-  )
-}
-
-function RoomLegendRow({ color, label, count, percent }: { color: string; label: string; count: number; percent: number | string }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
-      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ width: 10, height: 10, borderRadius: '50%', background: color }} />
-        <span>{label}</span>
-      </span>
-      <span>
-        <strong>{count}</strong> <span style={{ color: 'var(--ma-text-secondary)', fontSize: 12 }}>({percent}%)</span>
-      </span>
-    </div>
-  )
-}
-
-function BuildingComparisonTable({ list }: { list: DashboardData['soSanhToaNha'] }) {
-  return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid var(--ma-border-default)' }}>
-            <th style={{ padding: '8px 6px' }}>Toà nhà</th>
-            <th style={{ padding: '8px 6px', textAlign: 'right' }}>Lấp đầy</th>
-            <th style={{ padding: '8px 6px', textAlign: 'right' }}>Phát hành (₫)</th>
-            <th style={{ padding: '8px 6px', textAlign: 'right' }}>Thực thu (₫)</th>
-            <th style={{ padding: '8px 6px', textAlign: 'right' }}>Công nợ (₫)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {list.map((row) => (
-            <tr key={row.toaNhaId} style={{ borderBottom: '1px solid var(--ma-border-subtle)' }}>
-              <td style={{ padding: '8px 6px', fontWeight: 600 }}>{row.tenToaNha}</td>
-              <td style={{ padding: '8px 6px', textAlign: 'right' }}>
-                <span style={{ fontWeight: 700, color: 'var(--ma-brand-accent, #0D9488)' }}>{dinhDangSo(row.tyLeLapDay)}%</span>
-                <span style={{ fontSize: 11, color: 'var(--ma-text-secondary)', display: 'block' }}>
-                  {row.soPhongDangThue}/{row.tongSoPhong}
-                </span>
-              </td>
-              <td style={{ padding: '8px 6px', textAlign: 'right', fontFamily: 'var(--ma-font-mono)' }}>{dinhDangTien(row.doanhThuPhatHanh)}</td>
-              <td style={{ padding: '8px 6px', textAlign: 'right', fontFamily: 'var(--ma-font-mono)', color: 'var(--ma-accent)' }}>{dinhDangTien(row.thucThu)}</td>
-              <td style={{ padding: '8px 6px', textAlign: 'right', fontFamily: 'var(--ma-font-mono)', color: Number(row.congNo) > 0 ? 'var(--ma-urgent)' : 'inherit' }}>
-                {dinhDangTien(row.congNo)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function DebtAgingBuckets({ tuoiNo }: { tuoiNo: DashboardData['tuoiNo'] }) {
-  const buckets = [
-    { label: 'Chưa đến hạn', count: tuoiNo.chuaDenHan.soLuong, amount: tuoiNo.chuaDenHan.soTien, tone: 'done' as const },
-    { label: 'Quá hạn 1–7 ngày', count: tuoiNo.quaHan1Den7.soLuong, amount: tuoiNo.quaHan1Den7.soTien, tone: 'waiting' as const },
-    { label: 'Quá hạn 8–30 ngày', count: tuoiNo.quaHan8Den30.soLuong, amount: tuoiNo.quaHan8Den30.soTien, tone: 'urgent' as const },
-    { label: 'Quá hạn > 30 ngày', count: tuoiNo.quaHanTren30.soLuong, amount: tuoiNo.quaHanTren30.soTien, tone: 'urgent' as const },
-  ]
-
-  return (
-    <div style={{ display: 'grid', gap: 8 }}>
-      {buckets.map((b) => (
-        <div
-          key={b.label}
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '8px 10px',
-            background: 'var(--ma-bg-sunken, #f8fafc)',
-            border: '1px solid var(--ma-border-subtle)',
-            borderRadius: 6,
-          }}
+              <option value="tien">Theo số tiền</option>
+              <option value="ngay">Theo số ngày</option>
+            </select>
+          }
         >
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>{b.label}</div>
-            <div style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>{b.count} hoá đơn</div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <span style={{ fontFamily: 'var(--ma-font-mono)', fontWeight: 700, fontSize: 14 }}>{dinhDangTien(b.amount)} ₫</span>
+          {noQuaHan === null ? <p className="t-2">Chưa tải được danh sách nợ.</p> : noQuaHan.length === 0 ? <p className="t-2">Không có hoá đơn quá hạn.</p> : (
+            <ul className="list">
+              {noQuaHan.map((n, i) => (
+                <li className="list-row" key={n.nguoiThueId}>
+                  <span className={`avatar ${AVATAR[i % AVATAR.length]}`} aria-hidden="true">{vietTat(n.hoTenNguoiThue)}</span>
+                  <div className="body">
+                    <div className="name">{n.hoTenNguoiThue}</div>
+                    <div className="sub">{n.tenToaNha} · {n.soPhong} · {n.soHoaDon} hoá đơn</div>
+                  </div>
+                  <div className="end"><div className="t-money">{tien(n.conLai)}</div><div className="t-meta t-danger">trễ {n.soNgayQuaHanLonNhat} ngày</div></div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="card-foot"><a className="link-more" href={duongDan('/cong-no')}>Tất cả {k.soHoaDonQuaHan} hoá đơn quá hạn <Icon name="arrow-right" size="sm" /></a></div>
+        </Card>
+
+        <div className={`${cot('c-7')} stack`} style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
+          <Card
+            title="Doanh thu theo tháng"
+            action={<div className="legend"><span><i style={{ background: 'var(--ma-chart-1)' }} />Thực thu</span><span><i style={{ background: 'var(--ma-chart-3)' }} />Phát hành</span></div>}
+          >
+            {thang.length === 0 ? <p className="t-2">Chưa có số liệu trong kỳ này.</p> : (
+              <div className="chart-scroll" tabIndex={0} role="region" aria-label="Biểu đồ doanh thu, cuộn ngang trên điện thoại">
+                <BieuDoVung
+                  kyCuoiDangMo={thang.at(-1)?.nhan === nhanThangNay()}
+                  tieuDe="Biểu đồ vùng: thực thu và doanh thu phát hành theo tháng"
+                  nhan={thang.map((t) => t.nhan.replace(/\/20(\d\d)$/, '/$1'))}
+                  chuoi={[
+                    { ten: 'Thực thu', mau: 'var(--ma-chart-1)', giaTri: thang.map((t) => Number(t.thucThu)) },
+                    { ten: 'Phát hành', mau: 'var(--ma-chart-3)', giaTri: thang.map((t) => Number(t.doanhThuPhatHanh)) },
+                  ]}
+                />
+              </div>
+            )}
+          </Card>
+          <div className="minis">
+            <Card style={{ padding: 20 }}>
+              <h2 className="mini-label">Toà thu nhiều nhất</h2>
+              <p className="mini-value">{toaDauTien ? toaDauTien.tenToaNha : '—'}</p>
+              <p className="mini-sub">{toaDauTien ? `${tien(toaDauTien.thucThu)} thực thu` : 'Chưa có số liệu'}</p>
+            </Card>
+            <Card style={{ padding: 20 }}>
+              <h2 className="mini-label">Hợp đồng sắp hết</h2>
+              <p className="mini-value">{hopDong === null ? '—' : sapHet[0] ? dinhDangNgayIso(sapHet[0].ngayKetThuc) : 'Không có'}</p>
+              <p className="mini-sub">
+                {sapHet[0] ? `Phòng ${sapHet[0].soPhong} ${sapHet[0].tenToa} · còn ${sapHet[0].soNgayConLai} ngày` : hopDong === null ? 'Chưa tải được' : 'Chưa có hợp đồng sắp hết hạn'}
+              </p>
+            </Card>
+            <Card style={{ padding: 20 }}>
+              <h2 className="mini-label">Sự cố đang mở</h2>
+              <p className="mini-value">{k.soSuCoDangMo} việc</p>
+              <p className="mini-sub">Chi phí kỳ này {tien(k.chiPhiBaoTri)}</p>
+            </Card>
           </div>
         </div>
-      ))}
-    </div>
-  )
-}
 
-function UtilityTrendBar({
-  series,
-  donVi,
-  color,
-}: {
-  series: DashboardData['tieuThuDienNuoc']['dien']
-  donVi: string
-  color: string
-}) {
-  const maxVal = Math.max(...series.map((s) => Number(s.tong)), 1)
+        <Card className={cot('c-4')} title="Tiêu thụ điện theo toà" action={dien?.nhanKy ? <span className="t-meta">kỳ {dien.nhanKy}</span> : undefined}>
+          {dien === null ? <p className="t-2">Chưa tải được số điện.</p> : dien.toa.length === 0 ? <p className="t-2">Chưa có kỳ nào có số điện.</p> : (
+            <ThanhXepHang muc={dien.toa.map((t) => ({ nhan: t.tenToaNha, giaTri: t.tong, hienThi: `${dinhDangSo(t.tong)} ${dien.donVi ?? 'kWh'}` }))} />
+          )}
+          <p className="t-meta" style={{ marginTop: 12 }}>
+            Tổng {dinhDangSo(tongDien)} {dien?.donVi ?? 'kWh'}{nuoc ? ` · nước ${dinhDangSo(nuoc.tong)} ${nuoc.donVi === 'm3' ? 'm³' : nuoc.donVi}` : ''}
+          </p>
+        </Card>
+        <Card className={cot('c-4')} title="Công nợ theo toà" action={<span className="t-meta">hiện tại</span>}>
+          <ThanhXepHang
+            am
+            muc={[...soSanh].sort((a, b) => Number(b.congNo) - Number(a.congNo)).map((t) => ({ nhan: t.tenToaNha, giaTri: Number(t.congNo), hienThi: tien(t.congNo) }))}
+          />
+          <p className="t-meta" style={{ marginTop: 12 }}>Tổng {tien(k.congNoHienTai)}</p>
+        </Card>
+        <Card className={cot('c-4')} title="Cần chú ý">
+          <nav className="alist" aria-label="Việc cần chú ý">
+            <HangChuY icon="wrench" nhan="Sự cố đang mở" so={k.soSuCoDangMo} href={duongDan('/su-co')} />
+            <HangChuY icon="receipt" nhan="Hoá đơn quá hạn" so={k.soHoaDonQuaHan} href={duongDan('/cong-no')} />
+            <HangChuY icon="contract" nhan="Hợp đồng sắp hết hạn" so={hopDong === null ? '—' : sapHet.length} href={duongDan('/hop-dong')} />
+            {doiSoat?.vuotNguong ? <HangChuY icon="meter" nhan="Đối soát công tơ tổng lệch" so={dinhDangSo(doiSoat.chenhLech)} href={duongDan('/bao-cao/tieu-thu')} /> : null}
+          </nav>
+        </Card>
+
+        <Card className={cot('c-4')} title="Tuổi nợ" action={<span className="t-meta">số tiền · số hoá đơn</span>}>
+          <ThanhXepHang
+            am
+            muc={[
+              { nhan: 'Chưa đến hạn', b: tuoi.chuaDenHan },
+              { nhan: 'Quá hạn 1–7 ngày', b: tuoi.quaHan1Den7 },
+              { nhan: 'Quá hạn 8–30 ngày', b: tuoi.quaHan8Den30 },
+              { nhan: 'Quá hạn trên 30 ngày', b: tuoi.quaHanTren30 },
+            ].map(({ nhan, b }) => ({ nhan, giaTri: Number(b.soTien), hienThi: `${tien(b.soTien)} · ${b.soLuong}` }))}
+          />
+        </Card>
+        <Card className={cot('c-4')} title="Cơ cấu phòng" action={<span className="t-meta">{cc.tongSo} phòng</span>}>
+          <ThanhXepHang
+            muc={[
+              { nhan: 'Đang thuê', n: cc.dangThue, p: cc.tyLeDangThue },
+              { nhan: 'Trống', n: cc.trong, p: cc.tyLeTrong },
+              { nhan: 'Đang sửa chữa', n: cc.dangSua, p: cc.tyLeDangSua },
+              { nhan: 'Ngừng khai thác', n: cc.ngung, p: cc.tyLeNgung },
+            ].map(({ nhan, n, p }) => ({ nhan, giaTri: n, hienThi: `${n} · ${dinhDangSo(p)}%` }))}
+          />
+        </Card>
+        <Card className={cot('c-4')} title="Chi phí bảo trì theo tháng" action={<span className="t-meta">đã nghiệm thu</span>}>
+          {d.chiPhiBaoTri.length === 0 ? <p className="t-2">Chưa có chi phí bảo trì trong kỳ.</p> : (
+            <ThanhXepHang muc={d.chiPhiBaoTri.map((m) => ({ nhan: m.nhan, giaTri: Number(m.chiPhi), hienThi: `${tien(m.chiPhi)} · ${m.soSuCo} sự cố` }))} />
+          )}
+        </Card>
+
+        {doiSoat ? (
+          <Card
+            className={cot('c-12')}
+            title="Đối soát công tơ tổng"
+            action={<StatusTag tone={doiSoat.trangThai === 'KHOP_DOI_SOAT' ? 'done' : doiSoat.trangThai === 'CANH_BAO_THAT_THOAT' ? 'urgent' : 'waiting'}>{NHAN_DOI_SOAT[doiSoat.trangThai] ?? 'Chưa đủ dữ liệu đối soát'}</StatusTag>}
+          >
+            <p className="t-2" style={{ marginBottom: 12 }}>
+              {doiSoat.tenToaNha ? `${doiSoat.tenToaNha}${doiSoat.tenKy ? ` · ${doiSoat.tenKy}` : ''} — ` : ''}Chênh lệch = công tơ tổng − tổng phòng − khu vực chung đo riêng.
+            </p>
+            {doiSoat.trangThai === 'CHON_TOA_NHA' ? <p className="t-2">Chọn một toà nhà ở bộ lọc phía trên để xem đối soát công tơ tổng.</p> : (
+            <div className="minis" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+              {([['Công tơ tổng', doiSoat.mucTong], ['Tổng tiêu thụ phòng', doiSoat.mucPhong], ['Khu vực chung đo riêng', doiSoat.mucChungDoRieng], ['Chênh lệch đối soát', doiSoat.chenhLech]] as const).map(([nhan, so]) => (
+                <div className="card-sunken" key={nhan}>
+                  <div className="t-meta">{nhan}</div>
+                  <div className={`t-strong${nhan === 'Chênh lệch đối soát' && doiSoat.vuotNguong ? ' t-danger' : ''}`}>{so === null ? 'Chưa có' : `${dinhDangSo(so)} ${doiSoat.donVi}`}</div>
+                </div>
+              ))}
+            </div>
+            )}
+            {d.dienNuocDungChung.khuVucChung.length > 0 ? (
+              <ul className="list" style={{ marginTop: 12 }}>
+                {d.dienNuocDungChung.khuVucChung.map((kv) => (
+                  <li className="list-row" key={kv.diemDoId} style={{ minHeight: 48 }}>
+                    <div className="body"><div className="name">{kv.tenCongTo}</div><div className="sub">{kv.maCongTo} · {anhXaKhuVuc(kv.khuVuc)}</div></div>
+                    <div className="end"><div className="t-money">{dinhDangSo(kv.mucTieuThu)} {kv.donVi}</div><div className="t-meta">{tien(kv.chiPhi)}</div></div>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </Card>
+        ) : null}
+      </div>
+    )
+  }
 
   return (
-    <div style={{ marginTop: 12 }}>
-      <div
-        role="group"
-        aria-label={`Biểu đồ tiêu thụ đơn vị ${donVi}`}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${Math.max(series.length, 1)}, minmax(0, 1fr))`,
-          gap: 8,
-          alignItems: 'flex-end',
-          height: 140,
-          borderBottom: '1px solid var(--ma-border-default)',
-          paddingBottom: 4,
-          minWidth: 0,
-        }}
-      >
-        {series.map((s, idx) => {
-          const h = Math.max(Math.round((Number(s.tong) / maxVal) * 100), 4)
-          return (
-            <div key={idx} style={{ display: 'grid', justifyItems: 'center', gap: 4, height: '100%', alignItems: 'flex-end' }}>
-              <div
-                title={`${s.nhan}: Tổng ${dinhDangSo(s.tong)} ${donVi}`}
-                style={{ width: '60%', height: `${h}%`, background: color, borderRadius: '2px 2px 0 0' }}
-              />
-              <span style={{ fontSize: 11, color: 'var(--ma-text-secondary)', whiteSpace: 'nowrap' }}>{s.nhan}</span>
-            </div>
-          )
-        })}
-      </div>
-    </div>
+    <section data-testid="owner-dashboard-screen" data-layout-variant={mobile ? 'mobile' : 'desktop'} aria-labelledby="owner-dashboard-title" className={mobile ? 'main m-app' : 'main'}>
+      <header className="topbar" style={{ flexWrap: 'wrap' }}>
+        <div className="title-block" style={{ flex: '1 1 280px' }}>
+          <h1 className="h1" id="owner-dashboard-title">Tổng quan</h1>
+          {dashboard && kpi ? (
+            <p className="sub">
+              {toaNhaId ? 1 : dashboard.soSanhToaNha.length || toaNhaList.length} toà · {kpi.tongSoPhong} phòng · từ {dinhDangNgayIso(dashboard.tuNgay)} đến {dinhDangNgayIso(dashboard.denNgay)} · cập nhật {dinhDangGio(dashboard.thoiDiemCapNhat)}
+            </p>
+          ) : null}
+        </div>
+        <div className="topbar-actions">
+          <select className="select" style={{ width: 220 }} value={toaNhaId ?? ''} onChange={(e) => setToaNhaId(e.target.value ? Number(e.target.value) : null)} aria-label="Chọn toà nhà xem dashboard">
+            <option value="">Tất cả toà được phân quyền</option>
+            {toaNhaList.map((tn) => <option key={tn.id} value={tn.id}>{tn.ten}</option>)}
+          </select>
+          <div className="seg" role="group" aria-label="Khoảng thời gian" style={{ flexWrap: 'wrap', maxWidth: '100%' }}>
+            {KY_NHANH.map(([ma, nhan]) => (
+              <button key={ma} type="button" aria-pressed={kyNhanh === ma} onClick={() => chonKyNhanh(ma)}>{nhan}</button>
+            ))}
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => setSoLanTaiLai((n) => n + 1)}>Làm mới</Button>
+        </div>
+      </header>
+
+      {loi ? <p role="alert" style={{ color: 'var(--ma-urgent)' }}>{loi}</p> : null}
+      {dangTai && !dashboard ? <p aria-live="polite" className="t-2">Đang tổng hợp dữ liệu dashboard…</p> : null}
+      {dashboard && kpi ? noiDung(dashboard, kpi) : null}
+    </section>
   )
 }
 
-/* =========================================================================
- * STYLES & UTILS
- * ========================================================================= */
-
-const styleInput: React.CSSProperties = {
-  padding: '6px 10px',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 4,
-  background: 'var(--ma-bg-surface, #ffffff)',
-  color: 'inherit',
-  font: 'inherit',
-  fontSize: 14,
+function nhanThangNay(): string {
+  const n = new Date()
+  return `${String(n.getMonth() + 1).padStart(2, '0')}/${n.getFullYear()}`
 }
 
-const styleChip = (selected: boolean): React.CSSProperties => ({
-  padding: '4px 10px',
-  borderRadius: 16,
-  border: `1px solid ${selected ? 'var(--ma-brand-primary, #0F172A)' : 'var(--ma-border-default)'}`,
-  background: selected ? 'var(--ma-brand-primary, #0F172A)' : 'transparent',
-  color: selected ? '#ffffff' : 'inherit',
-  fontSize: 12,
-  fontWeight: 600,
-  cursor: 'pointer',
-})
-
-const styleTabBtn = (active: boolean): React.CSSProperties => ({
-  padding: '8px 14px',
-  background: 'transparent',
-  border: 'none',
-  borderBottom: active ? '3px solid var(--ma-brand-accent, #0D9488)' : '3px solid transparent',
-  color: active ? 'var(--ma-brand-accent, #0D9488)' : 'var(--ma-text-secondary)',
-  fontWeight: active ? 700 : 500,
-  fontSize: 14,
-  cursor: 'pointer',
-  marginBottom: -2,
-})
-
-const styleKpiCard: React.CSSProperties = {
-  display: 'grid',
-  gap: 4,
-  padding: '12px 14px',
-  background: 'var(--ma-bg-card)',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 8,
-  cursor: 'pointer',
-  transition: 'transform 0.1s ease',
+function useManHinhHep(): boolean {
+  const [hep, setHep] = useState(() => window.matchMedia?.('(max-width: 1279px)').matches ?? false)
+  useEffect(() => {
+    const mq = window.matchMedia?.('(max-width: 1279px)')
+    if (!mq) return
+    const doi = () => setHep(mq.matches)
+    mq.addEventListener('change', doi)
+    return () => mq.removeEventListener('change', doi)
+  }, [])
+  return hep
 }
 
-const styleKpiLabel: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 600,
-  color: 'var(--ma-text-secondary)',
-  textTransform: 'uppercase',
-  letterSpacing: 0.5,
+function HangChuY({ icon, nhan, so, href }: { icon: IconName; nhan: string; so: number | string; href: string }): React.ReactElement {
+  return <a className="arow" href={href}><Icon name={icon} />{nhan}<b>{so}</b><Icon name="chevron-right" size="sm" /></a>
 }
 
-const styleKpiUnit: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 700,
-  color: 'var(--ma-text-secondary)',
-}
-
-const styleKpiValue: React.CSSProperties = {
-  fontSize: 20,
-  fontWeight: 700,
-  fontFamily: 'var(--ma-font-mono)',
-}
-
-const styleKpiSub: React.CSSProperties = {
-  fontSize: 12,
-  color: 'var(--ma-text-secondary)',
-  marginTop: 2,
-}
-
-const styleChartCard: React.CSSProperties = {
-  padding: 16,
-  background: 'var(--ma-bg-card)',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 8,
-  minWidth: 0,
-  overflowX: 'auto',
+function vietTat(ten: string): string {
+  return ten.trim().split(/\s+/).slice(-2).map((t) => t[0]?.toUpperCase() ?? '').join('')
 }
 
 function layNgayDinhDang(d: Date): string {
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 function docToaNhaIdTuUrl(): number | null {
-  const params = new URLSearchParams(window.location.search)
-  const val = params.get('toaNhaId')
+  const val = new URLSearchParams(window.location.search).get('toaNhaId')
   return val ? Number(val) : null
 }
 
 function dinhDangGio(iso: string): string {
-  try {
-    const d = new Date(iso)
-    return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  } catch {
-    return iso
-  }
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 }
 
 function anhXaKhuVuc(code: string): string {
-  switch (code) {
-    case 'HANH_LANG':
-      return 'Hành lang & cầu thang'
-    case 'THANG_MAY':
-      return 'Thang máy'
-    case 'MAY_BOM':
-      return 'Máy bơm cấp nước'
-    case 'GIAT_LA':
-      return 'Khu giặt chung'
-    case 'BAI_XE':
-      return 'Bãi gửi xe'
-    default:
-      return 'Khu vực chung'
-  }
+  const map: Record<string, string> = { HANH_LANG: 'Hành lang & cầu thang', THANG_MAY: 'Thang máy', MAY_BOM: 'Máy bơm cấp nước', GIAT_LA: 'Khu giặt chung', BAI_XE: 'Bãi gửi xe' }
+  return map[code] ?? 'Khu vực chung'
 }
-

@@ -103,12 +103,29 @@ describe('ChuDashboard', () => {
           },
         })
       }
-      if (url.includes('/bang-viec')) {
+      if (url.startsWith('/api/bao-cao/cong-no')) {
         return jsonResponse({
-          toaNhaId: 3,
-          tenToaNha: 'An Nhiên Residence',
-          nhomViec: [],
+          toaNhaId: null,
+          tinhLuc: '2026-11-06T03:00:00Z',
+          congNo: [
+            { hoaDonId: 1, maHoaDon: 'HD1', kyId: 1, hopDongId: 1, toaNhaId: 3, tenToaNha: 'An Nhiên Residence', soPhong: '201', nguoiThueId: 7, hoTenNguoiThue: 'Nguyễn Văn A', ngayPhatHanh: '2026-06-01', hanThanhToan: '2026-06-10', tongTien: '9000000', daThu: '0', conLai: '9000000', soNgayQuaHan: 139 },
+          ],
         })
+      }
+      if (url.startsWith('/api/bao-cao/tieu-thu')) {
+        return jsonResponse({
+          toaNhaId: null,
+          phongId: null,
+          kyId: null,
+          tinhLuc: '2026-11-06T03:00:00Z',
+          bieuDo: [],
+          cacDong: [
+            { kyId: 4, nam: 2026, thang: 10, nhanKy: '10/2026', tuNgay: '2026-10-01', denNgay: '2026-10-31', toaNhaId: 3, maToa: 'DEMO-P1', tenToaNha: 'An Nhiên Residence', phongId: 1, soPhong: '201', tang: 2, hopDongId: 1, dichVuId: 1, tenDichVu: 'Điện', donVi: 'kWh', laDien: true, chiSoDau: '0', chiSoCuoi: '1570', coThayCongTo: false, chiSoCuoiCongToCu: null, chiSoDauCongToMoi: null, mucTieuThu: '1570', coDuLieu: true },
+          ],
+        })
+      }
+      if (url.startsWith('/api/hop-dong')) {
+        return jsonResponse([{ id: 1, phongId: 1, soPhong: '303', nguoiThueId: 7, hoTenNguoiThue: 'Nguyễn Văn A', ngayBatDau: '2025-12-02', ngayKetThuc: '2026-12-02', giaThue: '5000000', tienCoc: '5000000', soNgayBaoTruoc: 30, trangThai: 'HIEU_LUC', tenTrangThai: 'Hiệu lực', sapHetHan: true, soNgayConLai: 11, dichVuApDung: [], quyetToan: null }])
       }
       throw new Error(`Unexpected request ${url}`)
     })
@@ -118,25 +135,23 @@ describe('ChuDashboard', () => {
     await act(async () => root.render(<ChuDashboard token="test-token" />))
 
     await vi.waitFor(() => expect(container.querySelector('[data-testid="owner-dashboard-screen"]')).not.toBeNull())
+    await vi.waitFor(() => expect(container.textContent).toContain('Thực thu'))
 
-    // Verify 6 KPIs rendered
-    expect(container.textContent).toContain('Doanh thu phát hành')
-    expect(container.textContent).toContain('555.947.000')
-    expect(container.textContent).toContain('Dòng tiền thực thu')
+    // Thẻ KPI + khối mới theo thiết kế 03
+    expect(container.textContent).toContain('Thực thu')
     expect(container.textContent).toContain('376.130.000')
-    expect(container.textContent).toContain('Công nợ hiện tại')
+    expect(container.textContent).toContain('Công nợ')
     expect(container.textContent).toContain('173.450.000')
     expect(container.textContent).toContain('Tỷ lệ lấp đầy')
     expect(container.textContent).toContain('75%')
-    expect(container.textContent).toContain('Phòng trống / Sửa')
-    expect(container.textContent).toContain('Chi phí bảo trì')
+    expect(container.textContent).toContain('Nợ quá hạn nhiều nhất')
+    expect(container.textContent).toContain('Tiêu thụ điện theo toà')
+    await vi.waitFor(() => expect(container.textContent).toContain('Nguyễn Văn A'))
+    await vi.waitFor(() => expect(container.textContent).toContain('1.570 kWh'))
+    await vi.waitFor(() => expect(container.textContent).toContain('Phòng 303 An Nhiên Residence · còn 11 ngày'))
+    expect(container.textContent).toContain('Chi phí kỳ này 750.000')
 
-    // Switch to Utility Tab
-    const tabDn = container.querySelector('button[role="tab"]:nth-child(2)') as HTMLButtonElement
-    await act(async () => tabDn.click())
-
-    expect(container.textContent).toContain('TIÊU THỤ ĐIỆN')
-    expect(container.textContent).toContain('TIÊU THỤ NƯỚC')
+    // Đối soát công tơ tổng không còn nằm sau tab
     expect(container.textContent).toContain('Đối soát công tơ tổng')
     expect(container.textContent).toContain('Khớp đối soát')
   })
