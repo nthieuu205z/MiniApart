@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ApiError,
   fetchCongNoBaoCao,
@@ -9,8 +9,9 @@ import {
 } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { EmptyState } from './design/feedback/EmptyState'
-import { ScreenHeader, ScreenNotice, ScreenSurface, TableCell, TableFrame, TableHeadCell } from './design/layout/Screen'
-import { SysLabel } from './design/core/SysLabel'
+import { Icon } from './design/core/Icon'
+import { Card } from './design/layout/Card'
+import { DataTable, type DataTableChip, type DataTableColumn } from './design/table/DataTable'
 import ExcelExportButton from './ExcelExportButton'
 
 type Props = { token: string; mobile?: boolean }
@@ -83,108 +84,75 @@ export default function CongNoBaoCao({ token, mobile = false }: Props): React.Re
     return () => window.removeEventListener('popstate', docLaiBoLocTuLichSu)
   }, [])
 
+
+  const goc = (noiDung: React.ReactNode) => <section data-testid="debt-report-screen" data-layout-variant={variant} style={{ display: 'grid', gap: 16, minWidth: 0 }}>{noiDung}</section>
   if (dangTai && !baoCao) {
-    return <ScreenSurface data-testid="debt-report-screen" data-layout-variant={variant} aria-busy="true" aria-live="polite">Đang tải báo cáo công nợ…</ScreenSurface>
+    return goc(<div aria-busy="true" aria-live="polite"><span className="sr-only">Đang tải báo cáo công nợ…</span><EmptyState kind="loading" title="Đang tải báo cáo công nợ…" /></div>)
   }
   if (loi && !baoCao) {
-    return (
-      <ScreenSurface data-testid="debt-report-screen" data-layout-variant={variant} role="alert">
-        <SysLabel>BÁO CÁO CÔNG NỢ</SysLabel>
-        <ScreenNotice tone="urgent">{loi}</ScreenNotice>
-      </ScreenSurface>
-    )
+    return goc(<div role="alert"><EmptyState kind="error" title={loi} /></div>)
   }
   if (!baoCao) {
-    return <ScreenSurface data-testid="debt-report-screen" data-layout-variant={variant}><EmptyState title="Chưa có báo cáo công nợ để hiển thị." /></ScreenSurface>
+    return goc(<EmptyState title="Chưa có báo cáo công nợ để hiển thị." />)
   }
 
-  return (
-    <ScreenSurface data-testid="debt-report-screen" data-layout-variant={variant} aria-labelledby="debt-report-title">
-      <ScreenHeader action={<ExcelExportButton token={token} report="cong-no" filters={boLoc} loading={dangTai} />}>
-        <SysLabel>BÁO CÁO CÔNG NỢ</SysLabel>
-        <h3 id="debt-report-title" style={{ margin: '8px 0 0' }}>Báo cáo công nợ</h3>
-        <p style={styleMuted}>Nợ được đọc từ sổ thanh toán tại thời điểm xem và đã sắp theo số ngày quá hạn từ cao xuống thấp.</p>
-      </ScreenHeader>
-
-      <label style={styleField}>
-        <span>Toà nhà</span>
+  const tong = baoCao.congNo.reduce((t, n) => t + Number(n.conLai), 0)
+  const quaHan = baoCao.congNo.filter((n) => n.soNgayQuaHan > 0).length
+  return goc(<>
+    <header className="topbar">
+      <div className="title-block">
+        <h1 className="h1" id="debt-report-title">Công nợ</h1>
+        <p className="sub">{baoCao.congNo.length} khoản còn nợ · {quaHan} quá hạn · tổng {dinhDangTien(String(tong))} ₫. Nợ đọc từ sổ thanh toán lúc xem, xếp theo số ngày quá hạn từ cao xuống thấp.</p>
+      </div>
+      <div className="topbar-actions">
+        <label className="sr-only" htmlFor="cong-no-toa">Toà nhà</label>
         <select
+          id="cong-no-toa"
+          className="select"
+          style={{ width: 240 }}
           aria-label="Lọc công nợ theo toà nhà"
           value={boLoc.toaNhaId === null ? '' : String(boLoc.toaNhaId)}
           onChange={(event) => setBoLoc({ toaNhaId: event.target.value ? Number(event.target.value) : null })}
-          style={styleInput}
         >
           <option value="">Tất cả toà được phân quyền</option>
           {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
         </select>
-      </label>
+        <ExcelExportButton token={token} report="cong-no" filters={boLoc} loading={dangTai} />
+      </div>
+    </header>
 
-      {dangTai ? <ScreenNotice live>Đang cập nhật báo cáo công nợ…</ScreenNotice> : null}
-      {loi ? <ScreenNotice tone="urgent">{loi}</ScreenNotice> : null}
-      {baoCao.congNo.length === 0 ? <EmptyState title="Không có hoá đơn còn nợ trong phạm vi này." /> : null}
-      {baoCao.congNo.length > 0 && mobile ? <DanhSachNoMobile congNo={baoCao.congNo} /> : null}
-      {baoCao.congNo.length > 0 && !mobile ? <DanhSachNoDesktop congNo={baoCao.congNo} /> : null}
-      <p style={{ ...styleMuted, margin: 0 }}>Tính lúc {baoCao.tinhLuc}. Bấm mã hoá đơn để đối chiếu chi tiết.</p>
-    </ScreenSurface>
-  )
+    {dangTai ? <p className="t-sm" aria-live="polite">Đang cập nhật báo cáo công nợ…</p> : null}
+    {loi ? <p role="alert" className="alert alert-danger"><Icon name="alert" />{loi}</p> : null}
+    {baoCao.congNo.length === 0 ? <EmptyState title="Không có hoá đơn còn nợ trong phạm vi này." /> : (
+      <Card data-debt-list aria-label="Danh sách công nợ, sắp xếp từ nợ quá hạn lâu nhất">
+        <DataTable
+          rows={baoCao.congNo}
+          columns={COT}
+          getRowId={(n) => n.hoaDonId}
+          chips={CHIP}
+          timTheo={(n) => `${n.tenToaNha} ${n.soPhong} ${n.hoTenNguoiThue} ${n.maHoaDon}`}
+          searchLabel="Tìm phòng, người thuê, mã hoá đơn"
+          noun="khoản nợ"
+          pageSize={250}
+          rowProps={(n) => ({ 'data-debt-row': String(n.hoaDonId) })}
+        />
+      </Card>
+    )}
+    <p className="t-meta" style={{ margin: 0 }}>Tính lúc {baoCao.tinhLuc}. Bấm mã hoá đơn để đối chiếu chi tiết.</p>
+  </>)
 }
 
-function DanhSachNoDesktop({ congNo }: { congNo: ThongTinKhoanNoBaoCao[] }): React.ReactElement {
-  return (
-    <div data-debt-list aria-label="Danh sách công nợ, sắp xếp từ nợ quá hạn lâu nhất" style={styleTableWrap}>
-      <TableFrame minWidth={900}>
-        <thead>
-          <tr>
-            <TableHeadCell>Toà / phòng</TableHeadCell>
-            <TableHeadCell>Người thuê</TableHeadCell>
-            <TableHeadCell>Hoá đơn</TableHeadCell>
-            <TableHeadCell>Hạn thanh toán</TableHeadCell>
-            <TableHeadCell align="right">Quá hạn</TableHeadCell>
-            <TableHeadCell align="right">Còn nợ</TableHeadCell>
-          </tr>
-        </thead>
-        <tbody>{congNo.map((no) => <DongNo key={no.hoaDonId} no={no} />)}</tbody>
-      </TableFrame>
-    </div>
-  )
-}
+const CHIP: DataTableChip<ThongTinKhoanNoBaoCao>[] = [
+  { key: 'QUA_HAN', label: 'Quá hạn', match: (n) => n.soNgayQuaHan > 0 },
+  { key: 'QUA_30', label: 'Quá hạn trên 30 ngày', match: (n) => n.soNgayQuaHan > 30 },
+  { key: 'CHUA_QUA_HAN', label: 'Chưa quá hạn', match: (n) => n.soNgayQuaHan <= 0 },
+]
 
-function DanhSachNoMobile({ congNo }: { congNo: ThongTinKhoanNoBaoCao[] }): React.ReactElement {
-  return (
-    <div data-debt-list aria-label="Danh sách công nợ, sắp xếp từ nợ quá hạn lâu nhất" style={styleCards}>
-      {congNo.map((no) => (
-        <article key={no.hoaDonId} data-debt-row={no.hoaDonId} style={styleCard}>
-          <div style={styleCardHeading}>
-            <a href={`/hoa-don?hoaDonId=${no.hoaDonId}`} style={styleLink}>{no.maHoaDon}</a>
-            <strong>{dinhDangTien(no.conLai)} ₫</strong>
-          </div>
-          <span>{no.tenToaNha} · Phòng {no.soPhong}</span>
-          <span style={styleMuted}>{no.hoTenNguoiThue}</span>
-          <span style={styleMuted}>Hạn {dinhDangNgayIso(no.hanThanhToan)} · {no.soNgayQuaHan} ngày quá hạn</span>
-        </article>
-      ))}
-    </div>
-  )
-}
-
-function DongNo({ no }: { no: ThongTinKhoanNoBaoCao }): React.ReactElement {
-  return (
-    <tr data-debt-row={no.hoaDonId}>
-      <TableCell header>{no.tenToaNha} · {no.soPhong}</TableCell>
-      <TableCell>{no.hoTenNguoiThue}</TableCell>
-      <TableCell><a href={`/hoa-don?hoaDonId=${no.hoaDonId}`} style={styleLink}>{no.maHoaDon}</a></TableCell>
-      <TableCell>{dinhDangNgayIso(no.hanThanhToan)}</TableCell>
-      <TableCell align="right">{no.soNgayQuaHan} ngày</TableCell>
-      <TableCell align="right"><strong>{dinhDangTien(no.conLai)} ₫</strong></TableCell>
-    </tr>
-  )
-}
-
-const styleMuted: CSSProperties = { margin: '8px 0 0', color: 'var(--ma-text-secondary)', lineHeight: 1.6 }
-const styleField: CSSProperties = { display: 'grid', gap: 6, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }
-const styleInput: CSSProperties = { width: '100%', minWidth: 0, maxWidth: '100%', minHeight: 'var(--ma-hit-mobile)', padding: '0 10px', border: '1px solid var(--ma-border-strong)', borderRadius: 0, background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'var(--ma-text-body)', boxSizing: 'border-box' }
-const styleTableWrap: CSSProperties = { minWidth: 0, overflowX: 'auto' }
-const styleCards: CSSProperties = { display: 'grid', gap: 10 }
-const styleCard: CSSProperties = { display: 'grid', gap: 7, minWidth: 0, padding: 16, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }
-const styleCardHeading: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, minWidth: 0 }
-const styleLink: CSSProperties = { color: 'var(--ma-text-primary)', fontWeight: 800, textDecoration: 'underline', textUnderlineOffset: 3, overflowWrap: 'anywhere' }
+const COT: DataTableColumn<ThongTinKhoanNoBaoCao>[] = [
+  { key: 'phong', label: 'Toà / phòng', sortable: true, sortValue: (n) => `${n.tenToaNha} ${n.soPhong}`, render: (n) => <span className="td-main">{n.tenToaNha} · {n.soPhong}</span> },
+  { key: 'nguoiThue', label: 'Người thuê', the: 'tieu-de', sortable: true, sortValue: (n) => n.hoTenNguoiThue, render: (n) => <span title={n.hoTenNguoiThue}>{n.hoTenNguoiThue}</span> },
+  { key: 'hoaDon', label: 'Hoá đơn', render: (n) => <a href={`/hoa-don?hoaDonId=${n.hoaDonId}`} style={{ color: 'var(--ma-brand-accent)', textDecoration: 'none', fontWeight: 600 }}>{n.maHoaDon}</a> },
+  { key: 'han', label: 'Hạn thanh toán', sortable: true, sortValue: (n) => n.hanThanhToan, render: (n) => dinhDangNgayIso(n.hanThanhToan) },
+  { key: 'quaHan', label: 'Quá hạn', align: 'num', sortable: true, sortValue: (n) => n.soNgayQuaHan, render: (n) => <span className={n.soNgayQuaHan > 0 ? 't-danger t-strong' : undefined}>{n.soNgayQuaHan} ngày</span> },
+  { key: 'conLai', label: 'Còn nợ', align: 'num', sortable: true, sortValue: (n) => Number(n.conLai), render: (n) => <span className="t-money">{dinhDangTien(n.conLai)} ₫</span> },
+]
