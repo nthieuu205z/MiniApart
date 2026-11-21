@@ -312,6 +312,12 @@ th[aria-sort] .th-sort { color: var(--ma-text-primary); font-weight: 600; }
 .pager .pg:hover { background: var(--ma-paper-3); }
 .pager .pg[aria-current="page"] { background: var(--ma-text-primary); color: #fff; }
 
+/* ---------- Thông báo trong màn (ManagementShared.Feedback) ---------- */
+.alert { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; padding: 12px 16px; border-radius: var(--ma-radius-md); font: var(--ma-text-body-sm); overflow-wrap: anywhere; }
+.alert .ic { margin-top: 1px; flex: none; }
+.alert-danger { background: var(--ma-urgent-bg); color: var(--ma-urgent); }
+.alert-success { background: var(--ma-done-bg); color: var(--ma-done-text); }
+
 /* ---------- Tabs, segmented, breadcrumb ---------- */
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--ma-line-200); overflow-x: auto; scrollbar-width: none; }
 .tab { position: relative; height: 44px; padding: 0 12px; border: 0; background: none; font: 500 15px/1 var(--ma-font-ui); color: var(--ma-text-muted); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; }
