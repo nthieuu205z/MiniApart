@@ -200,7 +200,7 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
         </>
       ) : (
         <>
-          <div className="sb-brand">
+          <div className="sb-brand" style={collapsed ? undefined : { paddingBottom: 8 }}>
             <div className="logo" aria-hidden="true">M</div>
             <div>
               <div className="sb-name">{product}</div>
@@ -210,8 +210,8 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
 
           <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'grid', gap: 2, alignContent: 'start' }}>
             {groups.map((g) => (
-              <div key={g.label || 'chung'} style={{ display: 'grid', gap: 2 }}>
-                {g.label ? <div className="sb-label">{g.label}</div> : null}
+              <div key={g.label || 'chung'} style={{ display: 'grid', gap: collapsed ? 2 : 0 }}>
+                {g.label ? <div className="sb-label" style={collapsed ? undefined : { paddingTop: 6, paddingBottom: 0 }}>{g.label}</div> : null}
                 {g.items.map((it) => (
                   <a
                     key={it.label}
@@ -220,7 +220,7 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
                     aria-current={it.active ? 'page' : undefined}
                     aria-label={collapsed ? it.label : undefined}
                     title={collapsed ? it.label : undefined}
-                    style={{ minHeight: collapsed ? 'var(--ma-hit-mobile)' : undefined, marginLeft: it.depth === 1 ? 32 : undefined }}
+                    style={{ minHeight: collapsed ? 'var(--ma-hit-mobile)' : 36, marginLeft: it.depth === 1 ? 32 : undefined }}
                   >
                     {it.depth === 1 ? null : it.icon ? <Icon name={it.icon} /> : <Glyph name={it.glyph} size={16} strokeWidth={it.active ? 2 : 1.6} />}
                     <span>{it.label}</span>
