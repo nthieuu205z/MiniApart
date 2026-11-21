@@ -1,0 +1,51 @@
+[
+ {
+  "name": "nt-390",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "C:\\Users\\nthieuu05\\AppData\\Local\\hermes\\profiles\\bot-nthieuu\\cache\\scratch\\merged1\\nt-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 11,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12px \"Hoá đơn\"",
+    "12px \"Lịch sử\"",
+    "12px \"Tiêu thụ\"",
+    "12px \"Hợp đồng\"",
+    "12px \"Báo hỏng\"",
+    "12px \"Người thuê\"",
+    "12px \"›\"",
+    "12px \"Hoá đơn của tôi\""
+   ],
+   "contrast": {
+    "textNodesChecked": 93,
+    "minRatio": 1.35,
+    "below": [
+     "1.35 \"›\" rgb(214, 210, 203) / rgb(244,242,238)"
+    ]
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 600",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1546
+  }
+ }
+]
