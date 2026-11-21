@@ -431,10 +431,10 @@ describe('App role navigation', () => {
       expect(mountedApp!.container.textContent).toContain('Chủ sở hữu mẫu')
     })
 
-    expect(mountedApp.container.textContent).toContain('Quản lý tài khoản')
+    expect(mountedApp.container.textContent).toContain('tài khoản đang hoạt động')
     expect(mountedApp.container.textContent).toContain('Hoạt động (máy chủ)')
     expect(mountedApp.container.textContent).toContain('Tạo tài khoản')
-    expect(mountedApp.container.textContent).toContain('Khoá')
+    expect(mountedApp.container.querySelector('button[aria-label^="Thao tác khác cho"]')).not.toBeNull() // Khoá nằm trong menu "⋯"
     expect(mountedApp.container.textContent).not.toContain('Mật khẩu của người dùng khác')
   })
 
@@ -499,7 +499,10 @@ describe('App role navigation', () => {
     await vi.waitFor(() => {
       expect(mountedApp!.container.textContent).toContain('Thợ trực mới đã sửa')
     })
-    const lockButton = findButton(mountedApp.container, 'Khoá Thợ trực mới đã sửa')
+    await act(async () => {
+      mountedApp!.container.querySelector<HTMLButtonElement>('button[aria-label="Thao tác khác cho Thợ trực mới đã sửa"]')!.click()
+    })
+    const lockButton = findButton(mountedApp.container, 'Khoá tài khoản… Thợ trực mới đã sửa')
     await act(async () => {
       lockButton.click()
       await Promise.resolve()

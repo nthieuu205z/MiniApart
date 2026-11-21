@@ -69,6 +69,12 @@ async function renderScreen(mobile = false) {
   await vi.waitFor(() => expect(container.textContent).toContain('Người quản lý'))
 }
 
+async function moMenu(hoTen: string) {
+  const nut = container.querySelector<HTMLButtonElement>(`button[aria-label="Thao tác khác cho ${hoTen}"]`)
+  expect(nut).not.toBeNull()
+  await act(async () => nut!.click())
+}
+
 function button(label: string) {
   const found = [...container.querySelectorAll('button')].find((item) => item.textContent?.trim() === label)
   expect(found).toBeDefined()
@@ -101,7 +107,7 @@ describe('Quản lý tài khoản', () => {
   it('FR-AUT-06 liệt kê tài khoản từ máy chủ', async () => {
     vi.stubGlobal('fetch', createFetchMock().fetchMock)
     await renderScreen()
-    expect(container.textContent).toContain('0900000001')
+    expect(container.textContent).toContain('0900 000 001')
     expect(container.textContent).toContain('Toà A')
   })
 
@@ -115,10 +121,9 @@ describe('Quản lý tài khoản', () => {
     }))
 
     await act(async () => root.render(<QuanLyTaiKhoan token="test-token" />))
-    const emptyCell = await vi.waitFor(() => container.querySelector('tbody td[colspan="6"]'))
+    await vi.waitFor(() => expect(container.textContent).toContain('Chưa có tài khoản nào.'))
 
-    expect(emptyCell?.textContent).toContain('Chưa có tài khoản nào.')
-    expect(container.querySelector('table > div')).toBeNull()
+    expect(container.querySelector('table')).toBeNull()
   })
 
   it('FR-AUT-06 tạo tài khoản với vai trò và phân công toà', async () => {
@@ -157,7 +162,8 @@ describe('Quản lý tài khoản', () => {
     const { fetchMock } = createFetchMock()
     vi.stubGlobal('fetch', fetchMock)
     await renderScreen()
-    await act(async () => button('Khoá Người quản lý').click())
+    await moMenu('Người quản lý')
+    await act(async () => button('Khoá tài khoản… Người quản lý').click())
     expect(container.querySelector('[role="dialog"]')).not.toBeNull()
     const confirm = button('Khoá tài khoản')
     expect(fetchMock).not.toHaveBeenCalledWith('/api/nguoi-dung/1/khoa', expect.objectContaining({ method: 'POST' }))
@@ -171,7 +177,8 @@ describe('Quản lý tài khoản', () => {
   it('FR-AUT-06 yêu cầu xác nhận khoá và giải thích lịch sử vẫn được giữ', async () => {
     vi.stubGlobal('fetch', createFetchMock().fetchMock)
     await renderScreen()
-    await act(async () => button('Khoá Người quản lý').click())
+    await moMenu('Người quản lý')
+    await act(async () => button('Khoá tài khoản… Người quản lý').click())
     await vi.waitFor(() => expect(container.querySelector('[role="dialog"]')).not.toBeNull())
     expect(container.textContent).toContain('không đăng nhập được nữa')
     expect(container.textContent).toContain('lịch sử thao tác và bản ghi đã tạo vẫn giữ nguyên')
@@ -208,33 +215,39 @@ describe('Quản lý tài khoản', () => {
     await vi.waitFor(() => expect(container.querySelector('[data-testid="account-management"]')).not.toBeNull())
     expect(container.querySelector('[data-layout-variant="mobile"]')).not.toBeNull()
     expect(container.querySelector('[data-account-card]')).not.toBeNull()
-    expect(container.querySelector('table')).toBeNull()
   })
 
-  it('NFR-USA-01 wraps long account action labels on mobile', async () => {
+  it('NFR-USA-01 tên dài bị cắt bằng dấu … nhưng vẫn đọc được qua title', async () => {
     const { fetchMock, accounts } = createFetchMock()
     accounts[0].hoTen = 'Người quản lý có tên rất dài để kiểm tra giao diện điện thoại'
     vi.stubGlobal('fetch', fetchMock)
 
     await renderScreen(true)
 
-    const actionButton = [...container.querySelectorAll<HTMLButtonElement>('[data-account-card] button')]
-      .find((item) => item.textContent?.startsWith('Sửa'))
-    expect(actionButton).toBeDefined()
-    expect(actionButton?.style.maxWidth).toBe('100%')
-    expect(actionButton?.style.minWidth).toBe('0px')
-    expect(actionButton?.style.whiteSpace).toBe('normal')
-    expect(actionButton?.style.overflowWrap).toBe('anywhere')
+    const ten = container.querySelector<HTMLElement>('[data-account-card] .bq-cat')
+    expect(ten?.getAttribute('title')).toBe(accounts[0].hoTen)
+    expect(container.querySelector('[data-account-card] button')?.textContent).toContain('Sửa')
   })
 
-  it('NFR-USA-01 keeps desktop account actions inside the table cell at tablet width', async () => {
+  it('NFR-USA-01 bảng desktop nằm trong khung cuộn .table-wrap để không tràn ngang ở máy tính bảng', async () => {
     vi.stubGlobal('fetch', createFetchMock().fetchMock)
 
     await renderScreen(false)
 
-    const actionButtons = [...container.querySelectorAll<HTMLButtonElement>('tbody td:last-child button')]
-    expect(actionButtons.length).toBeGreaterThan(0)
-    expect(actionButtons.every((item) => item.style.maxWidth === '100%' && item.style.whiteSpace === 'normal')).toBe(true)
-    expect(container.querySelector('table')?.parentElement?.style.contain).toBe('paint')
+    expect(container.querySelector('.table-wrap > table')).not.toBeNull()
+    expect(container.querySelectorAll('tbody td:last-child button').length).toBeGreaterThan(0)
+  })
+
+  it('chip vai trò đếm đúng số tài khoản và lọc bảng', async () => {
+    const { fetchMock, accounts } = createFetchMock()
+    accounts.push({ id: 5, hoTen: 'Thợ Một', soDienThoai: '0900000005', vaiTro: 'THO', tenVaiTro: 'Thợ sửa chữa', trangThai: 'HOAT_DONG', tenTrangThai: 'Hoạt động', toaNhaIds: [2] })
+    vi.stubGlobal('fetch', fetchMock)
+    await renderScreen()
+
+    const chipTho = [...container.querySelectorAll<HTMLButtonElement>('button.chip')].find((item) => item.textContent?.startsWith('Thợ'))
+    expect(chipTho?.querySelector('.n')?.textContent).toBe('1')
+    await act(async () => chipTho!.click())
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
+    expect(container.querySelector('tbody')?.textContent).toContain('Thợ Một')
   })
 })

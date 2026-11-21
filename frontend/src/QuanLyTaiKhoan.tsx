@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react'
 import {
   ApiError,
   capNhatNguoiDungQuanLy,
+  fetchCurrentUser,
   fetchNguoiDungQuanLy,
   fetchToaNha,
   fetchVaiTro,
@@ -14,11 +15,14 @@ import {
 } from './api'
 import { Button } from './design/core/Button'
 import { StatusTag } from './design/core/StatusTag'
-import { SysLabel } from './design/core/SysLabel'
+import { Icon } from './design/core/Icon'
 import { ConfirmDialog } from './design/feedback/ConfirmDialog'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Toast } from './design/feedback/Toast'
-import { ActionRow, CheckboxField, CheckboxGroup, FormField, FormPanel, ScreenHeader, ScreenNotice, ScreenSurface, TableActions, TableFrame } from './design/layout/Screen'
+import { Card } from './design/layout/Card'
+import { ActionRow, CheckboxField, CheckboxGroup, FormField, FormPanel, ScreenNotice } from './design/layout/Screen'
+import { DataTable, type DataTableColumn } from './design/table/DataTable'
+import { CSS_BANG_QUAN_TRI, MenuThaoTac, MucMenu, NguoiCoAvatar, nhomSoDienThoai } from './bangQuanTriChung'
 
 type Props = {
   token: string
@@ -40,6 +44,8 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
   const [nguoiDungChoKhoa, setNguoiDungChoKhoa] = useState<ThongTinQuanLyNguoiDung | null>(null)
   const [loi, setLoi] = useState<string | null>(null)
   const [thongBao, setThongBao] = useState<string | null>(null)
+  const [locTrangThai, setLocTrangThai] = useState<'' | 'HOAT_DONG' | 'KHOA'>('')
+  const [idCuaToi, setIdCuaToi] = useState<number | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -65,6 +71,9 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
       mounted = false
     }
   }, [token])
+
+  // "· bạn": lấy id người đang đăng nhập; lỗi thì thôi, không chặn màn hình.
+  useEffect(() => { let mounted = true; fetchCurrentUser(token).then((me) => { if (mounted) setIdCuaToi(me.id) }).catch(() => undefined); return () => { mounted = false } }, [token])
 
   function batDauTao() {
     setThongBao(null)
@@ -139,138 +148,89 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
     }
   }
 
+  const dangHoatDong = danhSach.filter((item) => item.trangThai === 'HOAT_DONG').length
+  const tenToa = (ids: number[]) => ids.map((id) => toaNha.find((building) => building.id === id)?.ten ?? `Toà #${id}`)
+  const hangHienThi = locTrangThai ? danhSach.filter((item) => (locTrangThai === 'KHOA' ? item.trangThai !== 'HOAT_DONG' : item.trangThai === 'HOAT_DONG')) : danhSach
+  const chips = [{ key: 'TAT_CA', label: 'Tất cả', match: () => true }, ...vaiTroTheoThuTu(vaiTro, danhSach).map((role) => ({ key: role.vaiTro, label: NHAN_VAI_TRO[role.vaiTro] ?? role.tenVaiTro, match: (item: ThongTinQuanLyNguoiDung) => item.vaiTro === role.vaiTro }))]
+  const cot: DataTableColumn<ThongTinQuanLyNguoiDung>[] = [
+    { key: 'nguoiDung', label: 'Người dùng', sortable: true, sortValue: (item) => item.hoTen, render: (item) => <NguoiCoAvatar id={item.id} ten={item.hoTen} phu={<>{nhomSoDienThoai(item.soDienThoai)}{item.id === idCuaToi ? ' · bạn' : ''}</>} /> },
+    { key: 'vaiTro', label: 'Vai trò', sortable: true, sortValue: (item) => item.tenVaiTro, render: (item) => <span className="bq-tag-vai">{item.tenVaiTro}</span> },
+    { key: 'toa', label: 'Toà được giao', render: (item) => {
+      const ten = tenToa(item.toaNhaIds)
+      if (ten.length > 0) return <span className="bq-toa" title={ten.join(', ')}>{ten.join(', ')}</span>
+      return <span style={{ color: 'var(--ma-text-muted)' }}>{item.vaiTro === 'QTHT' ? 'Toàn hệ thống' : item.vaiTro === 'NGUOI_THUE' ? 'Người thuê' : 'Chưa gán'}</span>
+    } },
+    { key: 'trangThai', label: 'Trạng thái', sortable: true, sortValue: (item) => item.tenTrangThai, render: (item) => <StatusTag tone={item.trangThai === 'BI_KHOA' ? 'closed' : 'done'}>{item.tenTrangThai}</StatusTag> },
+    { key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong', render: (item) => (
+      <div className="td-acts">
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => batDauSua(item)}>Sửa<span className="sr-only"> {item.hoTen}</span></button>
+        <MenuThaoTac nhan={`Thao tác khác cho ${item.hoTen}`}>{(dong) => <>
+          <MucMenu icon="building" onClick={() => { dong(); batDauSua(item) }}>Đổi toà được giao</MucMenu>
+          {item.trangThai === 'HOAT_DONG' ? <MucMenu icon="lock" nguyHiem onClick={() => { dong(); setNguoiDungChoKhoa(item) }}>Khoá tài khoản…<span className="sr-only"> {item.hoTen}</span></MucMenu> : null}
+        </>}</MenuThaoTac>
+      </div>
+    ) },
+  ]
+
   return (
-    <ScreenSurface
+    <section
       className={`account-management account-management--${mobile ? 'mobile' : 'desktop'}`}
       data-testid="account-management"
       data-layout-variant={mobile ? 'mobile' : 'desktop'}
       aria-labelledby="account-management-title"
+      style={{ display: 'grid', gap: 16, minWidth: 0 }}
     >
-      <ScreenHeader action={<Button onClick={batDauTao}>Tạo tài khoản</Button>}>
-        <div>
-          <SysLabel>QUẢN LÝ TÀI KHOẢN</SysLabel>
-          <h3 id="account-management-title">Quản lý tài khoản</h3>
+      <style>{CSS_BANG_QUAN_TRI}</style>
+      <header className="topbar">
+        <div className="title-block">
+          <h1 className="h1" id="account-management-title">Tài khoản</h1>
+          <p className="sub">{dangHoatDong} tài khoản đang hoạt động · tài khoản đã phát sinh dữ liệu chỉ khoá, không xoá</p>
         </div>
-      </ScreenHeader>
+        <div className="topbar-actions"><Button onClick={batDauTao}><Icon name="plus" />Tạo tài khoản</Button></div>
+      </header>
 
-      <ScreenNotice>
-        Tạo tài khoản sẽ gửi mã kích hoạt để người dùng tự chọn mật khẩu. Tài khoản đã phát sinh dữ liệu chỉ được khoá, không xoá.
-      </ScreenNotice>
-
-      {loi ? <ScreenNotice tone="urgent">{loi}</ScreenNotice> : null}
+      {loi ? <div role="alert"><ScreenNotice tone="urgent">{loi}</ScreenNotice></div> : null}
       {thongBao ? <Toast>{thongBao}</Toast> : null}
 
       {dangTai ? (
-        <ScreenNotice live>Đang tải danh sách tài khoản…</ScreenNotice>
-      ) : mobile ? (
-        <div data-mobile-account-list style={{ display: 'grid', gap: 10, minWidth: 0 }}>
-          <h4 style={{ margin: 0 }}>Danh sách tài khoản</h4>
-          {danhSach.length === 0 ? (
-            <EmptyState title="Chưa có tài khoản nào." />
-          ) : danhSach.map((nguoiDung) => (
-            <article key={nguoiDung.id} data-account-card="true" data-account-id={nguoiDung.id} style={{ display: 'grid', gap: 12, minWidth: 0, padding: 14, border: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-card)' }}>
-              <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, minWidth: 0 }}>
-                <div style={{ minWidth: 0 }}>
-                  <strong style={{ display: 'block', overflowWrap: 'anywhere' }}>{nguoiDung.hoTen}</strong>
-                  <span style={{ display: 'block', marginTop: 4, color: 'var(--ma-text-secondary)', fontFamily: 'var(--ma-font-mono)', fontSize: 13 }}>{nguoiDung.soDienThoai}</span>
-                </div>
-                <StatusTag tone={nguoiDung.trangThai === 'BI_KHOA' ? 'closed' : 'done'}>{nguoiDung.tenTrangThai}</StatusTag>
-              </header>
-              <dl style={{ display: 'grid', gap: 8, margin: 0 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(7rem, 0.8fr) minmax(0, 1.2fr)', gap: 10, paddingTop: 8, borderTop: '1px solid var(--ma-border-subtle)' }}>
-                  <dt style={{ color: 'var(--ma-text-secondary)' }}>Vai trò</dt>
-                  <dd style={{ margin: 0, minWidth: 0, overflowWrap: 'anywhere' }}>{nguoiDung.tenVaiTro}</dd>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(7rem, 0.8fr) minmax(0, 1.2fr)', gap: 10, paddingTop: 8, borderTop: '1px solid var(--ma-border-subtle)' }}>
-                  <dt style={{ color: 'var(--ma-text-secondary)' }}>Toà được giao</dt>
-                  <dd style={{ margin: 0, minWidth: 0, overflowWrap: 'anywhere' }}>{danhSachToaNha(nguoiDung.toaNhaIds, toaNha)}</dd>
-                </div>
-              </dl>
-              <TableActions>
-                <Button
-                  variant="secondary"
-                  onClick={() => batDauSua(nguoiDung)}
-                  style={{ flex: '1 1 8rem', maxWidth: '100%', minWidth: 0, whiteSpace: 'normal', overflowWrap: 'anywhere', justifyContent: 'center', textAlign: 'center' }}
-                >
-                  Sửa {nguoiDung.hoTen}
-                </Button>
-                {nguoiDung.trangThai === 'HOAT_DONG' ? (
-                  <Button
-                    variant="secondary"
-                    type="button"
-                    blocked={idDangKhoa === nguoiDung.id}
-                    blockedReason={idDangKhoa === nguoiDung.id ? 'Đang cập nhật trạng thái tài khoản.' : undefined}
-                    onClick={() => setNguoiDungChoKhoa(nguoiDung)}
-                    style={{ flex: '1 1 8rem', maxWidth: '100%', minWidth: 0, whiteSpace: 'normal', overflowWrap: 'anywhere', justifyContent: 'center', textAlign: 'center' }}
-                  >
-                    {idDangKhoa === nguoiDung.id ? 'Đang khoá…' : `Khoá ${nguoiDung.hoTen}`}
-                  </Button>
-                ) : null}
-              </TableActions>
-            </article>
-          ))}
-        </div>
+        <EmptyState title="Đang tải danh sách tài khoản…" />
+      ) : danhSach.length === 0 ? (
+        <EmptyState title="Chưa có tài khoản nào." />
       ) : (
-        <TableFrame minWidth={700}>
-            <caption>Danh sách tài khoản</caption>
-            <thead>
-              <tr>
-                <th scope="col">Họ tên</th>
-                <th scope="col">Số điện thoại</th>
-                <th scope="col">Vai trò</th>
-                <th scope="col">Toà được giao</th>
-                <th scope="col">Trạng thái</th>
-                <th scope="col"><span className="sr-only">Thao tác</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {danhSach.length === 0 ? (
-                <tr>
-                  <td colSpan={6}><EmptyState title="Chưa có tài khoản nào." /></td>
-                </tr>
-              ) : danhSach.map((nguoiDung) => (
-                <tr key={nguoiDung.id} data-account-id={nguoiDung.id}>
-                  <th scope="row">{nguoiDung.hoTen}</th>
-                  <td>{nguoiDung.soDienThoai}</td>
-                  <td>{nguoiDung.tenVaiTro}</td>
-                  <td>{danhSachToaNha(nguoiDung.toaNhaIds, toaNha)}</td>
-                  <td><StatusTag tone={nguoiDung.trangThai === 'BI_KHOA' ? 'closed' : 'done'}>{nguoiDung.tenTrangThai}</StatusTag></td>
-                  <td><TableActions>
-                    <Button
-                      variant="secondary"
-                      onClick={() => batDauSua(nguoiDung)}
-                      style={{ maxWidth: '100%', minWidth: 0, whiteSpace: 'normal', overflowWrap: 'anywhere', justifyContent: 'center', textAlign: 'center' }}
-                    >
-                      Sửa {nguoiDung.hoTen}
-                    </Button>
-                    {nguoiDung.trangThai === 'HOAT_DONG' ? (
-                      <Button
-                        variant="secondary"
-                        type="button"
-                        blocked={idDangKhoa === nguoiDung.id}
-                        blockedReason={idDangKhoa === nguoiDung.id ? 'Đang cập nhật trạng thái tài khoản.' : undefined}
-                        onClick={() => setNguoiDungChoKhoa(nguoiDung)}
-                        style={{ maxWidth: '100%', minWidth: 0, whiteSpace: 'normal', overflowWrap: 'anywhere', justifyContent: 'center', textAlign: 'center' }}
-                      >
-                        {idDangKhoa === nguoiDung.id ? 'Đang khoá…' : `Khoá ${nguoiDung.hoTen}`}
-                      </Button>
-                    ) : null}
-                  </TableActions></td>
-                </tr>
-              ))}
-            </tbody>
-        </TableFrame>
+        <Card className="bq-the-loc" data-account-list={mobile ? 'mobile' : 'desktop'}>
+          <label className="bq-toolbar-phai bq-loc-phai">
+            <span className="sr-only">Lọc theo trạng thái</span>
+            <select className="select" style={{ width: 152 }} value={locTrangThai} onChange={(event) => setLocTrangThai(event.target.value as '' | 'HOAT_DONG' | 'KHOA')}>
+              <option value="">Mọi trạng thái</option>
+              <option value="HOAT_DONG">Hoạt động</option>
+              <option value="KHOA">Đã khoá</option>
+            </select>
+          </label>
+          <DataTable
+            rows={hangHienThi}
+            columns={cot}
+            getRowId={(item) => item.id}
+            chips={chips}
+            defaultChip="TAT_CA"
+            timTheo={(item) => `${item.hoTen} ${item.soDienThoai}`}
+            searchLabel="Tìm tên, SĐT"
+            noun="tài khoản"
+            pageSize={8}
+            rowLabel={(item) => item.hoTen}
+            rowProps={(item) => ({ 'data-account-id': String(item.id), 'data-account-card': 'true' })}
+          />
+        </Card>
       )}
 
       {bieuMau ? (
         <FormPanel testId="account-form" onSubmit={luuTaiKhoan}>
           <div>
-            <SysLabel>QUẢN LÝ TÀI KHOẢN</SysLabel>
-            <h4>{bieuMau.id === null ? 'Tạo tài khoản' : 'Sửa tài khoản'}</h4>
+            <h2 className="h2">{bieuMau.id === null ? 'Tạo tài khoản' : 'Sửa tài khoản'}</h2>
           </div>
 
           <FormField label="Họ tên">
             <input
+              className="input"
               name="hoTen"
               value={bieuMau.hoTen}
               onChange={(event) => setBieuMau((current) => current ? { ...current, hoTen: event.target.value } : current)}
@@ -280,6 +240,7 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
 
           <FormField label="Số điện thoại">
             <input
+              className="input"
               name="soDienThoai"
               value={bieuMau.soDienThoai}
               onChange={(event) => setBieuMau((current) => current ? { ...current, soDienThoai: event.target.value } : current)}
@@ -290,6 +251,7 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
 
           <FormField label="Vai trò">
             <select
+              className="select"
               name="vaiTro"
               value={bieuMau.vaiTro}
               required
@@ -299,7 +261,7 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
             </select>
           </FormField>
 
-          {bieuMau.vaiTro === 'NGUOI_THUE' ? <FormField label="Mã hồ sơ người thuê liên kết"><input type="number" min="1" required value={bieuMau.nguoiThueId ?? ''} onChange={(event) => setBieuMau((current) => current ? { ...current, nguoiThueId: event.target.value ? Number(event.target.value) : null } : current)} /><span>Lấy mã hồ sơ từ màn Người thuê của quản lý toà nhà.</span></FormField> : null}
+          {bieuMau.vaiTro === 'NGUOI_THUE' ? <FormField label="Mã hồ sơ người thuê liên kết"><input className="input" type="number" min="1" required value={bieuMau.nguoiThueId ?? ''} onChange={(event) => setBieuMau((current) => current ? { ...current, nguoiThueId: event.target.value ? Number(event.target.value) : null } : current)} /><span>Lấy mã hồ sơ từ màn Người thuê của quản lý toà nhà.</span></FormField> : null}
 
           <CheckboxGroup legend="Toà nhà được giao">
             {toaNha.length === 0 ? (
@@ -343,16 +305,19 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
         onCancel={() => setNguoiDungChoKhoa(null)}
         onConfirm={() => { const account = nguoiDungChoKhoa; setNguoiDungChoKhoa(null); void khoaTaiKhoan(account) }}
       /> : null}
-    </ScreenSurface>
+    </section>
   )
 }
 
-function danhSachToaNha(ids: number[], toaNha: ThongTinToaNha[]) {
-  if (ids.length === 0) return 'Chưa gán'
-  return ids.map((id) => {
-    const item = toaNha.find((building) => building.id === id)
-    return item ? `${item.maToa} · ${item.ten}` : `Toà #${id}`
-  }).join(', ')
+const NHAN_VAI_TRO: Record<string, string> = { NGUOI_THUE: 'Người thuê', QUAN_LY: 'Quản lý', CHU: 'Chủ sở hữu', THO: 'Thợ', QTHT: 'Quản trị' }
+const THU_TU_VAI_TRO = ['NGUOI_THUE', 'QUAN_LY', 'CHU', 'THO', 'QTHT']
+
+/** Chip theo vai trò máy chủ trả về, xếp theo thứ tự thiết kế; vai trò lạ xếp cuối. */
+function vaiTroTheoThuTu(vaiTro: ThongTinVaiTro[], danhSach: ThongTinQuanLyNguoiDung[]): ThongTinVaiTro[] {
+  const co = new Map(vaiTro.map((role) => [role.vaiTro, role]))
+  for (const item of danhSach) if (!co.has(item.vaiTro)) co.set(item.vaiTro, { vaiTro: item.vaiTro, tenVaiTro: item.tenVaiTro })
+  const rank = (code: string) => { const i = THU_TU_VAI_TRO.indexOf(code); return i < 0 ? 99 : i }
+  return [...co.values()].sort((a, b) => rank(a.vaiTro) - rank(b.vaiTro))
 }
 
 function thongBaoLoi(reason: unknown, fallback: string) {
