@@ -1,35 +1,30 @@
 import type * as React from 'react'
 
-export interface FilterChipProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface FilterChipProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onClick'> {
   active?: boolean
-  /** Có onRemove thì chip hiện nút bỏ lọc. */
+  /** Số kết quả hiện cạnh nhãn. */
+  count?: number
+  onClick?: React.MouseEventHandler<HTMLButtonElement>
+  /** Có onRemove thì chip chỉ để hiển thị bộ lọc đang bật, kèm nút bỏ lọc. */
   onRemove?: () => void
   children?: React.ReactNode
 }
 
+const ACTIVE: React.CSSProperties = {
+  background: 'var(--ma-brand-accent-light)',
+  borderColor: 'var(--ma-brand-primary)',
+  color: 'var(--ma-brand-primary-hover)',
+}
+
 /** Chip lọc. Bộ lọc đang bật phải hiện thành chip để trạng thái rỗng-do-lọc giải thích được. */
-export function FilterChip({ active = false, onRemove, children, style, ...rest }: FilterChipProps): React.ReactElement {
-  return (
-    <span
-      style={{
-        fontFamily: "var(--ma-font-mono)",
-        fontSize: 11,
-        fontWeight: active ? 700 : 400,
-        letterSpacing: '0.06em',
-        padding: '4px 10px',
-        border: `1px solid ${active ? 'var(--ma-ink-900)' : 'var(--ma-border-dashed)'}`,
-        color: active ? 'var(--ma-text-primary)' : 'var(--ma-text-secondary)',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        borderRadius: 'var(--ma-radius-pill)',
-        transition: 'all 0.15s ease',
-        ...(style || {}),
-      }}
-      {...rest}
-    >
-      {children}
-      {onRemove ? (
+export function FilterChip({ active = false, count, onClick, onRemove, children, className, style, ...rest }: FilterChipProps): React.ReactElement {
+  const cls = ['chip', className].filter(Boolean).join(' ')
+  const n = count === undefined ? null : <span className="n">{count}</span>
+  if (onRemove) {
+    return (
+      <span className={cls} style={{ ...(active ? ACTIVE : {}), ...(style || {}) }} {...rest}>
+        {children}
+        {n}
         <button
           type="button"
           onClick={onRemove}
@@ -38,7 +33,13 @@ export function FilterChip({ active = false, onRemove, children, style, ...rest 
         >
           Bỏ
         </button>
-      ) : null}
-    </span>
+      </span>
+    )
+  }
+  return (
+    <button type="button" className={cls} aria-pressed={active} onClick={onClick} style={style} {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)}>
+      {children}
+      {n}
+    </button>
   )
 }

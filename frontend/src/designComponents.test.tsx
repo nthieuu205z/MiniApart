@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { Button } from './design/core/Button'
 import { Figure } from './design/core/Figure'
 import { Glyph } from './design/core/Glyph'
+import { StatusTag } from './design/core/StatusTag'
+import { FilterChip } from './design/forms/FilterChip'
 import { ConfirmDialog } from './design/feedback/ConfirmDialog'
 import { MeterInput } from './design/forms/MeterInput'
 import { MetaItem, TableCell, TableHeadCell } from './design/layout/Screen'
@@ -210,5 +212,26 @@ describe('MiniApart design components', () => {
     expect(container.querySelector('[role="dialog"]')).toBeNull()
     expect(opener.hasAttribute('inert')).toBe(false)
     expect(document.activeElement).toBe(opener)
+  })
+
+  it('maps Button primary to the design btn-primary class', async () => {
+    await act(async () => root.render(<Button variant="primary" type="submit">Lưu</Button>))
+    const btn = container.querySelector('button')!
+    expect(btn.classList.contains('btn-primary')).toBe(true)
+    expect(btn.type).toBe('submit')
+  })
+
+  it('shows StatusTag with an icon and text', async () => {
+    await act(async () => root.render(<StatusTag tone="urgent">Quá hạn</StatusTag>))
+    const tag = container.querySelector('.tag')!
+    expect(tag.querySelector('svg')).not.toBeNull()
+    expect(tag.textContent).toBe('Quá hạn')
+  })
+
+  it('exposes FilterChip active state and count', async () => {
+    await act(async () => root.render(<FilterChip active count={9}>Hiệu lực</FilterChip>))
+    const chip = container.querySelector('button.chip')!
+    expect(chip.getAttribute('aria-pressed')).toBe('true')
+    expect(chip.textContent).toContain('9')
   })
 })

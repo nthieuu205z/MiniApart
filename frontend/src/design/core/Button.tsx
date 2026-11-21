@@ -19,29 +19,14 @@ export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
   children?: React.ReactNode
 }
 
-const BASE: React.CSSProperties = {
-  fontFamily: 'var(--ma-font-ui)',
-  border: '1px solid transparent',
-  borderRadius: 'var(--ma-radius)',
-  cursor: 'pointer',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 8,
-  whiteSpace: 'nowrap',
-  transition: 'all 0.15s ease',
-  boxShadow: 'var(--ma-shadow-sm)',
+const CLASS: Record<'primary' | 'secondary' | 'text', string> = {
+  primary: 'btn btn-primary',
+  secondary: 'btn btn-secondary',
+  text: 'btn btn-ghost',
 }
 
-const SIZES: Record<NonNullable<ButtonProps['size']>, React.CSSProperties> = {
-  md: { fontSize: 14, fontWeight: 600, padding: "10px 18px", minHeight: 44 },
-  sm: { fontSize: 13, fontWeight: 500, padding: "7px 14px", minHeight: 36 },
-}
-
-const VARIANTS: Record<NonNullable<ButtonProps['variant']>, React.CSSProperties> = {
-  primary: { background: "var(--ma-brand-primary)", color: "#FFFFFF", borderColor: "var(--ma-brand-primary)" },
-  secondary: { background: "var(--ma-bg-card)", color: "var(--ma-text-primary)", borderColor: "var(--ma-border-default)" },
-  text: { background: "transparent", color: "var(--ma-brand-blue)", borderColor: "transparent", padding: "9px 4px", textDecoration: "none", boxShadow: "none" },
+// Chỉ dùng trên nền tối: giữ inline như cũ, lớp .btn lo kích thước.
+const INVERSE: Record<'onInverse' | 'onInverseGhost', React.CSSProperties> = {
   onInverse: { background: "#FFFFFF", color: "var(--ma-brand-primary)", borderColor: "#FFFFFF" },
   onInverseGhost: { background: "rgba(255, 255, 255, 0.1)", color: "#FFFFFF", borderColor: "rgba(255, 255, 255, 0.2)" },
 }
@@ -55,22 +40,18 @@ export function Button({
   blockedReason,
   children,
   style,
+  className,
   onClick,
   onKeyDown,
   ...rest
 }: ButtonProps): React.ReactElement {
-  const s: React.CSSProperties = { ...BASE, ...SIZES[size], ...VARIANTS[variant], ...(style || {}) }
-  if (blocked) {
-    Object.assign(s, {
-      background: "transparent",
-      color: "var(--ma-text-disabled)",
-      borderColor: "var(--ma-border-default)",
-      cursor: "not-allowed",
-    })
-  }
+  const cls = [variant in CLASS ? CLASS[variant as keyof typeof CLASS] : 'btn', size === 'sm' ? 'btn-sm' : '', className].filter(Boolean).join(' ')
+  // minHeight 44 giữ vùng chạm ≥44px ở mọi cỡ màn (ViecCuaToi.test khoá); .btn tự cao 40/48.
+  const s: React.CSSProperties = { ...(size === 'md' ? { minHeight: 44 } : {}), ...(INVERSE[variant as keyof typeof INVERSE] ?? {}), ...(style || {}) }
   const btn = (
     <button
       type="button"
+      className={cls}
       style={s}
       {...rest}
       aria-disabled={blocked || undefined}
