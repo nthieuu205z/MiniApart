@@ -26,16 +26,23 @@ const fill = (sel, val) => `(() => { const el = document.querySelector(${JSON.st
 
 const b = await Browser.launch({ width: 1440, height: 900 })
 const ketQua = []
+let vaiTroHienTai // một phiên đăng nhập dùng lại cho các job liền nhau cùng vai trò; đổi vai trò thì xoá phiên rồi đăng nhập lại
 try {
   for (const j of jobs) {
     const p = await b.newPage({ width: j.w, height: j.h, mobile: j.w < 600, dsf: 1 })
-    if (j.role) {
+    const vaiTro = j.role ?? null
+    if (vaiTroHienTai !== undefined && vaiTro !== vaiTroHienTai) {
+      await p.goto(`${BASE}/dang-nhap`, { settleMs: 300 })
+      await p.eval('localStorage.clear(); sessionStorage.clear(); 1')
+    }
+    if (j.role && vaiTro !== vaiTroHienTai) {
       await p.goto(`${BASE}/dang-nhap`, { settleMs: 800 })
       const ok = (await p.eval(fill('input[autocomplete="username"]', SDT[j.role]))) && (await p.eval(fill('input[autocomplete="current-password"]', process.env.MA_DEMO_PASSWORD)))
       if (!ok) throw new Error(`${j.name}: không thấy ô đăng nhập`)
       await p.eval(`document.querySelector('form button[type="submit"]').click()`)
       for (let i = 0; i < 40 && !(await p.eval(`!!document.querySelector('nav[data-navigation-layout], nav[aria-label]')`)); i++) await sleep(250)
     }
+    vaiTroHienTai = vaiTro
     await p.goto(`${BASE}${j.path}`, { settleMs: 1500 })
     await p.eval('document.fonts.ready.then(() => 1)')
     const qa = await p.eval(readFileSync(join(HERE, 'qa-probe.js'), 'utf8'))
