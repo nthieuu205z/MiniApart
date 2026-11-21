@@ -155,7 +155,7 @@ describe('DanhMucPhong', () => {
       }
     }
 
-    expect(readTile('101')).toMatchObject({ text: 'Trống', color: 'var(--ma-text-disabled)', border: '1px dashed var(--ma-border-dashed)' })
+    expect(readTile('101')).toMatchObject({ text: 'Trống', color: 'var(--ma-text-secondary)', border: '1px dashed var(--ma-border-dashed)' })
     expect(readTile('102')).toMatchObject({ text: 'Đã đặt cọc', color: 'var(--ma-waiting)', border: '1px solid var(--ma-waiting-border)', glyph: 'var(--ma-waiting)' })
     expect(readTile('103')).toMatchObject({ text: 'Đang thuê', color: 'var(--ma-done-text)', border: '1px solid var(--ma-done-text)', glyph: 'var(--ma-done-text)' })
     expect(readTile('104')).toMatchObject({ text: 'Đang sửa', color: 'var(--ma-waiting)' })

@@ -32,7 +32,7 @@ const STATES: Record<SingleRoomState, RoomStateStyle> = {
   missing:  { glyph: "thieu-so", glyphColor: "var(--ma-urgent)", flag: "var(--ma-urgent)", border: "1px solid var(--ma-urgent)", labelColor: "var(--ma-urgent)", labelWeight: 700 },
   debt:     { glyph: "con-no", glyphColor: "var(--ma-urgent)", flag: "var(--ma-urgent)", labelColor: "var(--ma-urgent)", labelWeight: 700 },
   repair:   { glyph: "cho-tho", glyphColor: "var(--ma-waiting)", flag: "var(--ma-waiting-border)", labelColor: "var(--ma-waiting)", labelWeight: 700 },
-  vacant:   { glyph: "phong-trong", glyphColor: "var(--ma-ink-300)", flag: null, labelColor: "var(--ma-text-disabled)", labelWeight: 400, dashed: true },
+  vacant:   { glyph: "phong-trong", glyphColor: "var(--ma-ink-300)", flag: null, labelColor: "var(--ma-text-secondary)", labelWeight: 400, dashed: true },
   reserved: { glyph: "hop-dong", glyphColor: "var(--ma-waiting)", flag: "var(--ma-waiting-border)", border: "1px solid var(--ma-waiting-border)", labelColor: "var(--ma-waiting)", labelWeight: 700 },
   occupied: { glyph: "hop-dong", glyphColor: "var(--ma-done-text)", flag: "var(--ma-done-text)", border: "1px solid var(--ma-done-text)", labelColor: "var(--ma-done-text)", labelWeight: 700 },
   stopped:  { glyph: "bi-chan", glyphColor: "var(--ma-ink-900)", flag: "var(--ma-ink-900)", border: "1px solid var(--ma-border-strong)", labelColor: "var(--ma-ink-900)", labelWeight: 700 },
@@ -61,7 +61,7 @@ export function RoomCell({ room, state = 'recorded', label, taskCount, multiSumm
             {taskCount}
           </span>
         </div>
-        <div className="room-tile__status" style={{ fontSize: 11, marginTop: 5, color: "var(--ma-text-secondary-on-inverse)" }}>{multiSummary}</div>
+        <div className="room-tile__status" style={{ fontSize: 13, marginTop: 5, color: "var(--ma-text-secondary-on-inverse)" }}>{multiSummary}</div>
       </div>
     );
   }
@@ -87,7 +87,7 @@ export function RoomCell({ room, state = 'recorded', label, taskCount, multiSumm
           style={{
             fontSize: 15,
             fontWeight: 600,
-            color: s.dashed ? "var(--ma-text-disabled)" : "var(--ma-text-primary)",
+            color: s.dashed ? "var(--ma-text-secondary)" : "var(--ma-text-primary)",
           }}
         >
           {room}
@@ -98,7 +98,7 @@ export function RoomCell({ room, state = 'recorded', label, taskCount, multiSumm
         className="room-tile__status"
         style={{
           fontFamily: "var(--ma-font-ui)",
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: s.labelWeight,
           color: s.labelColor,
           marginTop: 5,

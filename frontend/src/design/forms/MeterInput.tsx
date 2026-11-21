@@ -38,7 +38,7 @@ export function MeterInput({
   };
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 5, ...(style || {}) }}>
-      <label style={{ fontSize: 12, fontWeight: 600, fontFamily: "var(--ma-font-ui)" }}>{label}</label>
+      <label style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--ma-font-ui)" }}>{label}</label>
       <div
         style={{
           fontSize: 17,
@@ -51,14 +51,14 @@ export function MeterInput({
         {children ?? value}
       </div>
       {state === "error" && error ? (
-        <div style={{ fontSize: 11.5, lineHeight: 1.45, color: "var(--ma-urgent)" }}>{error}</div>
+        <div style={{ fontSize: 13, lineHeight: 1.45, color: "var(--ma-urgent)" }}>{error}</div>
       ) : consumption ? (
-        <div style={{ fontSize: 11.5 }}>
+        <div style={{ fontSize: 13 }}>
           <b>= {consumption}</b>{" "}
           <span style={{ color: "var(--ma-text-secondary)" }}>· hiện ngay khi gõ</span>
         </div>
       ) : (
-        <div style={{ fontSize: 11.5, color: "var(--ma-text-secondary)" }}>
+        <div style={{ fontSize: 13, color: "var(--ma-text-secondary)" }}>
           {hint || (previous ? `Kỳ trước ${previous}` : null)}
         </div>
       )}
