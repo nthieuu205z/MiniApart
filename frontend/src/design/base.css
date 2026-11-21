@@ -1,0 +1,16 @@
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font: var(--ma-text-body);
+  color: var(--ma-text-primary);
+  background: var(--ma-bg-page);
+  font-variant-numeric: tabular-nums;   /* mọi con số thẳng cột */
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--ma-text-link); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+img { display: block; max-width: 100%; }
