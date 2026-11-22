@@ -17,3 +17,7 @@
   .sc-split .drawer-f .btn { min-height: 44px; }
   .sc-dong { width: 44px; height: 44px; }
 }
+
+/* Đầu ngăn: thẻ + mã + nút đóng luôn trên một dòng (mã co lại có dấu … khi hết chỗ) */
+.sc-split .drawer-h .row-wrap { flex-wrap: nowrap; }
+.sc-split .drawer-h .t-meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

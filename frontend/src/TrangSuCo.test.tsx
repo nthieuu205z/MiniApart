@@ -58,7 +58,7 @@ describe('TrangSuCo (một danh sách + ngăn chi tiết)', () => {
     expect(chip('Đang mở').getAttribute('aria-pressed')).toBe('true')
     await act(async () => chip('Đã đóng').click())
     expect(window.location.search).toBe('?loc=xong')
-    expect(hang().map((a) => a.querySelector('.s')?.textContent)).toEqual(['Toà A · Phòng 101 · SC-5'])
+    expect(hang().map((a) => a.querySelector('.s')?.textContent)).toEqual(['Phòng 101 · SC-5'])
   })
 
   it('khẩn cấp lên đầu, rồi mới nhất; tìm không dấu', async () => {

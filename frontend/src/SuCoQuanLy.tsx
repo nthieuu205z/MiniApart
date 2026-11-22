@@ -213,7 +213,7 @@ export default function SuCoQuanLy({ token, dieuHuong = dieuHuongMacDinh }: { to
           </div>
         )}
         <dl className="kv">
-          <dt>Báo lúc</dt><dd>{dinhDangNgayIso(chon.taoLuc)}</dd>
+          <dt>Báo lúc</dt><dd>{dinhDangNgayIso(chon.taoLuc.slice(0, 10))}</dd>
           <dt>Liên hệ</dt><dd>{chon.soDienThoaiLienHe ? <a href={`tel:${chon.soDienThoaiLienHe}`} style={{ color: 'var(--ma-text-link)' }}>{chon.soDienThoaiLienHe}</a> : 'Chưa có'}</dd>
           <dt>Thợ</dt><dd>{chon.nguoiXuLyId ? (workers.find((w) => w.id === chon.nguoiXuLyId)?.hoTen ?? `Thợ #${chon.nguoiXuLyId}`) : 'Chưa phân công'}</dd>
           <dt>Chi phí</dt><dd>{chon.chiPhi == null ? 'Chưa có báo giá' : `${dinhDangTien(chon.chiPhi)} ₫`}</dd>
@@ -230,7 +230,7 @@ export default function SuCoQuanLy({ token, dieuHuong = dieuHuongMacDinh }: { to
             <div className="blk-h"><h2>Lịch sử</h2></div>
             <ul className="tl">
               {[['Báo sự cố', chon.taoLuc], ['Tiếp nhận', chon.tiepNhanLuc], ['Phân công thợ', chon.phanCongLuc], ['Chờ nghiệm thu', chon.choXacNhanLuc]].filter(([, t]) => t).map(([n, t]) => (
-                <li key={n}><span className="dot ok" /><span>{n}</span><span className="when">{dinhDangNgayIso(t as string)}</span></li>
+                <li key={n}><span className="dot ok" /><span>{n}</span><span className="when">{dinhDangNgayIso((t as string).slice(0, 10))}</span></li>
               ))}
             </ul>
           </div>
@@ -288,14 +288,14 @@ export default function SuCoQuanLy({ token, dieuHuong = dieuHuongMacDinh }: { to
                     <a key={k} className="chip" href={href(null, k)} aria-pressed={loc === k} onClick={di(href(null, k))}>{NHOM[k][0]} <span className="n">{dem(k)}</span></a>
                   ))}
                   <span className="push" />
-                  <label className="input-wrap" style={{ width: 220 }}><span className="sr-only">Tìm sự cố</span><Icon name="search" /><input className="input" type="search" placeholder="Tìm phòng, hạng mục" value={tim} onChange={(e) => setTim(e.target.value)} /></label>
+                  <label className="input-wrap" style={{ width: 260 }}><span className="sr-only">Tìm sự cố</span><Icon name="search" /><input className="input" type="search" placeholder="Tìm phòng, hạng mục" value={tim} onChange={(e) => setTim(e.target.value)} /></label>
                 </div>
                 {ds.length === 0 ? <div style={{ padding: '0 24px 16px' }}><EmptyState title={rows.length === 0 ? 'Chưa có yêu cầu sửa chữa.' : 'Không có sự cố ở nhóm này.'} body={rows.length === 0 ? 'Khi người thuê báo hỏng, yêu cầu sẽ hiện ở đây.' : 'Đổi nhóm hoặc xoá ô tìm để xem thêm.'} /></div> : (
                   <div style={{ paddingBottom: 8 }}>
                     {ds.map((r) => (
                       <a key={r.id} className={`irow${r.id === chon?.id ? ' sel' : ''}`} href={href(r.id, loc)} aria-current={r.id === chon?.id ? 'true' : undefined} data-repair-row={r.id} onClick={di(href(r.id, loc))}>
                         <span className={`tile ${r.mucDo === 'KHAN_CAP' ? 'red' : r.mucDo === 'GAP' ? 'warm' : ''}`}><Icon name={r.mucDo === 'THUONG' ? 'wrench' : 'alert'} /></span>
-                        <div className="body"><div className="t">{r.hangMuc}</div><div className="s">{r.toaNha} · Phòng {r.soPhong} · {ma(r)}</div></div>
+                        <div className="body"><div className="t">{r.hangMuc}</div><div className="s">{toaNhaId ? '' : `${r.toaNha} · `}Phòng {r.soPhong} · {ma(r)}</div></div>
                         {r.mucDo !== 'THUONG' && <StatusTag tone={toneMucDo(r.mucDo)}>{r.tenMucDo}</StatusTag>}
                         <span className="t-meta" style={{ width: 64, textAlign: 'right' }}>{ngayTruoc(r.taoLuc)}</span>
                       </a>
