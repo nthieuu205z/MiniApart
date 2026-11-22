@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { tinhBuoc } from './chuKyThang'
+import { tinhBuoc } from './tinhBuocChuKy'
 
 const mo = { trangThai: 'DANG_MO', ngayBatDau: '2026-10-26' }
 const chot = { trangThai: 'DA_CHOT', ngayBatDau: '2026-10-26' }
