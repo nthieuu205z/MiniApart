@@ -1,0 +1,64 @@
+[
+ {
+  "name": "vung-nhin-chu-nguoi-thue-1-390",
+  "path": "/nguoi-thue/1",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x3\\vung\\vung-nhin-chu-nguoi-thue-1-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 24,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 135,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 2857,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "vung-nhin-ql-phong-401-390",
+  "path": "/phong/10?toaNhaId=3",
+  "role": "QUAN_LY",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x3\\vung\\vung-nhin-ql-phong-401-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 9,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 49,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1166,
+   "khongCoQuyen": false
+  }
+ }
+]
