@@ -140,7 +140,7 @@ describe('HoaDon detail and print view', () => {
     expect(container.querySelector('table')).toBeNull()
   })
 
-  it('NFR-USA-01 tenant mobile shows the amount still due, previous debts, and never asks for a QR code', async () => {
+  it('NFR-USA-01 tenant mobile shows the total still due across unpaid periods, and never asks for a QR code', async () => {
     const hoaDon = {
       hoaDonId: 10, maHoaDon: 'DEMO-10', kyId: 8, hopDongId: 11, soPhong: '101', nguoiThue: 'Người thuê 101',
       ngayPhatHanh: '2026-10-25', hanThanhToan: '2026-10-05', trangThai: 'QUA_HAN',
@@ -165,14 +165,13 @@ describe('HoaDon detail and print view', () => {
     root = createRoot(container)
     await act(async () => root.render(<HoaDon token="tenant-token" cheDoNguoiThue mobile />))
 
-    await vi.waitFor(() => expect(container.querySelector('[data-previous-debt-invoice="9"]')).not.toBeNull())
-    expect(container.querySelector('[data-invoice-due]')?.textContent).toContain('1.895.000')
-    expect(container.textContent).toContain('Còn phải trả')
-    expect(container.textContent).toContain('Kỳ 10/2026')
-    expect(container.textContent).toContain('Quá hạn')
-    expect(container.textContent).toContain('288 → 384 = 96 × 3.800 ₫')
-    expect(container.querySelector('[data-previous-debt-invoice="10"]')).toBeNull()
-    expect(container.querySelector('[data-previous-debt-invoice="8"]')).toBeNull()
+    // Không chọn kỳ → màn "Cần trả" gom mọi kỳ chưa trả đủ (kỳ 10 và 9 = 3.790.000), kỳ đã trả không vào danh sách.
+    await vi.waitFor(() => expect(container.querySelector('[data-can-tra-tong]')).not.toBeNull())
+    expect(container.querySelector('[data-can-tra-tong]')?.textContent).toContain('3.790.000')
+    expect(container.textContent).toContain('2 kỳ quá hạn')
+    expect(container.querySelector('[data-ky-hoa-don="9"]')).not.toBeNull()
+    expect(container.querySelector('[data-ky-hoa-don="8"]')).toBeNull()
+    expect(container.textContent).toContain('288 → 384 · 96 × 3.800 ₫')
     expect(fetchMock.mock.calls.some(([input]) => String(input).includes('ma-qr'))).toBe(false)
   })
 
