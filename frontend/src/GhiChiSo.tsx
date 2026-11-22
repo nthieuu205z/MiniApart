@@ -31,6 +31,8 @@ type Props = {
   token: string
   mobile?: boolean
   vaiTro?: string
+  /** Ẩn nút chốt kỳ (Chu kỳ tháng có bước chốt riêng). Mặc định giữ nút như cũ. */
+  anNutChot?: boolean
 }
 
 type PendingValues = Record<string, string>
@@ -75,7 +77,7 @@ const styleThongBao = {
   lineHeight: 1.55,
 }
 
-export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
+export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = false }: Props) {
   const [danhSachToaNha, setDanhSachToaNha] = useState<ThongTinToaNha[]>([])
   const [danhSachKy, setDanhSachKy] = useState<ThongTinKyThanhToan[]>([])
   const [toaNhaId, setToaNhaId] = useState<number | null>(() => docToaNhaIdTuUrl())
@@ -737,15 +739,17 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
             <section className="m-card" aria-labelledby="meter-close-title" style={{ display: 'grid', gap: 'var(--ma-space-4)' }}>
               <div className="spread">
                 <h2 className="h3" id="meter-close-title" style={{ margin: 0 }}>Chốt kỳ</h2>
-                <Button
-                  variant="secondary"
-                  data-close-period
-                  blocked={dangChotKy || kyDaChot}
-                  blockedReason={kyDaChot ? 'Kỳ này đã chốt, không thể ghi thêm chỉ số.' : undefined}
-                  onClick={() => void chotKyDangChon()}
-                >
-                  {dangChotKy ? 'Đang chốt…' : 'Chốt kỳ'}
-                </Button>
+                {anNutChot ? null : (
+                  <Button
+                    variant="secondary"
+                    data-close-period
+                    blocked={dangChotKy || kyDaChot}
+                    blockedReason={kyDaChot ? 'Kỳ này đã chốt, không thể ghi thêm chỉ số.' : undefined}
+                    onClick={() => void chotKyDangChon()}
+                  >
+                    {dangChotKy ? 'Đang chốt…' : 'Chốt kỳ'}
+                  </Button>
+                )}
               </div>
               {dangTaiPhongChuaGhiChiSo ? (
                 <p style={styleThongBao}>Đang tải phòng còn thiếu…</p>
@@ -932,17 +936,19 @@ export default function GhiChiSo({ token, mobile = false, vaiTro }: Props) {
                   Chốt kỳ
                 </h2>
               </div>
-              <Button
-                variant="secondary"
-                size="md"
-                data-close-period
-                blocked={dangChotKy || kyDaChot}
-                blockedReason={kyDaChot ? 'Kỳ này đã chốt, không thể ghi thêm chỉ số.' : undefined}
-                style={{ minHeight: 'var(--ma-hit-mobile)' }}
-                onClick={() => void chotKyDangChon()}
-              >
-                {dangChotKy ? 'Đang chốt…' : 'Chốt kỳ'}
-              </Button>
+              {anNutChot ? null : (
+                <Button
+                  variant="secondary"
+                  size="md"
+                  data-close-period
+                  blocked={dangChotKy || kyDaChot}
+                  blockedReason={kyDaChot ? 'Kỳ này đã chốt, không thể ghi thêm chỉ số.' : undefined}
+                  style={{ minHeight: 'var(--ma-hit-mobile)' }}
+                  onClick={() => void chotKyDangChon()}
+                >
+                  {dangChotKy ? 'Đang chốt…' : 'Chốt kỳ'}
+                </Button>
+              )}
             </div>
             {dangTaiPhongChuaGhiChiSo ? (
               <p style={styleThongBao}>Đang tải phòng còn thiếu…</p>

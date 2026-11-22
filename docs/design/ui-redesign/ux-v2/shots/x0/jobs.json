@@ -1,0 +1,139 @@
+[
+ {
+  "name": "chu-hom-nay-1440",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "chu-thu-tien-1440",
+  "path": "/thu-tien",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "chu-hoa-don-1440",
+  "path": "/hoa-don",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "chu-tong-quan-1440",
+  "path": "/tong-quan",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "chu-phong-khong-quyen-1440",
+  "path": "/phong",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "ql-hom-nay-1440",
+  "path": "/hom-nay",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "ql-su-co-1440",
+  "path": "/su-co",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "chu-hom-nay-390",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": false
+ },
+ {
+  "name": "chu-thu-tien-390",
+  "path": "/thu-tien",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": false
+ },
+ {
+  "name": "chu-hoa-don-390",
+  "path": "/hoa-don",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": false
+ },
+ {
+  "name": "chu-tong-quan-390",
+  "path": "/tong-quan",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": false
+ },
+ {
+  "name": "chu-phong-khong-quyen-390",
+  "path": "/phong",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": false
+ },
+ {
+  "name": "ql-hom-nay-390",
+  "path": "/hom-nay",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": false
+ },
+ {
+  "name": "ql-su-co-390",
+  "path": "/su-co",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": false
+ },
+ {
+  "name": "tho-viec-390",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 390,
+  "h": 844,
+  "full": false
+ },
+ {
+  "name": "khach-hoa-don-390",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "h": 844,
+  "full": false
+ },
+ {
+  "name": "chu-ngan-menu-390",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": false,
+  "click": "button[aria-label=\"Mở menu\"]"
+ }
+]

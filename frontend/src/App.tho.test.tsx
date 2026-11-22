@@ -90,7 +90,7 @@ describe('App worker entry point (V2)', () => {
     vi.restoreAllMocks()
   })
 
-  it('sends worker to /tho/tong-quan overview dashboard while keeping navigation and topbar available', async () => {
+  it('sends worker to /viec-cua-toi (old /tho/tong-quan redirects) while keeping navigation and topbar available', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
       if (url === '/api/health') return jsonResponse({ status: 'UP', database: 'UP' })
@@ -115,20 +115,18 @@ describe('App worker entry point (V2)', () => {
     await act(async () => root.render(<App />))
 
     await vi.waitFor(() => {
-      expect(window.location.pathname).toBe('/tho/tong-quan')
+      expect(window.location.pathname).toBe('/viec-cua-toi')
     })
 
     expect(window.history.length).toBe(historyLengthBeforeMount)
     expect(container.querySelector('nav')).not.toBeNull()
-    expect(container.textContent).toContain('Bàn làm việc thợ')
-    expect(container.textContent).toContain('Tổng quan công việc của thợ')
 
     // Topbar notification badge
     expect(container.querySelector('[data-testid="topbar-notifications"]')?.getAttribute('href')).toBe('/thong-bao')
     expect(container.querySelector('[data-testid="topbar-unread-count"]')?.textContent).toBe('2')
 
     // Navigation links for THO
-    expect(container.querySelector('nav a[href="/tho/tong-quan"]')).not.toBeNull()
+    expect(container.querySelector('nav a[href="/tho/tong-quan"]')).toBeNull() // gộp vào Việc
     expect(container.querySelector('nav a[href="/viec-cua-toi"]')).not.toBeNull()
     expect(container.querySelector('nav a[href="/tho/chi-phi"]')).not.toBeNull()
     expect(container.querySelector('nav a[href="/thong-bao"]')).not.toBeNull()
@@ -158,7 +156,7 @@ describe('App worker entry point (V2)', () => {
     await act(async () => root.render(<App />))
 
     await vi.waitFor(() => {
-      expect(window.location.pathname).toBe('/tho/tong-quan')
+      expect(window.location.pathname).toBe('/viec-cua-toi')
     })
 
     // Click on /viec-cua-toi navigation link
@@ -181,7 +179,7 @@ describe('App worker entry point (V2)', () => {
     })
   })
 
-  it('shows a 4-tab bottom-nav at 390px with "Báo giá" short label, full aria-label, no "Thêm"', async () => {
+  it('shows a 3-tab bottom-nav at 390px (Việc · Tiền công · Thông báo), no "Thêm", logout icon kept', async () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 })
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
@@ -200,10 +198,8 @@ describe('App worker entry point (V2)', () => {
       expect(element).not.toBeNull()
       return element as HTMLElement
     })
-    const link = bar.querySelector('a[href="/tho/chi-phi"]') as HTMLAnchorElement
-    expect(bar.querySelectorAll('a')).toHaveLength(4)
-    expect(link.textContent?.trim()).toBe('Báo giá')
-    expect(link.getAttribute('aria-label')).toBe('Báo giá & thanh toán')
+    expect([...bar.querySelectorAll('a')].map((link) => link.getAttribute('href'))).toEqual(['/viec-cua-toi', '/tho/chi-phi', '/thong-bao'])
+    expect([...bar.querySelectorAll('a')].map((link) => link.textContent?.trim())).toEqual(['Việc', 'Tiền công', 'Thông báo'])
     expect([...bar.querySelectorAll('button')].some((b) => b.textContent === 'Thêm')).toBe(false)
     expect(container.querySelector('[data-testid="topbar-logout"]')?.getAttribute('aria-label')).toBe('Đăng xuất')
   })

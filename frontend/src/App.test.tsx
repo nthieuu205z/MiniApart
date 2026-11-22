@@ -38,7 +38,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'CHU',
       tenVaiTro: 'Chủ sở hữu',
     },
-    menuLabels: ['Tổng quan', 'Toà nhà', 'Người thuê', 'Hợp đồng', 'Cư trú', 'Lịch hẹn', 'Sự cố', 'An toàn', 'Dịch vụ và kỳ', 'Ghi chỉ số', 'Hoá đơn', 'Thu tiền', 'Công nợ', 'Báo cáo', 'Tiêu thụ điện nước', 'Chi phí bảo trì', 'Nhật ký thao tác'],
+    menuLabels: ['Hôm nay', 'Thu tiền', 'Chu kỳ tháng', 'Toà & phòng', 'Người thuê', 'Hợp đồng', 'Lịch hẹn', 'Sự cố', 'An toàn PCCC', 'Báo cáo', 'Dịch vụ & đơn giá'],
   },
   {
     nguoiDung: {
@@ -48,7 +48,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'QUAN_LY',
       tenVaiTro: 'Quản lý toà nhà',
     },
-    menuLabels: ['Nhắc việc', 'Ghi chỉ số', 'Lịch hẹn', 'Sự cố', 'Hoá đơn', 'Thu tiền', 'Dịch vụ và kỳ', 'Phòng', 'Hợp đồng', 'Người thuê', 'Cư trú', 'An toàn', 'Thông báo'],
+    menuLabels: ['Hôm nay', 'Chu kỳ tháng', 'Thu tiền', 'Phòng', 'Người thuê', 'Hợp đồng', 'Lịch hẹn', 'Sự cố', 'An toàn PCCC', 'Thông báo cư dân', 'Dịch vụ & đơn giá'],
   },
   {
     nguoiDung: {
@@ -58,7 +58,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'THO',
       tenVaiTro: 'Thợ sửa chữa',
     },
-    menuLabels: ['Việc của tôi', 'Thông báo'],
+    menuLabels: ['Việc', 'Tiền công', 'Thông báo'],
   },
   {
     nguoiDung: {
@@ -68,7 +68,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'NGUOI_THUE',
       tenVaiTro: 'Người thuê',
     },
-    menuLabels: ['Hoá đơn của tôi', 'Lịch sử', 'Tiêu thụ', 'Hợp đồng', 'Báo hỏng'],
+    menuLabels: ['Cần trả', 'Báo hỏng', 'Phòng của tôi'],
   },
 ]
 
@@ -81,6 +81,7 @@ describe('App role navigation', () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     vi.restoreAllMocks()
     clearStoredToken()
+    localStorage.removeItem('ma.toaNhaId')
     window.history.replaceState({}, '', '/')
     document.body.innerHTML = ''
   })
@@ -107,24 +108,24 @@ describe('App role navigation', () => {
       })
 
       expect(mountedApp.container.textContent).toContain(nguoiDung.tenVaiTro)
-      expect(mountedApp.container.textContent).toContain('Trang chủ')
     },
   )
 
-  it('FR-AUT-04 shows the manager shell with grouped navigation and top-bar context', async () => {
+  it('FR-AUT-04 shows the manager shell with job-based groups, a fixed building box and a slim top bar', async () => {
     const quanLyToaNha = MENU_BY_ROLE[2]
     mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung)
 
     await vi.waitFor(() => {
-      expect(mountedApp!.container.textContent).toContain('Hàng ngày')
-      expect(mountedApp!.container.textContent).toContain('Tiền')
-      expect(mountedApp!.container.textContent).toContain('Toà nhà')
-      expect(mountedApp!.container.textContent).toContain('Thông báo')
+      expect(mountedApp!.container.textContent).toContain('Phòng & người thuê')
+      expect(mountedApp!.container.textContent).toContain('Vận hành')
+      expect(mountedApp!.container.textContent).toContain('được phân công')
     })
 
     expect(mountedApp.container.textContent).toContain('Quản lý toà nhà')
-    expect(mountedApp.container.textContent).toContain(new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'long' }).format(new Date()))
+    expect(mountedApp.container.textContent).not.toContain('Không gian quản lý')
     expect(mountedApp.container.textContent).not.toContain('Kỳ 09/2026')
+    expect(mountedApp.container.querySelector('button[aria-label^="Tìm nhanh"]')).not.toBeNull()
+    expect(mountedApp.container.querySelector('.crumb')).toBeNull()
   })
 
   it('FR-MNT-02 shows the shared notification route and unread badge in the application shell', async () => {
@@ -218,38 +219,63 @@ describe('App role navigation', () => {
     expect(loginGrid.style.gridTemplateColumns).toBe('minmax(0, 1fr)')
   })
 
-  it('NFR-USA-01 places all role navigation behind a bounded five-slot bottom bar at 360px', async () => {
+  it('NFR-USA-01 hides the manager sidebar at 360px behind a ☰ drawer that traps focus, closes on Esc and returns focus', async () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
     const quanLyToaNha = MENU_BY_ROLE[2]
     mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung)
 
-    const nav = await vi.waitFor(() => {
-      const element = mountedApp!.container.querySelector('nav')
+    const menuButton = await vi.waitFor(() => {
+      const element = mountedApp!.container.querySelector('button[aria-label="Mở menu"]')
+      expect(element).not.toBeNull()
+      return element as HTMLButtonElement
+    })
+    expect(mountedApp.container.querySelector('[data-testid="mobile-nav-bar"]')).toBeNull()
+    expect(mountedApp.container.querySelector('nav a[href="/phong"]')).toBeNull()
+
+    await act(async () => menuButton.focus())
+    await act(async () => menuButton.click())
+    const dialog = mountedApp.container.querySelector('[role="dialog"]') as HTMLElement
+    expect(dialog).not.toBeNull()
+    expect(dialog.getAttribute('aria-modal')).toBe('true')
+    expect(document.body.style.overflow).toBe('hidden')
+    expect(menuButton.getAttribute('aria-expanded')).toBe('true')
+    expect([...dialog.querySelectorAll('a')].map((link) => link.textContent?.trim())).toEqual(quanLyToaNha.menuLabels)
+    expect(dialog.querySelector('[data-testid="nav-logout"]')).not.toBeNull()
+
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
+    expect(mountedApp.container.querySelector('[role="dialog"]')).toBeNull()
+    expect(document.body.style.overflow).not.toBe('hidden')
+    expect(document.activeElement).toBe(menuButton)
+
+    await act(async () => menuButton.click())
+    await act(async () => ((mountedApp!.container.querySelector('[role="dialog"] a[href="/phong"]')) as HTMLAnchorElement).click())
+    expect(window.location.pathname).toBe('/phong')
+    expect(mountedApp.container.querySelector('[role="dialog"]')).toBeNull()
+  })
+
+  it('NFR-USA-01 closes the drawer when the backdrop is pressed', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
+    mountedApp = await mountAppAndLogin(MENU_BY_ROLE[2].nguoiDung)
+    const menuButton = await vi.waitFor(() => mountedApp!.container.querySelector('button[aria-label="Mở menu"]') as HTMLButtonElement)
+    await act(async () => menuButton.click())
+    const backdrop = mountedApp.container.querySelector('.ngan-nen') as HTMLElement
+    await act(async () => backdrop.click())
+    expect(mountedApp.container.querySelector('[role="dialog"]')).toBeNull()
+  })
+
+  it('NFR-USA-01 gives the tenant a three-slot bottom bar at 360px and no drawer button', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
+    const khach = MENU_BY_ROLE[4]
+    mountedApp = await mountAppAndLogin(khach.nguoiDung)
+    const bar = await vi.waitFor(() => {
+      const element = mountedApp!.container.querySelector('[data-testid="mobile-nav-bar"]')
       expect(element).not.toBeNull()
       return element as HTMLElement
     })
-    const mobileBar = nav.querySelector('[data-testid="mobile-nav-bar"]') as HTMLElement
-
-    expect(nav.dataset.navigationLayout).toBe('bottom')
-    expect(nav.style.position).toBe('fixed')
-    expect(nav.style.bottom).toBe('0px')
-    expect(nav.style.left).toBe('0px')
-    expect(nav.style.right).toBe('0px')
-    expect(nav.style.width).toBe('100%')
-    expect(nav.style.overflowX).toBe('hidden')
-    expect(mobileBar.style.display).toBe('grid')
-    expect(mobileBar.style.gridTemplateColumns).toBe('repeat(5, minmax(0, 1fr))')
-    expect(mobileBar.querySelectorAll('a')).toHaveLength(4)
-    expect([...mobileBar.querySelectorAll('a')].map((link) => link.textContent?.trim())).toEqual(quanLyToaNha.menuLabels.slice(0, 4))
-    expect(readMenuLabels(mountedApp.container)).toEqual(quanLyToaNha.menuLabels)
-
-    const moreButton = findButton(mountedApp.container, 'Thêm')
-    await act(async () => moreButton.click())
-    expect((nav.querySelector('[data-testid="mobile-nav-more"]') as HTMLElement).style.display).toBe('grid')
-    expect(nav.querySelector('a[href="/phong"]')?.textContent?.trim()).toBe('Phòng')
-
-    await act(async () => (nav.querySelector('a[href="/phong"]') as HTMLAnchorElement).click())
-    expect(window.location.pathname).toBe('/phong')
+    expect(bar.querySelectorAll('a')).toHaveLength(3)
+    expect([...bar.querySelectorAll('a')].map((link) => link.getAttribute('aria-label') ?? link.textContent?.trim())).toEqual(['Cần trả', 'Báo hỏng', 'Phòng của tôi'])
+    expect(mountedApp.container.querySelector('button[aria-label="Mở menu"]')).toBeNull()
+    expect(mountedApp.container.querySelector('[data-testid="topbar-logout"]')).not.toBeNull()
   })
 
   it('NFR-USA-01 preserves the vertical left navigation contract at desktop width', async () => {
@@ -264,22 +290,6 @@ describe('App role navigation', () => {
     expect(nav.style.width).toBe('var(--ma-nav-width)')
     expect(appShell.style.gridTemplateColumns).toBe('var(--ma-nav-width) minmax(0, 1fr)')
     expect(readMenuLabels(mountedApp.container)).toEqual(MENU_BY_ROLE[2].menuLabels)
-  })
-
-  it('NFR-USA-01 keeps App-owned definition-list values on design tokens after legacy colors are removed', async () => {
-    mountedApp = await mountAppAndLogin(MENU_BY_ROLE[2].nguoiDung)
-
-    const values = await vi.waitFor(() => {
-      const definitionValues = [...mountedApp!.container.querySelectorAll('dd')]
-      expect(definitionValues).not.toHaveLength(0)
-      return definitionValues
-    })
-
-    expect(values.map((value) => value.style.color)).toEqual([
-      'var(--ma-text-primary)',
-      'var(--ma-text-primary)',
-      'var(--ma-text-primary)',
-    ])
   })
 
   it('NFR-USA-03 gives every role-navigation link the 44px mobile hit target', async () => {
@@ -325,15 +335,13 @@ describe('App role navigation', () => {
     })
   })
 
-  it('FR-RPT-02 routes CHU to the debt report screen', async () => {
+  it('FR-RPT-02 sends the old CHU /cong-no route to the Thu tiền screen and keeps its query', async () => {
     const chuSoHuu = MENU_BY_ROLE[1]
-    const fetchMock = buildFetchMock(chuSoHuu.nguoiDung, {
-      debtResponse: { toaNhaId: null, tinhLuc: '2040-08-15T10:00+07:00', congNo: [] },
-    })
-    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/cong-no', fetchMock)
+    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/cong-no?toaNhaId=2')
 
     await vi.waitFor(() => {
-      expect(mountedApp!.container.querySelector('[data-testid="debt-report-screen"]')).not.toBeNull()
+      expect(window.location.pathname).toBe('/thu-tien')
+      expect(window.location.search).toBe('?toaNhaId=2')
     })
   })
 
@@ -347,7 +355,8 @@ describe('App role navigation', () => {
     await vi.waitFor(() => {
       expect(mountedApp!.container.querySelector('[data-testid="maintenance-cost-report-screen"]')).not.toBeNull()
     })
-    expect(readMenuLabels(mountedApp.container)).toContain('Chi phí bảo trì')
+    expect(mountedApp.container.querySelector('nav[aria-label="Các mục của trang"] a[aria-current="page"]')?.textContent).toBe('Chi phí bảo trì')
+    expect(mountedApp.container.querySelector('nav[data-navigation-layout] a[aria-current="page"]')?.textContent).toBe('Báo cáo')
 
     const quanLy = MENU_BY_ROLE[2]
     const managerApp = await mountAppAndLogin(quanLy.nguoiDung, '/bao-cao/chi-phi-bao-tri')
@@ -419,7 +428,8 @@ describe('App role navigation', () => {
     })
 
     expect(readMenuLabels(mountedApp.container)).toEqual(chuSoHuu.menuLabels)
-    expect(mountedApp.container.textContent).toContain('Đường dẫn không thuộc vai trò hiện tại')
+    expect(mountedApp.container.querySelector('h1')?.textContent).toBe('Trang này dành cho Quản trị hệ thống')
+    expect(mountedApp.container.textContent).toContain('Về Hôm nay')
   })
 
   it('FR-AUT-06 gives QTHT an account management screen with records and safe actions', async () => {
@@ -1530,7 +1540,7 @@ function buildPreviewRooms(
 }
 
 function readMenuLabels(container: HTMLDivElement) {
-  return [...container.querySelectorAll('nav a')].map((link) => link.textContent?.trim() ?? '')
+  return [...container.querySelectorAll('nav[data-navigation-layout] a')].map((link) => link.textContent?.trim() ?? '')
 }
 
 describe('invoice navigation', () => {
@@ -1539,6 +1549,7 @@ describe('invoice navigation', () => {
   beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     clearStoredToken()
+    localStorage.removeItem('ma.toaNhaId')
     window.history.replaceState({}, '', '/')
     document.body.innerHTML = ''
   })
@@ -1957,5 +1968,83 @@ describe('invoice navigation', () => {
 
   it('FR-INV-02 ignores an incomplete invoice query instead of opening an ambiguous invoice', () => {
     expect(layDinhDanhHoaDonTuUrl('https://miniapart.test/hoa-don?toaNhaId=1&kyId=8')).toEqual({})
+  })
+})
+
+// Lưới an toàn cho UX v2 x0: chuỗi hienThi* → bảng định tuyến không được đổi quyền của bất kỳ vai trò nào.
+const MENU_CU: Record<string, string[]> = {
+  QTHT: ['/tai-khoan', '/toa-nha', '/nhat-ky-thao-tac'],
+  CHU: ['/tong-quan', '/toa-nha', '/nguoi-thue', '/hop-dong', '/dich-vu', '/ghi-chi-so', '/thu-tien', '/cu-tru', '/lich-hen', '/hoa-don', '/cong-no', '/bao-cao', '/bao-cao/tieu-thu', '/bao-cao/chi-phi-bao-tri', '/su-co', '/an-toan', '/nhat-ky-thao-tac'],
+  QUAN_LY: ['/nhac-viec', '/ghi-chi-so', '/hoa-don', '/thu-tien', '/phong', '/hop-dong', '/nguoi-thue', '/dich-vu', '/cu-tru', '/an-toan', '/lich-hen', '/su-co', '/thong-bao'],
+  THO: ['/tho/tong-quan', '/viec-cua-toi', '/tho/chi-phi', '/thong-bao'],
+  NGUOI_THUE: ['/hoa-don-cua-toi', '/lich-su', '/tieu-thu', '/hop-dong', '/bao-hong'],
+}
+
+describe('định tuyến cũ — không đổi quyền', () => {
+  let mountedApp: MountedApp | null = null
+  const nguoiTheoVaiTro = (vaiTro: string) => MENU_BY_ROLE.find((m) => m.nguoiDung.vaiTro === vaiTro)!.nguoiDung
+
+  // Dùng mock sẵn của file; API nào mock chưa có thì trả lỗi 500 (màn tự hiện trạng thái lỗi; mảng rỗng làm vài màn vỡ vì sai hình dạng): chỉ kiểm khung chọn đúng màn, không kiểm nội dung màn.
+  function fetchRong(nguoiDung: ThongTinNguoiDung) {
+    const goc = buildFetchMock(nguoiDung)
+    return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      try {
+        return await goc(input, init)
+      } catch {
+        return new Response(JSON.stringify({ thongBao: 'Mock chưa có API này.' }), { status: 500, headers: { 'Content-Type': 'application/json' } })
+      }
+    })
+  }
+
+  async function mo(vaiTro: string, path: string) {
+    const nguoiDung = nguoiTheoVaiTro(vaiTro)
+    mountedApp = await mountAppAndLogin(nguoiDung, path, fetchRong(nguoiDung))
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 30)) })
+    return mountedApp.container
+  }
+
+  beforeEach(() => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true
+    vi.restoreAllMocks()
+    clearStoredToken()
+    localStorage.removeItem('ma.toaNhaId')
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: ORIGINAL_INNER_WIDTH })
+    window.history.replaceState({}, '', '/')
+    document.body.innerHTML = ''
+  })
+
+  afterEach(async () => {
+    if (mountedApp) await act(async () => { mountedApp?.root.unmount() })
+    mountedApp = null
+    clearStoredToken()
+    vi.restoreAllMocks()
+  })
+
+  for (const [vaiTro, danhSach] of Object.entries(MENU_CU)) {
+    for (const duongDan of danhSach) {
+      it(`${vaiTro} mở được ${duongDan} (không "Không có quyền")`, async () => {
+        const container = await mo(vaiTro, duongDan)
+        expect(container.querySelector('nav')).not.toBeNull()
+        expect(container.textContent).not.toContain('Không có quyền')
+      })
+    }
+  }
+
+  for (const [vaiTro, duongDan] of [['QUAN_LY', '/bao-cao'], ['QUAN_LY', '/cong-no'], ['QUAN_LY', '/tai-khoan'], ['NGUOI_THUE', '/thu-tien']] as const) {
+    it(`${vaiTro} ở ${duongDan} → "Không có quyền"`, async () => {
+      const container = await mo(vaiTro, duongDan)
+      expect(container.textContent).toContain('Không có quyền')
+    })
+  }
+
+  it('QTHT vẫn mở được /hoa-don như app cũ', async () => {
+    const container = await mo('QTHT', '/hoa-don')
+    expect(container.textContent).not.toContain('Không có quyền')
+  })
+
+  it('Thợ ở /thu-tien bị đưa về màn việc của thợ', async () => {
+    const container = await mo('THO', '/thu-tien')
+    expect(container.textContent).not.toContain('Không có quyền')
+    expect(['/tho/tong-quan', '/viec-cua-toi']).toContain(window.location.pathname)
   })
 })

@@ -1,34 +1,30 @@
-import { Fragment } from 'react'
 import type * as React from 'react'
+import { Icon } from '../core/Icon'
 
-export interface BreadcrumbProps extends React.HTMLAttributes<HTMLDivElement> {
-  items: string[]
+/** Một tầng: chữ thường (chỉ chữ) hoặc có `href` (bấm được). Tầng cuối là trang hiện tại. */
+export type MucBreadcrumb = string | { nhan: string; href?: string }
+
+export interface BreadcrumbProps extends React.HTMLAttributes<HTMLElement> {
+  items: MucBreadcrumb[]
 }
 
-/** Đường dẫn. Luôn theo dạng Toà › Kỳ › Màn — trả lời "tôi đang ở đâu" trong một dòng. */
-export function Breadcrumb({ items, style, ...rest }: BreadcrumbProps): React.ReactElement {
+const nhanCua = (m: MucBreadcrumb) => (typeof m === 'string' ? m : m.nhan)
+
+/** Đường dẫn. Chỉ hiện khi từ 2 tầng trở lên (ví dụ Toà & phòng › An Nhiên Residence): trang một tầng đã có tiêu đề. */
+export function Breadcrumb({ items, className, ...rest }: BreadcrumbProps): React.ReactElement | null {
+  if (items.length < 2) return null
   return (
-    <div
-      style={{
-        padding: "7px 30px",
-        borderBottom: "1px solid var(--ma-border-subtle)",
-        fontFamily: "var(--ma-font-ui)",
-        fontSize: 12,
-        color: "var(--ma-text-secondary)",
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        minHeight: "var(--ma-breadcrumb-height)",
-        ...(style || {}),
-      }}
-      {...rest}
-    >
-      {items.map((it, i) => (
-        <Fragment key={it}>
-          {i > 0 ? <span style={{ color: "var(--ma-text-muted)" }}>›</span> : null}
-          <span style={i === items.length - 1 ? { fontWeight: 700, color: "var(--ma-text-primary)" } : undefined}>{it}</span>
-        </Fragment>
-      ))}
-    </div>
+    <nav className={['crumb', className].filter(Boolean).join(' ')} aria-label="Vị trí" {...rest}>
+      {items.map((it, i) => {
+        const cuoi = i === items.length - 1
+        const href = typeof it === 'string' ? undefined : it.href
+        return (
+          <span key={`${nhanCua(it)}-${i}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {i > 0 ? <Icon name="chevron-right" size="sm" /> : null}
+            {cuoi ? <span aria-current="page">{nhanCua(it)}</span> : href ? <a href={href}>{nhanCua(it)}</a> : <span>{nhanCua(it)}</span>}
+          </span>
+        )
+      })}
+    </nav>
   )
 }

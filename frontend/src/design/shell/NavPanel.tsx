@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type * as React from 'react'
 import { Glyph } from '../core/Glyph'
 import type { GlyphName } from '../core/GlyphName'
 import { Icon, type IconName } from '../core/Icon'
+import { useDialogTrap } from '../feedback/useDialogTrap'
 
 export interface NavItem {
   label: string
@@ -17,6 +18,8 @@ export interface NavItem {
   active?: boolean
   /** Số việc tồn. Chỉ hiện khi > 0. */
   count?: number
+  /** Số đỏ (cần xử lý ngay); mặc định xám trung tính ở sidebar. */
+  hot?: boolean
   /** urgent (đỏ, mặc định) hoặc waiting (cam). */
   countTone?: 'urgent' | 'waiting'
 }
@@ -33,17 +36,31 @@ export interface NavGroup {
  */
 export interface NavPanelProps extends React.HTMLAttributes<HTMLElement> {
   product?: string
+  /** Dòng phụ dưới tên sản phẩm; bỏ trống thì không hiện. */
   subtitle?: string
   groups: NavGroup[]
+  /** Mục chân sidebar (Dịch vụ & đơn giá), nằm dưới khoảng trống, trên khối người dùng. */
+  footerItems?: NavItem[]
+  /** Ô chọn toà đặt đầu sidebar (ChonToa). */
+  toa?: React.ReactNode
   user?: { initials: string; name: string; role: string }
+  /** side = sidebar; bar = bottom-nav; drawer = ngăn menu ≤ 767px (cần `open`, `onClose`). `mobile` cũ = bar. */
+  variant?: 'side' | 'bar' | 'drawer'
   mobile?: boolean
+  open?: boolean
+  onClose?: () => void
   /** Sidebar thu gọn còn icon (≥768 và <1280). */
   collapsed?: boolean
   onLogout?: () => void
 }
 
 /** Menu dọc chia ba nhóm: Hàng ngày / Tiền / Toà nhà. Thứ tự nhóm phản ánh nhịp công việc thật. */
-export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nhà', groups, user, mobile = false, collapsed = false, onLogout, className, style, ...rest }: NavPanelProps): React.ReactElement {
+export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems = [], toa, user, variant, mobile = false, open = false, onClose, collapsed = false, onLogout, className, style, ...rest }: NavPanelProps): React.ReactElement | null {
+  const kieu = variant ?? (mobile ? 'bar' : 'side')
+  const bar = kieu === 'bar'
+  const drawer = kieu === 'drawer'
+  const nganRef = useRef<HTMLElement>(null)
+  useDialogTrap({ open: drawer && open, dialogRef: nganRef, onClose })
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
   const allItems = groups.flatMap((group) => group.items)
   // ≤ 5 mục: hiện hết, không có "Thêm"; nhiều hơn: 4 mục + "Thêm".
@@ -66,7 +83,7 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
         minWidth: 0,
         minHeight: 'var(--ma-bottom-nav-height)',
         padding: '5px 3px',
-        fontSize: 12,
+        fontSize: 13,
         lineHeight: 1.1,
         textAlign: 'center',
         textDecoration: 'none',
@@ -95,19 +112,102 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
       {item.icon ? <Icon name={item.icon} /> : <Glyph name={item.glyph} size={variant === 'bar' ? 16 : 15} strokeWidth={1.5} color={item.active ? 'var(--ma-brand-accent)' : 'var(--ma-text-secondary)'} />}
       <span style={variant === 'bar' ? { minWidth: 0, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } : { minWidth: 0 }}>{variant === 'bar' ? item.shortLabel ?? item.label : item.label}</span>
       {item.count ? (
-        <span style={{ marginLeft: variant === 'bar' ? 0 : 'auto', fontSize: 11, fontWeight: 700, color: item.countTone === 'waiting' ? 'var(--ma-waiting)' : 'var(--ma-urgent)' }}>
+        <span style={{ marginLeft: variant === 'bar' ? 0 : 'auto', fontSize: 13, fontWeight: 700, color: item.countTone === 'waiting' ? 'var(--ma-waiting)' : 'var(--ma-urgent)' }}>
           {item.count}
         </span>
       ) : null}
     </a>
   )
 
+  const nenCss = { fontFamily: 'var(--ma-font-ui)', ...(style || {}) }
+
+  const sideJSX = (
+        <>
+          <div className="sb-brand" style={collapsed ? undefined : { paddingBottom: 8 }}>
+            <div className="logo" aria-hidden="true">M</div>
+            <div>
+              <div className="sb-name">{product}</div>
+              {subtitle ? <div className="sb-scope">{subtitle}</div> : null}
+            </div>
+          </div>
+          {toa}
+
+          <div className="sb-nav">
+            {groups.map((g) => (
+              <div key={g.label || 'chung'} style={{ display: 'grid', gap: collapsed ? 2 : 0 }}>
+                {g.label ? <div className="sb-label" style={collapsed ? undefined : { paddingTop: 6, paddingBottom: 0 }}>{g.label}</div> : null}
+                {g.items.map((it) => (
+                  <a
+                    key={it.label}
+                    className="nav-item"
+                    href={it.href || '#'}
+                    aria-current={it.active ? 'page' : undefined}
+                    aria-label={collapsed ? it.label : undefined}
+                    title={collapsed ? it.label : undefined}
+                    style={{ minHeight: collapsed ? 'var(--ma-hit-mobile)' : undefined, marginLeft: it.depth === 1 ? 32 : undefined }}
+                  >
+                    {it.depth === 1 ? null : it.icon ? <Icon name={it.icon} /> : <Glyph name={it.glyph} size={16} strokeWidth={it.active ? 2 : 1.6} />}
+                    <span>{it.label}</span>
+                    {it.count ? (
+                      <b
+                        className={it.hot ? 'count hot' : 'count'}
+                        aria-label={`${it.count} việc cần xử lý`}
+                        style={it.countTone === 'waiting' ? { background: 'var(--ma-waiting-bg)', color: 'var(--ma-waiting)' } : undefined}
+                      >
+                        {it.count}
+                      </b>
+                    ) : null}
+                  </a>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {footerItems.map((it) => (
+            <a key={it.label} className="nav-item" href={it.href || '#'} aria-current={it.active ? 'page' : undefined} aria-label={collapsed ? it.label : undefined} title={collapsed ? it.label : undefined} style={{ minHeight: collapsed ? 'var(--ma-hit-mobile)' : undefined }}>
+              {it.icon ? <Icon name={it.icon} /> : <Glyph name={it.glyph} size={16} strokeWidth={it.active ? 2 : 1.6} />}
+              <span>{it.label}</span>
+            </a>
+          ))}
+
+          {user ? (
+            <>
+              <div className="sb-user" style={{ marginTop: 8, flex: 'none' }}>
+                {collapsed ? null : <span className="avatar sm h4" aria-hidden="true">{user.initials}</span>}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="name" title={user.name}>{user.name}</div>
+                  <div className="t-meta" title={user.role}>{user.role}</div>
+                </div>
+                {onLogout ? (
+                  <button type="button" className="icon-btn sm" data-testid="nav-logout" aria-label="Đăng xuất" title="Đăng xuất" onClick={onLogout}>
+                    <Icon name="logout" />
+                  </button>
+                ) : null}
+              </div>
+            </>
+          ) : null}
+        </>
+  )
+
+  if (drawer) {
+    if (!open) return null
+    return (
+      <div className="ngan-nen ma-no-print" onClick={(event) => { if (event.target === event.currentTarget) onClose?.() }}>
+        <aside ref={nganRef} role="dialog" aria-modal="true" aria-label="Menu" tabIndex={-1} className="sidebar" data-navigation-layout="drawer" style={{ ...nenCss, width: undefined }}>
+          <nav aria-label="Điều hướng chính" style={{ display: 'contents' }}>
+            {sideJSX}
+          </nav>
+        </aside>
+      </div>
+    )
+  }
+
   return (
     <nav
-      className={[mobile ? '' : 'sidebar', !mobile && collapsed ? 'is-collapsed' : '', className].filter(Boolean).join(' ') || undefined}
-      data-navigation-layout={mobile ? 'bottom' : 'side'}
+      className={[bar ? '' : 'sidebar', !bar && collapsed ? 'is-collapsed' : '', className].filter(Boolean).join(' ') || undefined}
+      data-navigation-layout={bar ? 'bottom' : 'side'}
       style={{
-        ...(mobile ? {
+        ...(bar ? {
           position: 'fixed',
           left: 0,
           right: 0,
@@ -122,13 +222,12 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
           width: 'var(--ma-nav-width)',
           overflow: 'hidden',
         }),
-        ...(mobile ? { background: 'var(--ma-bg-nav)', display: 'flex', flexDirection: 'column' } : {}),
-        fontFamily: 'var(--ma-font-ui)',
-        ...(style || {}),
+        ...(bar ? { background: 'var(--ma-bg-nav)', display: 'flex', flexDirection: 'column' } : {}),
+        ...nenCss,
       }}
       {...rest}
     >
-      {mobile ? (
+      {bar ? (
         <>
           <div
             data-testid="mobile-nav-bar"
@@ -160,7 +259,7 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
                   background: 'transparent',
                   color: 'var(--ma-text-secondary)',
                   fontFamily: 'var(--ma-font-ui)',
-                  fontSize: 12,
+                  fontSize: 13,
                   lineHeight: 1.1,
                   textAlign: 'center',
                   overflow: 'hidden',
@@ -198,65 +297,7 @@ export function NavPanel({ product = 'MiniApart', subtitle = 'Quản lý toà nh
             </div>
           ) : null}
         </>
-      ) : (
-        <>
-          <div className="sb-brand" style={collapsed ? undefined : { paddingBottom: 8 }}>
-            <div className="logo" aria-hidden="true">M</div>
-            <div>
-              <div className="sb-name">{product}</div>
-              <div className="sb-scope">{subtitle}</div>
-            </div>
-          </div>
-
-          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'grid', gap: 2, alignContent: 'start' }}>
-            {groups.map((g) => (
-              <div key={g.label || 'chung'} style={{ display: 'grid', gap: collapsed ? 2 : 0 }}>
-                {g.label ? <div className="sb-label" style={collapsed ? undefined : { paddingTop: 6, paddingBottom: 0 }}>{g.label}</div> : null}
-                {g.items.map((it) => (
-                  <a
-                    key={it.label}
-                    className="nav-item"
-                    href={it.href || '#'}
-                    aria-current={it.active ? 'page' : undefined}
-                    aria-label={collapsed ? it.label : undefined}
-                    title={collapsed ? it.label : undefined}
-                    style={{ minHeight: collapsed ? 'var(--ma-hit-mobile)' : 36, marginLeft: it.depth === 1 ? 32 : undefined }}
-                  >
-                    {it.depth === 1 ? null : it.icon ? <Icon name={it.icon} /> : <Glyph name={it.glyph} size={16} strokeWidth={it.active ? 2 : 1.6} />}
-                    <span>{it.label}</span>
-                    {it.count ? (
-                      <b
-                        className="count"
-                        aria-label={`${it.count} việc cần xử lý`}
-                        style={it.countTone === 'waiting' ? { background: 'var(--ma-waiting-bg)', color: 'var(--ma-waiting)' } : undefined}
-                      >
-                        {it.count}
-                      </b>
-                    ) : null}
-                  </a>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          {user ? (
-            <>
-              <div className="sb-user" style={{ marginTop: 8, flex: 'none' }}>
-                {collapsed ? null : <span className="avatar sm h4" aria-hidden="true">{user.initials}</span>}
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="name" title={user.name}>{user.name}</div>
-                  <div className="t-meta" title={user.role}>{user.role}</div>
-                </div>
-                {onLogout ? (
-                  <button type="button" className="icon-btn sm" data-testid="nav-logout" aria-label="Đăng xuất" title="Đăng xuất" onClick={onLogout}>
-                    <Icon name="logout" />
-                  </button>
-                ) : null}
-              </div>
-            </>
-          ) : null}
-        </>
-      )}
+      ) : sideJSX}
     </nav>
   )
 }

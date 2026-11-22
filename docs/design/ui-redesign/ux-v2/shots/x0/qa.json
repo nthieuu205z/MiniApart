@@ -1,0 +1,512 @@
+[
+ {
+  "name": "chu-hom-nay-1440",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\chu-hom-nay-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 29,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 202,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1178
+  }
+ },
+ {
+  "name": "chu-thu-tien-1440",
+  "path": "/thu-tien",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\chu-thu-tien-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 42,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 149,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1225
+  }
+ },
+ {
+  "name": "chu-hoa-don-1440",
+  "path": "/hoa-don",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\chu-hoa-don-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 76,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 262,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1880
+  }
+ },
+ {
+  "name": "chu-tong-quan-1440",
+  "path": "/tong-quan",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\chu-tong-quan-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 34,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 207,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1243
+  }
+ },
+ {
+  "name": "chu-phong-khong-quyen-1440",
+  "path": "/phong",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\chu-phong-khong-quyen-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 17,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 40,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 900
+  }
+ },
+ {
+  "name": "ql-hom-nay-1440",
+  "path": "/hom-nay",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\ql-hom-nay-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 27,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 146,
+    "minRatio": 4.9,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1469
+  }
+ },
+ {
+  "name": "ql-su-co-1440",
+  "path": "/su-co",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\ql-su-co-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 44,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 150,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1508
+  }
+ },
+ {
+  "name": "chu-hom-nay-390",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\chu-hom-nay-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 17,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 177,
+    "minRatio": 5.75,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 3074
+  }
+ },
+ {
+  "name": "chu-thu-tien-390",
+  "path": "/thu-tien",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\chu-thu-tien-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 28,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 120,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 2753
+  }
+ },
+ {
+  "name": "chu-hoa-don-390",
+  "path": "/hoa-don",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\chu-hoa-don-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 58,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 229,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 6396
+  }
+ },
+ {
+  "name": "chu-tong-quan-390",
+  "path": "/tong-quan",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\chu-tong-quan-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 22,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 182,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 3155
+  }
+ },
+ {
+  "name": "chu-phong-khong-quyen-390",
+  "path": "/phong",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\chu-phong-khong-quyen-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 5,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 15,
+    "minRatio": 5.47,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 844
+  }
+ },
+ {
+  "name": "ql-hom-nay-390",
+  "path": "/hom-nay",
+  "role": "QUAN_LY",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\ql-hom-nay-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 16,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 121,
+    "minRatio": 4.9,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 2955
+  }
+ },
+ {
+  "name": "ql-su-co-390",
+  "path": "/su-co",
+  "role": "QUAN_LY",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\ql-su-co-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 30,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 118,
+    "minRatio": 5.47,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 3957
+  }
+ },
+ {
+  "name": "tho-viec-390",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\tho-viec-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 39,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 199,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 4095
+  }
+ },
+ {
+  "name": "khach-hoa-don-390",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\khach-hoa-don-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 11,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 89,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1641
+  }
+ },
+ {
+  "name": "chu-ngan-menu-390",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x0\\chu-ngan-menu-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 30,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 201,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 3074
+  }
+ }
+]
