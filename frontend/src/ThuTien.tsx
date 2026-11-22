@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import './ThuTien.css'
-import { fetchChiSoDichVu, fetchCongNoBaoCao, fetchHoaDonQuanLy, fetchHopDongQuanLy, fetchKyThanhToan, type ThongTinGhiChiSo, type ThongTinHopDong, type ThongTinKyThanhToan, type ThongTinToaNha } from './api'
+import { fetchChiSoDichVu, fetchCongNoBaoCao, fetchHoaDonCongNoChiTiet, fetchHoaDonQuanLy, fetchHopDongQuanLy, fetchKyThanhToan, type ThongTinGhiChiSo, type ThongTinHoaDonQuanLy, type ThongTinHopDong, type ThongTinKyThanhToan, type ThongTinToaNha } from './api'
 import { Button } from './design/core/Button'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
+import { Toast } from './design/feedback/Toast'
+import { useDialogTrap } from './design/feedback/useDialogTrap'
 import { Card } from './design/layout/Card'
 import { DataTable, type DataTableColumn } from './design/table/DataTable'
 import FinancePaymentPanel, { message } from './FinancePaymentPanel'
+import { mapTrangThaiHoaDon } from './HoaDonQuanLy'
 import { collectDeposit, financeRequest, getDeposit, localDate, validMoney, type Deposit, type Settlement } from './financeApi'
 import { BuildingSelect, today, useBuildings } from './ManagementShared'
 import { demBoLoc, hangTong, locNo, nhomNo, tuCongNo, tuHoaDonQuanLy, type BoLocNo, type DongNo, type NhomNo } from './nhomNoTheoNguoi'
@@ -67,19 +71,22 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
   const q = p.get('q') ?? ''
 
   const [dong, setDong] = useState<DongNo[] | null>(null)
+  const [tho, setTho] = useState<ThongTinHoaDonQuanLy[]>([]) // Quản lý: mọi hoá đơn của toà, để mở ngăn cho hoá đơn đã thu đủ
   const [loi, setLoi] = useState<string | null>(null)
   const [reload, setReload] = useState(0)
   const [mo, setMo] = useState<Set<string>>(new Set())
   const [chon, setChon] = useState<Set<string>>(new Set())
   const [ngan, setNgan] = useState<{ hoaDonId: number | null } | null>(null)
+  const [thongBao, setThongBao] = useState('')
+  const daMoTuUrl = useRef('')
   useEffect(() => {
     if (choToa) return
     let active = true
     setLoi(null)
     const tai = laChu
-      ? fetchCongNoBaoCao(token, null).then((r) => tuCongNo(r.congNo))
-      : Promise.all([fetchHoaDonQuanLy(token, toa!.id, ''), fetchHopDongQuanLy(token, toa!.id)]).then(([hd, hop]) => tuHoaDonQuanLy(hd, toa!, today(), hop))
-    tai.then((rows) => { if (active) setDong(rows) }).catch((cause: unknown) => { if (active) setLoi(message(cause)) })
+      ? fetchCongNoBaoCao(token, null).then((r) => ({ rows: tuCongNo(r.congNo), hd: [] as ThongTinHoaDonQuanLy[] }))
+      : Promise.all([fetchHoaDonQuanLy(token, toa!.id, ''), fetchHopDongQuanLy(token, toa!.id)]).then(([hd, hop]) => ({ rows: tuHoaDonQuanLy(hd, toa!, today(), hop), hd }))
+    tai.then(({ rows, hd }) => { if (active) { setDong(rows); setTho(hd) } }).catch((cause: unknown) => { if (active) setLoi(message(cause)) })
     return () => { active = false }
   }, [token, laChu, choToa, laChu ? 0 : toa?.id, reload]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -113,6 +120,22 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
     URL.revokeObjectURL(url)
   }
 
+  // Mở từ nơi khác: ?hoaDonId= mở đúng hoá đơn; ?nguoiThueId= mở hoá đơn còn nợ cũ nhất của người đó (không nợ → chế độ chọn hoá đơn).
+  useEffect(() => {
+    const hoaDonId = Number(p.get('hoaDonId')) || null
+    const nguoiThueId = Number(p.get('nguoiThueId')) || null
+    const khoa = `${hoaDonId ?? ''}|${nguoiThueId ?? ''}`
+    if (dong === null || khoa === '|' || khoa === daMoTuUrl.current) return
+    daMoTuUrl.current = khoa
+    setNgan({ hoaDonId: hoaDonId ?? nhomNo(dong, 'nguoi').find((g) => g.nguoiThueId === nguoiThueId)?.hoaDon[0].hoaDonId ?? null })
+  }, [dong, p])
+  useEffect(() => {
+    if (!thongBao) return
+    const hen = setTimeout(() => setThongBao(''), 4000)
+    return () => clearTimeout(hen)
+  }, [thongBao])
+  const dongNgan = () => { setNgan(null); daMoTuUrl.current = ''; if (p.has('hoaDonId') || p.has('nguoiThueId')) dat({ hoaDonId: null, nguoiThueId: null }) }
+
   const tenToa = toa?.ten ?? `Tất cả ${buildings.length} toà`
   const phuDe = tab === 'can-thu' ? 'nhóm theo người thuê, mỗi người một hàng tổng' : tab === 'da-thu' ? 'hoá đơn đã thu đủ' : 'tiền cọc và trả phòng'
   const datLoc = (patch: Record<string, string | null>) => dat({ trang: null, ...patch })
@@ -124,6 +147,7 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
         <h1 className="h1" id="thu-tien-title">Thu tiền</h1>
         <p className="sub">{tenToa} · {phuDe}</p>
       </div>
+      {tab === 'coc' ? null : <div className="ph-acts"><Button onClick={() => setNgan({ hoaDonId: null })}><Icon name="plus" />Ghi nhận thu tiền</Button></div>}
     </div>
     {tab === 'coc' ? <TabCoc token={token} toaNhaId={toaId} buildings={buildings} chonToa={ngoaiProvider(chung) || !chung.coDinh ? chung.chon : undefined} />
       : tab === 'da-thu' ? null
@@ -157,7 +181,7 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
                         <th scope="col" style={{ width: 52 }}><span className="sr-only">Mở</span></th>
                       </tr></thead>
                       <tbody>
-                        {trangHienTai.map((g) => <HangNhom key={g.khoa} g={g} theo={theo} chon={chon.has(g.khoa)} doiChon={(bat) => doiChon([g], bat)} mo={mo.has(g.khoa)} doiMo={() => setMo((s) => { const n = new Set(s); if (n.has(g.khoa)) n.delete(g.khoa); else n.add(g.khoa); return n })} />)}
+                        {trangHienTai.map((g) => <HangNhom key={g.khoa} g={g} theo={theo} chon={chon.has(g.khoa)} doiChon={(bat) => doiChon([g], bat)} mo={mo.has(g.khoa)} doiMo={() => setMo((s) => { const n = new Set(s); if (n.has(g.khoa)) n.delete(g.khoa); else n.add(g.khoa); return n })} thu={(id) => setNgan({ hoaDonId: id })} />)}
                         <tr className="tot"><td /><td>Tổng {tong.soNhom} {theo === 'nguoi' ? 'người' : 'phòng'}</td><td className="c-ky">{tong.soKy} kỳ</td><td className="c-tre" /><td className="num c-thu">{vnd(tong.daThu)}</td><td className="num t-danger">{vnd(tong.conLai)}</td><td /></tr>
                       </tbody>
                     </table></div>
@@ -168,10 +192,69 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
                     </div>
                   </>}
         </section>}
+    {ngan ? <NganGhiNhan token={token} laChu={laChu} dong={dong ?? []} tho={tho} hoaDonId={ngan.hoaDonId} doiHoaDon={(id) => setNgan({ hoaDonId: id })} onDong={dongNgan}
+      onDaGhi={() => { dongNgan(); setReload((v) => v + 1); setThongBao('Đã ghi nhận giao dịch thu tiền.') }} /> : null}
+    {thongBao ? <Toast style={{ position: 'fixed', zIndex: 90, left: 16, right: 16, bottom: 16, maxWidth: 420, margin: '0 auto' }}>{thongBao}</Toast> : null}
   </section>
 }
 
-function HangNhom({ g, theo, chon, doiChon, mo, doiMo }: { g: NhomNo; theo: 'nguoi' | 'phong'; chon: boolean; doiChon: (bat: boolean) => void; mo: boolean; doiMo: () => void }) {
+type HoaDonThu = { hoaDonId: number; maHoaDon: string; conLai: string; trangThai: string; soPhong: string; nguoiThue: string }
+const trangThaiTuDong = (d: DongNo) => (d.soNgayQuaHan > 0 ? 'QUA_HAN' : d.daThu > 0 ? 'DA_THU_MOT_PHAN' : 'DA_PHAT_HANH')
+
+/** Ngăn phải (toàn màn ở điện thoại): dùng lại FinancePaymentPanel với đúng props của màn Thu tiền cũ; chưa chọn hoá đơn thì chọn từ bảng hoá đơn còn nợ. */
+function NganGhiNhan({ token, laChu, dong, tho, hoaDonId, doiHoaDon, onDong, onDaGhi }: { token: string; laChu: boolean; dong: DongNo[]; tho: ThongTinHoaDonQuanLy[]; hoaDonId: number | null; doiHoaDon: (id: number | null) => void; onDong: () => void; onDaGhi: () => void }) {
+  const ref = useRef<HTMLElement>(null)
+  useDialogTrap({ open: true, dialogRef: ref, onClose: onDong })
+  const [hd, setHd] = useState<HoaDonThu | null>(null)
+  const [loi, setLoi] = useState<string | null>(null)
+  useEffect(() => {
+    setHd(null); setLoi(null)
+    if (hoaDonId === null) return
+    let active = true
+    if (laChu) {
+      fetchHoaDonCongNoChiTiet(token, hoaDonId).then((d) => { if (active) setHd(d) }).catch((cause: unknown) => { if (active) setLoi(message(cause)) })
+    } else {
+      const d = tho.find((x) => x.hoaDonId === hoaDonId)
+      if (d) setHd(d); else setLoi('Không tìm thấy hoá đơn này ở toà đang chọn.')
+    }
+    return () => { active = false }
+  }, [token, laChu, hoaDonId, tho])
+  const cungNguoi = hoaDonId === null ? [] : nhomNo(dong, 'nguoi').find((g) => g.hoaDon.some((h) => h.hoaDonId === hoaDonId))?.hoaDon ?? []
+  const hangChon: ThongTinHoaDonQuanLy[] = useMemo(() => dong.map((d) => ({ hoaDonId: d.hoaDonId, maHoaDon: d.maHoaDon, kyId: d.kyId, hopDongId: d.hopDongId, soPhong: d.soPhong, nguoiThue: d.hoTen, hanThanhToan: d.hanThanhToan, trangThai: trangThaiTuDong(d), tongTien: String(d.tongTien), daThu: String(d.daThu), conLai: String(d.conLai) })), [dong])
+  const cot = useMemo(() => cotHoaDonThu((id) => doiHoaDon(id)), []) // eslint-disable-line react-hooks/exhaustive-deps
+  return createPortal(<div className="tt-nen">
+    <aside ref={ref} role="dialog" aria-modal="true" aria-labelledby="ngan-thu-tien-title" tabIndex={-1} className="drawer tt-ngan">
+      <div className="drawer-h">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h2 className="h2" id="ngan-thu-tien-title" style={{ flex: 1, margin: 0 }}>Ghi nhận thu tiền</h2>
+          <Button size="sm" variant="secondary" onClick={onDong}>Đóng</Button>
+        </div>
+        {hd ? <p className="t-sm" style={{ margin: '8px 0 0' }}>Phòng {hd.soPhong} · {hd.nguoiThue} · Còn phải thu <strong>{dinhDangTien(hd.conLai)} đ</strong></p> : null}
+      </div>
+      <div className="drawer-b">
+        {hoaDonId === null ? <DataTable rows={hangChon} columns={cot} getRowId={(h) => h.hoaDonId} timTheo={(h) => `${h.maHoaDon} ${h.soPhong} ${h.nguoiThue}`} searchLabel="Tìm mã hoá đơn, phòng, người thuê" noun="hoá đơn" pageSize={8} />
+          : loi ? <EmptyState kind="error" title={loi} body="Dữ liệu chưa bị thay đổi." actionLabel="Chọn hoá đơn khác" onAction={() => doiHoaDon(null)} />
+            : !hd ? <EmptyState kind="loading" title="Đang tải hoá đơn…" />
+              : <>
+                {cungNguoi.length > 1 ? <label className="field"><span className="label">Hoá đơn của người này</span>
+                  <select className="select" value={hd.hoaDonId} onChange={(e) => doiHoaDon(Number(e.target.value))}>{cungNguoi.map((h) => <option key={h.hoaDonId} value={h.hoaDonId}>Kỳ {nhanKy(h)} · {h.maHoaDon} · còn {vnd(h.conLai)}</option>)}</select></label> : null}
+                <FinancePaymentPanel key={hd.hoaDonId} token={token} hoaDonId={hd.hoaDonId} maHoaDon={hd.maHoaDon} conLai={hd.conLai} trangThai={hd.trangThai} onChanged={onDaGhi} />
+              </>}
+      </div>
+    </aside>
+  </div>, document.body)
+}
+
+function cotHoaDonThu(chon: (id: number) => void): DataTableColumn<ThongTinHoaDonQuanLy>[] {
+  return [
+    { key: 'ma', label: 'Hoá đơn', the: 'tieu-de', sortable: true, sortValue: (h) => h.maHoaDon, render: (h) => <><span className="td-main">{h.maHoaDon}</span><div className="td-sub" title={h.nguoiThue}>Phòng {h.soPhong} · {h.nguoiThue}</div></> },
+    { key: 'conLai', label: 'Còn lại', align: 'num', sortable: true, sortValue: (h) => Number(h.conLai), render: (h) => <span className="t-money" style={{ color: 'var(--ma-urgent)' }}>{dinhDangTien(h.conLai)} ₫</span> },
+    { key: 'trangThai', label: 'Trạng thái', render: (h) => { const t = mapTrangThaiHoaDon(h.trangThai); return <StatusTag tone={t.tone}>{t.nhan}</StatusTag> } },
+    { key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong', render: (h) => <div className="td-acts"><button type="button" className="btn btn-secondary btn-sm" aria-label={`Thu tiền hoá đơn ${h.maHoaDon}`} onClick={() => chon(h.hoaDonId)}>Thu tiền</button></div> },
+  ]
+}
+
+function HangNhom({ g, theo, chon, doiChon, mo, doiMo, thu }: { g: NhomNo; theo: 'nguoi' | 'phong'; chon: boolean; doiChon: (bat: boolean) => void; mo: boolean; doiMo: () => void; thu: (hoaDonId: number) => void }) {
   const ten = theo === 'nguoi' ? g.hoTen : `Phòng ${g.soPhong}`
   const phu = theo === 'nguoi' ? `${g.tenToaNha} · Phòng ${g.soPhong}` : `${g.tenToaNha} · ${g.hoTen}`
   const nguoi = <><span className={`avatar sm ${mauAvatar(g.khoa)}`} aria-hidden="true">{theo === 'nguoi' ? vietTat(g.hoTen) : g.soPhong.slice(0, 3)}</span><span><span className="td-main">{ten}</span><span className="td-sub" style={{ display: 'block' }}>{phu}</span></span></>
@@ -193,7 +276,7 @@ function HangNhom({ g, theo, chon, doiChon, mo, doiMo }: { g: NhomNo; theo: 'ngu
       <td className="c-tre">{h.daThu > 0 ? <StatusTag tone="waiting">Trả một phần</StatusTag> : <StatusTag tone="urgent">Chưa trả</StatusTag>}</td>
       <td className="num c-thu">{vnd(h.daThu)} / {vnd(h.tongTien)}</td>
       <td className="num t-money">{vnd(h.conLai)}</td>
-      <td />
+      <td><button type="button" className="btn btn-secondary btn-sm" aria-label={`Thu tiền hoá đơn ${h.maHoaDon}`} onClick={() => thu(h.hoaDonId)}>Thu</button></td>
     </tr>) : null}
   </>
 }
