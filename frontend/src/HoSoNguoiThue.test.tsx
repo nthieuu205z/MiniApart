@@ -2,7 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import HoSoNguoiThue from './HoSoNguoiThue'
+import HoSoNguoiThue, { NganFormNguoiThue } from './HoSoNguoiThue'
 
 declare global { var IS_REACT_ACT_ENVIRONMENT: boolean | undefined }
 
@@ -15,10 +15,16 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const huy = { id: 1, hoTen: 'Trần Quang Huy', ngaySinh: '2003-11-10', soDienThoai: '0999100001', soGiayToChe: '*********ON-1', queQuan: 'Nam Định', canhBao: [] as string[] }
 const ha = { id: 2, hoTen: 'Bùi Ngọc Hà', ngaySinh: '1991-11-10', soDienThoai: '0999100067', soGiayToChe: '', queQuan: '', canhBao: ['Thiếu ảnh giấy tờ'] }
 
-async function render(fetchMock: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) {
+async function render(fetchMock: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>, dieuHuong?: (href: string) => void) {
   vi.stubGlobal('fetch', fetchMock)
   root = createRoot(container)
-  await act(async () => root!.render(<HoSoNguoiThue token="t" />))
+  await act(async () => root!.render(<HoSoNguoiThue token="t" dieuHuong={dieuHuong} />))
+}
+async function renderNgan(fetchMock: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>, id: number | null, onSaved = vi.fn()) {
+  vi.stubGlobal('fetch', fetchMock)
+  root = createRoot(container)
+  await act(async () => root!.render(<NganFormNguoiThue token="t" id={id} onSaved={onSaved} onClose={vi.fn()} />))
+  return onSaved
 }
 function button(prefix: string) {
   const found = [...container.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent?.trim().startsWith(prefix))
@@ -43,8 +49,21 @@ describe('Hồ sơ người thuê', () => {
     expect(text).toContain('Nam Định')
     expect(text).toContain('Thiếu ảnh giấy tờ')
     expect(text).toContain('Chưa cập nhật')
-    expect(container.querySelectorAll('button')).not.toBeNull()
-    expect([...container.querySelectorAll('button')].filter((b) => b.textContent?.includes('Xem và sửa'))).toHaveLength(2)
+    // Mỗi người là một liên kết tới hồ sơ; không còn nút "Xem và sửa" và không có form dưới bảng.
+    expect([...container.querySelectorAll('tbody a')].map((a) => a.getAttribute('href'))).toEqual(['/nguoi-thue/1', '/nguoi-thue/2'])
+    expect([...container.querySelectorAll('button')].filter((b) => b.textContent?.includes('Xem và sửa'))).toHaveLength(0)
+    expect(container.querySelector('form')).toBeNull()
+  })
+
+  it('bấm một hàng mở hồ sơ đúng người (một lần); bấm tên là liên kết thật, không gọi điều hướng thêm', async () => {
+    const dieuHuong = vi.fn()
+    await render(vi.fn(async (_i: RequestInfo | URL, _n?: RequestInit) => json([huy, ha])), dieuHuong)
+    await vi.waitFor(() => expect(container.textContent).toContain('Trần Quang Huy'))
+    await act(async () => (container.querySelector('tr[data-tenant-row="1"] td:nth-child(3)') as HTMLElement).click())
+    expect(dieuHuong).toHaveBeenCalledExactlyOnceWith('/nguoi-thue/1')
+    dieuHuong.mockClear()
+    await act(async () => (container.querySelector('tr[data-tenant-row="2"] a') as HTMLElement).click())
+    expect(dieuHuong).not.toHaveBeenCalled()
   })
 
   it('hiện trạng thái rỗng khi chưa có hồ sơ và khi tìm không ra', async () => {
@@ -63,16 +82,14 @@ describe('Hồ sơ người thuê', () => {
     await vi.waitFor(() => expect(fetchMock.mock.calls.some(([u]) => String(u) === '/api/nguoi-thue?q=Huy')).toBe(true))
   })
 
-  it('mở hồ sơ để sửa nạp đúng dữ liệu rồi lưu bằng PUT', async () => {
+  it('ngăn sửa hồ sơ nạp đúng dữ liệu rồi lưu bằng PUT, báo cho nơi gọi tải lại', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
       const url = String(input)
       if (url === '/api/nguoi-thue/1' && (init?.method ?? 'GET') === 'GET') return json({ ...huy, soGiayTo: '012345678901' })
       if (url === '/api/nguoi-thue/1' && init?.method === 'PUT') return json(huy)
       return json([huy])
     })
-    await render(fetchMock)
-    await vi.waitFor(() => expect(container.textContent).toContain('Trần Quang Huy'))
-    await act(async () => button('Xem và sửa').click())
+    const onSaved = await renderNgan(fetchMock, 1)
     await vi.waitFor(() => expect(container.textContent).toContain('Chỉnh sửa hồ sơ: Trần Quang Huy'))
     const cccd = [...container.querySelectorAll<HTMLInputElement>('form input')].find((i) => i.value === '012345678901')
     expect(cccd).toBeDefined()
@@ -82,16 +99,17 @@ describe('Hồ sơ người thuê', () => {
     expect(put[0]).toBe('/api/nguoi-thue/1')
     expect(JSON.parse(String((put[1] as RequestInit).body))).toMatchObject({ hoTen: 'Trần Quang Huy', soGiayTo: '012345678901', queQuan: 'Hà Nội' })
     await vi.waitFor(() => expect(container.textContent).toContain('Đã cập nhật thông tin hồ sơ người thuê.'))
+    expect(onSaved).toHaveBeenCalledTimes(1)
     expect(container.textContent).toContain('Ảnh giấy tờ của hồ sơ #1')
   })
 
-  it('thêm hồ sơ mới gửi POST', async () => {
+  it('Thêm người thuê mở ngăn form trống và gửi POST', async () => {
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => init?.method === 'POST' ? json({ ...huy, id: 9 }, 201) : json([huy]))
     await render(fetchMock)
     await vi.waitFor(() => expect(container.textContent).toContain('Trần Quang Huy'))
-    await act(async () => button('Thêm hồ sơ mới').click())
-    await vi.waitFor(() => expect(container.textContent).toContain('Thêm hồ sơ người thuê mới'))
-    const inputs = [...container.querySelectorAll<HTMLInputElement>('form input')]
+    await act(async () => button('Thêm người thuê').click())
+    await vi.waitFor(() => expect(container.querySelector('[role="dialog"]')?.textContent).toContain('Thêm hồ sơ người thuê mới'))
+    const inputs = [...container.querySelectorAll<HTMLInputElement>('[role="dialog"] form input')]
     expect(inputs).toHaveLength(5)
     const values = ['Nguyễn Văn A', '2000-01-02', '0900000009', '079200000009', 'Hà Nam']
     for (let i = 0; i < 5; i++) await setValue(inputs[i], values[i])
@@ -100,5 +118,7 @@ describe('Hồ sơ người thuê', () => {
     expect(post[0]).toBe('/api/nguoi-thue')
     expect(JSON.parse(String((post[1] as RequestInit).body))).toEqual({ hoTen: 'Nguyễn Văn A', ngaySinh: '2000-01-02', soDienThoai: '0900000009', soGiayTo: '079200000009', queQuan: 'Hà Nam' })
     await vi.waitFor(() => expect(container.textContent).toContain('Đã tạo hồ sơ người thuê mới thành công.'))
+    // danh sách tải lại sau khi tạo
+    await vi.waitFor(() => expect(fetchMock.mock.calls.filter(([u, i]) => String(u).startsWith('/api/nguoi-thue?') && (i as RequestInit | undefined)?.method === 'GET').length).toBeGreaterThan(1))
   })
 })
