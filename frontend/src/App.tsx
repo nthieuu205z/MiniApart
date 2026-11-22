@@ -66,15 +66,17 @@ const styleKhungKhach: CSSProperties = {
   display: 'grid',
   gap: 'var(--ma-space-7)',
   padding: 'clamp(16px, 4vw, var(--ma-space-8))',
-  alignContent: 'start',
+  alignContent: 'center',
 }
 
 const styleGridKhachDesktop: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'minmax(0, 520px) minmax(0, 1fr)',
+  gridTemplateColumns: 'minmax(0, 460px) minmax(0, 1fr)',
   gap: 16,
   width: '100%',
-  minHeight: 'calc(100vh - 32px)',
+  maxWidth: 1120,
+  margin: '0 auto',
+  minHeight: 'min(660px, calc(100vh - 64px))',
 }
 
 const styleGridKhachManHinhHep: CSSProperties = {
@@ -632,7 +634,7 @@ function App() {
     return (
       <main style={styleKhungKhach}>
         <section style={laManHinhHep ? styleGridKhachManHinhHep : styleGridKhachDesktop}>
-          <div style={{ ...styleDangNhapThe, padding: laManHinhHep ? '24px 20px' : '40px 56px' }} aria-labelledby="auth-title">
+          <div style={{ ...styleDangNhapThe, padding: laManHinhHep ? '24px 20px' : '32px 48px' }} aria-labelledby="auth-title">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div className="logo" aria-hidden="true">M</div>
@@ -676,10 +678,7 @@ function App() {
                   </div>
 
                   <div className="field">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                      <label className="label" htmlFor="dn-mk">Mật khẩu</label>
-                      <Button variant="text" size="sm" onClick={() => setMoTroGiupTaiKhoan(true)}>Quên mật khẩu?</Button>
-                    </div>
+                    <label className="label" htmlFor="dn-mk">Mật khẩu</label>
                     <div className="input-wrap">
                       <Icon name="lock" />
                       <input
@@ -713,6 +712,7 @@ function App() {
                   >
                     {dangDangNhap ? 'Đang đăng nhập…' : 'Đăng nhập'}
                   </Button>
+                  <Button type="button" variant="text" size="sm" style={{ justifySelf: 'center' }} onClick={() => setMoTroGiupTaiKhoan(true)}>Quên mật khẩu?</Button>
                 </form>
               )}
             </div>
