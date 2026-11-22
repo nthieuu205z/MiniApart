@@ -305,6 +305,7 @@ describe('GhiChiSo mobile screen', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     await renderScreen()
+    await moSua()
 
     expect(container.querySelector('button[data-confirm-warning-key="11-21"]')).toBeNull()
     const saveButton = await vi.waitFor(() => container.querySelector('button[data-save-key="11-21"]') as HTMLButtonElement)
@@ -398,7 +399,7 @@ describe('GhiChiSo mobile screen', () => {
     }))
     root = createRoot(container)
     await act(async () => root.render(<GhiChiSo token="meter-token" anNutChot />))
-    await vi.waitFor(() => expect(container.textContent).toContain('Kỳ: 8/2026'))
+    await vi.waitFor(() => expect(container.textContent).toContain('Kỳ 8/2026'))
     expect(container.querySelector('button[data-close-period]')).toBeNull()
   })
 
@@ -582,6 +583,8 @@ describe('GhiChiSo mobile screen', () => {
       const observer = new MutationObserver(() => {
         const input = container.querySelector('input[name="chiSoCuoi-11-21"]')
         const saveButton = container.querySelector('button[data-save-key="11-21"]')
+        // Công tơ đã ghi nằm trong bảng gọn: phải bấm "Sửa" mới có ô nhập.
+        if (!input) container.querySelector<HTMLButtonElement>('button[aria-label^="Sửa"]')?.click()
         if (!(input instanceof HTMLInputElement) || !(saveButton instanceof HTMLButtonElement)) return
         if (input.value !== '1239.99') {
           setInputValue(input, '1239.99')
@@ -666,15 +669,107 @@ describe('GhiChiSo mobile screen', () => {
 
     await renderScreen(true)
     const saveButton = await vi.waitFor(() => container.querySelector('button[data-save-key="11-21"]') as HTMLButtonElement)
-    expect(saveButton.textContent).toContain('Lưu, sang công tơ nước 101')
+    expect(saveButton.textContent).toContain('Lưu, sang 101 · Nước')
 
     await act(async () => setInputValue(container.querySelector('input[name="chiSoCuoi-11-21"]') as HTMLInputElement, '1252'))
     await act(async () => saveButton.click())
 
-    await vi.waitFor(() => expect(container.querySelector('button[data-save-key="11-22"]')?.textContent).toContain('Lưu, sang phòng 201'))
+    await vi.waitFor(() => expect(container.querySelector('button[data-save-key="11-22"]')?.textContent).toContain('Lưu, sang 201 · Điện'))
     await vi.waitFor(() => expect(document.activeElement).toBe(container.querySelector('input[name="chiSoCuoi-11-22"]')))
   })
+  describe('x8 bước 1 Chu kỳ tháng', () => {
+    const duLieuHaiPhong = {
+      tongPhong: 2,
+      daGhi: 1,
+      phong: [
+        { id: 11, soPhong: '101', tang: 1, dichVu: [{ id: 21, tenDichVu: 'Điện', donVi: 'kWh', chiSoDau: '100.00', chiSoCuoi: '150.00', mucTieuThu: '50.00', coThayCongTo: false }] },
+        { id: 12, soPhong: '201', tang: 2, dichVu: [{ id: 21, tenDichVu: 'Điện', donVi: 'kWh', chiSoDau: '980.00', coThayCongTo: false }, { id: 22, tenDichVu: 'Nước', donVi: 'm3', chiSoDau: '45.00', coThayCongTo: false }] },
+      ],
+    }
+    const taoFetch = (postResponse: () => Response = () => jsonResponse({ phongId: 12, dichVuId: 21, chiSoDau: '980.00', chiSoCuoi: '1000.00', mucTieuThu: '20.00', coThayCongTo: false }, 201)) =>
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url === '/api/toa-nha') return jsonResponse([{ id: 1, ten: 'Toà A' }])
+        if (url === '/api/toa-nha/1/ky-thanh-toan') return jsonResponse([{ id: 8, nam: 2026, thang: 8, trangThai: 'DANG_MO' }])
+        if (url.endsWith('/thieu-chi-so')) return jsonResponse([])
+        if (url.endsWith('/chi-so') && init?.method === 'POST') return postResponse()
+        return jsonResponse(duLieuHaiPhong)
+      })
+
+    it('desktop: công tơ chưa ghi hiện trước, phòng đã ghi nằm trong bảng gọn, chỉ một nút chính', async () => {
+      vi.stubGlobal('fetch', taoFetch())
+      await renderScreen()
+      await vi.waitFor(() => expect(container.querySelector('#cong-to-12-21')).not.toBeNull())
+      const chua = container.querySelector('#cong-to-12-21') as HTMLElement
+      const bang = container.querySelector('table') as HTMLTableElement
+      expect(chua.compareDocumentPosition(bang) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      expect(bang.textContent).toContain('101')
+      expect(bang.querySelector('input')).toBeNull()
+      expect(container.querySelector('#cong-to-12-22')).not.toBeNull()
+      expect(container.querySelectorAll('.btn-primary').length).toBe(1)
+      expect(container.textContent).toContain('Chưa ghi (2)')
+    })
+
+    it('desktop: "Lưu k chỉ số" gửi từng ô đã nhập đúng URL và payload cũ', async () => {
+      const fetchMock = taoFetch()
+      vi.stubGlobal('fetch', fetchMock)
+      await renderScreen()
+      const dien = await vi.waitFor(() => container.querySelector('input[name="chiSoCuoi-12-21"]') as HTMLInputElement)
+      const nuoc = container.querySelector('input[name="chiSoCuoi-12-22"]') as HTMLInputElement
+      await act(async () => { setInputValue(dien, '1000'); setInputValue(nuoc, '50') })
+      const nutLuu = container.querySelector('button[data-save-all]') as HTMLButtonElement
+      expect(nutLuu.textContent).toBe('Lưu 2 chỉ số')
+      await act(async () => nutLuu.click())
+      await vi.waitFor(() => expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST').length).toBe(2))
+      const bodies = fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST').map(([url, init]) => [url, JSON.parse(String(init?.body))])
+      expect(bodies[0]).toEqual(['/api/toa-nha/1/ky-thanh-toan/8/chi-so', { phongId: 12, dichVuId: 21, chiSoCuoi: '1000', coThayCongTo: false }])
+      expect(bodies[1][1]).toEqual({ phongId: 12, dichVuId: 22, chiSoCuoi: '50', coThayCongTo: false })
+    })
+
+    it('desktop: anNutChot không render khối chốt kỳ', async () => {
+      vi.stubGlobal('fetch', taoFetch())
+      root = createRoot(container)
+      await act(async () => root.render(<GhiChiSo token="meter-token" anNutChot />))
+      await vi.waitFor(() => expect(container.querySelector('#cong-to-12-21')).not.toBeNull())
+      expect(container.querySelector('[data-close-period]')).toBeNull()
+      expect(container.textContent).not.toContain('Chốt kỳ')
+    })
+
+    it('mobile: một công tơ mỗi màn; "Lưu, sang" gọi API một lần rồi chuyển công tơ kế', async () => {
+      const fetchMock = taoFetch()
+      vi.stubGlobal('fetch', fetchMock)
+      await renderScreen(true)
+      const nut = await vi.waitFor(() => container.querySelector('button[data-save-key="12-21"]') as HTMLButtonElement)
+      expect(container.querySelectorAll('input[name^="chiSoCuoi-"]').length).toBe(1)
+      expect(container.textContent).toContain('Bước 1/4 Ghi chỉ số · 1/3')
+      expect(nut.textContent).toBe('Lưu, sang 201 · Nước')
+      const o = container.querySelector('input[name="chiSoCuoi-12-21"]') as HTMLInputElement
+      expect(o.inputMode).toBe('numeric')
+      await act(async () => setInputValue(o, '1000'))
+      await act(async () => nut.click())
+      await vi.waitFor(() => expect(container.querySelector('input[name="chiSoCuoi-12-22"]')).not.toBeNull())
+      expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST').length).toBe(1)
+      expect((container.querySelector('button[data-save-key="12-22"]') as HTMLElement).textContent).toBe('Lưu và xong')
+    })
+
+    it('mobile: lỗi API giữ nguyên công tơ và số đã nhập, báo lỗi dưới ô', async () => {
+      vi.stubGlobal('fetch', taoFetch(() => jsonResponse({ message: 'Máy chủ bận' }, 500)))
+      await renderScreen(true)
+      const nut = await vi.waitFor(() => container.querySelector('button[data-save-key="12-21"]') as HTMLButtonElement)
+      await act(async () => setInputValue(container.querySelector('input[name="chiSoCuoi-12-21"]') as HTMLInputElement, '1000'))
+      await act(async () => nut.click())
+      await vi.waitFor(() => expect(container.querySelector('.ghi-m-loi')).not.toBeNull())
+      expect((container.querySelector('input[name="chiSoCuoi-12-21"]') as HTMLInputElement).value).toBe('1000')
+      expect(container.querySelector('input[name="chiSoCuoi-12-22"]')).toBeNull()
+    })
+  })
+
 })
+
+async function moSua() {
+  const nut = await vi.waitFor(() => container.querySelector('button[aria-label^="Sửa"]') as HTMLButtonElement)
+  await act(async () => nut.click())
+}
 
 async function renderScreen(mobile = false) {
   root = createRoot(container)

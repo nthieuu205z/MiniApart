@@ -1,0 +1,34 @@
+/* Ghi chỉ số (bước 1 Chu kỳ tháng): công tơ thiếu trước, phòng đã ghi gọn thành bảng. */
+.ghi-cs { display: grid; gap: var(--ma-space-5); min-width: 0; color: var(--ma-text-primary); font-family: var(--ma-font-ui); }
+.ghi-cs-dau { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--ma-space-4); }
+.ghi-loc { display: flex; flex-wrap: wrap; gap: var(--ma-space-4); }
+.ghi-loc label { min-width: 200px; }
+.ghi-nhom { background: var(--ma-bg-card); border-radius: var(--ma-radius-xl); padding: var(--ma-space-5); display: grid; gap: var(--ma-space-4); min-width: 0; }
+.ghi-nhom-dau { flex-wrap: wrap; }
+.ghi-cong-to { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(200px, 1.2fr) auto; align-items: start; gap: var(--ma-space-3) var(--ma-space-5); padding: var(--ma-space-4) 0; border-top: 1px solid var(--ma-line-100); min-width: 0; }
+.ghi-ten { display: grid; gap: 2px; padding-top: 4px; min-width: 0; }
+.ghi-o-in { display: flex; align-items: center; gap: var(--ma-space-3); }
+.ghi-o-in input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: inherit; padding: 4px 0; }
+.ghi-o-in:focus-within { outline: 2px solid var(--ma-focus-ring); outline-offset: 6px; }
+.ghi-hanh-dong { display: flex; gap: var(--ma-space-3); padding-top: 22px; }
+.ghi-anh { position: relative; cursor: pointer; min-height: 44px; }
+.ghi-anh input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.ghi-anh:focus-within { outline: 2px solid var(--ma-focus-ring); outline-offset: 2px; }
+.ghi-them { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--ma-space-5); font: var(--ma-text-caption); color: var(--ma-text-secondary); }
+.ghi-thay { display: inline-flex; align-items: center; gap: var(--ma-space-2); min-height: 32px; }
+.ghi-thay-so { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--ma-space-4); }
+.ghi-cs .table th[scope="row"] { text-align: left; font: 600 15px/1.3 var(--ma-font-ui); padding: 0 12px 0 8px; height: 60px; border-bottom: 1px solid var(--ma-line-100); }
+.ghi-cs .table tbody tr:last-child th[scope="row"] { border-bottom: 0; }
+.ghi-cs .table tbody tr:has(.ghi-cong-to) { background: var(--ma-paper-1); }
+.ghi-cs .table .ghi-cong-to { border-top: 0; }
+
+/* Điện thoại: một công tơ mỗi màn. */
+.ghi-m-loi { color: var(--ma-urgent); margin: 8px 0 0; font: var(--ma-text-caption); }
+.ghi-m-lai { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px 16px; background: none; border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.ghi-m-lai + .ghi-m-lai { border-top: 1px solid var(--ma-line-100); }
+.ghi-m-lai .tile { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--ma-bg-sunken); color: var(--ma-text-secondary); flex: none; }
+.ghi-m-lai .s { font: var(--ma-text-caption); color: var(--ma-text-muted); }
+@media (max-width: 767px) {
+  .ghi-cong-to { grid-template-columns: minmax(0, 1fr); }
+  .ghi-hanh-dong { padding-top: 0; }
+}
