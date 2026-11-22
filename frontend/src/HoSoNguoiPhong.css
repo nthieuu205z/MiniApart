@@ -1,0 +1,46 @@
+/* Lô x3: phần riêng của hồ sơ Người thuê + Phòng. Lớp .prof/.cols/.side/.kv/.tl/.sumrow đã có ở design/ux-v2.css. */
+
+/* Tab là liên kết (aria-current), không phải role=tab: lặp lại kiểu .tab[aria-selected] của components.css */
+a.tab { text-decoration: none; }
+a.tab[aria-current="page"] { color: var(--ma-text-primary); font-weight: 600; }
+a.tab[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ma-brand-primary); }
+a.tab:hover { text-decoration: none; color: var(--ma-text-primary); }
+
+.hs-khoi { display: grid; gap: 12px; }
+.hs-so { display: flex; flex-wrap: wrap; gap: 8px 32px; }
+.hs-so .t-meta { margin-bottom: 2px; }
+.hs-hang-link { color: inherit; }
+.hs-hang-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.hs-trong { padding: 4px 0 8px; }
+
+/* Menu "…" */
+.hs-menu { position: relative; }
+.hs-menu-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 240px; background: var(--ma-bg-card); border: 1px solid var(--ma-line-200); border-radius: var(--ma-radius-md); box-shadow: var(--ma-shadow-md); padding: 6px; display: grid; }
+.hs-menu-list [role="menuitem"] { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border: 0; background: none; border-radius: 10px; font: 500 15px/1.3 var(--ma-font-ui); color: var(--ma-text-primary); cursor: pointer; text-align: left; width: 100%; }
+.hs-menu-list [role="menuitem"]:hover, .hs-menu-list [role="menuitem"]:focus-visible { background: var(--ma-brand-accent-light); text-decoration: none; }
+
+/* Ngăn bên phải chứa form (không còn form mở dưới danh sách) */
+.ngan-ben-nen { position: fixed; inset: 0; z-index: 70; background: var(--ma-bg-glass-overlay); display: flex; justify-content: flex-end; }
+.ngan-ben { width: min(520px, 100vw); height: 100%; background: var(--ma-bg-card); box-shadow: var(--ma-shadow-lg); display: flex; flex-direction: column; border-radius: var(--ma-radius-xl) 0 0 var(--ma-radius-xl); }
+.ngan-ben-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 24px 12px; border-bottom: 1px solid var(--ma-line-200); }
+.ngan-ben-b { padding: 16px 24px 24px; overflow: auto; display: grid; gap: 18px; align-content: start; }
+
+/* Hàng bảng bấm được (danh sách người thuê / phòng); tên trong hàng vẫn là <a href> thật */
+tr.nt-hang { cursor: pointer; }
+
+/* Ô phòng thành liên kết */
+.dp-o-phong { display: block; color: inherit; }
+.dp-o-phong:hover { text-decoration: none; }
+
+@media (max-width: 767px) {
+  .ngan-ben { border-radius: 0; }
+  .hs-pad-sticky { padding-bottom: 84px; }
+  /* Chủ/Quản lý ≤767px không có bottom-nav (menu nằm trong ngăn ☰) nên thanh dính đáy sát mép dưới */
+  .hs-khoi > .sticky-act { bottom: 0; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .hs-khoi > .sticky-act .btn { width: 100%; }
+  .hs-menu-list { right: 0; }
+  .prof .ph-acts { width: 100%; }
+  .prof .ph-acts .btn { flex: 1; }
+  .prof .ph-acts .hs-menu { flex: none; }
+  .hs-menu-list { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; }
+}
