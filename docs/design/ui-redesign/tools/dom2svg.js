@@ -50,9 +50,9 @@
   function textAttrs(s, extra = '') {
     const c = col(s.color) || { hex: '#000000', a: 1 };
     const ls = s.letterSpacing === 'normal' ? 0 : px(s.letterSpacing);
-    return `font-family="Archivo" font-size="${px(s.fontSize)}" font-weight="${s.fontWeight}"${ls ? ` letter-spacing="${n(ls)}"` : ''} ${paint('fill', c)}${extra}`;
+    return `font-family="Inter" font-size="${px(s.fontSize)}" font-weight="${s.fontWeight}"${ls ? ` letter-spacing="${n(ls)}"` : ''} ${paint('fill', c)}${extra}`;
   }
-  const base = (top, h, fs) => top + h / 2 + fs * 0.35; // đường chân chữ xấp xỉ cho Archivo
+  const base = (top, h, fs) => top + h / 2 + fs * 0.35; // đường chân chữ xấp xỉ cho Inter
   function textNode(t, s, dy) {
     const raw = t.nodeValue; if (!raw.trim()) return;
     const tr = s.textTransform === 'uppercase' ? (x) => x.toLocaleUpperCase('vi') : (x) => x;
@@ -74,7 +74,7 @@
       let txt = tr(raw.slice(L.a, L.z).replace(/\s+/g, ' '));
       if (cut) {
         const ctx = (textNode.c ||= document.createElement('canvas').getContext('2d'));
-        ctx.font = `${s.fontWeight} ${s.fontSize} Archivo`;
+        ctx.font = `${s.fontWeight} ${s.fontSize} Inter`;
         const avail = pe.getBoundingClientRect().right - px(s.paddingRight) - L.x;
         while (txt && ctx.measureText(txt + '…').width > avail) txt = txt.slice(0, -1);
         txt = txt.trimEnd() + '…';
@@ -147,7 +147,7 @@
           if (sk) a += ` ${paint('stroke', sk)} stroke-width="${px(cs.strokeWidth)}"${cs.strokeDasharray !== 'none' ? ` stroke-dasharray="${cs.strokeDasharray.replace(/px/g, '').replace(/,/g, ' ')}"` : ''}${cs.strokeLinecap !== 'butt' ? ` stroke-linecap="${cs.strokeLinecap}"` : ''}${cs.strokeLinejoin !== 'miter' ? ` stroke-linejoin="${cs.strokeLinejoin}"` : ''}`;
           if (px(cs.opacity) < 1) a += ` opacity="${cs.opacity}"`;
         }
-        if (tag === 'text') { s += `<text ${a} font-family="Archivo" font-size="${px(cs.fontSize)}" font-weight="${cs.fontWeight}">${esc(c.textContent)}</text>`; continue; }
+        if (tag === 'text') { s += `<text ${a} font-family="Inter" font-size="${px(cs.fontSize)}" font-weight="${cs.fontWeight}">${esc(c.textContent)}</text>`; continue; }
         s += c.children.length && tag !== 'text' ? `<${tag} ${a}>${walk(c, depth + 1)}</${tag}>` : `<${tag} ${a}/>`;
       }
       return s;

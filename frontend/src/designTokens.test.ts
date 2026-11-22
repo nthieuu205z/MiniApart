@@ -23,7 +23,7 @@ describe('MiniApart design tokens', () => {
     const styles = getComputedStyle(document.documentElement)
 
     expect(styles.getPropertyValue('--ma-paper-1').trim()).toBe('#F9F7F6')
-    expect(styles.getPropertyValue('--ma-font-ui').trim()).toContain('Archivo')
+    expect(styles.getPropertyValue('--ma-font-ui').trim()).toContain('Inter')
   })
 
   it('components.css không chứa reset toàn cục và chỉ có hex chép từ design', () => {
