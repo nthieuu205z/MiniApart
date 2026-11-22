@@ -1,0 +1,9 @@
+[
+{"name":"13-ql-su-co-1440","path":"/su-co","role":"QUAN_LY","w":1440,"h":900,"full":true},
+{"name":"13-ql-su-co-xong-1440","path":"/su-co?loc=xong","role":"QUAN_LY","w":1440,"h":900,"full":true},
+{"name":"13-ql-su-co-moi-1440","path":"/su-co?baoMoi=1&phongId=1","role":"QUAN_LY","w":1440,"h":900,"full":true},
+{"name":"13-ql-su-co-1180-ngan","path":"/su-co?id=3&loc=mo","role":"QUAN_LY","w":1180,"h":800,"full":false},
+{"name":"13-ql-su-co-390-ds","path":"/su-co","role":"QUAN_LY","w":390,"h":844,"full":true},
+{"name":"13-ql-su-co-390-ngan","path":"/su-co?id=3&loc=mo","role":"QUAN_LY","w":390,"h":844,"full":false},
+{"name":"13-chu-su-co-tat-ca-1440","path":"/su-co","role":"CHU","w":1440,"h":900,"full":true}
+]

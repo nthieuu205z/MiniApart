@@ -31,9 +31,11 @@ const num = { textAlign: 'right', fontVariantNumeric: 'tabular-nums' } as const
 export type QuanLyBaoGiaVaThanhToanProps = {
   token: string
   yeuCauId: number
+  /** Báo dữ liệu mới nhất lên ngăn sự cố để nó tính bước tiến độ + nút chính. */
+  onDuLieu?: (baoGia: BaoGiaSuaChua[], thanhToan: ThanhToanTho[]) => void
 }
 
-export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId }: QuanLyBaoGiaVaThanhToanProps): React.ReactElement {
+export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBaoGiaVaThanhToanProps): React.ReactElement {
   const [danhSachBaoGia, setDanhSachBaoGia] = useState<BaoGiaSuaChua[]>([])
   const [danhSachThanhToan, setDanhSachThanhToan] = useState<ThanhToanTho[]>([])
   const [dangTai, setDangTai] = useState(true)
@@ -65,6 +67,7 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId }: QuanLyBaoGiaVaThanh
       ])
       setDanhSachBaoGia(bgList)
       setDanhSachThanhToan(ttList)
+      onDuLieu?.(bgList, ttList)
     } catch (err: unknown) {
       setLoi(err instanceof Error ? err.message : 'Không thể tải thông tin báo giá & thanh toán')
     } finally {
