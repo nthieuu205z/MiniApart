@@ -80,7 +80,7 @@ export default function HopDongNguoiThue({ token, mobile = false }: Props) {
   return (
     <section {...khung} aria-labelledby="tenant-contract-title" style={{ display: 'grid', gap: 12, minWidth: 0 }}>
       <div>
-        <h1 id="tenant-contract-title" style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Hợp đồng của tôi</h1>
+        <h1 id="tenant-contract-title" className={mobile ? 'sr-only' : undefined} style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Hợp đồng của tôi</h1>
         <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)', marginTop: 2 }}>
           Thông tin chỉ đọc của các hợp đồng thuộc hồ sơ người thuê này. Cảnh báo hết hạn được tính theo ngày hiện tại.
         </div>
