@@ -1,4 +1,8 @@
 [
 {"name":"01-chu-hom-nay-1440","path":"/hom-nay","role":"CHU","w":1440,"h":900,"full":true},
-{"name":"24-chu-hom-nay-390","path":"/hom-nay","role":"CHU","w":390,"h":844,"full":true}
+{"name":"24-chu-hom-nay-390","path":"/hom-nay","role":"CHU","w":390,"h":844,"full":true},
+{"name":"01b-chu-mot-toa-1440","path":"/hom-nay?toaNhaId=5","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"10-ql-hom-nay-1440","path":"/hom-nay","role":"QUAN_LY","w":1440,"h":900,"full":true},
+{"name":"10-ql-hom-nay-390","path":"/hom-nay","role":"QUAN_LY","w":390,"h":844,"full":true},
+{"name":"10-ql-nhac-viec-1440","path":"/nhac-viec","role":"QUAN_LY","w":1440,"h":900,"full":true}
 ]

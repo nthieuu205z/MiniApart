@@ -22,3 +22,6 @@
     margin: calc(0px - var(--hn-dem)) calc(16px - var(--hn-dem)) calc(24px - var(--hn-dem));
   }
 }
+/* 390: tiêu đề khối + meta + link xuống dòng gọn, link không bị bẻ chữ */
+.hom-nay .sec-h { flex-wrap: wrap; row-gap: 2px; }
+.hom-nay .sec-h .push, .hom-nay .blk-h .push { white-space: nowrap; flex: none; }

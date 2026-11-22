@@ -118,7 +118,7 @@ describe('App role navigation', () => {
     await vi.waitFor(() => {
       expect(mountedApp!.container.textContent).toContain('Phòng & người thuê')
       expect(mountedApp!.container.textContent).toContain('Vận hành')
-      expect(mountedApp!.container.textContent).toContain('được phân công')
+      expect(mountedApp!.container.querySelector('.sb-toa')).not.toBeNull() // trước đây khớp nhầm chữ "Tất cả toà được phân công" của QuanLyDashboard cũ; hộp toà cố định đã có test ở designComponents.test.tsx
     })
 
     expect(mountedApp.container.textContent).toContain('Quản lý toà nhà')
