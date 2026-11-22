@@ -107,7 +107,6 @@ describe('App role navigation', () => {
       })
 
       expect(mountedApp.container.textContent).toContain(nguoiDung.tenVaiTro)
-      expect(mountedApp.container.textContent).toContain('Trang chủ')
     },
   )
 
@@ -266,22 +265,6 @@ describe('App role navigation', () => {
     expect(readMenuLabels(mountedApp.container)).toEqual(MENU_BY_ROLE[2].menuLabels)
   })
 
-  it('NFR-USA-01 keeps App-owned definition-list values on design tokens after legacy colors are removed', async () => {
-    mountedApp = await mountAppAndLogin(MENU_BY_ROLE[2].nguoiDung)
-
-    const values = await vi.waitFor(() => {
-      const definitionValues = [...mountedApp!.container.querySelectorAll('dd')]
-      expect(definitionValues).not.toHaveLength(0)
-      return definitionValues
-    })
-
-    expect(values.map((value) => value.style.color)).toEqual([
-      'var(--ma-text-primary)',
-      'var(--ma-text-primary)',
-      'var(--ma-text-primary)',
-    ])
-  })
-
   it('NFR-USA-03 gives every role-navigation link the 44px mobile hit target', async () => {
     const quanLyToaNha = MENU_BY_ROLE[2]
     mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung)
@@ -325,15 +308,13 @@ describe('App role navigation', () => {
     })
   })
 
-  it('FR-RPT-02 routes CHU to the debt report screen', async () => {
+  it('FR-RPT-02 sends the old CHU /cong-no route to the Thu tiền screen and keeps its query', async () => {
     const chuSoHuu = MENU_BY_ROLE[1]
-    const fetchMock = buildFetchMock(chuSoHuu.nguoiDung, {
-      debtResponse: { toaNhaId: null, tinhLuc: '2040-08-15T10:00+07:00', congNo: [] },
-    })
-    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/cong-no', fetchMock)
+    mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/cong-no?toaNhaId=2')
 
     await vi.waitFor(() => {
-      expect(mountedApp!.container.querySelector('[data-testid="debt-report-screen"]')).not.toBeNull()
+      expect(window.location.pathname).toBe('/thu-tien')
+      expect(window.location.search).toBe('?toaNhaId=2')
     })
   })
 

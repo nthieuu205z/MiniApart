@@ -90,7 +90,7 @@ describe('App worker entry point (V2)', () => {
     vi.restoreAllMocks()
   })
 
-  it('sends worker to /tho/tong-quan overview dashboard while keeping navigation and topbar available', async () => {
+  it('sends worker to /viec-cua-toi (old /tho/tong-quan redirects) while keeping navigation and topbar available', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
       if (url === '/api/health') return jsonResponse({ status: 'UP', database: 'UP' })
@@ -115,13 +115,12 @@ describe('App worker entry point (V2)', () => {
     await act(async () => root.render(<App />))
 
     await vi.waitFor(() => {
-      expect(window.location.pathname).toBe('/tho/tong-quan')
+      expect(window.location.pathname).toBe('/viec-cua-toi')
     })
 
     expect(window.history.length).toBe(historyLengthBeforeMount)
     expect(container.querySelector('nav')).not.toBeNull()
     expect(container.textContent).toContain('Bàn làm việc thợ')
-    expect(container.textContent).toContain('Tổng quan công việc của thợ')
 
     // Topbar notification badge
     expect(container.querySelector('[data-testid="topbar-notifications"]')?.getAttribute('href')).toBe('/thong-bao')
@@ -158,7 +157,7 @@ describe('App worker entry point (V2)', () => {
     await act(async () => root.render(<App />))
 
     await vi.waitFor(() => {
-      expect(window.location.pathname).toBe('/tho/tong-quan')
+      expect(window.location.pathname).toBe('/viec-cua-toi')
     })
 
     // Click on /viec-cua-toi navigation link

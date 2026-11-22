@@ -45,14 +45,24 @@ import ThuTien from './ThuTien'
 import { AnToanVanHanh, CuTruVanHanh, NhatKyVanHanh } from './TuanThuVanHanh'
 import { BlockedNotice } from './design/building/BlockedNotice'
 import { Button } from './design/core/Button'
-import { SysLabel } from './design/core/SysLabel'
 import { Toast } from './design/feedback/Toast'
 import { Breadcrumb } from './design/shell/Breadcrumb'
 import { NavPanel, type NavGroup } from './design/shell/NavPanel'
 import { TopBar } from './design/shell/TopBar'
 import type { GlyphName } from './design/core/GlyphName'
 import { Icon, type IconName } from './design/core/Icon'
-import { layMenuTheoVaiTro, xacDinhTrangTheoVaiTro } from './roleNavigation'
+import { layMenuTheoVaiTro } from './roleNavigation'
+import { TRANG_DAU, laVaiTro, timTuyen, type KhoaTrang, type TrangProps, type VaiTro } from './dinhTuyen'
+import HomNay from './HomNay'
+import ChuKyThang from './ChuKyThang'
+import HoSoNguoiThue360 from './HoSoNguoiThue360'
+import HoSoPhong360 from './HoSoPhong360'
+import HoSoHopDong360 from './HoSoHopDong360'
+import HoSoToa360 from './HoSoToa360'
+import TaoHopDong from './TaoHopDong'
+import TrangSuCo from './TrangSuCo'
+import TimNhanh from './TimNhanh'
+import TrangKhongCoQuyen from './TrangKhongCoQuyen'
 
 const styleTrang: CSSProperties = {
   minHeight: '100vh',
@@ -114,19 +124,6 @@ const styleDangNhapChuThich: CSSProperties = {
   flexWrap: 'wrap',
 }
 
-const styleThe: CSSProperties = {
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 'var(--ma-radius-md)',
-  boxShadow: 'var(--ma-shadow-sm)',
-  background: 'var(--ma-bg-card)',
-  minWidth: 0,
-}
-
-const styleTheNoiDung: CSSProperties = {
-  ...styleThe,
-  padding: 'clamp(18px, 4vw, 30px)',
-}
-
 const styleKhungUngDungDesktop: CSSProperties = {
   ...styleTrang,
   display: 'grid',
@@ -173,78 +170,11 @@ const styleVungNoiDungKhongDem: CSSProperties = {
   alignContent: 'start',
 }
 
-const styleTieuDe: CSSProperties = {
-  margin: 'var(--ma-space-2) 0 0',
-  font: 'var(--ma-text-screen-title)',
-  letterSpacing: 'var(--ma-tracking-title)',
-}
-
-const styleTieuDeKhoi: CSSProperties = {
-  letterSpacing: 'var(--ma-tracking-title)',
-}
-
 const styleDoanMoTa: CSSProperties = {
   margin: 0,
   color: 'var(--ma-text-secondary)',
   font: 'var(--ma-text-body)',
   lineHeight: 1.6,
-}
-
-const styleThongTinNguoiDung: CSSProperties = {
-  display: 'grid',
-  gap: 'var(--ma-space-5)',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-  margin: 0,
-}
-
-const styleHangThongTin: CSSProperties = {
-  display: 'grid',
-  gap: 'var(--ma-space-1)',
-  paddingTop: 'var(--ma-space-4)',
-  borderTop: '1px solid var(--ma-border-subtle)',
-}
-
-const styleNhomNut: CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: 'var(--ma-space-3)',
-}
-
-const styleNutChonDemo: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-start',
-  gap: 2,
-  padding: '8px 12px',
-  background: 'var(--ma-bg-page)',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 'var(--ma-radius)',
-  cursor: 'pointer',
-  textAlign: 'left',
-  fontFamily: 'var(--ma-font-ui)',
-  transition: 'border-color 0.15s ease, background 0.15s ease',
-}
-
-const styleSoDemo: CSSProperties = {
-  fontSize: 11,
-  color: 'var(--ma-text-secondary)',
-}
-
-function layDuongDanChinhTheoVaiTro(vaiTro: string): string {
-  switch (vaiTro) {
-    case 'CHU':
-      return '/tong-quan'
-    case 'QUAN_LY':
-      return '/nhac-viec'
-    case 'THO':
-      return '/tho/tong-quan'
-    case 'NGUOI_THUE':
-      return '/hoa-don-cua-toi'
-    case 'QTHT':
-      return '/tai-khoan'
-    default:
-      return '/tong-quan'
-  }
 }
 
 function App() {
@@ -259,7 +189,9 @@ function App() {
   const [token, setToken] = useState<string | null>(null)
   const [soThongBaoChuaDoc, setSoThongBaoChuaDoc] = useState<number | null>(null)
   const phienBanTaiThongBao = useRef(0)
-  const [duongDanHienTai, setDuongDanHienTai] = useState(() => layDuongDanHienTai())
+  const [viTri, setViTri] = useState(() => layViTri())
+  const [dangMoTim, setDangMoTim] = useState(false)
+  const duongDanHienTai = viTri.duongDan
   const [laManHinhHep, setLaManHinhHep] = useState(() => kiemTraManHinhHep())
   const [laManHinhThuGon, setLaManHinhThuGon] = useState(() => kiemTraManHinhThuGon())
   const [cheDoKhach, setCheDoKhach] = useState<'KHAM_PHA' | 'DANG_NHAP'>(() => {
@@ -333,7 +265,7 @@ function App() {
     }
 
     function dongBoDuongDan() {
-      setDuongDanHienTai(layDuongDanHienTai())
+      setViTri(layViTri())
     }
 
     window.addEventListener('popstate', dongBoDuongDan)
@@ -373,11 +305,12 @@ function App() {
     }
   }, [duongDanHienTai, nguoiDung?.vaiTro, token])
 
+  // Bảng định tuyến quyết định; đường dẫn cũ đã gộp thì thay thế (không thêm mục lịch sử) rồi đọc lại.
+  const ketQuaTuyen = nguoiDung ? timTuyen(nguoiDung.vaiTro, viTri.duongDan, viTri.search) : null
+  const toiChuyen = ketQuaTuyen?.loai === 'chuyen' ? ketQuaTuyen.toi : null
   useEffect(() => {
-    if (nguoiDung?.vaiTro === 'THO' && !['/tho/tong-quan', '/viec-cua-toi', '/tho/chi-phi', '/thong-bao'].includes(duongDanHienTai)) {
-      thayTheDuongDan('/tho/tong-quan')
-    }
-  }, [nguoiDung, duongDanHienTai])
+    if (toiChuyen) thayTheDuongDan(toiChuyen)
+  }, [toiChuyen])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -410,7 +343,7 @@ function App() {
       } else if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
         dieuHuongToi('/')
       } else {
-        dieuHuongToi(layDuongDanChinhTheoVaiTro(response.nguoiDung.vaiTro))
+        dieuHuongToi(laVaiTro(response.nguoiDung.vaiTro) ? TRANG_DAU[response.nguoiDung.vaiTro] : '/')
       }
       setForm({ soDienThoai: '', matKhau: '' })
     } catch (reason) {
@@ -429,196 +362,6 @@ function App() {
     dieuHuongToi('/')
   }
 
-  const menuVaiTro = nguoiDung ? layMenuTheoVaiTro(nguoiDung.vaiTro) : []
-  const trangVaiTro = nguoiDung
-    ? xacDinhTrangTheoVaiTro(nguoiDung.vaiTro, nguoiDung.tenVaiTro, duongDanHienTai)
-    : null
-  const dinhDanhHoaDon = typeof window === 'undefined'
-    ? {}
-    : layDinhDanhHoaDonTuUrl(window.location.href)
-  const hienThiDanhMucToaNha = Boolean(
-    token
-    && nguoiDung
-    && duongDanHienTai === '/toa-nha'
-    && ['QTHT', 'CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro),
-  )
-  const hienThiDanhMucPhong = Boolean(
-    token
-    && nguoiDung
-    && duongDanHienTai === '/phong'
-    && nguoiDung.vaiTro === 'QUAN_LY',
-  )
-  const hienThiGhiChiSo = Boolean(
-    token
-    && nguoiDung
-    && duongDanHienTai === '/ghi-chi-so'
-    && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro),
-  )
-  const hienThiHoaDonNguoiThue = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'NGUOI_THUE'
-    && ['/', '/hoa-don-cua-toi'].includes(duongDanHienTai)
-  )
-  const hienThiLichSuHoaDonNguoiThue = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'NGUOI_THUE'
-    && duongDanHienTai === '/lich-su'
-  )
-  const hienThiBieuDoTieuThuNguoiThue = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'NGUOI_THUE'
-    && duongDanHienTai === '/tieu-thu'
-  )
-  const hienThiHopDongNguoiThue = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'NGUOI_THUE'
-    && duongDanHienTai === '/hop-dong'
-  )
-  const hienThiHopDongQuanLy = Boolean(
-    token
-    && nguoiDung
-    && duongDanHienTai === '/hop-dong'
-    && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro)
-  )
-  const hienThiLichHen = Boolean(
-    token
-    && nguoiDung
-    && duongDanHienTai === '/lich-hen'
-    && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro)
-  )
-  const hienThiThongBao = Boolean(
-    token
-    && nguoiDung
-    && duongDanHienTai === '/thong-bao'
-    && ['CHU', 'QUAN_LY', 'THO', 'NGUOI_THUE'].includes(nguoiDung.vaiTro),
-  )
-  const hienThiThoTongQuan = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'THO'
-    && duongDanHienTai === '/tho/tong-quan',
-  )
-  const hienThiViecCuaToi = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'THO'
-    && duongDanHienTai === '/viec-cua-toi',
-  )
-  const hienThiThoChiPhi = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'THO'
-    && duongDanHienTai === '/tho/chi-phi',
-  )
-  const hienThiLichSuSuaChua = Boolean(
-    token
-    && nguoiDung
-    && duongDanHienTai === '/su-co'
-    && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro),
-  )
-  const hienThiDashboardChu = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'CHU'
-    && duongDanHienTai === '/tong-quan',
-  )
-  const hienThiDashboardQuanLy = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'QUAN_LY'
-    && duongDanHienTai === '/nhac-viec',
-  )
-  const hienThiBangViec = Boolean(
-    token
-    && nguoiDung
-    && ((nguoiDung.vaiTro === 'QUAN_LY' && duongDanHienTai === '/nhac-viec')
-      || (nguoiDung.vaiTro === 'CHU' && duongDanHienTai === '/tong-quan')),
-  )
-  const hienThiBaoCaoTongQuan = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'CHU'
-    && duongDanHienTai === '/bao-cao',
-  )
-  const hienThiBaoCaoTieuThu = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'CHU'
-    && duongDanHienTai === '/bao-cao/tieu-thu',
-  )
-  const hienThiBaoCaoChiPhiBaoTri = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'CHU'
-    && duongDanHienTai === '/bao-cao/chi-phi-bao-tri',
-  )
-  const hienThiBaoCaoCongNo = Boolean(
-    token
-    && nguoiDung
-    && nguoiDung.vaiTro === 'CHU'
-    && duongDanHienTai === '/cong-no',
-  )
-  const laDrillDownCongNo = Boolean(
-    nguoiDung?.vaiTro === 'CHU'
-    && duongDanHienTai === '/hoa-don'
-    && dinhDanhHoaDon.hoaDonId !== undefined
-    && (dinhDanhHoaDon.toaNhaId === undefined || dinhDanhHoaDon.kyId === undefined),
-  )
-  const hienThiHoaDon = Boolean(
-    token
-    && nguoiDung
-    && ['/hoa-don', '/hoa-don-cua-toi'].includes(duongDanHienTai)
-    && ['QTHT', 'CHU', 'QUAN_LY', 'NGUOI_THUE'].includes(nguoiDung.vaiTro)
-    && (!['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro)
-      || (dinhDanhHoaDon.toaNhaId !== undefined && dinhDanhHoaDon.kyId !== undefined && dinhDanhHoaDon.hoaDonId !== undefined)
-      || laDrillDownCongNo),
-  )
-  const hienThiHoaDonQuanLy = Boolean(
-    token
-    && nguoiDung
-    && duongDanHienTai === '/hoa-don'
-    && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro)
-    && dinhDanhHoaDon.hoaDonId === undefined,
-  )
-  const tieuDeTheChinh = hienThiBieuDoTieuThuNguoiThue
-    ? 'Tiêu thụ điện và nước'
-    : hienThiHopDongNguoiThue
-      ? 'Hợp đồng của tôi'
-      : hienThiHopDongQuanLy
-        ? 'Hợp đồng theo toà nhà'
-      : hienThiLichHen
-        ? 'Lịch hẹn xem phòng'
-      : hienThiThongBao
-        ? 'Thông báo'
-      : hienThiBaoCaoTongQuan
-        ? 'Báo cáo tổng quan'
-      : hienThiBaoCaoTieuThu
-        ? 'Báo cáo tiêu thụ điện nước'
-      : hienThiBaoCaoChiPhiBaoTri
-        ? 'Báo cáo chi phí bảo trì'
-      : hienThiBaoCaoCongNo
-        ? 'Báo cáo công nợ'
-      : hienThiBangViec
-        ? (duongDanHienTai === '/tong-quan' ? 'Tổng quan' : 'Nhắc việc')
-      : hienThiLichSuSuaChua
-        ? 'Lịch sử sửa chữa'
-    : hienThiHoaDonNguoiThue && duongDanHienTai !== '/'
-      ? 'Hoá đơn của tôi'
-    : hienThiLichSuHoaDonNguoiThue
-      ? 'Lịch sử hoá đơn'
-      : hienThiDanhMucToaNha
-        ? 'Toà nhà'
-        : hienThiDanhMucPhong
-          ? 'Phòng'
-      : hienThiGhiChiSo
-            ? 'Ghi chỉ số'
-            : hienThiHoaDonQuanLy || hienThiHoaDon
-              ? 'Hoá đơn'
-              : nguoiDung && trangVaiTro ? trangVaiTro.tieuDe : 'Đăng nhập'
 
   if (!nguoiDung) {
     if (moTroGiupTaiKhoan) return <TaiKhoanTruyCap onLogin={() => { setMoTroGiupTaiKhoan(false); setCheDoKhach('DANG_NHAP') }} />
@@ -742,13 +485,20 @@ function App() {
     )
   }
 
+  if (!ketQuaTuyen || ketQuaTuyen.loai === 'chuyen') return null
+
+  const vaiTro = nguoiDung.vaiTro as VaiTro
+  const trangProps: TrangProps = { token: token ?? '', vaiTro, mobile: laManHinhHep, thamSo: ketQuaTuyen.loai === 'trang' ? ketQuaTuyen.thamSo : {}, dieuHuong: dieuHuongToi }
+  const khoa = ketQuaTuyen.loai === 'trang' ? ketQuaTuyen.khoa : null
   const nhomDieuHuong = taoNhomDieuHuong(nguoiDung.vaiTro, duongDanHienTai)
   const thongTinTopBar = taoThongTinTopBar(nguoiDung.vaiTro)
-  const canDungTopBarToanCuc = !hienThiGhiChiSo
-  const duongDanPhanCap = taoDuongDanPhanCap(nguoiDung.tenVaiTro, tieuDeTheChinh)
+  const canDungTopBarToanCuc = khoa !== 'chu-ky'
+  const tieuDeTrang = layMenuTheoVaiTro(nguoiDung.vaiTro).find((muc) => muc.duongDan === duongDanHienTai)?.nhan ?? 'Trang'
+  const duongDanPhanCap = taoDuongDanPhanCap(nguoiDung.tenVaiTro, tieuDeTrang)
+  const laDashboardChu = vaiTro === 'CHU' && (khoa === 'hom-nay' || khoa === 'tong-quan')
 
   return (
-    <main className="ma-app-shell" style={laManHinhHep ? styleKhungUngDungMobile : laManHinhThuGon ? styleKhungUngDungThuGon : styleKhungUngDungDesktop}>
+    <main className="ma-app-shell" onClick={chanLienKetNoiBo} style={laManHinhHep ? styleKhungUngDungMobile : laManHinhThuGon ? styleKhungUngDungThuGon : styleKhungUngDungDesktop}>
       <NavPanel
         className="ma-no-print"
         mobile={laManHinhHep}
@@ -762,7 +512,6 @@ function App() {
         }}
         collapsed={laManHinhThuGon}
         onLogout={handleLogout}
-        onClick={handleNavClick}
         style={{
           width: laManHinhHep ? '100%' : 'var(--ma-nav-width)',
           minWidth: 0,
@@ -781,321 +530,90 @@ function App() {
               notificationHref={['CHU', 'QUAN_LY', 'THO', 'NGUOI_THUE'].includes(nguoiDung.vaiTro) ? '/thong-bao' : undefined}
               onLogout={laManHinhHep ? handleLogout : undefined}
               compact={laManHinhHep}
-              onClick={handleNavClick}
-              style={{
+                    style={{
                 padding: laManHinhHep ? '10px 16px' : undefined,
                 gap: laManHinhHep ? 10 : undefined,
                 flexWrap: laManHinhHep ? 'nowrap' : 'wrap',
                 height: 'auto',
-                minHeight: hienThiDashboardChu && !laManHinhHep ? 48 : 'var(--ma-topbar-height)',
+                minHeight: laDashboardChu && !laManHinhHep ? 48 : 'var(--ma-topbar-height)',
               }}
             />
-            {tieuDeTheChinh === 'Tổng quan' || hienThiDashboardChu ? null : <Breadcrumb className="ma-no-print" items={duongDanPhanCap} style={{ padding: laManHinhHep ? '7px 16px' : undefined }} />}
+            {laDashboardChu ? null : <Breadcrumb className="ma-no-print" items={duongDanPhanCap} style={{ padding: laManHinhHep ? '7px 16px' : undefined }} />}
           </>
         ) : null}
 
-        <section style={hienThiGhiChiSo ? styleVungNoiDungKhongDem : hienThiDashboardChu && !laManHinhHep ? { ...styleVungNoiDung, padding: '0 16px 24px', gap: 16 } : styleVungNoiDung}>
+        <section style={khoa === 'chu-ky' ? styleVungNoiDungKhongDem : laDashboardChu && !laManHinhHep ? { ...styleVungNoiDung, padding: '0 16px 24px', gap: 16 } : styleVungNoiDung}>
           {healthError ? (
             <div role="alert" style={{ marginBottom: 'var(--ma-space-4)' }}>
               <BlockedNotice title="Mất kết nối máy chủ" reason={healthError} />
             </div>
           ) : null}
-          {token && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && duongDanHienTai === '/nguoi-thue' ? (
-            <HoSoNguoiThue token={token} />
-          ) : token && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && duongDanHienTai === '/dich-vu' ? (
-            <DichVuVaKy token={token} />
-          ) : token && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && duongDanHienTai === '/thu-tien' ? (
-            <ThuTien token={token} mobile={laManHinhHep} vaiTro={nguoiDung.vaiTro} />
-          ) : token && nguoiDung.vaiTro === 'NGUOI_THUE' && duongDanHienTai === '/bao-hong' ? (
-            <BaoHongKhach token={token} />
-          ) : token && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && duongDanHienTai === '/an-toan' ? (
-            <AnToanVanHanh token={token} vaiTro={nguoiDung.vaiTro} />
-          ) : token && ['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && duongDanHienTai === '/cu-tru' ? (
-            <CuTruVanHanh token={token} />
-          ) : token && ['QTHT', 'CHU'].includes(nguoiDung.vaiTro) && duongDanHienTai === '/nhat-ky-thao-tac' ? (
-            <NhatKyVanHanh token={token} />
-          ) : hienThiDanhMucToaNha && token ? (
-            <DanhMucToaNha token={token} vaiTro={nguoiDung.vaiTro} mobile={laManHinhHep} />
-          ) : hienThiDanhMucPhong && token ? (
-            <DanhMucPhong token={token} mobile={laManHinhHep} />
-          ) : hienThiGhiChiSo && token ? (
-            <GhiChiSo token={token} mobile={laManHinhHep} vaiTro={nguoiDung.vaiTro} />
-          ) : hienThiBieuDoTieuThuNguoiThue && token ? (
-            <BieuDoTieuThu token={token} mobile={laManHinhHep} />
-          ) : hienThiHopDongNguoiThue && token ? (
-            <HopDongNguoiThue token={token} mobile={laManHinhHep} />
-          ) : hienThiHopDongQuanLy && token ? (
-            <HopDongQuanLy token={token} mobile={laManHinhHep} />
-          ) : hienThiLichHen && token ? (
-            <QuanLyLichHen token={token} mobile={laManHinhHep} />
-          ) : hienThiThoTongQuan && token ? (
-            <ThoTongQuan token={token} mobile={laManHinhHep} onNavigate={dieuHuongToi} />
-          ) : hienThiViecCuaToi && token ? (
-            <ThoCongViec token={token} mobile={laManHinhHep} />
-          ) : hienThiThoChiPhi && token ? (
-            <ThoChiPhi token={token} mobile={laManHinhHep} onNavigateToTicket={(id) => dieuHuongToi(`/viec-cua-toi?yeuCauId=${id}`)} />
-          ) : hienThiBaoCaoTongQuan && token ? (
-            <BaoCaoTongQuan token={token} mobile={laManHinhHep} />
-          ) : hienThiBaoCaoTieuThu && token ? (
-            <TieuThuBaoCao token={token} mobile={laManHinhHep} />
-          ) : hienThiBaoCaoChiPhiBaoTri && token ? (
-            <ChiPhiBaoTriBaoCao token={token} mobile={laManHinhHep} />
-          ) : hienThiBaoCaoCongNo && token ? (
-            <CongNoBaoCao token={token} mobile={laManHinhHep} />
-          ) : hienThiDashboardChu && token ? (
-            <ChuDashboard token={token} mobile={laManHinhHep} />
-          ) : hienThiDashboardQuanLy && token ? (
-            <QuanLyDashboard token={token} mobile={laManHinhHep} />
-          ) : hienThiBangViec && token ? (
-            <BangViecVanHanh token={token} mobile={laManHinhHep} />
-          ) : hienThiLichSuSuaChua && token ? (
-            <><QuanLySuaChua token={token} /><LichSuSuaChua token={token} mobile={laManHinhHep} /></>
-          ) : hienThiThongBao && token ? (
-            <ThongBao token={token} mobile={laManHinhHep} vaiTro={nguoiDung.vaiTro} onUnreadCountChange={setSoThongBaoChuaDoc} />
-          ) : hienThiHoaDonQuanLy && token ? (
-            <HoaDonQuanLy token={token} mobile={laManHinhHep} vaiTro={nguoiDung.vaiTro} />
-          ) : hienThiLichSuHoaDonNguoiThue && token ? (
-            <LichSuHoaDon token={token} mobile={laManHinhHep} />
-          ) : (hienThiHoaDon || hienThiHoaDonNguoiThue) && token ? (
-            <HoaDon
-              token={token}
-              {...dinhDanhHoaDon}
-              vaiTro={nguoiDung.vaiTro}
-              mobile={laManHinhHep}
-              cheDoNguoiThue={nguoiDung.vaiTro === 'NGUOI_THUE'}
-              cheDoCongNo={laDrillDownCongNo}
-            />
-          ) : nguoiDung.vaiTro === 'QTHT' && duongDanHienTai === '/tai-khoan' && token ? (
-            <QuanLyTaiKhoan token={token} mobile={laManHinhHep} />
-          ) : trangVaiTro ? (
-            <section style={{ ...styleTheNoiDung, display: 'grid', gap: 'var(--ma-space-6)' }} aria-labelledby="current-route-title">
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  justifyContent: 'space-between',
-                  gap: 'var(--ma-space-5)',
-                  alignItems: 'start',
-                  paddingBottom: 'var(--ma-space-5)',
-                  borderBottom: '2px solid var(--ma-ink-900)',
-                }}
-              >
-                <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
-                  <SysLabel tone="primary">{nguoiDung.tenVaiTro.toUpperCase()}</SysLabel>
-                  <h2 id="current-route-title" style={{ margin: 0, font: 'var(--ma-text-block-title)', ...styleTieuDeKhoi }}>
-                    {trangVaiTro.tieuDe}
-                  </h2>
-                  <p style={styleDoanMoTa}>{trangVaiTro.thongDiep}</p>
-                </div>
-                <div style={styleNhomNut}>
-                  {trangVaiTro.loai === 'khong-co-quyen' ? (
-                    <Button
-                      variant="secondary"
-                      onClick={() => dieuHuongToi('/')}
-                      style={{ minHeight: 'var(--ma-hit-mobile)' }}
-                    >
-                      Về trang chủ
-                    </Button>
-                  ) : null}
-                  <Button
-                    variant="secondary"
-                    onClick={handleLogout}
-                    style={{ minHeight: 'var(--ma-hit-mobile)' }}
-                  >
-                    Đăng xuất
-                  </Button>
-                </div>
-              </div>
-
-              {trangVaiTro.loai === 'khong-co-quyen' ? (
-                <BlockedNotice
-                  title="Không có quyền"
-                  reason="Đường dẫn không thuộc vai trò hiện tại. Hãy chọn một mục trong menu để tiếp tục."
-                />
-              ) : (
-                <div style={{ display: 'grid', gap: 'var(--ma-space-6)' }}>
-                  <div style={{ display: 'grid', gap: 'var(--ma-space-2)' }}>
-                    <SysLabel>Thông tin phiên</SysLabel>
-                    <p style={{ ...styleDoanMoTa, color: 'var(--ma-text-primary)' }}>
-                      Xin chào, {nguoiDung.hoTen}
-                    </p>
-                  </div>
-
-                  <dl style={styleThongTinNguoiDung}>
-                    <div style={styleHangThongTin}>
-                      <dt>
-                        <SysLabel>Số điện thoại</SysLabel>
-                      </dt>
-                      <dd style={{ margin: 0, font: 'var(--ma-text-body)', color: 'var(--ma-text-primary)' }}>{nguoiDung.soDienThoai}</dd>
-                    </div>
-                    <div style={styleHangThongTin}>
-                      <dt>
-                        <SysLabel>Vai trò</SysLabel>
-                      </dt>
-                      <dd style={{ margin: 0, font: 'var(--ma-text-body)', color: 'var(--ma-text-primary)' }}>{nguoiDung.tenVaiTro}</dd>
-                    </div>
-                    <div style={styleHangThongTin}>
-                      <dt>
-                        <SysLabel>Mã vai trò</SysLabel>
-                      </dt>
-                      <dd style={{ margin: 0, font: 'var(--ma-text-body)', color: 'var(--ma-text-primary)' }}>{nguoiDung.vaiTro}</dd>
-                    </div>
-                  </dl>
-
-                  {['CHU', 'QUAN_LY'].includes(nguoiDung.vaiTro) && (
-                    <div style={{ display: 'grid', gap: 'var(--ma-space-4)', marginTop: 'var(--ma-space-2)' }}>
-                      <SysLabel>Lối tắt phân hệ vận hành</SysLabel>
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                          gap: 'var(--ma-space-4)',
-                        }}
-                      >
-                        <div
-                          style={{
-                            border: '1px solid var(--ma-border-default)',
-                            borderRadius: 'var(--ma-radius-md)',
-                            padding: 'var(--ma-space-4)',
-                            background: 'var(--ma-bg-card)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 'var(--ma-space-2)',
-                            boxShadow: 'var(--ma-shadow-sm)',
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 14, fontWeight: 700 }}>📋 Hợp đồng & Hồ sơ</span>
-                            <span style={{ fontSize: 11, background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>5 BƯỚC</span>
-                          </div>
-                          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
-                            Quy trình chốt hồ sơ bất biến, phụ lục bàn giao tài sản phòng, điều khoản mẫu và xuất file PDF văn bản ký kết.
-                          </p>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => dieuHuongToi('/hop-dong')}
-                            style={{ marginTop: 'auto', alignSelf: 'flex-start' }}
-                          >
-                            Mở phân hệ Hợp đồng →
-                          </Button>
-                        </div>
-
-                        <div
-                          style={{
-                            border: '1px solid var(--ma-border-default)',
-                            borderRadius: 'var(--ma-radius-md)',
-                            padding: 'var(--ma-space-4)',
-                            background: 'var(--ma-bg-card)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 'var(--ma-space-2)',
-                            boxShadow: 'var(--ma-shadow-sm)',
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 14, fontWeight: 700 }}>👥 Người thuê & Cư trú</span>
-                            <span style={{ fontSize: 11, background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>2 CỘT</span>
-                          </div>
-                          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
-                            Danh bạ khách thuê thông minh, tra cứu CCCD, trạng thái duyệt cư trú tạm trú và liên kết phòng đang ở.
-                          </p>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => dieuHuongToi('/nguoi-thue')}
-                            style={{ marginTop: 'auto', alignSelf: 'flex-start' }}
-                          >
-                            Mở phân hệ Người thuê →
-                          </Button>
-                        </div>
-
-                        <div
-                          style={{
-                            border: '1px solid var(--ma-border-default)',
-                            borderRadius: 'var(--ma-radius-md)',
-                            padding: 'var(--ma-space-4)',
-                            background: 'var(--ma-bg-card)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 'var(--ma-space-2)',
-                            boxShadow: 'var(--ma-shadow-sm)',
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 14, fontWeight: 700 }}>💳 Hoá đơn & Thu tiền</span>
-                            <span style={{ fontSize: 11, background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>VIETQR</span>
-                          </div>
-                          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
-                            Sổ quỹ đối soát thu tiền đa kênh, lập hoá đơn hằng tháng, ghi nhận phiếu thu cọc và quyết toán phòng.
-                          </p>
-                          <div style={{ display: 'flex', gap: 'var(--ma-space-2)', marginTop: 'auto', flexWrap: 'wrap' }}>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => dieuHuongToi('/thu-tien')}
-                            >
-                              Sổ thu tiền →
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => dieuHuongToi('/hoa-don')}
-                            >
-                              Hoá đơn →
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div
-                          style={{
-                            border: '1px solid var(--ma-border-default)',
-                            borderRadius: 'var(--ma-radius-md)',
-                            padding: 'var(--ma-space-4)',
-                            background: 'var(--ma-bg-card)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 'var(--ma-space-2)',
-                            boxShadow: 'var(--ma-shadow-sm)',
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 14, fontWeight: 700 }}>🏢 Sơ đồ Phòng & Toà</span>
-                            <span style={{ fontSize: 11, background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 6px', borderRadius: 'var(--ma-radius-pill)' }}>Sơ đồ tầng</span>
-                          </div>
-                          <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.5 }}>
-                            Sơ đồ mặt bằng phòng theo tầng, trực quan hoá phòng trống / đang thuê / bảo trì và tài sản gắn phòng.
-                          </p>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => dieuHuongToi(nguoiDung.vaiTro === 'CHU' ? '/toa-nha' : '/phong')}
-                            style={{ marginTop: 'auto', alignSelf: 'flex-start' }}
-                          >
-                            Mở Sơ đồ phòng →
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </section>
+          {token && khoa ? (
+            <ManTheoKhoa khoa={khoa} {...trangProps} capNhatChuaDoc={setSoThongBaoChuaDoc} />
+          ) : ketQuaTuyen.loai === 'khong-co-quyen' ? (
+            <TrangKhongCoQuyen vaiTroSoHuu={ketQuaTuyen.vaiTroSoHuu} dieuHuong={dieuHuongToi} />
           ) : null}
         </section>
       </div>
+      <TimNhanh {...trangProps} mo={dangMoTim} datMo={setDangMoTim} />
     </main>
   )
 }
 
 export default App
 
-function layDuongDanHienTai() {
-  if (typeof window === 'undefined') {
-    return '/'
+/** Một `switch` duy nhất khoá → màn. Màn cũ nhận đúng props cũ; vỏ mới nhận `TrangProps`. */
+function ManTheoKhoa({ khoa, capNhatChuaDoc, ...p }: TrangProps & { khoa: KhoaTrang; capNhatChuaDoc: (n: number) => void }) {
+  const { token, vaiTro, mobile } = p
+  switch (khoa) {
+    case 'hom-nay': return <HomNay {...p} />
+    case 'tong-quan': return <ChuDashboard token={token} mobile={mobile} />
+    case 'chu-ky': return <ChuKyThang {...p} />
+    case 'thu-tien': return <ThuTien token={token} mobile={mobile} vaiTro={vaiTro} />
+    case 'hoa-don': return <ManHoaDon {...p} />
+    case 'toa-nha': return <DanhMucToaNha token={token} vaiTro={vaiTro} mobile={mobile} />
+    case 'ho-so-toa': return <HoSoToa360 {...p} />
+    case 'phong': return <DanhMucPhong token={token} mobile={mobile} />
+    case 'ho-so-phong': return <HoSoPhong360 {...p} />
+    case 'nguoi-thue': return <HoSoNguoiThue token={token} />
+    case 'ho-so-nguoi-thue': return <HoSoNguoiThue360 {...p} />
+    case 'cu-tru': return <CuTruVanHanh token={token} />
+    case 'hop-dong': return <HopDongQuanLy token={token} mobile={mobile} />
+    case 'tao-hop-dong': return <TaoHopDong {...p} />
+    case 'ho-so-hop-dong': return <HoSoHopDong360 {...p} />
+    case 'lich-hen': return <QuanLyLichHen token={token} mobile={mobile} />
+    case 'su-co': return <TrangSuCo {...p} />
+    case 'an-toan': return <AnToanVanHanh token={token} vaiTro={vaiTro} />
+    case 'dich-vu': return <DichVuVaKy token={token} />
+    case 'thong-bao': return <ThongBao token={token} mobile={mobile} vaiTro={vaiTro} onUnreadCountChange={capNhatChuaDoc} />
+    case 'bao-cao': return <BaoCaoTongQuan token={token} mobile={mobile} />
+    case 'bao-cao-tieu-thu': return <TieuThuBaoCao token={token} mobile={mobile} />
+    case 'bao-cao-chi-phi': return <ChiPhiBaoTriBaoCao token={token} mobile={mobile} />
+    case 'nhat-ky': return <NhatKyVanHanh token={token} />
+    case 'tai-khoan': return <QuanLyTaiKhoan token={token} mobile={mobile} />
+    case 'viec-tho': return <ThoCongViec token={token} mobile={mobile} />
+    case 'tien-cong': return <ThoChiPhi token={token} mobile={mobile} onNavigateToTicket={(id) => p.dieuHuong(`/viec-cua-toi?yeuCauId=${id}`)} />
+    case 'can-tra': return <ManHoaDon {...p} />
+    case 'lich-su-hoa-don': return <LichSuHoaDon token={token} mobile={mobile} />
+    case 'bao-hong': return <BaoHongKhach token={token} />
+    case 'hop-dong-cua-toi': return <HopDongNguoiThue token={token} mobile={mobile} />
+    case 'tieu-thu-cua-toi': return <BieuDoTieuThu token={token} mobile={mobile} />
   }
+}
 
-  return window.location.pathname || '/'
+/** Hoá đơn: danh sách (Chủ/QL) hay chi tiết theo `?hoaDonId=…` như app cũ. */
+function ManHoaDon({ token, vaiTro, mobile }: TrangProps) {
+  const dinhDanh = layDinhDanhHoaDonTuUrl(window.location.href)
+  const laDrillDownCongNo = vaiTro === 'CHU' && dinhDanh.hoaDonId !== undefined && (dinhDanh.toaNhaId === undefined || dinhDanh.kyId === undefined)
+  const quanLy = vaiTro === 'CHU' || vaiTro === 'QUAN_LY'
+  const day = dinhDanh.toaNhaId !== undefined && dinhDanh.kyId !== undefined && dinhDanh.hoaDonId !== undefined
+  if (quanLy && !day && !laDrillDownCongNo) return <HoaDonQuanLy token={token} mobile={mobile} vaiTro={vaiTro} />
+  return <HoaDon token={token} {...dinhDanh} vaiTro={vaiTro} mobile={mobile} cheDoNguoiThue={vaiTro === 'NGUOI_THUE'} cheDoCongNo={laDrillDownCongNo} />
+}
+
+function layViTri() {
+  if (typeof window === 'undefined') return { duongDan: '/', search: '' }
+  return { duongDan: window.location.pathname || '/', search: window.location.search }
 }
 
 export function layDinhDanhHoaDonTuUrl(url: string | URL) {
@@ -1138,24 +656,18 @@ function thayTheDuongDan(duongDan: string) {
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
 
-function handleNavClick(event: MouseEvent<HTMLElement>) {
+// Chặn click vào <a href> nội bộ (cùng origin, không target/download, không phím bổ trợ) để điều hướng SPA.
+function chanLienKetNoiBo(event: MouseEvent<HTMLElement>) {
+  if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
   const dich = event.target
-  if (!(dich instanceof HTMLElement)) {
-    return
-  }
-
+  if (!(dich instanceof Element)) return
   const lienKet = dich.closest('a[href]')
-  if (!(lienKet instanceof HTMLAnchorElement)) {
-    return
-  }
-
-  const duongDan = lienKet.getAttribute('href')
-  if (!duongDan || duongDan.startsWith('http')) {
-    return
-  }
-
+  if (!(lienKet instanceof HTMLAnchorElement) || (lienKet.target && lienKet.target !== '_self') || lienKet.hasAttribute('download')) return
+  const url = new URL(lienKet.href, window.location.href)
+  if (url.origin !== window.location.origin || url.pathname.startsWith('/api/')) return
+  if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return
   event.preventDefault()
-  dieuHuongToi(duongDan)
+  dieuHuongToi(url.pathname + url.search + url.hash)
 }
 
 function kiemTraManHinhHep() {
