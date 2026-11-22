@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react'
 import { chotKyThanhToan, fetchChiSoDichVu, fetchHoaDonQuanLy, fetchKyThanhToan, fetchPhongChuaGhiChiSo, type ThongTinHoaDonQuanLy, type ThongTinKyThanhToan, type ThongTinPhongChuaGhiChiSo } from './api'
 import { tinhBuoc } from './tinhBuocChuKy'
 import GhiChiSo from './GhiChiSo'
@@ -92,10 +92,13 @@ export default function ChuKyThang({ token, vaiTro, mobile, dieuHuong }: TrangPr
     </section>
   }
 
-  if (loi) return <EmptyState kind="error" title="Không tải được chu kỳ tháng" body="Dữ liệu chưa bị thay đổi." actionLabel="Thử lại" onAction={taiLai} />
-  if (dl && !kyDangXem) return <EmptyState title="Toà này chưa có kỳ thanh toán" body="Mở kỳ đầu tiên ở Dịch vụ & đơn giá, rồi quay lại đây để ghi chỉ số." actionLabel="Mở Dịch vụ & đơn giá" onAction={() => dieuHuong('/dich-vu')} />
+  const vo = (noiDung: ReactNode) => <section aria-labelledby="chu-ky-title" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
+    <div className="ph"><div className="grow"><h1 className="h1" id="chu-ky-title">Chu kỳ tháng</h1></div></div>{noiDung}
+  </section>
+  if (loi) return vo(<EmptyState kind="error" title="Không tải được chu kỳ tháng" body="Dữ liệu chưa bị thay đổi." actionLabel="Thử lại" onAction={taiLai} />)
+  if (dl && !kyDangXem) return vo(<EmptyState title="Toà này chưa có kỳ thanh toán" body="Mở kỳ đầu tiên ở Dịch vụ & đơn giá, rồi quay lại đây để ghi chỉ số." actionLabel="Mở Dịch vụ & đơn giá" onAction={() => dieuHuong('/dich-vu')} />)
   if (!dl || !kyDangXem) {
-    return <div aria-busy="true" style={{ display: 'grid', gap: 12 }}><span className="skel skel-line" style={{ width: '40%' }} /><span className="skel skel-line" style={{ width: '100%', height: 72 }} /><span className="skel skel-line" style={{ width: '100%', height: 220 }} /></div>
+    return vo(<div aria-busy="true" style={{ display: 'grid', gap: 12 }}><span className="skel skel-line" style={{ width: '100%', height: 72 }} /><span className="skel skel-line" style={{ width: '100%', height: 220 }} /></div>)
   }
 
   const ky = kyDangXem
