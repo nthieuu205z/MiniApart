@@ -67,18 +67,36 @@ describe('DanhMucPhong', () => {
     expect(container.textContent).toContain('Trống')
   })
 
-  it('FR-BLD-02 opens room detail with Enter and Space from the room map', async () => {
+  it('FR-BLD-02 opens the room profile (not an inline detail) with Enter and Space from the room map', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       if (String(input) === '/api/toa-nha') return jsonResponse([toaA])
       return jsonResponse([phong101])
     }))
-    await renderScreen()
+    const dieuHuong = vi.fn()
+    await renderScreen(false, dieuHuong)
     await moSoDoTang()
     const tile = await vi.waitFor(() => container.querySelector('[data-testid="room-tile"]') as HTMLButtonElement)
     await act(async () => tile.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
-    await vi.waitFor(() => expect(container.querySelector('[data-testid="room-detail"]')?.textContent).toContain('Chi tiết phòng 101'))
+    expect(dieuHuong).toHaveBeenLastCalledWith('/phong/11?toaNhaId=1')
     await act(async () => tile.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true })))
-    await vi.waitFor(() => expect(container.querySelector('[data-testid="room-detail"]')?.textContent).toContain('Chi tiết phòng 101'))
+    expect(dieuHuong).toHaveBeenCalledTimes(2)
+    expect(container.querySelector('[data-testid="room-detail"]')).toBeNull()
+  })
+
+  it('table rows link to the room profile: the room cell is a real <a href>, a click on the row navigates once', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === '/api/toa-nha') return jsonResponse([toaA])
+      return jsonResponse([phong101, phong201])
+    }))
+    const dieuHuong = vi.fn()
+    await renderScreen(false, dieuHuong)
+    const link = await vi.waitFor(() => container.querySelector('a.dp-o-phong[href="/phong/11?toaNhaId=1"]') as HTMLAnchorElement)
+    expect(link.textContent).toContain('Phòng 101')
+    await act(async () => link.click()) // liên kết tự điều hướng (App chặn <a>), hàng không gọi thêm lần nữa
+    expect(dieuHuong).not.toHaveBeenCalled()
+    await act(async () => (container.querySelector('tr[data-room-row="12"] td:nth-child(2)') as HTMLElement).click())
+    expect(dieuHuong).toHaveBeenCalledExactlyOnceWith('/phong/12?toaNhaId=1')
+    expect(container.querySelector('[data-testid="room-detail"]')).toBeNull()
   })
 
   it('NFR-USA-01 owns a responsive room layout without legacy CSS rules', async () => {
@@ -119,10 +137,6 @@ describe('DanhMucPhong', () => {
     expect((catalog.querySelector('.room-floor-section') as HTMLElement).style.gridTemplateColumns)
       .toBe('34px repeat(3, minmax(0, 1fr)) 30px')
 
-    await act(async () => (catalog.querySelector('[data-testid="room-tile"]') as HTMLElement).click())
-    const facts = catalog.querySelector('.building-summary__facts') as HTMLElement
-    expect(facts.style.display).toBe('grid')
-    expect(facts.style.minWidth).toBe('0px')
   })
 
   it('FR-BLD-03 gives persisted room statuses distinct token-owned color treatments and preserves labels and hooks', async () => {
@@ -275,9 +289,9 @@ describe('DanhMucPhong', () => {
   })
 })
 
-async function renderScreen(mobile = false) {
+async function renderScreen(mobile = false, dieuHuong?: (href: string) => void) {
   root = createRoot(container)
-  await act(async () => root.render(<DanhMucPhong token="room-token" mobile={mobile} />))
+  await act(async () => root.render(<DanhMucPhong token="room-token" mobile={mobile} dieuHuong={dieuHuong} />))
 }
 
 async function moSoDoTang() {

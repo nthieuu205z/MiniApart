@@ -1,0 +1,123 @@
+[
+ {
+  "name": "chu-nguoi-thue-1-1440",
+  "path": "/nguoi-thue/1",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "ql-nguoi-thue-1-1440",
+  "path": "/nguoi-thue/1",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "chu-nguoi-thue-ds-1440",
+  "path": "/nguoi-thue",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "ql-phong-101-1440",
+  "path": "/phong/1?toaNhaId=3",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "ql-phong-401-1440",
+  "path": "/phong/10?toaNhaId=3",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "ql-phong-ds-1440",
+  "path": "/phong",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "chu-nguoi-thue-1-390",
+  "path": "/nguoi-thue/1",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "ql-nguoi-thue-1-390",
+  "path": "/nguoi-thue/1",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "chu-nguoi-thue-ds-390",
+  "path": "/nguoi-thue",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "ql-phong-101-390",
+  "path": "/phong/1?toaNhaId=3",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "ql-phong-401-390",
+  "path": "/phong/10?toaNhaId=3",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "ql-phong-ds-390",
+  "path": "/phong",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "chu-nguoi-thue-1-hoa-don-1440",
+  "path": "/nguoi-thue/1?tab=hoa-don",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "chu-nguoi-thue-ds-ngan-them-1440",
+  "path": "/nguoi-thue",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true,
+  "click": ".topbar-actions button"
+ },
+ {
+  "name": "chu-phong-101-1440",
+  "path": "/phong/1?toaNhaId=3",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ }
+]
