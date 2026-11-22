@@ -101,6 +101,106 @@ const tabInactiveStyle: CSSProperties = {
   marginBottom: -2,
 }
 
+export type FormTaoHopDong = { phongId: string; nguoiThueId: string; ngayBatDau: string; ngayKetThuc: string; giaThue: string; tienCoc: string; soNgayBaoTruoc: string }
+
+/** Lỗi theo ô cho từng bước tạo hợp đồng (cùng ràng buộc với thuộc tính required/min của form cũ). */
+export function kiemTraFormTao(f: FormTaoHopDong, buoc: 1 | 2 | 3 | 4 | 5): Partial<Record<keyof FormTaoHopDong, string>> {
+  const e: Partial<Record<keyof FormTaoHopDong, string>> = {}
+  const am = (v: string) => Number(v) < 0
+  if (buoc === 1 || buoc === 5) {
+    if (!f.phongId) e.phongId = 'Chọn phòng cần thuê.'
+    if (!f.nguoiThueId) e.nguoiThueId = 'Chọn người thuê đứng tên hợp đồng.'
+  }
+  if (buoc === 2 || buoc === 5) {
+    if (!f.ngayBatDau) e.ngayBatDau = 'Nhập ngày bắt đầu.'
+    if (!f.ngayKetThuc) e.ngayKetThuc = 'Nhập ngày kết thúc.'
+    else if (f.ngayBatDau && f.ngayKetThuc < f.ngayBatDau) e.ngayKetThuc = 'Ngày kết thúc không được trước ngày bắt đầu.'
+    if (f.giaThue === '' || Number.isNaN(Number(f.giaThue)) || am(f.giaThue)) e.giaThue = 'Nhập giá thuê từ 0 trở lên.'
+  }
+  if (buoc === 4 || buoc === 5) {
+    if (f.tienCoc === '' || Number.isNaN(Number(f.tienCoc)) || am(f.tienCoc)) e.tienCoc = 'Nhập tiền cọc từ 0 trở lên.'
+    if (!(Number(f.soNgayBaoTruoc) >= 1) || !Number.isInteger(Number(f.soNgayBaoTruoc))) e.soNgayBaoTruoc = 'Nhập số ngày báo trước (số nguyên từ 1).'
+  }
+  return e
+}
+
+/** State + hành vi của form tạo hợp đồng; dùng chung cho form cũ trong HopDongThaoTac và luồng 5 bước TaoHopDong. */
+export function useFormTaoHopDong(rooms: ThongTinPhong[], tenants: Tenant[], services: Service[], macDinh?: Partial<FormTaoHopDong>) {
+  const [form, setForm] = useState<FormTaoHopDong>({
+    phongId: '',
+    nguoiThueId: '',
+    ngayBatDau: today(),
+    ngayKetThuc: '',
+    giaThue: '',
+    tienCoc: '',
+    soNgayBaoTruoc: '30',
+    ...macDinh,
+  })
+  const [applied, setApplied] = useState<Record<number, string>>({})
+
+  function chonPhong(phongId: string) {
+    const room = rooms.find((r) => r.id === Number(phongId))
+    setForm((prev) => ({
+      ...prev,
+      phongId,
+      giaThue: room?.giaThueMacDinh ?? prev.giaThue,
+      tienCoc: room?.giaThueMacDinh ? room.giaThueMacDinh : prev.tienCoc,
+    }))
+  }
+
+  // ⚡ 1-chạm tính ngày kết thúc theo số tháng
+  function chonThoiHan(thang: number) {
+    const batDau = form.ngayBatDau || today()
+    const d = new Date(batDau)
+    d.setMonth(d.getMonth() + thang)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const ketThuc = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    setForm((prev) => ({ ...prev, ngayKetThuc: ketThuc }))
+  }
+
+  // ⚡ 1-chạm tính tiền cọc dựa trên giá phòng
+  function chonTienCoc(heSo: number) {
+    const gia = Number(form.giaThue) || 0
+    if (gia > 0) {
+      setForm((prev) => ({ ...prev, tienCoc: String(Math.round(gia * heSo)) }))
+    } else {
+      setForm((prev) => ({ ...prev, tienCoc: String(Math.round(3000000 * heSo)) }))
+    }
+  }
+
+  // ⚡ 1-chạm áp dụng toàn bộ dịch vụ cơ bản
+  function chonTatCaDichVu() {
+    const copy: Record<number, string> = {}
+    services.filter((s) => s.dangSuDung).forEach((s) => {
+      copy[s.id] = ''
+    })
+    setApplied(copy)
+  }
+
+  function boChonTatCaDichVu() {
+    setApplied({})
+  }
+
+  const taoBody = () => ({
+    ...form,
+    phongId: Number(form.phongId),
+    nguoiThueId: Number(form.nguoiThueId),
+    soNgayBaoTruoc: Number(form.soNgayBaoTruoc),
+    dichVuApDung: Object.entries(applied).map(([id, price]) => ({
+      dichVuId: Number(id),
+      donGiaApDung: price || null,
+    })),
+  })
+
+  const phongChon = rooms.find((r) => r.id === Number(form.phongId))
+  const nguoiThueChon = tenants.find((t) => t.id === Number(form.nguoiThueId))
+  const giaThueSo = Number(form.giaThue) || 0
+  const tienCocSo = Number(form.tienCoc) || 0
+  const tongThanhToanDauKy = giaThueSo + tienCocSo
+
+  return { form, setForm, applied, setApplied, chonPhong, chonThoiHan, chonTienCoc, chonTatCaDichVu, boChonTatCaDichVu, phongChon, nguoiThueChon, giaThueSo, tienCocSo, tongThanhToanDauKy, taoBody }
+}
+
 export type HopDongThaoTacProps = {
   token: string
   buildingId?: number | null
@@ -160,16 +260,7 @@ export default function HopDongThaoTac({
   const dossierRef = useRef<HTMLDivElement>(null)
   const lastScrolledHopDongIdRef = useRef<number | null>(null)
   const [occupants, setOccupants] = useState<Occupant[]>([])
-  const [form, setForm] = useState({
-    phongId: '',
-    nguoiThueId: '',
-    ngayBatDau: today(),
-    ngayKetThuc: '',
-    giaThue: '',
-    tienCoc: '',
-    soNgayBaoTruoc: '30',
-  })
-  const [applied, setApplied] = useState<Record<number, string>>({})
+  const { form, setForm, applied, setApplied, chonPhong, chonThoiHan, chonTienCoc, chonTatCaDichVu, boChonTatCaDichVu, phongChon, nguoiThueChon, giaThueSo, tienCocSo, tongThanhToanDauKy, taoBody } = useFormTaoHopDong(rooms, tenants, services)
   const [occupant, setOccupant] = useState({ nguoiThueId: '', quanHe: '', tuNgay: today(), denNgay: '' })
   const [renewal, setRenewal] = useState({ ngayKetThuc: '', giaThue: '' })
   const [settle, setSettle] = useState<{ khauTruHuHong: string; lyDo: string; bienBanId?: number | null }>({ khauTruHuHong: '0', lyDo: '', bienBanId: null })
@@ -424,16 +515,7 @@ export default function HopDongThaoTac({
   async function create(e: FormEvent) {
     e.preventDefault()
     await action.run(async () => {
-      const row = await managementRequest<ThongTinHopDong>(token, '/api/hop-dong', 'POST', {
-        ...form,
-        phongId: Number(form.phongId),
-        nguoiThueId: Number(form.nguoiThueId),
-        soNgayBaoTruoc: Number(form.soNgayBaoTruoc),
-        dichVuApDung: Object.entries(applied).map(([id, price]) => ({
-          dichVuId: Number(id),
-          donGiaApDung: price || null,
-        })),
-      })
+      const row = await managementRequest<ThongTinHopDong>(token, '/api/hop-dong', 'POST', taoBody())
       await load(activeBuildingId)
       setSelected(row.id)
       setMoFormTao(false)
@@ -448,45 +530,6 @@ export default function HopDongThaoTac({
       await load(activeBuildingId)
     })
   }
-
-  // ⚡ 1-chạm tính ngày kết thúc theo số tháng
-  function chonThoiHan(thang: number) {
-    const batDau = form.ngayBatDau || today()
-    const d = new Date(batDau)
-    d.setMonth(d.getMonth() + thang)
-    const pad = (n: number) => String(n).padStart(2, '0')
-    const ketThuc = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-    setForm((prev) => ({ ...prev, ngayKetThuc: ketThuc }))
-  }
-
-  // ⚡ 1-chạm tính tiền cọc dựa trên giá phòng
-  function chonTienCoc(heSo: number) {
-    const gia = Number(form.giaThue) || 0
-    if (gia > 0) {
-      setForm((prev) => ({ ...prev, tienCoc: String(Math.round(gia * heSo)) }))
-    } else {
-      setForm((prev) => ({ ...prev, tienCoc: String(Math.round(3000000 * heSo)) }))
-    }
-  }
-
-  // ⚡ 1-chạm áp dụng toàn bộ dịch vụ cơ bản
-  function chonTatCaDichVu() {
-    const copy: Record<number, string> = {}
-    services.filter((s) => s.dangSuDung).forEach((s) => {
-      copy[s.id] = ''
-    })
-    setApplied(copy)
-  }
-
-  function boChonTatCaDichVu() {
-    setApplied({})
-  }
-
-  const phongChon = rooms.find((r) => r.id === Number(form.phongId))
-  const nguoiThueChon = tenants.find((t) => t.id === Number(form.nguoiThueId))
-  const giaThueSo = Number(form.giaThue) || 0
-  const tienCocSo = Number(form.tienCoc) || 0
-  const tongThanhToanDauKy = giaThueSo + tienCocSo
 
   return (
     <section style={{ display: 'grid', gap: 24, minWidth: 0, maxWidth: '100%' }}>
@@ -533,15 +576,7 @@ export default function HopDongThaoTac({
               style={fieldStyle}
               required
               value={form.phongId}
-              onChange={(e) => {
-                const room = rooms.find((r) => r.id === Number(e.target.value))
-                setForm({
-                  ...form,
-                  phongId: e.target.value,
-                  giaThue: room?.giaThueMacDinh ?? form.giaThue,
-                  tienCoc: room?.giaThueMacDinh ? room.giaThueMacDinh : form.tienCoc,
-                })
-              }}
+              onChange={(e) => chonPhong(e.target.value)}
             >
               <option value="">-- Chọn phòng --</option>
               {rooms.map((r) => (
