@@ -167,7 +167,7 @@ export default function ChuKyThang({ token, vaiTro, mobile, dieuHuong }: TrangPr
 
   return <section aria-labelledby="chu-ky-title" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
     <div className="ph">
-      <div className="grow">
+      <div className="grow" style={{ flex: '1 1 260px' }}>
         <h1 className="h1" id="chu-ky-title">Chu kỳ tháng {nhanKyDangXem}</h1>
         <p className="sub">{tenToa} · kỳ {dinhDangNgayIso(ky.ngayBatDau)} – {dinhDangNgayIso(ky.ngayKetThuc)} · chốt sổ sau {ngaySau(ky.ngayKetThuc)} ngày</p>
       </div>
