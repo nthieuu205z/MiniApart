@@ -203,11 +203,13 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
     },
   ]
 
+  const TieuDe = mobile ? 'h2' : 'h1'
   return (
-    <div style={{ padding: mobile ? 0 : '24px 20px', maxWidth: 1360, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 16 }}>
+    <div style={{ maxWidth: 1360, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 16 }}>
       <div className="spread" style={{ alignItems: 'flex-start' }}>
         <div>
-          <h1 style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Báo giá & thanh toán</h1>
+          {/* Mobile: khung đã có h1 (tên trang) → tiêu đề màn là h2 để mỗi trang chỉ một h1. */}
+          <TieuDe style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Báo giá & thanh toán</TieuDe>
           <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)' }}>Chi phí vật tư, công thợ & chứng từ đối soát</div>
         </div>
         <button type="button" className="icon-btn boxed" aria-label="Làm mới dữ liệu" title="Làm mới dữ liệu" aria-disabled={dangTai || undefined} onClick={() => { if (!dangTai) taiDuLieu() }}>

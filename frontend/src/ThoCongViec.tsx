@@ -332,12 +332,12 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
   const viTriNutChinh = dsMobile.findIndex((r) => nutChinhCuaViec(r).hanhDong !== 'KHONG')
 
   return (
-    <div style={{ padding: mobile ? 0 : '24px 20px', maxWidth: 1240, margin: '0 auto', display: 'grid', gap: 20 }} data-testid="worker-jobs-screen">
+    <div style={{ maxWidth: 1240, display: 'grid', gap: 20 }} data-testid="worker-jobs-screen">
       {mobile ? (
         <>
           <div className="spread" style={{ alignItems: 'flex-start' }}>
             <div>
-              <h1 className="h1" style={{ margin: 0 }}>Việc của tôi</h1>
+              <h2 className="h1" style={{ margin: 0 }}>Việc của tôi</h2>
               <div className="t-meta">
                 {[tomTat.hoTen, new Date().toLocaleDateString('vi-VN')].filter(Boolean).join(' · ')}
               </div>
@@ -575,19 +575,19 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                   <td style={{ padding: '14px 16px', verticalAlign: 'top' }}>
                     <div style={{ fontWeight: 700, fontSize: 14 }}>{row.maYeuCau}</div>
                     <div style={{ color: 'var(--ma-text-primary)', marginTop: 2 }}>{row.hangMuc}</div>
-                    <div style={{ color: 'var(--ma-text-secondary)', fontSize: 12, marginTop: 4, maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ color: 'var(--ma-text-secondary)', fontSize: 13, marginTop: 4, maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {row.moTa}
                     </div>
                   </td>
 
                   <td style={{ padding: '14px 16px', verticalAlign: 'top' }}>
                     <div style={{ fontWeight: 600 }}>P.{row.soPhong}</div>
-                    <div style={{ color: 'var(--ma-text-secondary)', fontSize: 12 }}>{row.toaNha}</div>
+                    <div style={{ color: 'var(--ma-text-secondary)', fontSize: 13 }}>{row.toaNha}</div>
                   </td>
 
                   <td style={{ padding: '14px 16px', verticalAlign: 'top' }}>
                     <div>{row.nguoiLienHeHoTen}</div>
-                    <a href={`tel:${row.soDienThoaiLienHe}`} style={{ color: 'var(--ma-brand-primary, #2563EB)', textDecoration: 'none', fontSize: 12 }}>
+                    <a href={`tel:${row.soDienThoaiLienHe}`} style={{ color: 'var(--ma-brand-primary, #2563EB)', textDecoration: 'none', fontSize: 13 }}>
                       {row.soDienThoaiLienHe}
                     </a>
                   </td>
@@ -613,12 +613,12 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                       )}
                     </div>
                     {row.daThanhToan > 0 ? (
-                      <div style={{ fontSize: 12, color: '#059669', marginTop: 2 }}>
+                      <div style={{ fontSize: 13, color: '#059669', marginTop: 2 }}>
                         Đã nhận: {dinhDangTien(row.daThanhToan)} đ
                       </div>
                     ) : null}
                     {row.conPhaiTra > 0 ? (
-                      <div style={{ fontSize: 12, color: '#DC2626', marginTop: 2 }}>
+                      <div style={{ fontSize: 13, color: '#DC2626', marginTop: 2 }}>
                         Còn: {dinhDangTien(row.conPhaiTra)} đ
                       </div>
                     ) : null}
@@ -720,7 +720,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                     <SysLabel>Thông tin liên hệ</SysLabel>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 13.5 }}>
                       <div style={{ background: 'var(--ma-bg-sunken)', padding: 10, borderRadius: 6 }}>
-                        <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)' }}>Người báo hỏng</div>
+                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Người báo hỏng</div>
                         <strong>{chiTietData.nguoiBaoHoTen}</strong>
                         <div>
                           <a href={`tel:${chiTietData.nguoiBaoSoDienThoai}`} style={{ color: 'var(--ma-brand-primary, #2563EB)' }}>
@@ -730,7 +730,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                       </div>
 
                       <div style={{ background: 'var(--ma-bg-sunken)', padding: 10, borderRadius: 6 }}>
-                        <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)' }}>
+                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>
                           Người liên hệ thực tế {chiTietData.laNguoiDungTenHopDong ? '(Đứng tên HĐ)' : ''}
                         </div>
                         <strong>{chiTietData.nguoiLienHeHoTen}</strong>
@@ -743,7 +743,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
 
                       {chiTietData.quanLyPhuTrachHoTen ? (
                         <div style={{ background: 'var(--ma-bg-sunken)', padding: 10, borderRadius: 6 }}>
-                          <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)' }}>Quản lý phụ trách</div>
+                          <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Quản lý phụ trách</div>
                           <strong>{chiTietData.quanLyPhuTrachHoTen}</strong>
                           <div>
                             <a href={`tel:${chiTietData.quanLyPhuTrachSoDienThoai}`} style={{ color: 'var(--ma-brand-primary, #2563EB)' }}>
@@ -767,21 +767,21 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
 
                     {chiTietData.anhTruocIds.length > 0 ? (
                       <div>
-                        <div style={{ fontSize: 12, color: 'var(--ma-text-secondary)', marginBottom: 6 }}>Ảnh hiện trường sự cố:</div>
+                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)', marginBottom: 6 }}>Ảnh hiện trường sự cố:</div>
                         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                           {chiTietData.anhTruocIds.map((pid) => (
                             <div key={pid} style={stylePhotoBox}>
                               {photoUrls[pid] ? (
                                 <img src={photoUrls[pid]} alt="Ảnh sự cố" style={stylePhotoImg} />
                               ) : (
-                                <span style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>Đang tải ảnh...</span>
+                                <span style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Đang tải ảnh...</span>
                               )}
                             </div>
                           ))}
                         </div>
                       </div>
                     ) : (
-                      <div style={{ fontSize: 12.5, color: 'var(--ma-text-secondary)', fontStyle: 'italic' }}>Không có ảnh đính kèm ban đầu.</div>
+                      <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)', fontStyle: 'italic' }}>Không có ảnh đính kèm ban đầu.</div>
                     )}
                   </div>
 
@@ -790,7 +790,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                     <SysLabel>Khảo sát & Tiến độ sửa chữa</SysLabel>
                     <div style={{ display: 'grid', gap: 14 }}>
                       <div>
-                        <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>
+                        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
                           Ghi chú khảo sát kỹ thuật
                         </label>
                         <textarea
@@ -805,7 +805,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                             variant="secondary"
                             onClick={handleLuuKhaoSat}
                             blocked={dangXuLyHanhDong}
-                            style={{ fontSize: 12.5, height: 32 }}
+                            style={{ fontSize: 13, height: 32 }}
                           >
                             Lưu khảo sát
                           </Button>
@@ -814,7 +814,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
 
                       {chiTietData.trangThaiHieuLuc !== 'DA_DONG' && chiTietData.trangThaiHieuLuc !== 'DA_HUY' ? (
                         <div style={{ borderTop: '1px dashed var(--ma-border-default)', paddingTop: 12 }}>
-                          <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
                             Kết quả sửa chữa (khi hoàn thành)
                           </label>
                           <textarea
@@ -825,7 +825,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                             style={styleTextarea}
                           />
                           <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>
+                            <span style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>
                               Báo xong sẽ chuyển trạng thái sang Chờ xác nhận để người thuê và quản lý nghiệm thu.
                             </span>
                             <Button
@@ -849,7 +849,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                         <Button
                           variant="secondary"
                           onClick={() => setHienFormBaoGia(true)}
-                          style={{ fontSize: 12, height: 30 }}
+                          style={{ fontSize: 13, height: 30 }}
                         >
                           + Tạo báo giá mới
                         </Button>
@@ -869,7 +869,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                         />
 
                         <div style={{ display: 'grid', gap: 8 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600 }}>Các dòng vật tư / công thợ:</div>
+                          <div style={{ fontSize: 13, fontWeight: 600 }}>Các dòng vật tư / công thợ:</div>
                           {dongBaoGiaForm.map((line, idx) => (
                             <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                               <input
@@ -931,7 +931,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                           <button
                             type="button"
                             onClick={() => setDongBaoGiaForm((curr) => [...curr, { tenHangMuc: '', soLuong: 1, donVi: 'gói', donGia: 0 }])}
-                            style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'var(--ma-brand-primary, #2563EB)', cursor: 'pointer', fontSize: 12.5 }}
+                            style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'var(--ma-brand-primary, #2563EB)', cursor: 'pointer', fontSize: 13 }}
                           >
                             + Thêm dòng vật tư
                           </button>
@@ -978,7 +978,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                                   {dichTrangThaiBaoGia(bg.trangThai)}
                                 </StatusTag>
                                 {bg.trangThai === 'NHAP' ? (
-                                  <Button variant="secondary" onClick={() => handleGuiDuyetBaoGia(bg.id)} blocked={dangXuLyHanhDong} style={{ fontSize: 12, height: 28, padding: '0 8px' }}>
+                                  <Button variant="secondary" onClick={() => handleGuiDuyetBaoGia(bg.id)} blocked={dangXuLyHanhDong} style={{ fontSize: 13, height: 28, padding: '0 8px' }}>
                                     Gửi duyệt
                                   </Button>
                                 ) : null}
@@ -987,7 +987,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
 
                             {/* Line items table */}
                             {bg.dongBaoGia.length > 0 ? (
-                              <table style={{ width: '100%', fontSize: 12.5, borderCollapse: 'collapse', marginBottom: 8 }}>
+                              <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse', marginBottom: 8 }}>
                                 <thead>
                                   <tr style={{ color: 'var(--ma-text-secondary)', borderBottom: '1px solid var(--ma-border-default)' }}>
                                     <th style={{ textAlign: 'left', padding: '4px 0' }}>Hạng mục</th>
@@ -1019,7 +1019,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                             </div>
 
                             {bg.lyDoTuChoi ? (
-                              <div style={{ marginTop: 8, padding: '6px 10px', background: 'rgba(239, 68, 68, 0.08)', borderRadius: 6, fontSize: 12, color: 'var(--ma-urgent)' }}>
+                              <div style={{ marginTop: 8, padding: '6px 10px', background: 'rgba(239, 68, 68, 0.08)', borderRadius: 6, fontSize: 13, color: 'var(--ma-urgent)' }}>
                                 <strong>Lý do từ chối:</strong> {bg.lyDoTuChoi}
                               </div>
                             ) : null}
@@ -1037,7 +1037,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                         <Button
                           variant="secondary"
                           onClick={() => handleXemChungTu(chiTietData.id)}
-                          style={{ fontSize: 12, height: 30 }}
+                          style={{ fontSize: 13, height: 30 }}
                         >
                           📄 Xem & In chứng từ
                         </Button>
@@ -1046,15 +1046,15 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, background: 'var(--ma-bg-sunken)', padding: 12, borderRadius: 8, marginBottom: 12, textAlign: 'center' }}>
                       <div>
-                        <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)' }}>Được duyệt</div>
+                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Được duyệt</div>
                         <strong style={{ fontSize: 14 }}>{dinhDangTien(chiTietData.tongTienBaoGia)} đ</strong>
                       </div>
                       <div>
-                        <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)' }}>Đã nhận</div>
+                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Đã nhận</div>
                         <strong style={{ fontSize: 14, color: '#059669' }}>{dinhDangTien(chiTietData.tongDaNhan)} đ</strong>
                       </div>
                       <div>
-                        <div style={{ fontSize: 11.5, color: 'var(--ma-text-secondary)' }}>Còn lại</div>
+                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Còn lại</div>
                         <strong style={{ fontSize: 14, color: chiTietData.tongConLai > 0 ? '#DC2626' : 'var(--ma-text-primary)' }}>
                           {dinhDangTien(chiTietData.tongConLai)} đ
                         </strong>
@@ -1086,11 +1086,11 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                     <div style={{ display: 'grid', gap: 10, position: 'relative', paddingLeft: 16 }}>
                       <div style={{ position: 'absolute', top: 6, bottom: 6, left: 6, width: 2, background: 'var(--ma-border-default)' }} />
                       {chiTietData.lichSuTrangThai.map((item, idx) => (
-                        <div key={idx} style={{ position: 'relative', display: 'grid', gap: 2, fontSize: 12.5 }}>
+                        <div key={idx} style={{ position: 'relative', display: 'grid', gap: 2, fontSize: 13 }}>
                           <span style={{ position: 'absolute', left: -14, top: 4, width: 8, height: 8, borderRadius: '50%', background: item.laTuDong ? '#F59E0B' : 'var(--ma-brand-primary, #2563EB)' }} />
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <strong>{item.tenHanhDong}</strong>
-                            <span style={{ color: 'var(--ma-text-secondary)', fontSize: 11.5 }}>
+                            <span style={{ color: 'var(--ma-text-secondary)', fontSize: 13 }}>
                               {new Date(item.thoiDiem).toLocaleString('vi-VN')}
                             </span>
                             {item.laTuDong ? <StatusTag tone="waiting">Tự động</StatusTag> : null}
