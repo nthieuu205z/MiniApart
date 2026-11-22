@@ -14,14 +14,6 @@
   .hom-nay .hn-dots, .hom-nay .hn-skel { padding-left: 16px; padding-right: 16px; }
   .hom-nay .irow .btn { flex: none; }
 }
-/* App.tsx chỉ cho Chủ đệm gọn (0 16px 24px) ở trang Hôm nay; Quản lý nhận đệm 40px nên lùi lại cho khớp prototype.
-   shortcut: bù bằng margin âm, xoá khối này khi App.tsx cho Quản lý dùng chung đệm với Chủ (laDashboardChu). */
-@media (min-width: 768px) {
-  .hom-nay.hom-nay-ql {
-    --hn-dem: clamp(16px, 4vw, var(--ma-space-8));
-    margin: calc(0px - var(--hn-dem)) calc(16px - var(--hn-dem)) calc(24px - var(--hn-dem));
-  }
-}
 /* 390: tiêu đề khối + meta + link xuống dòng gọn, link không bị bẻ chữ */
 .hom-nay .sec-h { flex-wrap: wrap; row-gap: 2px; }
 .hom-nay .sec-h .push, .hom-nay .blk-h .push { white-space: nowrap; flex: none; }

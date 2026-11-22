@@ -16,7 +16,10 @@
 a.tab { text-decoration: none; }
 a.tab[aria-current="page"] { color: var(--ma-text-primary); font-weight: 600; }
 a.tab[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ma-brand-primary); }
-.tabs-trang { margin-bottom: 4px; }
+/* Vùng nội dung: MỘT quy tắc đệm cho mọi màn; tab trang là thanh mỏng sát thanh trên (kéo ngược đệm trên). */
+.ma-vung-noi-dung { --vung-y: 24px; --vung-x: 32px; padding: var(--vung-y) var(--vung-x); gap: 16px; }
+@media (max-width: 767px) { .ma-vung-noi-dung { --vung-y: 16px; --vung-x: 16px; } .ma-vung-noi-dung .topbar { padding-top: 0; } } /* .topbar cũ của màn quản trị tự đệm 12px trên ở điện thoại */
+.ma-vung-noi-dung > .tabs-trang { margin: calc(0px - var(--vung-y)) 0 0; }
 
 /* Ô chọn toà: danh sách mở dưới nút */
 .sb-toa-wrap { position: relative; }
@@ -51,7 +54,7 @@ a.tab[aria-current="page"]::after { content: ""; position: absolute; left: 12px;
 .ux-search .grow { flex: 1; }
 .ux-top .push { margin-left: auto; }
 .icon-btn.has-n { position: relative; }
-.icon-btn.has-n b { position: absolute; top: 0; right: 0; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--ma-urgent); color: var(--ma-text-on-inverse); font: 600 13px/20px var(--ma-font-ui); text-align: center; }
+.icon-btn.has-n b { position: absolute; top: -6px; right: -8px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--ma-urgent); color: var(--ma-text-on-inverse); font: 600 13px/20px var(--ma-font-ui); text-align: center; }
 
 /* MỚI: đầu trang — tiêu đề + 1 hành động chính; breadcrumb chỉ khi sâu ≥ 2 tầng */
 .ph { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }

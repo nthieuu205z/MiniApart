@@ -160,15 +160,6 @@ const styleCotNoiDungMobile: CSSProperties = {
 const styleVungNoiDung: CSSProperties = {
   flex: 1,
   minWidth: 0,
-  padding: 'clamp(16px, 4vw, var(--ma-space-8))',
-  display: 'grid',
-  gap: 'var(--ma-space-7)',
-  alignContent: 'start',
-}
-
-const styleVungNoiDungKhongDem: CSSProperties = {
-  flex: 1,
-  minWidth: 0,
   display: 'grid',
   alignContent: 'start',
 }
@@ -536,7 +527,6 @@ function KhungUngDung({ nguoiDung, token, viTri, ketQuaTuyen, laManHinhHep, laMa
   const quanLy = vaiTro === 'CHU' || vaiTro === 'QUAN_LY'
   const khoa = ketQuaTuyen.loai === 'trang' ? ketQuaTuyen.khoa : null
   const trangProps: TrangProps = { token: token ?? '', vaiTro, mobile: laManHinhHep, thamSo: ketQuaTuyen.loai === 'trang' ? ketQuaTuyen.thamSo : {}, dieuHuong: dieuHuongToi }
-  const laDashboardChu = vaiTro === 'CHU' && (khoa === 'hom-nay' || khoa === 'tong-quan')
 
   // Sang trang khác hoặc về màn rộng thì ngăn menu tự đóng.
   useEffect(() => { setMoNgan(false) }, [duongDan, coNgan])
@@ -591,7 +581,7 @@ function KhungUngDung({ nguoiDung, token, viTri, ketQuaTuyen, laManHinhHep, laMa
           style={{ padding: laManHinhHep ? '8px 16px' : undefined }}
         />
 
-        <section style={khoa === 'chu-ky' ? styleVungNoiDungKhongDem : laDashboardChu && !laManHinhHep ? { ...styleVungNoiDung, padding: '0 16px 24px', gap: 16 } : styleVungNoiDung}>
+        <section className="ma-vung-noi-dung" style={styleVungNoiDung}>
           {healthError ? (
             <div role="alert" style={{ marginBottom: 'var(--ma-space-4)' }}>
               <BlockedNotice title="Mất kết nối máy chủ" reason={healthError} />

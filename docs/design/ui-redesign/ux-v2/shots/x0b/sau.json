@@ -1,0 +1,1154 @@
+[
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/hom-nay",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Hôm nay"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/thu-tien",
+  "khoi": [
+   320,
+   133
+  ],
+  "h1": [
+   320,
+   133
+  ],
+  "tab": [
+   320,
+   72
+  ],
+  "tabBottom": 117,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Thu tiền"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/thu-tien?tab=hoa-don",
+  "khoi": [
+   320,
+   133
+  ],
+  "h1": [
+   320,
+   133
+  ],
+  "tab": [
+   320,
+   72
+  ],
+  "tabBottom": 117,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Thu tiền"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/nguoi-thue",
+  "khoi": [
+   320,
+   133
+  ],
+  "h1": [
+   320,
+   133
+  ],
+  "tab": [
+   320,
+   72
+  ],
+  "tabBottom": 117,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Người thuê"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/nguoi-thue/1",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   392,
+   133
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Trần Quang Huy"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/hop-dong",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Hợp đồng"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/hop-dong/9",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   392,
+   137
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Hợp đồng #9 · Phòng 303"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/toa-nha",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Toà nhà"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/toa-nha/3",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   392,
+   137
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "An Nhiên Residence"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/phong/1?toaNhaId=3",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   392,
+   133
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Phòng 101"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/chu-ky",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   360,
+   262
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Ghi chỉ số"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/su-co",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Sự cố"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/bao-cao",
+  "khoi": [
+   320,
+   133
+  ],
+  "h1": [
+   320,
+   133
+  ],
+  "tab": [
+   320,
+   72
+  ],
+  "tabBottom": 117,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Báo cáo tổng quan"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/lich-hen",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Lịch hẹn"
+ },
+ {
+  "role": "CHU",
+  "w": 1440,
+  "d": "/an-toan",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "An toàn và phòng cháy chữa chá"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/hom-nay",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Hôm nay"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/thu-tien",
+  "khoi": [
+   16,
+   129
+  ],
+  "h1": [
+   16,
+   129
+  ],
+  "tab": [
+   16,
+   68
+  ],
+  "tabBottom": 113,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Thu tiền"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/thu-tien?tab=hoa-don",
+  "khoi": [
+   16,
+   129
+  ],
+  "h1": [
+   16,
+   129
+  ],
+  "tab": [
+   16,
+   68
+  ],
+  "tabBottom": 113,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Thu tiền"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/nguoi-thue",
+  "khoi": [
+   16,
+   129
+  ],
+  "h1": [
+   16,
+   129
+  ],
+  "tab": [
+   16,
+   68
+  ],
+  "tabBottom": 113,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Người thuê"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/nguoi-thue/1",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   88,
+   126
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Trần Quang Huy"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/hop-dong",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Hợp đồng"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/hop-dong/9",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   88,
+   130
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Hợp đồng #9 · Phòng 303"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/toa-nha",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Toà nhà"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/toa-nha/3",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   88,
+   130
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "An Nhiên Residence"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/phong/1?toaNhaId=3",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   88,
+   126
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Phòng 101"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/chu-ky",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": null,
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": null
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/su-co",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Sự cố"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/bao-cao",
+  "khoi": [
+   16,
+   129
+  ],
+  "h1": [
+   16,
+   129
+  ],
+  "tab": [
+   16,
+   68
+  ],
+  "tabBottom": 113,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Báo cáo tổng quan"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/lich-hen",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Lịch hẹn"
+ },
+ {
+  "role": "CHU",
+  "w": 390,
+  "d": "/an-toan",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "An toàn và phòng cháy chữa chá"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/hom-nay",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Hôm nay"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/thu-tien",
+  "khoi": [
+   320,
+   133
+  ],
+  "h1": [
+   320,
+   133
+  ],
+  "tab": [
+   320,
+   72
+  ],
+  "tabBottom": 117,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Thu tiền"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/thu-tien?tab=hoa-don",
+  "khoi": [
+   320,
+   133
+  ],
+  "h1": [
+   320,
+   133
+  ],
+  "tab": [
+   320,
+   72
+  ],
+  "tabBottom": 117,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Thu tiền"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/nguoi-thue",
+  "khoi": [
+   320,
+   133
+  ],
+  "h1": [
+   320,
+   133
+  ],
+  "tab": [
+   320,
+   72
+  ],
+  "tabBottom": 117,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Người thuê"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/nguoi-thue/1",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   392,
+   133
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Trần Quang Huy"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/hop-dong",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Hợp đồng"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/hop-dong/9",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   392,
+   137
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Hợp đồng #9 · Phòng 303"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/toa-nha",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Toà nhà"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/toa-nha/3",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   392,
+   137
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "An Nhiên Residence"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/phong/1?toaNhaId=3",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   392,
+   133
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Phòng 101"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/chu-ky",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   360,
+   262
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Ghi chỉ số"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/su-co",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Sự cố"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/bao-cao",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   376,
+   246
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": true,
+  "h1Text": "Trang này dành cho Chủ sở hữu"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/lich-hen",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Lịch hẹn"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/an-toan",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "An toàn và phòng cháy chữa chá"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 1440,
+  "d": "/phong",
+  "khoi": [
+   320,
+   96
+  ],
+  "h1": [
+   320,
+   96
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 64,
+  "khongQuyen": false,
+  "h1Text": "Phòng"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/hom-nay",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Hôm nay"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/thu-tien",
+  "khoi": [
+   16,
+   129
+  ],
+  "h1": [
+   16,
+   129
+  ],
+  "tab": [
+   16,
+   68
+  ],
+  "tabBottom": 113,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Thu tiền"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/thu-tien?tab=hoa-don",
+  "khoi": [
+   16,
+   129
+  ],
+  "h1": [
+   16,
+   129
+  ],
+  "tab": [
+   16,
+   68
+  ],
+  "tabBottom": 113,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Thu tiền"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/nguoi-thue",
+  "khoi": [
+   16,
+   129
+  ],
+  "h1": [
+   16,
+   129
+  ],
+  "tab": [
+   16,
+   68
+  ],
+  "tabBottom": 113,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Người thuê"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/nguoi-thue/1",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   88,
+   126
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Trần Quang Huy"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/hop-dong",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Hợp đồng"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/hop-dong/9",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   88,
+   130
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Hợp đồng #9 · Phòng 303"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/toa-nha",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Toà nhà"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/toa-nha/3",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   88,
+   130
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "An Nhiên Residence"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/phong/1?toaNhaId=3",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   88,
+   126
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Phòng 101"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/chu-ky",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": null,
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": null
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/su-co",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Sự cố"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/bao-cao",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   66,
+   228
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": true,
+  "h1Text": "Trang này dành cho Chủ sở hữu"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/lich-hen",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Lịch hẹn"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/an-toan",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "An toàn và phòng cháy chữa chá"
+ },
+ {
+  "role": "QUAN_LY",
+  "w": 390,
+  "d": "/phong",
+  "khoi": [
+   16,
+   84
+  ],
+  "h1": [
+   16,
+   84
+  ],
+  "tab": null,
+  "tabBottom": null,
+  "topBottom": 60,
+  "khongQuyen": false,
+  "h1Text": "Phòng"
+ }
+]
