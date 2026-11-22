@@ -64,6 +64,8 @@ describe('owner closed-period correction', () => {
     vi.stubGlobal('fetch',fetchMock)
     root=createRoot(container)
     await act(async()=>root!.render(<GhiChiSo token="owner-token" vaiTro="CHU"/>))
+    const sua=await vi.waitFor(()=>{const element=container.querySelector<HTMLButtonElement>('button[aria-label^="Sửa"]');expect(element).not.toBeNull();return element!})
+    await act(async()=>sua.click())
     const save=await vi.waitFor(()=>{const element=container.querySelector<HTMLButtonElement>('[data-save-key="11-21"]');expect(element).not.toBeNull();return element!})
     expect(save.getAttribute('aria-disabled')).toBe('true')
     await act(async()=>{setValue(container.querySelector('textarea')!,'Đối chiếu lại ảnh công tơ');setValue(container.querySelector('input[name="chiSoCuoi-11-21"]')!,'120.00')})
