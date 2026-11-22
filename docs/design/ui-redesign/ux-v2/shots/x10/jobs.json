@@ -1,0 +1,58 @@
+[
+ {
+  "name": "21-khach-can-tra-390",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "22-khach-tra-tien-390",
+  "path": "/hoa-don-cua-toi?tra=tat-ca",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "23-khach-lich-su-390",
+  "path": "/lich-su",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "24-khach-hop-dong-390",
+  "path": "/hop-dong",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "25-khach-tieu-thu-390",
+  "path": "/tieu-thu",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "26-khach-bao-hong-390",
+  "path": "/bao-hong",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "21-khach-can-tra-1440",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ }
+]

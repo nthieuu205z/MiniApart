@@ -1,0 +1,219 @@
+[
+ {
+  "name": "21-khach-can-tra-390",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x10\\21-khach-can-tra-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 13,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 105,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1389,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "22-khach-tra-tien-390",
+  "path": "/hoa-don-cua-toi?tra=tat-ca",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x10\\22-khach-tra-tien-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 9,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 22,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 844,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "23-khach-lich-su-390",
+  "path": "/lich-su",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x10\\23-khach-lich-su-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 11,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 70,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1076,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "24-khach-hop-dong-390",
+  "path": "/hop-dong",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x10\\24-khach-hop-dong-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 8,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 38,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 875,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "25-khach-tieu-thu-390",
+  "path": "/tieu-thu",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x10\\25-khach-tieu-thu-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 15,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 114,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1741,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "26-khach-bao-hong-390",
+  "path": "/bao-hong",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x10\\26-khach-bao-hong-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 25,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 151,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 3895,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "21-khach-can-tra-1440",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 1440,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x10\\21-khach-can-tra-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 10,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 116,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1534,
+   "khongCoQuyen": false
+  }
+ }
+]

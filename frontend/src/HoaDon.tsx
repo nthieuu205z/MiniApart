@@ -11,6 +11,7 @@ import { HighlightNotice, MetaGrid, MetaItem, MeterImage, ScreenHeader, ScreenSu
 import InvoiceActions from './InvoiceActions'
 import FinancePaymentPanel from './FinancePaymentPanel'
 import { KyTruocConNo } from './LichSuHoaDon'
+import CanTra from './CanTra'
 
 type Props = { token: string; toaNhaId?: number; kyId?: number; hoaDonId?: number; mobile?: boolean; cheDoNguoiThue?: boolean; cheDoCongNo?: boolean; vaiTro?: string }
 
@@ -22,6 +23,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
   const [soLanTaiLai, setSoLanTaiLai] = useState(0)
   const [moThanhToan, setMoThanhToan] = useState(false)
   const [lichSu, setLichSu] = useState<ThongTinHoaDonLichSu[]>([])
+  const [lichSuDaTai, setLichSuDaTai] = useState<boolean | null>(null) // null: đang tải, false: lỗi
   const previousRequest = useRef('')
   const variant = mobile ? 'mobile' : 'desktop'
   const maTruyVet = cheDoNguoiThue ? 'Hoá đơn của tôi' : cheDoCongNo ? 'Đối soát công nợ' : 'Quản lý hoá đơn'
@@ -80,9 +82,10 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
     if (!manHinhNguoiThueMobile) return
     let mounted = true
     // Lịch sử chỉ để vẽ khối "Kỳ trước còn nợ": lỗi thì bỏ khối, không chặn hoá đơn.
+    setLichSuDaTai(null)
     fetchLichSuHoaDonCuaNguoiThue(token)
-      .then((data) => { if (mounted && Array.isArray(data)) setLichSu(data) })
-      .catch(() => { if (mounted) setLichSu([]) })
+      .then((data) => { if (mounted && Array.isArray(data)) { setLichSu(data); setLichSuDaTai(true) } })
+      .catch(() => { if (mounted) { setLichSu([]); setLichSuDaTai(false) } })
     return () => { mounted = false }
   }, [manHinhNguoiThueMobile, token, soLanTaiLai])
 
@@ -105,7 +108,12 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
     )
   }
 
-  if (manHinhNguoiThueMobile) return <HoaDonNguoiThueMobile token={token} hoaDon={hoaDon} lichSu={lichSu} />
+  if (manHinhNguoiThueMobile) {
+    // Không chọn kỳ → "Cần trả" gom mọi kỳ chưa trả; lịch sử lỗi → quay về màn kỳ mới nhất như cũ.
+    if (hoaDonId === undefined && lichSuDaTai === null) return <ScreenSurface data-layout-variant={variant} aria-busy="true" aria-live="polite"><div className="skel skel-line" />Đang tải hoá đơn…</ScreenSurface>
+    if (hoaDonId === undefined && lichSuDaTai) return <CanTra hoaDon={hoaDon} lichSu={lichSu} tra={new URLSearchParams(window.location.search).get('tra')} />
+    return <HoaDonNguoiThueMobile token={token} hoaDon={hoaDon} lichSu={lichSu} />
+  }
 
   const meta = (
     <>
@@ -202,13 +210,13 @@ function HoaDonNguoiThueMobile({ token, hoaDon, lichSu }: { token: string; hoaDo
       aria-labelledby="invoice-title"
       role="region"
     >
-      <header className="m-top">
+      <header className="m-top" style={{ padding: 0 }}>
         <div className="h-title">
           <span id="invoice-title">Hoá đơn của tôi</span>
           <div className="h-sub">Phòng {hoaDon.soPhong}{trongLichSu ? ` · ${trongLichSu.tenToaNha || `Toà ${trongLichSu.maToa}`}` : ''}</div>
         </div>
       </header>
-      <div className="m-body">
+      <div className="m-body" style={{ padding: 0, gridTemplateColumns: 'minmax(0, 1fr)' }}>
         <section className="m-card" aria-labelledby="invoice-period" data-invoice-total>
           <div className="spread">
             <h1 className="h3" id="invoice-period" style={{ margin: 0 }}>Kỳ {ky}</h1>

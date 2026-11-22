@@ -75,7 +75,7 @@ export default function BieuDoTieuThu({ token, mobile = false }: Props) {
   }
 
   const tieuDe = (
-    <h1 id="consumption-title" style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Tiêu thụ điện và nước</h1>
+    <h1 id="consumption-title" className={mobile ? 'sr-only' : undefined} style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Tiêu thụ điện và nước</h1>
   )
 
   if (duLieu.dien.length === 0 && duLieu.nuoc.length === 0) {

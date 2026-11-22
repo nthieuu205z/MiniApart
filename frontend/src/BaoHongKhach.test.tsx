@@ -32,7 +32,7 @@ describe('Báo hỏng (khách thuê)', () => {
     expect(container.textContent).not.toContain('Phân công thợ')
     expect(fetchMock.mock.calls.some(([u]) => String(u) === '/api/toa-nha')).toBe(false)
     await vi.waitFor(() => expect((container.querySelector('select') as HTMLSelectElement).value).toBe('11'))
-    expect(container.querySelector('button[type="submit"]')?.textContent).toBe('Gửi yêu cầu sửa chữa')
+    expect(container.querySelector('button[type="submit"]')?.textContent).toBe('Gửi yêu cầu')
 
     const form = container.querySelector('form') as HTMLFormElement
     await act(async () => {

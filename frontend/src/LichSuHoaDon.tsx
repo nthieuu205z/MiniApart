@@ -58,7 +58,7 @@ export default function LichSuHoaDon({ token, mobile = false }: Props) {
   return (
     <section {...khung} aria-labelledby="invoice-history-title" style={{ display: 'grid', gap: 12, minWidth: 0 }}>
       <div>
-        <h1 id="invoice-history-title" style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Lịch sử hoá đơn</h1>
+        <h1 id="invoice-history-title" className={mobile ? 'sr-only' : undefined} style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Lịch sử hoá đơn</h1>
         {lichSu.length > 0 ? (
           <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)', marginTop: 2 }}>
             {lichSu.length} kỳ gần nhất của các phòng bạn đã từng thuê, kỳ mới nhất ở trên.

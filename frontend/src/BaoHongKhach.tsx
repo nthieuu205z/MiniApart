@@ -116,7 +116,7 @@ export default function BaoHongKhach({ token }: { token: string }) {
           </label>
         </div>
         <Button type="submit" blocked={action.busy} blockedReason={action.busy ? 'Đang gửi, vui lòng chờ.' : undefined} style={{ minHeight: 'var(--ma-control-h-touch)', width: '100%', justifyContent: 'center' }}>
-          Gửi yêu cầu sửa chữa
+          Gửi yêu cầu
         </Button>
       </form>
 
