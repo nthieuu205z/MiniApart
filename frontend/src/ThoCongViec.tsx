@@ -376,7 +376,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
       <div style={{ display: 'grid', gap: 14, borderBottom: '1px solid var(--ma-border-default)', paddingBottom: 16 }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
-            <h1 style={{ margin: '0 0 4px', font: '700 clamp(20px, 3.5vw, 26px)/1.2 var(--ma-font-ui)' }}>
+            <h1 className="h1" style={{ margin: '0 0 4px' }}>
               Danh sách công việc
             </h1>
             <p style={{ margin: 0, color: 'var(--ma-text-secondary)', fontSize: 13.5 }}>
@@ -646,7 +646,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                 <h2 id="drawer-title" style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
                   Chi tiết sự cố: {chiTietData?.maYeuCau ?? `SC-${chiTietId}`}
                 </h2>
-                <div style={{ color: 'var(--ma-text-secondary)', fontSize: 12.5, marginTop: 2 }}>
+                <div style={{ color: 'var(--ma-text-secondary)', fontSize: 13, marginTop: 2 }}>
                   {chiTietData?.toaNha} · Phòng {chiTietData?.soPhong}
                 </div>
               </div>
@@ -1372,12 +1372,13 @@ const styleDetailSection: CSSProperties = {
 const styleSmallActionBtn: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  padding: '3px 8px',
+  minHeight: 44,
+  padding: '0 12px',
   borderRadius: 4,
   border: '1px solid var(--ma-border-strong, #cbd5e1)',
   background: 'var(--ma-bg-sunken)',
   color: 'var(--ma-text-primary)',
-  fontSize: 12,
+  fontSize: 13,
   cursor: 'pointer',
   textDecoration: 'none',
 }

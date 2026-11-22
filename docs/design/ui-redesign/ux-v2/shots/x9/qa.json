@@ -1,0 +1,232 @@
+[
+ {
+  "name": "20-tho-viec-390",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x9\\20-tho-viec-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 21,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 72,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1402,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "20-tho-viec-1440",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 1440,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x9\\20-tho-viec-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 43,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 202,
+    "minRatio": 4.9,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1958,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "20-tho-viec-xong-390",
+  "path": "/viec-cua-toi?loc=xong",
+  "role": "THO",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x9\\20-tho-viec-xong-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 45,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 256,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 4895,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "20-tho-viec-drawer-390",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x9\\20-tho-viec-drawer-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 33,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "11.5px \"Người báo hỏng\"",
+    "11.5px \"Người liên hệ thực t\"",
+    "11.5px \"Quản lý phụ trách\"",
+    "12.5px \"Không có ảnh đính kè\"",
+    "12.5px \"Ghi chú khảo sát kỹ \"",
+    "12.5px \"Lưu khảo sát\"",
+    "12.5px \"Kết quả sửa chữa (kh\"",
+    "12px \"Báo xong sẽ chuyển t\"",
+    "12px \"+ Tạo báo giá mới\"",
+    "12px \"Gửi duyệt\"",
+    "12.5px \"Hạng mục\"",
+    "12.5px \"SL\"",
+    "12.5px \"Đơn giá\"",
+    "12.5px \"Thành tiền\"",
+    "12.5px \"Vật tư thay thế\"",
+    "12.5px \"1\"",
+    "12.5px \"bộ\"",
+    "12.5px \"220.000\"",
+    "12.5px \"đ\"",
+    "12.5px \"Công thợ sửa chữa\"",
+    "12.5px \"lần\"",
+    "12.5px \"80.000\"",
+    "11.5px \"Được duyệt\"",
+    "11.5px \"Đã nhận\"",
+    "11.5px \"Còn lại\"",
+    "12.5px \"Tạo yêu cầu\"",
+    "11.5px \"21:42:00 10/11/2026\"",
+    "12.5px \"Thực hiện bởi:\"",
+    "12.5px \"Ngô Mai Phương\"",
+    "12.5px \"DANG_XU_LY\"",
+    "12.5px \"Tiếp nhận\"",
+    "11.5px \"17:00:00 11/11/2026\"",
+    "12.5px \"Quản lý Toà A\"",
+    "12.5px \"DA_TIEP_NHAN\"",
+    "12.5px \"Phân công\"",
+    "11.5px \"21:00:00 11/11/2026\"",
+    "12.5px \"DA_PHAN_CONG\"",
+    "12.5px \"Bắt đầu xử lý\"",
+    "11.5px \"23:00:00 11/11/2026\"",
+    "12.5px \"Lê Quốc Huy\""
+   ],
+   "contrast": {
+    "textNodesChecked": 184,
+    "minRatio": 3.46,
+    "below": [
+     "3.46 \"0\" rgb(5, 150, 105) / rgb(247,245,242)",
+     "3.46 \"đ\" rgb(5, 150, 105) / rgb(247,245,242)"
+    ]
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(15, 118, 110)",
+   "docHeight": 1402,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "20-tho-tong-quan-390",
+  "path": "/tho/tong-quan",
+  "role": "THO",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x9\\20-tho-tong-quan-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 21,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 72,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1402,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "20-tho-chi-phi-390",
+  "path": "/tho/chi-phi",
+  "role": "THO",
+  "w": 390,
+  "png": "docs\\design\\ui-redesign\\ux-v2\\shots\\x9\\20-tho-chi-phi-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 26,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 147,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 3259,
+   "khongCoQuyen": false
+  }
+ }
+]

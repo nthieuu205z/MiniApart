@@ -1,0 +1,8 @@
+[
+{"name":"20-tho-viec-390","path":"/viec-cua-toi","role":"THO","w":390,"h":844,"full":true},
+{"name":"20-tho-viec-1440","path":"/viec-cua-toi","role":"THO","w":1440,"h":900,"full":true},
+{"name":"20-tho-viec-xong-390","path":"/viec-cua-toi?loc=xong","role":"THO","w":390,"h":844,"full":true},
+{"name":"20-tho-viec-drawer-390","path":"/viec-cua-toi","click":"article.job h2 button","role":"THO","w":390,"h":844,"full":false},
+{"name":"20-tho-tong-quan-390","path":"/tho/tong-quan","role":"THO","w":390,"h":844,"full":true},
+{"name":"20-tho-chi-phi-390","path":"/tho/chi-phi","role":"THO","w":390,"h":844,"full":true}
+]
