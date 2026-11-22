@@ -1,6 +1,7 @@
 import './tokens/index.css'
 import './design/base.css'
 import './design/components.css'
+import './design/ux-v2.css'
 import './styles.css'
 
 import { StrictMode } from 'react'

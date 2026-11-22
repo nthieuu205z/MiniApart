@@ -1,122 +1,99 @@
+// Cấu hình điều hướng UX v2 (ux-v2/02 §2): nhóm theo công việc, không theo bảng dữ liệu.
+// Không đổi quyền: quyền do dinhTuyen.ts quyết định; file này chỉ chọn mục hiện trên sidebar / bottom-nav.
+import type { IconName } from './design/core/Icon'
+
 export type VaiTroDieuHuong = 'QTHT' | 'CHU' | 'QUAN_LY' | 'THO' | 'NGUOI_THUE'
 
 export type MucDieuHuong = {
   duongDan: string
   nhan: string
+  icon: IconName
+  /** Đường dẫn làm mục này sáng: khớp đúng hoặc là tiền tố (`/toa-nha` sáng cả ở `/toa-nha/3`). */
+  activeFor: string[]
+  /** Nhãn ngắn cho bottom-nav. */
+  nhanNgan?: string
+  /** Khoá số đếm lấy từ soDemDieuHuong. */
+  dem?: 'suCo' | 'lichHen' | 'chuKy'
+  /** Số đếm đỏ (cần xử lý ngay) thay vì xám. */
+  nong?: boolean
 }
 
-type TrangVaiTro =
-  | {
-      loai: 'trang-chu'
-      tieuDe: 'Trang chủ'
-      thongDiep: string
-    }
-  | {
-      loai: 'menu'
-      tieuDe: string
-      thongDiep: string
-    }
-  | {
-      loai: 'khong-co-quyen'
-      tieuDe: 'Không có quyền'
-      thongDiep: string
-    }
+export type NhomDieuHuong = { nhan: string; muc: MucDieuHuong[] }
+export type CauHinhDieuHuong = { nhom: NhomDieuHuong[]; chanSidebar: MucDieuHuong[]; bottomNav: boolean }
 
-const DIEU_HUONG_THEO_VAI_TRO: Record<VaiTroDieuHuong, MucDieuHuong[]> = {
-  QTHT: [
-    { duongDan: '/tai-khoan', nhan: 'Tài khoản' },
-    { duongDan: '/toa-nha', nhan: 'Toà nhà' },
-    { duongDan: '/nhat-ky-thao-tac', nhan: 'Nhật ký thao tác' },
-  ],
-  CHU: [
-    { duongDan: '/tong-quan', nhan: 'Tổng quan' },
-    { duongDan: '/toa-nha', nhan: 'Toà nhà' },
-    { duongDan: '/nguoi-thue', nhan: 'Người thuê' },
-    { duongDan: '/hop-dong', nhan: 'Hợp đồng' },
-    { duongDan: '/dich-vu', nhan: 'Dịch vụ và kỳ' },
-    { duongDan: '/ghi-chi-so', nhan: 'Ghi chỉ số' },
-    { duongDan: '/thu-tien', nhan: 'Thu tiền' },
-    { duongDan: '/cu-tru', nhan: 'Cư trú' },
-    { duongDan: '/lich-hen', nhan: 'Lịch hẹn' },
-    { duongDan: '/hoa-don', nhan: 'Hoá đơn' },
-    { duongDan: '/cong-no', nhan: 'Công nợ' },
-    { duongDan: '/bao-cao', nhan: 'Báo cáo' },
-    { duongDan: '/bao-cao/tieu-thu', nhan: 'Tiêu thụ điện nước' },
-    { duongDan: '/bao-cao/chi-phi-bao-tri', nhan: 'Chi phí bảo trì' },
-    { duongDan: '/su-co', nhan: 'Sự cố' },
-    { duongDan: '/an-toan', nhan: 'An toàn' },
-    { duongDan: '/nhat-ky-thao-tac', nhan: 'Nhật ký thao tác' },
-  ],
-  QUAN_LY: [
-    { duongDan: '/nhac-viec', nhan: 'Nhắc việc' },
-    { duongDan: '/ghi-chi-so', nhan: 'Ghi chỉ số' },
-    { duongDan: '/hoa-don', nhan: 'Hoá đơn' },
-    { duongDan: '/thu-tien', nhan: 'Thu tiền' },
-    { duongDan: '/phong', nhan: 'Phòng' },
-    { duongDan: '/hop-dong', nhan: 'Hợp đồng' },
-    { duongDan: '/nguoi-thue', nhan: 'Người thuê' },
-    { duongDan: '/dich-vu', nhan: 'Dịch vụ và kỳ' },
-    { duongDan: '/cu-tru', nhan: 'Cư trú' },
-    { duongDan: '/an-toan', nhan: 'An toàn' },
-    { duongDan: '/lich-hen', nhan: 'Lịch hẹn' },
-    { duongDan: '/su-co', nhan: 'Sự cố' },
-    { duongDan: '/thong-bao', nhan: 'Thông báo' },
-  ],
-  THO: [
-    { duongDan: '/tho/tong-quan', nhan: 'Tổng quan' },
-    { duongDan: '/viec-cua-toi', nhan: 'Công việc' },
-    { duongDan: '/tho/chi-phi', nhan: 'Báo giá & thanh toán' },
-    { duongDan: '/thong-bao', nhan: 'Thông báo' },
-  ],
-  NGUOI_THUE: [
-    { duongDan: '/hoa-don-cua-toi', nhan: 'Hoá đơn của tôi' },
-    { duongDan: '/lich-su', nhan: 'Lịch sử' },
-    { duongDan: '/tieu-thu', nhan: 'Tiêu thụ' },
-    { duongDan: '/hop-dong', nhan: 'Hợp đồng' },
-    { duongDan: '/bao-hong', nhan: 'Báo hỏng' },
-  ],
+const m = (duongDan: string, nhan: string, icon: IconName, extra: Partial<MucDieuHuong> = {}): MucDieuHuong => ({ duongDan, nhan, icon, activeFor: [duongDan], ...extra })
+
+const HOM_NAY = m('/hom-nay', 'Hôm nay', 'dashboard')
+const THU_TIEN = m('/thu-tien', 'Thu tiền', 'wallet', { activeFor: ['/thu-tien', '/hoa-don'] })
+const CHU_KY = m('/chu-ky', 'Chu kỳ tháng', 'meter')
+const NGUOI_THUE = m('/nguoi-thue', 'Người thuê', 'users', { activeFor: ['/nguoi-thue', '/cu-tru'] })
+const HOP_DONG = m('/hop-dong', 'Hợp đồng', 'contract')
+const LICH_HEN = m('/lich-hen', 'Lịch hẹn', 'calendar', { dem: 'lichHen' })
+const SU_CO = m('/su-co', 'Sự cố', 'wrench', { dem: 'suCo', nong: true })
+const AN_TOAN = m('/an-toan', 'An toàn PCCC', 'shield')
+const DICH_VU = m('/dich-vu', 'Dịch vụ & đơn giá', 'settings')
+
+const CAU_HINH: Record<VaiTroDieuHuong, CauHinhDieuHuong> = {
+  CHU: {
+    bottomNav: false,
+    chanSidebar: [DICH_VU],
+    nhom: [
+      { nhan: '', muc: [HOM_NAY] },
+      { nhan: 'Thu tiền', muc: [THU_TIEN, CHU_KY] },
+      { nhan: 'Phòng & người thuê', muc: [m('/toa-nha', 'Toà & phòng', 'building', { activeFor: ['/toa-nha', '/phong'] }), NGUOI_THUE, HOP_DONG, LICH_HEN] },
+      { nhan: 'Vận hành', muc: [SU_CO, AN_TOAN] },
+      { nhan: 'Báo cáo', muc: [m('/tong-quan', 'Báo cáo', 'chart', { activeFor: ['/tong-quan', '/bao-cao', '/bao-cao/tieu-thu', '/bao-cao/chi-phi-bao-tri', '/nhat-ky-thao-tac'] })] },
+    ],
+  },
+  QUAN_LY: {
+    bottomNav: false,
+    chanSidebar: [DICH_VU],
+    nhom: [
+      { nhan: '', muc: [HOM_NAY] },
+      { nhan: 'Thu tiền', muc: [{ ...CHU_KY, dem: 'chuKy', nong: true }, THU_TIEN] },
+      { nhan: 'Phòng & người thuê', muc: [m('/phong', 'Phòng', 'door'), NGUOI_THUE, HOP_DONG, LICH_HEN] },
+      { nhan: 'Vận hành', muc: [SU_CO, AN_TOAN, m('/thong-bao', 'Thông báo cư dân', 'megaphone')] },
+    ],
+  },
+  QTHT: {
+    bottomNav: false,
+    chanSidebar: [],
+    nhom: [{ nhan: '', muc: [m('/tai-khoan', 'Tài khoản', 'key'), m('/toa-nha', 'Toà nhà', 'building'), m('/nhat-ky-thao-tac', 'Nhật ký thao tác', 'history')] }],
+  },
+  THO: {
+    bottomNav: true,
+    chanSidebar: [],
+    nhom: [{ nhan: '', muc: [m('/viec-cua-toi', 'Việc', 'wrench'), m('/tho/chi-phi', 'Tiền công', 'wallet'), m('/thong-bao', 'Thông báo', 'bell')] }],
+  },
+  NGUOI_THUE: {
+    bottomNav: true,
+    chanSidebar: [],
+    nhom: [{ nhan: '', muc: [m('/hoa-don-cua-toi', 'Cần trả', 'receipt', { activeFor: ['/hoa-don-cua-toi', '/lich-su', '/hoa-don'] }), m('/bao-hong', 'Báo hỏng', 'wrench'), m('/hop-dong', 'Phòng của tôi', 'home', { nhanNgan: 'Phòng tôi', activeFor: ['/hop-dong', '/tieu-thu'] })] }],
+  },
 }
 
+const DANH_SACH_VAI_TRO = Object.keys(CAU_HINH)
+
+export function layCauHinhDieuHuong(vaiTro: string): CauHinhDieuHuong {
+  return DANH_SACH_VAI_TRO.includes(vaiTro) ? CAU_HINH[vaiTro as VaiTroDieuHuong] : { nhom: [], chanSidebar: [], bottomNav: false }
+}
+
+/** Mọi mục của vai trò (nhóm + chân sidebar), theo thứ tự hiện. */
 export function layMenuTheoVaiTro(vaiTro: string): MucDieuHuong[] {
-  if (!(vaiTro in DIEU_HUONG_THEO_VAI_TRO)) {
-    return []
-  }
-
-  return DIEU_HUONG_THEO_VAI_TRO[vaiTro as VaiTroDieuHuong]
+  const cauHinh = layCauHinhDieuHuong(vaiTro)
+  return [...cauHinh.nhom.flatMap((nhom) => nhom.muc), ...(cauHinh.chanSidebar ?? [])]
 }
 
-export function xacDinhTrangTheoVaiTro(vaiTro: string, tenVaiTro: string, duongDanHienTai: string): TrangVaiTro {
-  const menu = layMenuTheoVaiTro(vaiTro)
-  const duongDan = chuanHoaDuongDan(duongDanHienTai)
-
-  if (duongDan === '/') {
-    return {
-      loai: 'trang-chu',
-      tieuDe: 'Trang chủ',
-      thongDiep: `Bạn đang ở khu điều hướng dành cho ${tenVaiTro}. Chọn một mục trong menu để mở đúng công việc của mình.`,
-    }
-  }
-
-  const mucPhuHop = menu.find((muc) => muc.duongDan === duongDan)
-  if (mucPhuHop) {
-    return {
-      loai: 'menu',
-      tieuDe: mucPhuHop.nhan,
-      thongDiep: `Khu vực quản trị và xử lý nghiệp vụ ${mucPhuHop.nhan.toLowerCase()} dành cho ${tenVaiTro}.`,
-    }
-  }
-
-  return {
-    loai: 'khong-co-quyen',
-    tieuDe: 'Không có quyền',
-    thongDiep: 'Đường dẫn không thuộc vai trò hiện tại. Hãy chọn một mục trong menu để tiếp tục.',
-  }
+function chuanHoa(duongDan: string) {
+  return duongDan.length > 1 && duongDan.endsWith('/') ? duongDan.slice(0, -1) : duongDan
 }
 
-function chuanHoaDuongDan(duongDan: string) {
-  if (!duongDan || duongDan === '/') {
-    return '/'
-  }
+export function mucDangChon(muc: MucDieuHuong, duongDan: string): boolean {
+  const p = chuanHoa(duongDan)
+  return muc.activeFor.some((a) => p === a || p.startsWith(`${a}/`))
+}
 
-  return duongDan.endsWith('/') ? duongDan.slice(0, -1) : duongDan
+/** Mục của vai trò khớp đường dẫn (dùng cho tiêu đề trang và nút "Mở …" của trang Không có quyền). */
+export function timMucTheoDuongDan(vaiTro: string, duongDan: string): MucDieuHuong | undefined {
+  return layMenuTheoVaiTro(vaiTro).find((muc) => mucDangChon(muc, duongDan))
 }

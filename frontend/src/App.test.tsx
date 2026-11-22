@@ -38,7 +38,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'CHU',
       tenVaiTro: 'Chủ sở hữu',
     },
-    menuLabels: ['Tổng quan', 'Toà nhà', 'Người thuê', 'Hợp đồng', 'Cư trú', 'Lịch hẹn', 'Sự cố', 'An toàn', 'Dịch vụ và kỳ', 'Ghi chỉ số', 'Hoá đơn', 'Thu tiền', 'Công nợ', 'Báo cáo', 'Tiêu thụ điện nước', 'Chi phí bảo trì', 'Nhật ký thao tác'],
+    menuLabels: ['Hôm nay', 'Thu tiền', 'Chu kỳ tháng', 'Toà & phòng', 'Người thuê', 'Hợp đồng', 'Lịch hẹn', 'Sự cố', 'An toàn PCCC', 'Báo cáo', 'Dịch vụ & đơn giá'],
   },
   {
     nguoiDung: {
@@ -48,7 +48,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'QUAN_LY',
       tenVaiTro: 'Quản lý toà nhà',
     },
-    menuLabels: ['Nhắc việc', 'Ghi chỉ số', 'Lịch hẹn', 'Sự cố', 'Hoá đơn', 'Thu tiền', 'Dịch vụ và kỳ', 'Phòng', 'Hợp đồng', 'Người thuê', 'Cư trú', 'An toàn', 'Thông báo'],
+    menuLabels: ['Hôm nay', 'Chu kỳ tháng', 'Thu tiền', 'Phòng', 'Người thuê', 'Hợp đồng', 'Lịch hẹn', 'Sự cố', 'An toàn PCCC', 'Thông báo cư dân', 'Dịch vụ & đơn giá'],
   },
   {
     nguoiDung: {
@@ -58,7 +58,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'THO',
       tenVaiTro: 'Thợ sửa chữa',
     },
-    menuLabels: ['Việc của tôi', 'Thông báo'],
+    menuLabels: ['Việc', 'Tiền công', 'Thông báo'],
   },
   {
     nguoiDung: {
@@ -68,7 +68,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'NGUOI_THUE',
       tenVaiTro: 'Người thuê',
     },
-    menuLabels: ['Hoá đơn của tôi', 'Lịch sử', 'Tiêu thụ', 'Hợp đồng', 'Báo hỏng'],
+    menuLabels: ['Cần trả', 'Báo hỏng', 'Phòng của tôi'],
   },
 ]
 
@@ -81,6 +81,7 @@ describe('App role navigation', () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     vi.restoreAllMocks()
     clearStoredToken()
+    localStorage.removeItem('ma.toaNhaId')
     window.history.replaceState({}, '', '/')
     document.body.innerHTML = ''
   })
@@ -110,20 +111,21 @@ describe('App role navigation', () => {
     },
   )
 
-  it('FR-AUT-04 shows the manager shell with grouped navigation and top-bar context', async () => {
+  it('FR-AUT-04 shows the manager shell with job-based groups, a fixed building box and a slim top bar', async () => {
     const quanLyToaNha = MENU_BY_ROLE[2]
     mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung)
 
     await vi.waitFor(() => {
-      expect(mountedApp!.container.textContent).toContain('Hàng ngày')
-      expect(mountedApp!.container.textContent).toContain('Tiền')
-      expect(mountedApp!.container.textContent).toContain('Toà nhà')
-      expect(mountedApp!.container.textContent).toContain('Thông báo')
+      expect(mountedApp!.container.textContent).toContain('Phòng & người thuê')
+      expect(mountedApp!.container.textContent).toContain('Vận hành')
+      expect(mountedApp!.container.textContent).toContain('được phân công')
     })
 
     expect(mountedApp.container.textContent).toContain('Quản lý toà nhà')
-    expect(mountedApp.container.textContent).toContain(new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'long' }).format(new Date()))
+    expect(mountedApp.container.textContent).not.toContain('Không gian quản lý')
     expect(mountedApp.container.textContent).not.toContain('Kỳ 09/2026')
+    expect(mountedApp.container.querySelector('button[aria-label^="Tìm nhanh"]')).not.toBeNull()
+    expect(mountedApp.container.querySelector('.crumb')).toBeNull()
   })
 
   it('FR-MNT-02 shows the shared notification route and unread badge in the application shell', async () => {
@@ -217,38 +219,63 @@ describe('App role navigation', () => {
     expect(loginGrid.style.gridTemplateColumns).toBe('minmax(0, 1fr)')
   })
 
-  it('NFR-USA-01 places all role navigation behind a bounded five-slot bottom bar at 360px', async () => {
+  it('NFR-USA-01 hides the manager sidebar at 360px behind a ☰ drawer that traps focus, closes on Esc and returns focus', async () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
     const quanLyToaNha = MENU_BY_ROLE[2]
     mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung)
 
-    const nav = await vi.waitFor(() => {
-      const element = mountedApp!.container.querySelector('nav')
+    const menuButton = await vi.waitFor(() => {
+      const element = mountedApp!.container.querySelector('button[aria-label="Mở menu"]')
+      expect(element).not.toBeNull()
+      return element as HTMLButtonElement
+    })
+    expect(mountedApp.container.querySelector('[data-testid="mobile-nav-bar"]')).toBeNull()
+    expect(mountedApp.container.querySelector('nav a[href="/phong"]')).toBeNull()
+
+    await act(async () => menuButton.focus())
+    await act(async () => menuButton.click())
+    const dialog = mountedApp.container.querySelector('[role="dialog"]') as HTMLElement
+    expect(dialog).not.toBeNull()
+    expect(dialog.getAttribute('aria-modal')).toBe('true')
+    expect(document.body.style.overflow).toBe('hidden')
+    expect(menuButton.getAttribute('aria-expanded')).toBe('true')
+    expect([...dialog.querySelectorAll('a')].map((link) => link.textContent?.trim())).toEqual(quanLyToaNha.menuLabels)
+    expect(dialog.querySelector('[data-testid="nav-logout"]')).not.toBeNull()
+
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
+    expect(mountedApp.container.querySelector('[role="dialog"]')).toBeNull()
+    expect(document.body.style.overflow).not.toBe('hidden')
+    expect(document.activeElement).toBe(menuButton)
+
+    await act(async () => menuButton.click())
+    await act(async () => ((mountedApp!.container.querySelector('[role="dialog"] a[href="/phong"]')) as HTMLAnchorElement).click())
+    expect(window.location.pathname).toBe('/phong')
+    expect(mountedApp.container.querySelector('[role="dialog"]')).toBeNull()
+  })
+
+  it('NFR-USA-01 closes the drawer when the backdrop is pressed', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
+    mountedApp = await mountAppAndLogin(MENU_BY_ROLE[2].nguoiDung)
+    const menuButton = await vi.waitFor(() => mountedApp!.container.querySelector('button[aria-label="Mở menu"]') as HTMLButtonElement)
+    await act(async () => menuButton.click())
+    const backdrop = mountedApp.container.querySelector('.ngan-nen') as HTMLElement
+    await act(async () => backdrop.click())
+    expect(mountedApp.container.querySelector('[role="dialog"]')).toBeNull()
+  })
+
+  it('NFR-USA-01 gives the tenant a three-slot bottom bar at 360px and no drawer button', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
+    const khach = MENU_BY_ROLE[4]
+    mountedApp = await mountAppAndLogin(khach.nguoiDung)
+    const bar = await vi.waitFor(() => {
+      const element = mountedApp!.container.querySelector('[data-testid="mobile-nav-bar"]')
       expect(element).not.toBeNull()
       return element as HTMLElement
     })
-    const mobileBar = nav.querySelector('[data-testid="mobile-nav-bar"]') as HTMLElement
-
-    expect(nav.dataset.navigationLayout).toBe('bottom')
-    expect(nav.style.position).toBe('fixed')
-    expect(nav.style.bottom).toBe('0px')
-    expect(nav.style.left).toBe('0px')
-    expect(nav.style.right).toBe('0px')
-    expect(nav.style.width).toBe('100%')
-    expect(nav.style.overflowX).toBe('hidden')
-    expect(mobileBar.style.display).toBe('grid')
-    expect(mobileBar.style.gridTemplateColumns).toBe('repeat(5, minmax(0, 1fr))')
-    expect(mobileBar.querySelectorAll('a')).toHaveLength(4)
-    expect([...mobileBar.querySelectorAll('a')].map((link) => link.textContent?.trim())).toEqual(quanLyToaNha.menuLabels.slice(0, 4))
-    expect(readMenuLabels(mountedApp.container)).toEqual(quanLyToaNha.menuLabels)
-
-    const moreButton = findButton(mountedApp.container, 'Thêm')
-    await act(async () => moreButton.click())
-    expect((nav.querySelector('[data-testid="mobile-nav-more"]') as HTMLElement).style.display).toBe('grid')
-    expect(nav.querySelector('a[href="/phong"]')?.textContent?.trim()).toBe('Phòng')
-
-    await act(async () => (nav.querySelector('a[href="/phong"]') as HTMLAnchorElement).click())
-    expect(window.location.pathname).toBe('/phong')
+    expect(bar.querySelectorAll('a')).toHaveLength(3)
+    expect([...bar.querySelectorAll('a')].map((link) => link.getAttribute('aria-label') ?? link.textContent?.trim())).toEqual(['Cần trả', 'Báo hỏng', 'Phòng của tôi'])
+    expect(mountedApp.container.querySelector('button[aria-label="Mở menu"]')).toBeNull()
+    expect(mountedApp.container.querySelector('[data-testid="topbar-logout"]')).not.toBeNull()
   })
 
   it('NFR-USA-01 preserves the vertical left navigation contract at desktop width', async () => {
@@ -328,7 +355,8 @@ describe('App role navigation', () => {
     await vi.waitFor(() => {
       expect(mountedApp!.container.querySelector('[data-testid="maintenance-cost-report-screen"]')).not.toBeNull()
     })
-    expect(readMenuLabels(mountedApp.container)).toContain('Chi phí bảo trì')
+    expect(mountedApp.container.querySelector('nav[aria-label="Các mục của trang"] a[aria-current="page"]')?.textContent).toBe('Chi phí bảo trì')
+    expect(mountedApp.container.querySelector('nav[data-navigation-layout] a[aria-current="page"]')?.textContent).toBe('Báo cáo')
 
     const quanLy = MENU_BY_ROLE[2]
     const managerApp = await mountAppAndLogin(quanLy.nguoiDung, '/bao-cao/chi-phi-bao-tri')
@@ -400,7 +428,8 @@ describe('App role navigation', () => {
     })
 
     expect(readMenuLabels(mountedApp.container)).toEqual(chuSoHuu.menuLabels)
-    expect(mountedApp.container.textContent).toContain('Đường dẫn không thuộc vai trò hiện tại')
+    expect(mountedApp.container.querySelector('h1')?.textContent).toBe('Trang này dành cho Quản trị hệ thống')
+    expect(mountedApp.container.textContent).toContain('Về Hôm nay')
   })
 
   it('FR-AUT-06 gives QTHT an account management screen with records and safe actions', async () => {
@@ -1511,7 +1540,7 @@ function buildPreviewRooms(
 }
 
 function readMenuLabels(container: HTMLDivElement) {
-  return [...container.querySelectorAll('nav a')].map((link) => link.textContent?.trim() ?? '')
+  return [...container.querySelectorAll('nav[data-navigation-layout] a')].map((link) => link.textContent?.trim() ?? '')
 }
 
 describe('invoice navigation', () => {
@@ -1520,6 +1549,7 @@ describe('invoice navigation', () => {
   beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     clearStoredToken()
+    localStorage.removeItem('ma.toaNhaId')
     window.history.replaceState({}, '', '/')
     document.body.innerHTML = ''
   })
@@ -1977,6 +2007,8 @@ describe('định tuyến cũ — không đổi quyền', () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     vi.restoreAllMocks()
     clearStoredToken()
+    localStorage.removeItem('ma.toaNhaId')
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: ORIGINAL_INNER_WIDTH })
     window.history.replaceState({}, '', '/')
     document.body.innerHTML = ''
   })

@@ -11,6 +11,11 @@ import { FilterChip } from './design/forms/FilterChip'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Field, Input } from './design/forms/Field'
 import { NavPanel, type NavItem } from './design/shell/NavPanel'
+import { Breadcrumb } from './design/shell/Breadcrumb'
+import { ChonToa } from './design/shell/ChonToa'
+import { TabTrang } from './design/shell/TabTrang'
+import { ToaDangChonProvider } from './toaDangChon'
+import type { ThongTinToaNha } from './api'
 import { Card } from './design/layout/Card'
 import { ConfirmDialog } from './design/feedback/ConfirmDialog'
 import { MeterInput } from './design/forms/MeterInput'
@@ -271,5 +276,96 @@ describe('MiniApart design components', () => {
     await act(async () => root.render(<NavPanel mobile groups={[{ label: 'g', items: navItems(6) }]} />))
     expect(container.querySelectorAll('[data-testid="mobile-nav-bar"] a')).toHaveLength(4)
     expect(container.querySelector('[data-testid="mobile-nav-more"]')).not.toBeNull()
+  })
+})
+
+describe('Khung UX v2: ô chọn toà, tab trang, breadcrumb, sidebar', () => {
+  const toa = (id: number, ten: string) => ({ id, ten, maToa: `T${id}`, diaChi: '', soTang: 4 }) as unknown as ThongTinToaNha
+  const BA_TOA = [toa(1, 'Bình Minh Riverside'), toa(2, 'Mộc Lan Home'), toa(3, 'An Nhiên Residence')]
+  const phim = (el: Element, key: string) => act(async () => { el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true })) })
+
+  beforeEach(() => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true
+    localStorage.clear()
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+  afterEach(async () => {
+    await act(async () => root.unmount())
+    container.remove()
+  })
+
+  async function veChonToa(vaiTro: string, ds = BA_TOA) {
+    await act(async () => root.render(<ToaDangChonProvider token="t" vaiTro={vaiTro} search="" taiToa={async () => ds}><ChonToa /></ToaDangChonProvider>))
+  }
+
+  it('ChonToa (Chủ): Enter mở, mũi tên chọn, Enter xác nhận, Esc đóng và trả focus về nút', async () => {
+    await veChonToa('CHU')
+    const nut = container.querySelector('button.sb-toa') as HTMLButtonElement
+    expect(nut.getAttribute('aria-haspopup')).toBe('listbox')
+    expect(nut.textContent).toContain('Tất cả 3 toà')
+    await act(async () => nut.focus())
+    await act(async () => nut.click()) // Enter trên nút = click
+    const ds = container.querySelector('[role="listbox"]') as HTMLElement
+    expect(ds).not.toBeNull()
+    expect(nut.getAttribute('aria-expanded')).toBe('true')
+    expect(document.activeElement).toBe(ds)
+    expect([...ds.querySelectorAll('[role="option"]')].map((o) => o.textContent)).toEqual(['Tất cả 3 toà', 'Bình Minh Riverside', 'Mộc Lan Home', 'An Nhiên Residence'])
+    await phim(ds, 'ArrowDown')
+    await phim(ds, 'ArrowDown')
+    await phim(ds, 'Enter')
+    expect(container.querySelector('[role="listbox"]')).toBeNull()
+    expect(nut.textContent).toContain('Mộc Lan Home')
+    expect(localStorage.getItem('ma.toaNhaId')).toBe('2')
+    expect(document.activeElement).toBe(nut)
+
+    await act(async () => nut.click())
+    await phim(container.querySelector('[role="listbox"]') as HTMLElement, 'Escape')
+    expect(container.querySelector('[role="listbox"]')).toBeNull()
+    expect(document.activeElement).toBe(nut)
+    expect(nut.textContent).toContain('Mộc Lan Home')
+  })
+
+  it('ChonToa (Quản lý): ô tĩnh, không phải nút', async () => {
+    await veChonToa('QUAN_LY', [toa(3, 'An Nhiên Residence')])
+    expect(container.querySelector('button')).toBeNull()
+    expect(container.querySelector('.sb-toa.static')?.textContent).toContain('An Nhiên Residence')
+    expect(container.querySelector('.sb-toa.static')?.textContent).toContain('được phân công')
+  })
+
+  it('TabTrang: link thật, tab đang ở là aria-current, không có role="tab"; trang ngoài nhóm không có tab', async () => {
+    await act(async () => root.render(<TabTrang vaiTro="CHU" duongDan="/thu-tien" search="?tab=da-thu" />))
+    const links = [...container.querySelectorAll('a.tab')]
+    expect(links.map((a) => a.textContent)).toEqual(['Cần thu', 'Hoá đơn', 'Đã thu', 'Tiền cọc'])
+    expect(links.map((a) => a.getAttribute('aria-current'))).toEqual([null, null, 'page', null])
+    expect(container.querySelector('[role="tab"]')).toBeNull()
+    await act(async () => root.render(<TabTrang vaiTro="CHU" duongDan="/hop-dong" search="" />))
+    expect(container.querySelector('nav')).toBeNull()
+    await act(async () => root.render(<TabTrang vaiTro="QTHT" duongDan="/nhat-ky-thao-tac" search="" />))
+    expect(container.querySelector('nav')).toBeNull()
+  })
+
+  it('Breadcrumb chỉ hiện từ 2 tầng; tầng trước là link, tầng cuối là trang hiện tại', async () => {
+    await act(async () => root.render(<Breadcrumb items={['Toà & phòng']} />))
+    expect(container.querySelector('nav')).toBeNull()
+    await act(async () => root.render(<Breadcrumb items={[{ nhan: 'Toà & phòng', href: '/toa-nha' }, 'An Nhiên Residence']} />))
+    expect(container.querySelector('a[href="/toa-nha"]')?.textContent).toBe('Toà & phòng')
+    expect(container.querySelector('[aria-current="page"]')?.textContent).toBe('An Nhiên Residence')
+  })
+
+  it('NavPanel side: nhóm có nhãn, số đếm xám/đỏ, chân sidebar, ô toà ở đầu', async () => {
+    const mucs: NavItem[] = [
+      { label: 'Sự cố', glyph: 'toa-nha', href: '/su-co', count: 2, hot: true },
+      { label: 'Lịch hẹn', glyph: 'toa-nha', href: '/lich-hen', count: 3 },
+    ]
+    await act(async () => root.render(<NavPanel variant="side" toa={<div data-testid="o-toa">ô toà</div>} groups={[{ label: 'Vận hành', items: mucs }]} footerItems={[{ label: 'Dịch vụ & đơn giá', glyph: 'toa-nha', href: '/dich-vu' }]} />))
+    const nav = container.querySelector('nav') as HTMLElement
+    expect(nav.querySelector('.sb-brand + [data-testid="o-toa"]')).not.toBeNull()
+    expect(nav.querySelector('.sb-label')?.textContent).toBe('Vận hành')
+    expect(nav.querySelector('a[href="/su-co"] .count')?.className).toContain('hot')
+    expect(nav.querySelector('a[href="/lich-hen"] .count')?.className).not.toContain('hot')
+    expect([...nav.querySelectorAll('a')].map((a) => a.textContent)).toEqual(['Sự cố2', 'Lịch hẹn3', 'Dịch vụ & đơn giá'])
+    expect(nav.querySelector('.sb-name')?.nextElementSibling).toBeNull()
   })
 })
