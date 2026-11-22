@@ -1,12 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react'
 import {
   ApiError,
   fetchPhong,
-  fetchToaNha,
   taoPhong,
   taoPhongHangLoat,
   type ThongTinPhong,
-  type ThongTinToaNha,
   type YeuCauPhong,
   type YeuCauPhongHangLoat,
   xemTruocPhongHangLoat,
@@ -24,12 +22,15 @@ import { FilterChip } from './design/forms/FilterChip'
 import { Card } from './design/layout/Card'
 import { DataTable, type DataTableChip, type DataTableColumn } from './design/table/DataTable'
 import QuanLyLichHen from './QuanLyLichHen'
-import QuanLyTaiSanPhong from './QuanLyTaiSanPhong'
+import { dieuHuongMacDinh } from './HoSoNguoiThue'
+import { useBuildings } from './ManagementShared'
+import { ngoaiProvider, useToaDangChon } from './toaDangChon'
 import { CSS_BANG_QUAN_TRI } from './bangQuanTriChung'
 
 type Props = {
   token: string
   mobile?: boolean
+  dieuHuong?: (href: string) => void
 }
 
 const TRANG_THAI_PHONG_HIEN_THI: Record<string, { nhan: string; lopCss: string }> = {
@@ -94,18 +95,19 @@ const DAY_PHONG_GOI_Y = [
   { nhan: 'Dãy T4 (6 phòng)', tang: '4', soBatDau: '401', soKetThuc: '406' },
 ] as const
 
-export default function DanhMucPhong({ token, mobile = false }: Props) {
-  const [danhSachToa, setDanhSachToa] = useState<ThongTinToaNha[]>([])
-  const [toaDangChonId, setToaDangChonId] = useState<number | null>(null)
+export default function DanhMucPhong({ token, mobile = false, dieuHuong = dieuHuongMacDinh }: Props) {
+  // Toà lấy từ bối cảnh khung (Quản lý một toà → ô chọn toà ẩn); ngoài khung (test riêng lẻ) tự tải như cũ.
+  const { buildings: danhSachToa, buildingId, setBuildingId, error: loiToa } = useBuildings(token)
+  const toaDangChonId = buildingId ?? danhSachToa[0]?.id ?? null // Chủ đang "Tất cả toà" thì xem toà đầu, ô chọn toà tại chỗ để đổi
+  const chung = useToaDangChon()
+  const hienChonToa = ngoaiProvider(chung) || (chung.toaNhaId === null && !chung.coDinh)
   const [tangLoc, setTangLoc] = useState('')
   const [danhSachPhong, setDanhSachPhong] = useState<ThongTinPhong[]>([])
-  const [dangTai, setDangTai] = useState(true)
   const [dangTaiPhong, setDangTaiPhong] = useState(false)
   const [dangLuu, setDangLuu] = useState(false)
   const [dangXuLyHangLoat, setDangXuLyHangLoat] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
   const [thongBao, setThongBao] = useState<string | null>(null)
-  const [phongDangXemId, setPhongDangXemId] = useState<number | null>(null)
   const [bieuMauPhong, setBieuMauPhong] = useState<BieuMauPhong>(BIEU_MAU_PHONG_MAC_DINH)
   const [hienBieuMauHangLoat, setHienBieuMauHangLoat] = useState(false)
   const [bieuMauHangLoat, setBieuMauHangLoat] = useState({
@@ -126,7 +128,16 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
 
   const toaDangChon = danhSachToa.find((item) => item.id === toaDangChonId) ?? null
   const nhomPhongTheoTang = taoNhomPhongTheoTang(danhSachPhong)
-  const phongDangXem = danhSachPhong.find((phong) => phong.id === phongDangXemId) ?? null
+  const dangTai = danhSachToa.length === 0 && !loiToa
+  const hrefPhong = (item: ThongTinPhong) => `/phong/${item.id}?toaNhaId=${item.toaNhaId}`
+  const moHoSo = (item: ThongTinPhong) => dieuHuong(hrefPhong(item))
+  // Bấm chỗ trống của hàng cũng mở hồ sơ; liên kết/nút tự xử lý, khỏi điều hướng hai lần.
+  const bamHang = (e: MouseEvent<HTMLElement>) => {
+    const target = e.target as Element
+    const hang = target.closest('tr[data-room-row]')
+    const phong = hang && danhSachPhong.find((p) => String(p.id) === hang.getAttribute('data-room-row'))
+    if (phong && !target.closest('a,button,input,select')) moHoSo(phong)
+  }
   const floors = nhomPhongTheoTang.map(({ tang, phong }) => ({
     name: `T${tang}`,
     rooms: phong.map((item) => {
@@ -135,36 +146,12 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
         room: item.soPhong,
         state: layTrangThaiRoomCell(item.trangThai),
         label: status.nhan,
-        className: `${status.lopCss} ${phongDangXem?.id === item.id ? 'room-tile--active' : ''}`,
-        'aria-pressed': phongDangXem?.id === item.id,
-        onClick: () => setPhongDangXemId(item.id),
+        className: status.lopCss,
+        'aria-label': `Mở hồ sơ phòng ${item.soPhong}, ${status.nhan}`,
+        onClick: () => moHoSo(item),
       }
     }),
   }))
-
-  useEffect(() => {
-    let mounted = true
-    setDangTai(true)
-    setLoi(null)
-
-    fetchToaNha(token)
-      .then((toaNha) => {
-        if (!mounted) return
-        setDanhSachToa(toaNha)
-        setToaDangChonId((current) => current ?? toaNha[0]?.id ?? null)
-      })
-      .catch((reason: unknown) => {
-        if (!mounted) return
-        setLoi(thongBaoLoi(reason, 'Không thể tải danh sách toà nhà.'))
-      })
-      .finally(() => {
-        if (mounted) setDangTai(false)
-      })
-
-    return () => {
-      mounted = false
-    }
-  }, [token])
 
   useEffect(() => {
     if (!toaDangChonId) {
@@ -192,17 +179,6 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
       mounted = false
     }
   }, [token, toaDangChonId, tangLoc])
-
-  useEffect(() => {
-    if (phongDangXemId === null) {
-      return
-    }
-
-    const vanConTrongDanhSach = danhSachPhong.some((phong) => phong.id === phongDangXemId)
-    if (!vanConTrongDanhSach) {
-      setPhongDangXemId(null)
-    }
-  }, [danhSachPhong, phongDangXemId])
 
   async function handleTaoPhong(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -281,13 +257,12 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
   }
 
   const cotPhong: DataTableColumn<ThongTinPhong>[] = [
-    { key: 'phong', label: 'Phòng', sortable: true, sortValue: (item) => item.tang * 100000 + (Number.parseInt(item.soPhong, 10) || 0), render: (item) => <div><div className="td-main">{item.soPhong}</div><div className="td-sub">Tầng {item.tang}</div></div> },
+    { key: 'phong', label: 'Phòng', sortable: true, sortValue: (item) => item.tang * 100000 + (Number.parseInt(item.soPhong, 10) || 0), render: (item) => <a className="dp-o-phong" href={hrefPhong(item)}><div className="td-main">Phòng {item.soPhong}</div><div className="td-sub">Tầng {item.tang}</div></a> },
     { key: 'loai', label: 'Loại phòng', sortable: true, sortValue: (item) => item.loaiPhong, render: (item) => <span className="bq-toa" title={item.loaiPhong}>{item.loaiPhong}</span> },
     { key: 'dienTich', label: 'Diện tích', align: 'num', sortable: true, sortValue: (item) => Number(item.dienTich), render: (item) => `${item.dienTich} m²` },
     { key: 'sucChua', label: 'Sức chứa', align: 'num', sortable: true, sortValue: (item) => item.sucChua, render: (item) => `${item.sucChua} người` },
     { key: 'gia', label: 'Giá thuê mặc định', align: 'num', sortable: true, sortValue: (item) => Number(item.giaThueMacDinh), render: (item) => <span className="t-money">{dinhDangTien(item.giaThueMacDinh)} ₫</span> },
     { key: 'trangThai', label: 'Trạng thái', render: (item) => <StatusTag tone={SAC_THAI_PHONG[item.trangThai] ?? 'neutral'}>{layThongTinTrangThai(item).nhan}</StatusTag> },
-    { key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong', render: (item) => <div className="td-acts"><button type="button" className="btn btn-ghost btn-sm" aria-pressed={phongDangXemId === item.id} onClick={() => setPhongDangXemId(item.id)}>Xem chi tiết<span className="sr-only"> phòng {item.soPhong}</span></button></div> },
   ]
   const chipPhong: DataTableChip<ThongTinPhong>[] = [
     { key: 'TAT_CA', label: 'Tất cả', match: () => true },
@@ -346,17 +321,17 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
         <QuanLyLichHen token={token} mobile={mobile} />
       ) : (
         <>
-          {loi ? <p className="alert alert-danger" role="alert"><Icon name="alert" />{loi}</p> : null}
+          {loi || loiToa ? <p className="alert alert-danger" role="alert"><Icon name="alert" />{loi ?? loiToa}</p> : null}
           {thongBao ? <p className="alert alert-success" role="status"><Icon name="check-circle" />{thongBao}</p> : null}
 
           <div className="dp-hang-loc">
-            <Field label="Toà nhà">
+            {hienChonToa ? <Field label="Toà nhà">
               <select
                 className="select"
                 name="toaNhaId"
                 value={toaDangChonId ?? ''}
                 onChange={(event) => {
-                  setToaDangChonId(Number(event.target.value))
+                  setBuildingId(Number(event.target.value))
                   setXemTruoc([])
                   setYeuCauPhongHangLoatDaXemTruoc(null)
                 }}
@@ -368,7 +343,7 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
                   </option>
                 ))}
               </select>
-            </Field>
+            </Field> : null}
             <Field label="Lọc theo tầng">
               <select className="select" name="tangLoc" value={tangLoc} onChange={(event) => setTangLoc(event.target.value)} disabled={!toaDangChon}>
                 <option value="">Tất cả các tầng</option>
@@ -415,14 +390,13 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
                                   room={item.soPhong}
                                   state={layTrangThaiRoomCell(item.trangThai)}
                                   label={status.nhan}
-                                  aria-label={`Phòng ${item.soPhong}, ${status.nhan}`}
-                                  aria-pressed={phongDangXem?.id === item.id}
-                                  className={`${status.lopCss} ${phongDangXem?.id === item.id ? 'room-tile--active' : ''}`}
-                                  onClick={() => setPhongDangXemId(item.id)}
+                                  aria-label={`Mở hồ sơ phòng ${item.soPhong}, ${status.nhan}`}
+                                  className={status.lopCss}
+                                  onClick={() => moHoSo(item)}
                                   onKeyDown={(event) => {
                                     if (event.key === 'Enter' || event.key === ' ') {
                                       event.preventDefault()
-                                      setPhongDangXemId(item.id)
+                                      moHoSo(item)
                                     }
                                   }}
                                   style={{ minWidth: 0, minHeight: 72 }}
@@ -436,7 +410,7 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
                   </Card>
                 </div>
               ) : kieuXem === 'bang' ? (
-                <Card className="dp-bang">
+                <Card className="dp-bang" onClick={bamHang}>
                   <DataTable
                     rows={danhSachPhong}
                     columns={cotPhong}
@@ -447,7 +421,7 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
                     searchLabel="Tìm số phòng, loại phòng"
                     noun="phòng"
                     pageSize={12}
-                    rowProps={(item) => ({ 'data-room-row': String(item.id), className: phongDangXemId === item.id ? 'bq-chon' : '' })}
+                    rowProps={(item) => ({ 'data-room-row': String(item.id), className: 'nt-hang' })}
                   />
                 </Card>
               ) : (
@@ -458,37 +432,6 @@ export default function DanhMucPhong({ token, mobile = false }: Props) {
             </div>
 
             <div className="building-detail" style={{ display: 'grid', gap: 'var(--ma-space-5)', minWidth: 0, alignContent: 'start' }}>
-              <section className="card room-detail" data-testid="room-detail" aria-live="polite">
-                {phongDangXem ? (
-                  <>
-                    <div className="card-head">
-                      <h2 className="h2">Chi tiết phòng {phongDangXem.soPhong}</h2>
-                      <StatusTag tone={SAC_THAI_PHONG[phongDangXem.trangThai] ?? 'neutral'}>{layThongTinTrangThai(phongDangXem).nhan}</StatusTag>
-                    </div>
-                    <dl className="building-summary__facts bq-dl" style={{ display: 'grid', minWidth: 0 }}>
-                      <div><dt>Tầng</dt><dd>{phongDangXem.tang}</dd></div>
-                      <div><dt>Loại phòng</dt><dd>{phongDangXem.loaiPhong}</dd></div>
-                      <div><dt>Diện tích</dt><dd>{phongDangXem.dienTich} m²</dd></div>
-                      <div><dt>Sức chứa</dt><dd>{phongDangXem.sucChua} người</dd></div>
-                      <div><dt>Giá thuê mặc định</dt><dd>{dinhDangTien(phongDangXem.giaThueMacDinh)} ₫</dd></div>
-                    </dl>
-                    <p className="t-sm">Chi tiết lấy trực tiếp từ danh sách phòng hiện có.</p>
-                    {phongDangXem.id ? (
-                      <div style={{ marginTop: 'var(--ma-space-4)' }}>
-                        <QuanLyTaiSanPhong
-                          token={token}
-                          phongId={phongDangXem.id}
-                          soPhong={phongDangXem.soPhong}
-                          mobile={mobile}
-                        />
-                      </div>
-                    ) : null}
-                  </>
-                ) : (
-                  <EmptyState title="Chưa chọn phòng nào" body={mobile ? 'Chọn một ô phòng để xem chi tiết hiện tại của phòng đó.' : 'Chọn một phòng trong bảng hoặc sơ đồ để xem chi tiết hiện tại của phòng đó.'} />
-                )}
-              </section>
-
               <form ref={formPhongRef} className="building-form card" data-testid="room-form" onSubmit={handleTaoPhong} style={{ display: 'grid', gap: 'var(--ma-space-4)' }}>
                 <div>
                   <h2 className="h2">Khai báo một phòng</h2>

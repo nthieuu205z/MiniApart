@@ -859,10 +859,8 @@ describe('App role navigation', () => {
 
     expect(mountedApp.container.querySelector('.topbar .sub')?.textContent).toContain('5 trống · 7 đang thuê · 4 đang sửa')
 
-    const roomDetailBeforeClick = mountedApp.container.querySelector('[data-testid="room-detail"]')
-    expect(roomDetailBeforeClick?.textContent).toContain('Chọn một phòng trong bảng hoặc sơ đồ để xem chi tiết hiện tại của phòng đó.')
-    expect(roomDetailBeforeClick?.textContent).not.toContain('Chi tiết phòng 403')
-    expect(roomDetailBeforeClick?.textContent).not.toContain('Lịch sử công tơ')
+    // Lô x3: không còn ô chi tiết dưới danh sách phòng; bấm ô phòng mở hồ sơ phòng.
+    expect(mountedApp.container.querySelector('[data-testid="room-detail"]')).toBeNull()
 
     const tile403 = [...mountedApp.container.querySelectorAll('[data-testid="room-tile"]')].find(
       (tile) => tile.querySelector('.room-tile__number')?.textContent?.trim() === '403',
@@ -881,20 +879,8 @@ describe('App role navigation', () => {
     await act(async () => {
       ;(tile403 as HTMLButtonElement).click()
     })
-
-    const roomDetail = await vi.waitFor(() => {
-      const detail = mountedApp!.container.querySelector('[data-testid="room-detail"]')
-      expect(detail).not.toBeNull()
-      expect(detail?.textContent).toContain('403')
-      return detail as HTMLElement
-    })
-
-    expect(roomDetail.textContent).toContain('Đã đặt cọc')
-    expect(roomDetail.textContent).toContain('Gác xép')
-    expect(roomDetail.textContent).toContain('31.50')
-    expect(roomDetail.textContent).toContain('5.100.000')
-    expect(roomDetail.textContent).toContain('Chi tiết lấy trực tiếp từ danh sách phòng hiện có.')
-    expect(roomDetail.textContent).not.toContain('Lịch sử công tơ')
+    expect(window.location.pathname).toMatch(/^\/phong\/\d+$/)
+    expect(window.location.search).toBe('?toaNhaId=1')
   })
 })
 async function mountAppAndLogin(nguoiDung: ThongTinNguoiDung, path = '/', fetchMock = buildFetchMock(nguoiDung)) {
