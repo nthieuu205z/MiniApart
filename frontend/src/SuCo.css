@@ -1,0 +1,19 @@
+/* Lô x6: ngăn chi tiết sự cố. .split/.drawer/.irow/.vsteps/.kv đã có ở design/ux-v2.css. */
+.drawer-form { display: contents; }
+.sc-dong { margin-left: auto; display: none; }
+.drawer-h .t-meta + .sc-dong { margin-left: 8px; }
+.drawer-f .btn-secondary { flex: none; }
+.irow .t, .irow .s { min-width: 0; }
+
+/* ≤ 1180px: ngăn trượt phủ lên danh sách; chưa chọn gì thì ẩn hẳn */
+@media (max-width: 1180px) {
+  .sc-split .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); max-height: none; border-radius: 0; z-index: 70; box-shadow: 0 0 0 100vmax rgba(28, 27, 25, 0.4); }
+  .sc-split .drawer.sc-chua-mo { display: none; }
+  .sc-dong { display: inline-grid; }
+}
+@media (max-width: 767px) {
+  .sc-split .drawer { width: 100vw; box-shadow: none; }
+  .sc-split .drawer-f { flex-wrap: wrap; }
+  .sc-split .drawer-f .btn { min-height: 44px; }
+  .sc-dong { width: 44px; height: 44px; }
+}

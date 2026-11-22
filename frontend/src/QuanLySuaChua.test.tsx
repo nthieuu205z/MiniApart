@@ -13,6 +13,7 @@ let container: HTMLDivElement
 let root: Root
 let calls: Array<[string, RequestInit | undefined]>
 beforeEach(() => {
+  window.history.replaceState({}, '', '/su-co')
   globalThis.IS_REACT_ACT_ENVIRONMENT = true
   container = document.createElement('div'); document.body.append(container); root = createRoot(container)
   calls = []
@@ -31,15 +32,17 @@ beforeEach(() => {
 })
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 // Thiết kế mới mở chi tiết bằng nút "Mở"; bản cũ hiện sẵn nên bỏ qua.
-const mo = async (i = 0) => { const b = Array.from(container.querySelectorAll('button')).filter((x) => x.textContent === 'Mở'); if (b.length) await act(async () => b[i].click()) }
+const mo = async (i = 0) => { const b = Array.from(container.querySelectorAll<HTMLElement>('a.irow')); if (b.length) await act(async () => b[i].click()) }
 const button = (label: string) => Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes(label))
 
 describe('QuanLySuaChua (quản lý)', () => {
   it('liệt kê mọi yêu cầu của toà với mã, phòng, hạng mục, trạng thái, chi phí', async () => {
     await act(async () => root.render(<QuanLySuaChua token="m" />))
-    await vi.waitFor(() => expect(container.textContent).toContain('SC-2'))
-    const t = container.textContent ?? ''
-    for (const s of ['SC-1', '101', 'Điện', 'Mới', 'SC-2', '202', 'Nước', 'Đã đóng', '250.000']) expect(t).toContain(s)
+    await vi.waitFor(() => expect(container.textContent).toContain('SC-1'))
+    for (const s of ['SC-1', '101', 'Điện', 'Đang mở', 'Đã đóng']) expect(container.textContent).toContain(s)
+    // Một danh sách: yêu cầu đã đóng nằm sau chip "Đã đóng" (chi phí hiện trong ngăn).
+    await act(async () => Array.from(container.querySelectorAll<HTMLElement>('a.chip')).find((c) => c.textContent?.startsWith('Đã đóng'))!.click())
+    for (const s of ['SC-2', '202', 'Nước', '250.000']) expect(container.textContent).toContain(s)
     expect(calls.some(([u]) => u === '/api/yeu-cau-sua-chua?toaNhaId=1')).toBe(true)
   })
 
@@ -55,10 +58,11 @@ describe('QuanLySuaChua (quản lý)', () => {
 
   it('yêu cầu đã đóng không còn nút tiếp nhận / huỷ / phân công', async () => {
     DATA = [ALL[1]]
+    window.history.replaceState({}, '', '/su-co?id=2')
     await act(async () => root.render(<QuanLySuaChua token="m" />))
     await vi.waitFor(() => expect(container.textContent).toContain('SC-2'))
-    await mo(0)
-    await vi.waitFor(() => expect(button('Lưu chi phí')).toBeDefined())
+    await vi.waitFor(() => expect(container.querySelector('aside.drawer')).not.toBeNull())
+    expect(button('Lưu chi phí')).toBeUndefined() // ngăn đã đóng chỉ đọc
     expect(button('Huỷ yêu cầu')).toBeUndefined()
     expect(button('Phân công thợ')).toBeUndefined()
     expect(button('Tiếp nhận yêu cầu')).toBeUndefined()
@@ -67,7 +71,7 @@ describe('QuanLySuaChua (quản lý)', () => {
   it('form báo sự cố gửi multipart tới /api/yeu-cau-sua-chua', async () => {
     await act(async () => root.render(<QuanLySuaChua token="m" />))
     await vi.waitFor(() => expect(container.textContent).toContain('SC-1'))
-    await act(async () => button('Báo sự cố mới')?.click())  // bản cũ hiện sẵn form
+    await act(async () => button('Báo sự cố')?.click())
     const set = (el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement, v: string) => { const proto = el instanceof HTMLSelectElement ? HTMLSelectElement.prototype : el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, 'value')!.set!.call(el, v); el.dispatchEvent(new Event(el instanceof HTMLSelectElement ? 'change' : 'input', { bubbles: true })) }
     await vi.waitFor(() => expect(container.querySelector('textarea')).not.toBeNull())
     await act(async () => { set(container.querySelector('select[required]')!, '11'); set(container.querySelector('input[required]')!, 'Khoá'); set(container.querySelector('textarea')!, 'Kẹt khoá') })
