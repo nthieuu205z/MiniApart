@@ -5,16 +5,15 @@ import {
   fetchKyThanhToan,
   fetchPhong,
   fetchTieuThuBaoCao,
-  fetchToaNha,
   type BoLocTieuThuBaoCao,
   type ThongTinDiemTieuThuBaoCao,
   type ThongTinDashboardChu,
   type ThongTinDongTieuThuBaoCao,
   type ThongTinKyThanhToan,
   type ThongTinPhong,
-  type ThongTinToaNha,
   type ThongTinTieuThuBaoCao,
 } from './api'
+import { useToaKhung } from './useToaKhung'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
@@ -28,7 +27,6 @@ type Props = { token: string; mobile?: boolean }
 
 /** FR-RPT-02/FR-RPT-05 renders one owner-scoped electricity and water snapshot. */
 export default function TieuThuBaoCao({ token, mobile = false }: Props): React.ReactElement {
-  const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
   const [phong, setPhong] = useState<ThongTinPhong[]>([])
   const [ky, setKy] = useState<ThongTinKyThanhToan[]>([])
   const [boLoc, setBoLoc] = useState<BoLocTieuThuBaoCao>(() => (
@@ -41,6 +39,7 @@ export default function TieuThuBaoCao({ token, mobile = false }: Props): React.R
   const [loiBoLoc, setLoiBoLoc] = useState<string | null>(null)
   const [doiSoat, setDoiSoat] = useState<DoiSoatCongToTong | null | undefined>(undefined)
   const variant = mobile ? 'mobile' : 'desktop'
+  useToaKhung(boLoc.toaNhaId, (toaNhaId) => setBoLoc((b) => ({ ...b, toaNhaId, phongId: null, kyId: null })))
 
   // Đối soát công tơ tổng lấy từ dashboard chủ (cùng nguồn với dòng "Cần chú ý"); lỗi chỉ làm trống khối này, không chặn báo cáo.
   useEffect(() => {
@@ -52,18 +51,6 @@ export default function TieuThuBaoCao({ token, mobile = false }: Props): React.R
       .catch(() => mounted && setDoiSoat(null))
     return () => { mounted = false }
   }, [boLoc.toaNhaId, token])
-
-  useEffect(() => {
-    let mounted = true
-    fetchToaNha(token)
-      .then((items) => {
-        if (mounted) setToaNha(items)
-      })
-      .catch((reason: unknown) => {
-        if (mounted) setLoiBoLoc(thongBaoLoi(reason, 'Không thể tải danh sách toà nhà.'))
-      })
-    return () => { mounted = false }
-  }, [token])
 
   useEffect(() => {
     if (boLoc.toaNhaId === null) {
@@ -144,7 +131,7 @@ export default function TieuThuBaoCao({ token, mobile = false }: Props): React.R
         action={<ExcelExportButton token={token} report="tieu-thu" filters={boLoc} loading={dangTai} />}
       />
 
-      <BoLoc boLoc={boLoc} toaNha={toaNha} phong={phong} ky={ky} dangTai={dangTaiBoLoc} onChange={setBoLoc} />
+      <BoLoc boLoc={boLoc} phong={phong} ky={ky} dangTai={dangTaiBoLoc} onChange={setBoLoc} />
       {loiBoLoc ? <p className="alert alert-danger" role="alert"><Icon name="alert" />{loiBoLoc}</p> : null}
       {dangTai && baoCao ? <p className="t-2" role="status" aria-live="polite">Đang cập nhật báo cáo tiêu thụ…</p> : null}
       {loi && baoCao ? <p className="alert alert-danger" role="alert"><Icon name="alert" />{loi}</p> : null}
@@ -204,14 +191,12 @@ function DoiSoatCongToTong({ toaNhaId, doiSoat }: { toaNhaId: number | null; doi
 
 function BoLoc({
   boLoc,
-  toaNha,
   phong,
   ky,
   dangTai,
   onChange,
 }: {
   boLoc: BoLocTieuThuBaoCao
-  toaNha: ThongTinToaNha[]
   phong: ThongTinPhong[]
   ky: ThongTinKyThanhToan[]
   dangTai: boolean
@@ -219,16 +204,6 @@ function BoLoc({
 }): React.ReactElement {
   return (
     <ThanhLoc nhan="Bộ lọc báo cáo tiêu thụ">
-      <Field label="Toà nhà">
-        <Select
-          aria-label="Lọc tiêu thụ theo toà nhà"
-          value={boLoc.toaNhaId === null ? '' : String(boLoc.toaNhaId)}
-          onChange={(event) => onChange({ toaNhaId: event.target.value ? Number(event.target.value) : null, phongId: null, kyId: null })}
-        >
-          <option value="">Tất cả toà được phân quyền</option>
-          {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
-        </Select>
-      </Field>
       <Field label="Phòng">
         <Select
           aria-label="Lọc tiêu thụ theo phòng"

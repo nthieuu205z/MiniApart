@@ -123,7 +123,7 @@ export default function HoSoToa360({ token, vaiTro, thamSo, dieuHuong }: TrangPr
           </div>
 
           <Card title="Sơ đồ phòng" action={<span className="t-meta">bấm vào phòng để mở hồ sơ phòng</span>}>
-            {phong.length === 0 ? <p className="t-sm">Toà này chưa có phòng nào. Dùng nút “Khai báo phòng” ở đầu trang.</p> : tang.map((t) => (
+            {phong.length === 0 ? <p className="t-sm">Toà này chưa có phòng nào.{vaiTro === 'QUAN_LY' ? ' Dùng nút “Khai báo phòng” ở đầu trang.' : ''}</p> : tang.map((t) => (
               <div key={t} className="hs-hang-tang">
                 <div className="hs-tang">Tầng {t}</div>
                 <div className="rooms hs-so-do">

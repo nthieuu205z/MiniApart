@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   capNhatTrangThaiLichHen,
   fetchPublicLichHen,
-  fetchToaNha,
   type LichHenXemPhong,
-  type ThongTinToaNha,
 } from './api'
 import { Button } from './design/core/Button'
 import { Icon } from './design/core/Icon'
@@ -12,6 +10,7 @@ import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Card } from './design/layout/Card'
 import { Feedback } from './ManagementShared'
+import { useToaDangChon } from './toaDangChon'
 
 type Props = {
   token: string
@@ -52,24 +51,18 @@ function nhanNgay(khoa: string): string {
 
 export default function QuanLyLichHen({ token }: Props) {
   const [danhSachLichHen, setDanhSachLichHen] = useState<LichHenXemPhong[]>([])
-  const [danhSachToaNha, setDanhSachToaNha] = useState<ThongTinToaNha[]>([])
   const [dangTai, setDangTai] = useState(true)
   const [loi, setLoi] = useState<string | null>(null)
   const [thongBao, setThongBao] = useState<string | null>(null)
 
-  const [locToaNhaId, setLocToaNhaId] = useState<number | ''>('')
+  const locToaNhaId = useToaDangChon().toaNhaId // toà của khung; null = tất cả
   const [locTrangThai, setLocTrangThai] = useState<string>('TAT_CA')
 
   async function taiDuLieu() {
     setDangTai(true)
     setLoi(null)
     try {
-      const [dsLich, dsToa] = await Promise.all([
-        fetchPublicLichHen(token, locToaNhaId === '' ? undefined : locToaNhaId),
-        fetchToaNha(token).catch(() => []),
-      ])
-      setDanhSachLichHen(dsLich)
-      setDanhSachToaNha(dsToa)
+      setDanhSachLichHen(await fetchPublicLichHen(token, locToaNhaId ?? undefined))
     } catch (err: unknown) {
       setLoi(err instanceof Error ? err.message : 'Không thể tải danh sách lịch hẹn xem phòng.')
     } finally {
@@ -120,11 +113,6 @@ export default function QuanLyLichHen({ token }: Props) {
           <p className="sub">{soChoXacNhan} lịch hẹn mới cần gọi xác nhận · {danhSachLichHen.length} lịch hẹn xem phòng từ trang khám phá</p>
         </div>
         <div className="topbar-actions">
-          <label className="sr-only" htmlFor="lich-hen-toa">Toà nhà</label>
-          <select id="lich-hen-toa" className="select" style={{ width: 220 }} value={locToaNhaId} onChange={(e) => setLocToaNhaId(e.target.value === '' ? '' : Number(e.target.value))}>
-            <option value="">Tất cả toà nhà</option>
-            {danhSachToaNha.map((t) => <option key={t.id} value={t.id}>{t.ten}</option>)}
-          </select>
           <Button variant="secondary" onClick={() => taiDuLieu()}><Icon name="history" />Làm mới</Button>
         </div>
       </header>

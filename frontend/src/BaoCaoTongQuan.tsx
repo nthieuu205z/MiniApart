@@ -2,9 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   ApiError,
   fetchBaoCaoTongQuan,
-  fetchToaNha,
   type BoLocTongQuanBaoCao,
-  type ThongTinToaNha,
   type ThongTinTongQuanBaoCao,
 } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
@@ -13,6 +11,7 @@ import { Card } from './design/layout/Card'
 import { Field, Input, Select } from './design/forms/Field'
 import { DataTable } from './design/table/DataTable'
 import { BieuDoCot } from './design/charts/BieuDoCot'
+import { useToaKhung } from './useToaKhung'
 import { BaoCaoDangTai, BaoCaoLoi, DauBaoCao, ThanhLoc, gioTinh } from './baoCaoChung'
 import { EmptyState } from './design/feedback/EmptyState'
 import ExcelExportButton from './ExcelExportButton'
@@ -21,23 +20,11 @@ type Props = { token: string; mobile?: boolean }
 
 /** FR-RPT-01 renders the owner-only financial/operational overview from one server snapshot. */
 export default function BaoCaoTongQuan({ token, mobile = false }: Props): React.ReactElement {
-  const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
   const [boLoc, setBoLoc] = useState<BoLocTongQuanBaoCao>(() => docBoLocTuUrl())
   const [baoCao, setBaoCao] = useState<ThongTinTongQuanBaoCao | null>(null)
   const [dangTai, setDangTai] = useState(true)
   const [loi, setLoi] = useState<string | null>(null)
-
-  useEffect(() => {
-    let mounted = true
-    fetchToaNha(token)
-      .then((items) => {
-        if (mounted) setToaNha(items)
-      })
-      .catch((reason: unknown) => {
-        if (mounted) setLoi(reason instanceof ApiError ? reason.message : 'Không thể tải danh sách toà nhà.')
-      })
-    return () => { mounted = false }
-  }, [token])
+  useToaKhung(boLoc.toaNhaId, (toaNhaId) => setBoLoc((b) => ({ ...b, toaNhaId })))
 
   useEffect(() => {
     const query = new URLSearchParams()
@@ -104,16 +91,6 @@ export default function BaoCaoTongQuan({ token, mobile = false }: Props): React.
       />
 
       <ThanhLoc nhan="Bộ lọc báo cáo">
-        <Field label="Toà nhà">
-          <Select
-            aria-label="Lọc theo toà nhà"
-            value={boLoc.toaNhaId === null ? '' : String(boLoc.toaNhaId)}
-            onChange={(event) => setBoLoc((current) => ({ ...current, toaNhaId: event.target.value ? Number(event.target.value) : null }))}
-          >
-            <option value="">Tất cả toà được phân quyền</option>
-            {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
-          </Select>
-        </Field>
         <Field label="Từ ngày">
           <Input aria-label="Từ ngày" type="date" value={boLoc.tuNgay} onChange={(event) => setBoLoc((current) => ({ ...current, tuNgay: event.target.value }))} />
         </Field>

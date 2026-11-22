@@ -3,14 +3,12 @@ import {
   ApiError,
   fetchChiPhiBaoTriBaoCao,
   fetchPhong,
-  fetchToaNha,
   type BoLocChiPhiBaoTriBaoCao,
   type ThongTinChiPhiBaoTriBaoCao,
   type ThongTinDiemChiPhiBaoTriBaoCao,
   type ThongTinDongChiPhiBaoTriBaoCao,
   type ThongTinNhomChiPhiBaoTriBaoCao,
   type ThongTinPhong,
-  type ThongTinToaNha,
 } from './api'
 import { dinhDangTien } from './design/core/format'
 import { EmptyState } from './design/feedback/EmptyState'
@@ -20,6 +18,7 @@ import { Card } from './design/layout/Card'
 import { Field, Input, Select } from './design/forms/Field'
 import { DataTable } from './design/table/DataTable'
 import { BieuDoCot } from './design/charts/BieuDoCot'
+import { useToaKhung } from './useToaKhung'
 import { BaoCaoDangTai, BaoCaoLoi, DauBaoCao, ThanhLoc, gioTinh } from './baoCaoChung'
 import ExcelExportButton from './ExcelExportButton'
 
@@ -27,7 +26,6 @@ type Props = { token: string; mobile?: boolean }
 
 /** FR-RPT-02/FR-RPT-08 renders one owner-scoped maintenance-cost snapshot with source-request drill-down. */
 export default function ChiPhiBaoTriBaoCao({ token, mobile = false }: Props): React.ReactElement {
-  const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
   const [phong, setPhong] = useState<ThongTinPhong[]>([])
   const [boLoc, setBoLoc] = useState<BoLocChiPhiBaoTriBaoCao>(() => (
     typeof window === 'undefined' ? boLocMacDinh() : layBoLocChiPhiBaoTriTuUrl(window.location.href)
@@ -38,18 +36,7 @@ export default function ChiPhiBaoTriBaoCao({ token, mobile = false }: Props): Re
   const [loi, setLoi] = useState<string | null>(null)
   const [loiBoLoc, setLoiBoLoc] = useState<string | null>(null)
   const variant = mobile ? 'mobile' : 'desktop'
-
-  useEffect(() => {
-    let mounted = true
-    fetchToaNha(token)
-      .then((items) => {
-        if (mounted) setToaNha(items)
-      })
-      .catch((reason: unknown) => {
-        if (mounted) setLoiBoLoc(thongBaoLoi(reason, 'Không thể tải danh sách toà nhà.'))
-      })
-    return () => { mounted = false }
-  }, [token])
+  useToaKhung(boLoc.toaNhaId, (toaNhaId) => setBoLoc((b) => ({ ...b, toaNhaId, phongId: null })))
 
   useEffect(() => {
     if (boLoc.toaNhaId === null) {
@@ -136,7 +123,7 @@ export default function ChiPhiBaoTriBaoCao({ token, mobile = false }: Props): Re
         action={<ExcelExportButton token={token} report="chi-phi-bao-tri" filters={boLoc} loading={dangTai} />}
       />
 
-      <BoLoc boLoc={boLoc} toaNha={toaNha} phong={phong} dangTai={dangTaiBoLoc} onChange={setBoLoc} />
+      <BoLoc boLoc={boLoc} phong={phong} dangTai={dangTaiBoLoc} onChange={setBoLoc} />
       {loiBoLoc ? <p className="alert alert-danger" role="alert"><Icon name="alert" />{loiBoLoc}</p> : null}
       {dangTai ? <p className="t-2" role="status" aria-live="polite">Đang cập nhật báo cáo chi phí bảo trì…</p> : null}
       {loi ? <p className="alert alert-danger" role="alert"><Icon name="alert" />{loi}</p> : null}
@@ -163,29 +150,17 @@ export default function ChiPhiBaoTriBaoCao({ token, mobile = false }: Props): Re
 
 function BoLoc({
   boLoc,
-  toaNha,
   phong,
   dangTai,
   onChange,
 }: {
   boLoc: BoLocChiPhiBaoTriBaoCao
-  toaNha: ThongTinToaNha[]
   phong: ThongTinPhong[]
   dangTai: boolean
   onChange: (value: BoLocChiPhiBaoTriBaoCao) => void
 }): React.ReactElement {
   return (
     <ThanhLoc nhan="Bộ lọc báo cáo chi phí bảo trì">
-      <Field label="Toà nhà">
-        <Select
-          aria-label="Lọc chi phí bảo trì theo toà nhà"
-          value={boLoc.toaNhaId === null ? '' : String(boLoc.toaNhaId)}
-          onChange={(event) => onChange({ ...boLoc, toaNhaId: event.target.value ? Number(event.target.value) : null, phongId: null })}
-        >
-          <option value="">Tất cả toà được phân quyền</option>
-          {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
-        </Select>
-      </Field>
       <Field label="Phòng">
         <Select
           aria-label="Lọc chi phí bảo trì theo phòng"
