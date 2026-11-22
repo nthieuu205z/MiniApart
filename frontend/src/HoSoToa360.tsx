@@ -107,7 +107,7 @@ export default function HoSoToa360({ token, vaiTro, thamSo, dieuHuong }: TrangPr
         {coQuyenVanHanh ? (
           <div className="ph-acts">
             <Button variant="secondary" onClick={() => { setThongBao(null); setNganSua(true) }}><Icon name="edit" />Sửa thông tin toà</Button>
-            <a className="btn btn-primary" href={`/phong${q}&moi=1`}><Icon name="plus" />Khai báo phòng</a>
+            {vaiTro === 'QUAN_LY' ? <a className="btn btn-primary" href={`/phong${q}&moi=1`}><Icon name="plus" />Khai báo phòng</a> : null}
           </div>
         ) : null}
       </div>

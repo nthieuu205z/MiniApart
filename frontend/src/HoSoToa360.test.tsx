@@ -65,7 +65,8 @@ describe('HoSoToa360', () => {
     const hang = [...container.querySelectorAll('a.irow')].map((a) => a.getAttribute('href'))
     expect(hang).toEqual(['/nguoi-thue/12', '/nguoi-thue/13', '/nguoi-thue/11', '/hop-dong/2', '/hop-dong/3'])
     expect(container.querySelector('.strip')?.textContent).toContain('1.500.000')
-    expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
+    expect(container.querySelector('a.btn-primary')).toBeNull() // Chủ không có route /phong nên không có nút Khai báo phòng
+    await mount('QUAN_LY')
     expect(container.querySelector('a.btn-primary')?.getAttribute('href')).toBe('/phong?toaNhaId=3&moi=1')
   })
 
