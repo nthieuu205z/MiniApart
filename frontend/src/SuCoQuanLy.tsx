@@ -305,7 +305,7 @@ export default function SuCoQuanLy({ token, dieuHuong = dieuHuongMacDinh }: { to
               </section>
 
               {(baoMoi || chon) && (
-                <aside ref={ngan} className={`drawer${tuongTac ? '' : ' sc-chua-mo'}`} data-repair-detail-panel={chon?.id} role={hep && tuongTac ? 'dialog' : undefined} aria-modal={hep && tuongTac ? true : undefined} aria-labelledby="su-co-ngan">
+                <aside ref={ngan} className={`drawer${tuongTac ? '' : ' sc-chua-mo'}`} data-repair-detail-panel={chon?.id} data-repair-detail={chon?.id} role={hep && tuongTac ? 'dialog' : undefined} aria-modal={hep && tuongTac ? true : undefined} aria-labelledby="su-co-ngan">
                   <div className="drawer-h">
                     <div className="row-wrap" style={{ gap: 8 }}>
                       {chon ? <>
