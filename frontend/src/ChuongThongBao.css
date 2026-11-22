@@ -1,0 +1,5 @@
+.chuong { position: relative; display: inline-block; }
+.chuong-n { position: absolute; top: -4px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--ma-urgent); color: var(--ma-text-on-inverse); font: 600 13px/20px var(--ma-font-ui); text-align: center; pointer-events: none; }
+.chuong .pop { top: calc(100% + 8px); right: 0; width: min(380px, calc(100vw - 24px)); }
+.chuong .pop .irow { padding: 6px 10px; }
+@media (max-width: 767px) { .chuong .pop { position: fixed; top: 64px; right: 12px; } }

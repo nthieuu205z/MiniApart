@@ -6,14 +6,12 @@ import {
   fetchPhong,
   fetchThongBao,
   fetchThongBaoLuuTru,
-  fetchToaNha,
   guiThongBaoChung,
   guiThongBaoChungCoAnh,
   xemTruocThongBaoChung,
   type ThongTinGuiThongBaoChung,
   type ThongTinHopThongBao,
   type ThongTinPhong,
-  type ThongTinToaNha,
   type ThongTinThongBao,
   type YeuCauThongBaoChung,
 } from './api'
@@ -23,7 +21,10 @@ import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Field } from './design/forms/Field'
 import { Card } from './design/layout/Card'
-import { Feedback } from './ManagementShared'
+import { BuildingSelect, Feedback, useBuildings } from './ManagementShared'
+
+/** Màn /thong-bao báo số chưa đọc mới để chuông trên thanh trên cập nhật theo, không cần App nối thêm. */
+export const SU_KIEN_CHUA_DOC = 'ma:thong-bao-chua-doc'
 
 export type ThongBaoProps = {
   token: string
@@ -43,7 +44,12 @@ export function ThongBao({ token, mobile = false, vaiTro, onUnreadCountChange }:
   const [loiHanhDong, setLoiHanhDong] = useState<string | null>(null)
   const [anhUrls, setAnhUrls] = useState<Record<number, string>>({})
   const [moSoan, setMoSoan] = useState(false)
+  const [xemHet, setXemHet] = useState(false)
   const anhUrlsRef = useRef<Record<number, string>>({})
+  const baoDoi = useCallback((n: number) => {
+    onUnreadCountChange?.(n)
+    window.dispatchEvent(new CustomEvent(SU_KIEN_CHUA_DOC, { detail: n }))
+  }, [onUnreadCountChange])
 
   const taiHopThongBao = useCallback(async () => {
     setDangTai(true)
@@ -52,13 +58,13 @@ export function ThongBao({ token, mobile = false, vaiTro, onUnreadCountChange }:
       const data = dangXemLuuTru ? await fetchThongBaoLuuTru(token) : await fetchThongBao(token)
       hopThongBaoRef.current = data
       setHopThongBao(data)
-      if (!dangXemLuuTru) onUnreadCountChange?.(data.soChuaDoc)
+      if (!dangXemLuuTru) baoDoi(data.soChuaDoc)
     } catch {
       setLoiTai(true)
     } finally {
       setDangTai(false)
     }
-  }, [dangXemLuuTru, onUnreadCountChange, token])
+  }, [dangXemLuuTru, baoDoi, token])
 
   useEffect(() => {
     void taiHopThongBao()
@@ -103,7 +109,7 @@ export function ThongBao({ token, mobile = false, vaiTro, onUnreadCountChange }:
       }
       hopThongBaoRef.current = next
       setHopThongBao(next)
-      onUnreadCountChange?.(next.soChuaDoc)
+      baoDoi(next.soChuaDoc)
     } catch {
       setLoiHanhDong(thongBao.maThamChieu)
     } finally {
@@ -113,6 +119,9 @@ export function ThongBao({ token, mobile = false, vaiTro, onUnreadCountChange }:
 
   const soChuaDoc = hopThongBao?.soChuaDoc ?? 0
   const coQuyenSoan = vaiTro === 'CHU' || vaiTro === 'QUAN_LY'
+  // Chủ/Quản lý đọc nhanh ở chuông nên hộp thư ở đây thu gọn 5 tin; Thợ/Khách thấy đủ.
+  const thuGon = coQuyenSoan && !dangXemLuuTru && !xemHet && (hopThongBao?.thongBao.length ?? 0) > 5
+  const dsHien = thuGon ? hopThongBao!.thongBao.slice(0, 5) : (hopThongBao?.thongBao ?? [])
 
   return (
     <div
@@ -167,7 +176,7 @@ export function ThongBao({ token, mobile = false, vaiTro, onUnreadCountChange }:
       ) : (
         <Card>
           <section aria-label={dangXemLuuTru ? 'Danh sách thông báo lưu trữ' : 'Danh sách thông báo'} className="ma-notification-list stack" style={{ gap: 0 }}>
-            {hopThongBao.thongBao.map((thongBao) => {
+            {dsHien.map((thongBao) => {
               const chuaDoc = !dangXemLuuTru && !thongBao.daDoc
               return (
                 <article
@@ -222,6 +231,7 @@ export function ThongBao({ token, mobile = false, vaiTro, onUnreadCountChange }:
               )
             })}
           </section>
+          {thuGon ? <div className="row-wrap" style={{ paddingTop: 12 }}><Button variant="text" size="sm" onClick={() => setXemHet(true)}>Xem cả {hopThongBao!.thongBao.length} thông báo</Button></div> : null}
         </Card>
       )}
     </div>
@@ -229,9 +239,9 @@ export function ThongBao({ token, mobile = false, vaiTro, onUnreadCountChange }:
 }
 
 function ThongBaoChungForm({ token, mobile, onDong }: { token: string; mobile: boolean; onDong: () => void }) {
-  const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
+  const { buildings, buildingId, setBuildingId } = useBuildings(token)
   const [phong, setPhong] = useState<ThongTinPhong[]>([])
-  const [toaNhaId, setToaNhaId] = useState('')
+  const toaNhaId = buildingId === null ? '' : String(buildingId)
   const [phamVi, setPhamVi] = useState<'TOA_NHA' | 'TANG' | 'PHONG'>('TOA_NHA')
   const [tang, setTang] = useState('')
   const [phongIds, setPhongIds] = useState<number[]>([])
@@ -244,18 +254,6 @@ function ThongBaoChungForm({ token, mobile, onDong }: { token: string; mobile: b
   const [loi, setLoi] = useState<string | null>(null)
   const [thanhCong, setThanhCong] = useState<string | null>(null)
   const khoaChongLapRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    let mounted = true
-    void fetchToaNha(token).then((items) => {
-      if (!mounted) return
-      setToaNha(items)
-      setToaNhaId((current) => current || String(items[0]?.id ?? ''))
-    }).catch((reason: unknown) => {
-      if (mounted) setLoi(reason instanceof Error ? reason.message : 'Không thể tải toà nhà.')
-    })
-    return () => { mounted = false }
-  }, [token])
 
   useEffect(() => {
     if (!toaNhaId || phamVi !== 'PHONG') return
@@ -324,12 +322,7 @@ function ThongBaoChungForm({ token, mobile, onDong }: { token: string; mobile: b
     <Card title="Soạn thông báo chung" aria-label="Soạn thông báo chung" action={<Button variant="text" size="sm" onClick={onDong}><Icon name="x" />Đóng</Button>}>
       <p className="t-sm" style={{ color: 'var(--ma-text-secondary)', marginBottom: 16 }}>Xem trước số phòng nhận trước khi gửi. Người nhận được chụp tại thời điểm gửi.</p>
       <form onSubmit={xemTruocForm} style={{ display: 'grid', gap: 16, gridTemplateColumns: mobile ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
-        <Field label="Toà nhà">
-          <select className="select" value={toaNhaId} onChange={(event) => setToaNhaId(event.target.value)} required>
-            <option value="">Chọn toà nhà</option>
-            {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
-          </select>
-        </Field>
+        <BuildingSelect buildings={buildings} value={buildingId} onChange={setBuildingId} />
         <Field label="Phạm vi">
           <select className="select" value={phamVi} onChange={(event) => { setPhamVi(event.target.value as typeof phamVi); setPhongIds([]) }}>
             <option value="TOA_NHA">Toàn toà</option>
@@ -362,7 +355,7 @@ function ThongBaoChungForm({ token, mobile, onDong }: { token: string; mobile: b
           <input className="input" type="file" accept="image/png,image/jpeg" onChange={(event) => setTep(event.target.files?.[0] ?? null)} />
         </Field>
         <div className="row-wrap" style={cot2(true)}>
-          <Button type="submit" variant={xemTruoc ? 'secondary' : 'primary'} blocked={dangTai}>{dangTai ? 'Đang xử lý…' : 'Xem trước người nhận'}</Button>
+          <Button type="submit" variant={xemTruoc ? 'secondary' : 'primary'} blocked={dangTai || !toaNhaId} blockedReason={!toaNhaId ? 'Chọn toà nhà trước khi xem trước người nhận.' : undefined}>{dangTai ? 'Đang xử lý…' : 'Xem trước người nhận'}</Button>
           {xemTruoc ? <Button type="button" variant="primary" blocked={dangTai || xemTruoc.soNguoiNhan === 0} blockedReason={xemTruoc.soNguoiNhan === 0 ? 'Chưa có tài khoản nào nhận được thông báo này.' : undefined} onClick={() => void guiForm()}>Gửi thông báo</Button> : null}
         </div>
       </form>
