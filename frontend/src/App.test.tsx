@@ -1959,3 +1959,79 @@ describe('invoice navigation', () => {
     expect(layDinhDanhHoaDonTuUrl('https://miniapart.test/hoa-don?toaNhaId=1&kyId=8')).toEqual({})
   })
 })
+
+// Lưới an toàn cho UX v2 x0: chuỗi hienThi* → bảng định tuyến không được đổi quyền của bất kỳ vai trò nào.
+const MENU_CU: Record<string, string[]> = {
+  QTHT: ['/tai-khoan', '/toa-nha', '/nhat-ky-thao-tac'],
+  CHU: ['/tong-quan', '/toa-nha', '/nguoi-thue', '/hop-dong', '/dich-vu', '/ghi-chi-so', '/thu-tien', '/cu-tru', '/lich-hen', '/hoa-don', '/cong-no', '/bao-cao', '/bao-cao/tieu-thu', '/bao-cao/chi-phi-bao-tri', '/su-co', '/an-toan', '/nhat-ky-thao-tac'],
+  QUAN_LY: ['/nhac-viec', '/ghi-chi-so', '/hoa-don', '/thu-tien', '/phong', '/hop-dong', '/nguoi-thue', '/dich-vu', '/cu-tru', '/an-toan', '/lich-hen', '/su-co', '/thong-bao'],
+  THO: ['/tho/tong-quan', '/viec-cua-toi', '/tho/chi-phi', '/thong-bao'],
+  NGUOI_THUE: ['/hoa-don-cua-toi', '/lich-su', '/tieu-thu', '/hop-dong', '/bao-hong'],
+}
+
+describe('định tuyến cũ — không đổi quyền', () => {
+  let mountedApp: MountedApp | null = null
+  const nguoiTheoVaiTro = (vaiTro: string) => MENU_BY_ROLE.find((m) => m.nguoiDung.vaiTro === vaiTro)!.nguoiDung
+
+  // Dùng mock sẵn của file; API nào mock chưa có thì trả lỗi 500 (màn tự hiện trạng thái lỗi; mảng rỗng làm vài màn vỡ vì sai hình dạng): chỉ kiểm khung chọn đúng màn, không kiểm nội dung màn.
+  function fetchRong(nguoiDung: ThongTinNguoiDung) {
+    const goc = buildFetchMock(nguoiDung)
+    return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      try {
+        return await goc(input, init)
+      } catch {
+        return new Response(JSON.stringify({ thongBao: 'Mock chưa có API này.' }), { status: 500, headers: { 'Content-Type': 'application/json' } })
+      }
+    })
+  }
+
+  async function mo(vaiTro: string, path: string) {
+    const nguoiDung = nguoiTheoVaiTro(vaiTro)
+    mountedApp = await mountAppAndLogin(nguoiDung, path, fetchRong(nguoiDung))
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 30)) })
+    return mountedApp.container
+  }
+
+  beforeEach(() => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true
+    vi.restoreAllMocks()
+    clearStoredToken()
+    window.history.replaceState({}, '', '/')
+    document.body.innerHTML = ''
+  })
+
+  afterEach(async () => {
+    if (mountedApp) await act(async () => { mountedApp?.root.unmount() })
+    mountedApp = null
+    clearStoredToken()
+    vi.restoreAllMocks()
+  })
+
+  for (const [vaiTro, danhSach] of Object.entries(MENU_CU)) {
+    for (const duongDan of danhSach) {
+      it(`${vaiTro} mở được ${duongDan} (không "Không có quyền")`, async () => {
+        const container = await mo(vaiTro, duongDan)
+        expect(container.querySelector('nav')).not.toBeNull()
+        expect(container.textContent).not.toContain('Không có quyền')
+      })
+    }
+  }
+
+  for (const [vaiTro, duongDan] of [['QUAN_LY', '/bao-cao'], ['QUAN_LY', '/cong-no'], ['QUAN_LY', '/tai-khoan'], ['NGUOI_THUE', '/thu-tien']] as const) {
+    it(`${vaiTro} ở ${duongDan} → "Không có quyền"`, async () => {
+      const container = await mo(vaiTro, duongDan)
+      expect(container.textContent).toContain('Không có quyền')
+    })
+  }
+
+  it('QTHT vẫn mở được /hoa-don như app cũ', async () => {
+    const container = await mo('QTHT', '/hoa-don')
+    expect(container.textContent).not.toContain('Không có quyền')
+  })
+
+  it('Thợ ở /thu-tien bị đưa về màn việc của thợ', async () => {
+    const container = await mo('THO', '/thu-tien')
+    expect(container.textContent).not.toContain('Không có quyền')
+    expect(['/tho/tong-quan', '/viec-cua-toi']).toContain(window.location.pathname)
+  })
+})
