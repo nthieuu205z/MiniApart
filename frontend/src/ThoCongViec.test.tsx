@@ -3,7 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ThoCongViec } from './ThoCongViec'
+import { ThoCongViec, buocViecTho } from './ThoCongViec'
 
 const mockJobList = [
   {
@@ -257,29 +257,51 @@ describe('ThoCongViec Component', () => {
       expect(nut.length).toBe(1)
       return nut[0].textContent
     })
-    expect(nhanNut).toEqual(['Nhận việc & khảo sát', 'Lập báo giá', 'Báo xong'])
+    expect(nhanNut).toEqual(['Bắt đầu khảo sát', 'Gửi báo giá', 'Báo đã sửa xong'])
     const tel = container.querySelector('a[href^="tel:"]')
     expect(tel?.getAttribute('href')).toBe('tel:0987654321')
   })
 
-  it('mobile: tab đếm theo nhóm và chỉ hiện việc của nhóm đang chọn', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
-      if (url.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(mockJobList), { status: 200 })
-      throw new Error(`Unexpected ${url}`)
-    }))
+  it('buocViecTho: 5 ca trạng thái → bước', () => {
+    const b = (trangThaiHieuLuc: string, trangThaiBaoGia?: string) => buocViecTho({ trangThaiHieuLuc, trangThaiBaoGia } as never)
+    expect(b('DA_PHAN_CONG')).toEqual({ so: 1, nhan: 'Bước 1/4 · Khảo sát' })
+    expect(b('DANG_XU_LY')).toEqual({ so: 2, nhan: 'Bước 2/4 · Báo giá' })
+    expect(b('DANG_XU_LY', 'CHO_DUYET').so).toBe(2)
+    expect(b('DANG_XU_LY', 'DA_DUYET')).toEqual({ so: 3, nhan: 'Bước 3/4 · Sửa' })
+    expect(b('CHO_XAC_NHAN')).toEqual({ so: 4, nhan: 'Bước 4/4 · Nhận tiền' })
+  })
 
+  async function renderMobile(ds: unknown[], url = '/viec-cua-toi') {
+    window.history.replaceState({}, '', url)
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const u = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
+      if (u === '/api/tho/cong-viec/101') return new Response(JSON.stringify(mockDetail), { status: 200 })
+      if (u.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(ds), { status: 200 })
+      throw new Error(`Unexpected ${u}`)
+    }))
     root = createRoot(container)
     await act(async () => {
       root.render(<ThoCongViec token="worker-token" mobile />)
     })
+  }
 
+  it('mobile: lọc ?loc=xong, mặc định Gấp, đếm trên seg, chỉ 1 btn-primary, chấm bước', async () => {
+    await renderMobile(mockJobList, '/viec-cua-toi?loc=xong')
     await vi.waitFor(() => expect(container.querySelectorAll('article').length).toBe(1))
-    expect(Array.from(container.querySelectorAll('.tab')).map((t) => t.textContent)).toEqual(['Đang mở 1', 'Chờ xác nhận 0', 'Đã xong 1'])
-    await act(async () => {
-      ;(container.querySelectorAll('.tab')[2] as HTMLButtonElement).click()
-    })
+    expect(Array.from(container.querySelectorAll('.seg-links a')).map((t) => t.textContent)).toEqual(['Gấp (1)', 'Đang làm (1)', 'Xong (1)'])
     expect(container.querySelector('[data-testid="worker-task-row-102"]')).not.toBeNull()
-    expect(container.querySelector('[data-testid="worker-task-row-101"]')).toBeNull()
+    expect(container.querySelector('.btn-primary')).toBeNull()
+    expect(container.querySelector('[data-testid="worker-task-row-102"]')?.textContent).toContain('Chờ quản lý thanh toán')
+    await act(async () => {
+      ;(container.querySelectorAll('.seg-links a')[0] as HTMLAnchorElement).click()
+    })
+    expect(window.location.search).toBe('?loc=gap')
+    expect(container.querySelectorAll('.btn-primary').length).toBe(1)
+    expect(container.querySelector('.dots')?.getAttribute('aria-label')).toBe('Bước 3/4 · Sửa')
+  })
+
+  it('mobile: yeuCauId trên URL mở drawer chi tiết như cũ', async () => {
+    await renderMobile(mockJobList, '/viec-cua-toi?yeuCauId=101')
+    await vi.waitFor(() => expect(container.textContent).toContain('Chi tiết sự cố: SC-20261101-001'))
   })
 })

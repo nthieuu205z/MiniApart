@@ -70,6 +70,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
   // Mobile: tóm tắt (KPI, tên thợ, số toà) lấy một lần; lỗi thì bỏ qua, danh sách vẫn dùng được.
   const [tomTat, setTomTat] = useState<{ kpi?: KpiTho; hoTen?: string; soToa?: number }>({})
   const [hienTim, setHienTim] = useState(false)
+  const [loc, setLoc] = useState<LocViec | null>(docLoc)
   const moFormBaoGiaRef = useRef(false)
 
   // Voucher modal state
@@ -93,6 +94,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
   // Deep link sync on popstate
   useEffect(() => {
     function handlePopState() {
+      setLoc(docLoc())
       const p = new URLSearchParams(window.location.search).get('yeuCauId')
       setChiTietId(p ? Number(p) : null)
     }
@@ -211,6 +213,14 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
     moChiTiet(row.id)
   }
 
+  function chonLoc(e: React.MouseEvent, key: LocViec) {
+    e.preventDefault()
+    setLoc(key)
+    const url = new URL(window.location.href)
+    url.searchParams.set('loc', key)
+    window.history.replaceState({}, '', url.toString())
+  }
+
   function dongChiTiet() {
     setChiTietId(null)
     setChiTietData(null)
@@ -312,12 +322,14 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
     return Array.from(map.entries()).map(([id, ten]) => ({ id, ten }))
   }, [danhSach])
 
-  const nhomCuaViec = (r: ThongTinViecThoRow): NhomMobile =>
-    r.trangThaiHieuLuc === 'CHO_XAC_NHAN' ? 'CHO_XAC_NHAN' : r.trangThaiHieuLuc === 'DA_DONG' || r.trangThaiHieuLuc === 'DA_HUY' ? 'LICH_SU' : 'DANG_LAM'
-  const demNhom = (nhom: NhomMobile) => danhSach.filter((r) => nhomCuaViec(r) === nhom).length
-  const dsMobile = danhSach.filter((r) => nhomCuaViec(r) === (nhomTab === 'TAT_CA' ? 'DANG_LAM' : nhomTab))
-  const soMoiGiao = danhSach.filter((r) => r.trangThaiHieuLuc === 'DA_PHAN_CONG').length
-  const tyLe = tomTat.kpi?.tyLeHoanThanh
+  const dangMo = danhSach.filter((r) => r.trangThaiHieuLuc !== 'DA_DONG' && r.trangThaiHieuLuc !== 'DA_HUY')
+  const dsGap = dangMo.filter((r) => r.mucDo !== 'THUONG')
+  const dsDangLam = dangMo
+  const dsXong = danhSach.filter((r) => r.trangThaiHieuLuc === 'DA_DONG' || r.trangThaiHieuLuc === 'DA_HUY')
+  const soChuaBaoGia = dangMo.filter((r) => r.giaTriBaoGia == null).length
+  const locHieuLuc: LocViec = loc ?? (dsGap.length > 0 ? 'gap' : 'dang-lam')
+  const dsMobile = locHieuLuc === 'gap' ? dsGap : locHieuLuc === 'xong' ? dsXong : dsDangLam
+  const viTriNutChinh = dsMobile.findIndex((r) => nutChinhCuaViec(r).hanhDong !== 'KHONG')
 
   return (
     <div style={{ padding: mobile ? 0 : '24px 20px', maxWidth: 1240, margin: '0 auto', display: 'grid', gap: 20 }} data-testid="worker-jobs-screen">
@@ -325,46 +337,46 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
         <>
           <div className="spread" style={{ alignItems: 'flex-start' }}>
             <div>
-              <h1 style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Công việc</h1>
-              <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)' }}>
-                {[tomTat.hoTen, tomTat.soToa !== undefined ? `${tomTat.soToa} toà được giao` : undefined].filter(Boolean).join(' · ')}
+              <h1 className="h1" style={{ margin: 0 }}>Việc của tôi</h1>
+              <div className="t-meta">
+                {[tomTat.hoTen, new Date().toLocaleDateString('vi-VN')].filter(Boolean).join(' · ')}
               </div>
             </div>
             <button type="button" className="icon-btn touch" aria-label="Tìm việc" aria-expanded={hienTim} onClick={() => setHienTim((v) => !v)}>
               <Icon name="search" />
             </button>
           </div>
-          <div style={styleTomTat} aria-label="Tóm tắt">
-            <div style={styleOTomTat}>
-              <b style={styleSoTomTat}>{tomTat.kpi?.dangXuLy ?? '–'}</b>
-              <span style={styleNhanTomTat}>Đang làm</span>
+          <div className="m-sum" aria-label="Tóm tắt">
+            <div>
+              <div className="v">{tomTat.kpi?.dangXuLy ?? '–'}</div>
+              <div className="k">đang làm</div>
             </div>
-            <div style={styleOTomTat}>
-              <b style={styleSoTomTat}>{soMoiGiao}</b>
-              <span style={styleNhanTomTat}>Mới giao</span>
+            <div>
+              <div className="v">{soChuaBaoGia}</div>
+              <div className="k">chưa báo giá</div>
             </div>
-            <div style={styleOTomTat}>
-              <b style={styleSoTomTat}>{tyLe ? `${tyLe.daHoanThanh}/${tyLe.tongDuocGiao}` : '–'}</b>
-              <span style={styleNhanTomTat}>Xong kỳ này</span>
+            <div>
+              <div className="v">{tomTat.kpi ? `${(tomTat.kpi.conPhaiTra / 1e6).toFixed(2).replace('.', ',')} tr` : '–'}</div>
+              <div className="k">còn được trả</div>
             </div>
           </div>
-          <div className="tabs" role="tablist" aria-label="Lọc công việc">
+          <nav className="seg seg-links" aria-label="Lọc việc">
             {([
-              ['DANG_LAM', 'Đang mở'],
-              ['CHO_XAC_NHAN', 'Chờ xác nhận'],
-              ['LICH_SU', 'Đã xong'],
+              ['gap', `Gấp (${dsGap.length})`],
+              ['dang-lam', `Đang làm (${dsDangLam.length})`],
+              ['xong', `Xong (${dsXong.length})`],
             ] as const).map(([key, label]) => (
-              <button key={key} type="button" role="tab" className="tab" style={{ padding: '0 6px', gap: 6, fontSize: 14 }} aria-selected={nhomTab === key} onClick={() => setNhomTab(key)}>
-                {label} <span className="n">{demNhom(key)}</span>
-              </button>
+              <a key={key} href={`?loc=${key}`} aria-current={locHieuLuc === key ? 'true' : undefined} onClick={(e) => chonLoc(e, key)}>
+                {label}
+              </a>
             ))}
-          </div>
+          </nav>
         </>
       ) : (
       <div style={{ display: 'grid', gap: 14, borderBottom: '1px solid var(--ma-border-default)', paddingBottom: 16 }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
-            <h1 style={{ margin: '0 0 4px', font: '700 clamp(20px, 3.5vw, 26px)/1.2 var(--ma-font-ui)' }}>
+            <h1 className="h1" style={{ margin: '0 0 4px' }}>
               Danh sách công việc
             </h1>
             <p style={{ margin: 0, color: 'var(--ma-text-secondary)', fontSize: 13.5 }}>
@@ -479,61 +491,60 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
       ) : mobile ? (
         /* Mobile Card Layout */
         <div style={{ display: 'grid', gap: 12 }}>
-          {dsMobile.map((row) => {
+          {dsMobile.map((row, i) => {
             const nutChinh = nutChinhCuaViec(row)
+            const buoc = buocViecTho(row)
             const phong = row.soPhong.replace(/^P\.?\s*/i, '')
             return (
               <article
                 key={row.id}
-                className="m-card"
+                className="job"
                 onClick={() => moChiTiet(row.id)}
-                style={styleViecMobile}
+                style={{ cursor: 'pointer' }}
                 aria-labelledby={`viec-${row.id}`}
                 data-testid={`worker-task-row-${row.id}`}
               >
-                <div className="spread">
-                  {row.trangThaiHieuLuc === 'DANG_XU_LY' ? (
-                    <span className="tag tag-info">
-                      <Icon name="hammer" size="sm" />
-                      {row.tenTrangThaiHieuLuc}
+                <div className="row" style={{ gap: 8 }}>
+                  {row.mucDo !== 'THUONG' ? (
+                    <span className={`tag ${row.mucDo === 'KHAN_CAP' ? 'tag-danger' : 'tag-warning'}`}>
+                      <Icon name="alert" size="sm" />
+                      {row.tenMucDo}
                     </span>
-                  ) : (
-                    <StatusTag tone={row.trangThaiHieuLuc === 'DA_PHAN_CONG' ? 'waiting' : row.trangThaiHieuLuc === 'DA_DONG' ? 'done' : 'neutral'}>
-                      {row.trangThaiHieuLuc === 'DA_PHAN_CONG' ? 'Mới giao' : row.tenTrangThaiHieuLuc}
-                    </StatusTag>
-                  )}
-                  <span style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)' }}>
-                    {row.maYeuCau} · {ngayNganGon(row.taoLuc)}
-                  </span>
+                  ) : null}
+                  <span className="tag tag-info">{row.tenTrangThaiHieuLuc}</span>
+                  <span className="push t-meta">{ngayNganGon(row.taoLuc)}</span>
                 </div>
-                <h2 className="h3" id={`viec-${row.id}`} style={{ margin: 0, fontSize: 18 }}>
-                  {row.hangMuc}
-                </h2>
-                <p style={styleNoiLamViec}>
-                  <Icon name="pin" size="sm" />
-                  {row.toaNha} · Phòng {phong} · Tầng {row.tang}
-                </p>
-                {row.moTa ? <p className="t-sm t-2" style={styleMoTaNgan}>{row.moTa}</p> : null}
-                <div style={styleHangNut}>
-                  <a
-                    className="icon-btn touch boxed"
-                    href={`tel:${row.soDienThoaiLienHe}`}
-                    aria-label={`Gọi ${row.nguoiLienHeHoTen}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                <div>
+                  <h2 className="t" id={`viec-${row.id}`} style={{ margin: 0 }}>
+                    <button type="button" className="hit" style={styleNutTieuDe} onClick={(e) => { e.stopPropagation(); moChiTiet(row.id) }}>
+                      {row.hangMuc}
+                    </button>
+                  </h2>
+                  <div className="s">{row.toaNha} · Phòng {phong} · Tầng {row.tang}</div>
+                  <div className="s">{row.nguoiLienHeHoTen} · {row.soDienThoaiLienHe}</div>
+                </div>
+                <div className="dots" aria-label={buoc.nhan}>
+                  {[0, 1, 2, 3].map((k) => <i key={k} className={k < buoc.so ? 'on' : ''} />)}
+                  <span>{buoc.nhan}</span>
+                </div>
+                <div className="acts">
+                  <a className="icon-btn touch boxed" href={`tel:${row.soDienThoaiLienHe}`} aria-label={`Gọi ${row.nguoiLienHeHoTen}`} onClick={(e) => e.stopPropagation()}>
                     <Icon name="phone" />
                   </a>
-                  <Button
-                    variant={nutChinh.hanhDong === 'BAO_XONG' ? 'primary' : 'secondary'}
-                    className="btn-touch"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      void handleNutChinh(row, nutChinh.hanhDong)
-                    }}
-                  >
-                    {nutChinh.hanhDong === 'BAO_XONG' ? <Icon name="check" /> : null}
-                    {nutChinh.nhan}
-                  </Button>
+                  {nutChinh.hanhDong === 'KHONG' ? (
+                    <span className="t-sm t-2" style={{ flex: 1, alignSelf: 'center' }}>{nutChinh.nhan}</span>
+                  ) : (
+                    <Button
+                      variant={i === viTriNutChinh ? 'primary' : 'secondary'}
+                      className="btn-touch"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void handleNutChinh(row, nutChinh.hanhDong)
+                      }}
+                    >
+                      {nutChinh.nhan}
+                    </Button>
+                  )}
                 </div>
               </article>
             )
@@ -635,7 +646,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                 <h2 id="drawer-title" style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
                   Chi tiết sự cố: {chiTietData?.maYeuCau ?? `SC-${chiTietId}`}
                 </h2>
-                <div style={{ color: 'var(--ma-text-secondary)', fontSize: 12.5, marginTop: 2 }}>
+                <div style={{ color: 'var(--ma-text-secondary)', fontSize: 13, marginTop: 2 }}>
                   {chiTietData?.toaNha} · Phòng {chiTietData?.soPhong}
                 </div>
               </div>
@@ -1243,18 +1254,35 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
   )
 }
 
-type NhomMobile = 'DANG_LAM' | 'CHO_XAC_NHAN' | 'LICH_SU'
-type HanhDongChinh = 'NHAN_VIEC' | 'LAP_BAO_GIA' | 'BAO_XONG' | 'XEM'
+type LocViec = 'gap' | 'dang-lam' | 'xong'
+type HanhDongChinh = 'NHAN_VIEC' | 'LAP_BAO_GIA' | 'BAO_XONG' | 'XEM' | 'KHONG'
 
-/** Đúng một nút chính trên thẻ, theo trạng thái việc và báo giá. */
+function docLoc(): LocViec | null {
+  if (typeof window === 'undefined') return null
+  const v = new URLSearchParams(window.location.search).get('loc')
+  return v === 'gap' || v === 'dang-lam' || v === 'xong' ? v : null
+}
+
+const TEN_BUOC = ['Khảo sát', 'Báo giá', 'Sửa', 'Nhận tiền']
+
+/** Bước 1..4 của việc: nhận việc → báo giá → sửa (báo giá đã duyệt) → nhận tiền (chờ xác nhận/đã đóng). */
+export function buocViecTho(r: Pick<ThongTinViecThoRow, 'trangThaiHieuLuc' | 'trangThaiBaoGia'>): { so: number; nhan: string } {
+  const so =
+    r.trangThaiHieuLuc === 'DA_PHAN_CONG' ? 1
+    : r.trangThaiHieuLuc === 'DANG_XU_LY' ? (r.trangThaiBaoGia === 'DA_DUYET' ? 3 : 2)
+    : 4
+  return { so, nhan: `Bước ${so}/4 · ${TEN_BUOC[so - 1]}` }
+}
+
+/** Đúng một nút kế tiếp trên thẻ theo bước; bước nhận tiền không có nút. */
 function nutChinhCuaViec(r: ThongTinViecThoRow): { hanhDong: HanhDongChinh; nhan: string } {
-  if (r.trangThaiHieuLuc === 'DA_PHAN_CONG') return { hanhDong: 'NHAN_VIEC', nhan: 'Nhận việc & khảo sát' }
+  if (r.trangThaiHieuLuc === 'DA_PHAN_CONG') return { hanhDong: 'NHAN_VIEC', nhan: 'Bắt đầu khảo sát' }
   if (r.trangThaiHieuLuc === 'DANG_XU_LY') {
-    if (r.trangThaiBaoGia === 'DA_DUYET') return { hanhDong: 'BAO_XONG', nhan: 'Báo xong' }
+    if (r.trangThaiBaoGia === 'DA_DUYET') return { hanhDong: 'BAO_XONG', nhan: 'Báo đã sửa xong' }
     if (r.trangThaiBaoGia === 'NHAP' || r.trangThaiBaoGia === 'CHO_DUYET') return { hanhDong: 'XEM', nhan: 'Xem báo giá' }
-    return { hanhDong: 'LAP_BAO_GIA', nhan: 'Lập báo giá' }
+    return { hanhDong: 'LAP_BAO_GIA', nhan: 'Gửi báo giá' }
   }
-  return { hanhDong: 'XEM', nhan: 'Xem chi tiết' }
+  return { hanhDong: 'KHONG', nhan: 'Chờ quản lý thanh toán' }
 }
 
 function ngayNganGon(iso: string): string {
@@ -1293,6 +1321,8 @@ function dichTrangThaiThanhToan(tt: string): string {
   }
 }
 
+const styleNutTieuDe: CSSProperties = { background: 'none', border: 0, padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer', display: 'block' }
+
 const styleSelect: CSSProperties = {
   height: 38,
   padding: '0 10px',
@@ -1303,25 +1333,9 @@ const styleSelect: CSSProperties = {
   fontSize: 13.5,
 }
 
-const styleViecMobile: CSSProperties = { display: 'grid', gap: 10, cursor: 'pointer' }
 
-const styleNoiLamViec: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 6,
-  margin: 0,
-  font: '500 14px/1.35 var(--ma-font-ui)',
-  color: 'var(--ma-text-secondary)',
-}
 
-const styleMoTaNgan: CSSProperties = { margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }
 
-const styleHangNut: CSSProperties = { display: 'grid', gridTemplateColumns: '48px minmax(0, 1fr)', gap: 8, marginTop: 4 }
-
-const styleTomTat: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }
-const styleOTomTat: CSSProperties = { background: 'var(--ma-bg-card)', borderRadius: 16, padding: 12 }
-const styleSoTomTat: CSSProperties = { display: 'block', font: '600 24px/1.1 var(--ma-font-ui)', letterSpacing: '-0.02em' }
-const styleNhanTomTat: CSSProperties = { font: 'var(--ma-text-caption)', color: 'var(--ma-text-secondary)' }
 
 const styleDrawerOverlay: CSSProperties = {
   position: 'fixed',
@@ -1358,12 +1372,13 @@ const styleDetailSection: CSSProperties = {
 const styleSmallActionBtn: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  padding: '3px 8px',
+  minHeight: 44,
+  padding: '0 12px',
   borderRadius: 4,
   border: '1px solid var(--ma-border-strong, #cbd5e1)',
   background: 'var(--ma-bg-sunken)',
   color: 'var(--ma-text-primary)',
-  fontSize: 12,
+  fontSize: 13,
   cursor: 'pointer',
   textDecoration: 'none',
 }
