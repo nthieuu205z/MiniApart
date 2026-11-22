@@ -388,6 +388,20 @@ describe('GhiChiSo mobile screen', () => {
     await vi.waitFor(() => expect(container.textContent).toContain('Phòng còn thiếu'))
   })
 
+  it('anNutChot ẩn nút Chốt kỳ nhưng vẫn tải dữ liệu kỳ', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/toa-nha') return jsonResponse([{ id: 1, ten: 'Toà A' }])
+      if (url === '/api/toa-nha/1/ky-thanh-toan') return jsonResponse([{ id: 8, nam: 2026, thang: 8, trangThai: 'DANG_MO' }])
+      if (url.endsWith('/thieu-chi-so')) return jsonResponse([])
+      return jsonResponse({ tongPhong: 0, daGhi: 0, phong: [] })
+    }))
+    root = createRoot(container)
+    await act(async () => root.render(<GhiChiSo token="meter-token" anNutChot />))
+    await vi.waitFor(() => expect(container.textContent).toContain('Kỳ: 8/2026'))
+    expect(container.querySelector('button[data-close-period]')).toBeNull()
+  })
+
   it('FR-MTR-08 blocks closing when the selected period is already closed', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input)
