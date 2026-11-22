@@ -52,11 +52,11 @@ describe('DanhMucToaNha', () => {
     await fill('maToa', 'B')
     await fill('ten', 'Toà B')
     await fill('diaChi', '2 Đường B')
-    const bankBin = container.querySelector('input[name="maNganHang"]') as HTMLInputElement | null
+    const bankBin = document.querySelector('input[name="maNganHang"]') as HTMLInputElement | null
     expect(bankBin).not.toBeNull()
     expect(bankBin?.pattern).toBe('[0-9]{6}')
     expect(bankBin?.maxLength).toBe(6)
-    const bankAccount = container.querySelector('input[name="tkNganHang"]') as HTMLInputElement
+    const bankAccount = document.querySelector('input[name="tkNganHang"]') as HTMLInputElement
     expect(bankAccount.pattern).toBe('[0-9]{1,19}')
     expect(bankAccount.maxLength).toBe(19)
     await fill('maNganHang', '970422')
@@ -70,50 +70,6 @@ describe('DanhMucToaNha', () => {
     expect(container.textContent).toContain('Đã khai báo toà nhà mới.')
   })
 
-  it('FR-BLD-01 FR-INV-10 hydrates and updates the bank BIN through the actual client contract', async () => {
-    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-      if (init?.method === 'PUT') return jsonResponse({ ...toaA, maNganHang: '970436' })
-      return jsonResponse([toaA])
-    })
-    vi.stubGlobal('fetch', fetchMock)
-
-    await renderScreen('CHU')
-    await vi.waitFor(() => expect(container.textContent).toContain('Sửa Toà A'))
-    await act(async () => clickButton('Sửa Toà A'))
-
-    const bankBin = container.querySelector('input[name="maNganHang"]') as HTMLInputElement | null
-    expect(bankBin).not.toBeNull()
-    expect(bankBin?.value).toBe('970405')
-    await fill('maNganHang', '970436')
-    await act(async () => submitForm('building-form'))
-
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/toa-nha/1', expect.objectContaining({
-      method: 'PUT', body: JSON.stringify({ maToa: 'A', ten: 'Toà A', diaChi: '1 Đường A', soTang: 5, ngayChotSo: 28, soNgayHanTt: 7, maNganHang: '970436', tkNganHang: '0123456789', nguongThatThoat: '1.25', batBuocAnhCongTo: false }),
-    })))
-  })
-
-  it('FR-BLD-01 edits the selected building and shows duplicate-code and invalid-closing-date errors from the server', async () => {
-    let putCount = 0
-    vi.stubGlobal('fetch', vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-      if (init?.method === 'PUT') {
-        putCount += 1
-        return putCount === 1
-          ? jsonResponse({ thongBao: 'Mã toà A đã tồn tại.' }, 409)
-          : jsonResponse({ thongBao: 'Ngày chốt số phải từ 1 đến 28.' }, 400)
-      }
-      return jsonResponse([toaA])
-    }))
-
-    await renderScreen('QTHT')
-    await vi.waitFor(() => expect(container.textContent).toContain('Sửa Toà A'))
-    await act(async () => clickButton('Sửa Toà A'))
-    await act(async () => submitForm('building-form'))
-    await vi.waitFor(() => expect(container.textContent).toContain('Mã toà A đã tồn tại.'))
-    await fill('ngayChotSo', '29')
-    await act(async () => submitForm('building-form'))
-    await vi.waitFor(() => expect(container.textContent).toContain('Ngày chốt số phải từ 1 đến 28.'))
-  })
-
   it('NFR-USA-01 renders the dedicated mobile building layout', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse([toaA, toaB])))
 
@@ -124,19 +80,20 @@ describe('DanhMucToaNha', () => {
     expect(container.querySelector('[data-mobile-building-list]')).not.toBeNull()
   })
 
-  it('NFR-USA-01 wraps the selected building action label on mobile', async () => {
-    const longBuilding = { ...toaA, ten: 'Toà nhà có tên rất dài để kiểm tra giao diện điện thoại' }
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse([longBuilding])))
+  it('mỗi toà là liên kết tới /toa-nha/{id}; không còn thẻ chi tiết hay nút Sửa dưới bảng', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse([toaA, toaB])))
+    await renderScreen('CHU')
+    await vi.waitFor(() => expect(container.textContent).toContain('Toà B'))
+    expect([...container.querySelectorAll('a.td-main')].map((a) => a.getAttribute('href'))).toEqual(['/toa-nha/1', '/toa-nha/2'])
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
+    expect([...container.querySelectorAll('button')].some((b) => b.textContent?.startsWith('Sửa'))).toBe(false)
+  })
 
-    await renderScreen('CHU', true)
-
-    const actionButton = [...container.querySelectorAll<HTMLButtonElement>('button')]
-      .find((item) => item.textContent?.startsWith('Sửa'))
-    expect(actionButton).toBeDefined()
-    expect(actionButton?.style.maxWidth).toBe('100%')
-    expect(actionButton?.style.minWidth).toBe('0px')
-    expect(actionButton?.style.whiteSpace).toBe('normal')
-    expect(actionButton?.style.overflowWrap).toBe('anywhere')
+  it('lỗi tải có Thử lại và câu "Dữ liệu chưa bị thay đổi."', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ thongBao: 'Máy chủ bận.' }, 500)))
+    await renderScreen('CHU')
+    await vi.waitFor(() => expect(container.textContent).toContain('Dữ liệu chưa bị thay đổi.'))
+    expect(container.textContent).toContain('Thử lại')
   })
 })
 
@@ -146,12 +103,12 @@ async function renderScreen(vaiTro: string, mobile = false) {
 }
 
 function clickButton(label: string) {
-  const button = [...container.querySelectorAll('button')].find((item) => item.textContent?.trim() === label) as HTMLButtonElement
+  const button = [...document.querySelectorAll('button')].find((item) => item.textContent?.trim() === label) as HTMLButtonElement
   button.click()
 }
 
 async function fill(name: string, value: string) {
-  const input = container.querySelector(`[name="${name}"]`) as HTMLInputElement | HTMLTextAreaElement
+  const input = document.querySelector(`[name="${name}"]`) as HTMLInputElement | HTMLTextAreaElement
   await act(async () => {
     const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set
     setter?.call(input, value)
@@ -160,7 +117,7 @@ async function fill(name: string, value: string) {
 }
 
 function submitForm(testId: string) {
-  const form = container.querySelector(`[data-testid="${testId}"]`) as HTMLFormElement
+  const form = document.querySelector(`[data-testid="${testId}"]`) as HTMLFormElement
   form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 }
 

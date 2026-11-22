@@ -534,7 +534,7 @@ describe('App role navigation', () => {
     expect(mountedApp.container.textContent).not.toContain('Xoá')
   })
 
-  it('FR-BLD-01 lets the owner create and edit a building while showing the February closing-day rule', async () => {
+  it('FR-BLD-01 lets the owner create a building (form in drawer) while showing the February closing-day rule', async () => {
     const chuSoHuu = MENU_BY_ROLE[1]
     const fetchMock = buildFetchMock(chuSoHuu.nguoiDung)
     vi.stubGlobal('fetch', fetchMock)
@@ -545,17 +545,16 @@ describe('App role navigation', () => {
       expect(mountedApp!.container.textContent).toContain('Toà A')
     })
 
-    expect(mountedApp.container.textContent).toContain('tháng hai')
-
     await act(async () => {
       findButton(mountedApp!.container, 'Khai báo toà mới').click()
     })
 
     const createForm = await vi.waitFor(() => {
-      const form = mountedApp!.container.querySelector('[data-testid="building-form"]')
+      const form = document.querySelector('[data-testid="building-form"]')
       expect(form).not.toBeNull()
       return form as HTMLFormElement
     })
+    expect(document.body.textContent).toContain('tháng hai')
 
     await act(async () => {
       setInputValue(createForm.querySelector('input[name="maToa"]') as HTMLInputElement, 'TN-C')
@@ -596,26 +595,6 @@ describe('App role navigation', () => {
       tkNganHang: '0123456789',
       nguongThatThoat: '12.35',
       batBuocAnhCongTo: false,
-    })
-
-    await act(async () => {
-      findButton(mountedApp!.container, 'Sửa Toà C').click()
-    })
-
-    const editForm = await vi.waitFor(() => {
-      const form = mountedApp!.container.querySelector('[data-testid="building-form"]')
-      expect(form).not.toBeNull()
-      return form as HTMLFormElement
-    })
-
-    await act(async () => {
-      setInputValue(editForm.querySelector('input[name="ten"]') as HTMLInputElement, 'Toà C đã sửa')
-      editForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
-    })
-
-    await vi.waitFor(() => {
-      expect(mountedApp!.container.textContent).toContain('Toà C đã sửa')
-      expect(mountedApp!.container.textContent).toContain('12.35')
     })
   })
 
