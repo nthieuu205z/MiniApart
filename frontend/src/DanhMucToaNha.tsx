@@ -83,7 +83,8 @@ export function FormToaNha({ token, toa, mobile = false, onXong, onHuy }: { toke
     <>
       {error && <div role="alert" className="alert alert-danger"><Icon name="alert" />{error}</div>}
     <form data-testid="building-form" onSubmit={save} style={{ display: "grid", gap: 12 }}>
-            <Field label="Mã toà">
+            <p className="t-sm" style={{ margin: 0 }}>Ngày chốt số chỉ nhận từ 1 đến 28 để tháng hai vẫn luôn có ngày chốt.</p>
+      <Field label="Mã toà">
         <input className="input" required name="maToa" value={form.maToa} onChange={(e) => update("maToa", e.target.value)} />
       </Field>
       <Field label="Tên toà">

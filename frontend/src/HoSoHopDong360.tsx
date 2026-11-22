@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import './HoSoHopDongToa.css'
 import { ApiError, fetchCongNoBaoCao, fetchHopDongQuanLy, fetchHoaDonQuanLy, type ThongTinHopDong, type ThongTinToaNha } from './api'
-import { CSS_BANG_QUAN_TRI, MenuThaoTac, MucMenu } from './bangQuanTriChung'
+import { chuCaiDau, CSS_BANG_QUAN_TRI, MenuThaoTac, MucMenu } from './bangQuanTriChung'
 import { Button } from './design/core/Button'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Icon } from './design/core/Icon'
@@ -149,18 +149,18 @@ export default function HoSoHopDong360({ token, vaiTro, thamSo, dieuHuong }: Tra
             {hd.dichVuApDung.length === 0 ? <p className="t-sm">Hợp đồng chưa áp dụng dịch vụ nào.</p>
               : hd.dichVuApDung.map((d) => <div className="sumrow" key={d.dichVuId}><span>{d.tenDichVu}</span><b>{Number(d.donGiaApDung) > 0 ? `${dinhDangTien(d.donGiaApDung)} ₫` : 'Miễn phí'}</b></div>)}
           </Card>
-          <Card title="Hoá đơn theo hợp đồng">
+          <Card title="Hoá đơn theo hợp đồng" action={<span className="t-meta">{no === null ? 'chưa tải được' : no.length ? `${no.length} kỳ còn nợ` : 'không còn nợ'}</span>}>
             {no === null ? <p className="t-sm">Chưa tải được công nợ của hợp đồng này. Dữ liệu chưa bị thay đổi.</p>
               : no.length === 0 ? <p className="t-sm">Không còn khoản nợ nào.</p>
-                : <div className="hs-cuon"><table className="table"><thead><tr><th scope="col">Hoá đơn</th><th scope="col">Hạn</th><th scope="col" className="num">Còn lại</th></tr></thead>
-                  <tbody>{no.map((k) => <tr key={k.id}><th scope="row" className="td-main">{k.ma}</th><td>{dinhDangNgayIso(k.han)}</td><td className="num t-money t-danger">{dinhDangTien(k.conLai)} ₫</td></tr>)}</tbody></table></div>}
+                : <div className="table-wrap table-wrap-cards"><table className="table table-cards"><thead><tr><th scope="col">Hoá đơn</th><th scope="col">Hạn</th><th scope="col" className="num">Còn lại</th></tr></thead>
+                  <tbody>{no.map((k) => <tr key={k.id}><td className="td-main" data-label="Hoá đơn" data-the="tieu-de">{k.ma}</td><td data-label="Hạn">{dinhDangNgayIso(k.han)}</td><td className="num t-money t-danger" data-label="Còn lại">{dinhDangTien(k.conLai)} ₫</td></tr>)}</tbody></table></div>}
           </Card>
         </div>
         <div className="side" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
           <Card title="Liên kết">
             <div style={{ margin: '4px -24px -8px' }}>
-              <a className="irow" href={`/nguoi-thue/${hd.nguoiThueId}`}><div className="body"><div className="t">{hd.hoTenNguoiThue}</div><div className="s">Người thuê chính</div></div><Icon name="chevron-right" size="sm" /></a>
-              <a className="irow" href={`/phong/${hd.phongId}?toaNhaId=${toa.id}`}><div className="body"><div className="t">Phòng {hd.soPhong}</div><div className="s">{toa.ten}</div></div><Icon name="chevron-right" size="sm" /></a>
+              <a className="irow" href={`/nguoi-thue/${hd.nguoiThueId}`}><span className={`avatar sm h${(hd.nguoiThueId % 5) + 1}`} aria-hidden="true">{chuCaiDau(hd.hoTenNguoiThue)}</span><div className="body"><div className="t">{hd.hoTenNguoiThue}</div><div className="s">Người thuê chính</div></div><Icon name="chevron-right" size="sm" /></a>
+              <a className="irow" href={`/phong/${hd.phongId}?toaNhaId=${toa.id}`}><span className="tile" aria-hidden="true"><Icon name="door" /></span><div className="body"><div className="t">Phòng {hd.soPhong}</div><div className="s">{toa.ten}</div></div><Icon name="chevron-right" size="sm" /></a>
             </div>
           </Card>
           <Card title="Mốc">

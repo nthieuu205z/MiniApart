@@ -1,0 +1,122 @@
+[
+{
+"name": "08-chu-hd-sap-het-1440",
+"path": "/hop-dong/9",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "08-chu-hd-cho-ky-1440",
+"path": "/hop-dong/10",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "08-chu-hd-binh-thuong-1440",
+"path": "/hop-dong/1",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "08-chu-hd-sap-het-390",
+"path": "/hop-dong/9",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "08-chu-hd-cho-ky-390",
+"path": "/hop-dong/10",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "09-chu-toa-3-1440",
+"path": "/toa-nha/3",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "09-chu-toa-3-390",
+"path": "/toa-nha/3",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "chu-hop-dong-ds-1440",
+"path": "/hop-dong?toaNhaId=3",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "chu-hop-dong-ds-390",
+"path": "/hop-dong?toaNhaId=3",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "chu-toa-nha-ds-1440",
+"path": "/toa-nha",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "chu-toa-nha-ds-390",
+"path": "/toa-nha",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "qtht-toa-3-1440",
+"path": "/toa-nha/3",
+"role": "QTHT",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "qtht-toa-3-390",
+"path": "/toa-nha/3",
+"role": "QTHT",
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "08-chu-hd-sap-het-ngan-gia-han-1440",
+"path": "/hop-dong/9",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"click": ".ph-acts .btn-primary"
+},
+{
+"name": "09-chu-toa-3-ngan-sua-390",
+"path": "/toa-nha/3",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"click": ".ph-acts .btn-secondary"
+}
+]

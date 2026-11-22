@@ -5,11 +5,14 @@
 .nganx-h h2 { flex: 1; min-width: 0; font: 600 18px/1.35 var(--ma-font-ui); }
 .nganx-b { flex: 1; overflow: auto; padding: 20px 24px 28px; min-width: 0; }
 .hs-so-do .room { text-decoration: none; }
-.hs-tang { font: 500 13px/1.4 var(--ma-font-ui); color: var(--ma-text-muted); margin: 14px 0 6px; }
-.hs-tang:first-child { margin-top: 0; }
-.hs-cuon { overflow-x: auto; }
+.hs-hang-tang { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px 12px; align-items: start; }
+.hs-hang-tang + .hs-hang-tang { margin-top: 10px; }
+.hs-tang { font: 500 13px/1.4 var(--ma-font-ui); color: var(--ma-text-muted); padding-top: 22px; }
 @media (max-width: 767px) {
   .nganx { border-radius: 0; }
+  .hs-toa .card-head { flex-wrap: wrap; row-gap: 4px; }
+  .hs-hang-tang { grid-template-columns: minmax(0, 1fr); }
+  .hs-tang { padding-top: 0; }
   .nganx-h, .nganx-b { padding-left: 16px; padding-right: 16px; }
   .prof .ph-acts { flex-wrap: wrap; width: 100%; }
   .prof .ph-acts .btn { flex: 1 1 auto; }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import './HoSoHopDongToa.css'
 import { ApiError, fetchCongNoBaoCao, fetchHoaDonQuanLy, fetchHopDongQuanLy, fetchPhong, fetchToaNha, type ThongTinHopDong, type ThongTinPhong, type ThongTinToaNha, type ThongTinYeuCauSuaChua } from './api'
-import { CSS_BANG_QUAN_TRI } from './bangQuanTriChung'
+import { chuCaiDau, CSS_BANG_QUAN_TRI } from './bangQuanTriChung'
 import { FormToaNha } from './DanhMucToaNha'
 import { Button } from './design/core/Button'
 import { dinhDangTien } from './design/core/format'
@@ -91,7 +91,7 @@ export default function HoSoToa360({ token, vaiTro, thamSo, dieuHuong }: TrangPr
   const q = `?toaNhaId=${toa.id}`
 
   return (
-    <div style={{ display: 'grid', gap: 16, minWidth: 0 }} data-testid="ho-so-toa">
+    <div className="hs-toa" style={{ display: 'grid', gap: 16, minWidth: 0 }} data-testid="ho-so-toa">
       <style>{CSS_BANG_QUAN_TRI}</style>
       <Breadcrumb items={[{ nhan: 'Toà & phòng', href: '/toa-nha' }, toa.ten]} />
       <div className="prof">
@@ -124,7 +124,7 @@ export default function HoSoToa360({ token, vaiTro, thamSo, dieuHuong }: TrangPr
 
           <Card title="Sơ đồ phòng" action={<span className="t-meta">bấm vào phòng để mở hồ sơ phòng</span>}>
             {phong.length === 0 ? <p className="t-sm">Toà này chưa có phòng nào. Dùng nút “Khai báo phòng” ở đầu trang.</p> : tang.map((t) => (
-              <div key={t}>
+              <div key={t} className="hs-hang-tang">
                 <div className="hs-tang">Tầng {t}</div>
                 <div className="rooms hs-so-do">
                   {phong.filter((p) => p.tang === t).map((p) => {
@@ -144,12 +144,14 @@ export default function HoSoToa360({ token, vaiTro, thamSo, dieuHuong }: TrangPr
             <div style={{ margin: '4px -24px -8px' }}>
               {nguoiNo.slice(0, 3).map((n) => (
                 <a key={n.id} className="irow" href={`/nguoi-thue/${n.id}`}>
+                  <span className={`avatar sm h${(n.id % 5) + 1}`} aria-hidden="true">{chuCaiDau(n.ten)}</span>
                   <div className="body"><div className="t">{n.ten} · Phòng {n.phong}</div><div className="s">{n.ky} kỳ chưa trả đủ · trễ {n.tre} ngày</div></div>
                   <div className="money t-danger">{dinhDangTien(n.tong)} ₫</div><Icon name="chevron-right" size="sm" />
                 </a>
               ))}
               {canXuLy.map((h) => (
                 <a key={h.id} className="irow" href={`/hop-dong/${h.id}`}>
+                  <span className="tile warm" aria-hidden="true"><Icon name="contract" /></span>
                   <div className="body"><div className="t">Hợp đồng #{h.id} · Phòng {h.soPhong} · {h.hoTenNguoiThue}</div><div className="s">{h.trangThai === 'CHO_KY' ? `chờ ký, bắt đầu ${h.ngayBatDau.split('-').reverse().join('/')}` : `hết hạn ${h.ngayKetThuc.split('-').reverse().join('/')}`}</div></div>
                   <StatusTag tone={h.trangThai === 'CHO_KY' ? 'draft' : 'waiting'}>{h.trangThai === 'CHO_KY' ? 'Chờ ký' : `Còn ${h.soNgayConLai} ngày`}</StatusTag><Icon name="chevron-right" size="sm" />
                 </a>
@@ -160,7 +162,7 @@ export default function HoSoToa360({ token, vaiTro, thamSo, dieuHuong }: TrangPr
         </>
       ) : (
         <Card title="Thông tin toà">
-          <dl className="kv" style={{ marginTop: 8 }}>
+          <dl className="kv" style={{ marginTop: 8, gridTemplateColumns: '140px minmax(0, 1fr)' }}>
             <dt>Mã toà</dt><dd>{toa.maToa}</dd>
             <dt>Địa chỉ</dt><dd>{toa.diaChi}</dd>
             <dt>Số tầng</dt><dd>{toa.soTang}</dd>
