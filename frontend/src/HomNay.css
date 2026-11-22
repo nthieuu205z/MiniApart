@@ -1,0 +1,16 @@
+/* Hôm nay: chỉ phần khung ux-v2.css chưa có. Màu/cỡ chữ dùng biến sẵn. */
+.hom-nay { display: grid; gap: 16px; min-width: 0; }
+.hom-nay .hn-skel { display: grid; gap: 12px; padding: 12px 24px 16px; }
+.hom-nay .hn-tien { width: 132px; }
+.hom-nay .irow .chev { display: grid; place-items: center; }
+.hom-nay .hn-cuoi { white-space: nowrap; }
+.hom-nay .hn-so { font-size: 20px; min-width: 40px; text-align: right; }
+.hom-nay .hn-dots { padding: 4px 24px 12px; }
+.hom-nay .hn-dot { display: inline-flex; align-items: center; gap: 6px; margin-right: 10px; }
+.hom-nay .sec .empty { padding: 16px 24px 20px; }
+.hom-nay .sec-h .push, .hom-nay .blk-h .push { margin-left: auto; }
+@media (max-width: 767px) {
+  .hom-nay .hn-tien { width: auto; }
+  .hom-nay .hn-dots, .hom-nay .hn-skel { padding-left: 16px; padding-right: 16px; }
+  .hom-nay .irow .btn { flex: none; }
+}
