@@ -83,7 +83,7 @@ export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems 
         minWidth: 0,
         minHeight: 'var(--ma-bottom-nav-height)',
         padding: '5px 3px',
-        fontSize: 12,
+        fontSize: 13,
         lineHeight: 1.1,
         textAlign: 'center',
         textDecoration: 'none',
@@ -112,7 +112,7 @@ export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems 
       {item.icon ? <Icon name={item.icon} /> : <Glyph name={item.glyph} size={variant === 'bar' ? 16 : 15} strokeWidth={1.5} color={item.active ? 'var(--ma-brand-accent)' : 'var(--ma-text-secondary)'} />}
       <span style={variant === 'bar' ? { minWidth: 0, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } : { minWidth: 0 }}>{variant === 'bar' ? item.shortLabel ?? item.label : item.label}</span>
       {item.count ? (
-        <span style={{ marginLeft: variant === 'bar' ? 0 : 'auto', fontSize: 11, fontWeight: 700, color: item.countTone === 'waiting' ? 'var(--ma-waiting)' : 'var(--ma-urgent)' }}>
+        <span style={{ marginLeft: variant === 'bar' ? 0 : 'auto', fontSize: 13, fontWeight: 700, color: item.countTone === 'waiting' ? 'var(--ma-waiting)' : 'var(--ma-urgent)' }}>
           {item.count}
         </span>
       ) : null}
@@ -144,7 +144,7 @@ export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems 
                     aria-current={it.active ? 'page' : undefined}
                     aria-label={collapsed ? it.label : undefined}
                     title={collapsed ? it.label : undefined}
-                    style={{ minHeight: collapsed ? 'var(--ma-hit-mobile)' : 36, marginLeft: it.depth === 1 ? 32 : undefined }}
+                    style={{ minHeight: collapsed ? 'var(--ma-hit-mobile)' : undefined, marginLeft: it.depth === 1 ? 32 : undefined }}
                   >
                     {it.depth === 1 ? null : it.icon ? <Icon name={it.icon} /> : <Glyph name={it.glyph} size={16} strokeWidth={it.active ? 2 : 1.6} />}
                     <span>{it.label}</span>
@@ -164,7 +164,7 @@ export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems 
           </div>
 
           {footerItems.map((it) => (
-            <a key={it.label} className="nav-item" href={it.href || '#'} aria-current={it.active ? 'page' : undefined} aria-label={collapsed ? it.label : undefined} title={collapsed ? it.label : undefined} style={{ minHeight: collapsed ? 'var(--ma-hit-mobile)' : 36 }}>
+            <a key={it.label} className="nav-item" href={it.href || '#'} aria-current={it.active ? 'page' : undefined} aria-label={collapsed ? it.label : undefined} title={collapsed ? it.label : undefined} style={{ minHeight: collapsed ? 'var(--ma-hit-mobile)' : undefined }}>
               {it.icon ? <Icon name={it.icon} /> : <Glyph name={it.glyph} size={16} strokeWidth={it.active ? 2 : 1.6} />}
               <span>{it.label}</span>
             </a>
@@ -259,7 +259,7 @@ export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems 
                   background: 'transparent',
                   color: 'var(--ma-text-secondary)',
                   fontFamily: 'var(--ma-font-ui)',
-                  fontSize: 12,
+                  fontSize: 13,
                   lineHeight: 1.1,
                   textAlign: 'center',
                   overflow: 'hidden',

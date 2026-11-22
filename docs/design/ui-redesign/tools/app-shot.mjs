@@ -45,7 +45,9 @@ try {
     vaiTroHienTai = vaiTro
     await p.goto(`${BASE}${j.path}`, { settleMs: 1500 })
     await p.eval('document.fonts.ready.then(() => 1)')
+    if (j.click) { await p.eval(`document.querySelector(${JSON.stringify(j.click)}).click()`); await sleep(400) } // job.click: bấm 1 nút (vd ☰) trước khi chụp
     const qa = await p.eval(readFileSync(join(HERE, 'qa-probe.js'), 'utf8'))
+    qa.khongCoQuyen = await p.eval(`!!document.querySelector('#khong-co-quyen')`) // quét đường dẫn: có rơi vào trang Không có quyền không
     const png = join(outDir, `${j.name}.png`)
     await p.screenshot({ path: png, format: 'png', fullPage: !!j.full })
     ketQua.push({ name: j.name, path: j.path, role: j.role ?? null, w: j.w, png, qa })

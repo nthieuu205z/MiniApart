@@ -45,7 +45,7 @@ a.tab[aria-current="page"]::after { content: ""; position: absolute; left: 12px;
 .sb-toa.static:hover { border-color: var(--ma-line-200); }
 
 /* MỚI: thanh trên — tìm nhanh toàn cục + thông báo có số; bỏ "Không gian quản lý" và breadcrumb lặp */
-.ux-top { display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.ux-top { display: flex; align-items: center; gap: 8px; min-height: 48px; margin-bottom: 8px; }
 .ux-search { display: flex; align-items: center; gap: 10px; width: min(480px, 100%); height: 40px; padding: 0 8px 0 14px; border-radius: var(--ma-radius); border: 1px solid var(--ma-line-200); background: var(--ma-bg-card); color: var(--ma-text-muted); font: var(--ma-text-body-sm); cursor: text; text-align: left; }
 .ux-search:hover { border-color: var(--ma-line-600); }
 .ux-search .grow { flex: 1; }
@@ -258,7 +258,7 @@ a.vstep:hover .tt { text-decoration: underline; text-underline-offset: 3px; }
 
 /* Đáp ứng */
 @media (max-width: 1279px) {
-  .ma-app-shell .sb-toa .grow, .ma-app-shell .sb-toa > .ic-sm { display: none; }
+  .ma-app-shell .sidebar.is-collapsed .sb-toa .grow, .ma-app-shell .sidebar.is-collapsed .sb-toa > .ic-sm { display: none; }
   .ma-app-shell .sidebar.is-collapsed .sb-toa { width: 44px; min-height: 44px; padding: 0; justify-content: center; }
   .ma-app-shell .sidebar.is-collapsed .sb-toa-list { left: 0; right: auto; width: 240px; }
   .ma-app-shell .sidebar.is-collapsed .sb-toa-list .grow { display: block; }

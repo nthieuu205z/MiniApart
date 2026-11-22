@@ -1,0 +1,338 @@
+[
+ {
+  "name": "QTHT_tai-khoan",
+  "path": "/tai-khoan",
+  "role": "QTHT",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QTHT_toa-nha",
+  "path": "/toa-nha",
+  "role": "QTHT",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QTHT_nhat-ky-thao-tac",
+  "path": "/nhat-ky-thao-tac",
+  "role": "QTHT",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_tong-quan",
+  "path": "/tong-quan",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_toa-nha",
+  "path": "/toa-nha",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_nguoi-thue",
+  "path": "/nguoi-thue",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_hop-dong",
+  "path": "/hop-dong",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_dich-vu",
+  "path": "/dich-vu",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_ghi-chi-so",
+  "path": "/ghi-chi-so",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_thu-tien",
+  "path": "/thu-tien",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_cu-tru",
+  "path": "/cu-tru",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_lich-hen",
+  "path": "/lich-hen",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_hoa-don",
+  "path": "/hoa-don",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_cong-no",
+  "path": "/cong-no",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_bao-cao",
+  "path": "/bao-cao",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_bao-cao_tieu-thu",
+  "path": "/bao-cao/tieu-thu",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_bao-cao_chi-phi-bao-tri",
+  "path": "/bao-cao/chi-phi-bao-tri",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_su-co",
+  "path": "/su-co",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_an-toan",
+  "path": "/an-toan",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "CHU_nhat-ky-thao-tac",
+  "path": "/nhat-ky-thao-tac",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_nhac-viec",
+  "path": "/nhac-viec",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_ghi-chi-so",
+  "path": "/ghi-chi-so",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_hoa-don",
+  "path": "/hoa-don",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_thu-tien",
+  "path": "/thu-tien",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_phong",
+  "path": "/phong",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_hop-dong",
+  "path": "/hop-dong",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_nguoi-thue",
+  "path": "/nguoi-thue",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_dich-vu",
+  "path": "/dich-vu",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_cu-tru",
+  "path": "/cu-tru",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_an-toan",
+  "path": "/an-toan",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_lich-hen",
+  "path": "/lich-hen",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_su-co",
+  "path": "/su-co",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "QUAN_LY_thong-bao",
+  "path": "/thong-bao",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "THO_tho_tong-quan",
+  "path": "/tho/tong-quan",
+  "role": "THO",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "THO_viec-cua-toi",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "THO_tho_chi-phi",
+  "path": "/tho/chi-phi",
+  "role": "THO",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "THO_thong-bao",
+  "path": "/thong-bao",
+  "role": "THO",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "NGUOI_THUE_hoa-don-cua-toi",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "NGUOI_THUE_lich-su",
+  "path": "/lich-su",
+  "role": "NGUOI_THUE",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "NGUOI_THUE_tieu-thu",
+  "path": "/tieu-thu",
+  "role": "NGUOI_THUE",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "NGUOI_THUE_hop-dong",
+  "path": "/hop-dong",
+  "role": "NGUOI_THUE",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ },
+ {
+  "name": "NGUOI_THUE_bao-hong",
+  "path": "/bao-hong",
+  "role": "NGUOI_THUE",
+  "w": 1440,
+  "h": 900,
+  "full": false
+ }
+]
