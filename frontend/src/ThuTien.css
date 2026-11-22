@@ -1,0 +1,11 @@
+/* Cục bộ của màn Thu tiền (không đụng design/*). */
+.tt-grid { display: grid; gap: 16px; min-width: 0 }
+@media (min-width: 768px) { .tt-grid .table td { white-space: nowrap } }
+@media (min-width: 1100px) { .tt-grid { grid-template-columns: minmax(0, 1.4fr) minmax(340px, 1fr); align-items: start } .tt-panel { position: sticky; top: 16px } }
+.gtable .td-person { text-decoration: none }
+.gtable .xbtn { display: inline-grid; place-items: center }
+@media (max-width: 767px) {
+  /* Điện thoại: giữ người thuê + còn nợ + nút mở; kỳ, trễ, đã thu xem ở hàng con. */
+  .gtable th:nth-child(3), .gtable td:nth-child(3), .gtable th:nth-child(4), .gtable td:nth-child(4), .gtable th:nth-child(5), .gtable td:nth-child(5) { display: none }
+  .gtable tr.kid td:nth-child(2) { padding-left: 16px }
+}
