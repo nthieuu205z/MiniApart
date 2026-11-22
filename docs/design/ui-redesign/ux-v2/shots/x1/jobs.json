@@ -1,0 +1,18 @@
+[
+  {"name":"04-chu-thu-tien-1440","path":"/thu-tien","role":"CHU","w":1440,"h":900,"full":true},
+  {"name":"05-chu-thu-tien-chon-1440","path":"/thu-tien","role":"CHU","w":1440,"h":900,"full":true,"click":"tr.grp input[type=checkbox]"},
+  {"name":"27-chu-thu-tien-1180","path":"/thu-tien","role":"CHU","w":1180,"h":820,"full":true},
+  {"name":"25-chu-thu-tien-390","path":"/thu-tien","role":"CHU","w":390,"h":844,"full":true},
+  {"name":"chu-thu-tien-chon-390","path":"/thu-tien","role":"CHU","w":390,"h":844,"full":true,"click":"tr.grp input[type=checkbox]"},
+  {"name":"chu-thu-tien-ngan-1440","path":"/thu-tien","role":"CHU","w":1440,"h":900,"full":false,"click":".ph-acts button"},
+  {"name":"chu-thu-tien-ngan-390","path":"/thu-tien","role":"CHU","w":390,"h":844,"full":false,"click":".ph-acts button"},
+  {"name":"chu-thu-tien-da-thu-1440","path":"/thu-tien?tab=da-thu","role":"CHU","w":1440,"h":900,"full":true},
+  {"name":"chu-thu-tien-da-thu-390","path":"/thu-tien?tab=da-thu","role":"CHU","w":390,"h":844,"full":true},
+  {"name":"chu-thu-tien-coc-1440","path":"/thu-tien?tab=coc&toaNhaId=3","role":"CHU","w":1440,"h":900,"full":true},
+  {"name":"chu-thu-tien-coc-390","path":"/thu-tien?tab=coc&toaNhaId=3","role":"CHU","w":390,"h":844,"full":true},
+  {"name":"chu-hoa-don-1440","path":"/hoa-don?toaNhaId=3","role":"CHU","w":1440,"h":900,"full":true},
+  {"name":"ql-thu-tien-1440","path":"/thu-tien","role":"QUAN_LY","w":1440,"h":900,"full":true},
+  {"name":"ql-thu-tien-390","path":"/thu-tien","role":"QUAN_LY","w":390,"h":844,"full":true},
+  {"name":"ql-hoa-don-1440","path":"/hoa-don","role":"QUAN_LY","w":1440,"h":900,"full":true},
+  {"name":"ql-hoa-don-390","path":"/hoa-don","role":"QUAN_LY","w":390,"h":844,"full":true}
+]

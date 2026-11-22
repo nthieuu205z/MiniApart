@@ -4,11 +4,14 @@
 @media (min-width: 1100px) { .tt-grid { grid-template-columns: minmax(0, 1.4fr) minmax(340px, 1fr); align-items: start } .tt-panel { position: sticky; top: 16px } }
 .gtable .td-person { text-decoration: none }
 .gtable .xbtn { display: inline-grid; place-items: center }
+.tt-nhom { display: flex; align-items: center; gap: 8px }
+.gtable tr.kid td:nth-child(3) { white-space: nowrap }
 
 /* Ngăn Ghi nhận thu: phủ bên phải ở máy tính, toàn màn ở điện thoại. Dùng .drawer của ux-v2 nhưng cố định theo khung nhìn. */
 .tt-nen { position: fixed; inset: 0; z-index: 80; display: flex; justify-content: flex-end; padding: 16px; background: rgba(28, 27, 25, .36) }
 .tt-nen .tt-ngan { position: relative; top: auto; width: 480px; max-width: 100%; height: 100%; max-height: none; box-shadow: var(--ma-shadow-lg) }
 .tt-ngan:focus { outline: none }
+.tt-ngan .table td .td-main { white-space: nowrap }
 
 @media (max-width: 767px) {
   .tt-nen { padding: 0 }
@@ -16,5 +19,14 @@
   .tt-ngan .drawer-h, .tt-ngan .drawer-b { padding-left: 16px; padding-right: 16px }
   /* Điện thoại: giữ người thuê + còn nợ + nút mở; kỳ, trễ, đã thu xem ở hàng con. */
   .gtable th:nth-child(3), .gtable td:nth-child(3), .gtable th:nth-child(4), .gtable td:nth-child(4), .gtable th:nth-child(5), .gtable td:nth-child(5) { display: none }
-  .gtable tr.kid td:nth-child(2) { padding-left: 16px }
+  .gtable tr.kid td:nth-child(2) { padding-left: 8px }
+  /* Bảng hẹp: bỏ ảnh đại diện, ép cột chọn/mở gọn để còn nợ không bị cắt. */
+  .gtable th, .gtable td { padding-left: 8px; padding-right: 8px }
+  .gtable th:first-child, .gtable td:first-child { width: 44px; padding-left: 0; padding-right: 0; text-align: center }
+  .gtable th:last-child, .gtable td:last-child { width: 1px; padding-left: 0; padding-right: 8px }
+  .gtable .avatar { display: none }
+  .gtable td:nth-child(2) { white-space: normal }
+  .gtable td.num, .gtable th.num { padding-right: 4px }
+  .gtable tr.kid .btn { min-width: 44px; min-height: 44px; padding: 0 8px }
+  .gtable tr.kid td:nth-child(2) .t-meta { display: none }
 }
