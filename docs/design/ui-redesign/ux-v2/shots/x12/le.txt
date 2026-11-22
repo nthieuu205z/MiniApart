@@ -1,0 +1,10 @@
+{"role":"THO","w":1440,"path":"/viec-cua-toi","h1":1,"h1box":{"l":320,"r":601,"w":519},"card":{"l":321,"r":49,"w":1070},"cardTag":"TABLE.","sx":0}
+{"role":"THO","w":390,"path":"/viec-cua-toi","h1":1,"h1box":{"l":16,"r":332,"w":42},"card":{"l":16,"r":16,"w":358},"cardTag":"ARTICLE.job","sx":0}
+{"role":"NGUOI_THUE","w":1440,"path":"/hoa-don-cua-toi","h1":0,"h1box":null,"card":{"l":349,"r":77,"w":1014},"cardTag":"TABLE.table","sx":0}
+{"role":"NGUOI_THUE","w":390,"path":"/hoa-don-cua-toi","h1":1,"h1box":{"l":16,"r":305,"w":69},"card":null,"cardTag":null,"sx":0}
+{"role":"QTHT","w":1440,"path":"/tai-khoan","h1":1,"h1box":{"l":320,"r":224,"w":896},"card":{"l":320,"r":48,"w":1072},"cardTag":"SECTION.card bq-the-loc","sx":0}
+{"role":"QTHT","w":390,"path":"/tai-khoan","h1":1,"h1box":{"l":16,"r":16,"w":358},"card":{"l":16,"r":16,"w":358},"cardTag":"SECTION.card bq-the-loc","sx":0}
+{"role":"CHU","w":1440,"path":"/hom-nay","h1":1,"h1box":{"l":320,"r":48,"w":1072},"card":{"l":1052,"r":48,"w":340},"cardTag":"SECTION.card","sx":0}
+{"role":"CHU","w":390,"path":"/hom-nay","h1":1,"h1box":{"l":16,"r":16,"w":358},"card":{"l":16,"r":16,"w":358},"cardTag":"SECTION.card","sx":0}
+{"role":"QUAN_LY","w":1440,"path":"/hom-nay","h1":1,"h1box":{"l":320,"r":48,"w":1072},"card":{"l":1052,"r":48,"w":340},"cardTag":"SECTION.card","sx":0}
+{"role":"QUAN_LY","w":390,"path":"/hom-nay","h1":1,"h1box":{"l":16,"r":16,"w":358},"card":{"l":16,"r":16,"w":358},"cardTag":"SECTION.card","sx":0}

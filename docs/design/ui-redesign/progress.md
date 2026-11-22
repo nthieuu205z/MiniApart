@@ -103,3 +103,8 @@
 6. Ô nhập Ghi chỉ số desktop viền đen dày; bộ lọc trạng thái màn Báo hỏng khách 390 lệch phải.
 7. Figma mới có bản tổng quan v1 (9 màn SVG); chưa cập nhật theo bản đã code, chưa có component/Auto Layout.
 8. Backend B1–B13 (xem cuối plan 01–03). Nút `md` 44px vs spec 40px — chưa quyết.
+
+## UX v2 (nhánh `feat/ux-v2`, lô x0–x12)
+- Lô đã gộp: x0/x0b khung+lề, x1 thu tiền, x2 hôm nay, x3 hồ sơ người/phòng, x4 hồ sơ hợp đồng/toà, x5 chu kỳ, x6 sự cố, x7 tìm nhanh, x8 ghi chỉ số, x9 thợ, x10 khách, x11 tạo hợp đồng; x12 (`ui/x12-don`, chưa gộp): toà khung cho báo cáo/lịch hẹn/dashboard Chủ, lề Thợ 16px, nợ UI nhỏ, đo toàn bộ.
+- Test: 606 xanh (72 file). Ảnh: `ux-v2/shots/x12/` (168 job + 42 đường dẫn cũ; overflow/belowHit/contrast = 0).
+- Việc còn lại: Khách desktop chỉ hiện kỳ mới nhất; Thợ desktop còn bảng cũ; h1 thiếu/đôi ở Khách và QTHT `/hoa-don` trống (xem `shots/x12/BAO-CAO.md`); 7 file mồ côi chờ Chủ tịch quyết xoá; QR trả tiền phụ thuộc backend B2.
