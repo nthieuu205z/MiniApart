@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import HoaDonQuanLy from './HoaDonQuanLy'
+import { ToaDangChonProvider } from './toaDangChon'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined
@@ -74,5 +75,25 @@ describe('HoaDonQuanLy', () => {
       chonKy.dispatchEvent(new Event('change', { bubbles: true }))
     })
     expect(tao().getAttribute('aria-disabled')).toBeNull()
+  })
+
+  it('toà lấy từ khung: Chủ chọn một toà ở sidebar thì không còn ô chọn toà riêng; có link sang Chu kỳ tháng', async () => {
+    const taiToa = async () => [{ id: 3, ten: 'An Nhiên' }, { id: 4, ten: 'Mộc Lan' }] as never
+    await act(async () => { root = createRoot(container); root.render(<ToaDangChonProvider token="t" vaiTro="CHU" search="?toaNhaId=3" taiToa={taiToa}><HoaDonQuanLy token="t" /></ToaDangChonProvider>) })
+    await vi.waitFor(() => expect(container.querySelectorAll('[data-invoice-row]')).toHaveLength(3))
+    expect(container.querySelector('[data-invoice-building-select], #hoa-don-toa')).toBeNull()
+    expect(container.querySelector('a[href="/chu-ky"]')?.textContent).toContain('Phát hành hoá đơn kỳ mới ở Chu kỳ tháng')
+    expect(container.querySelector('h1')?.textContent).toBe('Thu tiền')
+    expect(calls.some((c) => c.url === '/api/toa-nha')).toBe(false) // không tự gọi fetchToaNha ngoài provider
+  })
+
+  it('Chủ đang "Tất cả toà": hiện ô chọn toà tại chỗ, chưa gọi API hoá đơn khi chưa chọn', async () => {
+    window.history.replaceState({}, '', '/hoa-don')
+    localStorage.clear()
+    const taiToa = async () => [{ id: 3, ten: 'An Nhiên' }, { id: 4, ten: 'Mộc Lan' }] as never
+    await act(async () => { root = createRoot(container); root.render(<ToaDangChonProvider token="t" vaiTro="CHU" search="" taiToa={taiToa}><HoaDonQuanLy token="t" /></ToaDangChonProvider>) })
+    await vi.waitFor(() => expect(container.querySelector('select option[value="4"]')).not.toBeNull())
+    expect(container.textContent).toContain('Chọn một toà nhà để xem hoá đơn.')
+    expect(calls.some((c) => c.url.startsWith('/api/hoa-don?'))).toBe(false)
   })
 })

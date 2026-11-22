@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ApiError, fetchHoaDonQuanLy, fetchKyThanhToan, fetchToaNha, type ThongTinHoaDonQuanLy, type ThongTinToaNha, type ThongTinKyThanhToan } from './api'
+import { ApiError, fetchHoaDonQuanLy, fetchKyThanhToan, type ThongTinHoaDonQuanLy, type ThongTinKyThanhToan } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
@@ -9,6 +9,8 @@ import { Icon } from './design/core/Icon'
 import { Card } from './design/layout/Card'
 import { DataTable, type DataTableChip, type DataTableColumn } from './design/table/DataTable'
 import { bulkInvoice, type BulkResult } from './financeApi'
+import { BuildingSelect, useBuildings } from './ManagementShared'
+import { ngoaiProvider, useToaDangChon } from './toaDangChon'
 
 type Props = { token: string; mobile?: boolean; vaiTro?: string }
 
@@ -46,7 +48,8 @@ export function layBoLocHoaDonQuanLyTuUrl(url: string | URL): BoLocHoaDonQuanLy 
 }
 
 export default function HoaDonQuanLy({ token, mobile = false }: Props): React.ReactElement {
-  const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
+  const chung = useToaDangChon()
+  const { buildings, buildingId, setBuildingId } = useBuildings(token)
   const [boLoc, setBoLoc] = useState<BoLocHoaDonQuanLy>(() => (
     typeof window === 'undefined' ? { toaNhaId: null, trangThai: 'NO_QUA_HAN' } : layBoLocHoaDonQuanLyTuUrl(window.location.href)
   ))
@@ -62,19 +65,11 @@ export default function HoaDonQuanLy({ token, mobile = false }: Props): React.Re
   const [reload, setReload] = useState(0)
   const variant = mobile ? 'mobile' : 'desktop'
 
+  // Toà do khung chọn (Chủ đang "Tất cả toà" thì chọn tại chỗ); ngoài khung (test) lấy toà trên URL, thiếu thì toà đầu.
   useEffect(() => {
-    let mounted = true
-    fetchToaNha(token)
-      .then((data) => {
-        if (!mounted) return
-        setToaNha(data)
-        setBoLoc((current) => ({ ...current, toaNhaId: current.toaNhaId ?? data[0]?.id ?? null }))
-      })
-      .catch((reason: unknown) => {
-        if (mounted) setLoi(reason instanceof ApiError ? reason.message : 'Không thể tải danh sách toà nhà.')
-      })
-    return () => { mounted = false }
-  }, [token])
+    if (ngoaiProvider(chung)) setBoLoc((current) => ({ ...current, toaNhaId: current.toaNhaId ?? buildingId }))
+    else setBoLoc((current) => (current.toaNhaId === buildingId ? current : { ...current, toaNhaId: buildingId }))
+  }, [chung, buildingId])
 
   useEffect(() => {
     if (boLoc.toaNhaId === null) { setKy([]); setKyId(null); return }
@@ -133,19 +128,15 @@ export default function HoaDonQuanLy({ token, mobile = false }: Props): React.Re
 
   return (
     <section data-testid="manager-invoice-screen" data-layout-variant={variant} aria-labelledby="manager-invoice-title" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
-      <header className="topbar">
-        <div className="title-block">
-          <h1 className="h1" id="manager-invoice-title">Hoá đơn</h1>
+      <div className="ph">
+        <div className="grow">
+          <h1 className="h1" id="manager-invoice-title">Thu tiền</h1>
           <p className="sub" data-invoice-active-filter>Đang lọc: {tieuDeBoLoc} · {visible.length} hoá đơn · còn phải thu {dinhDangTien(tongConLai)} ₫</p>
         </div>
-        <div className="topbar-actions">
-          <label className="sr-only" htmlFor="hoa-don-toa">Toà nhà</label>
-          <select id="hoa-don-toa" className="select" data-invoice-building-select style={{ width: 220 }} value={boLoc.toaNhaId ?? ''} onChange={(event) => setBoLoc((current) => ({ ...current, toaNhaId: soNguyenDuong(event.target.value) }))}>
-            <option value="">Chọn toà nhà</option>
-            {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
-          </select>
+        <div className="ph-acts">
+          <BuildingSelect buildings={buildings} value={boLoc.toaNhaId} onChange={(id) => { setBuildingId(id); setBoLoc((current) => ({ ...current, toaNhaId: id })) }} />
         </div>
-      </header>
+      </div>
 
       <Card>
         <div className="row-wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
@@ -168,6 +159,7 @@ export default function HoaDonQuanLy({ token, mobile = false }: Props): React.Re
             </select>
           </label>
           <span className="push" />
+          <a className="link-more brand" href="/chu-ky">Phát hành hoá đơn kỳ mới ở Chu kỳ tháng <Icon name="arrow-right" size="sm" /></a>
           <Button variant="secondary" blocked={busy || kyId === null} onClick={() => setXacNhanPhatHanh(true)}>
             Phát hành hoá đơn trong kỳ
           </Button>

@@ -150,7 +150,7 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
       {tab === 'coc' ? null : <div className="ph-acts"><Button onClick={() => setNgan({ hoaDonId: null })}><Icon name="plus" />Ghi nhận thu tiền</Button></div>}
     </div>
     {tab === 'coc' ? <TabCoc token={token} toaNhaId={toaId} buildings={buildings} chonToa={ngoaiProvider(chung) || !chung.coDinh ? chung.chon : undefined} />
-      : tab === 'da-thu' ? null
+      : tab === 'da-thu' ? <TabDaThu token={token} toaNhaId={toaId} buildings={buildings} chonToa={ngoaiProvider(chung) || !chung.coDinh ? chung.chon : undefined} />
         : <section className="card flush" aria-label="Cần thu">
           {daChon.length > 0 ? <div className="bulkbar" role="status">
             <Icon name="check-circle" /><span>Đã chọn <b>{daChon.length} {theo === 'nguoi' ? 'người' : 'phòng'}</b> · {vnd(tongChon)}</span><span className="push" />
@@ -278,6 +278,40 @@ function HangNhom({ g, theo, chon, doiChon, mo, doiMo, thu }: { g: NhomNo; theo:
       <td className="num t-money">{vnd(h.conLai)}</td>
       <td><button type="button" className="btn btn-secondary btn-sm" aria-label={`Thu tiền hoá đơn ${h.maHoaDon}`} onClick={() => thu(h.hoaDonId)}>Thu</button></td>
     </tr>) : null}
+  </>
+}
+
+type HoaDonDaThu = ThongTinHoaDonQuanLy & { tenToa: string }
+
+/** Hoá đơn đã thu đủ của toà đang chọn; Chủ đang "Tất cả toà" thì gọi từng toà rồi gộp. */
+function TabDaThu({ token, toaNhaId, buildings, chonToa }: { token: string; toaNhaId: number | null; buildings: ThongTinToaNha[]; chonToa?: (id: number | null) => void }) {
+  const [rows, setRows] = useState<HoaDonDaThu[] | null>(null)
+  const [loi, setLoi] = useState<string | null>(null)
+  const [reload, setReload] = useState(0)
+  useEffect(() => {
+    const ids = toaNhaId === null ? buildings.map((b) => b.id) : [toaNhaId]
+    if (ids.length === 0) return
+    let active = true
+    setLoi(null)
+    Promise.all(ids.map((id) => fetchHoaDonQuanLy(token, id, 'DA_THANH_TOAN').then((ds) => ds.map((d) => ({ ...d, tenToa: buildings.find((b) => b.id === id)?.ten ?? '' })))))
+      .then((nhieu) => { if (active) setRows(nhieu.flat().sort((a, b) => b.hanThanhToan.localeCompare(a.hanThanhToan))) })
+      .catch((cause: unknown) => { if (active) setLoi(message(cause)) })
+    return () => { active = false }
+  }, [token, toaNhaId, buildings, reload])
+  const cot: DataTableColumn<HoaDonDaThu>[] = useMemo(() => [
+    { key: 'ky', label: 'Kỳ', the: 'tieu-de', sortable: true, sortValue: (h) => h.hanThanhToan, render: (h) => <><span className="td-main">{h.hanThanhToan.slice(5, 7)}/{h.hanThanhToan.slice(0, 4)}</span><div className="td-sub">{h.maHoaDon}</div></> },
+    { key: 'nguoi', label: 'Phòng · người thuê', sortable: true, sortValue: (h) => h.nguoiThue, render: (h) => <><span className="td-main">{h.nguoiThue}</span><div className="td-sub">{h.tenToa} · Phòng {h.soPhong}</div></> },
+    { key: 'han', label: 'Hạn', sortable: true, sortValue: (h) => h.hanThanhToan, render: (h) => dinhDangNgayIso(h.hanThanhToan.slice(0, 10)) },
+    { key: 'tong', label: 'Tổng', align: 'num', sortable: true, sortValue: (h) => Number(h.tongTien), render: (h) => <>{dinhDangTien(h.tongTien)} ₫</> },
+    { key: 'conLai', label: 'Còn lại', align: 'num', render: (h) => <span className="t-money">{dinhDangTien(h.conLai)} ₫</span> },
+    { key: 'trangThai', label: 'Trạng thái', render: () => <StatusTag tone="done">Đã thu đủ</StatusTag> },
+  ], [])
+  return <>
+    {chonToa ? <BuildingSelect buildings={buildings} value={toaNhaId} onChange={chonToa} /> : null}
+    {loi ? <EmptyState kind="error" title={loi} body="Dữ liệu chưa bị thay đổi." actionLabel="Thử lại" onAction={() => setReload((v) => v + 1)} />
+      : rows === null ? <EmptyState kind="loading" title="Đang tải hoá đơn đã thu…" />
+        : rows.length === 0 ? <EmptyState title="Chưa có hoá đơn nào thu đủ." body="Hoá đơn xuất hiện ở đây khi được thu đủ tiền." />
+          : <Card><DataTable rows={rows} columns={cot} getRowId={(h) => h.hoaDonId} timTheo={(h) => `${h.maHoaDon} ${h.soPhong} ${h.nguoiThue} ${h.tenToa}`} searchLabel="Tìm người thuê, phòng, mã hoá đơn" noun="hoá đơn" pageSize={10} /></Card>}
   </>
 }
 

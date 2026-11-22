@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ThuTien from './ThuTien'
+import { ToaDangChonProvider } from './toaDangChon'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined
@@ -45,6 +46,7 @@ describe('ThuTien — Cần thu', () => {
       ])
       if (url === '/api/hop-dong?toaNhaId=3') return json([{ id: 5, soPhong: '101', hoTenNguoiThue: 'Trần Quang Huy', nguoiThueId: 21, tenTrangThai: 'Hiệu lực', trangThai: 'HIEU_LUC', phongId: 1, tienCoc: '6000000.00' }])
       if (url === '/api/toa-nha/3/ky-thanh-toan') return json([])
+      if (/^\/api\/hoa-don\?toaNhaId=\d&trangThai=DA_THANH_TOAN$/.test(url)) return json([hoaDonQl({ hoaDonId: 12 + Number(url.split('=')[1][0]), maHoaDon: `HD-T${url.split('=')[1][0]}`, nguoiThue: `Người toà ${url.split('=')[1][0]}`, conLai: '0.00', daThu: '3000000.00', trangThai: 'DA_THANH_TOAN' })])
       const ct = /^\/api\/bao-cao\/cong-no\/hoa-don\/(\d+)$/.exec(url)
       if (ct) { const k = CONG_NO.find((x) => x.hoaDonId === Number(ct[1]))!; return json({ hoaDonId: k.hoaDonId, maHoaDon: k.maHoaDon, soPhong: k.soPhong, nguoiThue: k.hoTenNguoiThue, trangThai: 'QUA_HAN', conLai: k.conLai, cacDong: [] }) }
       if (/^\/api\/hoa-don\/\d+\/thanh-toan$/.test(url)) return json({ hoaDonId: Number(url.split('/')[3]), hopDongId: 1, toaNhaId: 3, kyId: 8, giaoDich: [] })
@@ -262,6 +264,25 @@ describe('ThuTien — Cần thu', () => {
     await vi.waitFor(() => expect(ngan()).not.toBeNull())
     expect(ngan()!.querySelector('button[aria-label="Thu tiền hoá đơn HD-1"]')).not.toBeNull() // không nợ → chọn hoá đơn
     await phim('Escape')
+  })
+
+  it('tab Đã thu: bảng hoá đơn đã thanh toán của toà; Chủ "Tất cả toà" gọi từng toà rồi gộp', async () => {
+    window.history.replaceState({}, '', '/thu-tien?tab=da-thu')
+    await act(async () => { root = createRoot(container); root.render(<ThuTien token="t" vaiTro="CHU" />) })
+    await vi.waitFor(() => expect(container.querySelectorAll('tbody tr')).toHaveLength(1))
+    expect(calls.map((c) => c.url)).toContain('/api/hoa-don?toaNhaId=3&trangThai=DA_THANH_TOAN')
+    expect(container.querySelector('tbody')!.textContent).toContain('Đã thu đủ')
+    expect(container.querySelector('tbody')!.textContent).toContain('HD-T3')
+    await act(async () => root.unmount())
+    calls.length = 0
+    const taiToa = async () => [{ id: 3, ten: 'An Nhiên' }, { id: 4, ten: 'Mộc Lan' }] as never
+    localStorage.clear()
+    root = createRoot(container)
+    await act(async () => { root.render(<ToaDangChonProvider token="t" vaiTro="CHU" search="" taiToa={taiToa}><ThuTien token="t" vaiTro="CHU" /></ToaDangChonProvider>) })
+    await vi.waitFor(() => expect(container.querySelectorAll('tbody tr')).toHaveLength(2))
+    const urls = calls.map((c) => c.url)
+    expect(urls).toContain('/api/hoa-don?toaNhaId=3&trangThai=DA_THANH_TOAN')
+    expect(urls).toContain('/api/hoa-don?toaNhaId=4&trangThai=DA_THANH_TOAN')
   })
 
   it('tab Tiền cọc: chọn hợp đồng hiện số cọc đã thu / còn thiếu', async () => {
