@@ -3,6 +3,7 @@ import { fetchToaNha, type ThongTinToaNha } from './api'
 import { Button } from './design/core/Button'
 import { Icon } from './design/core/Icon'
 import { Field as DesignField } from './design/forms/Field'
+import { ngoaiProvider, useMotToa, useToaDangChon } from './toaDangChon'
 
 export const fieldStyle: CSSProperties = { minHeight: 44, width: '100%', minWidth: 0, border: '1px solid var(--ma-border-strong)', borderRadius: 'var(--ma-radius)', background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', padding: '10px 14px', font: 'var(--ma-text-body)' } // giống .input (inline vì 83 chỗ dùng style=)
 export const gridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,230px),1fr))', gap: 14, minWidth: 0, maxWidth: '100%' }
@@ -27,13 +28,23 @@ export function useAction() {
   }
   return { busy, error, success, run, setError, setSuccess, setBusy }
 }
+// Toà lấy từ bối cảnh dùng chung của khung (chọn ở sidebar, nhớ qua lần tải lại). Ngoài khung (test màn riêng lẻ) thì tự tải như cũ.
 export function useBuildings(token: string) {
+  const chung = useToaDangChon()
+  const rieng = ngoaiProvider(chung)
   const [buildings, setBuildings] = useState<ThongTinToaNha[]>([])
   const [buildingId, setBuildingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
-  useEffect(() => { if (!token) return; let active = true; fetchToaNha(token).then((rows) => { if (active) { setBuildings(rows); setBuildingId((id) => id ?? rows[0]?.id ?? null) } }).catch((e: Error) => { if (active) setError(e.message) }); return () => { active = false } }, [token])
-  return { buildings, buildingId, setBuildingId, error }
+  useEffect(() => { if (!token || !rieng) return; let active = true; fetchToaNha(token).then((rows) => { if (active) { setBuildings(rows); setBuildingId((id) => id ?? rows[0]?.id ?? null) } }).catch((e: Error) => { if (active) setError(e.message) }); return () => { active = false } }, [token, rieng])
+  if (rieng) return { buildings, buildingId, setBuildingId, error }
+  return { buildings: chung.danhSach, buildingId: chung.toaNhaId, setBuildingId: chung.chon, error: chung.loi }
 }
-export function BuildingSelect({ buildings, value, onChange }: { buildings: ThongTinToaNha[]; value: number | null; onChange: (id: number | null) => void }) { return <Field title="Toà nhà"><select style={fieldStyle} value={value ?? ''} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}><option value="">Chọn toà nhà</option>{buildings.map((b) => <option key={b.id} value={b.id}>{b.ten}</option>)}</select></Field> }
+// Ẩn khi khung đã có ô chọn toà (Quản lý một toà; Chủ đã chọn một toà). Chủ đang "Tất cả toà" mà màn cần một toà → hiện ô chọn tại chỗ.
+export function BuildingSelect({ buildings, value, onChange }: { buildings: ThongTinToaNha[]; value: number | null; onChange: (id: number | null) => void }) {
+  const chung = useToaDangChon()
+  const mot = useMotToa()
+  if (!ngoaiProvider(chung) && !mot.canChonTaiCho) return null
+  return <Field title="Toà nhà"><select style={fieldStyle} value={value ?? ''} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}><option value="">Chọn toà nhà</option>{buildings.map((b) => <option key={b.id} value={b.id}>{b.ten}</option>)}</select></Field>
+}
 export function SaveButton({ busy, children = 'Lưu thay đổi' }: { busy: boolean; children?: ReactNode }) { return <Button variant="primary" type="submit" blocked={busy} blockedReason={busy ? 'Đang lưu, vui lòng chờ.' : undefined}>{children}</Button> }
 export function today() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }) }

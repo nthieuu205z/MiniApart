@@ -63,6 +63,7 @@ import TaoHopDong from './TaoHopDong'
 import TrangSuCo from './TrangSuCo'
 import TimNhanh from './TimNhanh'
 import TrangKhongCoQuyen from './TrangKhongCoQuyen'
+import { ToaDangChonProvider } from './toaDangChon'
 
 const styleTrang: CSSProperties = {
   minHeight: '100vh',
@@ -498,6 +499,7 @@ function App() {
   const laDashboardChu = vaiTro === 'CHU' && (khoa === 'hom-nay' || khoa === 'tong-quan')
 
   return (
+    <ToaDangChonProvider token={token} vaiTro={nguoiDung.vaiTro} search={viTri.search}>
     <main className="ma-app-shell" onClick={chanLienKetNoiBo} style={laManHinhHep ? styleKhungUngDungMobile : laManHinhThuGon ? styleKhungUngDungThuGon : styleKhungUngDungDesktop}>
       <NavPanel
         className="ma-no-print"
@@ -557,6 +559,7 @@ function App() {
       </div>
       <TimNhanh {...trangProps} mo={dangMoTim} datMo={setDangMoTim} />
     </main>
+    </ToaDangChonProvider>
   )
 }
 
