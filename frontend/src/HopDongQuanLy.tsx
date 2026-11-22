@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { ApiError, fetchHopDongQuanLy, fetchToaNha, type ThongTinHopDong, type ThongTinToaNha } from './api'
+import { useEffect, useMemo, useState } from 'react'
+import { ApiError, fetchHopDongQuanLy, type ThongTinHopDong } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { StatusTag } from './design/core/StatusTag'
 import { Icon } from './design/core/Icon'
@@ -9,7 +9,7 @@ import { DataTable, type DataTableColumn, type DataTableChip } from './design/ta
 import { EmptyState } from './design/feedback/EmptyState'
 import { ScreenNotice } from './design/layout/Screen'
 import { downloadManagementFile } from './managementApi'
-import HopDongThaoTac from './HopDongThaoTac'
+import { useMotToa } from './toaDangChon'
 
 type Props = { token: string; mobile?: boolean }
 
@@ -30,40 +30,28 @@ export function layBoLocHopDongQuanLyTuUrl(url: string | URL): BoLocHopDongQuanL
 }
 
 export default function HopDongQuanLy({ token, mobile = false }: Props): React.ReactElement {
-  const [toaNha, setToaNha] = useState<ThongTinToaNha[]>([])
+  const toa = useMotToa()
   const [boLoc, setBoLoc] = useState<BoLocHopDongQuanLy>(() => (
     typeof window === 'undefined' ? { toaNhaId: null, sapHetHan: false, hopDongId: null } : layBoLocHopDongQuanLyTuUrl(window.location.href)
   ))
+  // Toà do khung quyết định; chỉ khi khung chưa có (link cũ, test riêng lẻ) mới dùng ?toaNhaId= trên URL.
+  const toaNhaId = toa.toaNhaId ?? boLoc.toaNhaId
   const [hopDongs, setHopDongs] = useState<ThongTinHopDong[]>([])
-  const [hienThiFormTao, setHienThiFormTao] = useState(false)
   const [dangTai, setDangTai] = useState(true)
   const [loi, setLoi] = useState<string | null>(null)
+  const [thu, setThu] = useState(0)
 
   useEffect(() => {
-    let mounted = true
-    fetchToaNha(token)
-      .then((data) => {
-        if (!mounted) return
-        setToaNha(data)
-        setBoLoc((current) => ({ ...current, toaNhaId: current.toaNhaId ?? data[0]?.id ?? null }))
-      })
-      .catch((reason: unknown) => {
-        if (mounted) setLoi(reason instanceof ApiError ? reason.message : 'Không thể tải danh sách toà nhà.')
-      })
-    return () => { mounted = false }
-  }, [token])
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || boLoc.toaNhaId === null) return
+    if (typeof window === 'undefined' || toaNhaId === null) return
     const query = new URLSearchParams()
-    query.set('toaNhaId', String(boLoc.toaNhaId))
+    query.set('toaNhaId', String(toaNhaId))
     if (boLoc.sapHetHan) query.set('sapHetHan', 'true')
     if (boLoc.hopDongId) query.set('hopDongId', String(boLoc.hopDongId))
     window.history.replaceState({}, '', `/hop-dong?${query.toString()}`)
-  }, [boLoc])
+  }, [boLoc, toaNhaId])
 
   useEffect(() => {
-    if (boLoc.toaNhaId === null) {
+    if (toaNhaId === null) {
       setHopDongs([])
       setDangTai(false)
       return undefined
@@ -71,27 +59,20 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
     let mounted = true
     setDangTai(true)
     setLoi(null)
-    fetchHopDongQuanLy(token, boLoc.toaNhaId)
+    fetchHopDongQuanLy(token, toaNhaId)
       .then((data) => { if (mounted) setHopDongs(data) })
       .catch((reason: unknown) => {
         if (mounted) setLoi(reason instanceof ApiError ? reason.message : 'Không thể tải danh sách hợp đồng.')
       })
       .finally(() => { if (mounted) setDangTai(false) })
     return () => { mounted = false }
-  }, [boLoc.toaNhaId, token])
+  }, [toaNhaId, token, thu])
 
   const hopDongsHienThi = useMemo(
     () => boLoc.sapHetHan ? hopDongs.filter((hopDong) => hopDong.sapHetHan) : hopDongs,
     [boLoc.sapHetHan, hopDongs],
   )
   const variant = mobile ? 'mobile' : 'desktop'
-  const chiTietRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (hienThiFormTao) {
-      chiTietRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
-    }
-  }, [hienThiFormTao])
 
   // DataTable chưa có sắp xếp mặc định: xếp Phòng tăng dần (số tự nhiên) trước khi đưa vào.
   const hangSapXep = useMemo(() => [...hopDongsHienThi].sort((a, b) => a.soPhong.localeCompare(b.soPhong, 'vi', { numeric: true })), [hopDongsHienThi])
@@ -108,10 +89,9 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
       setThongBaoPdf(reason instanceof Error ? reason.message : 'Không thể tải PDF.')
     }
   }
-  const chonHopDong = (id: number) => { setBoLoc((curr) => ({ ...curr, hopDongId: id })); setHienThiFormTao(false) }
   // Chip "Đã cọc" chỉ hiện khi có hợp đồng ở trạng thái đó.
   const chips = useMemo(() => CHIP.filter((c) => c.key !== 'DA_COC' || hopDongsHienThi.some(c.match)), [hopDongsHienThi])
-  const cot = useMemo(() => cotHopDong(chonHopDong), [])
+  const cot = useMemo(() => cotHopDong(), [])
 
   return (
     <section data-testid="manager-contract-screen" data-layout-variant={variant} aria-labelledby="manager-contract-title" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
@@ -122,29 +102,16 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
           <p className="sub">{hieuLuc.length} đang hiệu lực · tổng tiền thuê {dinhDangTien(tongThue)} ₫/tháng · tiền cọc đang giữ {dinhDangTien(tongCoc)} ₫</p>
         </div>
         <div className="topbar-actions">
-          <label className="sr-only" htmlFor="hop-dong-toa">Toà nhà</label>
-          <select
-            id="hop-dong-toa"
-            className="select"
-            data-contract-building-select
-            style={{ width: 220 }}
-            value={boLoc.toaNhaId ?? ''}
-            onChange={(event) => setBoLoc((current) => ({ ...current, toaNhaId: soNguyenDuong(event.target.value), hopDongId: null }))}
-          >
-            <option value="">Chọn toà nhà</option>
-            {toaNha.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
-          </select>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => {
-              const next = !hienThiFormTao
-              setHienThiFormTao(next)
-              if (next) setBoLoc((curr) => ({ ...curr, hopDongId: null }))
-            }}
-          >
-            <Icon name={hienThiFormTao ? 'x' : 'plus'} />{hienThiFormTao ? 'Đóng form tạo' : 'Tạo hợp đồng'}
-          </button>
+          {toa.canChonTaiCho ? (
+            <>
+              <label className="sr-only" htmlFor="hop-dong-toa">Toà nhà</label>
+              <select id="hop-dong-toa" className="select" data-contract-building-select style={{ width: 220 }} value="" onChange={(event) => toa.chon(soNguyenDuong(event.target.value))}>
+                <option value="">Chọn toà nhà</option>
+                {toa.danhSach.map((item) => <option key={item.id} value={item.id}>{item.ten}</option>)}
+              </select>
+            </>
+          ) : null}
+          <a className="btn btn-primary" href="/hop-dong/moi"><Icon name="plus" />Tạo hợp đồng</a>
         </div>
       </header>
 
@@ -153,11 +120,12 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
           <FilterChip active data-contract-expiring-filter onRemove={() => setBoLoc((current) => ({ ...current, sapHetHan: false }))}>Đang lọc hợp đồng sắp hết hạn</FilterChip>
         </p>
       ) : null}
+      {boLoc.hopDongId ? <p className="t-sm"><a href={`/hop-dong/${boLoc.hopDongId}`}>Mở hồ sơ hợp đồng #{boLoc.hopDongId}</a></p> : null}
       {thongBaoPdf ? <div role="alert"><ScreenNotice tone="urgent">{thongBaoPdf}</ScreenNotice></div> : null}
-      {dangTai ? <p aria-live="polite">Đang tải danh sách hợp đồng…</p>
-        : loi ? <div role="alert"><ScreenNotice tone="urgent">{loi}</ScreenNotice></div>
-          : boLoc.toaNhaId === null ? <EmptyState title="Chọn một toà nhà để xem hợp đồng." />
-            : hopDongsHienThi.length === 0 ? <EmptyState title={boLoc.sapHetHan ? 'Không có hợp đồng sắp hết hạn.' : 'Chưa có hợp đồng nào trong toà nhà này.'} />
+      {dangTai ? <EmptyState kind="loading" title="Đang tải danh sách hợp đồng…" />
+        : loi ? <EmptyState kind="error" title="Không tải được danh sách hợp đồng" body={`${loi} Dữ liệu chưa bị thay đổi.`} actionLabel="Thử lại" onAction={() => setThu((n) => n + 1)} />
+          : toaNhaId === null ? <EmptyState title="Chọn một toà nhà để xem hợp đồng." />
+            : hopDongsHienThi.length === 0 ? <EmptyState title={boLoc.sapHetHan ? 'Không có hợp đồng sắp hết hạn.' : 'Chưa có hợp đồng nào trong toà nhà này.'} body={<a href="/hop-dong/moi">Tạo hợp đồng</a>} />
               : (
                 <Card className="hd-bang" data-contract-list={variant}>
                   <DataTable
@@ -175,45 +143,6 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
                   />
                 </Card>
               )}
-
-      {/* CHI TIẾT HỒ SƠ & THAO TÁC HỢP ĐỒNG ĐƯỢC CHỌN HOẶC FORM TẠO */}
-      {(boLoc.hopDongId !== null || hienThiFormTao) && (
-        <div ref={chiTietRef} style={{ marginTop: 24, borderTop: '2px solid var(--ma-border-subtle)', paddingTop: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>
-              {hienThiFormTao ? '📝 Tạo hợp đồng thuê mới' : `📄 Hồ sơ chi tiết hợp đồng #${boLoc.hopDongId}`}
-            </h3>
-            <button
-              type="button"
-              onClick={() => {
-                setHienThiFormTao(false)
-                setBoLoc((curr) => ({ ...curr, hopDongId: null }))
-              }}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 'var(--ma-radius)',
-                background: 'transparent',
-                border: '1px solid var(--ma-border-default)',
-                fontSize: 12.5,
-                color: 'var(--ma-text-secondary)',
-                cursor: 'pointer',
-              }}
-            >
-              ✕ Đóng chi tiết
-            </button>
-          </div>
-          <HopDongThaoTac
-            token={token}
-            buildingId={boLoc.toaNhaId}
-            selectedHopDongId={boLoc.hopDongId}
-            onSelectHopDong={(id) => setBoLoc((curr) => ({ ...curr, hopDongId: id }))}
-            hienThiFormTao={hienThiFormTao}
-            onToggleFormTao={setHienThiFormTao}
-            onDongChiTiet={() => setBoLoc((curr) => ({ ...curr, hopDongId: null }))}
-            embedded={true}
-          />
-        </div>
-      )}
     </section>
   )
 }
@@ -244,9 +173,9 @@ function ghiChuThoiHan(h: ThongTinHopDong): string {
   return `còn ${h.soNgayConLai} ngày`
 }
 
-function cotHopDong(xem: (id: number) => void): DataTableColumn<ThongTinHopDong>[] {
+function cotHopDong(): DataTableColumn<ThongTinHopDong>[] {
   return [
-    { key: 'phong', label: 'Phòng', sortable: true, sortValue: (h) => h.soPhong, render: (h) => <span className="td-main">{h.soPhong}</span> },
+    { key: 'phong', label: 'Phòng', sortable: true, sortValue: (h) => h.soPhong, render: (h) => <a className="td-main" href={`/hop-dong/${h.id}`}>{h.soPhong}<span className="sr-only"> · hợp đồng {h.id}</span></a> },
     { key: 'nguoiThue', label: 'Người thuê', the: 'tieu-de', sortable: true, sortValue: (h) => h.hoTenNguoiThue, render: (h) => <div className="td-person"><span className={`avatar sm h${(h.id % 5) + 1}`} aria-hidden="true">{chuCaiDau(h.hoTenNguoiThue)}</span>{h.hoTenNguoiThue}</div> },
     {
       key: 'thoiHan', label: 'Thời hạn', sortable: true, sortValue: (h) => h.ngayKetThuc,
@@ -257,7 +186,7 @@ function cotHopDong(xem: (id: number) => void): DataTableColumn<ThongTinHopDong>
     { key: 'trangThai', label: 'Trạng thái', render: (h) => <StatusTag tone={tongTrangThai(h)}>{h.sapHetHan ? 'Sắp hết hạn' : h.tenTrangThai}</StatusTag> },
     {
       key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong',
-      render: (h) => <div className="td-acts"><button type="button" className="btn btn-ghost btn-sm" onClick={() => xem(h.id)}>{h.sapHetHan ? 'Gia hạn' : h.trangThai === 'CHO_KY' ? 'Ghi nhận ký' : 'Xem'}</button></div>,
+      render: (h) => <div className="td-acts"><a className="btn btn-ghost btn-sm" href={`/hop-dong/${h.id}`}>{h.sapHetHan ? 'Gia hạn' : h.trangThai === 'CHO_KY' ? 'Ký hợp đồng' : 'Xem'}<span className="sr-only"> hợp đồng phòng {h.soPhong}</span></a></div>,
     },
   ]
 }

@@ -54,7 +54,7 @@ describe('HopDongQuanLy bảng hợp đồng', () => {
   const chip = (nhan: string) => [...container.querySelectorAll('button.chip')].find((b) => b.textContent?.startsWith(nhan)) as HTMLButtonElement | undefined
   const hang = () => [...container.querySelectorAll('[data-contract-row]')].map((e) => e.getAttribute('data-contract-row'))
 
-  it('chip hiện đúng số theo trạng thái và chỉ gọi hợp đồng + toà nhà', async () => {
+  it('chip hiện đúng số theo trạng thái và chỉ gọi hợp đồng (toà do khung chọn)', async () => {
     await mount()
     expect(chip('Hiệu lực')?.textContent).toBe('Hiệu lực3')
     expect(chip('Sắp hết hạn')?.textContent).toBe('Sắp hết hạn1')
@@ -62,14 +62,14 @@ describe('HopDongQuanLy bảng hợp đồng', () => {
     expect(chip('Đã thanh lý')?.textContent).toBe('Đã thanh lý1')
     expect(chip('Đã cọc')).toBeUndefined()
     expect(container.querySelector('.sub')?.textContent).toContain('3 đang hiệu lực')
-    expect(fetchMock.mock.calls.map((c) => c[0]).sort()).toEqual(['/api/hop-dong?toaNhaId=1', '/api/toa-nha'])
+    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual(['/api/hop-dong?toaNhaId=1'])
   })
 
   it('?sapHetHan=true chỉ còn hàng sắp hết hạn và hiện chữ lọc', async () => {
     await mount('/hop-dong?toaNhaId=1&sapHetHan=true')
     expect(hang()).toEqual(['3'])
     expect(container.textContent).toContain('Đang lọc hợp đồng sắp hết hạn')
-    expect(container.querySelector('tr [class~="btn"]')?.textContent).toBe('Gia hạn')
+    expect(container.querySelector('tr [class~="btn"]')?.textContent).toContain('Gia hạn')
   })
 
   it('tìm "dinh" ra đúng một hàng và chip đếm theo kết quả tìm', async () => {
@@ -82,6 +82,15 @@ describe('HopDongQuanLy bảng hợp đồng', () => {
     expect(hang()).toEqual(['5'])
     expect(chip('Hiệu lực')?.textContent).toBe('Hiệu lực0')
     expect(chip('Đã thanh lý')?.textContent).toBe('Đã thanh lý1')
+  })
+
+  it('hàng là liên kết tới hồ sơ /hop-dong/{id}, nút Tạo hợp đồng tới /hop-dong/moi, không còn form hay chi tiết dưới bảng', async () => {
+    await mount()
+    expect(container.querySelector('[data-contract-row="3"] a.td-main')?.getAttribute('href')).toBe('/hop-dong/3')
+    expect(container.querySelector('[data-contract-row="4"] a.btn')?.getAttribute('href')).toBe('/hop-dong/4')
+    expect(container.querySelector('a.btn-primary')?.getAttribute('href')).toBe('/hop-dong/moi')
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
+    expect(container.querySelector('form, [data-testid="contract-dossier-panel"]')).toBeNull()
   })
 
   it('chọn một hàng hiện thanh "Đã chọn 1 hợp đồng" với In PDF', async () => {
