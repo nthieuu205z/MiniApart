@@ -2,7 +2,7 @@
 
 ## 1. Việc đã làm
 1. Test khoá định tuyến cũ (42 mục menu × vai trò + 6 ca ngoài menu), xanh trước khi đổi App — f01cb10
-2. App dùng `timTuyen` (bỏ chuỗi `hienThi*`), vỏ trang mới, điều hướng SPA ở `<main>` — 13c52b3 (App.tsx 1 335 → 740 dòng; `grep -c hienThi` = 0)
+2. App dùng `timTuyen` (bỏ chuỗi `hienThi*`), vỏ trang mới, điều hướng SPA ở `<main>` — 13c52b3 (App.tsx 1 284 → 740 dòng; `grep -c hienThi` = 0)
 3. Toà dùng chung: `ToaDangChonProvider`, `useBuildings`/`BuildingSelect` đọc từ khung, chép `nhomNoTheoNguoi` — 612faf6
 4. Khung mới: sidebar nhóm theo việc, `ChonToa`, TopBar (Tìm nhanh + chuông, bỏ "Không gian quản lý"), `TabTrang`, ngăn ☰ ≤767px, bottom-nav 3 mục Thợ/Khách, số đếm nav (`soDemDieuHuong`), `TrangKhongCoQuyen`, `ux-v2.css` — 00140cc
 5. `GhiChiSo anNutChot` + 1 test — 58c20eb
