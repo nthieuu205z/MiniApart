@@ -120,3 +120,39 @@ describe('Hôm nay · Chủ', () => {
     expect(khoi('hn-ph').textContent).toContain('Trống: 401 · Đang sửa: 403')
   })
 })
+
+describe('Hôm nay · Quản lý', () => {
+  const DASH_QL = {
+    toaNhaId: 3, tenToaNha: 'An Nhiên Residence', thoiDiemCapNhat: '2026-11-22T17:37:00+07:00',
+    kpi: { khoanConPhaiThu: 50398000, soHoaDonQuaHan: 20, tienQuaHan: 50398000, soPhongDangThue: 9, soPhongTrong: 2, soPhongDangSua: 1, tongSoPhong: 12, tyLeLapDay: 75, soCongToChuaGhi: 4, soSuCoCanXuLy: 14, soCanhBaoDienNuocDangMo: 0 },
+    canhBaoDienNuoc: [],
+    congToChuaGhi: { kyHienTaiId: 5, tenKyHienTai: 'Kỳ 11/2026 - An Nhiên Residence', tongSoCongTo: 24, soCongToDaGhi: 20, soCongToChuaGhi: 4, danhSachChuaGhi: [{ viTriId: 12, tenViTri: '403', toaNhaId: 3, tenToaNha: 'An Nhiên Residence', tenDichVu: 'Điện sinh hoạt', donVi: 'kWh', loaiDiemDo: 'PHONG', kyId: 5 }] },
+    lichHenSapToi: [{ id: 2, hoTen: 'Bùi Thảo Nguyên', soDienThoai: '0999100151', soPhong: '402 (An Nhiên Residence)', thoiGian: '2026-11-22T10:00:00Z', loai: 'XEM_PHONG', trangThai: 'DA_XAC_NHAN' }],
+  }
+  const nhom = (ma: string, tieuDe: string, soLuong: number | null, trangThai: string, khanCap = false) => ({ ma, tieuDe, soLuong, trangThai, tenTrangThai: trangThai === 'DA_XONG' ? 'Đã xong' : 'Cần xử lý', khanCap, lienKet: null })
+  const BANG_VIEC = { toaNhaId: 3, tenToaNha: 'An Nhiên Residence', nhomViec: [nhom('NO_QUA_HAN', 'Nợ quá hạn', 20, 'CAN_XU_LY', true), nhom('THIEU_CHI_SO', 'Thiếu chỉ số', 0, 'DA_XONG'), nhom('SU_CO_TON_DONG', 'Sự cố tồn đọng', 8, 'CAN_XU_LY', true)] }
+  const duongQl = { '/api/dashboard/quan-ly': DASH_QL, '/api/toa-nha/3/bang-viec': BANG_VIEC }
+
+  it('không gọi API của Chủ (403); nút chính duy nhất "Ghi chỉ số" trỏ /chu-ky; việc cần làm link sang màn mới', async () => {
+    const goi = dungMang(duongQl)
+    await ve('QUAN_LY', [TOA[0]])
+    await vi.waitFor(() => expect(khoi('hn-vc').querySelectorAll('a.irow')).toHaveLength(2))
+    expect(goi.some((u) => u.startsWith('/api/dashboard/chu') || u.startsWith('/api/bao-cao/cong-no'))).toBe(false)
+    const chinh = container.querySelectorAll('.btn-primary')
+    expect(chinh).toHaveLength(1)
+    expect(chinh[0].textContent).toBe('Ghi chỉ số')
+    expect(chinh[0].getAttribute('href')).toBe('/chu-ky')
+    expect([...khoi('hn-vc').querySelectorAll('a.irow')].map((a) => a.getAttribute('href'))).toEqual(['/thu-tien', '/su-co'])
+    expect(khoi('hn-vc').textContent).toContain('Thiếu chỉ số: không còn')
+    expect(khoi('hn-vc').querySelector('.meta')?.textContent).toBe('2 việc · 1 đã xong')
+    expect(container.querySelector('.strip')?.textContent).toContain('20/24')
+    expect(khoi('hn-lq').textContent).toContain('Bùi Thảo Nguyên')
+  })
+
+  it('bảng việc lỗi → chỉ khối đó lỗi, Chu kỳ tháng vẫn còn nút chính', async () => {
+    dungMang({ ...duongQl, '/api/toa-nha/3/bang-viec': json({}, 500) })
+    await ve('QUAN_LY', [TOA[0]])
+    await vi.waitFor(() => expect(khoi('hn-vc').textContent).toContain('Không tải được việc cần làm'))
+    expect(khoi('hn-ck').querySelector('.btn-primary')?.textContent).toBe('Ghi chỉ số')
+  })
+})

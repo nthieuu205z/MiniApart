@@ -1,8 +1,9 @@
 // Hôm nay (Chủ + Quản lý): một trang đọc, mọi dòng là link vào nơi xử lý. Mỗi khối tự tải, tự lỗi, tự "Thử lại" — một API hỏng không làm trắng trang.
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
-  fetchCongNoBaoCao, fetchDashboardChu, fetchHopDongQuanLy, fetchPhong, fetchPublicLichHen,
-  type LichHenXemPhong, type ThongTinCongNoBaoCao, type ThongTinDashboardChu, type ThongTinHopDong, type ThongTinPhong, type ThongTinYeuCauSuaChua,
+  fetchBangViecVanHanh, fetchCongNoBaoCao, fetchDashboardChu, fetchDashboardQuanLy, fetchHopDongQuanLy, fetchPhong, fetchPublicLichHen,
+  type LichHenXemPhong, type ThongTinBangViecVanHanh, type ThongTinCongNoBaoCao, type ThongTinDashboardChu, type ThongTinDashboardQuanLy,
+  type ThongTinHopDong, type ThongTinPhong, type ThongTinYeuCauSuaChua,
 } from './api'
 import { Icon, type IconName } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
@@ -11,7 +12,6 @@ import { EmptyState } from './design/feedback/EmptyState'
 import type { TrangProps } from './dinhTuyen'
 import { managementRequest } from './managementApi'
 import { nhomNo, tuCongNo } from './nhomNoTheoNguoi'
-import { QuanLyDashboard } from './QuanLyDashboard'
 import { tenToaDangChon, useToaDangChon } from './toaDangChon'
 import './HomNay.css'
 
@@ -253,6 +253,96 @@ function HomNayChu({ token }: Pick<TrangProps, 'token'>) {
   )
 }
 
-export default function HomNay({ token, vaiTro, mobile }: TrangProps) {
-  return vaiTro === 'CHU' ? <div className="hom-nay"><HomNayChu token={token} /></div> : <QuanLyDashboard token={token} mobile={mobile} />
+/* ------------------------------- Quản lý --------------------------------- */
+// Quản lý không gọi /api/dashboard/chu và /api/bao-cao/cong-no (403): số liệu lấy từ dashboard quản lý + bảng việc của đúng toà được phân công.
+
+const VIEC: Record<string, { icon: IconName; nhan: string; href: string }> = {
+  NO_QUA_HAN: { icon: 'receipt', nhan: 'Mở danh sách', href: '/thu-tien' },
+  THIEU_CHI_SO: { icon: 'meter', nhan: 'Ghi chỉ số', href: '/chu-ky' },
+  HOP_DONG_SAP_HET_HAN: { icon: 'contract', nhan: 'Gia hạn', href: '/hop-dong' },
+  SU_CO_TON_DONG: { icon: 'wrench', nhan: 'Mở sự cố', href: '/su-co' },
+  PCCC: { icon: 'shield', nhan: 'Mở An toàn', href: '/an-toan' },
+}
+
+function HomNayQuanLy({ token }: Pick<TrangProps, 'token'>) {
+  const t = useToaDangChon()
+  const { iso, thu } = homNayVn()
+  const toa = t.toaNhaId ?? t.danhSach[0]?.id ?? null
+  const khoa = t.dangTai ? null : `${token}|${toa}`
+  const dash = useNguon<ThongTinDashboardQuanLy>(khoa, () => fetchDashboardQuanLy(token, toa))
+  const viec = useNguon<ThongTinBangViecVanHanh>(khoa, async () => {
+    if (toa === null) throw new Error('Chưa có toà nhà được phân quyền.')
+    return fetchBangViecVanHanh(token, toa)
+  })
+  const k = dash.du?.kpi
+  const ct = dash.du?.congToChuaGhi
+  const ky = /\d+\/\d+/.exec(ct?.tenKyHienTai ?? '')?.[0] ?? `${iso.slice(5, 7)}/${iso.slice(0, 4)}`
+  const thieu = ct?.soCongToChuaGhi ?? 0
+  const canLam = (viec.du?.nhomViec ?? []).filter((g) => g.trangThai !== 'DA_XONG' && g.trangThai !== 'CHUA_SAN_SANG').length
+  const hen = (dash.du?.lichHenSapToi ?? []).filter((l) => l.thoiGian.slice(0, 10) >= iso).slice(0, 5)
+
+  const dai = [
+    { href: '/thu-tien', k: 'Còn phải thu', v: k ? tien(k.khoanConPhaiThu) : '', s: k ? `${k.soHoaDonQuaHan} hoá đơn quá hạn` : '', nguon: dash, nguy: !!k && num(k.khoanConPhaiThu) > 0 },
+    { href: '/chu-ky', k: `Công tơ kỳ ${ky}`, v: ct ? `${ct.soCongToDaGhi}/${ct.tongSoCongTo}` : '', s: ct ? `còn ${ct.soCongToChuaGhi} công tơ` : '', nguon: dash },
+    { href: '/su-co', k: 'Sự cố cần xử lý', v: k ? String(k.soSuCoCanXuLy) : '', s: 'đang mở trong toà', nguon: dash },
+    { href: '/phong', k: 'Lấp đầy', v: k ? `${Math.round(num(k.tyLeLapDay))}%` : '', s: k ? `${k.soPhongDangThue}/${k.tongSoPhong} phòng · ${k.soPhongTrong} trống` : '', nguon: dash },
+  ]
+
+  return (
+    <>
+      <DauTrang phu={`${thu}, ${dinhDangNgayIso(iso)} · ${tenToaDangChon(t) || 'chưa có toà'} · kỳ ${ky} đang mở`} />
+      <Dai cac={dai} />
+      <div className="cols">
+        <div className="surface">
+          <Khoi id="hn-ck" tieuDe={`Chu kỳ tháng ${ky}`} nguon={dash} meta={() => `bước ${thieu ? 1 : 2}/4${t.danhSach[0] ? ` · chốt sổ ngày ${t.danhSach[0].ngayChotSo}` : ''}`}
+            lienKet={<LienKet href="/chu-ky">Mở chu kỳ <Icon name="arrow-right" size="sm" /></LienKet>}>
+            {(d) => <>
+              {/* shortcut: chỉ biết bước 1 (ghi chỉ số) từ API; bước 3–4 chưa có nguồn, để chấm xám. Nâng cấp khi có API trạng thái kỳ. */}
+              <div className="hn-dots"><div className="dots">{['Ghi chỉ số', 'Chốt kỳ', 'Phát hành', 'Thu tiền'].map((b, i) => <span key={b} className="hn-dot"><i className={i === 0 || (i === 1 && !thieu) ? 'on' : ''} />{i + 1}. {b}</span>)}</div></div>
+              <div className="irow">
+                <span className={`tile ${thieu ? 'warm' : 'ok'}`}><Icon name={thieu ? 'meter' : 'check'} /></span>
+                <div className="body">
+                  <div className="t">{thieu ? `Ghi ${thieu} công tơ còn thiếu` : 'Đã ghi đủ công tơ kỳ này'}</div>
+                  <div className="s">{thieu ? d.congToChuaGhi.danhSachChuaGhi.map((c) => `${c.tenViTri} · ${c.tenDichVu}`).join(' · ') : 'Chốt kỳ khi đến ngày chốt sổ.'}</div>
+                </div>
+                <a className="btn btn-primary btn-sm" href="/chu-ky">{thieu ? 'Ghi chỉ số' : 'Mở chu kỳ'}</a>
+              </div>
+            </>}
+          </Khoi>
+
+          <Khoi id="hn-vc" tieuDe="Việc cần làm" nguon={viec} meta={(v) => `${canLam} việc · ${v.nhomViec.filter((g) => g.trangThai === 'DA_XONG').length} đã xong`}>
+            {(v) => [...v.nhomViec].sort((x, y) => Number(x.trangThai === 'DA_XONG') - Number(y.trangThai === 'DA_XONG')).map((g) => {
+              const m = VIEC[g.ma] ?? { icon: 'shield' as IconName, nhan: 'Mở danh sách', href: '/hom-nay' }
+              if (g.trangThai === 'DA_XONG') return <Xong key={g.ma}>{g.tieuDe}: không còn</Xong>
+              if (g.trangThai === 'CHUA_SAN_SANG') return <div className="irow done" key={g.ma}><span className="tile"><Icon name={m.icon} /></span><div className="body"><div className="t">{g.tieuDe}</div><div className="s">{g.tenTrangThai}</div></div></div>
+              return (
+                <a className="irow" key={g.ma} href={m.href}>
+                  <span className={`tile ${g.khanCap ? 'red' : 'warm'}`}><Icon name={m.icon} /></span>
+                  <div className="body"><div className="t">{g.tieuDe}</div><div className="s">{g.khanCap ? 'Khẩn · ' : ''}{g.tenTrangThai}</div></div>
+                  <span className="bignum hn-so">{g.soLuong ?? '—'}</span>
+                  <span className="btn btn-secondary btn-sm">{m.nhan}</span>
+                </a>
+              )
+            })}
+          </Khoi>
+        </div>
+
+        <div className="side">
+          <The id="hn-lq" tieuDe="Lịch hẹn xem phòng" lienKet={<LienKet href="/lich-hen">Tất cả</LienKet>}>
+            <NoiDung nguon={dash} ten="lịch hẹn">{() => <Hen rong="Chưa có lịch hẹn sắp tới" ds={hen.map((l) => ({ id: l.id, gio: `${ngayNgan(l.thoiGian)} ${l.thoiGian.slice(11, 16)}`, ten: l.hoTen, phu: `Phòng ${l.soPhong.replace(/ \(.*\)$/, '')} · ${l.soDienThoai}`, tt: l.trangThai }))} />}</NoiDung>
+          </The>
+          <The id="hn-cb" tieuDe="Cảnh báo điện nước">
+            <NoiDung nguon={dash} ten="cảnh báo điện nước">{(d) => d.canhBaoDienNuoc.length === 0
+              ? <p className="t-sm t-2">Không có cảnh báo tiêu thụ bất thường trong kỳ này.</p>
+              : <ul className="tl">{d.canhBaoDienNuoc.slice(0, 3).map((c) => <li key={c.id}><span className="dot red" /><span><b>{c.soPhong ? `Phòng ${c.soPhong}` : c.tenDiemDo}</b><br /><span className="t-meta">{c.lyDo}</span></span><span /></li>)}</ul>}
+            </NoiDung>
+          </The>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export default function HomNay({ token, vaiTro }: TrangProps) {
+  return vaiTro === 'CHU' ? <div className="hom-nay"><HomNayChu token={token} /></div> : <div className="hom-nay hom-nay-ql"><HomNayQuanLy token={token} /></div>
 }
