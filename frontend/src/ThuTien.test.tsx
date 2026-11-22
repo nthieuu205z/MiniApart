@@ -146,6 +146,51 @@ describe('ThuTien — Cần thu', () => {
     expect(nhomHang()[0].querySelector('a')?.getAttribute('href')).toBe('/nguoi-thue/21') // nối hợp đồng theo phòng + họ tên
   })
 
+  const tick = (ten: string) => bam(Array.from(container.querySelectorAll('tr.grp label.check')).find((l) => l.textContent === `Chọn ${ten}`)!.querySelector('input'))
+  const nutBulk = (nhan: string) => Array.from(container.querySelectorAll('.bulkbar button')).find((b) => b.textContent === nhan) as HTMLButtonElement
+
+  it('bulkbar: chọn 2 người khoá "Ghi nhận thu", "Gửi nhắc nợ" luôn aria-disabled kèm lý do, Esc bỏ chọn', async () => {
+    await mount()
+    expect(container.querySelector('.bulkbar')).toBeNull()
+    await tick('Nguyễn Quang Huy'); await tick('Hoàng Tuấn Anh')
+    expect(container.querySelector('.bulkbar')!.textContent).toContain('Đã chọn 2 người · 10.000.000 ₫')
+    expect(nutBulk('Ghi nhận thu').getAttribute('aria-disabled')).toBe('true')
+    const nhac = nutBulk('Gửi nhắc nợ')
+    expect(nhac.getAttribute('aria-disabled')).toBe('true')
+    expect(document.getElementById(nhac.getAttribute('aria-describedby')!)!.textContent).toBe('cần API nhắc nợ')
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })) })
+    expect(container.querySelector('.bulkbar')).toBeNull()
+    expect(container.querySelectorAll('tr.grp.is-selected')).toHaveLength(0)
+  })
+
+  it('bulkbar: chọn hết trên trang bằng ô ở <th>; chọn 1 người thì "Ghi nhận thu" mở khoá', async () => {
+    await mount()
+    await bam(container.querySelector('thead input[type="checkbox"]'))
+    expect(container.querySelector('.bulkbar')!.textContent).toContain('Đã chọn 3 người · 11.500.000 ₫')
+    await bam(container.querySelector('thead input[type="checkbox"]'))
+    await tick('Lê Nhật Quang')
+    expect(nutBulk('Ghi nhận thu').getAttribute('aria-disabled')).toBeNull()
+  })
+
+  it('xuất danh sách: CSV có họ tên, toà, phòng, số kỳ, trễ, còn nợ của người đã chọn và tải bằng <a download>', async () => {
+    const { taoCsv } = await import('./ThuTien')
+    const { nhomNo, tuCongNo } = await import('./nhomNoTheoNguoi')
+    const ds = nhomNo(tuCongNo(CONG_NO as never))
+    expect(taoCsv([ds[0]])).toBe('\uFEFF"Họ tên","Toà","Phòng","Số kỳ","Trễ lâu nhất (ngày)","Còn nợ"\r\n"Nguyễn Quang Huy","An Nhiên","201","2","140","8000000"')
+    const tao = vi.fn(() => 'blob:x'); const thu = vi.fn()
+    const goc = { c: URL.createObjectURL, r: URL.revokeObjectURL }
+    URL.createObjectURL = tao; URL.revokeObjectURL = thu
+    const nhan = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    await mount()
+    await tick('Lê Nhật Quang')
+    await bam(nutBulk('Xuất danh sách'))
+    expect(tao).toHaveBeenCalledTimes(1)
+    expect(await ((tao.mock.calls[0] as unknown as [Blob])[0]).text()).toContain('"Lê Nhật Quang","An Nhiên","103","1","40","1500000"')
+    expect(nhan).toHaveBeenCalledTimes(1)
+    nhan.mockRestore()
+    URL.createObjectURL = goc.c; URL.revokeObjectURL = goc.r
+  })
+
   it('tab Tiền cọc: chọn hợp đồng hiện số cọc đã thu / còn thiếu', async () => {
     window.history.replaceState({}, '', '/thu-tien?tab=coc')
     await act(async () => { root = createRoot(container); root.render(<ThuTien token="t" vaiTro="CHU" />) })

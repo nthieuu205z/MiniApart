@@ -25,6 +25,13 @@ const mauAvatar = (khoa: string) => ['', 'h1', 'h2', 'h3', 'h4', 'h5'][[...khoa]
 // Kỳ lấy theo tháng phát hành (Quản lý không có ngày phát hành → tháng của hạn thanh toán).
 const nhanKy = (d: DongNo) => { const s = (d.ngayPhatHanh ?? d.hanThanhToan).slice(0, 7); return `${s.slice(5, 7)}/${s.slice(0, 4)}` }
 
+/** CSV (UTF-8 có BOM để Excel đọc đúng tiếng Việt) từ các nhóm nợ. */
+export function taoCsv(ds: NhomNo[]): string {
+  const o = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
+  const hang = [['Họ tên', 'Toà', 'Phòng', 'Số kỳ', 'Trễ lâu nhất (ngày)', 'Còn nợ'], ...ds.map((g) => [g.hoTen, g.tenToaNha, g.soPhong, g.hoaDon.length, g.treLauNhat, g.conLai])]
+  return `\uFEFF${hang.map((h) => h.map(o).join(',')).join('\r\n')}`
+}
+
 /** Trạng thái lọc/nhóm/trang nằm trên URL (replaceState) để Back và tải lại giữ nguyên; `popstate` đồng bộ khi khung đổi tab. */
 function useQuery() {
   const [search, setSearch] = useState(() => window.location.search)
@@ -63,6 +70,8 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
   const [loi, setLoi] = useState<string | null>(null)
   const [reload, setReload] = useState(0)
   const [mo, setMo] = useState<Set<string>>(new Set())
+  const [chon, setChon] = useState<Set<string>>(new Set())
+  const [ngan, setNgan] = useState<{ hoaDonId: number | null } | null>(null)
   useEffect(() => {
     if (choToa) return
     let active = true
@@ -86,6 +95,24 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
   const [daMoDau, setDaMoDau] = useState(false)
   useEffect(() => { if (!daMoDau && nhom.length > 0) { setDaMoDau(true); setMo(new Set([nhom[0].khoa])) } }, [daMoDau, nhom])
 
+  // Chỉ tính nhóm còn hiện sau lọc: lọc/tìm lại thì phần đã chọn ngoài danh sách tự rơi ra.
+  const daChon = useMemo(() => hienThi.filter((g) => chon.has(g.khoa)), [hienThi, chon])
+  const tongChon = daChon.reduce((t, g) => t + g.conLai, 0)
+  const tatCaTrang = trangHienTai.length > 0 && trangHienTai.every((g) => chon.has(g.khoa))
+  const doiChon = (ds: NhomNo[], bat: boolean) => setChon((s) => { const n = new Set(s); ds.forEach((g) => (bat ? n.add(g.khoa) : n.delete(g.khoa))); return n })
+  useEffect(() => {
+    if (chon.size === 0 || ngan) return
+    const thoat = (e: KeyboardEvent) => { if (e.key === 'Escape') setChon(new Set()) }
+    document.addEventListener('keydown', thoat)
+    return () => document.removeEventListener('keydown', thoat)
+  }, [chon.size, ngan])
+  const xuatCsv = () => {
+    const url = URL.createObjectURL(new Blob([taoCsv(daChon)], { type: 'text/csv;charset=utf-8' }))
+    const a = document.createElement('a')
+    a.href = url; a.download = 'can-thu.csv'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const tenToa = toa?.ten ?? `Tất cả ${buildings.length} toà`
   const phuDe = tab === 'can-thu' ? 'nhóm theo người thuê, mỗi người một hàng tổng' : tab === 'da-thu' ? 'hoá đơn đã thu đủ' : 'tiền cọc và trả phòng'
   const datLoc = (patch: Record<string, string | null>) => dat({ trang: null, ...patch })
@@ -101,7 +128,13 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
     {tab === 'coc' ? <TabCoc token={token} toaNhaId={toaId} buildings={buildings} chonToa={ngoaiProvider(chung) || !chung.coDinh ? chung.chon : undefined} />
       : tab === 'da-thu' ? null
         : <section className="card flush" aria-label="Cần thu">
-          <div className="toolbar">
+          {daChon.length > 0 ? <div className="bulkbar" role="status">
+            <Icon name="check-circle" /><span>Đã chọn <b>{daChon.length} {theo === 'nguoi' ? 'người' : 'phòng'}</b> · {vnd(tongChon)}</span><span className="push" />
+            <Button size="sm" variant="secondary" blocked={daChon.length !== 1} title={daChon.length === 1 ? undefined : 'Chọn đúng một người để ghi nhận thu'} onClick={() => setNgan({ hoaDonId: daChon[0].hoaDon[0].hoaDonId })}>Ghi nhận thu</Button>
+            <Button size="sm" variant="secondary" onClick={xuatCsv}>Xuất danh sách</Button>
+            <button type="button" className="btn btn-secondary btn-sm" aria-disabled="true" aria-describedby="ly-do-nhac-no">Gửi nhắc nợ</button><span className="reason" id="ly-do-nhac-no">cần API nhắc nợ</span>
+            <Button size="sm" variant="text" onClick={() => setChon(new Set())}>Bỏ chọn</Button>
+          </div> : <div className="toolbar">
             <label className="input-wrap"><span className="sr-only">Tìm trong danh sách cần thu</span><Icon name="search" /><input className="input" type="search" placeholder="Tìm người, phòng, mã hoá đơn" value={q} onChange={(e) => datLoc({ q: e.target.value })} /></label>
             {BO_LOC.map((b) => <button key={b.khoa} type="button" className="chip" aria-pressed={loc === b.khoa} onClick={() => datLoc({ loc: b.khoa === 'tat-ca' ? null : b.khoa })}>{b.nhan}<span className="n">{dem[b.khoa]}</span></button>)}
             <span className="push t-meta">Nhóm theo</span>
@@ -109,7 +142,7 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
               <button type="button" aria-pressed={theo === 'nguoi'} onClick={() => datLoc({ theo: null })}>Người thuê</button>
               <button type="button" aria-pressed={theo === 'phong'} onClick={() => datLoc({ theo: 'phong' })}>Phòng</button>
             </div>
-          </div>
+          </div>}
           {loi ? <EmptyState kind="error" title={loi} body="Dữ liệu chưa bị thay đổi." actionLabel="Thử lại" onAction={() => setReload((v) => v + 1)} />
             : dong === null ? <div aria-busy="true" role="status" aria-label="Đang tải danh sách cần thu" style={{ padding: '8px 24px 24px', display: 'grid', gap: 14 }}>{[0, 1, 2, 3, 4].map((i) => <div key={i} className="skel skel-line" style={{ width: '100%', height: 40 }} />)}</div>
               : nhom.length === 0 ? <EmptyState title="Không ai còn nợ." body={<>Hoá đơn kỳ mới phát hành ở <a href="/chu-ky">Chu kỳ tháng</a>.</>} />
@@ -117,14 +150,14 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
                   : <>
                     <div className="table-wrap"><table className="table gtable">
                       <thead><tr>
-                        <th scope="col" style={{ width: 48 }}><span className="sr-only">Chọn</span></th>
+                        <th scope="col" style={{ width: 48 }}><label className="check"><input type="checkbox" checked={tatCaTrang} onChange={(e) => doiChon(trangHienTai, e.target.checked)} /><span className="sr-only">Chọn hết nhóm trên trang</span></label></th>
                         <th scope="col">{theo === 'nguoi' ? 'Người thuê · phòng' : 'Phòng · người thuê'}</th>
                         <th scope="col">Chưa trả đủ</th><th scope="col">Trễ lâu nhất</th>
                         <th scope="col" className="num">Đã thu</th><th scope="col" className="num">Còn nợ</th>
                         <th scope="col" style={{ width: 52 }}><span className="sr-only">Mở</span></th>
                       </tr></thead>
                       <tbody>
-                        {trangHienTai.map((g) => <HangNhom key={g.khoa} g={g} theo={theo} mo={mo.has(g.khoa)} doiMo={() => setMo((s) => { const n = new Set(s); if (n.has(g.khoa)) n.delete(g.khoa); else n.add(g.khoa); return n })} />)}
+                        {trangHienTai.map((g) => <HangNhom key={g.khoa} g={g} theo={theo} chon={chon.has(g.khoa)} doiChon={(bat) => doiChon([g], bat)} mo={mo.has(g.khoa)} doiMo={() => setMo((s) => { const n = new Set(s); if (n.has(g.khoa)) n.delete(g.khoa); else n.add(g.khoa); return n })} />)}
                         <tr className="tot"><td /><td>Tổng {tong.soNhom} {theo === 'nguoi' ? 'người' : 'phòng'}</td><td className="c-ky">{tong.soKy} kỳ</td><td className="c-tre" /><td className="num c-thu">{vnd(tong.daThu)}</td><td className="num t-danger">{vnd(tong.conLai)}</td><td /></tr>
                       </tbody>
                     </table></div>
@@ -138,14 +171,14 @@ export default function ThuTien({ token, mobile = false, vaiTro }: Props) {
   </section>
 }
 
-function HangNhom({ g, theo, mo, doiMo }: { g: NhomNo; theo: 'nguoi' | 'phong'; mo: boolean; doiMo: () => void }) {
+function HangNhom({ g, theo, chon, doiChon, mo, doiMo }: { g: NhomNo; theo: 'nguoi' | 'phong'; chon: boolean; doiChon: (bat: boolean) => void; mo: boolean; doiMo: () => void }) {
   const ten = theo === 'nguoi' ? g.hoTen : `Phòng ${g.soPhong}`
   const phu = theo === 'nguoi' ? `${g.tenToaNha} · Phòng ${g.soPhong}` : `${g.tenToaNha} · ${g.hoTen}`
   const nguoi = <><span className={`avatar sm ${mauAvatar(g.khoa)}`} aria-hidden="true">{theo === 'nguoi' ? vietTat(g.hoTen) : g.soPhong.slice(0, 3)}</span><span><span className="td-main">{ten}</span><span className="td-sub" style={{ display: 'block' }}>{phu}</span></span></>
   const idKid = (h: DongNo) => `kid-${g.khoa}-${h.hoaDonId}`
   return <>
-    <tr className="grp">
-      <td><span className="sr-only">Chọn {ten}</span></td>
+    <tr className={chon ? 'grp is-selected' : 'grp'}>
+      <td><label className="check"><input type="checkbox" checked={chon} onChange={(e) => doiChon(e.target.checked)} /><span className="sr-only">Chọn {ten}</span></label></td>
       <td>{theo === 'nguoi' && g.nguoiThueId !== null ? <a className="td-person" href={`/nguoi-thue/${g.nguoiThueId}`} style={{ color: 'inherit' }}>{nguoi}</a> : <span className="td-person">{nguoi}</span>}</td>
       <td className="c-ky">{g.hoaDon.length} kỳ</td>
       <td className="c-tre">{g.treLauNhat > 0 ? <StatusTag tone="urgent" icon="clock">{g.treLauNhat} ngày</StatusTag> : <span className="t-meta">Chưa đến hạn</span>}</td>
