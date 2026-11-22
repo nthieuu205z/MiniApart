@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="390" height="1208" viewBox="0 0 390 1208">
+<title>can-tra · Người thuê · MiniApart</title>
+<defs><style>@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 400; font-display: swap; src: url('../../assets/fonts/archivo-latin-400.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 500; font-display: swap; src: url('../../assets/fonts/archivo-latin-500.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 600; font-display: swap; src: url('../../assets/fonts/archivo-latin-600.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 700; font-display: swap; src: url('../../assets/fonts/archivo-latin-700.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 400; font-display: swap; src: url('../../assets/fonts/archivo-vietnamese-400.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 500; font-display: swap; src: url('../../assets/fonts/archivo-vietnamese-500.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 600; font-display: swap; src: url('../../assets/fonts/archivo-vietnamese-600.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 700; font-display: swap; src: url('../../assets/fonts/archivo-vietnamese-700.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }</style></defs>
+<rect data-name="nền trang" x="0" y="0" width="390" height="1208" fill="#F4F2EE"/>
+<rect data-name="m-top" x="0" y="0" width="390" height="64" fill="#F4F2EE"/>
+<text x="16" y="29.58" font-family="Archivo" font-size="20" font-weight="600" letter-spacing="-0.2" fill="#1C1B19" xml:space="preserve">Phòng 101</text>
+<text x="16" y="48.13" font-family="Archivo" font-size="13" font-weight="400" letter-spacing="-0.2" fill="#6B655F" xml:space="preserve">An Nhiên Residence · Trần Quang Huy</text>
+<g data-name="icon" transform="translate(292 22) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10a6 6 0 0 1 12 0c0 4.5 1.8 6 1.8 6H4.2S6 14.5 6 10z"></path><path d="M10 19.5a2.1 2.1 0 0 0 4 0"></path></g></g>
+<rect data-name="b" x="306" y="10" width="20" height="20" rx="10" fill="#B42318"/>
+<text x="312.25" y="24.55" font-family="Archivo" font-size="13" font-weight="600" fill="#FFFFFF" xml:space="preserve">8</text>
+<g data-name="icon" transform="translate(348 22) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 20.5c.8-3.8 3.7-6 7.5-6s6.7 2.2 7.5 6"></path></g></g>
+<rect data-name="payhero" x="16" y="64" width="360.66" height="300.59" rx="20" fill="#FFFFFF"/>
+<rect data-name="tag" x="34" y="84" width="111.09" height="26" rx="13" fill="#FDECEA"/>
+<g data-name="icon" transform="translate(42 90) scale(0.58333)"><g fill="none" stroke="#B42318" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 15.5H3z"></path><path d="M12 10v4.5M12 17.2h.01"></path></g></g>
+<text x="62" y="100.75" font-family="Archivo" font-size="13" font-weight="500" fill="#B42318" xml:space="preserve">4 kỳ quá hạn</text>
+<text x="34" y="133.4" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">Cần trả</text>
+<text x="34" y="178.6" font-family="Archivo" font-size="36" font-weight="600" letter-spacing="-0.72" fill="#B42318" xml:space="preserve">7.580.000 ₫</text>
+<text x="34" y="209.99" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">Mỗi kỳ còn 1.895.000 ₫ sau khi đã trả một nửa. Kỳ cũ</text>
+<text x="34" y="230.99" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">nhất hạn 05/07/2026.</text>
+<rect data-name="btn" x="34.5" y="245.09" width="323.66" height="47" rx="13.5" fill="#0F766E"/>
+<text x="140.59" y="273.69" font-family="Archivo" font-size="16" font-weight="600" fill="#FFFFFF" xml:space="preserve">Trả 7.580.000 ₫</text>
+<rect data-name="btn" x="34.5" y="301.09" width="323.66" height="43" rx="11.5" fill="none"/>
+<text x="134.72" y="327.34" font-family="Archivo" font-size="15" font-weight="600" fill="#0F766E" xml:space="preserve">Chỉ trả kỳ 10/2026</text>
+<text x="20" y="400.69" font-family="Archivo" font-size="16" font-weight="600" fill="#1C1B19" xml:space="preserve">Các kỳ chưa trả đủ</text>
+<rect data-name="m-list" x="16" y="418.19" width="360.66" height="264" rx="20" fill="#FFFFFF"/>
+<text x="32" y="449.89" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Kỳ 10/2026</text>
+<text x="32" y="468.44" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">Hạn 05/10/2026 · đã trả 1.895.000 ₫</text>
+<text x="251.36" y="449.27" font-family="Archivo" font-size="15" font-weight="600" fill="#1C1B19" xml:space="preserve">1.895.000 ₫</text>
+<text x="269.05" y="468.07" font-family="Archivo" font-size="13" font-weight="400" fill="#B42318" xml:space="preserve">trễ 48 ngày</text>
+<g data-name="icon" transform="translate(344.66 446.19) scale(0.66667)"><g fill="none" stroke="#6B655F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"></path></g></g>
+<line x1="16" y1="486.69" x2="376.66" y2="486.69" stroke="#F1EEE9" stroke-width="1"/>
+<text x="32" y="514.39" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Kỳ 09/2026</text>
+<text x="32" y="532.94" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">Hạn 05/09/2026 · đã trả 1.895.000 ₫</text>
+<text x="251.36" y="513.77" font-family="Archivo" font-size="15" font-weight="600" fill="#1C1B19" xml:space="preserve">1.895.000 ₫</text>
+<text x="269.08" y="532.57" font-family="Archivo" font-size="13" font-weight="400" fill="#B42318" xml:space="preserve">trễ 78 ngày</text>
+<g data-name="icon" transform="translate(344.66 510.69) scale(0.66667)"><g fill="none" stroke="#6B655F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"></path></g></g>
+<line x1="16" y1="550.69" x2="376.66" y2="550.69" stroke="#F1EEE9" stroke-width="1"/>
+<text x="32" y="578.39" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Kỳ 08/2026</text>
+<text x="32" y="596.94" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">Hạn 05/08/2026 · đã trả 1.895.000 ₫</text>
+<text x="251.36" y="577.77" font-family="Archivo" font-size="15" font-weight="600" fill="#1C1B19" xml:space="preserve">1.895.000 ₫</text>
+<text x="262.06" y="596.57" font-family="Archivo" font-size="13" font-weight="400" fill="#B42318" xml:space="preserve">trễ 109 ngày</text>
+<g data-name="icon" transform="translate(344.66 574.69) scale(0.66667)"><g fill="none" stroke="#6B655F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"></path></g></g>
+<line x1="16" y1="614.69" x2="376.66" y2="614.69" stroke="#F1EEE9" stroke-width="1"/>
+<text x="32" y="642.39" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Kỳ 07/2026</text>
+<text x="32" y="660.94" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">Hạn 05/07/2026 · đã trả 1.895.000 ₫</text>
+<text x="251.36" y="641.77" font-family="Archivo" font-size="15" font-weight="600" fill="#1C1B19" xml:space="preserve">1.895.000 ₫</text>
+<text x="262.3" y="660.57" font-family="Archivo" font-size="13" font-weight="400" fill="#B42318" xml:space="preserve">trễ 140 ngày</text>
+<g data-name="icon" transform="translate(344.66 638.69) scale(0.66667)"><g fill="none" stroke="#6B655F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"></path></g></g>
+<text x="20" y="718.29" font-family="Archivo" font-size="16" font-weight="600" fill="#1C1B19" xml:space="preserve">Kỳ 10/2026 gồm</text>
+<rect data-name="m-list" x="16" y="735.78" width="360.66" height="392" rx="20" fill="#FFFFFF"/>
+<text x="32" y="767.48" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Tiền phòng (29/29 ngày)</text>
+<text x="32" y="786.03" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">29 × 3.200.000 ₫</text>
+<text x="279.36" y="776.28" font-family="Archivo" font-size="15" font-weight="600" fill="#1C1B19" xml:space="preserve">3.200.000 ₫</text>
+<line x1="16" y1="804.28" x2="376.66" y2="804.28" stroke="#F1EEE9" stroke-width="1"/>
+<text x="32" y="831.98" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Điện sinh hoạt</text>
+<text x="32" y="850.53" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">288 → 384 · 96 × 3.800 ₫</text>
+<text x="292.44" y="840.78" font-family="Archivo" font-size="15" font-weight="600" fill="#1C1B19" xml:space="preserve">364.800 ₫</text>
+<line x1="16" y1="868.28" x2="376.66" y2="868.28" stroke="#F1EEE9" stroke-width="1"/>
+<text x="32" y="895.98" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Nước sạch</text>
+<text x="32" y="914.53" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">15 → 20 · 5 × 25.000 ₫</text>
+<text x="292.48" y="904.78" font-family="Archivo" font-size="15" font-weight="600" fill="#1C1B19" xml:space="preserve">125.000 ₫</text>
+<line x1="16" y1="932.28" x2="376.66" y2="932.28" stroke="#F1EEE9" stroke-width="1"/>
+<text x="32" y="959.98" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Internet cáp quang</text>
+<text x="32" y="978.53" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">1 × 0 ₫</text>
+<text x="340.14" y="968.78" font-family="Archivo" font-size="15" font-weight="600" fill="#1C1B19" xml:space="preserve">0 ₫</text>
+<line x1="16" y1="996.28" x2="376.66" y2="996.28" stroke="#F1EEE9" stroke-width="1"/>
+<text x="32" y="1023.98" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Vệ sinh khu vực chung</text>
+<text x="32" y="1042.53" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">2 × 50.000 ₫</text>
+<text x="292.5" y="1032.78" font-family="Archivo" font-size="15" font-weight="600" fill="#1C1B19" xml:space="preserve">100.000 ₫</text>
+<line x1="16" y1="1060.28" x2="376.66" y2="1060.28" stroke="#F1EEE9" stroke-width="1"/>
+<text x="32" y="1097.41" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Làm tròn</text>
+<text x="322.88" y="1096.78" font-family="Archivo" font-size="15" font-weight="600" fill="#1C1B19" xml:space="preserve">200 ₫</text>
+<rect data-name="Điều hướng chính" x="0" y="1144" width="390" height="64" fill="#FFFFFF"/>
+<line x1="0" y1="1144.5" x2="390" y2="1144.5" stroke="#E7E3DD" stroke-width="1"/>
+<rect data-name="[object" x="43.66" y="1154.34" width="48" height="26" rx="12" fill="#E6F2F0"/>
+<g data-name="icon" transform="translate(56.66 1156.34) scale(0.91667)"><g fill="none" stroke="#115E59" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5h13v17l-2.2-1.4-2.1 1.4-2.2-1.4-2.2 1.4-2.1-1.4-2.2 1.4z"></path><path d="M9 8h6M9 11.5h6M9 15h3.5"></path></g></g>
+<text x="46.25" y="1195.89" font-family="Archivo" font-size="13" font-weight="600" fill="#115E59" xml:space="preserve">Cần trả</text>
+<g data-name="icon" transform="translate(184.98 1157.34) scale(0.83333)"><g fill="none" stroke="#6B655F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.8 6.2a4 4 0 0 1 4.9-1.1l-2.6 2.6.2 2 2 .2 2.6-2.6a4 4 0 0 1-5.3 5.2l-7.3 7.3a2 2 0 0 1-2.8-2.8l7.3-7.3a4 4 0 0 1 1-3.5z"></path></g></g>
+<text x="166.77" y="1192.89" font-family="Archivo" font-size="13" font-weight="500" fill="#6B655F" xml:space="preserve">Báo hỏng</text>
+<g data-name="icon" transform="translate(312.33 1157.34) scale(0.83333)"><g fill="none" stroke="#6B655F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5L12 4l8 6.5"></path><path d="M6 9v10.5h12V9"></path><path d="M10 19.5v-5h4v5"></path></g></g>
+<text x="282.28" y="1192.89" font-family="Archivo" font-size="13" font-weight="500" fill="#6B655F" xml:space="preserve">Phòng của tôi</text>
+</svg>

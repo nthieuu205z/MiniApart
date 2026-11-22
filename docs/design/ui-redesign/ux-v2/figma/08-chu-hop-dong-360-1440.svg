@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1440" height="1026" viewBox="0 0 1440 1026">
+<title>Hợp đồng #1 · Phòng 101 · Chủ sở hữu · MiniApart</title>
+<defs><style>@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 400; font-display: swap; src: url('../../assets/fonts/archivo-latin-400.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 500; font-display: swap; src: url('../../assets/fonts/archivo-latin-500.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 600; font-display: swap; src: url('../../assets/fonts/archivo-latin-600.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 700; font-display: swap; src: url('../../assets/fonts/archivo-latin-700.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 400; font-display: swap; src: url('../../assets/fonts/archivo-vietnamese-400.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 500; font-display: swap; src: url('../../assets/fonts/archivo-vietnamese-500.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 600; font-display: swap; src: url('../../assets/fonts/archivo-vietnamese-600.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 700; font-display: swap; src: url('../../assets/fonts/archivo-vietnamese-700.woff2') format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }</style></defs>
+<rect data-name="nền trang" x="0" y="0" width="1440" height="1026" fill="#F4F2EE"/>
+<rect data-name="Thanh bên" x="16" y="16" width="248" height="868" rx="24" fill="#FFFFFF"/>
+<rect data-name="logo" x="36" y="32" width="36" height="36" rx="10" fill="#0F766E"/>
+<text x="46.33" y="56.3" font-family="Archivo" font-size="18" font-weight="700" letter-spacing="-0.36" fill="#FFFFFF" xml:space="preserve">M</text>
+<text x="82" y="55.5" font-family="Archivo" font-size="18" font-weight="600" letter-spacing="-0.18" fill="#1C1B19" xml:space="preserve">MiniApart</text>
+<rect data-name="sb-toa" x="26.5" y="81.5" width="227" height="49.34" rx="11.5" fill="#FFFFFF" stroke="#E7E3DD" stroke-width="1"/>
+<g data-name="icon" transform="translate(37 96.17) scale(0.83333)"><g fill="none" stroke="#1C1B19" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 20.5V5.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v15"></path><path d="M15.5 9.5h2a2 2 0 0 1 2 2v9"></path><path d="M3 20.5h18"></path><path d="M8 7.5h4M8 11h4M8 14.5h4"></path></g></g>
+<text x="67" y="101.4" font-family="Archivo" font-size="14" font-weight="600" fill="#1C1B19" xml:space="preserve">Tất cả 3 toà</text>
+<text x="67" y="119.05" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">36 phòng · Chủ sở hữu</text>
+<g data-name="icon" transform="translate(227 98.17) scale(0.66667)"><g fill="none" stroke="#1C1B19" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"></path></g></g>
+<g data-name="icon" transform="translate(36 146.34) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="8" rx="2"></rect><rect x="13.5" y="3.5" width="7" height="5" rx="2"></rect><rect x="13.5" y="11.5" width="7" height="9" rx="2"></rect><rect x="3.5" y="14.5" width="7" height="6" rx="2"></rect></g></g>
+<text x="66" y="161" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">Hôm nay</text>
+<text x="36" y="201.89" font-family="Archivo" font-size="13" font-weight="500" fill="#6B655F" xml:space="preserve">Thu tiền</text>
+<g data-name="icon" transform="translate(36 218.53) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5a2 2 0 0 1 2-2h11.5v3"></path><rect x="4" y="8.5" width="16" height="11" rx="2"></rect><path d="M16 14h.01"></path><path d="M15.5 12h4.5v4h-4.5a2 2 0 0 1 0-4z"></path></g></g>
+<text x="66" y="233.18" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">Thu tiền</text>
+<g data-name="icon" transform="translate(36 254.53) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16a8 8 0 1 1 16 0"></path><path d="M12 16l3.5-4.5"></path><circle cx="12" cy="16" r="1.3"></circle><path d="M4 19.5h16"></path></g></g>
+<text x="66" y="269.18" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">Chu kỳ tháng</text>
+<text x="36" y="310.08" font-family="Archivo" font-size="13" font-weight="500" fill="#6B655F" xml:space="preserve">Phòng &amp; người thuê</text>
+<g data-name="icon" transform="translate(36 326.72) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 20.5V5.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v15"></path><path d="M15.5 9.5h2a2 2 0 0 1 2 2v9"></path><path d="M3 20.5h18"></path><path d="M8 7.5h4M8 11h4M8 14.5h4"></path></g></g>
+<text x="66" y="341.37" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">Toà &amp; phòng</text>
+<g data-name="icon" transform="translate(36 362.72) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5"></path><path d="M15.5 4.8a3.5 3.5 0 0 1 0 6.4"></path><path d="M18 14.8c1.9.8 3.1 2.6 3.5 5.2"></path></g></g>
+<text x="66" y="377.37" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">Người thuê</text>
+<rect data-name="nav-item" x="26" y="390.72" width="228" height="36" rx="12" fill="#E6F2F0"/>
+<g data-name="icon" transform="translate(36 398.72) scale(0.83333)"><g fill="none" stroke="#115E59" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5z"></path><path d="M14 3.5v5h5"></path><path d="M8.5 12.5h7M8.5 16h4.5"></path></g></g>
+<text x="66" y="413.37" font-family="Archivo" font-size="14.5" font-weight="600" fill="#115E59" xml:space="preserve">Hợp đồng</text>
+<g data-name="icon" transform="translate(36 434.72) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"></path></g></g>
+<text x="66" y="449.37" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">Lịch hẹn</text>
+<rect data-name="9 cần xử lý" x="220.52" y="434.22" width="23.48" height="21" rx="10.5" fill="#EFECE7"/>
+<text x="228.52" y="448.77" font-family="Archivo" font-size="13" font-weight="600" fill="#57534E" xml:space="preserve">9</text>
+<text x="36" y="490.27" font-family="Archivo" font-size="13" font-weight="500" fill="#6B655F" xml:space="preserve">Vận hành</text>
+<g data-name="icon" transform="translate(36 506.91) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.8 6.2a4 4 0 0 1 4.9-1.1l-2.6 2.6.2 2 2 .2 2.6-2.6a4 4 0 0 1-5.3 5.2l-7.3 7.3a2 2 0 0 1-2.8-2.8l7.3-7.3a4 4 0 0 1 1-3.5z"></path></g></g>
+<text x="66" y="521.56" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">Sự cố</text>
+<rect data-name="6 cần xử lý" x="220.5" y="506.41" width="23.5" height="21" rx="10.5" fill="#FDECEA"/>
+<text x="228.5" y="520.96" font-family="Archivo" font-size="13" font-weight="600" fill="#B42318" xml:space="preserve">6</text>
+<g data-name="icon" transform="translate(36 542.91) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 2.6v5.4c0 4.4-2.9 7.6-7 9-4.1-1.4-7-4.6-7-9V6.1z"></path><path d="M9 12l2.2 2.2L15.5 10"></path></g></g>
+<text x="66" y="557.56" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">An toàn PCCC</text>
+<text x="36" y="598.46" font-family="Archivo" font-size="13" font-weight="500" fill="#6B655F" xml:space="preserve">Báo cáo</text>
+<g data-name="icon" transform="translate(36 615.09) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20.5h16"></path><path d="M6.5 16.5v-4M11 16.5V8M15.5 16.5v-6M20 16.5V5"></path></g></g>
+<text x="66" y="629.75" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">Báo cáo</text>
+<g data-name="icon" transform="translate(36 775.97) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></g></g>
+<text x="66" y="790.62" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">Dịch vụ &amp; đơn giá</text>
+<rect data-name="sb-user" x="26" y="810.97" width="228" height="61.03" rx="16" fill="#F7F5F2"/>
+<rect data-name="avatar" x="38" y="825.48" width="32" height="32" rx="16" fill="#E7F5EC"/>
+<text x="44.88" y="845.53" font-family="Archivo" font-size="13" font-weight="600" fill="#166534" xml:space="preserve">HP</text>
+<text x="80" y="836.37" font-family="Archivo" font-size="14" font-weight="600" fill="#1C1B19" xml:space="preserve">Nguyễn Hoàng…</text>
+<text x="80" y="854.71" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">Chủ sở hữu</text>
+<g data-name="icon" transform="translate(214 831.48) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5.5" r="1.2"></circle><circle cx="12" cy="12" r="1.2"></circle><circle cx="12" cy="18.5" r="1.2"></circle></g></g>
+<rect data-name="Tìm nhanh: người thuê, phòng, hợp đồng, " x="280.5" y="20.5" width="479" height="39" rx="11.5" fill="#FFFFFF" stroke="#E7E3DD" stroke-width="1"/>
+<g data-name="icon" transform="translate(295 30) scale(0.83333)"><g fill="none" stroke="#6B655F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></g></g>
+<text x="325" y="44.9" font-family="Archivo" font-size="14" font-weight="400" fill="#6B655F" xml:space="preserve">Tìm người thuê, phòng, hợp đồng, hoá đơn…</text>
+<rect data-name="search-kbd" x="705.05" y="29" width="45.45" height="22" rx="5.5" fill="#FFFFFF" stroke="#D6D2CB" stroke-width="1"/>
+<text x="711.55" y="44.05" font-family="Archivo" font-size="13" font-weight="500" fill="#6B655F" xml:space="preserve">Ctrl K</text>
+<g data-name="icon" transform="translate(1394 30) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10a6 6 0 0 1 12 0c0 4.5 1.8 6 1.8 6H4.2S6 14.5 6 10z"></path><path d="M10 19.5a2.1 2.1 0 0 0 4 0"></path></g></g>
+<text x="280" y="93.55" font-family="Archivo" font-size="13" font-weight="400" fill="#57534E" xml:space="preserve">Hợp đồng</text>
+<g data-name="icon" transform="translate(342.41 81.42) scale(0.66667)"><g fill="none" stroke="#6B655F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"></path></g></g>
+<text x="364.41" y="93.55" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">#1</text>
+<rect data-name="avatar" x="280" y="140.14" width="56" height="56" rx="28" fill="#EAF0FC"/>
+<g data-name="icon" transform="translate(296 156.14) scale(1)"><g fill="none" stroke="#1E4FC2" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5z"></path><path d="M14 3.5v5h5"></path><path d="M8.5 12.5h7M8.5 16h4.5"></path></g></g>
+<text x="352" y="147.14" font-family="Archivo" font-size="28" font-weight="600" letter-spacing="-0.42" fill="#1C1B19" xml:space="preserve">Hợp đồng #1 · Phòng 101</text>
+<g data-name="icon" transform="translate(352 160.94) scale(0.66667)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 20.5V5.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v15"></path><path d="M15.5 9.5h2a2 2 0 0 1 2 2v9"></path><path d="M3 20.5h18"></path><path d="M8 7.5h4M8 11h4M8 14.5h4"></path></g></g>
+<text x="374" y="173.84" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">An Nhiên Residence</text>
+<g data-name="icon" transform="translate(514.61 160.94) scale(0.66667)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 20.5c.8-3.8 3.7-6 7.5-6s6.7 2.2 7.5 6"></path></g></g>
+<text x="536.61" y="173.84" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">Trần Quang Huy</text>
+<g data-name="icon" transform="translate(651.56 160.94) scale(0.66667)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"></path></g></g>
+<text x="673.56" y="173.84" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">01/05/2026 – 20/05/2027</text>
+<rect data-name="tag" x="352" y="189.44" width="65.39" height="26" rx="13" fill="#E7F5EC"/>
+<text x="360" y="206.19" font-family="Archivo" font-size="13" font-weight="500" fill="#166534" xml:space="preserve">Hiệu lực</text>
+<rect data-name="tag" x="423.39" y="189.44" width="125.98" height="26" rx="13" fill="#FDECEA"/>
+<g data-name="icon" transform="translate(431.39 195.44) scale(0.58333)"><g fill="none" stroke="#B42318" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 15.5H3z"></path><path d="M12 10v4.5M12 17.2h.01"></path></g></g>
+<text x="451.39" y="206.19" font-family="Archivo" font-size="13" font-weight="500" fill="#B42318" xml:space="preserve">Nợ 7.580.000 ₫</text>
+<rect data-name="btn" x="1259.98" y="148.64" width="115.52" height="39" rx="11.5" fill="#FFFFFF" stroke="#D6D2CB" stroke-width="1"/>
+<g data-name="icon" transform="translate(1276.48 158.14) scale(0.83333)"><g fill="none" stroke="#1C1B19" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5"></path><path d="M4.5 19.5h15"></path></g></g>
+<text x="1304.48" y="172.89" font-family="Archivo" font-size="15" font-weight="600" fill="#1C1B19" xml:space="preserve">Tải PDF</text>
+<rect data-name="Thao tác khác: thanh lý, phụ lục, khoản " x="1384.5" y="148.64" width="39" height="39" rx="11.5" fill="#FFFFFF" stroke="#D6D2CB" stroke-width="1"/>
+<g data-name="icon" transform="translate(1394 158.14) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="12" r="1.2"></circle><circle cx="12" cy="12" r="1.2"></circle><circle cx="18.5" cy="12" r="1.2"></circle></g></g>
+<rect data-name="card" x="280" y="231.44" width="788" height="171.47" rx="24" fill="#FFFFFF"/>
+<text x="302" y="267.54" font-family="Archivo" font-size="16" font-weight="600" fill="#1C1B19" xml:space="preserve">Điều khoản</text>
+<text x="302" y="296.58" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">Giá thuê</text>
+<text x="302" y="327.18" font-family="Archivo" font-size="28" font-weight="600" letter-spacing="-0.42" fill="#1C1B19" xml:space="preserve">3.200.000 ₫</text>
+<text x="477.13" y="296.58" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">Tiền cọc</text>
+<text x="477.13" y="327.18" font-family="Archivo" font-size="28" font-weight="600" letter-spacing="-0.42" fill="#1C1B19" xml:space="preserve">6.400.000 ₫</text>
+<text x="652.27" y="296.58" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">Báo trước</text>
+<text x="652.27" y="327.18" font-family="Archivo" font-size="28" font-weight="600" letter-spacing="-0.42" fill="#1C1B19" xml:space="preserve">30 ngày</text>
+<rect data-name="Đã qua 53% thời hạn" x="302" y="350.06" width="744" height="8" rx="4" fill="#EFECE7"/>
+<rect data-name="span" x="302" y="350.06" width="394.31" height="8" rx="4" fill="#0D9488"/>
+<text x="302" y="377.61" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">Đã qua 53% thời hạn · còn 179 ngày</text>
+<rect data-name="card" x="280" y="418.91" width="788" height="225.59" rx="24" fill="#FFFFFF"/>
+<text x="302" y="455.01" font-family="Archivo" font-size="16" font-weight="600" fill="#1C1B19" xml:space="preserve">Dịch vụ áp dụng</text>
+<line x1="302" y1="504" x2="1046" y2="504" stroke="#F1EEE9" stroke-width="1"/>
+<text x="302" y="488.9" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">Điện sinh hoạt</text>
+<text x="998.47" y="488.9" font-family="Archivo" font-size="14" font-weight="600" fill="#1C1B19" xml:space="preserve">3.800 ₫</text>
+<line x1="302" y1="544" x2="1046" y2="544" stroke="#F1EEE9" stroke-width="1"/>
+<text x="302" y="528.9" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">Nước sạch</text>
+<text x="990.44" y="528.9" font-family="Archivo" font-size="14" font-weight="600" fill="#1C1B19" xml:space="preserve">25.000 ₫</text>
+<line x1="302" y1="584" x2="1046" y2="584" stroke="#F1EEE9" stroke-width="1"/>
+<text x="302" y="568.9" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">Internet cáp quang</text>
+<text x="991.83" y="568.9" font-family="Archivo" font-size="14" font-weight="600" fill="#1C1B19" xml:space="preserve">Miễn phí</text>
+<line x1="302" y1="624" x2="1046" y2="624" stroke="#F1EEE9" stroke-width="1"/>
+<text x="302" y="608.9" font-family="Archivo" font-size="14" font-weight="400" fill="#57534E" xml:space="preserve">Vệ sinh khu vực chung</text>
+<text x="990.45" y="608.9" font-family="Archivo" font-size="14" font-weight="600" fill="#1C1B19" xml:space="preserve">50.000 ₫</text>
+<rect data-name="card" x="280" y="660.5" width="788" height="349.84" rx="24" fill="#FFFFFF"/>
+<text x="302" y="696.6" font-family="Archivo" font-size="16" font-weight="600" fill="#1C1B19" xml:space="preserve">Hoá đơn theo hợp đồng</text>
+<text x="482.5" y="697.05" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">4 kỳ còn nợ</text>
+<line x1="302" y1="749.84" x2="512.98" y2="749.84" stroke="#E7E3DD" stroke-width="1"/>
+<text x="310" y="732.19" font-family="Archivo" font-size="13" font-weight="500" fill="#6B655F" xml:space="preserve">Kỳ</text>
+<line x1="512.98" y1="749.84" x2="779.98" y2="749.84" stroke="#E7E3DD" stroke-width="1"/>
+<text x="524.98" y="732.19" font-family="Archivo" font-size="13" font-weight="500" fill="#6B655F" xml:space="preserve">Hạn</text>
+<line x1="779.98" y1="749.84" x2="1046" y2="749.84" stroke="#E7E3DD" stroke-width="1"/>
+<text x="997.53" y="732.19" font-family="Archivo" font-size="13" font-weight="500" fill="#6B655F" xml:space="preserve">Còn lại</text>
+<line x1="302" y1="809.84" x2="512.98" y2="809.84" stroke="#F1EEE9" stroke-width="1"/>
+<text x="310" y="784.84" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">07/2026</text>
+<line x1="512.98" y1="809.84" x2="779.98" y2="809.84" stroke="#F1EEE9" stroke-width="1"/>
+<text x="524.98" y="785.24" font-family="Archivo" font-size="14" font-weight="400" fill="#1C1B19" xml:space="preserve">05/07/2026</text>
+<line x1="779.98" y1="809.84" x2="1046" y2="809.84" stroke="#F1EEE9" stroke-width="1"/>
+<text x="962.13" y="785.24" font-family="Archivo" font-size="14" font-weight="600" fill="#B42318" xml:space="preserve">1.895.000 ₫</text>
+<line x1="302" y1="869.84" x2="512.98" y2="869.84" stroke="#F1EEE9" stroke-width="1"/>
+<text x="310" y="844.84" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">08/2026</text>
+<line x1="512.98" y1="869.84" x2="779.98" y2="869.84" stroke="#F1EEE9" stroke-width="1"/>
+<text x="524.98" y="845.24" font-family="Archivo" font-size="14" font-weight="400" fill="#1C1B19" xml:space="preserve">05/08/2026</text>
+<line x1="779.98" y1="869.84" x2="1046" y2="869.84" stroke="#F1EEE9" stroke-width="1"/>
+<text x="962.13" y="845.24" font-family="Archivo" font-size="14" font-weight="600" fill="#B42318" xml:space="preserve">1.895.000 ₫</text>
+<line x1="302" y1="929.84" x2="512.98" y2="929.84" stroke="#F1EEE9" stroke-width="1"/>
+<text x="310" y="904.84" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">09/2026</text>
+<line x1="512.98" y1="929.84" x2="779.98" y2="929.84" stroke="#F1EEE9" stroke-width="1"/>
+<text x="524.98" y="905.24" font-family="Archivo" font-size="14" font-weight="400" fill="#1C1B19" xml:space="preserve">05/09/2026</text>
+<line x1="779.98" y1="929.84" x2="1046" y2="929.84" stroke="#F1EEE9" stroke-width="1"/>
+<text x="962.13" y="905.24" font-family="Archivo" font-size="14" font-weight="600" fill="#B42318" xml:space="preserve">1.895.000 ₫</text>
+<text x="310" y="965.09" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">10/2026</text>
+<text x="524.98" y="965.49" font-family="Archivo" font-size="14" font-weight="400" fill="#1C1B19" xml:space="preserve">05/10/2026</text>
+<text x="962.13" y="965.49" font-family="Archivo" font-size="14" font-weight="600" fill="#B42318" xml:space="preserve">1.895.000 ₫</text>
+<rect data-name="card" x="1084" y="231.44" width="340" height="173.59" rx="24" fill="#FFFFFF"/>
+<text x="1106" y="267.54" font-family="Archivo" font-size="16" font-weight="600" fill="#1C1B19" xml:space="preserve">Liên kết</text>
+<rect data-name="avatar" x="1108" y="293.03" width="32" height="32" rx="16" fill="#FDF1DC"/>
+<text x="1114.34" y="313.08" font-family="Archivo" font-size="13" font-weight="600" letter-spacing="-0.19" fill="#92400E" xml:space="preserve">QH</text>
+<text x="1152" y="304.73" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Trần Quang Huy</text>
+<text x="1152" y="323.28" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">Người thuê chính</text>
+<g data-name="icon" transform="translate(1384 301.03) scale(0.66667)"><g fill="none" stroke="#6B655F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"></path></g></g>
+<rect data-name="tile" x="1108" y="347.03" width="36" height="36" rx="10" fill="#F7F5F2"/>
+<g data-name="icon" transform="translate(1116 355.03) scale(0.83333)"><g fill="none" stroke="#57534E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20.5h14"></path><path d="M7 20.5V4.5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16"></path><path d="M14 12.5h.01"></path></g></g>
+<text x="1156" y="360.73" font-family="Archivo" font-size="15" font-weight="500" fill="#1C1B19" xml:space="preserve">Phòng 101</text>
+<text x="1156" y="379.28" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">An Nhiên Residence</text>
+<g data-name="icon" transform="translate(1384 357.03) scale(0.66667)"><g fill="none" stroke="#6B655F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"></path></g></g>
+<rect data-name="card" x="1084" y="421.03" width="340" height="284.81" rx="24" fill="#FFFFFF"/>
+<text x="1106" y="457.13" font-family="Archivo" font-size="16" font-weight="600" fill="#1C1B19" xml:space="preserve">Mốc</text>
+<rect data-name="n" x="1106.5" y="475.13" width="27" height="27" rx="13.5" fill="#0F766E" stroke="#0F766E" stroke-width="1"/>
+<g data-name="icon" transform="translate(1112 480.63) scale(0.66667)"><g fill="none" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></g></g>
+<text x="1146" y="492.7" font-family="Archivo" font-size="14.5" font-weight="600" fill="#1C1B19" xml:space="preserve">Tạo &amp; ký</text>
+<text x="1146" y="511.74" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">01/05/2026</text>
+<rect x="1119" y="504.63" width="2" height="24.41" fill="#0F766E"/>
+<rect data-name="n" x="1106.5" y="531.53" width="27" height="27" rx="13.5" fill="#FFFFFF" stroke="#0F766E" stroke-width="1"/>
+<text x="1116.25" y="549.08" font-family="Archivo" font-size="13" font-weight="600" fill="#115E59" xml:space="preserve">2</text>
+<text x="1146" y="549.11" font-family="Archivo" font-size="14.5" font-weight="600" fill="#1C1B19" xml:space="preserve">Đang hiệu lực</text>
+<text x="1146" y="568.14" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">179 ngày còn lại</text>
+<rect x="1119" y="561.03" width="2" height="24.41" fill="#E7E3DD"/>
+<rect data-name="n" x="1106.5" y="587.94" width="27" height="27" rx="13.5" fill="#FFFFFF" stroke="#8E8880" stroke-width="1"/>
+<text x="1116.25" y="605.49" font-family="Archivo" font-size="13" font-weight="600" fill="#57534E" xml:space="preserve">3</text>
+<text x="1146" y="605.51" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">Báo trước 30 ngày</text>
+<text x="1146" y="624.55" font-family="Archivo" font-size="13" font-weight="400" fill="#6B655F" xml:space="preserve">trước 20/05/2027</text>
+<rect x="1119" y="617.44" width="2" height="24.41" fill="#E7E3DD"/>
+<rect data-name="n" x="1106.5" y="644.34" width="27" height="27" rx="13.5" fill="#FFFFFF" stroke="#8E8880" stroke-width="1"/>
+<text x="1116.23" y="661.89" font-family="Archivo" font-size="13" font-weight="600" fill="#57534E" xml:space="preserve">4</text>
+<text x="1146" y="661.92" font-family="Archivo" font-size="14.5" font-weight="500" fill="#57534E" xml:space="preserve">Thanh lý &amp; quyết toán cọc</text>
+</svg>

@@ -1,0 +1,272 @@
+{
+ "role": "QUAN_LY",
+ "w": 390,
+ "pages": [
+  {
+   "path": "/nhac-viec",
+   "h1": "Nhắc việc",
+   "crumbs": false,
+   "selects": [
+    "Chọn toà nhà quản lý",
+    "Toà nhàAn Nhiên Residence"
+   ],
+   "tables": 0,
+   "h2": [
+    "Việc của toà hôm nay",
+    "Cảnh báo bất thường điện nước",
+    "Lịch hẹn xem phòng",
+    "Còn phải thu",
+    "Công tơ kỳ 11/2026",
+    "Phòng"
+   ],
+   "buttons": 6,
+   "primary": [],
+   "docH": 3042
+  },
+  {
+   "path": "/ghi-chi-so",
+   "crumbs": false,
+   "selects": [],
+   "tables": 0,
+   "h2": [
+    "Phòng 101",
+    "Chốt kỳ"
+   ],
+   "buttons": 16,
+   "primary": [
+    "Lưu, sang công tơ nước sạch 10"
+   ],
+   "docH": 924
+  },
+  {
+   "path": "/lich-hen",
+   "h1": "Lịch hẹn",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà"
+   ],
+   "tables": 0,
+   "h2": [
+    "Hôm nay · 22/11/2026 · 1 lịch",
+    "Ngày mai · 23/11/2026 · 1 lịch",
+    "24/11/2026 · 1 lịch",
+    "25/11/2026 · 1 lịch",
+    "21/11/2026 · 1 lịch"
+   ],
+   "buttons": 17,
+   "primary": [],
+   "docH": 2396
+  },
+  {
+   "path": "/su-co",
+   "h1": "Sự cố",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà",
+    "Toà nhàTất cả toà được phân qu",
+    "PhòngTất cả phòng"
+   ],
+   "tables": 1,
+   "h2": [
+    "Lịch sử sửa chữa"
+   ],
+   "buttons": 22,
+   "primary": [
+    "Báo sự cố mới"
+   ],
+   "docH": 4077
+  },
+  {
+   "path": "/hoa-don",
+   "h1": "Hoá đơn",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà",
+    "Kỳ thanh toánTất cả kỳ11/2026 ",
+    "Trạng tháiTất cả trạng tháiNợ "
+   ],
+   "tables": 1,
+   "h2": [],
+   "buttons": 9,
+   "primary": [],
+   "docH": 6436
+  },
+  {
+   "path": "/thu-tien",
+   "h1": "Thu tiền",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà"
+   ],
+   "tables": 1,
+   "h2": [],
+   "buttons": 21,
+   "primary": [],
+   "docH": 2772
+  },
+  {
+   "path": "/dich-vu",
+   "h1": "Dịch vụ và kỳ",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà",
+    "Cách tínhTheo chỉ sốCố định th",
+    "Chế độ giáĐơn giá cố địnhBiểu "
+   ],
+   "tables": 1,
+   "h2": [
+    "Kỳ thanh toán",
+    "Thêm dịch vụ"
+   ],
+   "buttons": 34,
+   "primary": [
+    "Lưu dịch vụ"
+   ],
+   "docH": 3157
+  },
+  {
+   "path": "/phong",
+   "h1": "Phòng",
+   "crumbs": false,
+   "selects": [
+    "Toà nhàAn Nhiên Residence",
+    "Lọc theo tầngTất cả các tầngTầ"
+   ],
+   "tables": 0,
+   "h2": [
+    "Khai báo một phòng"
+   ],
+   "buttons": 11,
+   "primary": [
+    "Khai báo phòng mới"
+   ],
+   "docH": 2832
+  },
+  {
+   "path": "/hop-dong",
+   "h1": "Hợp đồng",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà"
+   ],
+   "tables": 1,
+   "h2": [],
+   "buttons": 21,
+   "primary": [
+    "Tạo hợp đồng"
+   ],
+   "docH": 3553
+  },
+  {
+   "path": "/nguoi-thue",
+   "h1": "Hồ sơ người thuê",
+   "crumbs": false,
+   "selects": [],
+   "tables": 1,
+   "h2": [],
+   "buttons": 20,
+   "primary": [
+    "Thêm hồ sơ mới"
+   ],
+   "docH": 2941
+  },
+  {
+   "path": "/cu-tru",
+   "h1": "Khai báo cư trú",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà",
+    "Trạng thái khai báo của Bùi Ng",
+    "Trạng thái khai báo của Trần Q",
+    "Trạng thái khai báo của Lê Thu",
+    "Trạng thái khai báo của Đỗ Tuấ",
+    "Trạng thái khai báo của Ngô Kh",
+    "Trạng thái khai báo của Phạm Đ",
+    "Trạng thái khai báo của Dương ",
+    "Trạng thái khai báo của Hoàng ",
+    "Trạng thái khai báo của Vũ Tuấ",
+    "Trạng thái khai báo của Đinh T",
+    "Trạng thái khai báo của Đặng K",
+    "Trạng thái khai báo của Bùi Gi",
+    "Trạng thái khai báo của Đỗ Tha",
+    "Trạng thái khai báo của Ngô Hả"
+   ],
+   "tables": 1,
+   "h2": [],
+   "buttons": 24,
+   "primary": [],
+   "docH": 5155
+  },
+  {
+   "path": "/an-toan",
+   "h1": "An toàn và phòng cháy chữa cháy",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà"
+   ],
+   "tables": 2,
+   "h2": [
+    "Hồ sơ PCCC",
+    "Thiết bị và hạn kiểm định",
+    "Kiểm tra an toàn định kỳ"
+   ],
+   "buttons": 8,
+   "primary": [],
+   "docH": 1657
+  },
+  {
+   "path": "/thong-bao",
+   "h1": "Thông báo",
+   "crumbs": false,
+   "selects": [],
+   "tables": 0,
+   "h2": [
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Nhắc thanh toán hoá đơn",
+    "Yêu cầu sửa chữa mới",
+    "Yêu cầu sửa chữa mới",
+    "Yêu cầu sửa chữa mới",
+    "Yêu cầu sửa chữa mới",
+    "Yêu cầu sửa chữa mới"
+   ],
+   "buttons": 30,
+   "primary": [
+    "Soạn thông báo chung"
+   ],
+   "docH": 6413
+  }
+ ],
+ "menu": [
+  "/nhac-viec",
+  "/ghi-chi-so",
+  "/lich-hen",
+  "/su-co",
+  "/hoa-don",
+  "/thu-tien",
+  "/dich-vu",
+  "/phong",
+  "/hop-dong",
+  "/nguoi-thue",
+  "/cu-tru",
+  "/an-toan",
+  "/thong-bao"
+ ]
+}

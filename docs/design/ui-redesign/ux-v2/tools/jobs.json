@@ -1,0 +1,166 @@
+[
+ {
+  "name": "01-chu-hom-nay-1440",
+  "hash": "/CHU/hom-nay",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "02-chu-tim-nhanh-1440",
+  "hash": "/CHU/hom-nay?k=huy",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "03-chu-chon-toa-1440",
+  "hash": "/CHU/hom-nay?toa=1",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "04-chu-thu-tien-1440",
+  "hash": "/CHU/tien",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "05-chu-thu-tien-chon-1440",
+  "hash": "/CHU/tien?sel=1",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "06-chu-nguoi-thue-360-1440",
+  "hash": "/CHU/nguoi-thue/1",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "07-chu-phong-360-1440",
+  "hash": "/CHU/phong/1",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "08-chu-hop-dong-360-1440",
+  "hash": "/CHU/hop-dong/1",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "09-chu-toa-360-1440",
+  "hash": "/CHU/toa-nha/3",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "10-ql-hom-nay-1440",
+  "hash": "/QUAN_LY/hom-nay",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "11-ql-thong-bao-1440",
+  "hash": "/QUAN_LY/hom-nay?tb=1",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "12-ql-chu-ky-1440",
+  "hash": "/QUAN_LY/chu-ky",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "13-ql-su-co-1440",
+  "hash": "/QUAN_LY/su-co/SC-202611-0001",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "14-ql-tao-hop-dong-1440",
+  "hash": "/QUAN_LY/hop-dong/moi",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "15-chu-khong-co-quyen-1440",
+  "hash": "/CHU/khong-co-quyen",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "16-chu-trang-thai-1440",
+  "hash": "/CHU/trang-thai",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "20-tho-viec-390",
+  "hash": "/THO/viec",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "21-khach-can-tra-390",
+  "hash": "/NGUOI_THUE/can-tra",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "22-khach-tra-tien-390",
+  "hash": "/NGUOI_THUE/tra/31",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "23-ql-ghi-chi-so-390",
+  "hash": "/QUAN_LY/ghi-chi-so-m",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "24-chu-hom-nay-390",
+  "hash": "/CHU/hom-nay",
+  "w": 390,
+  "h": 844,
+  "full": true,
+  "svg": false
+ },
+ {
+  "name": "25-chu-thu-tien-390",
+  "hash": "/CHU/tien",
+  "w": 390,
+  "h": 844,
+  "full": true,
+  "svg": false
+ },
+ {
+  "name": "26-chu-menu-390",
+  "hash": "/CHU/hom-nay?nav=1",
+  "w": 390,
+  "h": 844,
+  "svg": false
+ },
+ {
+  "name": "27-chu-thu-tien-1180",
+  "hash": "/CHU/tien",
+  "w": 1180,
+  "h": 800,
+  "svg": false
+ }
+]

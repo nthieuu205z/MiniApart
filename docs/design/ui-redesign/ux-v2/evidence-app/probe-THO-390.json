@@ -1,0 +1,105 @@
+{
+ "role": "THO",
+ "w": 390,
+ "pages": [
+  {
+   "path": "/tho/tong-quan",
+   "h1": "Tổng quan công việc của thợ",
+   "crumbs": false,
+   "selects": [
+    "Chọn toà nhà"
+   ],
+   "tables": 0,
+   "h2": [
+    "Việc cần xử lý ngay (8)",
+    "Tiền công",
+    "Báo giá cần theo dõi (3)",
+    "Cơ cấu trạng thái công việc",
+    "Xu hướng giá trị chốt & tiền nhận"
+   ],
+   "buttons": 7,
+   "primary": [
+    "Xem việc đang làm"
+   ],
+   "docH": 2289
+  },
+  {
+   "path": "/viec-cua-toi",
+   "h1": "Công việc",
+   "crumbs": false,
+   "selects": [],
+   "tables": 0,
+   "h2": [
+    "Chiếu sáng",
+    "Khóa cửa",
+    "Chiếu sáng",
+    "Khóa cửa",
+    "Chiếu sáng",
+    "Khóa cửa",
+    "Vòi sen tắm rò rỉ",
+    "Ổ cắm điện chập chờn",
+    "Điều hòa không mát",
+    "Quạt thông gió kêu to",
+    "Lavabo thoát nước chậm",
+    "Bản lề cửa sổ kẹt",
+    "Bình nóng lạnh ngắt sớm",
+    "Đèn trần nhấp nháy",
+    "Khóa vân tay kẹt chốt"
+   ],
+   "buttons": 20,
+   "primary": [],
+   "docH": 4135
+  },
+  {
+   "path": "/tho/chi-phi",
+   "h1": "Báo giá & thanh toán",
+   "crumbs": false,
+   "selects": [
+    "Chọn tòa nhà"
+   ],
+   "tables": 0,
+   "h2": [
+    "Bình nóng lạnh",
+    "Chiếu sáng",
+    "Khóa cửa",
+    "Bình nóng lạnh",
+    "Chiếu sáng",
+    "Khóa cửa",
+    "Bình nóng lạnh",
+    "Chiếu sáng",
+    "Khóa cửa",
+    "Vòi xịt bồn cầu rỉ"
+   ],
+   "buttons": 20,
+   "primary": [],
+   "docH": 3280
+  },
+  {
+   "path": "/thong-bao",
+   "h1": "Thông báo",
+   "crumbs": false,
+   "selects": [],
+   "tables": 0,
+   "h2": [
+    "Việc sửa chữa mới được phân công",
+    "Việc sửa chữa mới được phân công",
+    "Việc sửa chữa mới được phân công",
+    "Việc sửa chữa mới được phân công",
+    "Việc sửa chữa mới được phân công",
+    "Việc sửa chữa mới được phân công",
+    "Việc sửa chữa mới được phân công",
+    "Việc sửa chữa mới được phân công",
+    "Việc sửa chữa mới được phân công"
+   ],
+   "buttons": 12,
+   "primary": [],
+   "docH": 3132
+  }
+ ],
+ "menu": [
+  "/tho/tong-quan",
+  "/viec-cua-toi",
+  "/tho/chi-phi",
+  "/thong-bao"
+ ]
+}

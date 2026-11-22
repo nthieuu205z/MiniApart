@@ -1,0 +1,85 @@
+{
+ "role": "NGUOI_THUE",
+ "w": 390,
+ "pages": [
+  {
+   "path": "/hoa-don-cua-toi",
+   "h1": "Kỳ 10/2026",
+   "crumbs": false,
+   "selects": [],
+   "tables": 0,
+   "h2": [
+    "Chi tiết khoản",
+    "Kỳ trước còn nợ"
+   ],
+   "buttons": 5,
+   "primary": [],
+   "docH": 1562
+  },
+  {
+   "path": "/lich-su",
+   "h1": "Lịch sử hoá đơn",
+   "crumbs": false,
+   "selects": [],
+   "tables": 0,
+   "h2": [],
+   "buttons": 5,
+   "primary": [],
+   "docH": 1100
+  },
+  {
+   "path": "/tieu-thu",
+   "h1": "Tiêu thụ điện và nước",
+   "crumbs": false,
+   "selects": [],
+   "tables": 2,
+   "h2": [
+    "Điện",
+    "Nước"
+   ],
+   "buttons": 9,
+   "primary": [],
+   "docH": 1743
+  },
+  {
+   "path": "/hop-dong",
+   "h1": "Hợp đồng của tôi",
+   "crumbs": false,
+   "selects": [],
+   "tables": 0,
+   "h2": [
+    "Phòng 101"
+   ],
+   "buttons": 2,
+   "primary": [
+    "Tải hợp đồng PDF"
+   ],
+   "docH": 878
+  },
+  {
+   "path": "/bao-hong",
+   "crumbs": false,
+   "selects": [
+    "PhòngChọn phòngPhòng 101",
+    "Mức độBình thườngCaoKhẩn cấp",
+    "Lọc trạng tháiTất cả trạng thá"
+   ],
+   "tables": 0,
+   "h2": [
+    "Báo hỏng"
+   ],
+   "buttons": 15,
+   "primary": [
+    "Gửi yêu cầu sửa chữa"
+   ],
+   "docH": 3872
+  }
+ ],
+ "menu": [
+  "/hoa-don-cua-toi",
+  "/lich-su",
+  "/tieu-thu",
+  "/hop-dong",
+  "/bao-hong"
+ ]
+}

@@ -1,0 +1,54 @@
+{
+ "role": "QTHT",
+ "w": 1440,
+ "pages": [
+  {
+   "path": "/tai-khoan",
+   "h1": "Tài khoản",
+   "crumbs": false,
+   "selects": [
+    "Lọc theo trạng tháiMọi trạng t"
+   ],
+   "tables": 1,
+   "h2": [],
+   "buttons": 38,
+   "primary": [
+    "Tạo tài khoản"
+   ],
+   "docH": 959
+  },
+  {
+   "path": "/toa-nha",
+   "h1": "Toà nhà",
+   "crumbs": false,
+   "selects": [],
+   "tables": 1,
+   "h2": [
+    "Toà A — Ngõ Hoà Bình"
+   ],
+   "buttons": 18,
+   "primary": [
+    "Khai báo toà mới"
+   ],
+   "docH": 1291
+  },
+  {
+   "path": "/nhat-ky-thao-tac",
+   "h1": "Nhật ký thao tác",
+   "crumbs": false,
+   "selects": [],
+   "tables": 1,
+   "h2": [],
+   "buttons": 10,
+   "primary": [
+    "Tra cứu nhật ký"
+   ],
+   "docH": 2029
+  }
+ ],
+ "menu": [
+  "/tai-khoan",
+  "/toa-nha",
+  "/nhat-ky-thao-tac"
+ ]
+}

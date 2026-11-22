@@ -1,0 +1,377 @@
+{
+ "role": "CHU",
+ "w": 1440,
+ "pages": [
+  {
+   "path": "/tong-quan",
+   "h1": "Tổng quan",
+   "crumbs": false,
+   "selects": [
+    "Chọn toà nhà xem dashboard",
+    "Sắp xếp nợ quá hạn"
+   ],
+   "tables": 1,
+   "h2": [
+    "Thực thu",
+    "Công nợ",
+    "Tỷ lệ lấp đầy",
+    "Nợ quá hạn nhiều nhất",
+    "Doanh thu theo tháng",
+    "Toà thu nhiều nhất",
+    "Hợp đồng sắp hết",
+    "Sự cố đang mở",
+    "Tiêu thụ điện theo toà",
+    "Công nợ theo toà",
+    "Cần chú ý"
+   ],
+   "buttons": 5,
+   "primary": [],
+   "docH": 1170
+  },
+  {
+   "path": "/toa-nha",
+   "h1": "Toà nhà",
+   "crumbs": false,
+   "selects": [],
+   "tables": 1,
+   "h2": [
+    "An Nhiên Residence"
+   ],
+   "buttons": 13,
+   "primary": [
+    "Khai báo toà mới"
+   ],
+   "docH": 968
+  },
+  {
+   "path": "/nguoi-thue",
+   "h1": "Hồ sơ người thuê",
+   "crumbs": false,
+   "selects": [],
+   "tables": 1,
+   "h2": [],
+   "buttons": 23,
+   "primary": [
+    "Thêm hồ sơ mới"
+   ],
+   "docH": 1079
+  },
+  {
+   "path": "/hop-dong",
+   "h1": "Hợp đồng",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà"
+   ],
+   "tables": 1,
+   "h2": [],
+   "buttons": 25,
+   "primary": [
+    "Tạo hợp đồng"
+   ],
+   "docH": 1139
+  },
+  {
+   "path": "/cu-tru",
+   "h1": "Khai báo cư trú",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà",
+    "Trạng thái khai báo của Bùi Ng",
+    "Trạng thái khai báo của Trần Q",
+    "Trạng thái khai báo của Lê Thu",
+    "Trạng thái khai báo của Đỗ Tuấ",
+    "Trạng thái khai báo của Ngô Kh",
+    "Trạng thái khai báo của Phạm Đ",
+    "Trạng thái khai báo của Dương ",
+    "Trạng thái khai báo của Hoàng ",
+    "Trạng thái khai báo của Vũ Tuấ",
+    "Trạng thái khai báo của Đinh T",
+    "Trạng thái khai báo của Đặng K",
+    "Trạng thái khai báo của Bùi Gi",
+    "Trạng thái khai báo của Đỗ Tha",
+    "Trạng thái khai báo của Ngô Hả"
+   ],
+   "tables": 1,
+   "h2": [],
+   "buttons": 26,
+   "primary": [],
+   "docH": 1577
+  },
+  {
+   "path": "/lich-hen",
+   "h1": "Lịch hẹn",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà"
+   ],
+   "tables": 0,
+   "h2": [
+    "Hôm nay · 22/11/2026 · 3 lịch",
+    "Ngày mai · 23/11/2026 · 3 lịch",
+    "24/11/2026 · 3 lịch",
+    "25/11/2026 · 3 lịch",
+    "21/11/2026 · 3 lịch"
+   ],
+   "buttons": 34,
+   "primary": [],
+   "docH": 3046
+  },
+  {
+   "path": "/su-co",
+   "h1": "Sự cố",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà",
+    "Toà nhàTất cả toà được phân qu",
+    "PhòngTất cả phòng"
+   ],
+   "tables": 1,
+   "h2": [
+    "Lịch sử sửa chữa"
+   ],
+   "buttons": 24,
+   "primary": [
+    "Báo sự cố mới"
+   ],
+   "docH": 1548
+  },
+  {
+   "path": "/an-toan",
+   "h1": "An toàn và phòng cháy chữa cháy",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà",
+    "Phân loại hồ sơThông tin cơ sở"
+   ],
+   "tables": 2,
+   "h2": [
+    "Hồ sơ PCCC",
+    "Thiết bị và hạn kiểm định",
+    "Kiểm tra an toàn định kỳ"
+   ],
+   "buttons": 19,
+   "primary": [
+    "Ghi kết quả kiểm tra"
+   ],
+   "docH": 2012
+  },
+  {
+   "path": "/dich-vu",
+   "h1": "Dịch vụ và kỳ",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà",
+    "Cách tínhTheo chỉ sốCố định th",
+    "Chế độ giáĐơn giá cố địnhBiểu "
+   ],
+   "tables": 1,
+   "h2": [
+    "Kỳ thanh toán",
+    "Thêm dịch vụ"
+   ],
+   "buttons": 34,
+   "primary": [
+    "Lưu dịch vụ"
+   ],
+   "docH": 1492
+  },
+  {
+   "path": "/ghi-chi-so",
+   "h1": "Ghi chỉ số",
+   "crumbs": false,
+   "selects": [
+    "Toà nhàAn Nhiên ResidenceMộc L",
+    "Kỳ thanh toán11/202610/20269/2"
+   ],
+   "tables": 0,
+   "h2": [
+    "Chốt kỳ",
+    "Phòng 101",
+    "Phòng 102",
+    "Phòng 103",
+    "Phòng 201",
+    "Phòng 202",
+    "Phòng 203",
+    "Phòng 301",
+    "Phòng 302",
+    "Phòng 303"
+   ],
+   "buttons": 20,
+   "primary": [
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số",
+    "Lưu chỉ số"
+   ],
+   "docH": 11151
+  },
+  {
+   "path": "/hoa-don",
+   "h1": "Hoá đơn",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà",
+    "Kỳ thanh toánTất cả kỳ11/2026 ",
+    "Trạng tháiTất cả trạng tháiNợ "
+   ],
+   "tables": 1,
+   "h2": [],
+   "buttons": 14,
+   "primary": [],
+   "docH": 1840
+  },
+  {
+   "path": "/thu-tien",
+   "h1": "Thu tiền",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà"
+   ],
+   "tables": 1,
+   "h2": [],
+   "buttons": 22,
+   "primary": [],
+   "docH": 1184
+  },
+  {
+   "path": "/cong-no",
+   "h1": "Công nợ",
+   "crumbs": false,
+   "selects": [
+    "Toà nhà"
+   ],
+   "tables": 1,
+   "h2": [],
+   "buttons": 13,
+   "primary": [],
+   "docH": 4134
+  },
+  {
+   "path": "/bao-cao",
+   "h1": "Báo cáo tổng quan",
+   "crumbs": false,
+   "selects": [
+    "Toà nhàTất cả toà được phân qu"
+   ],
+   "tables": 2,
+   "h2": [
+    "Doanh thu phát hành",
+    "Đã thu",
+    "Công nợ",
+    "Tỷ lệ lấp đầy",
+    "Phòng trống",
+    "Sự cố đang mở",
+    "Doanh thu, đã thu và công nợ theo tháng",
+    "Chi tiết theo tháng"
+   ],
+   "buttons": 5,
+   "primary": [],
+   "docH": 1360
+  },
+  {
+   "path": "/bao-cao/tieu-thu",
+   "h1": "Tiêu thụ điện và nước",
+   "crumbs": false,
+   "selects": [
+    "Toà nhàTất cả toà được phân qu",
+    "PhòngTất cả phòng",
+    "Kỳ thanh toánTất cả kỳ"
+   ],
+   "tables": 1,
+   "h2": [
+    "Đối soát công tơ tổng",
+    "Mức tiêu thụ theo kỳ và đơn vị",
+    "Điện theo kỳ (kWh)",
+    "Nước theo kỳ (m³)",
+    "Chi tiết phòng, kỳ và chỉ số"
+   ],
+   "buttons": 39,
+   "primary": [],
+   "docH": 2205
+  },
+  {
+   "path": "/bao-cao/chi-phi-bao-tri",
+   "h1": "Chi phí bảo trì",
+   "crumbs": false,
+   "selects": [
+    "Toà nhàTất cả toà được phân qu",
+    "PhòngTất cả phòng"
+   ],
+   "tables": 3,
+   "h2": [
+    "Chủ nhà",
+    "Người thuê",
+    "Chưa ghi nhận",
+    "Chi phí theo tháng",
+    "Chi tiết yêu cầu theo toà, hạng mục, thá",
+    "Tổng hợp theo hạng mục và phòng"
+   ],
+   "buttons": 18,
+   "primary": [],
+   "docH": 2637
+  },
+  {
+   "path": "/nhat-ky-thao-tac",
+   "h1": "Nhật ký thao tác",
+   "crumbs": false,
+   "selects": [],
+   "tables": 1,
+   "h2": [],
+   "buttons": 10,
+   "primary": [
+    "Tra cứu nhật ký"
+   ],
+   "docH": 1997
+  }
+ ],
+ "menu": [
+  "/tong-quan",
+  "/toa-nha",
+  "/nguoi-thue",
+  "/hop-dong",
+  "/cu-tru",
+  "/lich-hen",
+  "/su-co",
+  "/an-toan",
+  "/dich-vu",
+  "/ghi-chi-so",
+  "/hoa-don",
+  "/thu-tien",
+  "/cong-no",
+  "/bao-cao",
+  "/bao-cao/tieu-thu",
+  "/bao-cao/chi-phi-bao-tri",
+  "/nhat-ky-thao-tac"
+ ],
+ "nguoiThueClick": {
+  "clicked": true,
+  "url": "/nguoi-thue",
+  "hBefore": 1079,
+  "hAfter": 1760,
+  "newHeadings": [
+   [
+    "Chỉnh sửa hồ sơ: Bùi Gia Bảo",
+    1140
+   ],
+   [
+    "Ảnh giấy tờ của hồ sơ #12",
+    1470
+   ]
+  ]
+ }
+}

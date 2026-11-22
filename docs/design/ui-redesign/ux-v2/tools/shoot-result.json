@@ -1,0 +1,860 @@
+[
+ {
+  "name": "01-chu-hom-nay-1440",
+  "hash": "/CHU/hom-nay",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 37,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 128,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1397
+  },
+  "primaryButtons": 0,
+  "svgBytes": 42326,
+  "errors": []
+ },
+ {
+  "name": "02-chu-tim-nhanh-1440",
+  "hash": "/CHU/hom-nay?k=huy",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 52,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 179,
+    "minRatio": 5.02,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1397
+  },
+  "primaryButtons": 0,
+  "svgBytes": 55645,
+  "errors": []
+ },
+ {
+  "name": "03-chu-chon-toa-1440",
+  "hash": "/CHU/hom-nay?toa=1",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 41,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 138,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1397
+  },
+  "primaryButtons": 0,
+  "svgBytes": 45629,
+  "errors": []
+ },
+ {
+  "name": "04-chu-thu-tien-1440",
+  "hash": "/CHU/tien",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 57,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 163,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1184
+  },
+  "primaryButtons": 1,
+  "svgBytes": 53707,
+  "errors": []
+ },
+ {
+  "name": "05-chu-thu-tien-chon-1440",
+  "hash": "/CHU/tien?sel=1",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 55,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 136,
+    "minRatio": 4.98,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1000
+  },
+  "primaryButtons": 1,
+  "svgBytes": 44297,
+  "errors": []
+ },
+ {
+  "name": "06-chu-nguoi-thue-360-1440",
+  "hash": "/CHU/nguoi-thue/1",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 32,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 143,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1537
+  },
+  "primaryButtons": 1,
+  "svgBytes": 39128,
+  "errors": []
+ },
+ {
+  "name": "07-chu-phong-360-1440",
+  "hash": "/CHU/phong/1",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 24,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 89,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1089
+  },
+  "primaryButtons": 0,
+  "svgBytes": 28168,
+  "errors": []
+ },
+ {
+  "name": "08-chu-hop-dong-360-1440",
+  "hash": "/CHU/hop-dong/1",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 20,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 86,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1026
+  },
+  "primaryButtons": 0,
+  "svgBytes": 27781,
+  "errors": []
+ },
+ {
+  "name": "09-chu-toa-360-1440",
+  "hash": "/CHU/toa-nha/3",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 39,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 92,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 909
+  },
+  "primaryButtons": 1,
+  "svgBytes": 27609,
+  "errors": []
+ },
+ {
+  "name": "10-ql-hom-nay-1440",
+  "hash": "/QUAN_LY/hom-nay",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 25,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 94,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 900
+  },
+  "primaryButtons": 1,
+  "svgBytes": 28079,
+  "errors": []
+ },
+ {
+  "name": "11-ql-thong-bao-1440",
+  "hash": "/QUAN_LY/hom-nay?tb=1",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 31,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 113,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 900
+  },
+  "primaryButtons": 1,
+  "svgBytes": 31575,
+  "errors": []
+ },
+ {
+  "name": "12-ql-chu-ky-1440",
+  "hash": "/QUAN_LY/chu-ky",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 20,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 125,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1030
+  },
+  "primaryButtons": 1,
+  "svgBytes": 36126,
+  "errors": []
+ },
+ {
+  "name": "13-ql-su-co-1440",
+  "hash": "/QUAN_LY/su-co/SC-202611-0001",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 33,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 107,
+    "minRatio": 5.24,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 907
+  },
+  "primaryButtons": 1,
+  "svgBytes": 32122,
+  "errors": []
+ },
+ {
+  "name": "14-ql-tao-hop-dong-1440",
+  "hash": "/QUAN_LY/hop-dong/moi",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 29,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 69,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 900
+  },
+  "primaryButtons": 1,
+  "svgBytes": 23628,
+  "errors": []
+ },
+ {
+  "name": "15-chu-khong-co-quyen-1440",
+  "hash": "/CHU/khong-co-quyen",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 17,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 32,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 900
+  },
+  "primaryButtons": 1,
+  "svgBytes": 14306,
+  "errors": []
+ },
+ {
+  "name": "16-chu-trang-thai-1440",
+  "hash": "/CHU/trang-thai",
+  "w": 1440,
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 17,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 39,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 900
+  },
+  "primaryButtons": 0,
+  "svgBytes": 17763,
+  "errors": []
+ },
+ {
+  "name": "20-tho-viec-390",
+  "hash": "/THO/viec",
+  "w": 390,
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 15,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 48,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1186
+  },
+  "primaryButtons": 1,
+  "svgBytes": 17680,
+  "errors": []
+ },
+ {
+  "name": "21-khach-can-tra-390",
+  "hash": "/NGUOI_THUE/can-tra",
+  "w": 390,
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 11,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 47,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1208
+  },
+  "primaryButtons": 1,
+  "svgBytes": 13995,
+  "errors": []
+ },
+ {
+  "name": "22-khach-tra-tien-390",
+  "hash": "/NGUOI_THUE/tra/31",
+  "w": 390,
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 6,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 21,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 844
+  },
+  "primaryButtons": 1,
+  "svgBytes": 9428,
+  "errors": []
+ },
+ {
+  "name": "23-ql-ghi-chi-so-390",
+  "hash": "/QUAN_LY/ghi-chi-so-m",
+  "w": 390,
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 4,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 17,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 844
+  },
+  "primaryButtons": 1,
+  "svgBytes": 8650,
+  "errors": []
+ },
+ {
+  "name": "24-chu-hom-nay-390",
+  "hash": "/CHU/hom-nay",
+  "w": 390,
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 25,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 92,
+    "minRatio": 5.47,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 2477
+  },
+  "primaryButtons": 0,
+  "errors": []
+ },
+ {
+  "name": "25-chu-thu-tien-390",
+  "hash": "/CHU/tien",
+  "w": 390,
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 45,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 138,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1491
+  },
+  "primaryButtons": 1,
+  "errors": []
+ },
+ {
+  "name": "26-chu-menu-390",
+  "hash": "/CHU/hom-nay?nav=1",
+  "w": 390,
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 38,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 116,
+    "minRatio": 5.47,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 2477
+  },
+  "primaryButtons": 0,
+  "errors": []
+ },
+ {
+  "name": "27-chu-thu-tien-1180",
+  "hash": "/CHU/tien",
+  "w": 1180,
+  "qa": {
+   "viewport": "1180×800",
+   "horizontalOverflow": 0,
+   "controls": 57,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 141,
+    "minRatio": 5.28,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Archivo"
+   ],
+   "fontsLoaded": [
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600",
+    "Archivo 700",
+    "Archivo 400",
+    "Archivo 500",
+    "Archivo 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(15, 118, 110)",
+   "docHeight": 1184
+  },
+  "primaryButtons": 1,
+  "errors": []
+ }
+]
