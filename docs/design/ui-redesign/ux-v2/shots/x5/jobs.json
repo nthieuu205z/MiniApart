@@ -1,0 +1,114 @@
+[
+ {
+  "name": "12-ql-chu-ky-1440",
+  "path": "/chu-ky",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "12-ql-chu-ky-b2-1440",
+  "path": "/chu-ky?b=2",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "12-ql-chu-ky-b3-1440",
+  "path": "/chu-ky?b=3",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "12-ql-chu-ky-b4-1440",
+  "path": "/chu-ky?b=4",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "12-ql-chu-ky-b1-1440",
+  "path": "/chu-ky?b=1",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "23-ql-chu-ky-b1-390",
+  "path": "/chu-ky?b=1",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "23-ql-chu-ky-390",
+  "path": "/chu-ky",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "ql-chu-ky-b2-390",
+  "path": "/chu-ky?b=2",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "ql-ghi-chi-so-chuyen-1440",
+  "path": "/ghi-chi-so",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "ql-dich-vu-1440",
+  "path": "/dich-vu",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "ql-dich-vu-390",
+  "path": "/dich-vu",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "chu-chu-ky-tat-ca-1440",
+  "path": "/chu-ky",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "chu-chu-ky-toa3-1440",
+  "path": "/chu-ky?toaNhaId=3",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "chu-chu-ky-tat-ca-390",
+  "path": "/chu-ky",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ }
+]

@@ -93,7 +93,7 @@ export default function DichVuVaKy({ token }: { token: string }) {
     <style>{CSS_BO_CUC}</style>
     <header className="topbar">
       <div className="title-block">
-        <h1 className="h1" id="dich-vu-title">Dịch vụ và kỳ</h1>
+        <h1 className="h1" id="dich-vu-title">Dịch vụ & đơn giá</h1>
         <p className="sub">{soDangDung}/{services.length} dịch vụ đang sử dụng · {kyMo ? `kỳ đang mở ${kyMo.thang}/${kyMo.nam}` : 'chưa có kỳ đang mở'} · bảng giá mới được thêm theo ngày hiệu lực, lịch sử giá giữ nguyên</p>
       </div>
       <div className="topbar-actions">
@@ -105,10 +105,8 @@ export default function DichVuVaKy({ token }: { token: string }) {
       </div>
     </header>
     <Feedback error={action.error ?? building.error} success={action.success} />
-    <Card title="Kỳ thanh toán">
+    <Card title="Mở kỳ thanh toán mới" action={<a className="link-more brand" href="/chu-ky">Kỳ thanh toán và chốt sổ nằm ở Chu kỳ tháng →</a>}>
       <div className="row-wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
-        {periods.map((p) => <StatusTag key={p.id} tone={p.trangThai === 'DA_CHOT' ? 'closed' : 'strong'}>{p.thang}/{p.nam} · {p.trangThai === 'DA_CHOT' ? 'Đã chốt' : 'Đang mở'}</StatusTag>)}
-        {periods.length === 0 ? <span className="t-sm">Chưa có kỳ thanh toán nào.</span> : null}
         <span className="push" />
         <form onSubmit={(e) => { e.preventDefault(); if (building.buildingId) void action.run(async () => { const [nam, thang] = month.split('-').map(Number); await managementRequest(token, `/api/toa-nha/${building.buildingId}/ky-thanh-toan`, 'POST', { nam, thang }); await load() }, 'Đã mở kỳ thanh toán.') }} className="row-wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
           <Field title="Tháng cần mở"><input style={fieldStyle} type="month" required value={month} onChange={(e) => setMonth(e.target.value)} /></Field>
