@@ -136,7 +136,7 @@ describe('QuanLyTaiSanPhong', () => {
       bienBanButton?.click()
     })
 
-    expect(container.textContent).toContain('BÀN GIAO NHẬN PHÒNG')
+    expect(container.textContent).toContain('Bàn giao nhận phòng')
     expect(container.textContent).toContain('Bàn giao đầy đủ chìa khoá')
   })
 

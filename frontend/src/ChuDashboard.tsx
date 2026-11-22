@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ngoaiProvider, useToaDangChon } from './toaDangChon'
 import {
   ApiError,
   fetchCongNoBaoCao,
@@ -49,8 +50,13 @@ const tien = (v: number | string) => `${dinhDangTien(v)}\u00a0₫` // không ng�
 type HopDongTheoToa = ThongTinHopDong & { tenToa: string }
 
 export function ChuDashboard({ token, mobile = false }: Props): React.ReactElement {
-  const [toaNhaList, setToaNhaList] = useState<ThongTinToaNha[]>([])
-  const [toaNhaId, setToaNhaId] = useState<number | null>(() => docToaNhaIdTuUrl())
+  // Trong khung: toà lấy từ ô chọn toà của khung. Ngoài khung (test màn riêng lẻ): tự tải như cũ.
+  const chung = useToaDangChon()
+  const rieng = ngoaiProvider(chung)
+  const [toaRieng, setToaRieng] = useState<ThongTinToaNha[]>([])
+  const [idRieng, setToaNhaId] = useState<number | null>(() => docToaNhaIdTuUrl())
+  const toaNhaList = rieng ? toaRieng : chung.danhSach
+  const toaNhaId = rieng ? idRieng : chung.toaNhaId
   const [kyNhanh, setKyNhanh] = useState<KyNhanh>('6_thang')
   const [tuNgay, setTuNgay] = useState(() => {
     const now = new Date()
@@ -69,16 +75,17 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
   const cot = (rong: string) => (hep ? (rong === 'c-7' || rong === 'c-12' ? 'c-12' : 'c-6') : rong)
 
   useEffect(() => {
+    if (!rieng) return undefined
     let mounted = true
     fetchToaNha(token)
-      .then((items) => mounted && setToaNhaList(items))
+      .then((items) => mounted && setToaRieng(items))
       .catch((err: unknown) => {
         if (mounted) setLoi(err instanceof ApiError ? err.message : 'Không thể tải danh sách toà nhà.')
       })
     return () => {
       mounted = false
     }
-  }, [token])
+  }, [token, rieng])
 
   const chonKyNhanh = (opt: KyNhanh) => {
     setKyNhanh(opt)
@@ -307,10 +314,10 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
           ) : null}
         </div>
         <div className="topbar-actions" style={{ flexWrap: 'wrap' }}>
-          <select className="select" style={{ width: 200 }} value={toaNhaId ?? ''} onChange={(e) => setToaNhaId(e.target.value ? Number(e.target.value) : null)} aria-label="Chọn toà nhà xem dashboard">
+          {rieng ? <select className="select" style={{ width: 200 }} value={toaNhaId ?? ''} onChange={(e) => setToaNhaId(e.target.value ? Number(e.target.value) : null)} aria-label="Chọn toà nhà xem dashboard">
             <option value="">Tất cả toà</option>
             {toaNhaList.map((tn) => <option key={tn.id} value={tn.id}>{tn.ten}</option>)}
-          </select>
+          </select> : null}
           <div className="seg" role="group" aria-label="Khoảng thời gian" style={{ flexWrap: 'wrap', maxWidth: '100%' }}>
             {KY_NHANH.map(([ma, nhan]) => (
               <button key={ma} type="button" aria-pressed={kyNhanh === ma} onClick={() => chonKyNhanh(ma)}>{nhan}</button>

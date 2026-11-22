@@ -353,7 +353,7 @@ export default function QuanLyTaiSanPhong({
         }}
       >
         <div>
-          <SysLabel>QUẢN LÝ TÀI SẢN BÀN GIAO</SysLabel>
+          <SysLabel>Quản lý tài sản bàn giao</SysLabel>
           <h3 className="h3" style={{ margin: '4px 0 0' }}>
             Tiện nghi & Biên bản tài sản {soPhong ? `(Phòng ${soPhong})` : ''}
           </h3>
@@ -617,11 +617,11 @@ export default function QuanLyTaiSanPhong({
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <StatusTag tone={bb.loaiBienBan === 'NHAN_PHONG' ? 'done' : 'urgent'}>
                           {bb.loaiBienBan === 'NHAN_PHONG'
-                            ? 'BÀN GIAO NHẬN PHÒNG'
-                            : 'BIÊN BẢN TRẢ PHÒNG'}
+                            ? 'Bàn giao nhận phòng'
+                            : 'Biên bản trả phòng'}
                         </StatusTag>
                         <strong>Biên bản #{bb.id}</strong>
-                        <span style={{ color: 'var(--ma-text-secondary)', fontSize: 12 }}>
+                        <span style={{ color: 'var(--ma-text-secondary)', fontSize: 13 }}>
                           Ngày: {bb.ngayThucHien}
                         </span>
                       </div>
@@ -633,7 +633,7 @@ export default function QuanLyTaiSanPhong({
                     </div>
 
                     {bb.ghiChuChung ? (
-                      <p style={{ margin: 0, fontSize: 12, color: 'var(--ma-text-secondary)' }}>
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)' }}>
                         Ghi chú: {bb.ghiChuChung}
                       </p>
                     ) : null}
@@ -679,7 +679,7 @@ export default function QuanLyTaiSanPhong({
                   type="button"
                   variant={loaiBienBan === 'NHAN_PHONG' ? 'primary' : 'secondary'}
                   onClick={() => chuanBiKiemKe('NHAN_PHONG')}
-                  style={{ minHeight: 32, fontSize: 12 }}
+                  style={{ minHeight: 32, fontSize: 13 }}
                 >
                   Bàn giao Nhận phòng
                 </Button>
@@ -687,7 +687,7 @@ export default function QuanLyTaiSanPhong({
                   type="button"
                   variant={loaiBienBan === 'TRA_PHONG' ? 'primary' : 'secondary'}
                   onClick={() => chuanBiKiemKe('TRA_PHONG')}
-                  style={{ minHeight: 32, fontSize: 12 }}
+                  style={{ minHeight: 32, fontSize: 13 }}
                 >
                   Kiểm kê Trả phòng
                 </Button>
