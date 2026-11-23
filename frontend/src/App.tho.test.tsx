@@ -166,7 +166,7 @@ describe('App worker entry point (V2)', () => {
 
     await vi.waitFor(() => {
       expect(window.location.pathname).toBe('/viec-cua-toi')
-      expect(container.textContent).toContain('Danh sách công việc')
+      expect(container.textContent).toContain('Việc của tôi')
     })
 
     // Open notifications

@@ -153,7 +153,7 @@ describe('ThoCongViec Component', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders wide desktop rows with ticket code, building, room, and status tag', async () => {
+  it('máy tính: thẻ việc dạng lưới có hạng mục, toà, phòng, tag, chip lọc và đúng một h1', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
       if (url.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(mockJobList), { status: 200 })
@@ -166,17 +166,19 @@ describe('ThoCongViec Component', () => {
     })
 
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('Danh sách công việc')
-      expect(container.textContent).toContain('SC-20261101-001')
+      expect(container.textContent).toContain('Việc của tôi')
       expect(container.textContent).toContain('Vòi lavabo rò rỉ nước')
-      expect(container.textContent).toContain('P.201')
+      expect(container.textContent).toContain('Phòng 201')
       expect(container.textContent).toContain('Tòa Central')
       expect(container.textContent).toContain('Nguyễn Văn An')
       expect(container.textContent).toContain('Gấp')
     })
+    expect(container.querySelectorAll('h1')).toHaveLength(1)
+    expect(container.querySelector('table')).toBeNull()
+    expect(container.querySelector('nav[aria-label="Lọc việc"]')).not.toBeNull()
   })
 
-  it('opens detail drawer with deep link when clicking Xem chi tiết', async () => {
+  it('máy tính: mở drawer chi tiết với deep link khi bấm tiêu đề thẻ việc', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
       if (url === '/api/tho/cong-viec/101') return new Response(JSON.stringify(mockDetail), { status: 200 })
@@ -190,11 +192,10 @@ describe('ThoCongViec Component', () => {
     })
 
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('SC-20261101-001')
+      expect(container.textContent).toContain('Vòi lavabo rò rỉ nước')
     })
 
-    // Click Xem chi tiết button
-    const viewBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('Xem chi tiết'))
+    const viewBtn = Array.from(container.querySelectorAll<HTMLButtonElement>('article button')).find((b) => b.textContent?.includes('Vòi lavabo rò rỉ nước'))
     expect(viewBtn).toBeDefined()
     await act(async () => {
       viewBtn?.click()
@@ -210,7 +211,7 @@ describe('ThoCongViec Component', () => {
     })
   })
 
-  it('filters by status group tabs and shows empty state when no matching tasks', async () => {
+  it('hiện trạng thái rỗng khi không có việc nào', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => {
       return new Response(JSON.stringify([]), { status: 200 })
     }))

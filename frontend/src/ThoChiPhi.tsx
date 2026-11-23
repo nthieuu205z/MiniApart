@@ -217,7 +217,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'minmax(0, 1fr) minmax(0, 1fr)' : 'repeat(4, minmax(0, 1fr))', gap: mobile ? 8 : 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'minmax(0, 1fr) minmax(0, 1fr)' : 'minmax(0, 1.35fr) repeat(3, minmax(0, 1fr))', gap: mobile ? 8 : 16 }}>
         <Card style={mobile ? { gridColumn: '1 / -1' } : undefined}>
           <span className="t-sm t-2">Còn phải trả (công nợ)</span>
           <div className="kpi-value" style={{ color: tongMetrics.tongConNo > 0 ? 'var(--ma-urgent)' : undefined }}>
@@ -277,7 +277,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
             <label className="input-wrap" style={{ flex: mobile ? '1 1 100%' : '0 1 320px' }}>
               <span className="sr-only">Tìm theo mã việc, tòa, phòng, nội dung</span>
               <Icon name="search" />
-              <input className="input" type="search" placeholder="Tìm theo mã việc, tòa, phòng, nội dung…" value={tuKhoa} onChange={(e) => { setTuKhoa(e.target.value); setSoHienThi(10) }} />
+              <input className="input" type="search" placeholder="Tìm mã việc, tòa, phòng…" value={tuKhoa} onChange={(e) => { setTuKhoa(e.target.value); setSoHienThi(10) }} />
             </label>
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2, maxWidth: '100%' }}>
               {CHIP_THANH_TOAN.map(([key, label]) => (
