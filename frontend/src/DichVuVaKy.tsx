@@ -22,7 +22,7 @@ const MAU_DICH_VU_GOI_Y = [
 
 const empty = { ten: '', cachTinh: 'THEO_CHI_SO', cheDoGia: 'CO_DINH', donVi: 'kWh', laDien: false }
 export default function DichVuVaKy({ token }: { token: string }) {
-  const building = useBuildings(token)
+  const building = useBuildings(token, true)
   const [services, setServices] = useState<Service[]>([])
   const [periods, setPeriods] = useState<ThongTinKyThanhToan[]>([])
   const [selected, setSelected] = useState<number | null>(null)

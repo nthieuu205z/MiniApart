@@ -30,7 +30,7 @@ export function layBoLocHopDongQuanLyTuUrl(url: string | URL): BoLocHopDongQuanL
 }
 
 export default function HopDongQuanLy({ token, mobile = false }: Props): React.ReactElement {
-  const toa = useMotToa()
+  const toa = useMotToa({ tuChonDau: true })
   const [boLoc, setBoLoc] = useState<BoLocHopDongQuanLy>(() => (
     typeof window === 'undefined' ? { toaNhaId: null, sapHetHan: false, hopDongId: null } : layBoLocHopDongQuanLyTuUrl(window.location.href)
   ))

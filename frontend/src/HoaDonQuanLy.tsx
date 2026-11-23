@@ -49,7 +49,7 @@ export function layBoLocHoaDonQuanLyTuUrl(url: string | URL): BoLocHoaDonQuanLy 
 
 export default function HoaDonQuanLy({ token, mobile = false }: Props): React.ReactElement {
   const chung = useToaDangChon()
-  const { buildings, buildingId, setBuildingId } = useBuildings(token)
+  const { buildings, buildingId, setBuildingId } = useBuildings(token, true)
   const [boLoc, setBoLoc] = useState<BoLocHoaDonQuanLy>(() => (
     typeof window === 'undefined' ? { toaNhaId: null, trangThai: 'NO_QUA_HAN' } : layBoLocHoaDonQuanLyTuUrl(window.location.href)
   ))

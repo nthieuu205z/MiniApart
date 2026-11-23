@@ -47,7 +47,7 @@ function useBuoc(): [number, (n: number) => string] {
 type DuLieu = { phong: ThongTinPhong[]; nguoiThue: Tenant[]; dichVu: Service[] }
 
 export default function TaoHopDong({ token, mobile, dieuHuong }: TrangProps) {
-  const { toaNhaId, canChonTaiCho, danhSach, chon } = useMotToa()
+  const { toaNhaId, canChonTaiCho, danhSach, chon } = useMotToa({ tuChonDau: true })
   const [tai, setTai] = useState<{ trang: 'tai' } | { trang: 'loi'; loi: string } | { trang: 'xong'; du: DuLieu }>({ trang: 'tai' })
   const [lanThu, setLanThu] = useState(0)
   useEffect(() => {

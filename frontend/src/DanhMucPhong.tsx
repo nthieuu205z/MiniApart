@@ -97,7 +97,7 @@ const DAY_PHONG_GOI_Y = [
 
 export default function DanhMucPhong({ token, mobile = false, dieuHuong = dieuHuongMacDinh }: Props) {
   // Toà lấy từ bối cảnh khung (Quản lý một toà → ô chọn toà ẩn); ngoài khung (test riêng lẻ) tự tải như cũ.
-  const { buildings: danhSachToa, buildingId, setBuildingId, error: loiToa } = useBuildings(token)
+  const { buildings: danhSachToa, buildingId, setBuildingId, error: loiToa } = useBuildings(token, true)
   const toaDangChonId = buildingId ?? danhSachToa[0]?.id ?? null // Chủ đang "Tất cả toà" thì xem toà đầu, ô chọn toà tại chỗ để đổi
   const chung = useToaDangChon()
   const hienChonToa = ngoaiProvider(chung) || (chung.toaNhaId === null && !chung.coDinh)

@@ -29,7 +29,7 @@ function ngaySau(denNgay: string): number {
 }
 
 export default function ChuKyThang({ token, vaiTro, mobile, dieuHuong }: TrangProps) {
-  const toa = useMotToa()
+  const toa = useMotToa({ tuChonDau: true })
   const toaNhaId = toa.toaNhaId
   const [kyChon, setKyChon] = useState<number | null>(null)
   const [buocChon, setBuocChon] = useState<number | null>(() => {

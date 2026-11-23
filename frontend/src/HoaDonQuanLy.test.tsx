@@ -87,13 +87,12 @@ describe('HoaDonQuanLy', () => {
     expect(calls.some((c) => c.url === '/api/toa-nha')).toBe(false) // không tự gọi fetchToaNha ngoài provider
   })
 
-  it('Chủ đang "Tất cả toà": hiện ô chọn toà tại chỗ, chưa gọi API hoá đơn khi chưa chọn', async () => {
+  it('Chủ đang "Tất cả toà": tự chọn toà đầu (ô toà của khung đổi theo) rồi gọi API hoá đơn của toà đó', async () => {
     window.history.replaceState({}, '', '/hoa-don')
     localStorage.clear()
     const taiToa = async () => [{ id: 3, ten: 'An Nhiên' }, { id: 4, ten: 'Mộc Lan' }] as never
     await act(async () => { root = createRoot(container); root.render(<ToaDangChonProvider token="t" vaiTro="CHU" search="" taiToa={taiToa}><HoaDonQuanLy token="t" /></ToaDangChonProvider>) })
-    await vi.waitFor(() => expect(container.querySelector('select option[value="4"]')).not.toBeNull())
-    expect(container.textContent).toContain('Chọn một toà nhà để xem hoá đơn.')
-    expect(calls.some((c) => c.url.startsWith('/api/hoa-don?'))).toBe(false)
+    await vi.waitFor(() => expect(calls.some((c) => c.url.startsWith('/api/hoa-don?') && c.url.includes('toaNhaId=3'))).toBe(true))
+    expect(container.textContent).not.toContain('Chọn một toà nhà để xem hoá đơn.')
   })
 })

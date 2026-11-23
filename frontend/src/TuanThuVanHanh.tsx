@@ -44,7 +44,7 @@ function soNgayTu(ngay: string): number {
 }
 
 export function AnToanVanHanh({ token, vaiTro }: { token: string; vaiTro: string }) {
-  const building = useBuildings(token), action = useAction()
+  const building = useBuildings(token, true), action = useAction()
   const [data, setData] = useState<Safety | null>(null)
   const [document, setDocument] = useState({ phanLoai: 'THONG_TIN_CO_SO', ten: '' })
   const [file, setFile] = useState<File | null>(null)
@@ -154,7 +154,7 @@ function documentCategory(v: string) { return ({ THONG_TIN_CO_SO: 'Th√¥ng tin c∆
 
 type Residency = { nguoiThueId: number; phongId: number; soPhong: string; hoTen: string; ngaySinh: string; soDienThoai: string; soGiayToChe: string; trangThaiLuuTru: string; ngayKhaiBao: string | null; ngayVaoO: string; canhBaoQuaHan: boolean }
 export function CuTruVanHanh({ token }: { token: string }) {
-  const building = useBuildings(token), action = useAction()
+  const building = useBuildings(token, true), action = useAction()
   const [rows, setRows] = useState<Residency[]>([])
   const [dangTai, setDangTai] = useState(false)
   const [changes, setChanges] = useState<Record<number, { trangThaiLuuTru: string; ngayKhaiBao: string }>>({})

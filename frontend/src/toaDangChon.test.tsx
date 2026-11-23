@@ -110,6 +110,15 @@ describe('ToaDangChonProvider', () => {
     expect(mot.canChonTaiCho).toBe(false)
   })
 
+  it('useMotToa({ tuChonDau }): Chủ ở "Tất cả" được chọn sẵn toà đầu; Quản lý (một toà) không bị đổi', async () => {
+    let tuChon: ReturnType<typeof useMotToa>
+    function DocTuChon() { gt = useToaDangChon(); tuChon = useMotToa({ tuChonDau: true }); return null }
+    await act(async () => root!.render(<ToaDangChonProvider token="t" vaiTro="CHU" search="" taiToa={async () => BA_TOA as never}><DocTuChon /></ToaDangChonProvider>))
+    await act(async () => undefined)
+    expect(tuChon!.toaNhaId).toBe(BA_TOA[0].id)
+    expect(gt.toaNhaId).toBe(BA_TOA[0].id)
+  })
+
   it('lỗi tải danh sách toà hiện ra, không văng', async () => {
     await act(async () => root!.render(<ToaDangChonProvider token="t" vaiTro="CHU" search="" taiToa={async () => { throw new Error('Máy chủ không phản hồi') }}><Doc /></ToaDangChonProvider>))
     expect(gt.loi).toBe('Máy chủ không phản hồi')

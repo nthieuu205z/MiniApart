@@ -29,12 +29,14 @@ export function useAction() {
   return { busy, error, success, run, setError, setSuccess, setBusy }
 }
 // Toà lấy từ bối cảnh dùng chung của khung (chọn ở sidebar, nhớ qua lần tải lại). Ngoài khung (test màn riêng lẻ) thì tự tải như cũ.
-export function useBuildings(token: string) {
+export function useBuildings(token: string, tuChonDau = false) {
   const chung = useToaDangChon()
   const rieng = ngoaiProvider(chung)
   const [buildings, setBuildings] = useState<ThongTinToaNha[]>([])
   const [buildingId, setBuildingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Màn cần đúng một toà: Chủ đang ở "Tất cả toà" thì chọn toà đầu (hiện ở ô toà của khung) thay vì để trang chờ chọn.
+  useEffect(() => { if (tuChonDau && !rieng && chung.toaNhaId === null && !chung.coDinh && chung.danhSach.length > 0) chung.chon(chung.danhSach[0].id) }, [tuChonDau, rieng, chung])
   useEffect(() => { if (!token || !rieng) return; let active = true; fetchToaNha(token).then((rows) => { if (active) { setBuildings(rows); setBuildingId((id) => id ?? rows[0]?.id ?? null) } }).catch((e: Error) => { if (active) setError(e.message) }); return () => { active = false } }, [token, rieng])
   if (rieng) return { buildings, buildingId, setBuildingId, error }
   return { buildings: chung.danhSach, buildingId: chung.toaNhaId, setBuildingId: chung.chon, error: chung.loi }

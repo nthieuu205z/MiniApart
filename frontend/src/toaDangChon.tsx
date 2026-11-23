@@ -109,8 +109,12 @@ export function useToaDangChon(): ToaDangChon {
  * - đang "Tất cả" (chỉ Chủ) → `toaNhaId = null` và `canChonTaiCho = true`: màn hiện ô chọn toà tại chỗ,
  *   chọn ở đó sẽ đổi luôn toà của khung (nhớ cho các màn sau).
  */
-export function useMotToa(): { toaNhaId: number | null; canChonTaiCho: boolean; danhSach: ThongTinToaNha[]; chon: (id: number | null) => void } {
+export function useMotToa(opts?: { tuChonDau?: boolean }): { toaNhaId: number | null; canChonTaiCho: boolean; danhSach: ThongTinToaNha[]; chon: (id: number | null) => void } {
   const t = useToaDangChon()
+  // Màn cần đúng một toà: Chủ đang ở "Tất cả toà" thì chọn toà đầu (hiện ngay ở ô toà của khung) thay vì để trang trống chờ chọn.
+  const { toaNhaId, coDinh, danhSach, chon } = t
+  const tuChon = opts?.tuChonDau === true
+  useEffect(() => { if (tuChon && toaNhaId === null && !coDinh && danhSach.length > 0) chon(danhSach[0].id) }, [tuChon, toaNhaId, coDinh, danhSach, chon])
   return { toaNhaId: t.toaNhaId, canChonTaiCho: t.toaNhaId === null && !t.coDinh, danhSach: t.danhSach, chon: t.chon }
 }
 
