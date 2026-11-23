@@ -1,0 +1,640 @@
+[
+ {
+  "name": "14-hd9-sap-het-han-gia-han-1440",
+  "w": 1440,
+  "moDuoc": true,
+  "tieuDe": "Gia hạn hợp đồng · hợp đồng #9",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 25,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 116,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(28, 27, 25)",
+   "docHeight": 1109
+  }
+ },
+ {
+  "name": "14-hd9-sap-het-han-thanh-ly-hop-dong-1440",
+  "w": 1440,
+  "moDuoc": true,
+  "tieuDe": "Thanh lý hợp đồng · hợp đồng #9",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 53,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 193,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(28, 27, 25)",
+   "docHeight": 1109
+  }
+ },
+ {
+  "name": "14-hd9-sap-het-han-phu-luc-1440",
+  "w": 1440,
+  "moDuoc": true,
+  "tieuDe": "Phụ lục · hợp đồng #9",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 27,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 122,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(28, 27, 25)",
+   "docHeight": 1109
+  }
+ },
+ {
+  "name": "14-hd9-sap-het-han-nguoi-o-cung-1440",
+  "w": 1440,
+  "moDuoc": true,
+  "tieuDe": "Người ở cùng · hợp đồng #9",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 28,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 133,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(28, 27, 25)",
+   "docHeight": 1109
+  }
+ },
+ {
+  "name": "14-hd10-cho-ky-ky-hop-dong-1440",
+  "w": 1440,
+  "moDuoc": true,
+  "tieuDe": "Ký hợp đồng · hợp đồng #10",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 27,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 105,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(28, 27, 25)",
+   "docHeight": 900
+  }
+ },
+ {
+  "name": "14-hd10-cho-ky-thanh-ly-hop-dong-1440",
+  "w": 1440,
+  "moDuoc": true,
+  "tieuDe": "Thanh lý hợp đồng · hợp đồng #10",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 56,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 196,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(28, 27, 25)",
+   "docHeight": 900
+  }
+ },
+ {
+  "name": "14-hd10-cho-ky-phu-luc-1440",
+  "w": 1440,
+  "moDuoc": true,
+  "tieuDe": "Phụ lục · hợp đồng #10",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 24,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 94,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(28, 27, 25)",
+   "docHeight": 900
+  }
+ },
+ {
+  "name": "14-hd10-cho-ky-nguoi-o-cung-1440",
+  "w": 1440,
+  "moDuoc": true,
+  "tieuDe": "Người ở cùng · hợp đồng #10",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 27,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 95,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(28, 27, 25)",
+   "docHeight": 900
+  }
+ },
+ {
+  "name": "14-hd1-binh-thuong-thanh-ly-hop-dong-1440",
+  "w": 1440,
+  "moDuoc": true,
+  "tieuDe": "Thanh lý hợp đồng · hợp đồng #1",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 53,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 198,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(28, 27, 25)",
+   "docHeight": 1109
+  }
+ },
+ {
+  "name": "14-hd1-binh-thuong-phu-luc-1440",
+  "w": 1440,
+  "moDuoc": true,
+  "tieuDe": "Phụ lục · hợp đồng #1",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 26,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 118,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(28, 27, 25)",
+   "docHeight": 1109
+  }
+ },
+ {
+  "name": "14-hd1-binh-thuong-nguoi-o-cung-1440",
+  "w": 1440,
+  "moDuoc": true,
+  "tieuDe": "Người ở cùng · hợp đồng #1",
+  "qa": {
+   "viewport": "1440×900",
+   "horizontalOverflow": 0,
+   "controls": 29,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 143,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(28, 27, 25)",
+   "docHeight": 1109
+  }
+ },
+ {
+  "name": "14-hd9-sap-het-han-gia-han-390",
+  "w": 390,
+  "moDuoc": true,
+  "tieuDe": "Gia hạn hợp đồng · hợp đồng #9",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 13,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 88,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(87, 83, 78)",
+   "docHeight": 1978
+  }
+ },
+ {
+  "name": "14-hd9-sap-het-han-thanh-ly-hop-dong-390",
+  "w": 390,
+  "moDuoc": true,
+  "tieuDe": "Thanh lý hợp đồng · hợp đồng #9",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 39,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 158,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(87, 83, 78)",
+   "docHeight": 1978
+  }
+ },
+ {
+  "name": "14-hd9-sap-het-han-phu-luc-390",
+  "w": 390,
+  "moDuoc": true,
+  "tieuDe": "Phụ lục · hợp đồng #9",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 15,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 94,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(87, 83, 78)",
+   "docHeight": 1978
+  }
+ },
+ {
+  "name": "14-hd9-sap-het-han-nguoi-o-cung-390",
+  "w": 390,
+  "moDuoc": true,
+  "tieuDe": "Người ở cùng · hợp đồng #9",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 16,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 105,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(87, 83, 78)",
+   "docHeight": 1978
+  }
+ },
+ {
+  "name": "14-hd10-cho-ky-ky-hop-dong-390",
+  "w": 390,
+  "moDuoc": true,
+  "tieuDe": "Ký hợp đồng · hợp đồng #10",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 15,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 80,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(87, 83, 78)",
+   "docHeight": 1597
+  }
+ },
+ {
+  "name": "14-hd10-cho-ky-thanh-ly-hop-dong-390",
+  "w": 390,
+  "moDuoc": true,
+  "tieuDe": "Thanh lý hợp đồng · hợp đồng #10",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 42,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 164,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(87, 83, 78)",
+   "docHeight": 1597
+  }
+ },
+ {
+  "name": "14-hd10-cho-ky-phu-luc-390",
+  "w": 390,
+  "moDuoc": true,
+  "tieuDe": "Phụ lục · hợp đồng #10",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 12,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 69,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(87, 83, 78)",
+   "docHeight": 1597
+  }
+ },
+ {
+  "name": "14-hd10-cho-ky-nguoi-o-cung-390",
+  "w": 390,
+  "moDuoc": true,
+  "tieuDe": "Người ở cùng · hợp đồng #10",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 15,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 70,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(87, 83, 78)",
+   "docHeight": 1597
+  }
+ },
+ {
+  "name": "14-hd1-binh-thuong-thanh-ly-hop-dong-390",
+  "w": 390,
+  "moDuoc": true,
+  "tieuDe": "Thanh lý hợp đồng · hợp đồng #1",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 39,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 163,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(87, 83, 78)",
+   "docHeight": 1973
+  }
+ },
+ {
+  "name": "14-hd1-binh-thuong-phu-luc-390",
+  "w": 390,
+  "moDuoc": true,
+  "tieuDe": "Phụ lục · hợp đồng #1",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 14,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 90,
+    "minRatio": 5.14,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(87, 83, 78)",
+   "docHeight": 1973
+  }
+ },
+ {
+  "name": "14-hd1-binh-thuong-nguoi-o-cung-390",
+  "w": 390,
+  "moDuoc": true,
+  "tieuDe": "Người ở cùng · hợp đồng #1",
+  "qa": {
+   "viewport": "390×844",
+   "horizontalOverflow": 0,
+   "controls": 17,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 115,
+    "minRatio": 4.78,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Inter"
+   ],
+   "fontsLoaded": [
+    "Inter 100 900",
+    "Inter 100 900"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(87, 83, 78)",
+   "docHeight": 1973
+  }
+ }
+]

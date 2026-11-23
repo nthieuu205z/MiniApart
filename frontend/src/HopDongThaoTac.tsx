@@ -54,7 +54,8 @@ type Settlement = { tongHoaDonCuoi: string; daThuCoc: string; congNo: string; kh
 
 const quickPresetButtonStyle: CSSProperties = {
   padding: '6px 12px',
-  fontSize: 12,
+  minHeight: 44,
+  fontSize: 13,
   fontWeight: 600,
   borderRadius: 'var(--ma-radius-pill)',
   border: '1px solid var(--ma-brand-accent)',
@@ -781,7 +782,7 @@ export default function HopDongThaoTac({
                   transition: 'all 0.15s ease',
                 }}
               >
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 600 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, cursor: 'pointer', fontWeight: 600 }}>
                   <input
                     type="checkbox"
                     checked={s.id in applied}
@@ -1709,7 +1710,7 @@ export default function HopDongThaoTac({
                         Khi chốt hợp đồng, hệ thống sẽ lưu snapshot bất biến toàn bộ Bên A, Bên B, thông tin phòng, bảng giá dịch vụ và danh mục tài sản bàn giao.
                       </p>
 
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
                         <input
                           type="checkbox"
                           checked={xacNhanChot}
@@ -1980,7 +1981,7 @@ export default function HopDongThaoTac({
                           <span style={{ fontWeight: 600, fontSize: 14 }}>{o.hoTenNguoiThue}</span>
                           {o.quanHe ? <span style={{ color: 'var(--ma-text-secondary)', fontSize: 13 }}> ({o.quanHe})</span> : null}
                           {o.vaiTro && o.vaiTro !== 'NGUOI_O' ? (
-                            <span style={{ marginLeft: 8, fontSize: 11, background: 'var(--ma-bg-sunken)', padding: '2px 6px', borderRadius: 4 }}>
+                            <span style={{ marginLeft: 8, fontSize: 13, background: 'var(--ma-bg-sunken)', padding: '2px 6px', borderRadius: 4 }}>
                               {o.vaiTro}
                             </span>
                           ) : null}
@@ -1996,14 +1997,14 @@ export default function HopDongThaoTac({
                             <StatusTag tone="done">Đã duyệt cư trú</StatusTag>
                           )}
                           {o.coTaiKhoan ? (
-                            <span style={{ fontSize: 11, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>
+                            <span style={{ fontSize: 13, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>
                               ✓ Đã có tài khoản
                             </span>
                           ) : null}
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, fontSize: 12, color: 'var(--ma-text-secondary)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, fontSize: 13, color: 'var(--ma-text-secondary)' }}>
                         <div>
                           {o.soDienThoai ? <span>SĐT: {o.soDienThoai} | </span> : null}
                           {o.soGiayToChe ? <span>CCCD: {o.soGiayToChe} | </span> : null}
@@ -2359,7 +2360,7 @@ export default function HopDongThaoTac({
 
                         {!daKhop && (
                           <div style={{ gridColumn: '1 / -1' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#B45309', fontWeight: 600 }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, cursor: 'pointer', fontSize: 13, color: '#B45309', fontWeight: 600 }}>
                               <input
                                 type="checkbox"
                                 checked={xacNhanKhauTruKhacBienBan}
@@ -2395,7 +2396,7 @@ export default function HopDongThaoTac({
                   </Field>
                 </div>
 
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 600 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, cursor: 'pointer', fontWeight: 600 }}>
                   <input
                     type="checkbox"
                     checked={confirmed}
