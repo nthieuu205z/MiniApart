@@ -49,9 +49,12 @@ describe('BieuDoTieuThu', () => {
     expect(container.querySelectorAll('[data-consumption-table]')).toHaveLength(2)
     const text = container.textContent ?? ''
     expect(text).toContain('Tiêu thụ điện và nước')
-    expect(text).toContain('96.00 kWh')
-    expect(text).toContain('5.00 m3')
-    expect(text).toContain('Đầu 100.00 · cuối 125.00')
+    expect(text).not.toMatch(/[0-9][.][0-9]{2}(?![0-9])/) // không còn số thô dạng 96.00
+    expect(text).not.toMatch(/[A-Z]{2,}(_[A-Z0-9]+)+/)
+    expect(container.querySelectorAll('h1')).toHaveLength(mobile ? 0 : 1)
+    expect(text).toContain('96 kWh')
+    expect(text).toContain('5 m3')
+    expect(text).toContain('Đầu 100 · cuối 125')
   })
 
   it('bấm một cột hiện đúng kỳ và số', async () => {
@@ -60,7 +63,7 @@ describe('BieuDoTieuThu', () => {
     const cot = container.querySelector('[data-consumption-bar="electricity-8"]') as HTMLButtonElement
     await act(async () => cot.click())
     expect(cot.getAttribute('aria-pressed')).toBe('true')
-    expect(container.textContent).toContain('Kỳ 08/2026 · Phòng 101: 25.00 kWh')
+    expect(container.textContent).toContain('Kỳ 08/2026 · Phòng 101: 25 kWh')
   })
 
   it('một loại chưa có số: báo riêng, loại kia vẫn vẽ', async () => {

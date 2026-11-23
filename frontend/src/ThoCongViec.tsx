@@ -17,6 +17,7 @@ import { fetchCurrentUser, fetchLienKetAnh } from './api'
 import { dinhDangTien } from './design/core/format'
 import { Button } from './design/core/Button'
 import { Icon } from './design/core/Icon'
+import { Tieu } from './CanTra'
 import { StatusTag } from './design/core/StatusTag'
 import { SysLabel } from './design/core/SysLabel'
 import { EmptyState } from './design/feedback/EmptyState'
@@ -34,7 +35,6 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
   const [loiTai, setLoiTai] = useState<string | null>(null)
 
   // Filters
-  const [nhomTab, setNhomTab] = useState<'DANG_LAM' | 'CHO_XAC_NHAN' | 'LICH_SU' | 'TAT_CA'>('DANG_LAM')
   const [toaNhaId, setToaNhaId] = useState<number | undefined>(undefined)
   const [mucDo, setMucDo] = useState<string>('')
   const [tuKhoa, setTuKhoa] = useState<string>('')
@@ -103,23 +103,22 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
   }, [])
 
   useEffect(() => {
-    if (!mobile) return
     let active = true
     Promise.allSettled([fetchThoTongQuan(token), fetchCurrentUser(token)]).then(([tq, nd]) => {
       if (!active) return
       setTomTat({
         kpi: tq.status === 'fulfilled' ? tq.value.kpi : undefined,
-        soToa: tq.status === 'fulfilled' ? tq.value.danhSachToa.length : undefined,
+        soToa: tq.status === 'fulfilled' ? tq.value.danhSachToa?.length : undefined,
         hoTen: nd.status === 'fulfilled' ? nd.value.hoTen : undefined,
       })
     })
     return () => {
       active = false
     }
-  }, [mobile, token])
+  }, [token])
 
-  // Mobile tải đủ mọi nhóm một lần để đếm số trên tab; desktop vẫn để máy chủ lọc theo tab.
-  const nhomTai = mobile ? 'TAT_CA' : nhomTab
+  // Tải đủ mọi nhóm một lần để đếm số trên chip lọc (cả điện thoại lẫn máy tính).
+  const nhomTai = 'TAT_CA'
   const taiDanhSach = useCallback(async () => {
     setDangTai(true)
     setLoiTai(null)
@@ -333,18 +332,18 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
 
   return (
     <div style={{ maxWidth: 1240, display: 'grid', gap: 20 }} data-testid="worker-jobs-screen">
-      {mobile ? (
-        <>
+      <>
           <div className="spread" style={{ alignItems: 'flex-start' }}>
             <div>
-              <h2 className="h1" style={{ margin: 0 }}>Việc của tôi</h2>
+              {/* Điện thoại: thanh trên của khung đã là h1 ("Việc"), tiêu đề này chỉ giữ cho trình đọc màn hình. */}
+              <Tieu mobile={mobile} className={mobile ? 'sr-only' : 'h1'} style={{ margin: 0 }}>Việc của tôi</Tieu>
               <div className="t-meta">
                 {[tomTat.hoTen, new Date().toLocaleDateString('vi-VN')].filter(Boolean).join(' · ')}
               </div>
             </div>
-            <button type="button" className="icon-btn touch" aria-label="Tìm việc" aria-expanded={hienTim} onClick={() => setHienTim((v) => !v)}>
+            {mobile ? <button type="button" className="icon-btn touch" aria-label="Tìm việc" aria-expanded={hienTim} onClick={() => setHienTim((v) => !v)}>
               <Icon name="search" />
-            </button>
+            </button> : null}
           </div>
           <div className="m-sum" aria-label="Tóm tắt">
             <div>
@@ -372,55 +371,6 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
             ))}
           </nav>
         </>
-      ) : (
-      <div style={{ display: 'grid', gap: 14, borderBottom: '1px solid var(--ma-border-default)', paddingBottom: 16 }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <div>
-            <h1 className="h1" style={{ margin: '0 0 4px' }}>
-              Danh sách công việc
-            </h1>
-            <p style={{ margin: 0, color: 'var(--ma-text-secondary)', fontSize: 13.5 }}>
-              Quản lý các sự cố được giao, khảo sát hiện trường, lập báo giá và báo hoàn thành.
-            </p>
-          </div>
-        </div>
-
-        {/* Status Group Tabs */}
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }} role="tablist">
-          {[
-            { key: 'DANG_LAM', label: 'Đang làm / Cần xử lý' },
-            { key: 'CHO_XAC_NHAN', label: 'Chờ xác nhận' },
-            { key: 'LICH_SU', label: 'Lịch sử (Đã đóng / Hủy)' },
-            { key: 'TAT_CA', label: 'Tất cả' },
-          ].map((tab) => {
-            const active = nhomTab === tab.key
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setNhomTab(tab.key as typeof nhomTab)}
-                style={{
-                  padding: '8px 16px',
-                  minHeight: 36,
-                  borderRadius: 8,
-                  border: active ? '2px solid var(--ma-brand-primary, #2563EB)' : '1px solid var(--ma-border-default)',
-                  background: active ? 'rgba(37, 99, 235, 0.08)' : 'var(--ma-bg-card)',
-                  color: active ? 'var(--ma-brand-primary, #2563EB)' : 'var(--ma-text-primary)',
-                  fontWeight: active ? 700 : 500,
-                  fontSize: 13.5,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-      )}
 
       {/* Filter and Search Bar */}
       {!mobile || hienTim ? (
@@ -483,14 +433,14 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
         <div style={{ padding: 24, textAlign: 'center', background: 'var(--ma-urgent-bg)', color: 'var(--ma-urgent)' }}>
           {loiTai}
         </div>
-      ) : (mobile ? dsMobile : danhSach).length === 0 ? (
+      ) : dsMobile.length === 0 ? (
         <EmptyState
           title="Không tìm thấy công việc nào"
           body="Không có việc sửa chữa nào phù hợp với bộ lọc hiện tại của bạn."
         />
-      ) : mobile ? (
-        /* Mobile Card Layout */
-        <div style={{ display: 'grid', gap: 12 }}>
+      ) : (
+        /* Thẻ việc: điện thoại 1 cột, máy tính lưới 2–3 cột */
+        <div style={{ display: 'grid', gap: 12, gridTemplateColumns: mobile ? undefined : 'repeat(auto-fill, minmax(300px, 1fr))', alignItems: 'start' }}>
           {dsMobile.map((row, i) => {
             const nutChinh = nutChinhCuaViec(row)
             const buoc = buocViecTho(row)
@@ -549,90 +499,6 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
               </article>
             )
           })}
-        </div>
-      ) : (
-        /* Desktop Wide Table Layout */
-        <div style={{ background: 'var(--ma-bg-card)', border: '1px solid var(--ma-border-default)', borderRadius: 10, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13.5 }}>
-            <thead>
-              <tr style={{ background: 'var(--ma-bg-sunken)', borderBottom: '1px solid var(--ma-border-default)', color: 'var(--ma-text-secondary)' }}>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Mã & Hạng mục</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Tòa & Phòng</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Người liên hệ</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Mức độ</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Trạng thái</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Báo giá & Thanh toán</th>
-                <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600 }}>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {danhSach.map((row) => (
-                <tr
-                  key={row.id}
-                  style={{ borderBottom: '1px solid var(--ma-border-default)', transition: 'background 0.15s ease' }}
-                  data-testid={`worker-task-row-${row.id}`}
-                >
-                  <td style={{ padding: '14px 16px', verticalAlign: 'top' }}>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{row.maYeuCau}</div>
-                    <div style={{ color: 'var(--ma-text-primary)', marginTop: 2 }}>{row.hangMuc}</div>
-                    <div style={{ color: 'var(--ma-text-secondary)', fontSize: 13, marginTop: 4, maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {row.moTa}
-                    </div>
-                  </td>
-
-                  <td style={{ padding: '14px 16px', verticalAlign: 'top' }}>
-                    <div style={{ fontWeight: 600 }}>P.{row.soPhong}</div>
-                    <div style={{ color: 'var(--ma-text-secondary)', fontSize: 13 }}>{row.toaNha}</div>
-                  </td>
-
-                  <td style={{ padding: '14px 16px', verticalAlign: 'top' }}>
-                    <div>{row.nguoiLienHeHoTen}</div>
-                    <a href={`tel:${row.soDienThoaiLienHe}`} style={{ color: 'var(--ma-brand-primary, #2563EB)', textDecoration: 'none', fontSize: 13 }}>
-                      {row.soDienThoaiLienHe}
-                    </a>
-                  </td>
-
-                  <td style={{ padding: '14px 16px', verticalAlign: 'top' }}>
-                    <StatusTag tone={row.mucDo === 'KHAN_CAP' ? 'urgent' : row.mucDo === 'GAP' ? 'waiting' : 'neutral'}>
-                      {row.tenMucDo}
-                    </StatusTag>
-                  </td>
-
-                  <td style={{ padding: '14px 16px', verticalAlign: 'top' }}>
-                    <StatusTag tone={row.trangThaiHieuLuc === 'DA_DONG' ? 'done' : row.trangThaiHieuLuc === 'CHO_XAC_NHAN' ? 'waiting' : 'neutral'}>
-                      {row.tenTrangThaiHieuLuc}
-                    </StatusTag>
-                  </td>
-
-                  <td style={{ padding: '14px 16px', verticalAlign: 'top' }}>
-                    <div>
-                      {row.giaTriBaoGia != null ? (
-                        <strong>{dinhDangTien(row.giaTriBaoGia)} đ</strong>
-                      ) : (
-                        <span style={{ color: 'var(--ma-text-secondary)' }}>Chưa có báo giá</span>
-                      )}
-                    </div>
-                    {row.daThanhToan > 0 ? (
-                      <div style={{ fontSize: 13, color: '#059669', marginTop: 2 }}>
-                        Đã nhận: {dinhDangTien(row.daThanhToan)} đ
-                      </div>
-                    ) : null}
-                    {row.conPhaiTra > 0 ? (
-                      <div style={{ fontSize: 13, color: '#DC2626', marginTop: 2 }}>
-                        Còn: {dinhDangTien(row.conPhaiTra)} đ
-                      </div>
-                    ) : null}
-                  </td>
-
-                  <td style={{ padding: '14px 16px', verticalAlign: 'top', textAlign: 'right' }}>
-                    <Button variant="secondary" onClick={() => moChiTiet(row.id)}>
-                      Xem chi tiết
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       )}
 

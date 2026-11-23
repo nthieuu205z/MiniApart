@@ -5,6 +5,8 @@ import { Icon, type IconName } from './design/core/Icon'
 import { EmptyState } from './design/feedback/EmptyState'
 import { BieuDoCotChon } from './design/charts/BieuDoCotChon'
 import { Card } from './design/layout/Card'
+import { Tieu } from './CanTra'
+import { dinhDangSo } from './design/core/format'
 
 type Props = {
   token: string
@@ -75,7 +77,7 @@ export default function BieuDoTieuThu({ token, mobile = false }: Props) {
   }
 
   const tieuDe = (
-    <h1 id="consumption-title" className={mobile ? 'sr-only' : undefined} style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Tiêu thụ điện và nước</h1>
+    <Tieu mobile={mobile} id="consumption-title" className={mobile ? 'sr-only' : undefined} style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Tiêu thụ điện và nước</Tieu>
   )
 
   if (duLieu.dien.length === 0 && duLieu.nuoc.length === 0) {
@@ -144,7 +146,7 @@ function BieuDoSeries({ loai, points }: { loai: LoaiTieuThu; points: ThongTinTie
       {tieuDeThe}
 
       <BieuDoCotChon
-        cot={theoThoiGian.map((p) => ({ khoa: khoaCua(p), nhan: nhanNgan(p), giaTri: giaTriSo(p.mucTieuThu), hienThi: p.mucTieuThu === null ? '—' : String(Number(p.mucTieuThu)), moTa: moTaDiem(p, donVi) }))}
+        cot={theoThoiGian.map((p) => ({ khoa: khoaCua(p), nhan: nhanNgan(p), giaTri: giaTriSo(p.mucTieuThu), hienThi: p.mucTieuThu === null ? '—' : dinhDangSo(p.mucTieuThu), moTa: moTaDiem(p, donVi) }))}
         chonKhoa={khoaDangChon}
         onChon={setChonKhoa}
         mau={config.mau}
@@ -176,7 +178,7 @@ function BieuDoSeries({ loai, points }: { loai: LoaiTieuThu; points: ThongTinTie
                 </th>
                 <td className="num" style={cellText}>
                   <strong style={{ display: 'block', whiteSpace: 'nowrap' }}>{hienThiGiaTri(point, donVi)}</strong>
-                  <span className="t-meta">Đầu {point.chiSoDau ?? '—'} · cuối {point.chiSoCuoi ?? '—'}</span>
+                  <span className="t-meta">Đầu {point.chiSoDau === null ? '—' : dinhDangSo(point.chiSoDau)} · cuối {point.chiSoCuoi === null ? '—' : dinhDangSo(point.chiSoCuoi)}</span>
                 </td>
               </tr>
             ))}
@@ -196,7 +198,7 @@ function giaTriSo(value: string | null) {
 }
 
 function hienThiGiaTri(point: ThongTinTieuThu, donVi: string) {
-  return `${point.mucTieuThu ?? '—'} ${donVi}`
+  return `${point.mucTieuThu === null ? '—' : dinhDangSo(point.mucTieuThu)} ${donVi}`
 }
 
 function nhanKy(point: ThongTinTieuThu) {

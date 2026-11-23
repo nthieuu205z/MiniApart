@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
+import './CanTra.css'
 import type { ThongTinHoaDonChiTiet, ThongTinHoaDonLichSu } from './api'
 import { Button } from './design/core/Button'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
@@ -6,7 +7,13 @@ import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
 
-type Props = { hoaDon: ThongTinHoaDonChiTiet; lichSu: ThongTinHoaDonLichSu[]; tra: string | null }
+type Props = { mobile?: boolean; hoaDon: ThongTinHoaDonChiTiet; lichSu: ThongTinHoaDonLichSu[]; tra: string | null }
+
+/** Tiêu đề trang: điện thoại đã có h1 ở thanh trên của khung nên chỉ h2; máy tính không có thanh đó nên là h1. */
+export function Tieu({ mobile, children, ...rest }: { mobile?: boolean; children: ReactNode; className?: string; id?: string; style?: CSSProperties }) {
+  const H = mobile ? 'h2' : 'h1'
+  return <H {...rest}>{children}</H>
+}
 
 const NGAY_MS = 86_400_000
 const kyCua = (h: ThongTinHoaDonLichSu) => (h.thang != null && h.nam != null ? `${String(h.thang).padStart(2, '0')}/${h.nam}` : 'Quyết toán')
@@ -24,7 +31,7 @@ function nhanPhamVi(ds: ThongTinHoaDonLichSu[]) {
   return `${ds.length} kỳ ${dau.nam === cuoi.nam ? `${p(dau.thang!)}–${p(cuoi.thang!)}/${cuoi.nam}` : `${kyCua(dau)}–${kyCua(cuoi)}`}`
 }
 
-export default function CanTra({ hoaDon, lichSu, tra }: Props) {
+export default function CanTra({ mobile = false, hoaDon, lichSu, tra }: Props) {
   const chuaTra = lichSu.filter((h) => Number(h.conLai) > 0 && !h.trangThai.includes('HUY'))
   const dangTra = tra === 'tat-ca' ? chuaTra : chuaTra.filter((h) => String(h.hoaDonId) === tra)
   const moi = lichSu[0]
@@ -33,9 +40,9 @@ export default function CanTra({ hoaDon, lichSu, tra }: Props) {
   const phu = tra && dangTra.length > 0 ? `Phòng ${hoaDon.soPhong} · ${moi?.tenToaNha || hoaDon.nguoiThue}` : dau
 
   return (
-    <div className="invoice-screen invoice-screen--mobile" data-testid="invoice-detail" data-layout-variant="mobile" data-can-tra role="region" aria-labelledby="can-tra-tieu-de">
+    <div className={`invoice-screen invoice-screen--mobile${mobile ? '' : ' can-tra-rong'}${tra && dangTra.length > 0 ? ' can-tra-tra' : ''}`} data-testid="invoice-detail" data-layout-variant="mobile" data-can-tra role="region" aria-labelledby="can-tra-tieu-de">
       <header>
-        <h2 id="can-tra-tieu-de" className="h3" style={{ margin: 0, font: '600 20px/1.2 var(--ma-font-ui)' }}>{tieuDe}</h2>
+        <Tieu mobile={mobile} id="can-tra-tieu-de" className="h3" style={{ margin: 0, font: '600 20px/1.2 var(--ma-font-ui)' }}>{tieuDe}</Tieu>
         <div className="t-sm t-2">{phu}</div>
       </header>
       <div className="m-body" style={{ padding: 0, marginTop: 12, gridTemplateColumns: 'minmax(0, 1fr)' }}>
@@ -76,6 +83,7 @@ function TongQuan({ hoaDon, chuaTra, moi }: { hoaDon: ThongTinHoaDonChiTiet; chu
         )}
       </section>
 
+      <div className="can-tra-ds">
       {chuaTra.length > 0 ? (
         <>
           <h2 className="m-h">Các kỳ chưa trả đủ</h2>
@@ -112,6 +120,7 @@ function TongQuan({ hoaDon, chuaTra, moi }: { hoaDon: ThongTinHoaDonChiTiet; chu
             <div className="money" style={d.thanhTien.startsWith('-') ? { color: 'var(--ma-urgent)' } : undefined}>{dinhDangTien(d.thanhTien)} ₫</div>
           </div>
         ))}
+      </div>
       </div>
     </>
   )

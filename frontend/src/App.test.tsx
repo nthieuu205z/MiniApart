@@ -1585,7 +1585,7 @@ describe('invoice navigation', () => {
 
     await vi.waitFor(() => {
       expect(mountedApp!.container.querySelector('[data-testid="invoice-detail"]')).not.toBeNull()
-      expect(mountedApp!.container.textContent).toContain('TN-A-101-202608')
+      expect(mountedApp!.container.textContent).toContain('Phòng 101')
     })
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -1791,8 +1791,8 @@ describe('invoice navigation', () => {
     expect(mountedApp.container.querySelector('[data-consumption-chart="electricity"]')).not.toBeNull()
     expect(mountedApp.container.querySelector('[data-consumption-chart="water"]')).not.toBeNull()
     expect(mountedApp.container.querySelectorAll('[data-consumption-table]')).toHaveLength(2)
-    expect(mountedApp.container.textContent).toContain('25.00 kWh')
-    expect(mountedApp.container.textContent).toContain('6.25 m3')
+    expect(mountedApp.container.textContent).toContain('25 kWh')
+    expect(mountedApp.container.textContent).toContain('6,25 m3')
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/cong/tieu-thu?soKy=12',
       expect.objectContaining({ headers: { Authorization: 'Bearer header.payload.signature' } }),
@@ -1801,7 +1801,7 @@ describe('invoice navigation', () => {
     const electricityBar = mountedApp.container.querySelector('[data-consumption-bar="electricity-8"]') as HTMLButtonElement
     expect(electricityBar).not.toBeNull()
     await act(async () => electricityBar.click())
-    expect(mountedApp.container.textContent).toContain('Kỳ 08/2026 · Phòng 101: 25.00 kWh')
+    expect(mountedApp.container.textContent).toContain('Kỳ 08/2026 · Phòng 101: 25 kWh')
   })
 
   it('FR-POR-05 shows a clear first-use empty state when no meter history exists', async () => {

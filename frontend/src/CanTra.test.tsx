@@ -18,9 +18,9 @@ const bonKy = [kyLs(31, 10, '1895000.00'), kyLs(21, 9, '1895000.00'), kyLs(11, 8
 
 let container: HTMLDivElement
 let root: Root
-const ve = async (lichSu: ThongTinHoaDonLichSu[], tra: string | null) => {
+const ve = async (lichSu: ThongTinHoaDonLichSu[], tra: string | null, mobile = false) => {
   root = createRoot(container)
-  await act(async () => root.render(<CanTra hoaDon={hoaDon} lichSu={lichSu} tra={tra} />))
+  await act(async () => root.render(<CanTra mobile={mobile} hoaDon={hoaDon} lichSu={lichSu} tra={tra} />))
 }
 
 describe('CanTra (khách thuê)', () => {
@@ -37,6 +37,19 @@ describe('CanTra (khách thuê)', () => {
     expect(container.querySelector('[data-tra-mot-ky]')?.getAttribute('href')).toBe('/hoa-don-cua-toi?tra=31')
     expect(container.querySelectorAll('[data-ky-hoa-don]')).toHaveLength(4)
     expect(container.querySelector('[data-ky-hoa-don="9"], [data-ky-hoa-don="21"]')?.getAttribute('href')).toBe('/hoa-don-cua-toi?hoaDonId=21')
+  })
+
+  it('máy tính: một h1, hiện cả nợ cũ, một nút chính, không chuỗi IN_HOA_GẠCH_DƯỚI; điện thoại: h1 do thanh trên của khung', async () => {
+    await ve(bonKy, null)
+    expect(container.querySelectorAll('h1')).toHaveLength(1)
+    expect(container.querySelector('.can-tra-rong')).not.toBeNull()
+    expect(container.querySelectorAll('[data-ky-hoa-don]')).toHaveLength(4)
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
+    expect(container.textContent).not.toMatch(/[A-Z]{2,}(_[A-Z0-9]+)+/)
+    await act(async () => root.unmount())
+    await ve(bonKy, null, true)
+    expect(container.querySelectorAll('h1')).toHaveLength(0)
+    expect(container.querySelector('.can-tra-rong')).toBeNull()
   })
 
   it('không nợ → không có nút Trả', async () => {

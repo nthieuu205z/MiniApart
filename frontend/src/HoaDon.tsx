@@ -11,7 +11,7 @@ import { HighlightNotice, MetaGrid, MetaItem, MeterImage, ScreenHeader, ScreenSu
 import InvoiceActions from './InvoiceActions'
 import FinancePaymentPanel from './FinancePaymentPanel'
 import { KyTruocConNo } from './LichSuHoaDon'
-import CanTra from './CanTra'
+import CanTra, { Tieu } from './CanTra'
 
 type Props = { token: string; toaNhaId?: number; kyId?: number; hoaDonId?: number; mobile?: boolean; cheDoNguoiThue?: boolean; cheDoCongNo?: boolean; vaiTro?: string }
 
@@ -76,7 +76,8 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
     }
   }, [cheDoCongNo, cheDoNguoiThue, hoaDonId, kyId, soLanTaiLai, token, toaNhaId])
 
-  const manHinhNguoiThueMobile = mobile && cheDoNguoiThue
+  // Máy tính dùng chung bản "Cần trả" của điện thoại; chi tiết một kỳ (hoaDonId) trên máy tính vẫn là bảng đối chiếu đủ chỉ số.
+  const manHinhNguoiThueMobile = cheDoNguoiThue && (mobile || hoaDonId === undefined)
 
   useEffect(() => {
     if (!manHinhNguoiThueMobile) return
@@ -111,8 +112,8 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
   if (manHinhNguoiThueMobile) {
     // Không chọn kỳ → "Cần trả" gom mọi kỳ chưa trả; lịch sử lỗi → quay về màn kỳ mới nhất như cũ.
     if (hoaDonId === undefined && lichSuDaTai === null) return <ScreenSurface data-layout-variant={variant} aria-busy="true" aria-live="polite"><div className="skel skel-line" />Đang tải hoá đơn…</ScreenSurface>
-    if (hoaDonId === undefined && lichSuDaTai) return <CanTra hoaDon={hoaDon} lichSu={lichSu} tra={new URLSearchParams(window.location.search).get('tra')} />
-    return <HoaDonNguoiThueMobile token={token} hoaDon={hoaDon} lichSu={lichSu} />
+    if (hoaDonId === undefined && lichSuDaTai) return <CanTra mobile={mobile} hoaDon={hoaDon} lichSu={lichSu} tra={new URLSearchParams(window.location.search).get('tra')} />
+    return <HoaDonNguoiThueMobile mobile={mobile} token={token} hoaDon={hoaDon} lichSu={lichSu} />
   }
 
   const meta = (
@@ -193,7 +194,7 @@ const NHAN_TRANG_THAI: Record<string, [string, 'urgent' | 'done' | 'strong' | 'w
   DA_HUY: ['Đã huỷ', 'closed'],
 }
 
-function HoaDonNguoiThueMobile({ token, hoaDon, lichSu }: { token: string; hoaDon: ThongTinHoaDonChiTiet; lichSu: ThongTinHoaDonLichSu[] }) {
+function HoaDonNguoiThueMobile({ mobile, token, hoaDon, lichSu }: { mobile: boolean; token: string; hoaDon: ThongTinHoaDonChiTiet; lichSu: ThongTinHoaDonLichSu[] }) {
   const trongLichSu = lichSu.find((muc) => muc.hoaDonId === hoaDon.hoaDonId)
   const ky = trongLichSu?.thang != null && trongLichSu.nam != null
     ? `${String(trongLichSu.thang).padStart(2, '0')}/${trongLichSu.nam}`
@@ -204,7 +205,7 @@ function HoaDonNguoiThueMobile({ token, hoaDon, lichSu }: { token: string; hoaDo
 
   return (
     <div
-      className="m-app invoice-screen invoice-screen--mobile"
+      className={`m-app invoice-screen invoice-screen--mobile${mobile ? '' : ' can-tra-rong'}`}
       data-testid="invoice-detail"
       data-layout-variant="mobile"
       aria-labelledby="invoice-title"
@@ -219,7 +220,7 @@ function HoaDonNguoiThueMobile({ token, hoaDon, lichSu }: { token: string; hoaDo
       <div className="m-body" style={{ padding: 0, gridTemplateColumns: 'minmax(0, 1fr)' }}>
         <section className="m-card" aria-labelledby="invoice-period" data-invoice-total>
           <div className="spread">
-            <h1 className="h3" id="invoice-period" style={{ margin: 0 }}>Kỳ {ky}</h1>
+            <Tieu mobile={mobile} className="h3" id="invoice-period" style={{ margin: 0 }}>Kỳ {ky}</Tieu>
             <StatusTag tone={tone}>{nhan}</StatusTag>
           </div>
           <p className="t-sm t-2" style={{ margin: '12px 0 0' }}>Còn phải trả</p>

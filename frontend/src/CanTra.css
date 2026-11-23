@@ -1,0 +1,11 @@
+/* Bản máy tính của "Cần trả": cùng cấu trúc với điện thoại, rộng tối đa 960px, danh sách kỳ bên trái, khung tổng bên phải. */
+.can-tra-ds { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.can-tra-rong { max-width: 960px; }
+.can-tra-rong.can-tra-tra { max-width: 560px; }
+.can-tra-rong.m-app { min-height: 0; padding-bottom: 0; }
+@media (min-width: 768px) {
+  .can-tra-rong:not(.can-tra-tra) .m-body { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px) !important; align-items: start; gap: 16px 24px; }
+  .can-tra-rong:not(.can-tra-tra) .payhero { grid-column: 2; grid-row: 1; position: sticky; top: 16px; }
+  .can-tra-rong:not(.can-tra-tra) .can-tra-ds { grid-column: 1; grid-row: 1; }
+  .can-tra-rong .m-list .irow:hover { background: var(--ma-paper-1); }
+}

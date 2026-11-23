@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { fetchHopDongCuaNguoiThue, fetchLienKetAnh, type ThongTinYeuCauSuaChua } from './api'
 import { managementRequest } from './managementApi'
 import { Feedback, useAction } from './ManagementShared'
+import { Tieu } from './CanTra'
 import { Button } from './design/core/Button'
 import { Icon, type IconName } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
@@ -19,7 +20,16 @@ const ngayNgan = (iso: string) => (iso ? new Date(iso).toLocaleDateString('vi-VN
 const KET_THUC = ['DA_DONG', 'DA_HUY']
 
 /** Báo hỏng của khách thuê: form một cột (mobile-first) + danh sách yêu cầu của chính mình. */
-export default function BaoHongKhach({ token }: { token: string }) {
+export default function BaoHongKhach({ token, mobile: mobileProp }: { token: string; mobile?: boolean }) {
+  // App chưa truyền mobile cho trang này: tự đo theo ngưỡng của khung (≤767px = điện thoại, thanh trên đã có h1).
+  const [hepDo, setHepDo] = useState(() => window.matchMedia?.('(max-width: 767px)').matches ?? false)
+  useEffect(() => {
+    const mq = window.matchMedia?.('(max-width: 767px)')
+    const doi = () => setHepDo(mq.matches)
+    mq?.addEventListener?.('change', doi)
+    return () => mq?.removeEventListener?.('change', doi)
+  }, [])
+  const mobile = mobileProp ?? hepDo
   const [rooms, setRooms] = useState<Array<{ id: number; soPhong: string }>>([])
   const [rows, setRows] = useState<ThongTinYeuCauSuaChua[]>([])
   const [daTai, setDaTai] = useState(false)
@@ -69,15 +79,15 @@ export default function BaoHongKhach({ token }: { token: string }) {
   }
 
   return (
-    <section style={{ display: 'grid', gap: 16, maxWidth: 640, width: '100%', margin: '0 auto' }}>
+    <section style={{ display: 'grid', gap: 16, maxWidth: 640, width: '100%' }}>
       <div>
-        <h2 className="h1" style={{ margin: 0 }}>Báo hỏng</h2>
+        <Tieu mobile={mobile} className="h1" style={{ margin: 0 }}>Báo hỏng</Tieu>
         <p className="t-sm" style={{ margin: '4px 0 0', color: 'var(--ma-text-secondary)' }}>Gửi yêu cầu sửa chữa cho ban quản lý và theo dõi tiến độ.</p>
       </div>
       <Feedback error={action.error ?? loiPhong} success={action.success} />
 
       <form className="card" style={{ gap: 16 }} onSubmit={create}>
-        <h3 className="h3" style={{ margin: 0 }}>Gửi yêu cầu sửa chữa</h3>
+        <h2 className="h3" style={{ margin: 0 }}>Gửi yêu cầu sửa chữa</h2>
         <Field label="Phòng">
           <select className="select" required value={form.phongId} onChange={(e) => setForm({ ...form, phongId: e.target.value })}>
             <option value="">Chọn phòng</option>
@@ -121,7 +131,7 @@ export default function BaoHongKhach({ token }: { token: string }) {
       </form>
 
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <h3 className="h3" style={{ margin: 0 }}>Yêu cầu của tôi</h3>
+        <h2 className="h3" style={{ margin: 0 }}>Yêu cầu của tôi</h2>
         <label className="field" style={{ minWidth: 180 }}>
           <span className="label">Lọc trạng thái</span>
           <select className="select" value={status} onChange={(e) => setStatus(e.target.value)}>
