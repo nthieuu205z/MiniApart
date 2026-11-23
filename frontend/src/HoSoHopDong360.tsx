@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, createElement, type ComponentType, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import './HoSoHopDongToa.css'
 import { ApiError, fetchCongNoBaoCao, fetchHopDongQuanLy, fetchHoaDonQuanLy, type ThongTinHopDong, type ThongTinToaNha } from './api'
@@ -12,7 +12,7 @@ import { useDialogTrap } from './design/feedback/useDialogTrap'
 import { Card } from './design/layout/Card'
 import { Breadcrumb } from './design/shell/Breadcrumb'
 import type { TrangProps } from './dinhTuyen'
-import HopDongThaoTac from './HopDongThaoTac'
+import { GiaHanHopDong, KyHopDong, NguoiOCungHopDong, PhuLucHopDong, ThanhLyHopDong, type ThaoTacConProps } from './HopDongThaoTac'
 import { downloadManagementFile } from './managementApi'
 import { useToaDangChon } from './toaDangChon'
 
@@ -63,6 +63,7 @@ export default function HoSoHopDong360({ token, vaiTro, thamSo, dieuHuong }: Tra
   const [loi, setLoi] = useState<string | null>(null)
   const [lan, setLan] = useState(0)
   const [ngan, setNgan] = useState<string | null>(null)
+  const [thaoTac, setThaoTac] = useState<ComponentType<ThaoTacConProps> | null>(null)
   const [thongBaoPdf, setThongBaoPdf] = useState<string | null>(null)
 
   useEffect(() => {
@@ -76,7 +77,7 @@ export default function HoSoHopDong360({ token, vaiTro, thamSo, dieuHuong }: Tra
     return () => { con = false }
   }, [token, vaiTro, id, danhSach, dangTaiToa, lan])
 
-  const dongNgan = () => { setNgan(null); setLan((n) => n + 1) } // sau thao tác trong ngăn: tải lại hồ sơ
+  const dongNgan = () => { setNgan(null); setThaoTac(null); setLan((n) => n + 1) } // sau thao tác trong ngăn: tải lại hồ sơ
   const tai = async () => {
     setThongBaoPdf(null)
     try { await downloadManagementFile(token, `/api/hop-dong/${id}/xuat-pdf`, `hop-dong-${id}.pdf`) } catch (e) { setThongBaoPdf(thongBaoLoi(e, 'Không thể tải PDF.')) }
@@ -100,7 +101,7 @@ export default function HoSoHopDong360({ token, vaiTro, thamSo, dieuHuong }: Tra
     [hd.sapHetHan ? 'Gia hạn hoặc báo trả phòng' : `Báo trước ${hd.soNgayBaoTruoc} ngày`, `trước ${dinhDangNgayIso(hd.ngayKetThuc)}`, thanhLy ? 'done' : 'todo'],
     ['Thanh lý & quyết toán cọc', '', thanhLy ? 'done' : 'todo'],
   ]
-  const moNgan = (tieuDe: string) => () => setNgan(tieuDe)
+  const moNgan = (tieuDe: string, Con: ComponentType<ThaoTacConProps>) => () => { setNgan(tieuDe); setThaoTac(() => Con) }
 
   return (
     <div style={{ display: 'grid', gap: 16, minWidth: 0 }} data-testid="ho-so-hop-dong">
@@ -123,12 +124,14 @@ export default function HoSoHopDong360({ token, vaiTro, thamSo, dieuHuong }: Tra
         </div>
         <div className="ph-acts">
           <Button variant="secondary" onClick={() => void tai()}><Icon name="download" />Tải PDF</Button>
-          {giaHan ? <Button onClick={moNgan('Gia hạn hợp đồng')}>Gia hạn</Button> : null}
-          {choKy ? <Button onClick={moNgan('Ký hợp đồng')}>Ký hợp đồng</Button> : null}
+          {giaHan ? <Button onClick={moNgan('Gia hạn hợp đồng', GiaHanHopDong)}>Gia hạn</Button> : null}
+          {choKy ? <Button onClick={moNgan('Ký hợp đồng', KyHopDong)}>Ký hợp đồng</Button> : null}
           <MenuThaoTac nhan="Thao tác khác: thanh lý, phụ lục, khoản phát sinh, người ở cùng, giao dịch cọc">
-            {(dong) => [
-              ['Thanh lý hợp đồng', 'lock'], ['Phụ lục', 'edit'], ['Khoản phát sinh', 'send'], ['Người ở cùng', 'eye'], ['Giao dịch cọc', 'key'],
-            ].map(([nhan, icon]) => <MucMenu key={nhan} icon={icon as 'lock'} nguyHiem={nhan === 'Thanh lý hợp đồng'} onClick={() => { dong(); setNgan(nhan) }}>{nhan}</MucMenu>)}
+            {(dong) => ([
+              ['Thanh lý hợp đồng', 'lock', ThanhLyHopDong], ['Phụ lục', 'edit', PhuLucHopDong], ['Khoản phát sinh', 'send', '/hoa-don'], ['Người ở cùng', 'eye', NguoiOCungHopDong], ['Giao dịch cọc', 'key', '/thu-tien'],
+            ] as const).map(([nhan, icon, dich]) => ( // chưa có thao tác riêng cho phát sinh/cọc trong hồ sơ: đi tới màn hoá đơn/thu tiền
+              <MucMenu key={nhan} icon={icon} nguyHiem={nhan === 'Thanh lý hợp đồng'} onClick={() => { dong(); if (typeof dich === 'string') dieuHuong(dich); else moNgan(nhan, dich)() }}>{nhan}</MucMenu>
+            ))}
           </MenuThaoTac>
         </div>
       </div>
@@ -176,10 +179,9 @@ export default function HoSoHopDong360({ token, vaiTro, thamSo, dieuHuong }: Tra
         </div>
       </div>
 
-      {ngan ? (
+      {ngan && thaoTac ? (
         <Ngan tieuDe={`${ngan} · hợp đồng #${hd.id}`} onDong={dongNgan}>
-          {/* HopDongThaoTac chưa xuất từng phần thao tác (x11 sở hữu): nhúng nguyên chế độ chi tiết, các thao tác nằm trong đó. */}
-          <HopDongThaoTac token={token} buildingId={toa.id} selectedHopDongId={hd.id} onDongChiTiet={dongNgan} embedded />
+          {createElement(thaoTac, { token, buildingId: toa.id, hopDong: hd, onXong: dongNgan })}
         </Ngan>
       ) : null}
     </div>

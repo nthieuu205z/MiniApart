@@ -107,4 +107,22 @@ describe('HoSoToa360', () => {
     await mount('CHU', '99')
     expect(container.textContent).toContain('Không tìm thấy toà nhà này')
   })
+  it('vừa đăng nhập/đổi vai: ma.toaNhaId lạ không ảnh hưởng, kết quả muộn của vai cũ không ghi đè hồ sơ', async () => {
+    localStorage.setItem('ma.toaNhaId', '999')
+    let traVaiCu: (r: Response) => void = () => undefined
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url === '/api/toa-nha' && (init?.headers as Record<string, string>)?.Authorization?.endsWith('cu')) return new Promise<Response>((r) => { traVaiCu = r })
+      if (url === '/api/toa-nha') return json([TOA])
+      if (url === '/api/toa-nha/3/phong') return json(PHONG)
+      return json([])
+    })
+    const ve = (token: string, vaiTro: string) => act(async () => { root.render(<HoSoToa360 token={token} vaiTro={vaiTro as 'CHU'} mobile={false} thamSo={{ id: '3' }} dieuHuong={vi.fn()} />) })
+    await ve('cu', 'QUAN_LY')
+    await ve('moi', 'CHU')
+    await vi.waitFor(() => expect(container.querySelector('h1')?.textContent).toBe('An Nhiên Residence'))
+    await act(async () => { traVaiCu(json([])); await new Promise((r) => setTimeout(r, 20)) })
+    expect(container.querySelector('h1')?.textContent).toBe('An Nhiên Residence')
+    expect(container.textContent).not.toContain('Không tìm thấy toà nhà này')
+    localStorage.removeItem('ma.toaNhaId')
+  })
 })
