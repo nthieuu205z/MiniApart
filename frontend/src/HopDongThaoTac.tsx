@@ -201,6 +201,8 @@ export function useFormTaoHopDong(rooms: ThongTinPhong[], tenants: Tenant[], ser
   return { form, setForm, applied, setApplied, chonPhong, chonThoiHan, chonTienCoc, chonTatCaDichVu, boChonTatCaDichVu, phongChon, nguoiThueChon, giaThueSo, tienCocSo, tongThanhToanDauKy, taoBody }
 }
 
+export type ThaoTacHopDong = 'GIA_HAN' | 'KY' | 'THANH_LY' | 'PHU_LUC' | 'NGUOI_O_CUNG'
+
 export type HopDongThaoTacProps = {
   token: string
   buildingId?: number | null
@@ -211,6 +213,8 @@ export type HopDongThaoTacProps = {
   onToggleFormTao?: (show: boolean) => void
   onDongChiTiet?: () => void
   embedded?: boolean
+  /** Chỉ với `embedded`: hiện riêng một thao tác thay vì cả màn. */
+  thaoTac?: ThaoTacHopDong
 }
 
 export default function HopDongThaoTac({
@@ -223,6 +227,7 @@ export default function HopDongThaoTac({
   onToggleFormTao,
   onDongChiTiet,
   embedded = false,
+  thaoTac,
 }: HopDongThaoTacProps) {
   const building = useBuildings(token)
   const isControlled = selectedHopDongId !== undefined
@@ -277,7 +282,9 @@ export default function HopDongThaoTac({
   const [phuLucList, setPhuLucList] = useState<HopDongPhuLucDto[]>([])
   const [cauHinhBenA, setCauHinhBenA] = useState<CauHinhBenADto | null>(null)
   const [mauList, setMauList] = useState<MauHopDongDto[]>([])
-  const [activeStep, setActiveStep] = useState<number>(1)
+  const [buocDangChon, setActiveStep] = useState<number>(1)
+  const tt = embedded ? thaoTac : undefined // chỉ hiện đúng một thao tác trong ngăn của hồ sơ 360
+  const activeStep = tt === 'KY' || tt === 'PHU_LUC' ? 5 : buocDangChon
   const [dossierForm, setDossierForm] = useState<Partial<HopDongHoSoDto>>({})
   const [xacNhanChot, setXacNhanChot] = useState(false)
   const [signingForm, setSigningForm] = useState({ ngayKy: today(), ghiChuKy: '', fileScanDinhKem: '' })
@@ -855,6 +862,7 @@ export default function HopDongThaoTac({
         ) : contract ? (
           <>
             {/* THẺ CHI TIẾT HỢP ĐỒNG ĐƯỢC CHỌN */}
+            {!tt && (
             <div
               style={{
                 border: '1px solid var(--ma-border-default)',
@@ -962,8 +970,16 @@ export default function HopDongThaoTac({
                 </a>
               </div>
             </div>
+            )}
 
             {/* KHU VỰC BỘ HỒ SƠ HỢP ĐỒNG THUÊ & CHỐT PHÁP LÝ (5 BƯỚC) */}
+            {tt === 'KY' && (contract.trangThai === 'CHO_KY' || contract.trangThai === 'DA_COC') ? (
+              <div style={rowStyle}>
+                {contract.trangThai === 'CHO_KY' ? <Button blocked={action.busy} onClick={() => void command('nhan-coc')}>✓ Chuyển sang đã cọc</Button> : null}
+                {contract.trangThai === 'DA_COC' ? <Button blocked={action.busy} onClick={() => void command('kich-hoat')}>⚡ Kích hoạt hợp đồng</Button> : null}
+              </div>
+            ) : null}
+            {(!tt || tt === 'KY' || tt === 'PHU_LUC') && (
             <div style={{ ...panelStyle, background: 'var(--ma-bg-card)', border: '1px solid var(--ma-border-strong)', padding: '20px 22px' }}>
               <div style={sectionHeaderStyle}>
                 <div>
@@ -1031,6 +1047,7 @@ export default function HopDongThaoTac({
               </div>
 
               {/* THANH ĐIỀU HƯỚNG 5 BƯỚC */}
+              {!tt && (
               <div
                 style={{
                   display: 'flex',
@@ -1094,6 +1111,7 @@ export default function HopDongThaoTac({
                   </button>
                 ))}
               </div>
+              )}
 
               {/* BƯỚC 1: PHÒNG & THỜI HẠN */}
               {activeStep === 1 ? (
@@ -1666,7 +1684,8 @@ export default function HopDongThaoTac({
               {activeStep === 5 ? (
                 <div style={{ display: 'grid', gap: 16 }}>
                   {/* CẢNH BÁO THIẾU DỮ LIỆU */}
-                  {hoSo?.canhBaoThieuThongTin && hoSo.canhBaoThieuThongTin.length > 0 ? (
+                  {tt !== 'PHU_LUC' && (
+                  hoSo?.canhBaoThieuThongTin && hoSo.canhBaoThieuThongTin.length > 0 ? (
                     <div style={{ padding: '12px 16px', background: 'var(--ma-status-urgent-light)', border: '1px solid var(--ma-status-urgent)', borderRadius: 'var(--ma-radius)', color: 'var(--ma-status-urgent)' }}>
                       <strong>⚠️ Cảnh báo thiếu thông tin trước khi chốt:</strong>
                       <ul style={{ margin: '6px 0 0', paddingLeft: 20 }}>
@@ -1679,10 +1698,11 @@ export default function HopDongThaoTac({
                     <div style={{ padding: '12px 16px', background: 'var(--ma-status-done-light)', border: '1px solid var(--ma-status-done)', borderRadius: 'var(--ma-radius)', color: 'var(--ma-status-done)' }}>
                       ✓ Toàn bộ thông tin pháp lý bắt buộc của Bên A, Bên B và điều khoản đã được hoàn thiện đầy đủ.
                     </div>
+                  )
                   )}
 
                   {/* THAO TÁC CHỐT HỢP ĐỒNG NẾU ĐANG LÀ DRAFT */}
-                  {hoSo?.trangThaiTaiLieu === 'DRAFT' ? (
+                  {hoSo?.trangThaiTaiLieu === 'DRAFT' ? (tt === 'PHU_LUC' ? <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)' }}>Hồ sơ còn là bản nháp: hãy chốt hồ sơ (thao tác Ký hợp đồng) trước khi lập phụ lục.</p> : (
                     <div style={{ padding: '16px 18px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)', display: 'grid', gap: 12 }}>
                       <h4 style={{ margin: 0, font: 'var(--ma-text-task-name)' }}>🔒 Chốt hồ sơ hợp đồng</h4>
                       <p style={{ margin: 0, fontSize: 13, color: 'var(--ma-text-secondary)' }}>
@@ -1722,9 +1742,10 @@ export default function HopDongThaoTac({
                         </Button>
                       </div>
                     </div>
-                  ) : (
+                  )) : (
                     <div style={{ display: 'grid', gap: 16 }}>
                       {/* KHỐI GHI NHẬN KÝ GIẤY */}
+                      {tt !== 'PHU_LUC' && (
                       <div style={{ padding: '14px 16px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
                         <h4 style={{ margin: '0 0 8px', font: 'var(--ma-text-task-name)' }}>✍️ Ghi nhận ký kết hợp đồng giấy</h4>
                         {hoSo?.trangThaiTaiLieu === 'DA_GHI_NHAN_KY' ? (
@@ -1806,8 +1827,10 @@ export default function HopDongThaoTac({
                           </div>
                         )}
                       </div>
+                      )}
 
                       {/* KHỐI QUẢN LÝ PHỤ LỤC HỢP ĐỒNG */}
+                      {tt !== 'KY' && (
                       <div style={{ padding: '14px 16px', background: 'var(--ma-bg-sunken)', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
                         <h4 style={{ margin: '0 0 8px', font: 'var(--ma-text-task-name)' }}>📑 Phụ lục hợp đồng đã lập</h4>
                         {phuLucList.length === 0 ? (
@@ -1895,13 +1918,16 @@ export default function HopDongThaoTac({
                           </div>
                         </div>
                       </div>
+                      )}
                     </div>
                   )}
                 </div>
               ) : null}
             </div>
+            )}
 
             {/* QUẢN LÝ TÀI SẢN BÀN GIAO & TỰ ĐỘNG KHẤU TRỪ VÀO THANH LÝ */}
+            {(!tt || tt === 'THANH_LY') && (
             <QuanLyTaiSanPhong
               token={token}
               phongId={contract.phongId}
@@ -1916,8 +1942,10 @@ export default function HopDongThaoTac({
                 }))
               }
             />
+            )}
 
             {/* DANH SÁCH NGƯỜI Ở CÙNG */}
+            {(!tt || tt === 'NGUOI_O_CUNG') && (
             <section style={{ ...panelStyle, background: 'var(--ma-bg-sunken)' }}>
               <div style={sectionHeaderStyle}>
                 <div>
@@ -2156,9 +2184,10 @@ export default function HopDongThaoTac({
                 </div>
               </form>
             </section>
+            )}
 
             {/* GIA HẠN HỢP ĐỒNG */}
-            {contract.trangThai === 'HIEU_LUC' && contract.sapHetHan ? (
+            {(!tt || tt === 'GIA_HAN') && contract.trangThai === 'HIEU_LUC' && contract.sapHetHan ? (
               <form
                 style={{ ...panelStyle, borderLeft: '4px solid var(--ma-amber-500)' }}
                 onSubmit={(e) => {
@@ -2207,7 +2236,7 @@ export default function HopDongThaoTac({
             ) : null}
 
             {/* THANH LÝ VÀ QUYẾT TOÁN */}
-            {contract.trangThai !== 'DA_THANH_LY' ? (
+            {(!tt || tt === 'THANH_LY') && contract.trangThai !== 'DA_THANH_LY' ? (
               <form
                 style={{ ...panelStyle, borderLeft: '4px solid var(--ma-urgent)' }}
                 onSubmit={(e) => {
@@ -2384,7 +2413,7 @@ export default function HopDongThaoTac({
             ) : null}
 
             {/* KẾT QUẢ QUYẾT TOÁN */}
-            {settlement ? (
+            {settlement && (!tt || tt === 'THANH_LY') ? (
               <section
                 style={{
                   ...panelStyle,
@@ -2776,3 +2805,14 @@ function PromptModal({
     </div>
   )
 }
+
+/** Từng thao tác của hợp đồng, dùng trong ngăn của hồ sơ 360: cùng state/API/điều kiện với màn thao tác, chỉ hiện đúng một phần. */
+export type ThaoTacConProps = { token: string; buildingId: number; hopDong: Pick<ThongTinHopDong, 'id'>; onXong: () => void }
+const thaoTacCon = (thaoTac: ThaoTacHopDong) => ({ token, buildingId, hopDong, onXong }: ThaoTacConProps) => (
+  <HopDongThaoTac token={token} buildingId={buildingId} selectedHopDongId={hopDong.id} onDongChiTiet={onXong} embedded thaoTac={thaoTac} />
+)
+export const GiaHanHopDong = thaoTacCon('GIA_HAN')
+export const KyHopDong = thaoTacCon('KY')
+export const ThanhLyHopDong = thaoTacCon('THANH_LY')
+export const PhuLucHopDong = thaoTacCon('PHU_LUC')
+export const NguoiOCungHopDong = thaoTacCon('NGUOI_O_CUNG')

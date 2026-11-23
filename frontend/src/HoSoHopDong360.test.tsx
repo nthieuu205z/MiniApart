@@ -76,6 +76,50 @@ describe('HoSoHopDong360', () => {
     expect(container.querySelector('a[href="/phong/11?toaNhaId=3"]')).not.toBeNull()
   })
 
+  const ngan = () => document.querySelector('[role="dialog"]')
+  const doi = () => act(async () => { await new Promise((r) => setTimeout(r, 40)) })
+
+  it('nút chính \"Gia hạn\" mở ngăn chỉ có thao tác gia hạn; đóng ngăn thì tải lại hồ sơ', async () => {
+    await mount('1')
+    await act(async () => { (container.querySelector('.btn-primary') as HTMLButtonElement).click() })
+    await doi()
+    expect(ngan()?.querySelector('h2')?.textContent).toBe('Gia hạn hợp đồng · hợp đồng #1')
+    expect(ngan()?.textContent).toContain('Gia hạn hợp đồng sắp hết hạn')
+    expect(ngan()?.textContent).not.toContain('Thanh lý hợp đồng & Quyết toán cọc')
+    const truoc = vi.mocked(fetch).mock.calls.filter(([u]) => String(u).startsWith('/api/hop-dong?')).length
+    await act(async () => { (ngan()?.querySelector('button[aria-label=\"Đóng ngăn\"]') as HTMLButtonElement).click() })
+    await doi()
+    expect(ngan()).toBeNull()
+    expect(vi.mocked(fetch).mock.calls.filter(([u]) => String(u).startsWith('/api/hop-dong?')).length).toBeGreaterThan(truoc)
+  })
+
+  it('nút chính \"Ký hợp đồng\" mở ngăn Ký', async () => {
+    await mount('2')
+    await act(async () => { (container.querySelector('.btn-primary') as HTMLButtonElement).click() })
+    await doi()
+    expect(ngan()?.querySelector('h2')?.textContent).toBe('Ký hợp đồng · hợp đồng #2')
+  })
+
+  it('mục \"…\" mở đúng thao tác: Thanh lý / Phụ lục / Người ở cùng; phát sinh và cọc điều hướng', async () => {
+    const mucMenu = async (nhan: string) => {
+      await act(async () => { (container.querySelector('button[aria-haspopup=\"menu\"]') as HTMLButtonElement).click() })
+      await act(async () => { ([...container.querySelectorAll('[role=\"menuitem\"]')].find((m) => m.textContent === nhan) as HTMLElement).click() })
+      await doi()
+    }
+    await mount('3')
+    for (const [nhan, noiDung] of [['Thanh lý hợp đồng', 'Thanh lý hợp đồng & Quyết toán cọc'], ['Phụ lục', 'Phụ lục hợp đồng đã lập'], ['Người ở cùng', 'Người ở cùng phòng']]) {
+      await mucMenu(nhan)
+      expect(ngan()?.querySelector('h2')?.textContent).toBe(`${nhan} · hợp đồng #3`)
+      expect(ngan()?.textContent).toContain(noiDung)
+      await act(async () => { (ngan()?.querySelector('button[aria-label=\"Đóng ngăn\"]') as HTMLButtonElement).click() })
+    }
+    await mucMenu('Khoản phát sinh')
+    expect(dieuHuong).toHaveBeenLastCalledWith('/hoa-don')
+    await mucMenu('Giao dịch cọc')
+    expect(dieuHuong).toHaveBeenLastCalledWith('/thu-tien')
+    expect(ngan()).toBeNull()
+  })
+
   it('hợp đồng không có trong các toà được xem → trạng thái không tìm thấy', async () => {
     await mount('99')
     expect(container.textContent).toContain('Không tìm thấy hợp đồng này')
