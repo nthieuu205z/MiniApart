@@ -13,6 +13,16 @@ declare global {
 let container: HTMLDivElement
 let root: Root
 
+// Máy tính: "Cần trả" thay màn kỳ mới nhất; bảng đối chiếu đủ chỉ số nay mở theo hoaDonId (API trả thẳng hoá đơn, không bọc coHoaDon).
+function boBocHoaDon() {
+  const goc = globalThis.fetch
+  vi.stubGlobal('fetch', async (...args: Parameters<typeof fetch>) => {
+    const phanHoi = await goc(...args)
+    const json = await phanHoi.clone().json().catch(() => null)
+    return json?.hoaDon ? new Response(JSON.stringify(json.hoaDon), { status: phanHoi.status, headers: { 'Content-Type': 'application/json' } }) : phanHoi
+  })
+}
+
 describe('HoaDon detail and print view', () => {
   beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -243,7 +253,8 @@ describe('HoaDon detail and print view', () => {
     }), { status: 200, headers: { 'Content-Type': 'application/json' } })))
 
     root = createRoot(container)
-    await act(async () => root.render(<HoaDon token="tenant-token" cheDoNguoiThue />))
+    boBocHoaDon()
+    await act(async () => root.render(<HoaDon token="tenant-token" cheDoNguoiThue hoaDonId={10} />))
 
     const invoice = await vi.waitFor(() => {
       const element = container.querySelector('[data-testid="invoice-detail"]')
@@ -324,7 +335,8 @@ describe('HoaDon detail and print view', () => {
     }), { status: 200, headers: { 'Content-Type': 'application/json' } })))
 
     root = createRoot(container)
-    await act(async () => root.render(<HoaDon token="tenant-token" cheDoNguoiThue />))
+    boBocHoaDon()
+    await act(async () => root.render(<HoaDon token="tenant-token" cheDoNguoiThue hoaDonId={10} />))
 
     const rounding = await vi.waitFor(() => {
       const element = container.querySelector('[data-invoice-rounding]')
@@ -380,7 +392,8 @@ describe('HoaDon detail and print view', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     root = createRoot(container)
-    await act(async () => root.render(<HoaDon token="tenant-token" cheDoNguoiThue />))
+    boBocHoaDon()
+    await act(async () => root.render(<HoaDon token="tenant-token" cheDoNguoiThue hoaDonId={10} />))
 
     const image = await vi.waitFor(() => container.querySelector('img[alt="Ảnh công tơ Tiền điện"]') as HTMLImageElement)
     expect(container.textContent).toContain('Đang lấy ảnh công tơ')
@@ -480,7 +493,8 @@ describe('HoaDon detail and print view', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     root = createRoot(container)
-    await act(async () => root.render(<HoaDon token="tenant-token" cheDoNguoiThue />))
+    boBocHoaDon()
+    await act(async () => root.render(<HoaDon token="tenant-token" cheDoNguoiThue hoaDonId={10} />))
 
     const retry = await vi.waitFor(() => {
       const button = container.querySelector('[data-retry-invoice]')
