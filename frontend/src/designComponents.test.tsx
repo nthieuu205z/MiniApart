@@ -180,6 +180,13 @@ describe('MiniApart design components', () => {
     expect(dialog.getAttribute('aria-labelledby')).toBeNull()
   })
 
+  it('ConfirmDialog variant=danger: nút xác nhận là btn-danger, mặc định là btn-primary', async () => {
+    await act(async () => root.render(<ConfirmDialog title="Khoá?" consequence="x" confirmLabel="Khoá" variant="danger" />))
+    expect(container.querySelector('button')?.className).toContain('btn-danger')
+    await act(async () => root.render(<ConfirmDialog title="Gửi?" consequence="x" confirmLabel="Gửi" />))
+    expect(container.querySelector('button')?.className).toContain('btn-primary')
+  })
+
   it('FR-AUT-06 keeps an open confirmation modal named, focused, and isolated from the background', async () => {
     function Harness() {
       const [open, setOpen] = useState(false)
