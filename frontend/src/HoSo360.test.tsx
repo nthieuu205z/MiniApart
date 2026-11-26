@@ -191,17 +191,28 @@ describe('Hồ sơ người thuê 360°', () => {
 describe('Hồ sơ phòng 360°', () => {
   const hoSoPhong = (id: string, o: Partial<TrangProps> = {}) => <HoSoPhong360 {...props({ vaiTro: 'QUAN_LY', thamSo: { id }, ...o })} />
 
-  it('phòng đang thuê: breadcrumb về toà, không có nút chính, có Mở hợp đồng + Báo sự cố', async () => {
+  it('phòng đang thuê, có nợ: vết về toà, nút chính duy nhất là Ghi thu, có Mở hợp đồng + Báo sự cố', async () => {
     window.history.replaceState({}, '', '/phong/1?toaNhaId=3')
     await render(hoSoPhong('1'), mayChu())
     await vi.waitFor(() => expect(container.querySelector('h1')?.textContent).toBe('Phòng 101'))
-    expect(container.querySelector('nav.crumb a')?.getAttribute('href')).toBe('/toa-nha/3')
-    expect(container.querySelectorAll('.btn-primary')).toHaveLength(0)
+    expect(container.querySelector('.ma-vet a')?.getAttribute('href')).toBe('/toa-nha/3')
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
+    expect(container.querySelector('.btn-primary')?.textContent).toBe('Ghi thu 3.790.000 ₫')
+    expect(container.querySelector('.btn-primary')?.getAttribute('href')).toBe('/thu-tien?nguoiThueId=1')
+    expect(container.textContent).toContain('Công tơ tháng 8')
     expect(container.querySelector('a[href="/hop-dong/1"]')?.textContent).toContain('Mở hợp đồng')
     expect(container.querySelector('a[href="/su-co?baoMoi=1&phongId=1&toaNhaId=3"]')).not.toBeNull()
     expect(container.querySelector('a[href="/nguoi-thue/1"]')?.textContent).toContain('Trần Quang Huy')
     expect(container.textContent).toContain('288 → 384 kWh · dùng 96')
     chuaGoiCongNo()
+  })
+
+  it('phòng đang thuê, không nợ: không có nút chính', async () => {
+    window.history.replaceState({}, '', '/phong/1?toaNhaId=3')
+    await render(hoSoPhong('1'), mayChu((url) => (url.startsWith('/api/hoa-don?') ? json([]) : undefined)))
+    await vi.waitFor(() => expect(container.querySelector('h1')?.textContent).toBe('Phòng 101'))
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(0)
+    expect(container.textContent).toContain('Phòng chưa có hoá đơn nào.')
   })
 
   it('phòng trống: nút chính duy nhất là "Tạo hợp đồng" trỏ /hop-dong/moi?phongId=', async () => {

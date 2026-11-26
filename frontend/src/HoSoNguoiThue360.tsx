@@ -72,14 +72,14 @@ export function trangThaiHoaDon(r: Pick<ThongTinHoaDonQuanLy, 'trangThai' | 'daT
 export function BangHoaDon({ rows, hienNguoi = false }: { rows: HoaDonHoSo[]; hienNguoi?: boolean }) {
   return (
     <div className="table-wrap table-wrap-cards"><table className="table table-cards">
-      <thead><tr><th scope="col">Tháng</th>{hienNguoi ? <th scope="col">Người thuê</th> : null}<th scope="col">Hạn</th><th scope="col" className="num">Đã thu</th><th scope="col" className="num">Còn lại</th><th scope="col">Trạng thái</th></tr></thead>
+      <thead><tr><th scope="col">Tháng</th>{hienNguoi ? <th scope="col">Người thuê</th> : null}<th scope="col">Hạn</th><th scope="col" className="num">Phải trả</th><th scope="col" className="num">Còn nợ</th><th scope="col">Trạng thái</th></tr></thead>
       <tbody>{rows.map((r) => (
         <tr key={r.hoaDonId}>
           <td data-label="Tháng" data-the="tieu-de" className="td-main"><a className="hs-hang-link" href={`/hoa-don?toaNhaId=${r.toaNhaId}${r.kyId ? `&kyId=${r.kyId}` : ''}&hoaDonId=${r.hoaDonId}`}>{nhanThang(r)}</a></td>
           {hienNguoi ? <td data-label="Người thuê">{r.nguoiThue}</td> : null}
           <td data-label="Hạn">{dinhDangNgayIso(r.hanThanhToan)}</td>
-          <td data-label="Đã thu" className="num">{tien(r.daThu)}</td>
-          <td data-label="Còn lại" className={`num t-money${Number(r.conLai) > 0 ? ' t-danger' : ''}`}>{tien(r.conLai)}</td>
+          <td data-label="Phải trả" className="num">{tien(r.tongTien)}</td>
+          <td data-label="Còn nợ" className={`num t-money${Number(r.conLai) > 0 ? ' t-danger' : ''}`}>{tien(r.conLai)}</td>
           <td data-label="Trạng thái">{trangThaiHoaDon(r)}</td>
         </tr>
       ))}</tbody>
