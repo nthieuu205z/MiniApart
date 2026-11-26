@@ -31,19 +31,27 @@ describe('Báo hỏng (khách thuê)', () => {
     expect(container.textContent).toContain('Mới')
     expect(container.textContent).not.toContain('Phân công thợ')
     expect(fetchMock.mock.calls.some(([u]) => String(u) === '/api/toa-nha')).toBe(false)
-    await vi.waitFor(() => expect((container.querySelector('select') as HTMLSelectElement).value).toBe('11'))
-    expect(container.querySelector('button[type="submit"]')?.textContent).toBe('Gửi yêu cầu')
+    await vi.waitFor(() => expect(container.textContent).toContain('Phòng 101'))
+    // Nút chính duy nhất nằm trong ChanDinh và gắn với form báo hỏng.
+    const nutChinh = container.querySelector('.ma-chandinh button.btn-primary') as HTMLButtonElement
+    expect(nutChinh.textContent).toBe('Gửi báo hỏng')
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
+    expect(nutChinh.getAttribute('form')).toBe('bao-hong-form')
 
     const form = container.querySelector('form') as HTMLFormElement
     await act(async () => {
-      set(form.querySelector('input.input') as HTMLInputElement, 'Vòi nước rỉ')
+      ;(Array.from(form.querySelectorAll('.nt-o')).find((b) => b.textContent === 'Nước') as HTMLButtonElement).click()
       set(form.querySelector('textarea') as HTMLTextAreaElement, 'Vòi bếp rỉ nước liên tục')
+    })
+    await act(async () => {
       form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
     })
     const post = fetchMock.mock.calls.find(([u, i]) => String(u) === '/api/yeu-cau-sua-chua' && i?.method === 'POST')
     expect(post).toBeTruthy()
     const body = (post![1] as RequestInit).body as FormData
     expect(body.get('phongId')).toBe('11')
-    expect(body.get('hangMuc')).toBe('Vòi nước rỉ')
+    expect(body.get('hangMuc')).toBe('Nước')
+    expect(body.get('moTa')).toBe('Vòi bếp rỉ nước liên tục')
+    expect(body.get('mucDo')).toBe('THUONG')
   })
 })

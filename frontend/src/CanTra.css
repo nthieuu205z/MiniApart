@@ -30,3 +30,16 @@ a.nt-dong:hover { text-decoration: none; background: var(--ma-paper-1); }
   .can-tra-rong:not(.can-tra-tra) .nt-hero { grid-column: 2; grid-row: 1; position: sticky; top: 16px; }
   .can-tra-rong:not(.can-tra-tra) .can-tra-ds { grid-column: 1; grid-row: 1; }
 }
+
+/* Báo hỏng */
+.nt .label { font: var(--ma-text-body-sm); font-weight: 500; }
+.nt .input, .nt .select { font: var(--ma-text-body); min-height: var(--ma-control-h); }
+.nt .btn { font: var(--ma-text-task-name); }
+.nt-luoi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.nt-o { min-height: 64px; display: grid; justify-items: center; align-content: center; gap: 4px; padding: 6px; border-radius: 10px; border: 1px solid var(--ma-line-300); background: var(--ma-bg-card); color: var(--ma-text-primary); font: var(--ma-text-body-sm); font-weight: 500; cursor: pointer; }
+.nt-o[aria-pressed="true"] { background: var(--ma-brand-primary); border-color: var(--ma-brand-primary); color: var(--ma-text-on-inverse); }
+.nt-khan { display: flex; align-items: flex-start; gap: 12px; min-height: 52px; font: var(--ma-text-body); cursor: pointer; }
+.nt-khan input { width: 24px; height: 24px; margin: 14px 0 0; flex: none; }
+.nt-khan > span { padding: 12px 0; }
+.nt-spread { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nt-su-co { display: grid; gap: 6px; align-items: start; }
