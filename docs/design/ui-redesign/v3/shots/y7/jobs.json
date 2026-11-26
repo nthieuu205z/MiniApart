@@ -1,0 +1,82 @@
+[
+ {
+  "name": "26-tho-viec-390",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "26-tho-viec-1440",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "27-tho-viec-13-390",
+  "path": "/viec-cua-toi?yeuCauId=13",
+  "role": "THO",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "27-tho-viec-13-1440",
+  "path": "/viec-cua-toi?yeuCauId=13",
+  "role": "THO",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "28-tho-bao-gia-24-390",
+  "path": "/viec-cua-toi?yeuCauId=24&baoGia=1",
+  "role": "THO",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "28-tho-bao-gia-24-1440",
+  "path": "/viec-cua-toi?yeuCauId=24&baoGia=1",
+  "role": "THO",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "29-tho-tien-cong-390",
+  "path": "/tho/chi-phi",
+  "role": "THO",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "29-tho-tien-cong-1440",
+  "path": "/tho/chi-phi",
+  "role": "THO",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "27-tho-viec-13-390-vp",
+  "path": "/viec-cua-toi?yeuCauId=13",
+  "role": "THO",
+  "w": 390,
+  "h": 844,
+  "full": false
+ },
+ {
+  "name": "28-tho-bao-gia-24-390-vp",
+  "path": "/viec-cua-toi?yeuCauId=24&baoGia=1",
+  "role": "THO",
+  "w": 390,
+  "h": 844,
+  "full": false
+ }
+]

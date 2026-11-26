@@ -4,6 +4,7 @@ import { fetchCurrentUser } from './api'
 import { dinhDangTien } from './design/core/format'
 import { Button } from './design/core/Button'
 import { Tieu } from './CanTra'
+import { CSS_THO } from './ThoCongViec'
 import { Card } from './design/layout/Card'
 import { EmptyState } from './design/feedback/EmptyState'
 import { useDialogTrap } from './design/feedback/useDialogTrap'
@@ -62,7 +63,8 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
   const handlePrint = () => window.print()
 
   return (
-    <div style={{ maxWidth: 720, display: 'grid', gap: 16, alignContent: 'start' }}>
+    <div className="tho-cv" style={{ maxWidth: 720, display: 'grid', gap: 16, alignContent: 'start' }}>
+      <style>{CSS_THO}</style>
       <header className="ma-dautrang">
         <Tieu mobile={mobile} className={mobile ? 'sr-only' : 'h1'} style={{ margin: 0 }}>Tiền công</Tieu>
         <p className="ma-dautrang-phu">{hoTen ?? ''}</p>
@@ -83,16 +85,15 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
             {xong.length === 0 ? <p style={{ margin: 0 }}>Chưa có việc nào xong.</p> : xong.map((r) => {
               const duyet = r.trangThaiBaoGia === 'DA_DUYET'
               return (
-                <div key={r.id} className="irow" data-testid={`tien-cong-${r.id}`} style={{ flexWrap: 'wrap' }}>
-                  <div className="body">
-                    <div className="t">{r.hangMuc} · phòng {r.soPhong.replace(/^P\.?\s*/i, '')}</div>
-                    <div className="s" style={{ whiteSpace: 'normal' }}>{r.toaNha}</div>
-                  </div>
-                  <b className="money">{duyet ? `${dinhDangTien(r.giaTriBaoGia ?? 0)} ₫` : '—'}</b>
-                  <div style={{ flexBasis: '100%', display: 'flex', gap: 8 }}>
-                    {duyet ? <Button variant="secondary" onClick={() => void moChungTu(r.id)} blocked={dangTaiVoucher}>Xem phiếu</Button> : null}
-                    {onNavigateToTicket ? <Button variant="text" onClick={() => onNavigateToTicket(r.id)}>Chi tiết việc</Button> : null}
-                  </div>
+                <div key={r.id} data-testid={`tien-cong-${r.id}`}>
+                  <a className="irow" href={`/viec-cua-toi?yeuCauId=${r.id}`} onClick={(e) => { if (onNavigateToTicket) { e.preventDefault(); onNavigateToTicket(r.id) } }}>
+                    <div className="body">
+                      <div className="t">{r.hangMuc} · phòng {r.soPhong.replace(/^P\.?\s*/i, '')}</div>
+                      <div className="s" style={{ whiteSpace: 'normal' }}>{r.toaNha}</div>
+                    </div>
+                    <b className="money">{duyet ? `${dinhDangTien(r.giaTriBaoGia ?? 0)} ₫` : '—'}</b>
+                  </a>
+                  {duyet ? <Button variant="secondary" onClick={() => void moChungTu(r.id)} blocked={dangTaiVoucher}>Xem phiếu</Button> : null}
                 </div>
               )
             })}

@@ -33,6 +33,18 @@ export type ThoCongViecProps = {
 }
 
 type DongForm = { tenHangMuc: string; soLuong: string; donGia: string }
+// Ép chữ của các lớp chung (.btn 15px, .label 14px…) lên cỡ của mật độ "thoang" (≥ 16) chỉ trong màn Thợ.
+export const CSS_THO = `
+.tho-cv .btn, .tho-cv .seg-links a { font: var(--ma-text-body); font-weight: 500; }
+.tho-cv .label { font: var(--ma-text-body-sm); font-weight: 500; }
+.tho-cv .irow { padding: 6px 0; }
+.tho-cv .irow .t { font: var(--ma-text-task-name); }
+.tho-cv .irow .money { font: var(--ma-text-figure-sm); }
+.tho-cv .ma-buoc li, .tho-cv .ma-dongviec-mt { font: var(--ma-text-body-sm); }
+@media (max-width: 767px) { .tho-cv .ma-chandinh { bottom: var(--ma-bottom-nav-height); } }
+@media (min-width: 768px) { .tho-cv .ma-chandinh { position: static; margin: 0; padding: 0; border: 0; background: none; } .tho-cv .ma-chandinh .btn { flex: none; } }
+.tho-cv .ma-dautrang .btn-ghost { padding-left: 0; }
+`
 const DONG_TRONG: DongForm = { tenHangMuc: '', soLuong: '1', donGia: '' }
 const thamSo = (k: string) => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get(k))
 const docId = () => { const v = thamSo('yeuCauId'); return v ? Number(v) : null }
@@ -201,7 +213,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
   const dangLam = sapXep.filter((r) => !daXong(r))
   const xong = sapXep.filter(daXong)
 
-  const khung = (children: React.ReactNode) => <div className="tho-cv" style={styleKhung} data-testid="worker-jobs-screen">{children}{voucherData ? <ChungTu data={voucherData} voucherRef={voucherRef} dong={() => setVoucherData(null)} /> : null}</div>
+  const khung = (children: React.ReactNode) => <div className="tho-cv" style={styleKhung} data-testid="worker-jobs-screen"><style>{CSS_THO}</style>{children}{voucherData ? <ChungTu data={voucherData} voucherRef={voucherRef} dong={() => setVoucherData(null)} /> : null}</div>
 
   // ---------- T3 · Báo giá ----------
   if (chiTietId && moBaoGia) {
@@ -252,7 +264,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
     const baoGiaNhap = d?.danhSachBaoGia.find((b) => b.trangThai === 'NHAP')
     const lichSu = (d?.lichSuTrangThai ?? []).map((h, i, a) => ({
       ten: h.tenHanhDong,
-      moTa: [h.nguoiThucHien, h.chiTiet].filter(Boolean).join(' · '),
+      moTa: h.nguoiThucHien,
       trangThai: (i === a.length - 1 ? 'nay' : 'xong') as 'nay' | 'xong',
     }))
     const sdtKhach = d && (d.soDienThoaiLienHe || d.nguoiBaoSoDienThoai)
@@ -349,14 +361,14 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
     <>
       <header className="ma-dautrang">
         <Tieu mobile={mobile} className={mobile ? 'sr-only' : 'h1'} style={{ margin: 0 }}>Việc của tôi</Tieu>
-        <p className="ma-dautrang-phu">{hoTen ?? ''}</p>
+        {hoTen ? <p className="ma-dautrang-phu">{hoTen}</p> : null}
       </header>
       <nav className="seg seg-links" aria-label="Lọc việc">
         {([['dang-lam', `Đang làm ${dangLam.length}`], ['xong', `Đã xong ${xong.length}`]] as const).map(([k, nhan]) => (
           <a key={k} href={`?loc=${k}`} aria-current={tab === k ? 'true' : undefined} onClick={(e) => { e.preventDefault(); chonTab(k) }}>{nhan}</a>
         ))}
       </nav>
-      {danhSach.length > 8 || tuKhoa ? (
+      {danhSach.length > 12 || tuKhoa ? (
         <Field label="Tìm việc"><Input type="search" value={tuKhoa} placeholder="Phòng, mã việc, hạng mục" onChange={(e) => setTuKhoa(e.target.value)} /></Field>
       ) : null}
       {dangTai && danhSach.length === 0 ? <EmptyState kind="loading" title="Đang tải danh sách việc" /> : loiTai ? (
