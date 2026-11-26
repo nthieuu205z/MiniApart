@@ -572,3 +572,18 @@ th[aria-sort] .th-sort { color: var(--ma-text-primary); font-weight: 600; }
 [data-density="thoang"] .nav-item, [data-density="thoang"] .sb-sub .nav-item { min-height: 44px; font: var(--ma-text-body-sm); font-weight: 500; }
 [data-density="thoang"] .nav-item[aria-current="page"] { font-weight: 600; }
 [data-density="thoang"] .sb-label, [data-density="thoang"] .bottom-nav a { font-size: 16px; }
+
+/* Hàng tab cuộn ngang ở màn hẹp: mép mờ + bóng báo còn tab ngoài tầm nhìn (che mép khi đã cuộn tới đầu/cuối), tab cuối không dính mép. */
+@media (max-width: 767px) {
+  .tabs {
+    --tabs-nen: var(--ma-bg-card); --tabs-bong: color-mix(in srgb, var(--ma-text-primary) 16%, transparent);
+    scroll-padding-inline: 16px;
+    background:
+      linear-gradient(to right, var(--tabs-nen) 30%, transparent) left center / 28px 100% no-repeat local,
+      linear-gradient(to left, var(--tabs-nen) 30%, transparent) right center / 28px 100% no-repeat local,
+      linear-gradient(to right, var(--tabs-bong), transparent) left center / 12px 100% no-repeat scroll,
+      linear-gradient(to left, var(--tabs-bong), transparent) right center / 12px 100% no-repeat scroll;
+  }
+  .tabs-trang { --tabs-nen: var(--ma-bg-page); }
+  .tabs::after { content: ""; flex: 0 0 12px; }
+}
