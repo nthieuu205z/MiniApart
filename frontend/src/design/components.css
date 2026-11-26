@@ -569,8 +569,12 @@ th[aria-sort] .th-sort { color: var(--ma-text-primary); font-weight: 600; }
 [data-density="thoang"] .tab[aria-selected="true"], [data-density="thoang"] .tab[aria-current="page"] { font-weight: 600; }
 [data-density="thoang"] .tab .n, [data-density="thoang"] .nav-item .count, [data-density="thoang"] .bottom-nav .count { font: var(--ma-text-badge); font-weight: 600; }
 [data-density="thoang"] .chuong-n { font: var(--ma-text-badge); font-weight: 600; line-height: 22px; min-width: 22px; height: 22px; border-radius: 11px; }
-[data-density="thoang"] .nav-item, [data-density="thoang"] .sb-sub .nav-item { min-height: 44px; font: var(--ma-text-body-sm); font-weight: 500; }
-[data-density="thoang"] .nav-item[aria-current="page"] { font-weight: 600; }
+/* .ma-app-shell .nav-item (ux-v2) đặt 36/14.5: cần độ ưu tiên cao hơn. Desktop Thợ/Người thuê cũng dùng thoang (V3 §2): nav ≥ 44, chữ ≥ 16. */
+.ma-app-shell[data-density="thoang"] .nav-item, .ma-app-shell[data-density="thoang"] .sb-sub .nav-item { min-height: 44px; font: var(--ma-text-body-sm); font-weight: 500; }
+.ma-app-shell[data-density="thoang"] .nav-item[aria-current="page"] { font-weight: 600; }
+.ma-app-shell[data-density="thoang"] .nav-item .count { font: var(--ma-text-badge); font-weight: 600; }
+.ma-app-shell[data-density="thoang"] .icon-btn, .ma-app-shell[data-density="thoang"] .icon-btn.sm { width: 44px; height: 44px; }
+[data-density="thoang"] .table th { font: var(--ma-text-body-sm); font-weight: 500; }
 [data-density="thoang"] .sb-label, [data-density="thoang"] .bottom-nav a { font-size: 16px; }
 
 /* Hàng tab cuộn ngang ở màn hẹp: mép mờ + bóng báo còn tab ngoài tầm nhìn (che mép khi đã cuộn tới đầu/cuối), tab cuối không dính mép. */
@@ -587,3 +591,5 @@ th[aria-sort] .th-sort { color: var(--ma-text-primary); font-weight: 600; }
   .tabs-trang { --tabs-nen: var(--ma-bg-page); }
   .tabs::after { content: ""; flex: 0 0 12px; }
 }
+[data-density="thoang"] .sb-user .name, [data-density="thoang"] .avatar, [data-density="thoang"] .avatar.sm { font: var(--ma-text-body-sm); font-weight: 600; }
+[data-density="thoang"] .pager .pg { min-width: 44px; height: 44px; font: var(--ma-text-body-sm); font-weight: 500; }
