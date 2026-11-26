@@ -135,14 +135,14 @@ describe('ChuDashboard', () => {
     await act(async () => root.render(<ChuDashboard token="test-token" />))
 
     await vi.waitFor(() => expect(container.querySelector('[data-testid="owner-dashboard-screen"]')).not.toBeNull())
-    await vi.waitFor(() => expect(container.textContent).toContain('Thực thu'))
+    await vi.waitFor(() => expect(container.textContent).toContain('Đã thu'))
 
     // Thẻ KPI + khối mới theo thiết kế 03
-    expect(container.textContent).toContain('Thực thu')
+    expect(container.textContent).toContain('Đã thu')
     expect(container.textContent).toContain('376.130.000')
-    expect(container.textContent).toContain('Công nợ')
+    expect(container.textContent).toContain('Còn nợ')
     expect(container.textContent).toContain('173.450.000')
-    expect(container.textContent).toContain('Tỷ lệ lấp đầy')
+    expect(container.textContent).toContain('Phòng đang thuê')
     expect(container.textContent).toContain('75%')
     expect(container.textContent).toContain('Nợ quá hạn nhiều nhất')
     expect(container.textContent).toContain('Tiêu thụ điện theo toà')

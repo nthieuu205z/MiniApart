@@ -215,15 +215,15 @@ function BoLoc({
           {phong.map((item) => <option key={item.id ?? item.soPhong} value={item.id ?? ''}>Phòng {item.soPhong}</option>)}
         </Select>
       </Field>
-      <Field label="Kỳ thanh toán">
+      <Field label="Tháng">
         <Select
           aria-label="Lọc tiêu thụ theo kỳ"
           value={boLoc.kyId === null ? '' : String(boLoc.kyId)}
           disabled={boLoc.toaNhaId === null || dangTai}
           onChange={(event) => onChange({ ...boLoc, kyId: event.target.value ? Number(event.target.value) : null })}
         >
-          <option value="">Tất cả kỳ</option>
-          {ky.map((item) => <option key={item.id} value={item.id}>Kỳ {String(item.thang).padStart(2, '0')}/{item.nam}</option>)}
+          <option value="">Tất cả tháng</option>
+          {ky.map((item) => <option key={item.id} value={item.id}>Tháng {String(item.thang).padStart(2, '0')}/{item.nam}</option>)}
         </Select>
       </Field>
     </ThanhLoc>
@@ -294,7 +294,7 @@ function BangTieuThu({ rows }: { rows: ThongTinDongTieuThuBaoCao[] }): React.Rea
           { key: 'thieu', label: 'Thiếu chỉ số', match: thieu },
         ]}
         columns={[
-          { key: 'ky', label: 'Kỳ / phòng', sortable: true, sortValue: (r) => r.kyId, render: (r) => <><b>{r.nhanKy}</b><div className="t-meta">Phòng {r.soPhong} · {r.tenToaNha}</div></> },
+          { key: 'ky', label: 'Tháng / phòng', sortable: true, sortValue: (r) => r.kyId, render: (r) => <><b>{r.nhanKy}</b><div className="t-meta">Phòng {r.soPhong} · {r.tenToaNha}</div></> },
           { key: 'dv', label: 'Dịch vụ', render: (r) => <><b>{r.tenDichVu}</b><div className="t-meta">{hienThiDonVi(r.donVi)}</div></> },
           {
             key: 'chiso',
