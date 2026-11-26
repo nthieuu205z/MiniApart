@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   ApiError,
   chotKyThanhToan,
@@ -14,7 +15,8 @@ import { Button } from './design/core/Button'
 import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
-import { MeterInput } from './design/forms/MeterInput'
+import { ChanDinh } from './design/layout/ChanDinh'
+import { HangTong } from './design/table/HangTong'
 import { nenAnhCongTo } from './meterPhoto'
 import { managementRequest } from './managementApi'
 import { BuildingSelect, Field, fieldStyle, useBuildings } from './ManagementShared'
@@ -28,6 +30,9 @@ type Props = {
   vaiTro?: string
   /** Ẩn nút chốt kỳ (Chu kỳ tháng có bước chốt riêng). Mặc định giữ nút như cũ. */
   anNutChot?: boolean
+  /** Chu kỳ tháng: kỳ đang xem (thay cho kỳ đầu danh sách) và chỗ ở đầu trang để đặt nút chính "Lưu chỉ số". */
+  kyIdCoDinh?: number
+  nutChinhSlot?: HTMLElement | null
 }
 
 type PendingValues = Record<string, string>
@@ -72,7 +77,7 @@ const styleThongBao = {
   lineHeight: 1.55,
 }
 
-export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = false }: Props) {
+export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = false, kyIdCoDinh, nutChinhSlot }: Props) {
   const ctx = useToaDangChon()
   const { buildings: danhSachToaNha, buildingId: toaNhaId, setBuildingId: setToaNhaId } = useBuildings(token)
   const [danhSachKy, setDanhSachKy] = useState<ThongTinKyThanhToan[]>([])
@@ -95,6 +100,8 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
   const [yeuCauFocus, setYeuCauFocus] = useState<string | null>(null)
   const [hienBoLoc, setHienBoLoc] = useState(false)
   const [dangSua, setDangSua] = useState<string[]>([])
+  // Thứ tự phòng chốt lúc tải (thiếu lên đầu); không xếp lại khi vừa lưu để hàng không nhảy dưới tay người nhập.
+  const [thuTuPhong, setThuTuPhong] = useState<number[]>([])
 
   const phongDangChonId = chon?.phongId
   useEffect(() => {
@@ -131,7 +138,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
       .then((data) => {
         if (!mounted) return
         setDanhSachKy(data)
-        setKyId((current) => current ?? data[0]?.id ?? null)
+        setKyId((current) => kyIdCoDinh ?? current ?? data[0]?.id ?? null)
       })
       .catch((reason: unknown) => {
         if (!mounted) return
@@ -144,7 +151,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
     return () => {
       mounted = false
     }
-  }, [token, toaNhaId])
+  }, [token, toaNhaId, kyIdCoDinh])
 
   useEffect(() => {
     if (toaNhaId === null || kyId === null) {
@@ -160,6 +167,8 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
       .then((data) => {
         if (!mounted) return
         setDuLieu(data)
+        const thieu = (ph: ThongTinGhiChiSo['phong'][number]) => ph.dichVu.some((d) => !d.chiSoCuoi)
+        setThuTuPhong([...data.phong.filter(thieu), ...data.phong.filter((ph) => !thieu(ph))].map((ph) => ph.id))
       })
       .catch((reason: unknown) => {
         if (!mounted) return
@@ -698,9 +707,9 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
         </div>
 
         {phongChon && dichVuChon && !xongHet ? (
-          <div className="sticky-act">
-            {luuBiChan && lyDoChanLuu ? <p id={`ly-do-luu-${key}`} style={{ ...styleThongBao, marginBottom: 8 }}>{lyDoChanLuu}</p> : null}
-            <Button
+          <>
+            {luuBiChan && lyDoChanLuu ? <p id={`ly-do-luu-${key}`} className="m-body" style={{ ...styleThongBao, margin: '8px 0 0' }}>{lyDoChanLuu}</p> : null}
+            <ChanDinh><Button
               variant="primary"
               className="btn-touch btn-block"
               data-save-key={key}
@@ -710,21 +719,22 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
               onClick={() => void luuChiSo(phongChon.id, dichVuChon.id)}
             >
               {nhanLuu}
-            </Button>
-          </div>
+            </Button></ChanDinh>
+          </>
         ) : null}
       </section>
     )
   }
 
-  const chuaGhi = congTos.filter((c) => !c.dichVu.chiSoCuoi)
-  const phongDaGhi = phongs.filter((phong) => phong.dichVu.some((dichVu) => dichVu.chiSoCuoi))
-  const cotDichVu = Array.from(new Set(phongDaGhi.flatMap((phong) => phong.dichVu.map((dichVu) => dichVu.tenDichVu))))
+  const viTri = new Map(thuTuPhong.map((id, i) => [id, i]))
+  const hang = [...phongs].sort((x, y) => (viTri.get(x.id) ?? 1e9) - (viTri.get(y.id) ?? 1e9))
+  const cotDichVu = Array.from(new Map(hang.flatMap((phong) => phong.dichVu.map((dichVu) => [dichVu.tenDichVu, dichVu.donVi] as const))))
   const dangMoSua = (key: string) => dangSua.includes(key)
-  const trongPhamVi = congTos.filter((c) => !c.dichVu.chiSoCuoi || dangMoSua(c.key))
-  const sanSang = trongPhamVi.filter((c) => {
+  const daLuu = congTos.filter((c) => c.dichVu.chiSoCuoi).length
+  const coThayDoi = (dichVu: { chiSoCuoi?: string | null }, giaTri: string) => !dichVu.chiSoCuoi || Number(giaTri) !== Number(dichVu.chiSoCuoi)
+  const sanSang = congTos.filter((c) => {
     const t = tinhCongTo(c.phong.id, c.dichVu)
-    return !t.luuBiChan && (!c.dichVu.chiSoCuoi || t.giaTri !== c.dichVu.chiSoCuoi)
+    return !t.luuBiChan && coThayDoi(c.dichVu, t.giaTri)
   })
 
   // Lưu lần lượt từng ô đã nhập qua cùng luuChiSo (cùng API, cùng validate); dừng ở lỗi đầu tiên.
@@ -760,47 +770,22 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
     return { key, giaTri, coThayCongTo, chiSoThayCongTo, thongBaoChiSo, mucTieuThu, canhBaoTieuThu, luuBiChan, lyDoChanLuu }
   }
 
-  function renderCongTo(phong: ThongTinGhiChiSo['phong'][number], dichVu: ThongTinGhiChiSo['phong'][number]['dichVu'][number]) {
-    const { key, giaTri, coThayCongTo, chiSoThayCongTo, thongBaoChiSo, mucTieuThu, canhBaoTieuThu, luuBiChan, lyDoChanLuu } = tinhCongTo(phong.id, dichVu)
+  // Ô ngay dưới, cùng cột (cùng dịch vụ), theo thứ tự hàng trên màn hình.
+  function oXuongDuoi(phongId: number, dichVuId: number) {
+    const i = hang.findIndex((ph) => ph.id === phongId)
+    const tiep = hang.slice(i + 1).find((ph) => ph.dichVu.some((d) => d.id === dichVuId))
+    return tiep ? khoa(tiep.id, dichVuId) : null
+  }
+
+  function renderPhu(phong: ThongTinGhiChiSo['phong'][number], dichVu: ThongTinGhiChiSo['phong'][number]['dichVu'][number]) {
+    const { key, coThayCongTo, chiSoThayCongTo, canhBaoTieuThu, luuBiChan, lyDoChanLuu, thongBaoChiSo } = tinhCongTo(phong.id, dichVu)
     const anhDaChon = pendingPhotos[key]
     return (
-      <div className="ghi-cong-to" id={`cong-to-${phong.id}-${dichVu.id}`} key={key}>
+      <div className="ghi-cong-to" key={key}>
         <div className="ghi-ten">
-          <strong>Phòng {phong.soPhong} · {dichVu.tenDichVu}</strong>
+          <strong>{dichVu.tenDichVu} · phòng {phong.soPhong}</strong>
           <span className="t-meta">Tầng {phong.tang} · kỳ trước {gonSo(dichVu.chiSoDau)} {dichVu.donVi}</span>
         </div>
-        <MeterInput
-          label={`Chỉ số mới — phòng ${phong.soPhong}`}
-          value={giaTri}
-          state={chiSoBiKhoa ? 'locked' : thongBaoChiSo ? 'error' : giaTri ? 'filled' : 'default'}
-          error={thongBaoChiSo || undefined}
-          style={{ minWidth: 0 }}
-        >
-          <div className="ghi-o-in">
-            <input
-              ref={(element) => { inputRefs.current[key] = element }}
-              id={`chiSoCuoi-${key}`}
-              name={`chiSoCuoi-${phong.id}-${dichVu.id}`}
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              value={giaTri}
-              disabled={chiSoBiKhoa}
-              aria-label={`Chỉ số mới phòng ${phong.soPhong}`}
-              aria-invalid={Boolean(thongBaoChiSo) || undefined}
-              onChange={(event) => {
-                const value = event.target.value
-                setPendingValues((current) => ({ ...current, [key]: value }))
-              }}
-              onKeyDown={(event) => {
-                if (event.key !== 'Enter') return
-                event.preventDefault()
-                void luuChiSo(phong.id, dichVu.id)
-              }}
-            />
-            <span className="t-meta">{dichVu.donVi}</span>
-          </div>
-        </MeterInput>
         <div className="ghi-hanh-dong">
           <label className="btn btn-secondary ghi-anh">
             <Icon name="camera" />
@@ -825,7 +810,6 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
           </Button>
         </div>
         <div className="ghi-them">
-          {mucTieuThu ? <span>Mức tiêu thụ: {mucTieuThu} {dichVu.donVi}</span> : null}
           <label className="ghi-thay">
             <input
               name={`coThayCongTo-${phong.id}-${dichVu.id}`}
@@ -840,7 +824,8 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
             <span>Công tơ đã thay</span>
           </label>
           {anhDaChon ? <span>Đã chọn ảnh: {anhDaChon.name}</span> : null}
-          {luuBiChan && lyDoChanLuu ? <span id={`ly-do-luu-${key}`}>{lyDoChanLuu}</span> : null}
+          {thongBaoChiSo ? <span role="alert" style={{ color: 'var(--ma-urgent)' }}>{thongBaoChiSo}</span> : null}
+          {luuBiChan && lyDoChanLuu && !thongBaoChiSo ? <span id={`ly-do-luu-${key}`}>{lyDoChanLuu}</span> : null}
         </div>
         {coThayCongTo ? (
           <div className="ghi-thay-so">
@@ -900,25 +885,69 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
     )
   }
 
+  const nutLuu = (
+    <Button variant="primary" data-save-all blocked={sanSang.length === 0 || dangLuu !== null} blockedReason={sanSang.length === 0 ? 'Chưa có chỉ số mới nào để lưu.' : undefined} onClick={() => void luuTatCa()}>
+      {dangLuu !== null ? 'Đang lưu…' : sanSang.length ? `Lưu ${sanSang.length} chỉ số` : 'Lưu chỉ số'}
+    </Button>
+  )
+
+  function oNhap(phong: ThongTinGhiChiSo['phong'][number], dichVu: ThongTinGhiChiSo['phong'][number]['dichVu'][number], t: ReturnType<typeof tinhCongTo>) {
+    const { key, giaTri, thongBaoChiSo } = t
+    const thieu = !dichVu.chiSoCuoi && !giaTri
+    return (
+      <input
+        ref={(element) => { inputRefs.current[key] = element }}
+        id={`cong-to-${phong.id}-${dichVu.id}`}
+        className={`ghi-o-so${thieu ? ' thieu' : ''}`}
+        name={`chiSoCuoi-${phong.id}-${dichVu.id}`}
+        type="number"
+        inputMode="numeric"
+        step="0.01"
+        placeholder="chưa ghi"
+        value={giaTri}
+        disabled={chiSoBiKhoa}
+        aria-label={`Chỉ số mới ${dichVu.tenDichVu.toLocaleLowerCase('vi-VN')} phòng ${phong.soPhong}`}
+        aria-invalid={Boolean(thongBaoChiSo) || thieu || undefined}
+        onChange={(event) => {
+          const value = event.target.value
+          setPendingValues((current) => ({ ...current, [key]: value }))
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter') return
+          event.preventDefault()
+          const xuong = oXuongDuoi(phong.id, dichVu.id)
+          if (xuong) inputRefs.current[xuong]?.focus()
+          if (!t.luuBiChan && coThayDoi(dichVu, giaTri)) void luuChiSo(phong.id, dichVu.id, false, false)
+        }}
+      />
+    )
+  }
+
+  const tongTheoDichVu = cotDichVu.map(([ten]) => hang.reduce((tong, phong) => {
+    const dv = phong.dichVu.find((d) => d.tenDichVu === ten)
+    const muc = dv ? Number(tinhCongTo(phong.id, dv).mucTieuThu || dv.mucTieuThu || 0) : 0
+    return tong + (Number.isFinite(muc) ? muc : 0)
+  }, 0))
+  const soPhongDaGhi = hang.filter((ph) => ph.dichVu.every((d) => d.chiSoCuoi)).length
+
   return (
     <section className="ghi-cs" aria-labelledby="meter-title" data-testid="meter-screen" data-layout-variant="desktop">
-      <header className="ghi-cs-dau">
-        <div style={{ minWidth: 0 }}>
-          <h2 id="meter-title" className="h2" style={{ margin: 0 }}>Bước 1 · Ghi chỉ số{nhanKyThang ? ` kỳ ${nhanKyThang}` : ''}</h2>
-          <p className="t-meta" style={{ margin: '4px 0 0' }}>{nhanToaNha} · {nhanKy} · {tienDo} phòng đã ghi đủ</p>
-        </div>
-        <div className="ghi-loc">
-          <BuildingSelect buildings={danhSachToaNha} value={toaNhaId} onChange={setToaNhaId} />
-          {danhSachKy.length > 1 ? (
-            <label style={styleNhanTruong}>
-              <span>Kỳ thanh toán</span>
-              <select value={kyId ?? ''} onChange={(event) => setKyId(Number(event.target.value))} disabled={dangTaiChiSo} style={styleSelect}>
-                {danhSachKy.map((ky) => <option key={ky.id} value={ky.id}>{ky.thang}/{ky.nam}</option>)}
-              </select>
-            </label>
-          ) : null}
-        </div>
-      </header>
+      {!anNutChot ? (
+        <header className="ghi-cs-dau">
+          <p className="t-meta" style={{ margin: 0 }}>{nhanToaNha} · {nhanKy}</p>
+          <div className="ghi-loc">
+            <BuildingSelect buildings={danhSachToaNha} value={toaNhaId} onChange={setToaNhaId} />
+            {danhSachKy.length > 1 ? (
+              <label style={styleNhanTruong}>
+                <span>Kỳ thanh toán</span>
+                <select value={kyId ?? ''} onChange={(event) => setKyId(Number(event.target.value))} disabled={dangTaiChiSo} style={styleSelect}>
+                  {danhSachKy.map((ky) => <option key={ky.id} value={ky.id}>{ky.thang}/{ky.nam}</option>)}
+                </select>
+              </label>
+            ) : null}
+          </div>
+        </header>
+      ) : null}
 
       {dangTaiKy || dangTaiChiSo ? <p style={styleThongBao}>Đang tải dữ liệu chỉ số…</p> : null}
       {loi ? <p className="banner banner-danger" role="alert" style={{ margin: 0 }}>{loi}</p> : null}
@@ -927,76 +956,80 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
       {!duLieu ? null : phongs.length === 0 ? (
         <EmptyState kind="first" title="Không có phòng đủ điều kiện để ghi." body="Toà này hiện chưa có phòng có dữ liệu công tơ trong kỳ đã chọn." />
       ) : (
-        <div style={{ display: 'grid', gap: 'var(--ma-space-5)', minWidth: 0 }}>
-          <section aria-labelledby="meter-chua-ghi" className="ghi-nhom">
-            <div className="spread ghi-nhom-dau">
-              <h3 id="meter-chua-ghi" className="h3" style={{ margin: 0 }}>Chưa ghi ({chuaGhi.length})</h3>
-              <Button variant="primary" data-save-all blocked={sanSang.length === 0 || dangLuu !== null} onClick={() => void luuTatCa()}>
-                {dangLuu !== null ? 'Đang lưu…' : sanSang.length ? `Lưu ${sanSang.length} chỉ số` : 'Lưu chỉ số'}
-              </Button>
+        <section className="ghi-nhom" aria-labelledby="meter-title">
+          <div className="spread ghi-nhom-dau">
+            <div>
+              <h2 id="meter-title" className="h2" style={{ margin: 0, display: 'inline' }}>Ghi chỉ số{kyDangChon ? ` tháng ${kyDangChon.thang}` : ''}</h2>{' '}
+              <span className="t-meta">đã ghi {daLuu}/{congTos.length} công tơ · theo bảng chỉ số · phòng thiếu xếp lên đầu</span>
             </div>
-            {chuaGhi.length === 0
-              ? <p style={styleThongBao}>Đã ghi đủ công tơ của kỳ này.</p>
-              : chuaGhi.map((c) => renderCongTo(c.phong, c.dichVu))}
-          </section>
-
-          {phongDaGhi.length > 0 ? (
-            <section aria-labelledby="meter-da-ghi" className="ghi-nhom">
-              <h3 id="meter-da-ghi" className="h3" style={{ margin: 0 }}>Đã ghi ({phongDaGhi.length})</h3>
-              <div className="table-wrap">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Phòng</th>
-                      {cotDichVu.flatMap((ten) => [<th scope="col" key={ten}>{ten} đầu → cuối</th>, <th scope="col" className="num" key={`${ten}-dung`}>Dùng</th>])}
-                      <th scope="col">Trạng thái</th>
-                      <th scope="col"><span className="sr-only">Sửa</span></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {phongDaGhi.flatMap((phong) => {
-                      const daGhiHet = phong.dichVu.every((dichVu) => dichVu.chiSoCuoi)
-                      const daGhi = phong.dichVu.filter((dichVu) => dichVu.chiSoCuoi)
-                      return [
-                        <tr key={phong.id}>
-                          <th scope="row">{phong.soPhong}</th>
-                          {cotDichVu.flatMap((ten) => {
-                            const dichVu = phong.dichVu.find((d) => d.tenDichVu === ten)
-                            return dichVu?.chiSoCuoi
-                              ? [<td key={ten}>{gonSo(dichVu.chiSoDau)} → {gonSo(dichVu.chiSoCuoi)}</td>, <td className="num" key={`${ten}-dung`}><b>{gonSo(dichVu.mucTieuThu ?? '')}</b></td>]
-                              : [<td key={ten}>—</td>, <td className="num" key={`${ten}-dung`}>—</td>]
-                          })}
-                          <td><StatusTag tone={daGhiHet ? 'done' : 'waiting'}>{daGhiHet ? 'Đã ghi' : 'Còn thiếu'}</StatusTag></td>
-                          <td>
-                            {daGhi.map((dichVu) => {
-                              const key = khoa(phong.id, dichVu.id)
-                              return (
-                                <Button
-                                  key={key}
-                                  variant="text"
-                                  size="sm"
-                                  aria-expanded={dangMoSua(key)}
-                                  aria-label={`Sửa ${dichVu.tenDichVu.toLocaleLowerCase('vi-VN')} phòng ${phong.soPhong}`}
-                                  onClick={() => setDangSua((current) => (current.includes(key) ? current.filter((k) => k !== key) : [...current, key]))}
-                                >
-                                  {daGhi.length > 1 ? `Sửa ${dichVu.tenDichVu.toLocaleLowerCase('vi-VN')}` : 'Sửa'}
-                                </Button>
-                              )
-                            })}
-                          </td>
-                        </tr>,
-                        ...daGhi.filter((dichVu) => dangMoSua(khoa(phong.id, dichVu.id))).map((dichVu) => (
-                          <tr key={`sua-${phong.id}-${dichVu.id}`}><td colSpan={cotDichVu.length * 2 + 3}>{renderCongTo(phong, dichVu)}</td></tr>
-                        )),
-                      ]
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <p className="t-meta" style={{ margin: 0 }}>{phongDaGhi.length} trong {phongs.length} phòng</p>
-            </section>
-          ) : null}
-        </div>
+            {anNutChot ? (nutChinhSlot ? createPortal(nutLuu, nutChinhSlot) : null) : nutLuu}
+          </div>
+          <div className="table-wrap">
+            <table className="table ghi-bang">
+              <thead>
+                <tr>
+                  <th scope="col">Phòng</th>
+                  {cotDichVu.flatMap(([ten, donVi]) => [
+                    <th scope="col" className="num" key={`${ten}-cu`}>{ten} cũ</th>,
+                    <th scope="col" className="num" key={`${ten}-moi`}>{ten} mới</th>,
+                    <th scope="col" className="num" key={`${ten}-dung`}>Dùng {donVi}</th>,
+                  ])}
+                  <th scope="col">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hang.flatMap((phong) => {
+                  const tinh = phong.dichVu.map((dichVu) => ({ dichVu, ...tinhCongTo(phong.id, dichVu) }))
+                  const soThieu = tinh.filter((t) => !t.dichVu.chiSoCuoi && !t.giaTri).length
+                  const chuaLuu = tinh.filter((t) => t.giaTri && coThayDoi(t.dichVu, t.giaTri)).length
+                  const tang = tinh.find((t) => t.canhBaoTieuThu)
+                  const moRong = tinh.some((t) => dangMoSua(t.key) || t.canhBaoTieuThu || t.thongBaoChiSo || t.coThayCongTo)
+                  const trangThai = soThieu > 0 ? <StatusTag tone="urgent">Thiếu {soThieu} công tơ</StatusTag>
+                    : chuaLuu > 0 ? <StatusTag tone="waiting">Chưa lưu</StatusTag>
+                      : tang?.canhBaoTieuThu ? <StatusTag tone="waiting">{tang.dichVu.tenDichVu.toLocaleLowerCase('vi-VN')} tăng {Math.round((Number(tang.canhBaoTieuThu.gapLan) - 1) * 100)}%</StatusTag>
+                        : <StatusTag tone="done">Đã ghi</StatusTag>
+                  return [
+                    <tr key={phong.id}>
+                      <th scope="row">{phong.soPhong}</th>
+                      {cotDichVu.flatMap(([ten]) => {
+                        const t = tinh.find((x) => x.dichVu.tenDichVu === ten)
+                        if (!t) return [<td className="num" key={`${ten}-cu`}>—</td>, <td key={`${ten}-moi`} />, <td className="num" key={`${ten}-dung`} />]
+                        const dung = t.mucTieuThu || t.dichVu.mucTieuThu || ''
+                        return [
+                          <td className="num" key={`${ten}-cu`}>{gonSo(t.dichVu.chiSoDau)}</td>,
+                          <td className="num" key={`${ten}-moi`}>{oNhap(phong, t.dichVu, t)}</td>,
+                          <td className="num" key={`${ten}-dung`} data-dung={t.key}>{dung ? gonSo(dung) : ''}</td>,
+                        ]
+                      })}
+                      <td>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          {trangThai}
+                          <Button
+                            variant="text"
+                            size="sm"
+                            aria-expanded={moRong}
+                            aria-label={`Ảnh và thay công tơ phòng ${phong.soPhong}`}
+                            onClick={() => setDangSua((current) => (moRong ? current.filter((k) => !phong.dichVu.some((d) => khoa(phong.id, d.id) === k)) : [...current, ...phong.dichVu.map((d) => khoa(phong.id, d.id))]))}
+                          >
+                            Ảnh, thay công tơ
+                          </Button>
+                        </span>
+                      </td>
+                    </tr>,
+                    ...(moRong ? [<tr key={`phu-${phong.id}`}><td colSpan={cotDichVu.length * 3 + 2}>{phong.dichVu.map((dichVu) => renderPhu(phong, dichVu))}</td></tr>] : []),
+                  ]
+                })}
+              </tbody>
+              <tfoot>
+                <HangTong
+                  o={['Cộng ' + soPhongDaGhi + ' phòng đã ghi', ...cotDichVu.flatMap(([, donVi], i) => ['', '', `${gonSo(String(tongTheoDichVu[i]))} ${donVi}`]), '']}
+                  canhPhai={cotDichVu.flatMap((_, i) => [i * 3 + 1, i * 3 + 2, i * 3 + 3])}
+                />
+              </tfoot>
+            </table>
+          </div>
+          <p className="t-meta" style={{ margin: 0 }}><kbd className="search-kbd">Tab</kbd> sang ô kế · <kbd className="search-kbd">Enter</kbd> xuống phòng dưới</p>
+        </section>
       )}
 
       {kyDangChon && !anNutChot ? (
@@ -1058,7 +1091,7 @@ function taoGiaTriBanDau(duLieu: ThongTinGhiChiSo | null): PendingValues {
   const ketQua: PendingValues = {}
   duLieu?.phong.forEach((phong) => {
     phong.dichVu.forEach((dichVu) => {
-      ketQua[khoa(phong.id, dichVu.id)] = dichVu.chiSoCuoi ?? ''
+      ketQua[khoa(phong.id, dichVu.id)] = dichVu.chiSoCuoi ? String(Number(dichVu.chiSoCuoi)) : ''
     })
   })
   return ketQua
