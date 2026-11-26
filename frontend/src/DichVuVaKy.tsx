@@ -7,6 +7,7 @@ import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Card } from './design/layout/Card'
+import { DauTrang } from './design/layout/DauTrang'
 import { DataTable, type DataTableColumn } from './design/table/DataTable'
 
 type Price = { id: number; donGia: string; ngayHieuLuc: string; dangApDung: boolean }
@@ -89,24 +90,23 @@ export default function DichVuVaKy({ token }: { token: string }) {
   ]
   const soDangDung = services.filter((s) => s.dangSuDung).length
   const kyMo = periods.find((p) => p.trangThai !== 'DA_CHOT')
-  return <section aria-labelledby="dich-vu-title" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
+  return <section aria-label="Giá dịch vụ & cài đặt" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
     <style>{CSS_BO_CUC}</style>
-    <header className="topbar">
-      <div className="title-block">
-        <h1 className="h1" id="dich-vu-title">Dịch vụ & đơn giá</h1>
-        <p className="sub">{soDangDung}/{services.length} dịch vụ đang sử dụng · {kyMo ? `tháng đang mở ${kyMo.thang}/${kyMo.nam}` : 'chưa có tháng đang mở'} · bảng giá mới được thêm theo ngày hiệu lực, lịch sử giá giữ nguyên</p>
-      </div>
-      <div className="topbar-actions">
+    <DauTrang
+      tieuDe="Giá dịch vụ & cài đặt"
+      phu={`${building.buildings.find((b) => b.id === building.buildingId)?.ten ?? 'Chưa chọn toà'} · áp dụng cho hoá đơn từ tháng sau`}
+      hanhDong={<>
         <label className="sr-only" htmlFor="dich-vu-toa">Toà nhà</label>
         <select id="dich-vu-toa" className="select" style={{ width: 220 }} value={building.buildingId ?? ''} onChange={(e) => building.setBuildingId(e.target.value ? Number(e.target.value) : null)}>
           <option value="">Chọn toà nhà</option>{building.buildings.map((b) => <option key={b.id} value={b.id}>{b.ten}</option>)}
         </select>
         <Button variant="secondary" onClick={moiDichVu}><Icon name="plus" />Thêm dịch vụ</Button>
-      </div>
-    </header>
+      </>}
+    />
     <Feedback error={action.error ?? building.error} success={action.success} />
     <Card title="Mở tháng tính tiền mới" action={<a className="link-more brand" href="/chu-ky">Ghi chỉ số, khoá chỉ số và gửi hoá đơn nằm ở Tháng tính tiền →</a>}>
       <div className="row-wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
+        <span className="t-meta">{kyMo ? `Tháng đang mở: ${kyMo.thang}/${kyMo.nam}` : 'Chưa có tháng đang mở'}</span>
         <span className="push" />
         <form onSubmit={(e) => { e.preventDefault(); if (building.buildingId) void action.run(async () => { const [nam, thang] = month.split('-').map(Number); await managementRequest(token, `/api/toa-nha/${building.buildingId}/ky-thanh-toan`, 'POST', { nam, thang }); await load() }, 'Đã mở tháng tính tiền.') }} className="row-wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
           <Field title="Tháng cần mở"><input style={fieldStyle} type="month" required value={month} onChange={(e) => setMonth(e.target.value)} /></Field>

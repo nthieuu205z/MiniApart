@@ -57,7 +57,7 @@ describe('DichVuVaKy', () => {
     expect(text).toContain('Theo chỉ số')
     expect(text).toContain('Bậc thang')
     expect(text).toContain('Ngừng sử dụng')
-    expect(text).toContain('tháng đang mở 9/2026')
+    expect(text).toContain('Tháng đang mở: 9/2026')
     expect(text).not.toContain('Đã chốt')
     expect(container.querySelector('a[href="/chu-ky"]')?.textContent).toContain('Tháng tính tiền')
     expect(calls.every((c) => !c.method || c.method === 'GET')).toBe(true)

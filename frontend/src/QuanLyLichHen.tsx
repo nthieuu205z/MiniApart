@@ -9,6 +9,7 @@ import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Card } from './design/layout/Card'
+import { DauTrang } from './design/layout/DauTrang'
 import { Feedback } from './ManagementShared'
 import { useToaDangChon } from './toaDangChon'
 
@@ -106,16 +107,12 @@ export default function QuanLyLichHen({ token }: Props) {
   }, [danhSachLichHen, locTrangThai])
 
   return (
-    <section style={{ display: 'grid', gap: 16, minWidth: 0 }} aria-labelledby="lich-hen-title">
-      <header className="topbar">
-        <div className="title-block">
-          <h1 className="h1" id="lich-hen-title">Lịch hẹn</h1>
-          <p className="sub">{soChoXacNhan} lịch hẹn mới cần gọi xác nhận · {danhSachLichHen.length} lịch hẹn xem phòng từ trang khám phá</p>
-        </div>
-        <div className="topbar-actions">
-          <Button variant="secondary" onClick={() => taiDuLieu()}><Icon name="history" />Làm mới</Button>
-        </div>
-      </header>
+    <section style={{ display: 'grid', gap: 16, minWidth: 0 }} aria-label="Lịch xem phòng">
+      <DauTrang
+        tieuDe="Lịch xem phòng"
+        phu={`${soChoXacNhan} lịch hẹn mới cần gọi xác nhận · ${danhSachLichHen.length} lịch hẹn xem phòng từ trang khám phá`}
+        hanhDong={<Button variant="secondary" onClick={() => taiDuLieu()}><Icon name="history" />Làm mới</Button>}
+      />
 
       <Feedback error={!dangTai && danhSachLichHen.length ? loi : null} success={thongBao} />
 
