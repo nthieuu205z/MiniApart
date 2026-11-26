@@ -1,8 +1,8 @@
 # Báo cáo y7 — Thợ (nhánh ui/y7-tho)
 
 ## 1. Việc theo task
-- T1–T4 Việc · Chi tiết · Báo giá · Báo đã sửa xong: `ThoCongViec.tsx` viết lại (1.291 → ~560 dòng), commit `0f4d0d9` + sửa sau chụp ảnh (commit cuối lô).
-- T5 Tiền công: `ThoChiPhi.tsx` viết lại (856 → ~480 dòng), commit `c5c735a`. Hex cứng: 0 ở cả hai file.
+- T1–T4 Việc · Chi tiết · Báo giá · Báo đã sửa xong: `ThoCongViec.tsx` viết lại (1.291 → 662 dòng), commit `0f4d0d9` + sửa sau chụp ảnh (commit cuối lô).
+- T5 Tiền công: `ThoChiPhi.tsx` viết lại (856 → 558 dòng), commit `c5c735a`. Hex cứng: 0 ở cả hai file.
 - Màn chi tiết / báo giá là màn riêng theo URL `?yeuCauId=<id>` và `&baoGia=1` (thay ngăn kéo cũ). Route cũ vẫn mở được.
 
 ## 2. Lệnh kiểm
