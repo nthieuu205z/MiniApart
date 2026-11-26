@@ -836,7 +836,7 @@ describe('App role navigation', () => {
     expect(floorMap.querySelectorAll('[data-testid="room-tile"]')).toHaveLength(20)
     expect(mountedApp.container.textContent).toContain('20 phòng')
 
-    expect(mountedApp.container.querySelector('.topbar .sub')?.textContent).toContain('5 trống · 7 đang thuê · 4 đang sửa')
+    expect(mountedApp.container.querySelector('.ma-dautrang-phu')?.textContent).toContain('5 trống · 7 đang thuê · 4 đang sửa')
 
     // Lô x3: không còn ô chi tiết dưới danh sách phòng; bấm ô phòng mở hồ sơ phòng.
     expect(mountedApp.container.querySelector('[data-testid="room-detail"]')).toBeNull()
