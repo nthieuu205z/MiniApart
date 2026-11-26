@@ -113,7 +113,7 @@ describe('TaoHopDong một trang', () => {
     await go(container.querySelector('input[aria-label="Giá riêng của Nước"]')!, '25000')
     expect(thieu()).toEqual(['Phòng, thời hạn, giá, dịch vụ đã đủ'])
     expect(chinh()[0].getAttribute('aria-disabled')).toBeNull()
-    await act(async () => { chinh()[0].click() })
+    await act(async () => { (chinh()[0] as HTMLElement).click() })
     await vi.waitFor(() => expect(dieuHuong).toHaveBeenLastCalledWith('/hop-dong/99'))
     expect(post()![0]).toBe('/api/hop-dong')
     expect(JSON.parse(post()![1].body)).toEqual({

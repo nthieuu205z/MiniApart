@@ -1103,7 +1103,7 @@ export default function HopDongThaoTac({
                         fontSize: 11,
                         fontWeight: 700,
                         background: activeStep === st.id ? 'var(--ma-brand-accent)' : 'var(--ma-line-200)',
-                        color: activeStep === st.id ? '#ffffff' : 'var(--ma-text-secondary)',
+                        color: activeStep === st.id ? 'var(--ma-bg-card)' : 'var(--ma-text-secondary)',
                       }}
                     >
                       {st.id}
@@ -1269,7 +1269,7 @@ export default function HopDongThaoTac({
                           value={dossierForm.benATuCachKy || 'CHU_SO_HUU'}
                           onChange={(e) => setDossierForm({ ...dossierForm, benATuCachKy: e.target.value })}
                         >
-                          <option value="CHU_SO_HUU">Chủ sở hữu</option>
+                          <option value="CHU_SO_HUU">Chủ nhà</option>
                           <option value="DAI_DIEN_PHAP_LUAT">Đại diện pháp luật</option>
                           <option value="NGUOI_DUOC_UY_QUYEN">Người được ủy quyền</option>
                         </select>
@@ -1476,7 +1476,7 @@ export default function HopDongThaoTac({
                       </select>
                     </Field>
 
-                    <Field title="Kỳ thanh toán (tháng/lần)">
+                    <Field title="Số tháng mỗi lần thanh toán">
                       <input
                         type="number"
                         min="1"
@@ -1997,7 +1997,7 @@ export default function HopDongThaoTac({
                             <StatusTag tone="done">Đã duyệt cư trú</StatusTag>
                           )}
                           {o.coTaiKhoan ? (
-                            <span style={{ fontSize: 13, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>
+                            <span style={{ fontSize: 13, background: 'var(--ma-done-bg)', color: 'var(--ma-done-text)', padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>
                               ✓ Đã có tài khoản
                             </span>
                           ) : null}
@@ -2016,9 +2016,9 @@ export default function HopDongThaoTac({
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {o.trangThai === 'CHO_DUYET' ? (
                             <>
-                              <button
-                                type="button"
-                                style={{ ...quickPresetButtonStyle, background: 'var(--ma-primary-default)', color: '#fff' }}
+                              <Button
+                                variant="secondary"
+                                size="sm"
                                 onClick={async () => {
                                   if (!selected) return
                                   try {
@@ -2031,10 +2031,10 @@ export default function HopDongThaoTac({
                                 }}
                               >
                                 ✓ Duyệt cư trú
-                              </button>
-                              <button
-                                type="button"
-                                style={quickPresetButtonStyle}
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
                                 onClick={() => {
                                   if (!selected) return
                                   setPromptDialog({
@@ -2058,7 +2058,7 @@ export default function HopDongThaoTac({
                                 }}
                               >
                                 ✕ Từ chối
-                              </button>
+                              </Button>
                             </>
                           ) : null}
 
@@ -2315,8 +2315,8 @@ export default function HopDongThaoTac({
                           style={{
                             gridColumn: '1 / -1',
                             padding: '10px 14px',
-                            background: daKhop ? 'var(--ma-brand-accent-light)' : '#FFFBEB',
-                            border: `1px solid ${daKhop ? 'var(--ma-brand-accent)' : '#FDE68A'}`,
+                            background: daKhop ? 'var(--ma-brand-accent-light)' : 'var(--ma-waiting-bg)',
+                            border: `1px solid ${daKhop ? 'var(--ma-brand-accent)' : 'var(--ma-waiting-border)'}`,
                             borderRadius: 'var(--ma-radius)',
                             fontSize: 13,
                             display: 'flex',
@@ -2334,7 +2334,7 @@ export default function HopDongThaoTac({
                                 ✓ Đã khớp với thanh lý
                               </span>
                             ) : (
-                              <span style={{ marginLeft: 8, color: '#B45309', fontWeight: 600 }}>
+                              <span style={{ marginLeft: 8, color: 'var(--ma-waiting)', fontWeight: 600 }}>
                                 ⚠ Chưa khớp số tiền thanh lý ({dinhDangTien(settle.khauTruHuHong)} đ)
                               </span>
                             )}
@@ -2360,7 +2360,7 @@ export default function HopDongThaoTac({
 
                         {!daKhop && (
                           <div style={{ gridColumn: '1 / -1' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, cursor: 'pointer', fontSize: 13, color: '#B45309', fontWeight: 600 }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, cursor: 'pointer', fontSize: 13, color: 'var(--ma-waiting)', fontWeight: 600 }}>
                               <input
                                 type="checkbox"
                                 checked={xacNhanKhauTruKhacBienBan}
@@ -2406,9 +2406,9 @@ export default function HopDongThaoTac({
                 </label>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <SaveButton busy={action.busy || !confirmed || (Boolean(bienBans.find((b) => b.loaiBienBan === 'TRA_PHONG') && Number(settle.khauTruHuHong) !== Number(bienBans.find((b) => b.loaiBienBan === 'TRA_PHONG')?.tongTienKhauTru || 0) && !xacNhanKhauTruKhacBienBan))}>
+                  <Button type="submit" variant="danger" blocked={action.busy || !confirmed || (Boolean(bienBans.find((b) => b.loaiBienBan === 'TRA_PHONG') && Number(settle.khauTruHuHong) !== Number(bienBans.find((b) => b.loaiBienBan === 'TRA_PHONG')?.tongTienKhauTru || 0) && !xacNhanKhauTruKhacBienBan))}>
                     Thanh lý hợp đồng
-                  </SaveButton>
+                  </Button>
                 </div>
               </form>
             ) : null}
@@ -2446,7 +2446,7 @@ export default function HopDongThaoTac({
                   </div>
                 </div>
 
-                <div style={{ marginTop: 12, padding: '12px 16px', background: '#FFFFFF', borderRadius: 'var(--ma-radius)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ marginTop: 12, padding: '12px 16px', background: 'var(--ma-bg-card)', borderRadius: 'var(--ma-radius)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 15, fontWeight: 700 }}>Tiền cọc hoàn lại cho khách:</span>
                   <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--ma-done-text)' }}>
                     {settlement.hoanCoc} đ
@@ -2460,7 +2460,7 @@ export default function HopDongThaoTac({
                       style={{
                         padding: '8px 16px',
                         background: 'var(--ma-ink-900)',
-                        color: '#FFFFFF',
+                        color: 'var(--ma-bg-card)',
                         borderRadius: 'var(--ma-radius)',
                         textDecoration: 'none',
                         fontWeight: 600,
@@ -2605,7 +2605,7 @@ function ConfirmModal({
   title,
   message,
   confirmLabel = 'Xác nhận',
-  cancelLabel = 'Hủy bỏ',
+  cancelLabel = 'Huỷ',
   onConfirm,
   onCancel,
 }: {
@@ -2684,7 +2684,7 @@ function PromptModal({
   placeholder,
   defaultValue = '',
   confirmLabel = 'Xác nhận',
-  cancelLabel = 'Hủy bỏ',
+  cancelLabel = 'Huỷ',
   tone = 'primary',
   onConfirm,
   onCancel,
@@ -2790,13 +2790,9 @@ function PromptModal({
             {cancelLabel}
           </Button>
           <Button
-            variant="primary"
+            variant={tone === 'urgent' ? 'danger' : 'primary'}
             onClick={handleSubmit}
-            style={{
-              minHeight: 40,
-              backgroundColor: tone === 'urgent' ? 'var(--ma-urgent)' : undefined,
-              borderColor: tone === 'urgent' ? 'var(--ma-urgent)' : undefined,
-            }}
+            style={{ minHeight: 40 }}
             blocked={submitting}
           >
             {confirmLabel}

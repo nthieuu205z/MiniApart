@@ -60,10 +60,16 @@ describe('thao tác con của hợp đồng (ngăn hồ sơ 360)', () => {
     expect(co('Gia hạn hợp đồng sắp hết hạn') || co('Người ở cùng phòng') || co('Hồ sơ hợp đồng thuê')).toBe(false)
     const gui = formThanhLy().querySelector('button[type="submit"]') as HTMLButtonElement
     expect(gui.disabled || gui.getAttribute('aria-disabled') === 'true').toBe(true)
+    expect(gui.classList.contains('btn-primary')).toBe(false) // việc phá huỷ là nút danger, không phải nút chính
+    expect(gui.classList.contains('btn-danger')).toBe(true)
     await act(async () => { (formThanhLy().querySelector('input[type="checkbox"]') as HTMLInputElement).click() })
     await act(async () => { (formThanhLy().querySelector('button[type="submit"]') as HTMLButtonElement).click() })
     await vi.waitFor(() => expect(goi.find((g) => g.method === 'POST')).toBeTruthy())
     expect(goi.find((g) => g.method === 'POST')).toMatchObject({ url: '/api/hop-dong/1/thanh-ly', body: { khauTruHuHong: '0', xacNhanChenhLech: false, chiSoCuoi: [] } })
+  })
+
+  it('giữ nguyên 5 export mà hồ sơ 360 (y2) dùng', () => {
+    for (const C of [GiaHanHopDong, KyHopDong, ThanhLyHopDong, PhuLucHopDong, NguoiOCungHopDong]) expect(typeof C).toBe('function')
   })
 
   it('Ký: chỉ có khối ghi nhận ký, không có phụ lục / thanh lý / người ở cùng', async () => {
