@@ -46,15 +46,34 @@ describe('LichSuHoaDon', () => {
     await render(DATA, 200, mobile)
     await vi.waitFor(() => expect(container.querySelectorAll('[data-history-invoice]')).toHaveLength(3))
     const text = container.textContent ?? ''
-    expect(text).toContain('Lịch sử hoá đơn')
-    expect(text).toContain('Kỳ 10/2026')
-    expect(text).toContain('Phòng 101')
-    expect(text).toContain('An Nhiên Residence')
+    expect(text).toContain('Tháng 10/2026')
     expect(text).toContain('3.790.000')
-    expect(text).toContain('Quá hạn')
-    expect(text).toContain('Đã thanh toán')
     expect(text).toContain('Quyết toán hợp đồng')
-    expect(text).toContain('Đã thanh lý')
+    expect(text).not.toMatch(/\b[Kk]ỳ\b/)
+    if (mobile) {
+      expect(text).toContain('Hoá đơn và điện nước')
+      expect(text).toContain('đã trả 1.895.000 ₫, còn 1.895.000 ₫')
+      expect(text).toContain('đã trả đủ')
+      expect(text).toContain('Điện nước đã dùng')
+      expect(text).toContain('hợp đồng đã thanh lý')
+    } else {
+      expect(text).toContain('Lịch sử hoá đơn')
+      expect(text).toContain('Phòng 101')
+      expect(text).toContain('An Nhiên Residence')
+      expect(text).toContain('Quá hạn')
+      expect(text).toContain('Đã thanh toán')
+      expect(text).toContain('Đã thanh lý')
+    }
+  })
+
+  it('mobile: bảng điện nước gộp điện và nước theo tháng, mới nhất ở trên', async () => {
+    const diem = (nam: number, thang: number, muc: string) => ({ kyId: thang, hoaDonId: thang, nam, thang, hopDongId: 5, soPhong: '101', dichVuId: 1, tenDichVu: 'x', donVi: 'u', chiSoDau: '0', chiSoCuoi: muc, mucTieuThu: muc })
+    vi.stubGlobal('fetch', vi.fn(async (u: RequestInfo | URL) => new Response(JSON.stringify(String(u).includes('tieu-thu') ? { dien: [diem(2026, 9, '96'), diem(2026, 10, '100')], nuoc: [diem(2026, 10, '5')] } : DATA), { status: 200, headers: { 'Content-Type': 'application/json' } })))
+    root = createRoot(container)
+    await act(async () => root.render(<LichSuHoaDon token="t" mobile />))
+    await vi.waitFor(() => expect(container.querySelector('[data-dien-nuoc] tbody')).not.toBeNull())
+    const hang = Array.from(container.querySelectorAll('[data-dien-nuoc] tbody tr')).map((r) => Array.from(r.children).map((c) => c.textContent))
+    expect(hang).toEqual([['10/2026', '100', '5'], ['9/2026', '96', '—']])
   })
 
   it('bấm một kỳ chuyển sang /hoa-don-cua-toi?hoaDonId=', async () => {
@@ -69,7 +88,7 @@ describe('LichSuHoaDon', () => {
   it('rỗng: hiện EmptyState, không phải lỗi', async () => {
     await render([])
     await vi.waitFor(() => expect(container.querySelector('[data-history-empty]')).not.toBeNull())
-    expect(container.textContent).toContain('Chưa có kỳ hoá đơn nào')
+    expect(container.textContent).toContain('Chưa có hoá đơn nào')
     expect(container.querySelector('[role="alert"]')).toBeNull()
   })
 

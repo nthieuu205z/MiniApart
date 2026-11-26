@@ -200,7 +200,7 @@ describe('HoaDon detail and print view', () => {
 
     await vi.waitFor(() => expect(container.querySelector('[data-invoice-due]')?.textContent).toContain('1.000'))
     expect(container.textContent).toContain('Chưa đến hạn')
-    expect(container.textContent).toContain('Không có kỳ nào còn nợ.')
+    expect(container.textContent).toContain('Không có tháng nào còn nợ.')
   })
 
   it('FR-POR-02 renders labeled readings, consumption, unit price and amount for every invoice line', async () => {

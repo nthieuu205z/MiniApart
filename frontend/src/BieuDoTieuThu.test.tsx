@@ -63,7 +63,7 @@ describe('BieuDoTieuThu', () => {
     const cot = container.querySelector('[data-consumption-bar="electricity-8"]') as HTMLButtonElement
     await act(async () => cot.click())
     expect(cot.getAttribute('aria-pressed')).toBe('true')
-    expect(container.textContent).toContain('Kỳ 08/2026 · Phòng 101: 25 kWh')
+    expect(container.textContent).toContain('Tháng 8/2026 · Phòng 101: 25 kWh')
   })
 
   it('một loại chưa có số: báo riêng, loại kia vẫn vẽ', async () => {

@@ -1801,7 +1801,7 @@ describe('invoice navigation', () => {
     const electricityBar = mountedApp.container.querySelector('[data-consumption-bar="electricity-8"]') as HTMLButtonElement
     expect(electricityBar).not.toBeNull()
     await act(async () => electricityBar.click())
-    expect(mountedApp.container.textContent).toContain('Kỳ 08/2026 · Phòng 101: 25 kWh')
+    expect(mountedApp.container.textContent).toContain('Tháng 8/2026 · Phòng 101: 25 kWh')
   })
 
   it('FR-POR-05 shows a clear first-use empty state when no meter history exists', async () => {

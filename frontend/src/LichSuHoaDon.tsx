@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ApiError, fetchLichSuHoaDonCuaNguoiThue, type ThongTinHoaDonLichSu } from './api'
+import { ApiError, fetchLichSuHoaDonCuaNguoiThue, fetchTieuThuCuaNguoiThue, type ThongTinBieuDoTieuThu, type ThongTinHoaDonLichSu } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
@@ -8,6 +8,7 @@ import { Button } from './design/core/Button'
 import { Card } from './design/layout/Card'
 import { DataTable } from './design/table/DataTable'
 import { Tieu } from './CanTra'
+import './CanTra.css'
 
 type Props = { token: string; mobile?: boolean }
 
@@ -56,13 +57,31 @@ export default function LichSuHoaDon({ token, mobile = false }: Props) {
     )
   }
 
+  if (mobile && lichSu.length > 0) {
+    return (
+      <section {...khung} className="nt" aria-labelledby="invoice-history-title">
+        <header className="nt-dau">
+          <Tieu mobile id="invoice-history-title" className="nt-h1">Lịch sử</Tieu>
+          <div className="nt-phu">Hoá đơn và điện nước</div>
+        </header>
+        <section className="nt-khoi" aria-labelledby="lich-su-hoa-don">
+          <h2 className="nt-h2" id="lich-su-hoa-don">Hoá đơn</h2>
+          <div data-history-list="mobile">
+            {lichSu.map((hoaDon) => <DongHoaDon key={hoaDon.hoaDonId} hoaDon={hoaDon} />)}
+          </div>
+        </section>
+        <KhoiDienNuoc token={token} />
+      </section>
+    )
+  }
+
   return (
     <section {...khung} aria-labelledby="invoice-history-title" style={{ display: 'grid', gap: 12, minWidth: 0 }}>
       <div>
-        <Tieu mobile={mobile} id="invoice-history-title" className={mobile ? 'sr-only' : undefined} style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Lịch sử hoá đơn</Tieu>
+        <Tieu mobile={mobile} id="invoice-history-title" className={mobile ? 'sr-only' : undefined} style={{ margin: 0, font: 'var(--ma-text-screen-title)' }}>Lịch sử hoá đơn</Tieu>
         {lichSu.length > 0 ? (
           <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)', marginTop: 2 }}>
-            {lichSu.length} kỳ gần nhất của các phòng bạn đã từng thuê, kỳ mới nhất ở trên.
+            {lichSu.length} tháng gần nhất của các phòng bạn đã từng thuê, tháng mới nhất ở trên.
           </div>
         ) : null}
       </div>
@@ -71,12 +90,10 @@ export default function LichSuHoaDon({ token, mobile = false }: Props) {
         <Card>
           <EmptyState
             data-history-empty
-            title="Chưa có kỳ hoá đơn nào"
-            body="Hoá đơn sẽ xuất hiện tại đây sau khi kỳ thanh toán đầu tiên được phát hành. Đây không phải lỗi kết nối."
+            title="Chưa có hoá đơn nào"
+            body="Hoá đơn sẽ xuất hiện tại đây sau khi hoá đơn tháng đầu tiên được gửi. Đây không phải lỗi kết nối."
           />
         </Card>
-      ) : mobile ? (
-        <DanhSachHoaDonMobile lichSu={lichSu} />
       ) : (
         <Card><DanhSachHoaDonDesktop lichSu={lichSu} /></Card>
       )}
@@ -84,47 +101,72 @@ export default function LichSuHoaDon({ token, mobile = false }: Props) {
   )
 }
 
-function DanhSachHoaDonMobile({ lichSu }: { lichSu: ThongTinHoaDonLichSu[] }) {
-  return (
-    <div data-history-list="mobile" style={{ display: 'grid', gap: 12 }}>
-      {lichSu.map((hoaDon) => <HoaDonHistoryCard key={hoaDon.hoaDonId} hoaDon={hoaDon} />)}
-    </div>
-  )
-}
-
-function HoaDonHistoryCard({ hoaDon }: { hoaDon: ThongTinHoaDonLichSu }) {
-  const tong = Number(hoaDon.tongTien)
-  const phanTram = tong > 0 ? Math.min(100, Math.max(0, (Number(hoaDon.daThu) / tong) * 100)) : 0
+/** Một tháng trong Lịch sử (điện thoại): "đã trả đủ" hoặc "đã trả X ₫, còn Y ₫"; bấm vào mở chi tiết. */
+function DongHoaDon({ hoaDon }: { hoaDon: ThongTinHoaDonLichSu }) {
+  const conNo = Number(hoaDon.conLai) > 0
+  const daTra = Number(hoaDon.daThu) > 0
+  const phu = !conNo ? 'đã trả đủ' : daTra ? `đã trả ${dinhDangTien(hoaDon.daThu)} ₫, còn ${dinhDangTien(hoaDon.conLai)} ₫` : `chưa trả, còn ${dinhDangTien(hoaDon.conLai)} ₫`
   return (
     <button
       type="button"
-      className="m-card"
+      className="nt-dong nt-nut"
       data-history-invoice={hoaDon.hoaDonId}
       aria-label={`Mở hoá đơn ${nhanKy(hoaDon)} phòng ${hoaDon.soPhong}`}
       onClick={() => moHoaDon(hoaDon.hoaDonId)}
-      style={{ display: 'grid', gap: 12, width: '100%', border: 0, color: 'var(--ma-text-primary)', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{ display: 'grid', gap: 2, minWidth: 0 }}>
-          <strong style={{ font: '600 18px/1.3 var(--ma-font-ui)' }}>{nhanKy(hoaDon)}</strong>
-          <span className="t-sm t-2">Phòng {hoaDon.soPhong} · {nhanToaNha(hoaDon)}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--ma-text-muted)' }}>
-          <StatusTag tone={toneThanhToan(hoaDon.trangThaiThanhToan)}>{nhanTrangThai(hoaDon.trangThaiThanhToan)}</StatusTag>
-          <Icon name="chevron-right" />
-        </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
-        <span className="t-sm t-2">Tổng kỳ này</span>
-        <b style={{ font: '600 22px/1.2 var(--ma-font-ui)', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>{dinhDangTien(hoaDon.tongTien)} ₫</b>
-      </div>
-      <div className="progress" role="img" aria-label={`Đã thu ${Math.round(phanTram)}%`}><span style={{ width: `${phanTram}%` }} /></div>
-      <div className="t-sm t-2" style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-        <span>Đã thu {dinhDangTien(hoaDon.daThu)} ₫</span>
-        <span>Còn lại {dinhDangTien(hoaDon.conLai)} ₫</span>
-      </div>
-      {hoaDon.hopDongTrangThai === 'DA_THANH_LY' ? <div><StatusTag tone="closed">Đã thanh lý</StatusTag></div> : null}
+      <span className="nt-dong-trai">
+        <span className="nt-ten">{nhanKy(hoaDon)}</span>
+        <span className={`nt-phu${conNo && hoaDon.trangThaiThanhToan === 'QUA_HAN' ? ' nt-tre' : ''}`}>{phu}{hoaDon.hopDongTrangThai === 'DA_THANH_LY' ? ' · hợp đồng đã thanh lý' : ''}</span>
+      </span>
+      <span className="nt-tien">{dinhDangTien(hoaDon.tongTien)} ₫</span>
+      <Icon name="chevron-right" />
     </button>
+  )
+}
+
+/** Điện nước đã dùng (FR-POR-05): bảng Tháng · Điện · Nước, mới nhất ở trên. Lỗi báo ngay trong khối. */
+function KhoiDienNuoc({ token }: { token: string }) {
+  const [duLieu, setDuLieu] = useState<ThongTinBieuDoTieuThu | null>(null)
+  const [loi, setLoi] = useState<string | null>(null)
+  const [lanTai, setLanTai] = useState(0)
+  useEffect(() => {
+    let mounted = true
+    setLoi(null)
+    fetchTieuThuCuaNguoiThue(token)
+      .then((d) => { if (mounted) setDuLieu(d) })
+      .catch((e: unknown) => { if (mounted) setLoi(e instanceof ApiError ? e.message : 'Không thể tải điện nước.') })
+    return () => { mounted = false }
+  }, [token, lanTai])
+  const dien = Array.isArray(duLieu?.dien) ? duLieu!.dien : []
+  const nuoc = Array.isArray(duLieu?.nuoc) ? duLieu!.nuoc : []
+  const thang = new Map<number, { nam: number; thang: number; dien?: string | null; nuoc?: string | null }>()
+  for (const [loai, ds] of [['dien', dien], ['nuoc', nuoc]] as const) {
+    for (const p of ds) {
+      const k = p.nam * 12 + p.thang
+      thang.set(k, { ...(thang.get(k) ?? { nam: p.nam, thang: p.thang }), [loai]: p.mucTieuThu })
+    }
+  }
+  const dong = [...thang.entries()].sort((a, b) => b[0] - a[0]).map(([, v]) => v)
+  const so = (v?: string | null) => (v == null ? '—' : String(Number(v)).replace('.', ','))
+  return (
+    <section className="nt-khoi" aria-labelledby="lich-su-dien-nuoc" data-dien-nuoc>
+      <h2 className="nt-h2" id="lich-su-dien-nuoc">Điện nước đã dùng</h2>
+      {loi ? (
+        <div role="alert" className="nt-ghi">
+          <p className="nt-phu nt-tre">{loi}</p>
+          <Button variant="secondary" data-retry-dien-nuoc onClick={() => setLanTai((n) => n + 1)}>Tải lại</Button>
+        </div>
+      ) : duLieu === null ? (
+        <div className="skel skel-line" aria-busy="true" />
+      ) : dong.length === 0 ? (
+        <p className="nt-phu">Chưa có số điện nước nào. Số sẽ hiện sau khi hoá đơn đầu tiên được gửi.</p>
+      ) : (
+        <table className="nt-bang">
+          <thead><tr><th scope="col">Tháng</th><th scope="col" className="num">Điện ({dien[0]?.donVi ?? 'kWh'})</th><th scope="col" className="num">Nước ({nuoc[0]?.donVi ?? 'm³'})</th></tr></thead>
+          <tbody>{dong.map((r) => <tr key={`${r.nam}-${r.thang}`}><th scope="row">{r.thang}/{r.nam}</th><td className="num">{so(r.dien)}</td><td className="num">{so(r.nuoc)}</td></tr>)}</tbody>
+        </table>
+      )}
+    </section>
   )
 }
 
@@ -133,12 +175,12 @@ function DanhSachHoaDonDesktop({ lichSu }: { lichSu: ThongTinHoaDonLichSu[] }) {
     <DataTable
       rows={lichSu}
       getRowId={(h) => h.hoaDonId}
-      noun="kỳ"
+      noun="tháng"
       rowProps={(h) => ({ 'data-history-invoice': String(h.hoaDonId) })}
       columns={[
         {
           key: 'ky',
-          label: 'Kỳ / phòng',
+          label: 'Tháng / phòng',
           render: (h) => (
             <div style={{ display: 'grid', gap: 2 }}>
               <strong>{nhanKy(h)}</strong>
@@ -161,13 +203,13 @@ function DanhSachHoaDonDesktop({ lichSu }: { lichSu: ThongTinHoaDonLichSu[] }) {
   )
 }
 
-/** Khối "Kỳ trước còn nợ" của màn Hoá đơn khách thuê (mobile): tối đa 3 kỳ chưa trả hết, trừ hoá đơn đang xem. */
+/** Khối "Tháng trước còn nợ" của màn Hoá đơn khách thuê (mobile): tối đa 3 tháng chưa trả hết, trừ hoá đơn đang xem. */
 export function KyTruocConNo({ lichSu, hienTaiId }: { lichSu: ThongTinHoaDonLichSu[]; hienTaiId: number }) {
   const conNo = lichSu.filter((hoaDon) => hoaDon.hoaDonId !== hienTaiId && Number(hoaDon.conLai) > 0).slice(0, 3)
   return (
     <section className="m-card" aria-labelledby="ky-truoc-con-no" data-previous-debt>
       <div className="spread">
-        <h2 className="h3" id="ky-truoc-con-no" style={{ margin: 0 }}>Kỳ trước còn nợ</h2>
+        <h2 className="h3" id="ky-truoc-con-no" style={{ margin: 0 }}>Tháng trước còn nợ</h2>
         <Button
           variant="text"
           data-view-invoice-history
@@ -180,7 +222,7 @@ export function KyTruocConNo({ lichSu, hienTaiId }: { lichSu: ThongTinHoaDonLich
         </Button>
       </div>
       {conNo.length === 0 ? (
-        <p className="t-sm t-2" style={{ margin: '4px 0 0' }}>Không có kỳ nào còn nợ.</p>
+        <p className="t-sm t-2" style={{ margin: '4px 0 0' }}>Không có tháng nào còn nợ.</p>
       ) : (
         <ul className="list" style={{ marginTop: 4, padding: 0, listStyle: 'none' }}>
           {conNo.map((hoaDon) => (
@@ -191,7 +233,7 @@ export function KyTruocConNo({ lichSu, hienTaiId }: { lichSu: ThongTinHoaDonLich
                 data-previous-debt-invoice={hoaDon.hoaDonId}
                 aria-label={`Mở hoá đơn ${nhanKy(hoaDon)} phòng ${hoaDon.soPhong}`}
                 onClick={() => moHoaDon(hoaDon.hoaDonId)}
-                style={{ width: '100%', minHeight: 56, border: 0, background: 'transparent', font: 'inherit', textAlign: 'left', color: 'inherit', cursor: 'pointer' }}
+                style={{ width: '100%', minHeight: 'var(--ma-row-h)', border: 0, background: 'transparent', font: 'inherit', textAlign: 'left', color: 'inherit', cursor: 'pointer' }}
               >
                 <div className="body">
                   <div className="name">{nhanKy(hoaDon)}</div>
@@ -218,11 +260,11 @@ function moHoaDon(hoaDonId: number) {
 
 function dinhDangKy(hoaDon: ThongTinHoaDonLichSu) {
   if (hoaDon.kyId === null || hoaDon.nam === null || hoaDon.thang === null) return 'Quyết toán hợp đồng'
-  return `${String(hoaDon.thang).padStart(2, '0')}/${hoaDon.nam}`
+  return `${hoaDon.thang}/${hoaDon.nam}`
 }
 
 function nhanKy(hoaDon: ThongTinHoaDonLichSu) {
-  return hoaDon.kyId === null ? 'Quyết toán hợp đồng' : `Kỳ ${dinhDangKy(hoaDon)}`
+  return hoaDon.kyId === null ? 'Quyết toán hợp đồng' : `Tháng ${dinhDangKy(hoaDon)}`
 }
 
 function nhanToaNha(hoaDon: ThongTinHoaDonLichSu) {

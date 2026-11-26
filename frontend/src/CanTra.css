@@ -43,3 +43,10 @@ a.nt-dong:hover { text-decoration: none; background: var(--ma-paper-1); }
 .nt-khan > span { padding: 12px 0; }
 .nt-spread { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .nt-su-co { display: grid; gap: 6px; align-items: start; }
+
+/* Lịch sử */
+.nt-nut { width: 100%; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.nt-bang { width: 100%; border-collapse: collapse; font: var(--ma-text-body); }
+.nt-bang th, .nt-bang td { padding: 12px 0; min-height: var(--ma-row-h); border-top: 1px solid var(--ma-line-100); font-weight: 400; text-align: left; font-variant-numeric: tabular-nums; }
+.nt-bang thead th { border-top: 0; font: var(--ma-text-body-sm); color: var(--ma-text-secondary); }
+.nt-bang .num { text-align: right; }

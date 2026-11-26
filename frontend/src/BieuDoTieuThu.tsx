@@ -77,7 +77,7 @@ export default function BieuDoTieuThu({ token, mobile = false }: Props) {
   }
 
   const tieuDe = (
-    <Tieu mobile={mobile} id="consumption-title" className={mobile ? 'sr-only' : undefined} style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Tiêu thụ điện và nước</Tieu>
+    <Tieu mobile={mobile} id="consumption-title" className={mobile ? 'sr-only' : undefined} style={{ margin: 0, font: 'var(--ma-text-screen-title)' }}>Tiêu thụ điện và nước</Tieu>
   )
 
   if (duLieu.dien.length === 0 && duLieu.nuoc.length === 0) {
@@ -100,7 +100,7 @@ export default function BieuDoTieuThu({ token, mobile = false }: Props) {
       <div>
         {tieuDe}
         <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)', marginTop: 2 }}>
-          {Math.max(duLieu.dien.length, duLieu.nuoc.length)} kỳ gần nhất có dữ liệu của bạn. Điện và nước được hiển thị riêng theo đúng đơn vị.
+          {Math.max(duLieu.dien.length, duLieu.nuoc.length)} tháng gần nhất có dữ liệu của bạn. Điện và nước được hiển thị riêng theo đúng đơn vị.
         </div>
       </div>
 
@@ -117,7 +117,7 @@ function BieuDoSeries({ loai, points }: { loai: LoaiTieuThu; points: ThongTinTie
   const [chonKhoa, setChonKhoa] = useState<string | null>(null)
   const donVi = points[0]?.donVi || config.donViMacDinh
   const khoaCua = (p: ThongTinTieuThu) => `${p.kyId}`
-  // Trục thời gian tăng dần; kỳ mới nhất (cuối) được chọn sẵn để thấy số ngay.
+  // Trục thời gian tăng dần; tháng mới nhất (cuối) được chọn sẵn để thấy số ngay.
   const theoThoiGian = useMemo(() => [...points].sort((a, b) => a.nam - b.nam || a.thang - b.thang || a.kyId - b.kyId), [points])
   const khoaDangChon = chonKhoa ?? (theoThoiGian.length > 0 ? khoaCua(theoThoiGian[theoThoiGian.length - 1]) : null)
   const diemDangChon = theoThoiGian.find((p) => khoaCua(p) === khoaDangChon) ?? null
@@ -136,7 +136,7 @@ function BieuDoSeries({ loai, points }: { loai: LoaiTieuThu; points: ThongTinTie
     return (
       <Card data-consumption-chart={loai} aria-labelledby={`${loai}-chart-title`}>
         {tieuDeThe}
-        <p className="t-sm t-2" style={{ margin: 0 }}>Chưa có kỳ nào có số {config.tieuDe.toLowerCase()} để hiển thị.</p>
+        <p className="t-sm t-2" style={{ margin: 0 }}>Chưa có tháng nào có số {config.tieuDe.toLowerCase()} để hiển thị.</p>
       </Card>
     )
   }
@@ -150,22 +150,22 @@ function BieuDoSeries({ loai, points }: { loai: LoaiTieuThu; points: ThongTinTie
         chonKhoa={khoaDangChon}
         onChon={setChonKhoa}
         mau={config.mau}
-        ariaLabel={`Biểu đồ ${config.tieuDe.toLowerCase()} theo kỳ, đơn vị ${donVi}`}
+        ariaLabel={`Biểu đồ ${config.tieuDe.toLowerCase()} theo tháng, đơn vị ${donVi}`}
         cotProps={(c) => ({ 'data-consumption-bar': `${loai}-${c.khoa}`, 'data-consumption-selected': c.khoa === khoaDangChon ? 'true' : 'false' })}
       />
 
       <div className="card-sunken" role="status" aria-live="polite" style={{ display: 'grid', gap: 2 }}>
-        <span className="t-meta">{chonKhoa === null ? 'Kỳ gần nhất' : 'Kỳ đang chọn'}</span>
-        <b style={{ font: '600 17px/1.3 var(--ma-font-ui)' }}>{diemDangChon ? moTaDiem(diemDangChon, donVi) : ''}</b>
-        <span className="t-meta">Chạm một cột để xem số chính xác của kỳ đó.</span>
+        <span className="t-meta">{chonKhoa === null ? 'Tháng gần nhất' : 'Tháng đang chọn'}</span>
+        <b style={{ font: 'var(--ma-text-figure-sm)' }}>{diemDangChon ? moTaDiem(diemDangChon, donVi) : ''}</b>
+        <span className="t-meta">Chạm một cột để xem số chính xác của tháng đó.</span>
       </div>
 
       <div data-consumption-table style={{ overflowX: 'auto' }}>
-        <table className="table" aria-label={`Bảng ${config.tieuDe.toLowerCase()} theo kỳ`}>
-          <caption className="sr-only">Bảng số liệu {config.tieuDe.toLowerCase()} theo kỳ</caption>
+        <table className="table" aria-label={`Bảng ${config.tieuDe.toLowerCase()} theo tháng`}>
+          <caption className="sr-only">Bảng số liệu {config.tieuDe.toLowerCase()} theo tháng</caption>
           <thead>
             <tr>
-              <th scope="col">Kỳ / phòng</th>
+              <th scope="col">Tháng / phòng</th>
               <th scope="col" className="num">Tiêu thụ ({donVi}) · chỉ số</th>
             </tr>
           </thead>
@@ -202,7 +202,7 @@ function hienThiGiaTri(point: ThongTinTieuThu, donVi: string) {
 }
 
 function nhanKy(point: ThongTinTieuThu) {
-  return `Kỳ ${String(point.thang).padStart(2, '0')}/${point.nam}`
+  return `Tháng ${point.thang}/${point.nam}`
 }
 
 function nhanNgan(point: ThongTinTieuThu) {
