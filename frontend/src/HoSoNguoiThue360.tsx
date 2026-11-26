@@ -1,24 +1,31 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
-import { fetchChiSoDichVu, fetchHoaDonQuanLy, fetchHopDongQuanLy, fetchKyThanhToan, type ThongTinHoaDonQuanLy, type ThongTinHopDong, type ThongTinKyThanhToan, type ThongTinToaNha, type ThongTinYeuCauSuaChua } from './api'
+import { fetchHoaDonQuanLy, fetchHopDongQuanLy, fetchKyThanhToan, type ThongTinHoaDonQuanLy, type ThongTinHopDong, type ThongTinKyThanhToan, type ThongTinToaNha, type ThongTinYeuCauSuaChua } from './api'
 import { chuCaiDau } from './bangQuanTriChung'
 import { Icon } from './design/core/Icon'
 import { StatusTag } from './design/core/StatusTag'
-import { dinhDangNgayIso, dinhDangSo, dinhDangTien } from './design/core/format'
+import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Card } from './design/layout/Card'
 import { Breadcrumb } from './design/shell/Breadcrumb'
+import { Button } from './design/core/Button'
 import type { TrangProps } from './dinhTuyen'
 import { getLedger, type LedgerEntry } from './financeApi'
 import { NganFormNguoiThue } from './HoSoNguoiThue'
 import { managementRequest, type Tenant } from './managementApi'
 import { today, useBuildings } from './ManagementShared'
-import { tuHoaDonQuanLy, type DongNo } from './nhomNoTheoNguoi'
+import { nhomNo, tuHoaDonQuanLy, type DongNo } from './nhomNoTheoNguoi'
+import { DauTrang } from './design/layout/DauTrang'
+import { KhoiSo } from './design/layout/KhoiSo'
+import { ChanDinh } from './design/layout/ChanDinh'
+import { HangTong } from './design/table/HangTong'
+import { NhanMinhHoa } from './design/feedback/NhanMinhHoa'
+import { NganNhacNo } from './design/money/NganNhacNo'
+import { dinhDangSdt, nhanThang } from './tienTheoNguoi'
 import './HoSoNguoiPhong.css'
 
 type NguoiDayDu = Tenant & { loaiGiayTo?: string; diaChiThuongTru?: string; diaChiLienHe?: string; email?: string }
 export type HopDongToa = ThongTinHopDong & { toaNhaId: number; tenToa: string }
 export type HoaDonHoSo = ThongTinHoaDonQuanLy & { toaNhaId: number; kyNhan: string }
-type LanDien = { nhan: string; kwh: number }
 type NoKy = DongNo & { kyNhan: string }
 export type HoatDong = { ngay: string; cham: 'ok' | 'warn' | 'red' | ''; noiDung: ReactNode }
 type DuLieu = {
@@ -27,7 +34,6 @@ type DuLieu = {
   hoaDon: HoaDonHoSo[]
   no: NoKy[]
   suCo: ThongTinYeuCauSuaChua[]
-  dien: LanDien[]
   thanhToan: LedgerEntry | null
   khongTai: string[]
 }
@@ -66,10 +72,10 @@ export function trangThaiHoaDon(r: Pick<ThongTinHoaDonQuanLy, 'trangThai' | 'daT
 export function BangHoaDon({ rows, hienNguoi = false }: { rows: HoaDonHoSo[]; hienNguoi?: boolean }) {
   return (
     <div className="table-wrap table-wrap-cards"><table className="table table-cards">
-      <thead><tr><th scope="col">Kỳ</th>{hienNguoi ? <th scope="col">Người thuê</th> : null}<th scope="col">Hạn</th><th scope="col" className="num">Đã thu</th><th scope="col" className="num">Còn lại</th><th scope="col">Trạng thái</th></tr></thead>
+      <thead><tr><th scope="col">Tháng</th>{hienNguoi ? <th scope="col">Người thuê</th> : null}<th scope="col">Hạn</th><th scope="col" className="num">Đã thu</th><th scope="col" className="num">Còn lại</th><th scope="col">Trạng thái</th></tr></thead>
       <tbody>{rows.map((r) => (
         <tr key={r.hoaDonId}>
-          <td data-label="Kỳ" data-the="tieu-de" className="td-main"><a className="hs-hang-link" href={`/hoa-don?toaNhaId=${r.toaNhaId}${r.kyId ? `&kyId=${r.kyId}` : ''}&hoaDonId=${r.hoaDonId}`}>{r.kyNhan}</a></td>
+          <td data-label="Tháng" data-the="tieu-de" className="td-main"><a className="hs-hang-link" href={`/hoa-don?toaNhaId=${r.toaNhaId}${r.kyId ? `&kyId=${r.kyId}` : ''}&hoaDonId=${r.hoaDonId}`}>{nhanThang(r)}</a></td>
           {hienNguoi ? <td data-label="Người thuê">{r.nguoiThue}</td> : null}
           <td data-label="Hạn">{dinhDangNgayIso(r.hanThanhToan)}</td>
           <td data-label="Đã thu" className="num">{tien(r.daThu)}</td>
@@ -88,7 +94,7 @@ export function KhoiSuCo({ rows, tieuDe = 'Sự cố của phòng' }: { rows: Th
     <section className="card" aria-labelledby="hs-su-co">
       <div className="blk-h"><h2 id="hs-su-co">{tieuDe}</h2><span className="t-meta">{mo.length} đang mở · {rows.length - mo.length} đã xong</span><a className="link-more brand push" href="/su-co">Mở Sự cố</a></div>
       <div style={{ margin: '4px -24px -8px' }}>
-        {hien.length === 0 ? <p className="t-sm t-2" style={{ padding: '0 24px 12px' }}>Chưa có sự cố nào.</p> : hien.map((s) => (
+        {hien.length === 0 ? <p className="t-sm t-2" style={{ padding: '0 24px 12px' }}>Phòng này chưa báo hỏng lần nào.</p> : hien.map((s) => (
           <a key={s.id} className="irow" href={`/su-co?yeuCauId=${s.id}`}>
             <div className="body"><div className="t">{s.hangMuc}</div><div className="s">{s.maYeuCau} · báo {dinhDangNgayIso(s.taoLuc.slice(0, 10))}</div></div>
             <StatusTag tone={SU_CO_DONG.includes(s.trangThai) ? 'closed' : s.trangThai === 'DANG_XU_LY' ? 'strong' : 'waiting'}>{s.tenTrangThai ?? s.trangThai}</StatusTag>
@@ -147,14 +153,8 @@ async function taiHoSo(token: string, id: number, toa: ThongTinToaNha[], homNay:
   const hd0 = hopDong[0]
   const khongTai: string[] = []
   const phu = async <T,>(ten: string, viec: Promise<T>, macDinh: T) => { try { return await viec } catch { khongTai.push(ten); return macDinh } }
-  const kyCuaToa = hd0 ? theoToa.find((x) => x.t.id === hd0.toaNhaId)?.ky ?? [] : []
-  const [suCo, dien, thanhToan] = await Promise.all([
+  const [suCo, thanhToan] = await Promise.all([
     hd0 ? phu('sự cố', managementRequest<ThongTinYeuCauSuaChua[]>(token, `/api/yeu-cau-sua-chua?toaNhaId=${hd0.toaNhaId}`).then((rows) => rows.filter((s) => s.phongId === hd0.phongId)), [] as ThongTinYeuCauSuaChua[]) : [],
-    // Điện: 4 kỳ đã chốt gần nhất của phòng đang ở (GET chỉ số theo kỳ, quản lý cũng đọc được).
-    hd0 ? phu('điện', Promise.all(kyCuaToa.filter((k) => k.trangThai === 'DA_CHOT').slice(0, 4).map(async (k) => {
-      const dv = (await fetchChiSoDichVu(token, hd0.toaNhaId, k.id)).phong.find((p) => p.id === hd0.phongId)?.dichVu.find((d) => d.donVi === 'kWh')
-      return dv?.mucTieuThu ? { nhan: `Kỳ ${kyNhanCua(k)}`, kwh: Number(dv.mucTieuThu) } : null
-    })).then((l) => l.filter((x): x is LanDien => x !== null).reverse()), [] as LanDien[]) : [],
     (async () => {
       const gan = hoaDon.filter((h) => Number(h.daThu) > 0)[0] // hoaDon đã xếp hạn mới nhất trước
       if (!gan) return null
@@ -162,7 +162,7 @@ async function taiHoSo(token: string, id: number, toa: ThongTinToaNha[], homNay:
       return l?.giaoDich.filter((g) => g.loai === 'THU' && g.ngayThu).sort((a, b) => String(b.ngayThu).localeCompare(String(a.ngayThu)))[0] ?? null
     })(),
   ])
-  return { nguoi, hopDong, hoaDon, no, suCo, dien, thanhToan, khongTai }
+  return { nguoi, hopDong, hoaDon, no, suCo, thanhToan, khongTai }
 }
 
 function MenuThem({ nhan, muc }: { nhan: string; muc: Array<{ nhan: string; href?: string; chay?: () => void }> }) {
@@ -202,10 +202,33 @@ export function ThanhThoiHan({ hd }: { hd: Pick<ThongTinHopDong, 'ngayBatDau' | 
   return <div className="progress" style={{ marginTop: 14 }} role="img" aria-label={`Đã qua ${p}% thời hạn`}><span style={{ width: `${p}%` }} /></div>
 }
 
+/** Bảng "Hoá đơn chưa trả đủ" của một người: tháng cũ trước, hàng Cộng. Dùng `no` (đã gộp theo người) nên không cần gọi thêm API. */
+function BangNoNguoi({ no }: { no: NoKy[] }) {
+  if (no.length === 0) return <p className="t-sm t-2 hs-trong">Không còn hoá đơn nào chưa trả đủ.</p>
+  const cong = (k: 'tongTien' | 'daThu' | 'conLai') => tien(no.reduce((t, d) => t + d[k], 0))
+  return (
+    <div className="table-wrap table-wrap-cards"><table className="table table-cards">
+      <thead><tr><th scope="col">Tháng</th><th scope="col">Hạn trả</th><th scope="col" className="num">Phải trả</th><th scope="col" className="num">Đã trả</th><th scope="col" className="num">Còn nợ</th><th scope="col" className="num">Trễ</th></tr></thead>
+      <tbody>{no.map((d) => (
+        <tr key={d.hoaDonId}>
+          <td data-label="Tháng" data-the="tieu-de" className="td-main"><a className="hs-hang-link" href={`/hoa-don?toaNhaId=${d.toaNhaId}${d.kyId ? `&kyId=${d.kyId}` : ''}&hoaDonId=${d.hoaDonId}`}>{nhanThang(d)}</a></td>
+          <td data-label="Hạn trả">{dinhDangNgayIso(d.hanThanhToan.slice(0, 10))}</td>
+          <td data-label="Phải trả" className="num">{tien(d.tongTien)}</td>
+          <td data-label="Đã trả" className="num">{tien(d.daThu)}</td>
+          <td data-label="Còn nợ" className="num t-danger">{tien(d.conLai)}</td>
+          <td data-label="Trễ" className={`num${d.soNgayQuaHan > 0 ? ' t-danger' : ''}`}>{d.soNgayQuaHan > 0 ? `${d.soNgayQuaHan} ngày` : '—'}</td>
+        </tr>
+      ))}</tbody>
+      <tfoot><HangTong o={['Cộng', '', cong('tongTien'), cong('daThu'), cong('conLai'), '']} canhPhai={[2, 3, 4, 5]} /></tfoot>
+    </table></div>
+  )
+}
+
 export default function HoSoNguoiThue360({ token, mobile, thamSo }: TrangProps) {
   const id = Number(thamSo.id)
   const { buildings } = useBuildings(token)
   const [dangSua, setDangSua] = useState(false)
+  const [dangNhac, setDangNhac] = useState(false)
   const tabQuery = new URLSearchParams(window.location.search).get('tab')
   const tab = TAB.some(([k]) => k === tabQuery) ? tabQuery! : 'tong-quan'
   const { du, loi, lai } = useTai(() => taiHoSo(token, id, buildings, today()), `${token}|${id}|${buildings.map((b) => b.id).join(',')}`, buildings.length > 0)
@@ -213,42 +236,40 @@ export default function HoSoNguoiThue360({ token, mobile, thamSo }: TrangProps) 
   if (!Number.isSafeInteger(id) || id <= 0) return <EmptyState kind="error" title="Không có người thuê này" body="Đường dẫn không đúng. Dữ liệu chưa bị thay đổi." />
   if (!du) return <section className="hs-khoi"><Breadcrumb items={[{ nhan: 'Người thuê', href: '/nguoi-thue' }, 'Đang tải…']} /><TrangThaiTai loi={loi} lai={lai} ten="hồ sơ người thuê" /></section>
 
-  const { nguoi, hopDong, hoaDon, no, suCo, dien, thanhToan } = du
+  const { nguoi, hopDong, hoaDon, no, suCo } = du
   const hd0 = hopDong[0]
   const dangThue = hd0?.trangThai === 'HIEU_LUC'
   const tongNo = no.reduce((t, d) => t + d.conLai, 0)
-  const suCoMo = suCo.filter((s) => !SU_CO_DONG.includes(s.trangThai))
+  const noCu = [...no].sort((a, b) => a.hanThanhToan.localeCompare(b.hanThanhToan))
+  const nhom = nhomNo(no)[0]
   const tabHref = (k: string) => `/nguoi-thue/${id}${k === 'tong-quan' ? '' : `?tab=${k}`}`
   const dem: Record<string, number | undefined> = { 'hoa-don': hoaDon.length, 'hop-dong': hopDong.length, 'su-co': suCo.length }
-  const nutChinh = <a className="btn btn-primary" href={`/thu-tien?nguoiThueId=${id}`}><Icon name="wallet" />Ghi nhận thu tiền</a>
-  const sdt = nguoi.soDienThoai.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3')
+  // Nút chính duy nhất, chỉ khi còn nợ; < 768 nằm ở chân dính.
+  const nutChinh = tongNo > 0 ? <a className="btn btn-primary" href={`/thu-tien?nguoiThueId=${id}`}>Ghi thu {tien(tongNo)}</a> : null
+  const sdt = dinhDangSdt(nguoi.soDienThoai)
 
-  const tienKhoi = (tatCa: boolean) => (
+  const noKhoi = (
     <section className="card" aria-labelledby="hs-tien">
-      <div className="blk-h"><h2 id="hs-tien">{tatCa ? 'Hoá đơn' : 'Tiền'}</h2>{tatCa ? null : <a className="link-more brand push" href={tabHref('hoa-don')}>Tất cả hoá đơn</a>}</div>
-      {tongNo > 0 ? (
-        <div className="hs-so" style={{ margin: '6px 0 10px' }}>
-          <div><div className="t-meta">Còn nợ</div><div className="bignum t-danger">{tien(tongNo)}</div></div>
-          <div><div className="t-meta">Kỳ chưa trả đủ</div><div className="bignum">{no.length}</div></div>
-          <div><div className="t-meta">Trễ lâu nhất</div><div className="bignum">{Math.max(...no.map((d) => d.soNgayQuaHan))} ngày</div></div>
-        </div>
-      ) : <p className="t-sm t-2 hs-trong">Không còn khoản nợ nào.</p>}
-      {tatCa ? (hoaDon.length ? <BangHoaDon rows={hoaDon} /> : <p className="t-sm t-2">Chưa có hoá đơn nào.</p>)
-        : no.length ? <BangHoaDon rows={hoaDon.filter((h) => Number(h.conLai) > 0 && h.trangThai !== 'DA_HUY').reverse()} /> : null}
+      <div className="blk-h"><h2 id="hs-tien">Hoá đơn chưa trả đủ</h2><a className="link-more brand push" href={`/thu-tien?xem=${id}`}>Mọi hoá đơn →</a></div>
+      <BangNoNguoi no={noCu} />
+    </section>
+  )
+  const hoaDonTab = (
+    <section className="card" aria-labelledby="hs-tien">
+      <div className="blk-h"><h2 id="hs-tien">Hoá đơn</h2></div>
+      {hoaDon.length ? <BangHoaDon rows={hoaDon} /> : <p className="t-sm t-2">Người này chưa có hoá đơn nào.</p>}
     </section>
   )
   const hopDongKhoi = (
     <section className="card" aria-labelledby="hs-hop-dong">
-      <div className="blk-h"><h2 id="hs-hop-dong">{hd0 ? `Hợp đồng #${hd0.id}` : 'Hợp đồng'}</h2>{hd0 ? <StatusTag tone={dangThue ? 'done' : 'neutral'}>{hd0.tenTrangThai}</StatusTag> : null}{hd0 ? <a className="link-more brand push" href={`/hop-dong/${hd0.id}`}>Mở hợp đồng</a> : null}</div>
-      {hd0 ? (<>
-        <div className="hs-so" style={{ marginTop: 6 }}>
-          <div><div className="t-meta">Thời hạn</div><div className="t-strong">{dinhDangNgayIso(hd0.ngayBatDau)} – {dinhDangNgayIso(hd0.ngayKetThuc)}</div></div>
-          <div><div className="t-meta">Còn lại</div><div className="t-strong">{hd0.soNgayConLai} ngày</div></div>
-          <div><div className="t-meta">Giá thuê</div><div className="t-strong">{tien(hd0.giaThue)}/tháng</div></div>
-          <div><div className="t-meta">Tiền cọc</div><div className="t-strong">{tien(hd0.tienCoc)}</div></div>
-        </div>
-        <ThanhThoiHan hd={hd0} />
-      </>) : <p className="t-sm t-2">Chưa có hợp đồng nào.</p>}
+      <div className="blk-h"><h2 id="hs-hop-dong">Hợp đồng</h2>{hd0 ? <a className="link-more brand push" href={`/hop-dong/${hd0.id}`}>Mở →</a> : null}</div>
+      {hd0 ? (
+        <dl className="kv" style={{ marginTop: 8 }}>
+          <dt>Thời hạn</dt><dd>{dinhDangNgayIso(hd0.ngayBatDau)} – {dinhDangNgayIso(hd0.ngayKetThuc)}</dd>
+          <dt>Báo trước khi trả phòng</dt><dd>{hd0.soNgayBaoTruoc} ngày</dd>
+          <dt>Trạng thái</dt><dd><StatusTag tone={dangThue ? 'done' : 'neutral'}>{hd0.tenTrangThai}</StatusTag></dd>
+        </dl>
+      ) : <p className="t-sm t-2">Người này chưa có hợp đồng. Tạo hợp đồng ở màn Hợp đồng.</p>}
     </section>
   )
   const lienHe = (
@@ -258,67 +279,59 @@ export default function HoSoNguoiThue360({ token, mobile, thamSo }: TrangProps) 
         <dt>Điện thoại</dt><dd>{sdt}</dd>
         {nguoi.email ? <><dt>Email</dt><dd>{nguoi.email}</dd></> : null}
         <dt>Ngày sinh</dt><dd>{dinhDangNgayIso(nguoi.ngaySinh)}</dd>
-        <dt>Giấy tờ</dt><dd>{[nguoi.loaiGiayTo, nguoi.soGiayToChe].filter(Boolean).join(' ') || 'Chưa cập nhật'}</dd>
-        {nguoi.diaChiThuongTru ? <><dt>Thường trú</dt><dd>{nguoi.diaChiThuongTru}</dd></> : null}
         <dt>Quê quán</dt><dd>{nguoi.queQuan || 'Chưa cập nhật'}</dd>
+        <dt>Số CCCD</dt><dd>{[nguoi.loaiGiayTo, nguoi.soGiayToChe].filter(Boolean).join(' ') || 'Chưa cập nhật'}</dd>
       </dl>
     </section>
   )
-  const dienKhoi = dien.length ? (
-    <section className="card" aria-labelledby="hs-dien">
-      <div className="blk-h"><h2 id="hs-dien">Điện {dien.length} kỳ gần nhất</h2></div>
-      <div className="hbars" style={{ marginTop: 8 }}>{dien.map((d) => (
-        <div className="hbar" key={d.nhan}><span className="hbar-label">{d.nhan}</span><span className="hbar-value">{dinhDangSo(d.kwh)} kWh</span><div className="hbar-track"><div className="hbar-fill" style={{ width: `${(d.kwh / Math.max(...dien.map((x) => x.kwh), 1)) * 100}%` }} /></div></div>
-      ))}</div>
+  const ghiChu = (
+    <section className="card" aria-labelledby="hs-ghi-chu">
+      <div className="blk-h"><h2 id="hs-ghi-chu">Ghi chú liên hệ</h2><NhanMinhHoa>cần backend</NhanMinhHoa></div>
+      <p className="t-sm t-2" style={{ marginTop: 8 }}>Chưa lưu được ghi chú. Sau mỗi lần gọi hay nhắc, ghi một dòng để người sau biết đã hẹn gì.</p>
     </section>
-  ) : null
+  )
   const giayTo = (
     <section className="card" aria-labelledby="hs-giay-to">
       <div className="blk-h"><h2 id="hs-giay-to">Giấy tờ & cư trú</h2></div>
       {nguoi.canhBao.length ? <div className="row-wrap" style={{ margin: '8px 0' }}>{nguoi.canhBao.map((c) => <StatusTag key={c} tone="waiting">{c}</StatusTag>)}</div> : <p className="t-sm t-2" style={{ margin: '8px 0' }}>Giấy tờ đã đủ, không có cảnh báo.</p>}
       <div className="row-wrap">
-        <button type="button" className="btn btn-secondary" onClick={() => setDangSua(true)}><Icon name="image" />Sửa hồ sơ và ảnh giấy tờ</button>
-        <a className="btn btn-secondary" href="/cu-tru"><Icon name="users" />Khai báo cư trú</a>
+        <Button variant="secondary" onClick={() => setDangSua(true)}>Sửa hồ sơ và ảnh giấy tờ</Button>
+        <a className="btn btn-secondary" href="/cu-tru">Khai báo cư trú</a>
       </div>
     </section>
   )
-  const hoatDong = <KhoiHoatDong muc={dungHoatDong({ suCo, thanhToan, no, hopDong: hopDong.find((h) => h.trangThai === 'HIEU_LUC') ?? hd0 })} />
-  const trai = tab === 'hoa-don' ? tienKhoi(true) : tab === 'hop-dong' ? (hopDong.length ? <>{hopDong.map((h) => <ThuHopDong key={h.id} h={h} />)}</> : hopDongKhoi) : tab === 'su-co' ? <KhoiSuCo rows={suCo} /> : tab === 'giay-to' ? giayTo
-    : <>{tienKhoi(false)}{hopDongKhoi}<KhoiSuCo rows={suCo} />{hoatDong}</>
+  const trai = tab === 'hoa-don' ? hoaDonTab : tab === 'hop-dong' ? (hopDong.length ? <>{hopDong.map((h) => <ThuHopDong key={h.id} h={h} />)}</> : hopDongKhoi) : tab === 'su-co' ? <KhoiSuCo rows={suCo} tieuDe="Sự cố đã báo" /> : tab === 'giay-to' ? giayTo : noKhoi
+  const phai = <>{lienHe}{hopDongKhoi}<KhoiSuCo rows={suCo} tieuDe="Sự cố đã báo" />{ghiChu}</>
 
   return (
-    <section className={`hs-khoi${mobile ? ' hs-pad-sticky' : ''}`} style={{ minWidth: 0 }}>
-      <Breadcrumb items={[{ nhan: 'Người thuê', href: '/nguoi-thue' }, nguoi.hoTen]} />
-      <div className="prof">
-        <span className={`avatar xl h${(id % 5) + 1}`} aria-hidden="true">{chuCaiDau(nguoi.hoTen)}</span>
-        <div className="grow">
-          <h1 className="h1">{nguoi.hoTen}</h1>
-          <div className="meta">
-            {hd0 ? <span><Icon name="door" size="sm" />{hd0.tenToa} · Phòng {hd0.soPhong}</span> : null}
-            <span><Icon name="phone" size="sm" />{sdt}</span>
-            {nguoi.queQuan ? <span><Icon name="pin" size="sm" />{nguoi.queQuan}</span> : null}
-          </div>
-          <div className="tags">
-            {hd0 ? <StatusTag tone={dangThue ? 'done' : 'neutral'}>{dangThue ? 'Đang thuê' : hd0.tenTrangThai}</StatusTag> : <StatusTag tone="neutral">Chưa có hợp đồng</StatusTag>}
-            {tongNo > 0 ? <StatusTag tone="urgent">Nợ {tien(tongNo)}</StatusTag> : <StatusTag tone="done">Không nợ</StatusTag>}
-            {suCoMo.length ? <StatusTag tone="waiting" icon="wrench">{suCoMo.length} sự cố đang mở</StatusTag> : null}
-          </div>
-        </div>
-        <div className="ph-acts">
-          <a className="btn btn-secondary" href={`tel:${nguoi.soDienThoai}`}><Icon name="phone" />Gọi</a>
+    <section className={`hs-khoi${mobile && nutChinh ? ' hs-pad-sticky' : ''}`} style={{ minWidth: 0 }}>
+      <DauTrang
+        vet={[{ nhan: 'Người thuê', href: '/nguoi-thue' }, { nhan: nguoi.hoTen, href: `/nguoi-thue/${id}` }]}
+        tieuDe={nguoi.hoTen}
+        phu={hd0 ? `Phòng ${hd0.soPhong} · ${hd0.tenToa} · thuê từ ${dinhDangNgayIso(hd0.ngayBatDau)}` : 'Chưa có hợp đồng'}
+        hanhDong={<>
+          <a className="btn btn-secondary" href={`tel:${nguoi.soDienThoai}`}>{sdt}</a>
+          {!mobile && nhom ? <Button variant="secondary" onClick={() => setDangNhac(true)}>Nhắc qua Zalo</Button> : null}
           {mobile ? null : nutChinh}
           <MenuThem nhan="Thao tác khác: sửa hồ sơ, khai báo cư trú, ảnh giấy tờ" muc={[{ nhan: 'Sửa hồ sơ', chay: () => setDangSua(true) }, { nhan: 'Khai báo cư trú', href: '/cu-tru' }, { nhan: 'Ảnh giấy tờ', chay: () => setDangSua(true) }]} />
-        </div>
-      </div>
-      {du.khongTai.length ? <p className="banner banner-info" role="status"><Icon name="info" />Chưa tải được: {du.khongTai.join(', ')}. Phần còn lại vẫn đúng.</p> : null}
+        </>}
+      />
+      <KhoiSo so={[
+        { nhan: 'Còn nợ', giaTri: tien(tongNo), tone: tongNo > 0 ? 'no' : 'thuong', phu: tongNo > 0 ? `${no.length} tháng chưa trả đủ, cũ nhất hạn ${dinhDangNgayIso(noCu[0].hanThanhToan.slice(0, 10))}` : 'Đã trả đủ mọi hoá đơn' },
+        { nhan: 'Tiền phòng', giaTri: hd0 ? tien(hd0.giaThue) : '—', donVi: hd0 ? '/ tháng' : undefined },
+        { nhan: 'Cọc đang giữ', giaTri: hd0 ? tien(hd0.tienCoc) : '—' },
+        { nhan: 'Hợp đồng', giaTri: dangThue ? `còn ${hd0.soNgayConLai} ngày` : hd0?.tenTrangThai ?? '—', phu: hd0 ? `đến ${dinhDangNgayIso(hd0.ngayKetThuc)}` : undefined },
+      ]} />
+      {du.khongTai.length ? <p className="banner banner-info" role="status"><Icon name="info" />Chưa tải được: {du.khongTai.join(', ')}. Phần còn lại vẫn đúng. <button type="button" className="nt-phu-nut" onClick={lai}>Tải lại</button></p> : null}
       <nav className="tabs" aria-label="Các phần của hồ sơ">
         {TAB.map(([k, nhan]) => <a key={k} className="tab" href={tabHref(k)} aria-current={tab === k ? 'page' : undefined}>{nhan}{dem[k] !== undefined ? <span className="n">{dem[k]}</span> : null}</a>)}
       </nav>
       <div className="cols">
         <div className="side">{trai}</div>
-        <div className="side">{lienHe}{dienKhoi}</div>
+        <div className="side">{phai}</div>
       </div>
-      {mobile ? <div className="sticky-act">{nutChinh}</div> : null}
+      {mobile && nutChinh ? <ChanDinh>{nutChinh}</ChanDinh> : null}
+      {dangNhac && nhom ? <NganNhacNo nhom={nhom} sdt={nguoi.soDienThoai} hanTra={dinhDangNgayIso(today())} onDong={() => setDangNhac(false)} /> : null}
       {dangSua ? <NganFormNguoiThue token={token} id={id} onSaved={lai} onClose={() => setDangSua(false)} /> : null}
     </section>
   )
