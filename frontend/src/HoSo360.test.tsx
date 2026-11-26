@@ -70,7 +70,7 @@ describe('Hồ sơ người thuê 360°', () => {
     expect(tab('Sự cố').textContent).toContain('2')
     // bảng nợ có hàng Cộng; khối Điện nước ẩn (không có API điện nước theo phòng cho Chủ/QL)
     expect(container.querySelector('tfoot.ma-tong, tfoot .ma-tong')?.textContent).toContain('3.790.000 ₫')
-    expect(container.textContent).not.toContain('Điện')
+    expect(container.textContent).not.toContain('Điện nước')
     expect(container.textContent).toContain('Ghi chú liên hệ')
     expect(container.querySelector('.ma-nhanmh')?.textContent).toBe('cần backend')
     expect(container.querySelector('textarea, [contenteditable]')).toBeNull()
@@ -90,7 +90,7 @@ describe('Hồ sơ người thuê 360°', () => {
 
   it('đúng một nút chính, trỏ tới Thu tiền của người này; Gọi là liên kết tel:', async () => {
     await render(hoSoNguoi(), mayChu())
-    await vi.waitFor(() => expect(container.querySelector('.prof')).not.toBeNull())
+    await vi.waitFor(() => expect(container.querySelector('.ma-dautrang')).not.toBeNull())
     const chinh = container.querySelectorAll('.btn-primary')
     expect(chinh).toHaveLength(1)
     expect(chinh[0].getAttribute('href')).toBe('/thu-tien?nguoiThueId=1')
@@ -123,7 +123,7 @@ describe('Hồ sơ người thuê 360°', () => {
 
   it('điện thoại: nút chính chuyển xuống thanh dính đáy, vẫn chỉ một nút chính', async () => {
     await render(hoSoNguoi({ mobile: true }), mayChu())
-    await vi.waitFor(() => expect(container.querySelector('.prof')).not.toBeNull())
+    await vi.waitFor(() => expect(container.querySelector('.ma-dautrang')).not.toBeNull())
     expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
     expect(container.querySelector('.ma-chandinh .btn-primary')).not.toBeNull()
   })
