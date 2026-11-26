@@ -558,3 +558,17 @@ th[aria-sort] .th-sort { color: var(--ma-text-primary); font-weight: 600; }
 .crumb a, .crumbs a { color: var(--ma-text-secondary); }
 .nav-item[aria-current="page"] { box-shadow: none; }
 .tag[style*="background"] { padding: 2px 8px; border-radius: 6px; }
+
+/* ---------- Mật độ thoang (Người thuê, Thợ): chữ nhỏ nhất 16, chạm ≥ 44 ở mọi bề rộng (V3 §2) ---------- */
+[data-density="thoang"] .btn, [data-density="thoang"] .seg-links a { font: var(--ma-text-body); font-weight: 500; }
+[data-density="thoang"] .btn-primary { font-weight: 600; }
+[data-density="thoang"] .label { font: var(--ma-text-body-sm); font-weight: 500; }
+[data-density="thoang"] .irow .t { font: var(--ma-text-task-name); }
+[data-density="thoang"] .irow .money { font: var(--ma-text-figure-sm); }
+[data-density="thoang"] .tab { font: var(--ma-text-body-sm); font-weight: 500; }
+[data-density="thoang"] .tab[aria-selected="true"], [data-density="thoang"] .tab[aria-current="page"] { font-weight: 600; }
+[data-density="thoang"] .tab .n, [data-density="thoang"] .nav-item .count, [data-density="thoang"] .bottom-nav .count { font: var(--ma-text-badge); font-weight: 600; }
+[data-density="thoang"] .chuong-n { font: var(--ma-text-badge); font-weight: 600; line-height: 22px; min-width: 22px; height: 22px; border-radius: 11px; }
+[data-density="thoang"] .nav-item, [data-density="thoang"] .sb-sub .nav-item { min-height: 44px; font: var(--ma-text-body-sm); font-weight: 500; }
+[data-density="thoang"] .nav-item[aria-current="page"] { font-weight: 600; }
+[data-density="thoang"] .sb-label, [data-density="thoang"] .bottom-nav a { font-size: 16px; }
