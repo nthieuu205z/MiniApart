@@ -44,3 +44,15 @@ tr.nt-hang { cursor: pointer; }
   .prof .ph-acts .hs-menu { flex: none; }
   .hs-menu-list { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; }
 }
+
+/* Danh sách người thuê (V3) */
+.nt-phu-nut { display: inline-flex; align-items: center; min-height: var(--ma-control-h-sm); font: inherit; font-weight: 600; color: var(--ma-text-link); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.nt-phu-nut:hover { text-decoration: underline; }
+.nt-ten { display: inline-flex; align-items: center; gap: 10px; font-weight: 500; min-height: var(--ma-control-h-sm); }
+.nt-phu { display: block; font-size: 13px; color: var(--ma-text-secondary); }
+.nt-cho { color: var(--ma-waiting); }
+.nt-no { color: var(--ma-urgent); font-weight: 600; }
+@media (max-width: 767px) {
+  .nt-ten .avatar { display: none; }
+  .table.table-cards tbody td[data-label="Điện thoại"], .table.table-cards tbody td[data-label="Thuê đến"], .table.table-cards tbody td[data-the="hanh-dong"] { display: none; }
+}

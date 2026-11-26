@@ -59,17 +59,21 @@ describe('Hồ sơ người thuê 360°', () => {
   it('tiêu đề, thẻ nợ đúng tổng, đếm hoá đơn/hợp đồng/sự cố và chỉ lấy dữ liệu của chính người đó', async () => {
     await render(hoSoNguoi(), mayChu())
     await vi.waitFor(() => expect(container.querySelector('h1')?.textContent).toBe('Trần Quang Huy'))
-    const tags = container.querySelector('.prof .tags')!.textContent!
-    expect(tags).toContain('Đang thuê')
-    expect(tags).toContain('Nợ 3.790.000 ₫') // hai kỳ, mỗi kỳ còn 1.895.000; hoá đơn của người khác không tính
-    expect(tags).toContain('1 sự cố đang mở') // sự cố phòng khác và sự cố đã đóng không tính
+    const so = container.querySelector('.ma-khoiso')!.textContent!
+    expect(so).toContain('3.790.000 ₫') // hai tháng, mỗi tháng còn 1.895.000; hoá đơn của người khác không tính
+    expect(so).toContain('2 tháng chưa trả đủ, cũ nhất hạn 05/07/2026')
+    expect(container.querySelector('.ma-dautrang-phu')?.textContent).toBe('Phòng 101 · An Nhiên Residence · thuê từ 01/05/2026')
+    expect(container.querySelector('.ma-oso.no')).not.toBeNull()
     const tab = (t: string) => [...container.querySelectorAll('nav.tabs a')].find((a) => a.textContent!.startsWith(t))!
     expect(tab('Hoá đơn').textContent).toContain('2')
     expect(tab('Hợp đồng').textContent).toContain('1')
     expect(tab('Sự cố').textContent).toContain('2')
-    expect(container.textContent).toContain('Hoá đơn kỳ 08/2026 quá hạn')
-    expect(container.textContent).toContain('Thu 1.895.000 ₫ chuyển khoản · biên lai TT-1')
-    expect(container.textContent).toContain('Điện 1 kỳ gần nhất')
+    // bảng nợ có hàng Cộng; khối Điện nước ẩn (không có API điện nước theo phòng cho Chủ/QL)
+    expect(container.querySelector('tfoot.ma-tong, tfoot .ma-tong')?.textContent).toContain('3.790.000 ₫')
+    expect(container.textContent).not.toContain('Điện nước')
+    expect(container.textContent).toContain('Ghi chú liên hệ')
+    expect(container.querySelector('.ma-nhanmh')?.textContent).toBe('cần backend')
+    expect(container.querySelector('textarea, [contenteditable]')).toBeNull()
     chuaGoiCongNo()
   })
 
@@ -86,18 +90,42 @@ describe('Hồ sơ người thuê 360°', () => {
 
   it('đúng một nút chính, trỏ tới Thu tiền của người này; Gọi là liên kết tel:', async () => {
     await render(hoSoNguoi(), mayChu())
-    await vi.waitFor(() => expect(container.querySelector('.prof')).not.toBeNull())
+    await vi.waitFor(() => expect(container.querySelector('.ma-dautrang')).not.toBeNull())
     const chinh = container.querySelectorAll('.btn-primary')
     expect(chinh).toHaveLength(1)
     expect(chinh[0].getAttribute('href')).toBe('/thu-tien?nguoiThueId=1')
-    expect(container.querySelector('a[href="tel:0999100001"]')?.textContent).toContain('Gọi')
+    expect(chinh[0].textContent).toBe('Ghi thu 3.790.000 ₫')
+    expect(container.querySelector('a[href="tel:0999100001"]')?.textContent).toBe('0999 100 001')
+  })
+
+  it('không nợ: không có nút chính, không có Nhắc qua Zalo, số nợ không đỏ', async () => {
+    await render(hoSoNguoi(), mayChu((url) => (url.startsWith('/api/hoa-don?') ? json([]) : undefined)))
+    await vi.waitFor(() => expect(container.querySelector('.ma-khoiso')).not.toBeNull())
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(0)
+    expect([...container.querySelectorAll('button')].some((b) => b.textContent === 'Nhắc qua Zalo')).toBe(false)
+    expect(container.querySelector('.ma-oso.no')).toBeNull()
+    expect(container.textContent).toContain('Đã trả đủ mọi hoá đơn')
+    expect(container.textContent).toContain('Không còn hoá đơn nào chưa trả đủ.')
+  })
+
+  it('còn nợ: Nhắc qua Zalo mở ngăn nhắc, ẩn trên điện thoại', async () => {
+    await render(hoSoNguoi(), mayChu())
+    const nut = await vi.waitFor(() => [...container.querySelectorAll('button')].find((b) => b.textContent === 'Nhắc qua Zalo')!)
+    await act(async () => nut.click())
+    expect(container.querySelector('[role="dialog"] a[href="https://zalo.me/0999100001"]')).not.toBeNull()
+    await act(async () => root!.unmount())
+    root = createRoot(container)
+    vi.stubGlobal('fetch', mayChu())
+    await act(async () => root!.render(hoSoNguoi({ mobile: true })))
+    await vi.waitFor(() => expect(container.querySelector('.ma-khoiso')).not.toBeNull())
+    expect([...container.querySelectorAll('button')].some((b) => b.textContent === 'Nhắc qua Zalo')).toBe(false)
   })
 
   it('điện thoại: nút chính chuyển xuống thanh dính đáy, vẫn chỉ một nút chính', async () => {
     await render(hoSoNguoi({ mobile: true }), mayChu())
-    await vi.waitFor(() => expect(container.querySelector('.prof')).not.toBeNull())
+    await vi.waitFor(() => expect(container.querySelector('.ma-dautrang')).not.toBeNull())
     expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
-    expect(container.querySelector('.sticky-act .btn-primary')).not.toBeNull()
+    expect(container.querySelector('.ma-chandinh .btn-primary')).not.toBeNull()
   })
 
   it('menu "…" mở bằng bàn phím, mũi tên đổi mục, Esc đóng và trả focus', async () => {
@@ -163,17 +191,28 @@ describe('Hồ sơ người thuê 360°', () => {
 describe('Hồ sơ phòng 360°', () => {
   const hoSoPhong = (id: string, o: Partial<TrangProps> = {}) => <HoSoPhong360 {...props({ vaiTro: 'QUAN_LY', thamSo: { id }, ...o })} />
 
-  it('phòng đang thuê: breadcrumb về toà, không có nút chính, có Mở hợp đồng + Báo sự cố', async () => {
+  it('phòng đang thuê, có nợ: vết về toà, nút chính duy nhất là Ghi thu, có Mở hợp đồng + Báo sự cố', async () => {
     window.history.replaceState({}, '', '/phong/1?toaNhaId=3')
     await render(hoSoPhong('1'), mayChu())
     await vi.waitFor(() => expect(container.querySelector('h1')?.textContent).toBe('Phòng 101'))
-    expect(container.querySelector('nav.crumb a')?.getAttribute('href')).toBe('/toa-nha/3')
-    expect(container.querySelectorAll('.btn-primary')).toHaveLength(0)
+    expect(container.querySelector('.ma-vet a')?.getAttribute('href')).toBe('/toa-nha/3')
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
+    expect(container.querySelector('.btn-primary')?.textContent).toBe('Ghi thu 3.790.000 ₫')
+    expect(container.querySelector('.btn-primary')?.getAttribute('href')).toBe('/thu-tien?nguoiThueId=1')
+    expect(container.textContent).toContain('Công tơ tháng 8')
     expect(container.querySelector('a[href="/hop-dong/1"]')?.textContent).toContain('Mở hợp đồng')
     expect(container.querySelector('a[href="/su-co?baoMoi=1&phongId=1&toaNhaId=3"]')).not.toBeNull()
     expect(container.querySelector('a[href="/nguoi-thue/1"]')?.textContent).toContain('Trần Quang Huy')
     expect(container.textContent).toContain('288 → 384 kWh · dùng 96')
     chuaGoiCongNo()
+  })
+
+  it('phòng đang thuê, không nợ: không có nút chính', async () => {
+    window.history.replaceState({}, '', '/phong/1?toaNhaId=3')
+    await render(hoSoPhong('1'), mayChu((url) => (url.startsWith('/api/hoa-don?') ? json([]) : undefined)))
+    await vi.waitFor(() => expect(container.querySelector('h1')?.textContent).toBe('Phòng 101'))
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(0)
+    expect(container.textContent).toContain('Phòng chưa có hoá đơn nào.')
   })
 
   it('phòng trống: nút chính duy nhất là "Tạo hợp đồng" trỏ /hop-dong/moi?phongId=', async () => {

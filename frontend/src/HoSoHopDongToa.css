@@ -17,3 +17,32 @@
   .prof .ph-acts { flex-wrap: wrap; width: 100%; }
   .prof .ph-acts .btn { flex: 1 1 auto; }
 }
+
+/* Hồ sơ toà (V3): việc kế tiếp, ô phòng theo trạng thái */
+.hs-viec { border: 1px solid var(--ma-line-200); border-left: 4px solid var(--ma-text-muted); border-radius: 8px; background: var(--ma-bg-card); padding: 12px 16px; min-height: var(--ma-row-h); }
+.hs-viec[data-muc="no"] { border-left-color: var(--ma-urgent); }
+.hs-viec[data-muc="canh"] { border-left-color: var(--ma-waiting-border); }
+.hs-viec .ma-dongviec-cham { display: none; }
+.hs-viec .ma-dongviec-td { font-size: 17px; }
+.rooms.hs-so-do { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+.hs-so-do .room { background: var(--ma-bg-card); border: 1px solid var(--ma-line-200); border-radius: 8px; }
+.hs-so-do .room span { color: var(--ma-text-secondary); }
+.hs-so-do .room.no { background: var(--ma-urgent-bg); border-color: var(--ma-urgent); }
+.hs-so-do .room.no span { color: var(--ma-urgent); }
+.hs-so-do .room.trong { background: var(--ma-bg-card); border: 1px dashed var(--ma-text-muted); }
+.hs-so-do .room.sua { background: repeating-linear-gradient(135deg, var(--ma-bg-card) 0 6px, var(--ma-line-200) 6px 8px); }
+.hs-chuthich { display: flex; gap: 12px; font-size: 13px; color: var(--ma-text-secondary); }
+.hs-chuthich span::before { content: ""; display: inline-block; width: 12px; height: 12px; margin-right: 4px; vertical-align: -1px; border: 1px solid var(--ma-line-200); border-radius: 3px; }
+.hs-chuthich .no::before { background: var(--ma-urgent-bg); border-color: var(--ma-urgent); }
+.hs-chuthich .trong::before { border: 1px dashed var(--ma-text-muted); }
+.hs-chuthich .sua::before { background: repeating-linear-gradient(135deg, var(--ma-bg-card) 0 2px, var(--ma-line-200) 2px 4px); }
+@media (max-width: 767px) {
+  .rooms.hs-so-do { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .hs-so-do .room { padding: 8px; }
+}
+
+/* Chân dính nằm trên bottom-nav của khung (khung cố định ở đáy, z-index 20) */
+@media (max-width: 767px) {
+  .hs-khoi .ma-chandinh, .hs-toa .ma-chandinh, [data-testid="ho-so-hop-dong"] .ma-chandinh { bottom: var(--ma-bottom-nav-height); z-index: 10; }
+}
+.blk-h h2, .blk-h .link-more { white-space: nowrap; }
