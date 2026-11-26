@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, createElement, type ComponentType, type ReactNode } from 'react'
+import { Fragment, useEffect, useRef, useState, createElement, type ComponentType, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import './HoSoHopDongToa.css'
 import { ApiError, fetchCongNoBaoCao, fetchHopDongQuanLy, fetchHoaDonQuanLy, type ThongTinHopDong, type ThongTinToaNha } from './api'
@@ -10,9 +10,12 @@ import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
 import { useDialogTrap } from './design/feedback/useDialogTrap'
 import { Card } from './design/layout/Card'
-import { Breadcrumb } from './design/shell/Breadcrumb'
+import { DauTrang } from './design/layout/DauTrang'
+import { ChanDinh } from './design/layout/ChanDinh'
+import { ThanhBuoc, type Buoc } from './design/core/ThanhBuoc'
 import type { TrangProps } from './dinhTuyen'
 import { GiaHanHopDong, KyHopDong, NguoiOCungHopDong, PhuLucHopDong, ThanhLyHopDong, type ThaoTacConProps } from './HopDongThaoTac'
+import { tien } from './HoSoNguoiThue360'
 import { downloadManagementFile } from './managementApi'
 import { useToaDangChon } from './toaDangChon'
 
@@ -37,7 +40,6 @@ export function Ngan({ tieuDe, onDong, children }: { tieuDe: string; onDong: () 
 type KhoanNo = { id: number; ma: string; han: string; conLai: number }
 type DuLieu = { hd: ThongTinHopDong; toa: ThongTinToaNha; no: KhoanNo[] | null }
 
-const ngay = (iso: string) => new Date(`${iso}T00:00:00`).getTime()
 const thongBaoLoi = (e: unknown, mau: string) => (e instanceof ApiError || e instanceof Error ? e.message : mau)
 
 /** Tìm hợp đồng theo id trong các toà người dùng được xem (máy chủ chưa trả toaNhaId trong GET /api/hop-dong/{id}). */
@@ -55,7 +57,7 @@ async function taiHoSo(token: string, vaiTro: string, id: number, dsToa: ThongTi
   return { hd: t.hd, toa: t.toa, no }
 }
 
-export default function HoSoHopDong360({ token, vaiTro, thamSo, dieuHuong }: TrangProps) {
+export default function HoSoHopDong360({ token, vaiTro, mobile, thamSo, dieuHuong }: TrangProps) {
   const id = Number(thamSo.id)
   const { danhSach, dangTai: dangTaiToa } = useToaDangChon()
   const [du, setDu] = useState<DuLieu | null>(null)
@@ -88,96 +90,86 @@ export default function HoSoHopDong360({ token, vaiTro, thamSo, dieuHuong }: Tra
   if (!du) return <EmptyState title="Không tìm thấy hợp đồng này" body="Hợp đồng không tồn tại hoặc không thuộc toà bạn được xem." actionLabel="Danh sách hợp đồng" onAction={() => dieuHuong('/hop-dong')} />
 
   const { hd, toa, no } = du
-  const tong = Math.max(1, (ngay(hd.ngayKetThuc) - ngay(hd.ngayBatDau)) / 86_400_000)
-  const qua = Math.max(0, Math.min(100, Math.round((1 - hd.soNgayConLai / tong) * 100)))
   const tongNo = (no ?? []).reduce((t, k) => t + k.conLai, 0)
   const choKy = hd.trangThai === 'CHO_KY'
-  const giaHan = hd.trangThai === 'HIEU_LUC' && hd.sapHetHan
   const hieuLuc = hd.trangThai === 'HIEU_LUC'
+  const giaHan = hieuLuc && hd.sapHetHan
   const thanhLy = hd.trangThai === 'DA_THANH_LY'
-  const moc: Array<[string, string, 'done' | 'cur' | 'todo']> = [
-    ['Tạo & ký', dinhDangNgayIso(hd.ngayBatDau), choKy ? 'cur' : 'done'],
-    ['Đang hiệu lực', hieuLuc ? `${hd.soNgayConLai} ngày còn lại` : '', hieuLuc ? 'cur' : thanhLy ? 'done' : 'todo'],
-    [hd.sapHetHan ? 'Gia hạn hoặc báo trả phòng' : `Báo trước ${hd.soNgayBaoTruoc} ngày`, `trước ${dinhDangNgayIso(hd.ngayKetThuc)}`, thanhLy ? 'done' : 'todo'],
-    ['Thanh lý & quyết toán cọc', '', thanhLy ? 'done' : 'todo'],
-  ]
+  const coc = Number(hd.tienCoc)
+  const hoanLai = Math.max(0, coc - tongNo)
+  const hanBaoDaQua = hd.soNgayConLai < hd.soNgayBaoTruoc
   const moNgan = (tieuDe: string, Con: ComponentType<ThaoTacConProps>) => () => { setNgan(tieuDe); setThaoTac(() => Con) }
+  const buoc: Buoc[] = [
+    { ten: 'Tạo hợp đồng', trangThai: 'xong', moTa: dinhDangNgayIso(hd.ngayBatDau) },
+    { ten: 'Hai bên ký', trangThai: choKy ? 'nay' : 'xong' },
+    { ten: 'Đang hiệu lực', trangThai: choKy ? 'cho' : thanhLy || giaHan ? 'xong' : 'nay', moTa: hieuLuc ? `còn ${hd.soNgayConLai} ngày` : undefined },
+    { ten: 'Gia hạn hoặc báo trả phòng', trangThai: thanhLy ? 'xong' : giaHan ? 'nay' : 'cho', moTa: `trước ${dinhDangNgayIso(hd.ngayKetThuc)}` },
+    { ten: 'Thanh lý, hoàn cọc', trangThai: thanhLy ? 'xong' : 'cho' },
+  ]
+  // Nút chính theo trạng thái; Thanh lý không bao giờ là nút chính.
+  const nutChinh = giaHan ? <Button onClick={moNgan('Gia hạn hợp đồng', GiaHanHopDong)}>Gia hạn hợp đồng</Button> : choKy ? <Button onClick={moNgan('Ký hợp đồng', KyHopDong)}>Ghi nhận đã ký</Button> : null
 
   return (
     <div style={{ display: 'grid', gap: 16, minWidth: 0 }} data-testid="ho-so-hop-dong">
       <style>{CSS_BANG_QUAN_TRI}</style>
-      <Breadcrumb items={[{ nhan: 'Hợp đồng', href: '/hop-dong' }, `#${hd.id}`]} />
-      <div className="prof">
-        <span className="avatar xl h2" aria-hidden="true"><Icon name="contract" /></span>
-        <div className="grow">
-          <h1 className="h1">Hợp đồng #{hd.id} · Phòng {hd.soPhong}</h1>
-          <div className="meta">
-            <span><Icon name="building" size="sm" />{toa.ten}</span>
-            <span><Icon name="user" size="sm" />{hd.hoTenNguoiThue}</span>
-            <span><Icon name="calendar" size="sm" />{dinhDangNgayIso(hd.ngayBatDau)} – {dinhDangNgayIso(hd.ngayKetThuc)}</span>
-          </div>
-          <div className="tags">
-            <StatusTag tone={hieuLuc ? 'done' : choKy ? 'waiting' : 'neutral'}>{hd.tenTrangThai}</StatusTag>
-            {hd.sapHetHan ? <StatusTag tone="waiting" icon="clock">Hết hạn sau {hd.soNgayConLai} ngày</StatusTag> : null}
-            {tongNo > 0 ? <StatusTag tone="urgent">Nợ {dinhDangTien(tongNo)} ₫</StatusTag> : null}
-          </div>
-        </div>
-        <div className="ph-acts">
-          <Button variant="secondary" onClick={() => void tai()}><Icon name="download" />Tải PDF</Button>
-          {giaHan ? <Button onClick={moNgan('Gia hạn hợp đồng', GiaHanHopDong)}>Gia hạn</Button> : null}
-          {choKy ? <Button onClick={moNgan('Ký hợp đồng', KyHopDong)}>Ký hợp đồng</Button> : null}
-          <MenuThaoTac nhan="Thao tác khác: thanh lý, phụ lục, khoản phát sinh, người ở cùng, giao dịch cọc">
+      <DauTrang
+        vet={[{ nhan: 'Hợp đồng', href: '/hop-dong' }, { nhan: `Phòng ${hd.soPhong}`, href: `/hop-dong/${hd.id}` }]}
+        tieuDe={`Hợp đồng phòng ${hd.soPhong}`}
+        phu={`${hd.hoTenNguoiThue} · ${toa.ten}`}
+        hanhDong={<>
+          <Button variant="secondary" onClick={() => void tai()}>Tải PDF</Button>
+          {mobile ? null : nutChinh}
+          <MenuThaoTac nhan="Thao tác khác: phụ lục, khoản phát sinh, người ở cùng, giao dịch cọc">
             {(dong) => ([
-              ['Thanh lý hợp đồng', 'lock', ThanhLyHopDong], ['Phụ lục', 'edit', PhuLucHopDong], ['Khoản phát sinh', 'send', '/hoa-don'], ['Người ở cùng', 'eye', NguoiOCungHopDong], ['Giao dịch cọc', 'key', '/thu-tien'],
+              ['Phụ lục', 'edit', PhuLucHopDong], ['Khoản phát sinh', 'send', '/hoa-don'], ['Người ở cùng', 'eye', NguoiOCungHopDong], ['Giao dịch cọc', 'key', '/thu-tien'],
             ] as const).map(([nhan, icon, dich]) => ( // chưa có thao tác riêng cho phát sinh/cọc trong hồ sơ: đi tới màn hoá đơn/thu tiền
-              <MucMenu key={nhan} icon={icon} nguyHiem={nhan === 'Thanh lý hợp đồng'} onClick={() => { dong(); if (typeof dich === 'string') dieuHuong(dich); else moNgan(nhan, dich)() }}>{nhan}</MucMenu>
+              <MucMenu key={nhan} icon={icon} onClick={() => { dong(); if (typeof dich === 'string') dieuHuong(dich); else moNgan(nhan, dich)() }}>{nhan}</MucMenu>
             ))}
           </MenuThaoTac>
-        </div>
-      </div>
+        </>}
+      />
       {thongBaoPdf ? <div role="alert" className="alert alert-danger"><Icon name="alert" />{thongBaoPdf}</div> : null}
+      {giaHan ? <p className="banner banner-warning" role="status">Hết hạn ngày <b>{dinhDangNgayIso(hd.ngayKetThuc)}</b>, còn {hd.soNgayConLai} ngày.{hanBaoDaQua ? ` Người thuê phải báo trước ${hd.soNgayBaoTruoc} ngày nếu trả phòng, hạn báo đã qua.` : ''}</p> : null}
 
       <div className="cols">
         <div className="side" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
-          <Card title="Điều khoản">
-            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-              <div><div className="t-meta">Giá thuê</div><div className="bignum">{dinhDangTien(hd.giaThue)} ₫</div></div>
-              <div><div className="t-meta">Tiền cọc</div><div className="bignum">{dinhDangTien(hd.tienCoc)} ₫</div></div>
-              <div><div className="t-meta">Báo trước</div><div className="bignum">{hd.soNgayBaoTruoc} ngày</div></div>
-            </div>
-            <div className="progress" style={{ marginTop: 16 }} role="img" aria-label={`Đã qua ${qua}% thời hạn`}><span style={{ width: `${qua}%` }} /></div>
-            <p className="t-meta" style={{ marginTop: 6 }}>Đã qua {qua}% thời hạn · còn {hd.soNgayConLai} ngày</p>
+          <Card title="Điều khoản chính">
+            <dl className="kv">
+              <dt>Giá thuê</dt><dd>{dinhDangTien(hd.giaThue)} ₫ / tháng</dd>
+              <dt>Tiền cọc</dt><dd>{dinhDangTien(hd.tienCoc)} ₫</dd>
+              <dt>Thời hạn</dt><dd>{dinhDangNgayIso(hd.ngayBatDau)} – {dinhDangNgayIso(hd.ngayKetThuc)}</dd>
+              <dt>Báo trước khi trả phòng</dt><dd>{hd.soNgayBaoTruoc} ngày</dd>
+              <dt>Trạng thái</dt><dd><StatusTag tone={hieuLuc ? 'done' : choKy ? 'waiting' : 'neutral'}>{hd.tenTrangThai}</StatusTag></dd>
+              {hd.dichVuApDung.map((d) => <Fragment key={d.dichVuId}><dt>{d.tenDichVu}</dt><dd>{Number(d.donGiaApDung) > 0 ? `${dinhDangTien(d.donGiaApDung)} ₫` : 'Miễn phí'}</dd></Fragment>)}
+            </dl>
           </Card>
-          <Card title="Dịch vụ áp dụng">
-            {hd.dichVuApDung.length === 0 ? <p className="t-sm">Hợp đồng chưa áp dụng dịch vụ nào.</p>
-              : hd.dichVuApDung.map((d) => <div className="sumrow" key={d.dichVuId}><span>{d.tenDichVu}</span><b>{Number(d.donGiaApDung) > 0 ? `${dinhDangTien(d.donGiaApDung)} ₫` : 'Miễn phí'}</b></div>)}
-          </Card>
-          <Card title="Hoá đơn theo hợp đồng" action={<span className="t-meta">{no === null ? 'chưa tải được' : no.length ? `${no.length} kỳ còn nợ` : 'không còn nợ'}</span>}>
+          <Card title="Hoá đơn theo hợp đồng" action={<span className="t-meta">{no === null ? 'chưa tải được' : no.length ? `${no.length} tháng còn nợ` : 'không còn nợ'}</span>}>
             {no === null ? <p className="t-sm">Chưa tải được công nợ của hợp đồng này. Dữ liệu chưa bị thay đổi.</p>
               : no.length === 0 ? <p className="t-sm">Không còn khoản nợ nào.</p>
-                : <div className="table-wrap table-wrap-cards"><table className="table table-cards"><thead><tr><th scope="col">Hoá đơn</th><th scope="col">Hạn</th><th scope="col" className="num">Còn lại</th></tr></thead>
-                  <tbody>{no.map((k) => <tr key={k.id}><td className="td-main" data-label="Hoá đơn" data-the="tieu-de">{k.ma}</td><td data-label="Hạn">{dinhDangNgayIso(k.han)}</td><td className="num t-money t-danger" data-label="Còn lại">{dinhDangTien(k.conLai)} ₫</td></tr>)}</tbody></table></div>}
+                : <div className="table-wrap table-wrap-cards"><table className="table table-cards"><thead><tr><th scope="col">Hoá đơn</th><th scope="col">Hạn</th><th scope="col" className="num">Còn nợ</th></tr></thead>
+                  <tbody>{no.map((k) => <tr key={k.id}><td className="td-main" data-label="Hoá đơn" data-the="tieu-de">{k.ma}</td><td data-label="Hạn">{dinhDangNgayIso(k.han)}</td><td className="num t-money t-danger" data-label="Còn nợ">{dinhDangTien(k.conLai)} ₫</td></tr>)}</tbody></table></div>}
           </Card>
-        </div>
-        <div className="side" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
           <Card title="Liên kết">
             <div style={{ margin: '4px -24px -8px' }}>
               <a className="irow" href={`/nguoi-thue/${hd.nguoiThueId}`}><span className={`avatar sm h${(hd.nguoiThueId % 5) + 1}`} aria-hidden="true">{chuCaiDau(hd.hoTenNguoiThue)}</span><div className="body"><div className="t">{hd.hoTenNguoiThue}</div><div className="s">Người thuê chính</div></div><Icon name="chevron-right" size="sm" /></a>
               <a className="irow" href={`/phong/${hd.phongId}?toaNhaId=${toa.id}`}><span className="tile" aria-hidden="true"><Icon name="door" /></span><div className="body"><div className="t">Phòng {hd.soPhong}</div><div className="s">{toa.ten}</div></div><Icon name="chevron-right" size="sm" /></a>
             </div>
           </Card>
-          <Card title="Mốc">
-            <div className="vsteps" style={{ marginTop: 8 }}>
-              {moc.map(([tt, st, tr], i) => (
-                <div key={tt} className={`vstep ${tr}`}>
-                  <span className="n">{tr === 'done' ? <Icon name="check" size="sm" /> : i + 1}</span>
-                  <div><div className="tt">{tt}</div><div className="st">{st}</div></div>
-                </div>
-              ))}
-            </div>
-          </Card>
+        </div>
+        <div className="side" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
+          <Card title="Vòng đời hợp đồng"><ThanhBuoc doc nhan="Vòng đời hợp đồng" buoc={buoc} /></Card>
+          {hieuLuc ? (
+            <Card title="Nếu thanh lý hôm nay">
+              <div className="sumrow"><span>Cọc đang giữ</span><b>{tien(coc)}</b></div>
+              <div className="sumrow"><span>Trừ nợ hoá đơn</span><b>{no === null ? '—' : `− ${tien(tongNo)}`}</b></div>
+              <div className="sumrow hs-hoan"><span>Hoàn lại người thuê</span><b>{no === null ? '—' : tien(hoanLai)}</b></div>
+              {no !== null && tongNo > coc ? <p className="t-sm t-danger" style={{ marginTop: 8 }}>Nợ lớn hơn cọc {tien(tongNo - coc)}. Cần thu thêm trước khi thanh lý.</p> : null}
+              <div style={{ marginTop: 12 }}><Button variant="danger" onClick={moNgan('Thanh lý hợp đồng', ThanhLyHopDong)}>Thanh lý hợp đồng…</Button></div>
+            </Card>
+          ) : null}
         </div>
       </div>
+      {mobile && nutChinh ? <ChanDinh>{nutChinh}</ChanDinh> : null}
 
       {ngan && thaoTac ? (
         <Ngan tieuDe={`${ngan} · hợp đồng #${hd.id}`} onDong={dongNgan}>

@@ -49,29 +49,50 @@ describe('HoSoHopDong360', () => {
   }
   const nutChinh = () => [...container.querySelectorAll('.btn-primary')].map((b) => b.textContent)
 
-  it('sắp hết hạn → nút chính "Gia hạn", có thẻ hạn và nợ', async () => {
+  it('sắp hết hạn → nút chính "Gia hạn hợp đồng", băng vàng, nợ nhỏ hơn cọc', async () => {
     await mount('1')
-    expect(container.querySelector('h1')?.textContent).toBe('Hợp đồng #1 · Phòng 101')
-    expect(nutChinh()).toEqual(['Gia hạn'])
-    expect(container.textContent).toContain('Hết hạn sau 10 ngày')
-    expect(container.textContent).toContain('Nợ 500.000 ₫')
+    expect(container.querySelector('h1')?.textContent).toBe('Hợp đồng phòng 101')
+    expect(nutChinh()).toEqual(['Gia hạn hợp đồng'])
+    expect(container.querySelector('.banner-warning')?.textContent).toBe('Hết hạn ngày 01/01/2027, còn 10 ngày. Người thuê phải báo trước 30 ngày nếu trả phòng, hạn báo đã qua.')
+    expect(container.textContent).toContain('Hoàn lại người thuê5.500.000 ₫') // cọc 6.000.000 − nợ 500.000
+    expect(container.textContent).not.toContain('Nợ lớn hơn cọc')
   })
 
-  it('chờ ký → nút chính "Ký hợp đồng"', async () => {
+  it('chờ ký → nút chính "Ghi nhận đã ký"; không có băng vàng và không có khối thanh lý', async () => {
     await mount('2')
-    expect(nutChinh()).toEqual(['Ký hợp đồng'])
+    expect(nutChinh()).toEqual(['Ghi nhận đã ký'])
+    expect(container.querySelector('.banner-warning')).toBeNull()
+    expect(container.textContent).not.toContain('Nếu thanh lý hôm nay')
   })
 
-  it('hiệu lực bình thường → không có nút chính', async () => {
+  it('hiệu lực bình thường → không có nút chính; Thanh lý hợp đồng… là nút nguy hiểm, không phải nút chính', async () => {
     await mount('3')
     expect(nutChinh()).toEqual([])
     expect(container.textContent).toContain('Tải PDF')
+    const tl = [...container.querySelectorAll('button')].find((b) => b.textContent === 'Thanh lý hợp đồng…')!
+    expect(tl.className).toContain('btn-danger')
+    expect(tl.className).not.toContain('btn-primary')
   })
 
-  it('"…" có đúng 5 mục và liên kết người thuê, phòng đúng href', async () => {
+  it('nợ lớn hơn cọc → câu cảnh báo đỏ, hoàn lại 0 ₫', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => (url.startsWith('/api/hop-dong') ? json(DS) : url.startsWith('/api/bao-cao/cong-no') ? json({ ...NO, congNo: [{ ...NO.congNo[1], conLai: '7000000.00' }] }) : json([]))))
+    await mount('3')
+    expect(container.querySelector('.t-danger')?.textContent).toBeTruthy()
+    expect(container.textContent).toContain('Nợ lớn hơn cọc 1.000.000 ₫. Cần thu thêm trước khi thanh lý.')
+    expect(container.textContent).toContain('Hoàn lại người thuê0 ₫')
+  })
+
+  it('vòng đời 5 bước, bước hiện tại có aria-current', async () => {
+    await mount('1')
+    const li = [...container.querySelectorAll('ol.ma-buoc li')]
+    expect(li).toHaveLength(5)
+    expect(li.find((x) => x.getAttribute('aria-current') === 'step')?.textContent).toContain('Gia hạn hoặc báo trả phòng')
+  })
+
+  it('"…" có 4 mục (Thanh lý đã thành nút riêng) và liên kết người thuê, phòng đúng href', async () => {
     await mount('1')
     await act(async () => { (container.querySelector('button[aria-haspopup="menu"]') as HTMLButtonElement).click() })
-    expect([...container.querySelectorAll('[role="menuitem"]')].map((m) => m.textContent)).toEqual(['Thanh lý hợp đồng', 'Phụ lục', 'Khoản phát sinh', 'Người ở cùng', 'Giao dịch cọc'])
+    expect([...container.querySelectorAll('[role="menuitem"]')].map((m) => m.textContent)).toEqual(['Phụ lục', 'Khoản phát sinh', 'Người ở cùng', 'Giao dịch cọc'])
     expect(container.querySelector('a[href="/nguoi-thue/21"]')).not.toBeNull()
     expect(container.querySelector('a[href="/phong/11?toaNhaId=3"]')).not.toBeNull()
   })
@@ -107,7 +128,12 @@ describe('HoSoHopDong360', () => {
       await doi()
     }
     await mount('3')
-    for (const [nhan, noiDung] of [['Thanh lý hợp đồng', 'Thanh lý hợp đồng & Quyết toán cọc'], ['Phụ lục', 'Phụ lục hợp đồng đã lập'], ['Người ở cùng', 'Người ở cùng phòng']]) {
+    await act(async () => { ([...container.querySelectorAll('button')].find((b) => b.textContent === 'Thanh lý hợp đồng…') as HTMLButtonElement).click() })
+    await doi()
+    expect(ngan()?.querySelector('h2')?.textContent).toBe('Thanh lý hợp đồng · hợp đồng #3')
+    expect(ngan()?.textContent).toContain('Thanh lý hợp đồng & Quyết toán cọc')
+    await act(async () => { (ngan()?.querySelector('button[aria-label="Đóng ngăn"]') as HTMLButtonElement).click() })
+    for (const [nhan, noiDung] of [['Phụ lục', 'Phụ lục hợp đồng đã lập'], ['Người ở cùng', 'Người ở cùng phòng']]) {
       await mucMenu(nhan)
       expect(ngan()?.querySelector('h2')?.textContent).toBe(`${nhan} · hợp đồng #3`)
       expect(ngan()?.textContent).toContain(noiDung)
