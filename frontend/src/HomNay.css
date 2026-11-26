@@ -1,19 +1,37 @@
-/* Hôm nay: chỉ phần khung ux-v2.css chưa có. Màu/cỡ chữ dùng biến sẵn. */
-.hom-nay { display: grid; gap: 16px; min-width: 0; }
-.hom-nay .hn-skel { display: grid; gap: 12px; padding: 12px 24px 16px; }
-.hom-nay .hn-tien { width: 132px; }
-.hom-nay .irow .chev { display: grid; place-items: center; }
-.hom-nay .hn-cuoi { white-space: nowrap; }
-.hom-nay .hn-so { font-size: 20px; min-width: 40px; text-align: right; }
-.hom-nay .hn-dots { padding: 4px 24px 12px; }
-.hom-nay .hn-dot { display: inline-flex; align-items: center; gap: 6px; margin-right: 10px; }
-.hom-nay .sec .empty { padding: 16px 24px 20px; }
-.hom-nay .sec-h .push, .hom-nay .blk-h .push { margin-left: auto; }
+/* Hôm nay V3: chỉ phần bố cục khung; màu/cỡ chữ dùng token --ma-*. */
+.hom-nay { display: grid; gap: 16px; min-width: 0; align-content: start; }
+.hom-nay > * { min-width: 0; }
+.hom-nay .ma-khoiso, .hom-nay .ma-dautrang { margin-bottom: 0; }
+.hom-nay .hn-khoi { padding: 16px 20px; gap: 0; }
+.hom-nay .blk-h { margin-bottom: 8px; flex-wrap: wrap; row-gap: 2px; }
+.hom-nay .blk-h .meta { color: var(--ma-text-secondary); }
+.hom-nay .blk-h .push { margin-left: auto; white-space: nowrap; }
+.hom-nay .link-more { color: var(--ma-text-link); font-weight: 500; }
+.hom-nay .hn-skel { display: grid; gap: 12px; padding: 8px 0 12px; }
+.hom-nay .hn-luoi { display: grid; gap: 16px; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: start; }
+.hom-nay .hn-luoi-ql { grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); }
+.hom-nay .hn-chan { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0; padding-top: 12px; color: var(--ma-text-secondary); font-size: 14px; }
+.hom-nay .hn-loi { margin: 0 0 8px; color: var(--ma-urgent); }
+.hom-nay .hn-bang { border: 1px solid var(--ma-urgent); background: var(--ma-urgent-bg); color: var(--ma-urgent); border-radius: 8px; padding: 12px 16px; }
+.hom-nay .hn-hen { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--ma-text-secondary); }
+.hom-nay .hn-hen .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ma-done); }
+.hom-nay .hn-no { font-weight: 600; color: var(--ma-urgent); font-variant-numeric: tabular-nums; }
+.hom-nay .hn-pt { display: inline-flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
+.hom-nay .hn-thanh { width: 96px; height: 6px; border-radius: 3px; background: var(--ma-urgent-bg); overflow: hidden; display: inline-block; }
+.hom-nay .hn-thanh i { display: block; height: 100%; background: var(--ma-text-primary); }
+.hom-nay .hn-theo-toa .table td.num, .hom-nay .hn-theo-toa .table th.num { text-align: right; }
+.hom-nay .hn-theo-toa .pager { display: none; }
+@media (max-width: 1099px) { .hom-nay .hn-luoi, .hom-nay .hn-luoi-ql { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 767px) {
-  .hom-nay .hn-tien { width: auto; }
-  .hom-nay .hn-dots, .hom-nay .hn-skel { padding-left: 16px; padding-right: 16px; }
-  .hom-nay .irow .btn { flex: none; }
+  .hom-nay .hn-an-hep { display: none; }
+  .hom-nay .ma-nguoino-hang { flex-wrap: nowrap; }
+  .hom-nay .ma-nguoino-ten { min-width: 0; }
+  .hom-nay .hn-khoi { padding: 14px 16px; }
+  /* Số tiền lớn phải đọc trọn trong ô 2 cột: thu nhỏ cỡ số, không cắt. */
+  .hom-nay .ma-oso { padding: 12px; }
+  .hom-nay .ma-oso-so { font-size: 22px; line-height: 28px; overflow-wrap: anywhere; }
+  .hom-nay .ma-oso:first-child .ma-oso-so { font-size: 28px; line-height: 34px; }
+  .hom-nay .hn-theo-toa td[data-label="Đang thuê"], .hom-nay .hn-theo-toa td[data-label^="Tháng"], .hom-nay .hn-theo-toa td[data-label="Sự cố mở"] { display: none !important; }
+  .hom-nay .ma-dongviec { flex-wrap: wrap; }
+  .hom-nay .ma-dongviec .btn { flex: none; }
 }
-/* 390: tiêu đề khối + meta + link xuống dòng gọn, link không bị bẻ chữ */
-.hom-nay .sec-h { flex-wrap: wrap; row-gap: 2px; }
-.hom-nay .sec-h .push, .hom-nay .blk-h .push { white-space: nowrap; flex: none; }
