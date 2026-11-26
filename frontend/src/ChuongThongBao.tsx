@@ -89,7 +89,7 @@ export default function ChuongThongBao({ token, dieuHuong }: TrangProps) {
             </a>
           ))}
           {!loi && tin.length === 0 ? <p className="note">Không có thông báo mới.</p> : null}
-          <a className="note" href="/thong-bao" onClick={(e) => { e.preventDefault(); setMo(false); dieuHuong('/thong-bao') }}>Xem tất cả</a>
+          <a className="note" style={{ color: 'var(--ma-text-link)' }} href="/thong-bao" onClick={(e) => { e.preventDefault(); setMo(false); dieuHuong('/thong-bao') }}>Xem tất cả</a>
         </div>
       ) : null}
     </div>

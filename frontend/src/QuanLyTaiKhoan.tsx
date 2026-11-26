@@ -16,6 +16,7 @@ import {
 import { Button } from './design/core/Button'
 import { StatusTag } from './design/core/StatusTag'
 import { Icon } from './design/core/Icon'
+import { ChanDinh } from './design/layout/ChanDinh'
 import { DauTrang } from './design/layout/DauTrang'
 import { ConfirmDialog } from './design/feedback/ConfirmDialog'
 import { EmptyState } from './design/feedback/EmptyState'
@@ -156,6 +157,7 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
     { key: 'NHAN_SU', label: 'Nhân sự', match: (item: ThongTinQuanLyNguoiDung) => item.vaiTro !== 'NGUOI_THUE' },
     { key: 'NGUOI_THUE', label: 'Người thuê', match: (item: ThongTinQuanLyNguoiDung) => item.vaiTro === 'NGUOI_THUE' },
   ]
+  const themNut = <Button onClick={batDauTao}><Icon name="plus" />Thêm tài khoản</Button>
   const cot: DataTableColumn<ThongTinQuanLyNguoiDung>[] = [
     { key: 'hoTen', label: 'Họ tên', sortable: true, sortValue: (item) => item.hoTen, render: (item) => <span className="bq-cat" title={item.hoTen} style={{ fontWeight: 600 }}>{item.hoTen}{item.id === idCuaToi ? ' · bạn' : ''}</span> },
     { key: 'dienThoai', label: 'Điện thoại', render: (item) => dinhDangSdt(item.soDienThoai) },
@@ -174,10 +176,11 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
       style={{ display: 'grid', gap: 16, minWidth: 0 }}
     >
       <style>{CSS_BANG_QUAN_TRI}</style>
+      <style>{'.bq-the-loc .table-toolbar { padding-right: 0; } .bq-the-loc .table-toolbar .input-wrap { width: 320px; margin-left: auto; order: 9; } @media (max-width: 767px) { .bq-the-loc .table-toolbar .input-wrap { width: 100%; } }'}</style>
       <DauTrang
         tieuDe={<span id="account-management-title">Tài khoản</span>}
         phu={`${danhSach.length} tài khoản · ${dem('CHU')} chủ nhà · ${dem('QUAN_LY')} quản lý · ${dem('THO')} thợ · ${dem('NGUOI_THUE')} người thuê`}
-        hanhDong={<Button onClick={batDauTao}><Icon name="plus" />Thêm tài khoản</Button>}
+        hanhDong={mobile ? undefined : themNut}
       />
 
       {loi ? <div role="alert"><ScreenNotice tone="urgent">{loi}</ScreenNotice>{danhSach.length === 0 ? <Button variant="secondary" onClick={() => setLanTai((n) => n + 1)}>Tải lại</Button> : null}</div> : null}
@@ -281,6 +284,7 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
           </ActionRow>
         </FormPanel>
       ) : null}
+      {mobile && !bieuMau ? <ChanDinh>{themNut}</ChanDinh> : null}
       {nguoiDungChoKhoa ? <ConfirmDialog
         title={`Khoá tài khoản ${nguoiDungChoKhoa.hoTen}?`}
         consequence={<>Người dùng sẽ <strong>không đăng nhập được nữa</strong>; lịch sử thao tác và bản ghi đã tạo vẫn giữ nguyên. Có thể mở khoá lại được.</>}

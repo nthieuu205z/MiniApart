@@ -28,9 +28,9 @@ export default function TrangKhongCoQuyen({ vaiTro, vaiTroSoHuu, duongDan, dieuH
   const nhanTrangDau = layMenuTheoVaiTro(vaiTro).find((muc) => muc.duongDan === trangDau)?.nhan ?? 'trang đầu'
   const gan = timMucTheoDuongDan(vaiTro, duongDan)
   return (
-    <section aria-labelledby="khong-co-quyen" style={{ display: 'grid', justifyItems: 'center', gap: 'var(--ma-space-3)', textAlign: 'center', padding: 'var(--ma-space-8) var(--ma-space-4)' }}>
+    <section aria-labelledby="khong-co-quyen" style={{ display: 'grid', justifyItems: 'center', gap: 'var(--ma-space-3)', alignContent: 'center', minHeight: '60vh', textAlign: 'center', padding: 'var(--ma-space-5) var(--ma-space-4)' }}>
       <span style={{ color: 'var(--ma-text-secondary)' }} aria-hidden="true"><Icon name="lock" /></span>
-      <h1 id="khong-co-quyen" style={{ margin: 0 }}>{soHuu ? `Trang này dành cho ${soHuu}` : 'Trang này không dành cho tài khoản của bạn'}</h1>
+      <h1 id="khong-co-quyen" style={{ margin: 0, font: 'var(--ma-text-screen-title)' }}>{soHuu ? `Trang này dành cho ${soHuu}` : 'Trang này không dành cho tài khoản của bạn'}</h1>
       <p style={{ margin: 0, maxWidth: 480, color: 'var(--ma-text-secondary)' }}>
         {soHuu ? `Tài khoản ${TEN_VAI_TRO[vaiTro]} không mở được trang này. ${GOI_Y[vaiTroSoHuu[0]]}` : `Đường dẫn ${duongDan} không có trong hệ thống.`}
       </p>
