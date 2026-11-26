@@ -7,20 +7,23 @@ import {
   guiDuyetBaoGia,
   baoXongViecTho,
   fetchThoChungTu,
-  fetchThoTongQuan,
-  type KpiTho,
   type ThongTinViecThoRow,
   type ChiTietViecTho,
   type ChungTuThanhToanTho,
 } from './workerDashboardApi'
 import { fetchCurrentUser, fetchLienKetAnh } from './api'
 import { dinhDangTien } from './design/core/format'
+import { dinhDangSdt } from './tienTheoNguoi'
 import { Button } from './design/core/Button'
 import { Icon } from './design/core/Icon'
 import { Tieu } from './CanTra'
 import { StatusTag } from './design/core/StatusTag'
-import { SysLabel } from './design/core/SysLabel'
+import { ThanhBuoc } from './design/core/ThanhBuoc'
+import { Card } from './design/layout/Card'
+import { ChanDinh } from './design/layout/ChanDinh'
+import { Field, Input } from './design/forms/Field'
 import { EmptyState } from './design/feedback/EmptyState'
+import { Toast } from './design/feedback/Toast'
 import { useDialogTrap } from './design/feedback/useDialogTrap'
 
 export type ThoCongViecProps = {
@@ -29,951 +32,415 @@ export type ThoCongViecProps = {
   initialTicketId?: number | null
 }
 
+type DongForm = { tenHangMuc: string; soLuong: string; donGia: string }
+// Ép chữ của các lớp chung (.btn 15px, .label 14px…) lên cỡ của mật độ "thoang" (≥ 16) chỉ trong màn Thợ.
+export const CSS_THO = `
+.tho-cv .btn, .tho-cv .seg-links a { font: var(--ma-text-body); font-weight: 500; }
+.tho-cv .label { font: var(--ma-text-body-sm); font-weight: 500; }
+.tho-cv .irow { padding: 6px 0; }
+.tho-cv .irow .t { font: var(--ma-text-task-name); }
+.tho-cv .irow .money { font: var(--ma-text-figure-sm); }
+.tho-cv .ma-buoc li, .tho-cv .ma-dongviec-mt { font: var(--ma-text-body-sm); }
+@media (max-width: 767px) { .tho-cv .ma-chandinh { bottom: var(--ma-bottom-nav-height); } }
+@media (min-width: 768px) { .tho-cv .ma-chandinh { position: static; margin: 0; padding: 0; border: 0; background: none; } .tho-cv .ma-chandinh .btn { flex: none; } }
+.tho-cv .ma-dautrang .btn-ghost { padding-left: 0; }
+`
+const DONG_TRONG: DongForm = { tenHangMuc: '', soLuong: '1', donGia: '' }
+const thamSo = (k: string) => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get(k))
+const docId = () => { const v = thamSo('yeuCauId'); return v ? Number(v) : null }
+
 export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongViecProps): React.ReactElement {
   const [danhSach, setDanhSach] = useState<ThongTinViecThoRow[]>([])
   const [dangTai, setDangTai] = useState(true)
   const [loiTai, setLoiTai] = useState<string | null>(null)
+  const [tuKhoa, setTuKhoa] = useState('')
+  const [hoTen, setHoTen] = useState<string>()
+  const [tab, setTab] = useState<'dang-lam' | 'xong'>(() => (thamSo('loc') === 'xong' ? 'xong' : 'dang-lam'))
 
-  // Filters
-  const [toaNhaId, setToaNhaId] = useState<number | undefined>(undefined)
-  const [mucDo, setMucDo] = useState<string>('')
-  const [tuKhoa, setTuKhoa] = useState<string>('')
-
-  // Detail Drawer State
-  const [chiTietId, setChiTietId] = useState<number | null>(() => {
-    if (initialTicketId) return initialTicketId
-    if (typeof window !== 'undefined') {
-      const p = new URLSearchParams(window.location.search).get('yeuCauId')
-      return p ? Number(p) : null
-    }
-    return null
-  })
-
-  const [chiTietData, setChiTietData] = useState<ChiTietViecTho | null>(null)
+  // Màn đang mở: danh sách | chi tiết (?yeuCauId) | báo giá (?yeuCauId&baoGia=1)
+  const [chiTietId, setChiTietId] = useState<number | null>(() => initialTicketId || docId())
+  const [moBaoGia, setMoBaoGia] = useState(() => thamSo('baoGia') === '1')
+  const [chiTiet, setChiTiet] = useState<ChiTietViecTho | null>(null)
   const [dangTaiChiTiet, setDangTaiChiTiet] = useState(false)
   const [loiChiTiet, setLoiChiTiet] = useState<string | null>(null)
-
-  // Photo URLs cache
   const [photoUrls, setPhotoUrls] = useState<Record<number, string>>({})
 
-  // Form states inside drawer
-  const [ghiChuKhaoSatForm, setGhiChuKhaoSatForm] = useState('')
-  const [ketQuaSuaChuaForm, setKetQuaSuaChuaForm] = useState('')
-  const [hienFormBaoGia, setHienFormBaoGia] = useState(false)
-  const [moTaBaoGia, setMoTaBaoGia] = useState('')
-  const [dongBaoGiaForm, setDongBaoGiaForm] = useState<Array<{ tenHangMuc: string; soLuong: number; donVi: string; donGia: number }>>([
-    { tenHangMuc: '', soLuong: 1, donVi: 'gói', donGia: 0 },
-  ])
-  const [dangXuLyHanhDong, setDangXuLyHanhDong] = useState(false)
-  const [thongBaoThanhCong, setThongBaoThanhCong] = useState<string | null>(null)
-
-  // Mobile: tóm tắt (KPI, tên thợ, số toà) lấy một lần; lỗi thì bỏ qua, danh sách vẫn dùng được.
-  const [tomTat, setTomTat] = useState<{ kpi?: KpiTho; hoTen?: string; soToa?: number }>({})
-  const [hienTim, setHienTim] = useState(false)
-  const [loc, setLoc] = useState<LocViec | null>(docLoc)
-  const moFormBaoGiaRef = useRef(false)
-
-  // Voucher modal state
+  const [ghiChuKhaoSat, setGhiChuKhaoSat] = useState('')
+  const [dangBaoXong, setDangBaoXong] = useState(false)
+  const [ketQua, setKetQua] = useState('')
+  const [dong, setDong] = useState<DongForm[]>([DONG_TRONG])
+  const [ghiChuBaoGia, setGhiChuBaoGia] = useState('')
+  const [dangGui, setDangGui] = useState(false)
+  const [loiHanhDong, setLoiHanhDong] = useState<string | null>(null)
+  const [thongBao, setThongBao] = useState<string | null>(null)
   const [voucherData, setVoucherData] = useState<ChungTuThanhToanTho | null>(null)
-
-  const drawerRef = useRef<HTMLDivElement | null>(null)
   const voucherRef = useRef<HTMLDivElement | null>(null)
+  useDialogTrap({ open: Boolean(voucherData), dialogRef: voucherRef, onClose: () => setVoucherData(null) })
 
-  useDialogTrap({
-    open: Boolean(chiTietId),
-    dialogRef: drawerRef,
-    onClose: () => dongChiTiet(),
-  })
-
-  useDialogTrap({
-    open: Boolean(voucherData),
-    dialogRef: voucherRef,
-    onClose: () => setVoucherData(null),
-  })
-
-  // Deep link sync on popstate
   useEffect(() => {
-    function handlePopState() {
-      setLoc(docLoc())
-      const p = new URLSearchParams(window.location.search).get('yeuCauId')
-      setChiTietId(p ? Number(p) : null)
+    function onPop() {
+      setChiTietId(docId())
+      setMoBaoGia(thamSo('baoGia') === '1')
+      setTab(thamSo('loc') === 'xong' ? 'xong' : 'dang-lam')
     }
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
   }, [])
 
   useEffect(() => {
     let active = true
-    Promise.allSettled([fetchThoTongQuan(token), fetchCurrentUser(token)]).then(([tq, nd]) => {
-      if (!active) return
-      setTomTat({
-        kpi: tq.status === 'fulfilled' ? tq.value.kpi : undefined,
-        soToa: tq.status === 'fulfilled' ? tq.value.danhSachToa?.length : undefined,
-        hoTen: nd.status === 'fulfilled' ? nd.value.hoTen : undefined,
-      })
-    })
-    return () => {
-      active = false
-    }
+    fetchCurrentUser(token).then((u) => { if (active) setHoTen(u.hoTen) }).catch(() => {})
+    return () => { active = false }
   }, [token])
 
-  // Tải đủ mọi nhóm một lần để đếm số trên chip lọc (cả điện thoại lẫn máy tính).
-  const nhomTai = 'TAT_CA'
   const taiDanhSach = useCallback(async () => {
     setDangTai(true)
     setLoiTai(null)
     try {
-      const rows = await fetchThoCongViec(token, {
-        toaNhaId,
-        nhom: nhomTai,
-        mucDo: mucDo || undefined,
-        tuKhoa: tuKhoa || undefined,
-      })
-      setDanhSach(rows)
+      setDanhSach(await fetchThoCongViec(token, { nhom: 'TAT_CA', tuKhoa: tuKhoa || undefined }))
     } catch (err: unknown) {
       setLoiTai(err instanceof Error ? err.message : 'Không thể tải danh sách công việc')
     } finally {
       setDangTai(false)
     }
-  }, [token, toaNhaId, nhomTai, mucDo, tuKhoa])
+  }, [token, tuKhoa])
+  useEffect(() => { void taiDanhSach() }, [taiDanhSach])
+
+  const taiChiTiet = useCallback(async (id: number) => {
+    const d = await fetchThoChiTietCongViec(token, id)
+    setChiTiet(d)
+    setGhiChuKhaoSat(d.ghiChuKhaoSat ?? '')
+    return d
+  }, [token])
 
   useEffect(() => {
-    void taiDanhSach()
-  }, [taiDanhSach])
-
-  // Load ticket details when chiTietId changes
-  useEffect(() => {
-    if (!chiTietId) {
-      setChiTietData(null)
-      return
-    }
-
+    if (!chiTietId) { setChiTiet(null); return }
     let active = true
     setDangTaiChiTiet(true)
     setLoiChiTiet(null)
-    setHienFormBaoGia(false)
-    setThongBaoThanhCong(null)
-
-    fetchThoChiTietCongViec(token, chiTietId)
-      .then((detail) => {
-        if (active) {
-          setChiTietData(detail)
-          setGhiChuKhaoSatForm(detail.ghiChuKhaoSat ?? '')
-          setKetQuaSuaChuaForm(detail.ketQuaSuaChua ?? '')
-          setDangTaiChiTiet(false)
-          if (moFormBaoGiaRef.current) {
-            moFormBaoGiaRef.current = false
-            setHienFormBaoGia(true)
-          }
-
-          // Fetch photo urls
-          const allPhotoIds = [...detail.anhTruocIds, ...detail.anhSauIds]
-          allPhotoIds.forEach((pid) => {
-            if (!photoUrls[pid]) {
-              fetchLienKetAnh(token, pid)
-                .then((url) => {
-                  if (active) setPhotoUrls((prev) => ({ ...prev, [pid]: url }))
-                })
-                .catch(() => {})
-            }
-          })
-        }
+    setDangBaoXong(false)
+    setLoiHanhDong(null)
+    taiChiTiet(chiTietId)
+      .then((d) => {
+        if (!active) return
+        setKetQua(d.ketQuaSuaChua ?? '')
+        d.anhTruocIds.forEach((pid) => fetchLienKetAnh(token, pid).then((url) => active && setPhotoUrls((m) => ({ ...m, [pid]: url }))).catch(() => {}))
       })
-      .catch((err: Error) => {
-        if (active) {
-          setLoiChiTiet(err.message)
-          setDangTaiChiTiet(false)
-        }
-      })
+      .catch((err: Error) => { if (active) setLoiChiTiet(err.message) })
+      .finally(() => { if (active) setDangTaiChiTiet(false) })
+    return () => { active = false }
+  }, [token, chiTietId, taiChiTiet])
 
-    return () => {
-      active = false
-    }
-  }, [token, chiTietId])
-
-  function moChiTiet(id: number) {
-    setChiTietId(id)
+  function dieuHuong(id: number | null, baoGia = false) {
     const url = new URL(window.location.href)
-    url.searchParams.set('yeuCauId', String(id))
+    if (id) url.searchParams.set('yeuCauId', String(id)); else url.searchParams.delete('yeuCauId')
+    if (id && baoGia) url.searchParams.set('baoGia', '1'); else url.searchParams.delete('baoGia')
     window.history.pushState({}, '', url.toString())
+    setChiTietId(id)
+    setMoBaoGia(Boolean(id) && baoGia)
+    setThongBao(null)
   }
 
-  async function handleNutChinh(row: ThongTinViecThoRow, hanhDong: HanhDongChinh) {
-    if (hanhDong === 'LAP_BAO_GIA') moFormBaoGiaRef.current = true
-    if (hanhDong === 'NHAN_VIEC') {
-      try {
-        await capNhatKhaoSat(token, row.id, '')
-        void taiDanhSach()
-      } catch (err: unknown) {
-        alert(err instanceof Error ? err.message : 'Lỗi khi nhận việc')
-        return
-      }
-    }
-    moChiTiet(row.id)
-  }
-
-  function chonLoc(e: React.MouseEvent, key: LocViec) {
-    e.preventDefault()
-    setLoc(key)
+  function chonTab(t: 'dang-lam' | 'xong') {
+    setTab(t)
     const url = new URL(window.location.href)
-    url.searchParams.set('loc', key)
+    url.searchParams.set('loc', t)
     window.history.replaceState({}, '', url.toString())
   }
 
-  function dongChiTiet() {
-    setChiTietId(null)
-    setChiTietData(null)
-    const url = new URL(window.location.href)
-    url.searchParams.delete('yeuCauId')
-    window.history.pushState({}, '', url.toString())
-  }
-
-  async function handleLuuKhaoSat() {
-    if (!chiTietId) return
-    setDangXuLyHanhDong(true)
+  // Chạy một thao tác ghi: lỗi báo ngay trong khối, giữ nguyên chữ đã nhập.
+  async function chay(viec: () => Promise<void>, loiMacDinh: string) {
+    setDangGui(true)
+    setLoiHanhDong(null)
     try {
-      await capNhatKhaoSat(token, chiTietId, ghiChuKhaoSatForm)
-      setThongBaoThanhCong('Đã lưu ghi chú khảo sát.')
-      const updated = await fetchThoChiTietCongViec(token, chiTietId)
-      setChiTietData(updated)
-      void taiDanhSach()
+      await viec()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Lỗi khi lưu khảo sát')
+      setLoiHanhDong(err instanceof Error ? err.message : loiMacDinh)
     } finally {
-      setDangXuLyHanhDong(false)
+      setDangGui(false)
     }
   }
 
-  async function handleBaoXong() {
-    if (!chiTietId) return
-    if (!ketQuaSuaChuaForm.trim()) {
-      alert('Vui lòng nhập kết quả sửa chữa trước khi báo xong.')
-      return
-    }
-    setDangXuLyHanhDong(true)
-    try {
-      await baoXongViecTho(token, chiTietId, ketQuaSuaChuaForm.trim())
-      setThongBaoThanhCong('Đã báo hoàn thành sửa chữa. Yêu cầu chuyển sang Chờ xác nhận.')
-      const updated = await fetchThoChiTietCongViec(token, chiTietId)
-      setChiTietData(updated)
+  const lamMoi = async (id: number) => { await taiChiTiet(id); void taiDanhSach() }
+
+  async function batDauKhaoSat(id: number, tuDanhSach = false) {
+    await chay(async () => {
+      await capNhatKhaoSat(token, id, '')
+      if (tuDanhSach) dieuHuong(id)
+      else await lamMoi(id)
       void taiDanhSach()
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Lỗi khi báo xong')
-    } finally {
-      setDangXuLyHanhDong(false)
-    }
+    }, 'Lỗi khi nhận việc')
   }
 
-  async function handleTaoBaoGia(guiDuyet: boolean) {
+  const dongHopLe = dong.filter((l) => l.tenHangMuc.trim() && Number(l.soLuong) > 0 && Number(l.donGia) > 0)
+  const tongBaoGia = dongHopLe.reduce((a, l) => a + Number(l.soLuong) * Number(l.donGia), 0)
+
+  async function guiBaoGia() {
     if (!chiTietId) return
-    const validLines = dongBaoGiaForm.filter((l) => l.tenHangMuc.trim() && l.soLuong > 0 && l.donGia >= 0)
-    if (validLines.length === 0) {
-      alert('Cần ít nhất một dòng vật tư / công việc hợp lệ.')
-      return
-    }
-    setDangXuLyHanhDong(true)
-    try {
-      await taoBaoGia(token, chiTietId, {
-        moTa: moTaBaoGia,
-        dongBaoGia: validLines,
-        guiDuyetNgay: guiDuyet,
+    await chay(async () => {
+      const bg = await taoBaoGia(token, chiTietId, {
+        moTa: ghiChuBaoGia || undefined,
+        dongBaoGia: dongHopLe.map((l) => ({ tenHangMuc: l.tenHangMuc.trim(), soLuong: Number(l.soLuong), donVi: 'gói', donGia: Number(l.donGia) })),
+        guiDuyetNgay: false,
       })
-      setThongBaoThanhCong(guiDuyet ? 'Đã gửi báo giá tới ban quản lý để duyệt.' : 'Đã lưu bản nháp báo giá.')
-      setHienFormBaoGia(false)
-      const updated = await fetchThoChiTietCongViec(token, chiTietId)
-      setChiTietData(updated)
+      await guiDuyetBaoGia(token, chiTietId, bg.id)
+      setDong([DONG_TRONG])
+      setGhiChuBaoGia('')
+      dieuHuong(chiTietId)
+      setThongBao('Đã gửi báo giá. Chờ quản lý duyệt.')
       void taiDanhSach()
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Lỗi khi tạo báo giá')
-    } finally {
-      setDangXuLyHanhDong(false)
-    }
+    }, 'Lỗi khi gửi báo giá')
   }
 
-  async function handleGuiDuyetBaoGia(baoGiaId: number) {
+  async function baoXong() {
     if (!chiTietId) return
-    setDangXuLyHanhDong(true)
-    try {
-      await guiDuyetBaoGia(token, chiTietId, baoGiaId)
-      setThongBaoThanhCong('Đã gửi duyệt báo giá thành công.')
-      const updated = await fetchThoChiTietCongViec(token, chiTietId)
-      setChiTietData(updated)
-      void taiDanhSach()
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Lỗi khi gửi duyệt')
-    } finally {
-      setDangXuLyHanhDong(false)
-    }
+    await chay(async () => {
+      await baoXongViecTho(token, chiTietId, ketQua.trim())
+      setDangBaoXong(false)
+      setThongBao('Đã báo xong. Chờ quản lý nghiệm thu.')
+      await lamMoi(chiTietId)
+    }, 'Lỗi khi báo xong')
   }
 
-  async function handleXemChungTu(yeuCauId: number) {
-    try {
-      const doc = await fetchThoChungTu(token, yeuCauId)
-      setVoucherData(doc)
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể tải chứng từ')
-    }
+  async function xemChungTu(id: number) {
+    try { setVoucherData(await fetchThoChungTu(token, id)) } catch (err: unknown) { setLoiHanhDong(err instanceof Error ? err.message : 'Không thể tải chứng từ') }
   }
 
-  const toaNhaList = useMemo(() => {
-    const map = new Map<number, string>()
-    danhSach.forEach((r) => map.set(r.toaNhaId, r.toaNha))
-    return Array.from(map.entries()).map(([id, ten]) => ({ id, ten }))
+  const sapXep = useMemo(() => {
+    const hang = { KHAN_CAP: 0, GAP: 1, THUONG: 2 }
+    return [...danhSach].sort((a, b) => hang[a.mucDo] - hang[b.mucDo] || Date.parse(a.taoLuc) - Date.parse(b.taoLuc))
   }, [danhSach])
+  const dangLam = sapXep.filter((r) => !daXong(r))
+  const xong = sapXep.filter(daXong)
 
-  const dangMo = danhSach.filter((r) => r.trangThaiHieuLuc !== 'DA_DONG' && r.trangThaiHieuLuc !== 'DA_HUY')
-  const dsGap = dangMo.filter((r) => r.mucDo !== 'THUONG')
-  const dsDangLam = dangMo
-  const dsXong = danhSach.filter((r) => r.trangThaiHieuLuc === 'DA_DONG' || r.trangThaiHieuLuc === 'DA_HUY')
-  const soChuaBaoGia = dangMo.filter((r) => r.giaTriBaoGia == null).length
-  const locHieuLuc: LocViec = loc ?? (dsGap.length > 0 ? 'gap' : 'dang-lam')
-  const dsMobile = locHieuLuc === 'gap' ? dsGap : locHieuLuc === 'xong' ? dsXong : dsDangLam
-  const viTriNutChinh = dsMobile.findIndex((r) => nutChinhCuaViec(r).hanhDong !== 'KHONG')
+  const khung = (children: React.ReactNode) => <div className="tho-cv" style={styleKhung} data-testid="worker-jobs-screen"><style>{CSS_THO}</style>{children}{voucherData ? <ChungTu data={voucherData} voucherRef={voucherRef} dong={() => setVoucherData(null)} /> : null}</div>
 
-  return (
-    <div style={{ maxWidth: 1240, display: 'grid', gap: 20 }} data-testid="worker-jobs-screen">
+  // ---------- T3 · Báo giá ----------
+  if (chiTietId && moBaoGia) {
+    const lyDo = dongHopLe.length === 0 ? 'Thêm ít nhất một dòng có đơn giá.' : undefined
+    return khung(
       <>
-          <div className="spread" style={{ alignItems: 'flex-start' }}>
-            <div>
-              {/* Điện thoại: thanh trên của khung đã là h1 ("Việc"), tiêu đề này chỉ giữ cho trình đọc màn hình. */}
-              <Tieu mobile={mobile} className={mobile ? 'sr-only' : 'h1'} style={{ margin: 0 }}>Việc của tôi</Tieu>
-              <div className="t-meta">
-                {[tomTat.hoTen, new Date().toLocaleDateString('vi-VN')].filter(Boolean).join(' · ')}
+        <Dau mobile={mobile} tieuDe="Báo giá" phu={chiTiet ? `${chiTiet.hangMuc} · phòng ${phongCua(chiTiet.soPhong)} · ${chiTiet.toaNha}` : undefined} quay={() => dieuHuong(chiTietId)} />
+        {dong.map((l, i) => (
+          <Card key={i} aria-label={`Dòng ${i + 1}`} style={styleLuoi}>
+            <Field label={`Dòng ${i + 1}: vật tư hoặc công`}>
+              <Input value={l.tenHangMuc} onChange={(e) => setDong((c) => c.map((x, k) => (k === i ? { ...x, tenHangMuc: e.target.value } : x)))} />
+            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr)', gap: 12 }}>
+              <Field label="Số lượng">
+                <Input type="number" inputMode="decimal" min={0} step="any" value={l.soLuong} style={{ textAlign: 'right' }} onChange={(e) => setDong((c) => c.map((x, k) => (k === i ? { ...x, soLuong: e.target.value } : x)))} />
+              </Field>
+              <Field label="Đơn giá (₫)">
+                <Input type="number" inputMode="numeric" min={0} step={1000} value={l.donGia} style={{ textAlign: 'right' }} onChange={(e) => setDong((c) => c.map((x, k) => (k === i ? { ...x, donGia: e.target.value } : x)))} />
+              </Field>
+            </div>
+            <div className="spread">
+              <span style={{ color: 'var(--ma-text-secondary)' }}>Thành tiền</span>
+              <b>{dinhDangTien((Number(l.soLuong) || 0) * (Number(l.donGia) || 0))} ₫</b>
+            </div>
+            {dong.length > 1 ? <Button variant="text" onClick={() => setDong((c) => c.filter((_, k) => k !== i))}>Xoá dòng {i + 1}</Button> : null}
+          </Card>
+        ))}
+        <Button variant="secondary" onClick={() => setDong((c) => [...c, DONG_TRONG])}><Icon name="plus" />Thêm dòng</Button>
+        <Field label="Ghi chú cho quản lý (không bắt buộc)">
+          <textarea rows={3} style={styleTextarea} value={ghiChuBaoGia} placeholder="Ví dụ: cần cắt điện phòng 20 phút" onChange={(e) => setGhiChuBaoGia(e.target.value)} />
+        </Field>
+        <Card>
+          <span style={{ color: 'var(--ma-text-secondary)' }}>Tổng báo giá</span>
+          <b style={{ font: 'var(--ma-text-figure-lg)' }}>{dinhDangTien(tongBaoGia)} ₫</b>
+        </Card>
+        {loiHanhDong ? <p role="alert" style={styleLoi}>{loiHanhDong}</p> : null}
+        <ChanDinh>
+          <Button variant="primary" blocked={dongHopLe.length === 0 || dangGui} blockedReason={lyDo} onClick={() => void guiBaoGia()}>Gửi báo giá {dinhDangTien(tongBaoGia)} ₫</Button>
+        </ChanDinh>
+      </>,
+    )
+  }
+
+  // ---------- T2 · Chi tiết (+ T4 báo xong) ----------
+  if (chiTietId) {
+    const d = chiTiet
+    const nut = d ? nutChinhChiTiet(d) : null
+    const baoGiaNhap = d?.danhSachBaoGia.find((b) => b.trangThai === 'NHAP')
+    const lichSu = (d?.lichSuTrangThai ?? []).map((h, i, a) => ({
+      ten: h.tenHanhDong,
+      moTa: h.nguoiThucHien,
+      trangThai: (i === a.length - 1 ? 'nay' : 'xong') as 'nay' | 'xong',
+    }))
+    const sdtKhach = d && (d.soDienThoaiLienHe || d.nguoiBaoSoDienThoai)
+    const lienHe = d ? [
+      { vaiTro: 'Người thuê', ten: d.nguoiLienHeHoTen || d.nguoiBaoHoTen, sdt: sdtKhach },
+      { vaiTro: 'Quản lý toà', ten: d.quanLyPhuTrachHoTen, sdt: d.quanLyPhuTrachSoDienThoai },
+    ].filter((x) => x.ten) : []
+    return khung(
+      <>
+        <Dau mobile={mobile} tieuDe={d ? `${d.hangMuc} · phòng ${phongCua(d.soPhong)}` : 'Chi tiết việc'} phu={d?.maYeuCau} quay={() => dieuHuong(null)} />
+        {dangTaiChiTiet ? <EmptyState kind="loading" title="Đang tải chi tiết việc" /> : loiChiTiet ? (
+          <EmptyState kind="error" title="Không tải được chi tiết việc" body={loiChiTiet} actionLabel="Tải lại" actionSize="md" onAction={() => { setLoiChiTiet(null); setDangTaiChiTiet(true); taiChiTiet(chiTietId).catch((e: Error) => setLoiChiTiet(e.message)).finally(() => setDangTaiChiTiet(false)) }} />
+        ) : d ? (
+          <>
+            {thongBao ? <Toast role="status">{thongBao}</Toast> : null}
+            <Card style={styleLuoi}>
+              <div style={styleHang}>
+                <TrangThai r={d} />
+                {d.mucDo !== 'THUONG' ? <StatusTag tone={d.mucDo === 'KHAN_CAP' ? 'urgent' : 'waiting'}>{d.mucDo === 'KHAN_CAP' ? 'Khẩn' : 'Gấp'}</StatusTag> : null}
               </div>
-            </div>
-            {mobile ? <button type="button" className="icon-btn touch" aria-label="Tìm việc" aria-expanded={hienTim} onClick={() => setHienTim((v) => !v)}>
-              <Icon name="search" />
-            </button> : null}
-          </div>
-          <div className="m-sum" aria-label="Tóm tắt">
-            <div>
-              <div className="v">{tomTat.kpi?.dangXuLy ?? '–'}</div>
-              <div className="k">đang làm</div>
-            </div>
-            <div>
-              <div className="v">{soChuaBaoGia}</div>
-              <div className="k">chưa báo giá</div>
-            </div>
-            <div>
-              <div className="v">{tomTat.kpi ? `${(tomTat.kpi.conPhaiTra / 1e6).toFixed(2).replace('.', ',')} tr` : '–'}</div>
-              <div className="k">còn được trả</div>
-            </div>
-          </div>
-          <nav className="seg seg-links" aria-label="Lọc việc">
-            {([
-              ['gap', `Gấp (${dsGap.length})`],
-              ['dang-lam', `Đang làm (${dsDangLam.length})`],
-              ['xong', `Xong (${dsXong.length})`],
-            ] as const).map(([key, label]) => (
-              <a key={key} href={`?loc=${key}`} aria-current={locHieuLuc === key ? 'true' : undefined} onClick={(e) => chonLoc(e, key)}>
-                {label}
-              </a>
-            ))}
-          </nav>
-        </>
-
-      {/* Filter and Search Bar */}
-      {!mobile || hienTim ? (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-        <input
-          type="search"
-          placeholder="Tìm phòng, mã đơn, hạng mục..."
-          value={tuKhoa}
-          onChange={(e) => setTuKhoa(e.target.value)}
-          aria-label="Tìm kiếm công việc"
-          style={{
-            flex: '1 1 200px',
-            minWidth: 180,
-            height: 38,
-            padding: '0 12px',
-            borderRadius: 6,
-            border: '1px solid var(--ma-border-strong, #cbd5e1)',
-            background: 'var(--ma-bg-card)',
-            color: 'var(--ma-text-primary)',
-            fontSize: 13.5,
-          }}
-        />
-
-        {toaNhaList.length > 0 ? (
-          <select
-            value={toaNhaId ?? ''}
-            onChange={(e) => setToaNhaId(e.target.value ? Number(e.target.value) : undefined)}
-            aria-label="Lọc theo toà nhà"
-            style={styleSelect}
-          >
-            <option value="">Tất cả toà ({toaNhaList.length})</option>
-            {toaNhaList.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.ten}
-              </option>
-            ))}
-          </select>
-        ) : null}
-
-        <select
-          value={mucDo}
-          onChange={(e) => setMucDo(e.target.value)}
-          aria-label="Lọc theo mức độ"
-          style={styleSelect}
-        >
-          <option value="">Tất cả mức độ</option>
-          <option value="THUONG">Bình thường</option>
-          <option value="GAP">Gấp</option>
-          <option value="KHAN_CAP">Khẩn cấp</option>
-        </select>
-      </div>
-      ) : null}
-
-      {/* Main List / Table */}
-      {dangTai ? (
-        <div style={{ padding: 40, textAlign: 'center', color: 'var(--ma-text-secondary)' }}>
-          Đang tải danh sách công việc...
-        </div>
-      ) : loiTai ? (
-        <div style={{ padding: 24, textAlign: 'center', background: 'var(--ma-urgent-bg)', color: 'var(--ma-urgent)' }}>
-          {loiTai}
-        </div>
-      ) : dsMobile.length === 0 ? (
-        <EmptyState
-          title="Không tìm thấy công việc nào"
-          body="Không có việc sửa chữa nào phù hợp với bộ lọc hiện tại của bạn."
-        />
-      ) : (
-        /* Thẻ việc: điện thoại 1 cột, máy tính lưới 2–3 cột */
-        <div style={{ display: 'grid', gap: 12, gridTemplateColumns: mobile ? undefined : 'repeat(auto-fill, minmax(300px, 1fr))', alignItems: 'start' }}>
-          {dsMobile.map((row, i) => {
-            const nutChinh = nutChinhCuaViec(row)
-            const buoc = buocViecTho(row)
-            const phong = row.soPhong.replace(/^P\.?\s*/i, '')
-            return (
-              <article
-                key={row.id}
-                className="job"
-                onClick={() => moChiTiet(row.id)}
-                style={{ cursor: 'pointer' }}
-                aria-labelledby={`viec-${row.id}`}
-                data-testid={`worker-task-row-${row.id}`}
-              >
-                <div className="row" style={{ gap: 8 }}>
-                  {row.mucDo !== 'THUONG' ? (
-                    <span className={`tag ${row.mucDo === 'KHAN_CAP' ? 'tag-danger' : 'tag-warning'}`}>
-                      <Icon name="alert" size="sm" />
-                      {row.tenMucDo}
-                    </span>
-                  ) : null}
-                  <span className="tag tag-info">{row.tenTrangThaiHieuLuc}</span>
-                  <span className="push t-meta">{ngayNganGon(row.taoLuc)}</span>
-                </div>
-                <div>
-                  <h2 className="t" id={`viec-${row.id}`} style={{ margin: 0 }}>
-                    <button type="button" className="hit" style={styleNutTieuDe} onClick={(e) => { e.stopPropagation(); moChiTiet(row.id) }}>
-                      {row.hangMuc}
-                    </button>
-                  </h2>
-                  <div className="s">{row.toaNha} · Phòng {phong} · Tầng {row.tang}</div>
-                  <div className="s">{row.nguoiLienHeHoTen} · {row.soDienThoaiLienHe}</div>
-                </div>
-                <div className="dots" aria-label={buoc.nhan}>
-                  {[0, 1, 2, 3].map((k) => <i key={k} className={k < buoc.so ? 'on' : ''} />)}
-                  <span>{buoc.nhan}</span>
-                </div>
-                <div className="acts">
-                  <a className="icon-btn touch boxed" href={`tel:${row.soDienThoaiLienHe}`} aria-label={`Gọi ${row.nguoiLienHeHoTen}`} onClick={(e) => e.stopPropagation()}>
-                    <Icon name="phone" />
-                  </a>
-                  {nutChinh.hanhDong === 'KHONG' ? (
-                    <span className="t-sm t-2" style={{ flex: 1, alignSelf: 'center' }}>{nutChinh.nhan}</span>
-                  ) : (
-                    <Button
-                      variant={i === viTriNutChinh ? 'primary' : 'secondary'}
-                      className="btn-touch"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        void handleNutChinh(row, nutChinh.hanhDong)
-                      }}
-                    >
-                      {nutChinh.nhan}
-                    </Button>
-                  )}
-                </div>
-              </article>
-            )
-          })}
-        </div>
-      )}
-
-      {/* DETAIL DRAWER / MODAL */}
-      {chiTietId ? (
-        <div style={styleDrawerOverlay} role="dialog" aria-modal="true" aria-labelledby="drawer-title" data-testid="task-detail-drawer">
-          <div ref={drawerRef} style={styleDrawerContent(mobile)} tabIndex={-1}>
-            {/* Drawer Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--ma-border-default)', background: 'var(--ma-bg-sunken)' }}>
+              <p style={{ margin: 0 }}>{d.moTa}</p>
               <div>
-                <h2 id="drawer-title" style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
-                  Chi tiết sự cố: {chiTietData?.maYeuCau ?? `SC-${chiTietId}`}
-                </h2>
-                <div style={{ color: 'var(--ma-text-secondary)', fontSize: 13, marginTop: 2 }}>
-                  {chiTietData?.toaNha} · Phòng {chiTietData?.soPhong}
-                </div>
+                <div><b>{d.toaNha} · tầng {d.tang}</b></div>
+                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.diaChiToaNha)}`} target="_blank" rel="noreferrer" style={{ color: 'var(--ma-text-link)' }}>{d.diaChiToaNha}</a>
               </div>
-              <Button variant="text" onClick={dongChiTiet} aria-label="Đóng chi tiết">
-                ✕ Đóng (ESC)
-              </Button>
-            </div>
-
-            {/* Drawer Body */}
-            <div style={{ padding: '20px', overflowY: 'auto', display: 'grid', gap: 20 }}>
-              {dangTaiChiTiet ? (
-                <div style={{ padding: 40, textAlign: 'center' }}>Đang tải chi tiết sự cố...</div>
-              ) : loiChiTiet ? (
-                <div style={{ padding: 20, background: 'var(--ma-urgent-bg)', color: 'var(--ma-urgent)' }}>{loiChiTiet}</div>
-              ) : chiTietData ? (
-                <>
-                  {thongBaoThanhCong ? (
-                    <div style={{ padding: '10px 14px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10B981', color: '#059669', borderRadius: 8, fontSize: 13.5 }}>
-                      ✓ {thongBaoThanhCong}
-                    </div>
-                  ) : null}
-
-                  {/* Badges bar */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-                    <StatusTag tone={chiTietData.mucDo === 'KHAN_CAP' ? 'urgent' : chiTietData.mucDo === 'GAP' ? 'waiting' : 'neutral'}>
-                      Mức độ: {chiTietData.tenMucDo}
-                    </StatusTag>
-                    <StatusTag tone={chiTietData.trangThaiHieuLuc === 'DA_DONG' ? 'done' : chiTietData.trangThaiHieuLuc === 'CHO_XAC_NHAN' ? 'waiting' : 'neutral'}>
-                      Trạng thái: {chiTietData.tenTrangThaiHieuLuc}
-                    </StatusTag>
-                    <StatusTag tone={chiTietData.trangThaiThanhToan === 'DA_THANH_TOAN_DU' ? 'done' : chiTietData.trangThaiThanhToan === 'KHONG_PHAT_SINH_TIEN' ? 'neutral' : 'waiting'}>
-                      Thanh toán: {dichTrangThaiThanhToan(chiTietData.trangThaiThanhToan)}
-                    </StatusTag>
+              {d.anhTruocIds.length > 0 ? (
+                <div style={styleHang}>
+                  {d.anhTruocIds.map((pid) => photoUrls[pid] ? <img key={pid} src={photoUrls[pid]} alt="Ảnh hiện trạng" style={styleAnh} /> : <span key={pid} style={styleAnh} aria-busy="true" />)}
+                </div>
+              ) : null}
+            </Card>
+            {lienHe.length > 0 ? (
+              <Card>
+                {lienHe.map((l) => (
+                  <div key={l.vaiTro} className="spread" style={{ padding: '8px 0' }}>
+                    <div><div style={{ color: 'var(--ma-text-secondary)' }}>{l.vaiTro}</div><b>{l.ten}</b>{l.sdt ? <div style={{ color: 'var(--ma-text-secondary)' }}>{dinhDangSdt(l.sdt)}</div> : null}</div>
+                    {l.sdt ? <a className="btn btn-secondary" href={`tel:${l.sdt}`} aria-label={`Gọi ${l.vaiTro} ${l.ten}`}><Icon name="phone" />Gọi</a> : null}
                   </div>
-
-                  {/* Section 1: Location & Copy address */}
-                  <div style={styleDetailSection}>
-                    <SysLabel>Địa điểm & Phòng</SysLabel>
-                    <div style={{ display: 'grid', gap: 6, fontSize: 13.5 }}>
-                      <div>
-                        <strong>Toà nhà:</strong> {chiTietData.toaNha} (Tầng {chiTietData.tang}, Phòng {chiTietData.soPhong})
-                      </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-                        <span>
-                          <strong>Địa chỉ:</strong> {chiTietData.diaChiToaNha}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void navigator.clipboard.writeText(chiTietData.diaChiToaNha)
-                            alert('Đã sao chép địa chỉ toà nhà!')
-                          }}
-                          style={styleSmallActionBtn}
-                        >
-                          📋 Sao chép địa chỉ
-                        </button>
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(chiTietData.diaChiToaNha)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={styleSmallActionBtn}
-                        >
-                          📍 Mở Google Maps ↗
-                        </a>
-                      </div>
-                    </div>
+                ))}
+              </Card>
+            ) : null}
+            {lichSu.length > 0 ? <Card title="Đã làm gì"><ThanhBuoc doc nhan="Đã làm gì" buoc={lichSu} /></Card> : null}
+            {d.danhSachBaoGia.length > 0 ? (
+              <Card title="Báo giá">
+                {d.danhSachBaoGia.map((bg) => (
+                  <div key={bg.id} style={{ padding: '8px 0', display: 'grid', gap: 4 }}>
+                    <div className="spread"><b>{bg.maBaoGia} · bản {bg.phienBan}</b><StatusTag tone={bg.trangThai === 'DA_DUYET' ? 'done' : bg.trangThai === 'TU_CHOI' ? 'urgent' : 'waiting'}>{dichTrangThaiBaoGia(bg.trangThai)}</StatusTag></div>
+                    {bg.dongBaoGia.map((x, k) => <div key={k} className="spread"><span>{x.tenHangMuc} × {x.soLuong}</span><span>{dinhDangTien(x.thanhTien)} ₫</span></div>)}
+                    <div className="spread"><span style={{ color: 'var(--ma-text-secondary)' }}>Tổng</span><b>{dinhDangTien(bg.tongTien)} ₫</b></div>
+                    {bg.lyDoTuChoi ? <div style={{ color: 'var(--ma-urgent)' }}>Lý do từ chối: {bg.lyDoTuChoi}</div> : null}
                   </div>
+                ))}
+                {d.baoGiaHieuLuc ? <Button variant="secondary" onClick={() => void xemChungTu(d.id)}>Xem chứng từ</Button> : null}
+              </Card>
+            ) : null}
+            {d.trangThaiHieuLuc === 'DANG_XU_LY' ? (
+              <Card title="Ghi chú khảo sát">
+                <textarea rows={3} aria-label="Ghi chú khảo sát" style={styleTextarea} value={ghiChuKhaoSat} placeholder="Nguyên nhân, hiện trạng, linh kiện cần chuẩn bị" onChange={(e) => setGhiChuKhaoSat(e.target.value)} />
+                <div><Button variant="secondary" blocked={dangGui} onClick={() => void chay(async () => { await capNhatKhaoSat(token, d.id, ghiChuKhaoSat); setThongBao('Đã lưu ghi chú khảo sát.') }, 'Lỗi khi lưu khảo sát')}>Lưu ghi chú</Button></div>
+              </Card>
+            ) : null}
+            {dangBaoXong ? (
+              <Card title="Báo đã sửa xong">
+                <Field label="Đã làm gì">
+                  <textarea rows={4} style={styleTextarea} value={ketQua} placeholder="Ví dụ: thay công tắc nhà tắm, đã thử điện" onChange={(e) => setKetQua(e.target.value)} />
+                </Field>
+              </Card>
+            ) : null}
+            {loiHanhDong ? <p role="alert" style={styleLoi}>{loiHanhDong}</p> : null}
+            {dangBaoXong ? (
+              <ChanDinh><Button variant="primary" blocked={dangGui || !ketQua.trim()} blockedReason={!ketQua.trim() ? 'Nhập việc đã làm.' : undefined} onClick={() => void baoXong()}>Gửi báo xong</Button></ChanDinh>
+            ) : nut ? (
+              <ChanDinh>
+                <Button variant="primary" blocked={dangGui} onClick={() => {
+                  if (nut.hanhDong === 'NHAN_VIEC') void batDauKhaoSat(d.id)
+                  else if (nut.hanhDong === 'BAO_XONG') setDangBaoXong(true)
+                  else if (nut.hanhDong === 'GUI_NHAP' && baoGiaNhap) void chay(async () => { await guiDuyetBaoGia(token, d.id, baoGiaNhap.id); setThongBao('Đã gửi báo giá. Chờ quản lý duyệt.'); await lamMoi(d.id) }, 'Lỗi khi gửi duyệt')
+                  else dieuHuong(d.id, true)
+                }}>{nut.nhan}</Button>
+              </ChanDinh>
+            ) : null}
+          </>
+        ) : null}
+      </>,
+    )
+  }
 
-                  {/* Section 2: Contact Persons */}
-                  <div style={styleDetailSection}>
-                    <SysLabel>Thông tin liên hệ</SysLabel>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 13.5 }}>
-                      <div style={{ background: 'var(--ma-bg-sunken)', padding: 10, borderRadius: 6 }}>
-                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Người báo hỏng</div>
-                        <strong>{chiTietData.nguoiBaoHoTen}</strong>
-                        <div>
-                          <a href={`tel:${chiTietData.nguoiBaoSoDienThoai}`} style={{ color: 'var(--ma-brand-primary, #2563EB)' }}>
-                            📞 {chiTietData.nguoiBaoSoDienThoai}
-                          </a>
-                        </div>
-                      </div>
-
-                      <div style={{ background: 'var(--ma-bg-sunken)', padding: 10, borderRadius: 6 }}>
-                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>
-                          Người liên hệ thực tế {chiTietData.laNguoiDungTenHopDong ? '(Đứng tên HĐ)' : ''}
-                        </div>
-                        <strong>{chiTietData.nguoiLienHeHoTen}</strong>
-                        <div>
-                          <a href={`tel:${chiTietData.soDienThoaiLienHe}`} style={{ color: 'var(--ma-brand-primary, #2563EB)' }}>
-                            📞 {chiTietData.soDienThoaiLienHe}
-                          </a>
-                        </div>
-                      </div>
-
-                      {chiTietData.quanLyPhuTrachHoTen ? (
-                        <div style={{ background: 'var(--ma-bg-sunken)', padding: 10, borderRadius: 6 }}>
-                          <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Quản lý phụ trách</div>
-                          <strong>{chiTietData.quanLyPhuTrachHoTen}</strong>
-                          <div>
-                            <a href={`tel:${chiTietData.quanLyPhuTrachSoDienThoai}`} style={{ color: 'var(--ma-brand-primary, #2563EB)' }}>
-                              📞 {chiTietData.quanLyPhuTrachSoDienThoai}
-                            </a>
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {/* Section 3: Description & Photos */}
-                  <div style={styleDetailSection}>
-                    <SysLabel>Mô tả sự cố & Ảnh hiện trường</SysLabel>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ma-text-primary)', marginBottom: 6 }}>
-                      {chiTietData.hangMuc}
-                    </div>
-                    <p style={{ margin: '0 0 12px', fontSize: 13.5, lineHeight: 1.5, color: 'var(--ma-text-primary)' }}>
-                      {chiTietData.moTa}
-                    </p>
-
-                    {chiTietData.anhTruocIds.length > 0 ? (
-                      <div>
-                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)', marginBottom: 6 }}>Ảnh hiện trường sự cố:</div>
-                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                          {chiTietData.anhTruocIds.map((pid) => (
-                            <div key={pid} style={stylePhotoBox}>
-                              {photoUrls[pid] ? (
-                                <img src={photoUrls[pid]} alt="Ảnh sự cố" style={stylePhotoImg} />
-                              ) : (
-                                <span style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Đang tải ảnh...</span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)', fontStyle: 'italic' }}>Không có ảnh đính kèm ban đầu.</div>
-                    )}
-                  </div>
-
-                  {/* Section 4: Survey & Repair Action Form */}
-                  <div style={styleDetailSection}>
-                    <SysLabel>Khảo sát & Tiến độ sửa chữa</SysLabel>
-                    <div style={{ display: 'grid', gap: 14 }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
-                          Ghi chú khảo sát kỹ thuật
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={ghiChuKhaoSatForm}
-                          onChange={(e) => setGhiChuKhaoSatForm(e.target.value)}
-                          placeholder="Mô tả nguyên nhân, hiện trạng khảo sát, linh kiện cần chuẩn bị..."
-                          style={styleTextarea}
-                        />
-                        <div style={{ marginTop: 6, display: 'flex', justifyContent: 'flex-end' }}>
-                          <Button
-                            variant="secondary"
-                            onClick={handleLuuKhaoSat}
-                            blocked={dangXuLyHanhDong}
-                            style={{ fontSize: 13, height: 32 }}
-                          >
-                            Lưu khảo sát
-                          </Button>
-                        </div>
-                      </div>
-
-                      {chiTietData.trangThaiHieuLuc !== 'DA_DONG' && chiTietData.trangThaiHieuLuc !== 'DA_HUY' ? (
-                        <div style={{ borderTop: '1px dashed var(--ma-border-default)', paddingTop: 12 }}>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
-                            Kết quả sửa chữa (khi hoàn thành)
-                          </label>
-                          <textarea
-                            rows={2}
-                            value={ketQuaSuaChuaForm}
-                            onChange={(e) => setKetQuaSuaChuaForm(e.target.value)}
-                            placeholder="Mô tả kết quả sau khi đã sửa xong, các việc đã thực hiện..."
-                            style={styleTextarea}
-                          />
-                          <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>
-                              Báo xong sẽ chuyển trạng thái sang Chờ xác nhận để người thuê và quản lý nghiệm thu.
-                            </span>
-                            <Button
-                              onClick={handleBaoXong}
-                              blocked={dangXuLyHanhDong || !ketQuaSuaChuaForm.trim()}
-                              style={{ fontSize: 13, height: 36 }}
-                            >
-                              ✓ Báo đã sửa xong
-                            </Button>
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {/* Section 5: Quotes & Pricing */}
-                  <div style={styleDetailSection}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <SysLabel>Báo giá & Chi phí sửa chữa</SysLabel>
-                      {!hienFormBaoGia ? (
-                        <Button
-                          variant="secondary"
-                          onClick={() => setHienFormBaoGia(true)}
-                          style={{ fontSize: 13, height: 30 }}
-                        >
-                          + Tạo báo giá mới
-                        </Button>
-                      ) : null}
-                    </div>
-
-                    {/* Interactive Form for New Quote */}
-                    {hienFormBaoGia ? (
-                      <div style={{ background: 'var(--ma-bg-sunken)', padding: 14, borderRadius: 8, marginBottom: 14, display: 'grid', gap: 10 }}>
-                        <div style={{ fontWeight: 700, fontSize: 13.5 }}>Lập báo giá mới</div>
-                        <input
-                          type="text"
-                          placeholder="Mô tả tóm tắt phương án xử lý..."
-                          value={moTaBaoGia}
-                          onChange={(e) => setMoTaBaoGia(e.target.value)}
-                          style={styleInput}
-                        />
-
-                        <div style={{ display: 'grid', gap: 8 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600 }}>Các dòng vật tư / công thợ:</div>
-                          {dongBaoGiaForm.map((line, idx) => (
-                            <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                              <input
-                                type="text"
-                                placeholder="Tên vật tư / công việc"
-                                value={line.tenHangMuc}
-                                onChange={(e) => {
-                                  const val = e.target.value
-                                  setDongBaoGiaForm((curr) => curr.map((c, i) => (i === idx ? { ...c, tenHangMuc: val } : c)))
-                                }}
-                                style={{ ...styleInput, flex: 2 }}
-                              />
-                              <input
-                                type="number"
-                                placeholder="SL"
-                                min={0.1}
-                                step={0.1}
-                                value={line.soLuong}
-                                onChange={(e) => {
-                                  const val = Number(e.target.value)
-                                  setDongBaoGiaForm((curr) => curr.map((c, i) => (i === idx ? { ...c, soLuong: val } : c)))
-                                }}
-                                style={{ ...styleInput, width: 60 }}
-                              />
-                              <input
-                                type="text"
-                                placeholder="Đơn vị"
-                                value={line.donVi}
-                                onChange={(e) => {
-                                  const val = e.target.value
-                                  setDongBaoGiaForm((curr) => curr.map((c, i) => (i === idx ? { ...c, donVi: val } : c)))
-                                }}
-                                style={{ ...styleInput, width: 70 }}
-                              />
-                              <input
-                                type="number"
-                                placeholder="Đơn giá"
-                                min={0}
-                                step={1000}
-                                value={line.donGia}
-                                onChange={(e) => {
-                                  const val = Number(e.target.value)
-                                  setDongBaoGiaForm((curr) => curr.map((c, i) => (i === idx ? { ...c, donGia: val } : c)))
-                                }}
-                                style={{ ...styleInput, width: 110 }}
-                              />
-                              {dongBaoGiaForm.length > 1 ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setDongBaoGiaForm((curr) => curr.filter((_, i) => i !== idx))}
-                                  style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '0 4px' }}
-                                >
-                                  ✕
-                                </button>
-                              ) : null}
-                            </div>
-                          ))}
-
-                          <button
-                            type="button"
-                            onClick={() => setDongBaoGiaForm((curr) => [...curr, { tenHangMuc: '', soLuong: 1, donVi: 'gói', donGia: 0 }])}
-                            style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'var(--ma-brand-primary, #2563EB)', cursor: 'pointer', fontSize: 13 }}
-                          >
-                            + Thêm dòng vật tư
-                          </button>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 6 }}>
-                          <Button variant="secondary" onClick={() => setHienFormBaoGia(false)}>
-                            Hủy
-                          </Button>
-                          <Button variant="secondary" onClick={() => handleTaoBaoGia(false)} blocked={dangXuLyHanhDong}>
-                            Lưu bản nháp
-                          </Button>
-                          <Button onClick={() => handleTaoBaoGia(true)} blocked={dangXuLyHanhDong}>
-                            Gửi duyệt ngay
-                          </Button>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {/* Existing Quotes list */}
-                    {chiTietData.danhSachBaoGia.length === 0 ? (
-                      <p style={{ color: 'var(--ma-text-secondary)', fontSize: 13, fontStyle: 'italic', margin: 0 }}>
-                        Chưa có báo giá nào được tạo cho sự cố này.
-                      </p>
-                    ) : (
-                      <div style={{ display: 'grid', gap: 12 }}>
-                        {chiTietData.danhSachBaoGia.map((bg) => (
-                          <div
-                            key={bg.id}
-                            style={{
-                              border: bg.trangThai === 'DA_DUYET' ? '2px solid #10B981' : '1px solid var(--ma-border-default)',
-                              borderRadius: 8,
-                              padding: '12px 14px',
-                              background: bg.trangThai === 'DA_DUYET' ? 'rgba(16, 185, 129, 0.04)' : 'var(--ma-bg-card)',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                              <div>
-                                <strong>{bg.maBaoGia}</strong> (Phiên bản {bg.phienBan})
-                                {bg.moTa ? <span style={{ color: 'var(--ma-text-secondary)', marginLeft: 8 }}>· {bg.moTa}</span> : null}
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <StatusTag tone={bg.trangThai === 'DA_DUYET' ? 'done' : bg.trangThai === 'TU_CHOI' ? 'urgent' : 'waiting'}>
-                                  {dichTrangThaiBaoGia(bg.trangThai)}
-                                </StatusTag>
-                                {bg.trangThai === 'NHAP' ? (
-                                  <Button variant="secondary" onClick={() => handleGuiDuyetBaoGia(bg.id)} blocked={dangXuLyHanhDong} style={{ fontSize: 13, height: 28, padding: '0 8px' }}>
-                                    Gửi duyệt
-                                  </Button>
-                                ) : null}
-                              </div>
-                            </div>
-
-                            {/* Line items table */}
-                            {bg.dongBaoGia.length > 0 ? (
-                              <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse', marginBottom: 8 }}>
-                                <thead>
-                                  <tr style={{ color: 'var(--ma-text-secondary)', borderBottom: '1px solid var(--ma-border-default)' }}>
-                                    <th style={{ textAlign: 'left', padding: '4px 0' }}>Hạng mục</th>
-                                    <th style={{ textAlign: 'center', padding: '4px 8px' }}>SL</th>
-                                    <th style={{ textAlign: 'right', padding: '4px 8px' }}>Đơn giá</th>
-                                    <th style={{ textAlign: 'right', padding: '4px 0' }}>Thành tiền</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {bg.dongBaoGia.map((d, di) => (
-                                    <tr key={di} style={{ borderBottom: '1px dashed var(--ma-border-default)' }}>
-                                      <td style={{ padding: '4px 0' }}>{d.tenHangMuc}</td>
-                                      <td style={{ textAlign: 'center', padding: '4px 8px' }}>
-                                        {d.soLuong} {d.donVi}
-                                      </td>
-                                      <td style={{ textAlign: 'right', padding: '4px 8px' }}>{dinhDangTien(d.donGia)} đ</td>
-                                      <td style={{ textAlign: 'right', padding: '4px 0' }}>{dinhDangTien(d.thanhTien)} đ</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            ) : null}
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
-                              <span style={{ color: 'var(--ma-text-secondary)' }}>Tổng giá trị:</span>
-                              <strong style={{ fontSize: 15, color: bg.trangThai === 'DA_DUYET' ? '#059669' : 'var(--ma-text-primary)' }}>
-                                {dinhDangTien(bg.tongTien)} đ
-                              </strong>
-                            </div>
-
-                            {bg.lyDoTuChoi ? (
-                              <div style={{ marginTop: 8, padding: '6px 10px', background: 'rgba(239, 68, 68, 0.08)', borderRadius: 6, fontSize: 13, color: 'var(--ma-urgent)' }}>
-                                <strong>Lý do từ chối:</strong> {bg.lyDoTuChoi}
-                              </div>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Section 6: Payment history & Voucher */}
-                  <div style={styleDetailSection}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <SysLabel>Thanh toán & Chứng từ</SysLabel>
-                      {chiTietData.baoGiaHieuLuc ? (
-                        <Button
-                          variant="secondary"
-                          onClick={() => handleXemChungTu(chiTietData.id)}
-                          style={{ fontSize: 13, height: 30 }}
-                        >
-                          📄 Xem & In chứng từ
-                        </Button>
-                      ) : null}
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, background: 'var(--ma-bg-sunken)', padding: 12, borderRadius: 8, marginBottom: 12, textAlign: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Được duyệt</div>
-                        <strong style={{ fontSize: 14 }}>{dinhDangTien(chiTietData.tongTienBaoGia)} đ</strong>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Đã nhận</div>
-                        <strong style={{ fontSize: 14, color: '#059669' }}>{dinhDangTien(chiTietData.tongDaNhan)} đ</strong>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>Còn lại</div>
-                        <strong style={{ fontSize: 14, color: chiTietData.tongConLai > 0 ? '#DC2626' : 'var(--ma-text-primary)' }}>
-                          {dinhDangTien(chiTietData.tongConLai)} đ
-                        </strong>
-                      </div>
-                    </div>
-
-                    {chiTietData.danhSachThanhToan.length === 0 ? (
-                      <p style={{ color: 'var(--ma-text-secondary)', fontSize: 13, fontStyle: 'italic', margin: 0 }}>
-                        Chưa có giao dịch thanh toán nào được ghi nhận.
-                      </p>
-                    ) : (
-                      <div style={{ display: 'grid', gap: 8 }}>
-                        {chiTietData.danhSachThanhToan.map((tt) => (
-                          <div key={tt.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--ma-bg-card)', border: '1px solid var(--ma-border-default)', borderRadius: 6, fontSize: 13 }}>
-                            <div>
-                              <strong>{tt.maThanhToan}</strong> · {dichPhuongThuc(tt.phuongThuc)}
-                              {tt.maThamChieu ? <span style={{ color: 'var(--ma-text-secondary)', marginLeft: 6 }}>Ref: {tt.maThamChieu}</span> : null}
-                            </div>
-                            <strong style={{ color: '#059669' }}>{dinhDangTien(tt.soTien)} đ</strong>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Section 7: Audit Timeline */}
-                  <div style={styleDetailSection}>
-                    <SysLabel>Lịch sử thay đổi trạng thái</SysLabel>
-                    <div style={{ display: 'grid', gap: 10, position: 'relative', paddingLeft: 16 }}>
-                      <div style={{ position: 'absolute', top: 6, bottom: 6, left: 6, width: 2, background: 'var(--ma-border-default)' }} />
-                      {chiTietData.lichSuTrangThai.map((item, idx) => (
-                        <div key={idx} style={{ position: 'relative', display: 'grid', gap: 2, fontSize: 13 }}>
-                          <span style={{ position: 'absolute', left: -14, top: 4, width: 8, height: 8, borderRadius: '50%', background: item.laTuDong ? '#F59E0B' : 'var(--ma-brand-primary, #2563EB)' }} />
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <strong>{item.tenHanhDong}</strong>
-                            <span style={{ color: 'var(--ma-text-secondary)', fontSize: 13 }}>
-                              {new Date(item.thoiDiem).toLocaleString('vi-VN')}
-                            </span>
-                            {item.laTuDong ? <StatusTag tone="waiting">Tự động</StatusTag> : null}
-                          </div>
-                          <div style={{ color: 'var(--ma-text-secondary)' }}>Thực hiện bởi: {item.nguoiThucHien}</div>
-                          {item.chiTiet ? <div style={{ color: 'var(--ma-text-primary)', fontStyle: 'italic' }}>{item.chiTiet}</div> : null}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
+  // ---------- T1 · Việc ----------
+  const lamTruoc = dangLam[0]
+  const khac = dangLam.slice(1)
+  const hanhDong = lamTruoc ? nutChinhCuaViec(lamTruoc) : null
+  const danhSachXong = tab === 'xong' ? xong : []
+  return khung(
+    <>
+      <header className="ma-dautrang">
+        <Tieu mobile={mobile} className={mobile ? 'sr-only' : 'h1'} style={{ margin: 0 }}>Việc của tôi</Tieu>
+        {hoTen ? <p className="ma-dautrang-phu">{hoTen}</p> : null}
+      </header>
+      <nav className="seg seg-links" aria-label="Lọc việc">
+        {([['dang-lam', `Đang làm ${dangLam.length}`], ['xong', `Đã xong ${xong.length}`]] as const).map(([k, nhan]) => (
+          <a key={k} href={`?loc=${k}`} aria-current={tab === k ? 'true' : undefined} onClick={(e) => { e.preventDefault(); chonTab(k) }}>{nhan}</a>
+        ))}
+      </nav>
+      {danhSach.length > 12 || tuKhoa ? (
+        <Field label="Tìm việc"><Input type="search" value={tuKhoa} placeholder="Phòng, mã việc, hạng mục" onChange={(e) => setTuKhoa(e.target.value)} /></Field>
+      ) : null}
+      {dangTai && danhSach.length === 0 ? <EmptyState kind="loading" title="Đang tải danh sách việc" /> : loiTai ? (
+        <EmptyState kind="error" title="Không tải được danh sách việc" body={loiTai} actionLabel="Tải lại" actionSize="md" onAction={() => void taiDanhSach()} />
+      ) : tab === 'xong' ? (
+        danhSachXong.length === 0 ? <EmptyState title="Chưa có việc nào xong" body="Việc quản lý đã nghiệm thu sẽ hiện ở đây." /> : (
+          <Card>{danhSachXong.map((r) => <HangViec key={r.id} r={r} mo={() => dieuHuong(r.id)} />)}</Card>
+        )
+      ) : !lamTruoc ? (
+        <EmptyState title="Chưa có việc nào được giao" body="Khi quản lý giao việc, bạn sẽ nhận thông báo." />
+      ) : (
+        <>
+          <Card aria-labelledby={`viec-${lamTruoc.id}`} data-testid={`worker-task-row-${lamTruoc.id}`} style={styleLuoi}>
+            <div className="spread"><span style={{ color: 'var(--ma-text-secondary)' }}>Làm trước</span><TrangThai r={lamTruoc} /></div>
+            <h2 id={`viec-${lamTruoc.id}`} style={{ margin: 0, font: 'var(--ma-text-block-title)' }}>{lamTruoc.hangMuc} · phòng {phongCua(lamTruoc.soPhong)}</h2>
+            <div>{lamTruoc.toaNha}, tầng {lamTruoc.tang}</div>
+            <p style={{ margin: 0 }}>{lamTruoc.moTa}</p>
+            <div style={styleHang}>
+              <a className="btn btn-secondary" href={`tel:${lamTruoc.soDienThoaiLienHe}`} aria-label={`Gọi khách ${lamTruoc.nguoiLienHeHoTen}`}><Icon name="phone" />Gọi khách</a>
+              {hanhDong?.hanhDong === 'KHONG' || hanhDong?.hanhDong === 'XEM' ? (
+                <Button variant="secondary" onClick={() => dieuHuong(lamTruoc.id)}>Xem chi tiết</Button>
+              ) : hanhDong ? (
+                <Button variant="primary" blocked={dangGui} onClick={() => {
+                  if (hanhDong.hanhDong === 'NHAN_VIEC') void batDauKhaoSat(lamTruoc.id, true)
+                  else dieuHuong(lamTruoc.id, hanhDong.hanhDong === 'LAP_BAO_GIA')
+                }}>{hanhDong.nhan}</Button>
               ) : null}
             </div>
-          </div>
-        </div>
-      ) : null}
+            {loiHanhDong ? <p role="alert" style={styleLoi}>{loiHanhDong}</p> : null}
+          </Card>
+          {khac.length > 0 ? (
+            <Card title={`Việc khác (${khac.length} việc)`}>{khac.map((r) => <HangViec key={r.id} r={r} mo={() => dieuHuong(r.id)} />)}</Card>
+          ) : null}
+        </>
+      )}
+    </>,
+  )
+}
 
+function Dau({ mobile, tieuDe, phu, quay }: { mobile: boolean; tieuDe: string; phu?: string; quay: () => void }) {
+  return (
+    <header className="ma-dautrang">
+      <div><Button variant="text" onClick={quay}><Icon name="chevron-left" />Quay lại</Button></div>
+      <Tieu mobile={mobile} className={mobile ? 'sr-only' : 'h1'} style={{ margin: 0 }}>{tieuDe}</Tieu>
+      {mobile ? <div aria-hidden="true" style={{ font: 'var(--ma-text-block-title)' }}>{tieuDe}</div> : null}
+      {phu ? <p className="ma-dautrang-phu">{phu}</p> : null}
+    </header>
+  )
+}
+
+function HangViec({ r, mo }: { r: ThongTinViecThoRow; mo: () => void }) {
+  return (
+    <a className="irow" href={`?yeuCauId=${r.id}`} data-testid={`worker-task-row-${r.id}`} onClick={(e) => { e.preventDefault(); mo() }}>
+      <div className="body">
+        <div className="t">{r.hangMuc} · phòng {phongCua(r.soPhong)}</div>
+        <div className="s" style={{ whiteSpace: 'normal' }}>{r.toaNha} · {tenTrangThai(r).toLowerCase()}</div>
+      </div>
+      <Icon name="chevron-right" />
+    </a>
+  )
+}
+
+function TrangThai({ r }: { r: Pick<ThongTinViecThoRow, 'trangThaiHieuLuc'> }) {
+  const t = r.trangThaiHieuLuc
+  return <StatusTag tone={t === 'DA_DONG' ? 'done' : t === 'CHO_XAC_NHAN' ? 'waiting' : t === 'DA_HUY' ? 'closed' : 'neutral'}>{tenTrangThai(r)}</StatusTag>
+}
+
+function ChungTu({ data, voucherRef, dong }: { data: ChungTuThanhToanTho; voucherRef: React.RefObject<HTMLDivElement | null>; dong: () => void }) {
+  const voucherData = data
+  const setVoucherData = (_: null) => dong()
+  return (
+    <>
       {/* VOUCHER PRINTABLE MODAL */}
       {voucherData ? (
         <div style={styleDrawerOverlay} role="dialog" aria-modal="true" aria-labelledby="voucher-title">
@@ -989,18 +456,18 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                 padding: 20px !important;
                 margin: 0 !important;
                 box-shadow: none !important;
-                background: #ffffff !important;
+                background: var(--ma-bg-card) !important;
               }
               .ma-no-print { display: none !important; }
             }
           `}</style>
-          <div id="printable-voucher-congviec" ref={voucherRef} style={{ background: '#ffffff', color: '#0f172a', width: 'min(92%, 760px)', maxHeight: '90vh', overflowY: 'auto', borderRadius: 12, padding: 32, boxShadow: 'var(--ma-shadow-lg)' }} tabIndex={-1}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0f172a', paddingBottom: 16, marginBottom: 20 }}>
+          <div id="printable-voucher-congviec" ref={voucherRef} style={{ background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', width: 'min(92%, 760px)', maxHeight: '90vh', overflowY: 'auto', borderRadius: 12, padding: 32, boxShadow: 'var(--ma-shadow-md)' }} tabIndex={-1}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--ma-text-primary)', paddingBottom: 16, marginBottom: 20 }}>
               <div>
                 <h2 id="voucher-title" style={{ margin: '0 0 4px', fontSize: 22 }}>
                   Phiếu chi phí & Thanh toán sửa chữa
                 </h2>
-                <div style={{ fontSize: 13, color: '#475569' }}>
+                <div style={{ fontSize: 13, color: 'var(--ma-text-secondary)' }}>
                   Số chứng từ: <strong>{voucherData.maChungTu}</strong> · Ngày lập: {voucherData.ngayLap}
                 </div>
               </div>
@@ -1035,7 +502,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
             <h4 style={{ margin: '0 0 8px', fontSize: 14 }}>Chi tiết chi phí (Phiên bản {voucherData.baoGiaPhienBan})</h4>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginBottom: 20 }}>
               <thead>
-                <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                <tr style={{ background: 'var(--ma-bg-sunken)', borderBottom: '1px solid var(--ma-line-300)' }}>
                   <th style={{ padding: '8px 10px', textAlign: 'left' }}>STT</th>
                   <th style={{ padding: '8px 10px', textAlign: 'left' }}>Hạng mục vật tư / công sửa</th>
                   <th style={{ padding: '8px 10px', textAlign: 'center' }}>Số lượng</th>
@@ -1045,7 +512,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
               </thead>
               <tbody>
                 {voucherData.dongBaoGia.map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <tr key={idx} style={{ borderBottom: '1px solid var(--ma-line-200)' }}>
                     <td style={{ padding: '8px 10px' }}>{idx + 1}</td>
                     <td style={{ padding: '8px 10px' }}>{item.tenHangMuc}</td>
                     <td style={{ padding: '8px 10px', textAlign: 'center' }}>{item.soLuong} {item.donVi}</td>
@@ -1053,7 +520,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                     <td style={{ padding: '8px 10px', textAlign: 'right' }}>{dinhDangTien(item.thanhTien)}</td>
                   </tr>
                 ))}
-                <tr style={{ fontWeight: 700, background: '#f8fafc' }}>
+                <tr style={{ fontWeight: 600, background: 'var(--ma-bg-sunken)' }}>
                   <td colSpan={4} style={{ padding: '10px', textAlign: 'right' }}>Tổng chi phí được duyệt:</td>
                   <td style={{ padding: '10px', textAlign: 'right' }}>{dinhDangTien(voucherData.tongTienBaoGia)} đ</td>
                 </tr>
@@ -1063,11 +530,11 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
             {/* Payment history */}
             <h4 style={{ margin: '0 0 8px', fontSize: 14 }}>Lịch sử giao dịch thanh toán</h4>
             {voucherData.lichSuThanhToan.length === 0 ? (
-              <p style={{ fontSize: 13, color: '#64748b', fontStyle: 'italic', marginBottom: 24 }}>Chưa ghi nhận giao dịch thanh toán.</p>
+              <p style={{ fontSize: 13, color: 'var(--ma-text-secondary)', marginBottom: 24 }}>Chưa ghi nhận giao dịch thanh toán.</p>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginBottom: 24 }}>
                 <thead>
-                  <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                  <tr style={{ background: 'var(--ma-bg-sunken)', borderBottom: '1px solid var(--ma-line-300)' }}>
                     <th style={{ padding: '6px 10px', textAlign: 'left' }}>Mã GD</th>
                     <th style={{ padding: '6px 10px', textAlign: 'left' }}>Thời điểm</th>
                     <th style={{ padding: '6px 10px', textAlign: 'left' }}>Phương thức</th>
@@ -1077,7 +544,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                 </thead>
                 <tbody>
                   {voucherData.lichSuThanhToan.map((tt) => (
-                    <tr key={tt.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <tr key={tt.id} style={{ borderBottom: '1px solid var(--ma-line-200)' }}>
                       <td style={{ padding: '6px 10px' }}>{tt.maThanhToan}</td>
                       <td style={{ padding: '6px 10px' }}>{new Date(tt.xacNhanLuc).toLocaleDateString('vi-VN')}</td>
                       <td style={{ padding: '6px 10px' }}>{dichPhuongThuc(tt.phuongThuc)}</td>
@@ -1085,7 +552,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                       <td style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600 }}>{dinhDangTien(tt.soTien)}</td>
                     </tr>
                   ))}
-                  <tr style={{ fontWeight: 700, background: '#f8fafc' }}>
+                  <tr style={{ fontWeight: 600, background: 'var(--ma-bg-sunken)' }}>
                     <td colSpan={4} style={{ padding: '8px 10px', textAlign: 'right' }}>Đã thanh toán / Còn lại:</td>
                     <td style={{ padding: '8px 10px', textAlign: 'right' }}>
                       {dinhDangTien(voucherData.tongDaTra)} đ / {dinhDangTien(voucherData.conLai)} đ
@@ -1116,18 +583,11 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
           </div>
         </div>
       ) : null}
-    </div>
+    </>
   )
 }
 
-type LocViec = 'gap' | 'dang-lam' | 'xong'
-type HanhDongChinh = 'NHAN_VIEC' | 'LAP_BAO_GIA' | 'BAO_XONG' | 'XEM' | 'KHONG'
-
-function docLoc(): LocViec | null {
-  if (typeof window === 'undefined') return null
-  const v = new URLSearchParams(window.location.search).get('loc')
-  return v === 'gap' || v === 'dang-lam' || v === 'xong' ? v : null
-}
+type HanhDongChinh = 'NHAN_VIEC' | 'LAP_BAO_GIA' | 'GUI_NHAP' | 'BAO_XONG' | 'XEM' | 'KHONG'
 
 const TEN_BUOC = ['Khảo sát', 'Báo giá', 'Sửa', 'Nhận tiền']
 
@@ -1140,20 +600,37 @@ export function buocViecTho(r: Pick<ThongTinViecThoRow, 'trangThaiHieuLuc' | 'tr
   return { so, nhan: `Bước ${so}/4 · ${TEN_BUOC[so - 1]}` }
 }
 
-/** Đúng một nút kế tiếp trên thẻ theo bước; bước nhận tiền không có nút. */
-function nutChinhCuaViec(r: ThongTinViecThoRow): { hanhDong: HanhDongChinh; nhan: string } {
+const daXong = (r: Pick<ThongTinViecThoRow, 'trangThaiHieuLuc'>) => r.trangThaiHieuLuc === 'DA_DONG' || r.trangThaiHieuLuc === 'DA_HUY'
+const phongCua = (s: string) => s.replace(/^P\.?\s*/i, '')
+
+function tenTrangThai(r: Pick<ThongTinViecThoRow, 'trangThaiHieuLuc'>): string {
+  switch (r.trangThaiHieuLuc) {
+    case 'DA_PHAN_CONG': return 'Mới giao'
+    case 'DANG_XU_LY': return 'Đang làm'
+    case 'CHO_XAC_NHAN': return 'Chờ nghiệm thu'
+    case 'DA_DONG': return 'Đã xong'
+    case 'DA_HUY': return 'Đã huỷ'
+    default: return r.trangThaiHieuLuc
+  }
+}
+
+/** Đúng một nút chính theo trạng thái; báo giá đang chờ duyệt / chờ nghiệm thu thì không có. */
+function nutChinhCuaViec(r: Pick<ThongTinViecThoRow, 'trangThaiHieuLuc' | 'trangThaiBaoGia'>): { hanhDong: HanhDongChinh; nhan: string } {
   if (r.trangThaiHieuLuc === 'DA_PHAN_CONG') return { hanhDong: 'NHAN_VIEC', nhan: 'Bắt đầu khảo sát' }
   if (r.trangThaiHieuLuc === 'DANG_XU_LY') {
     if (r.trangThaiBaoGia === 'DA_DUYET') return { hanhDong: 'BAO_XONG', nhan: 'Báo đã sửa xong' }
     if (r.trangThaiBaoGia === 'NHAP' || r.trangThaiBaoGia === 'CHO_DUYET') return { hanhDong: 'XEM', nhan: 'Xem báo giá' }
     return { hanhDong: 'LAP_BAO_GIA', nhan: 'Gửi báo giá' }
   }
-  return { hanhDong: 'KHONG', nhan: 'Chờ quản lý thanh toán' }
+  return { hanhDong: 'KHONG', nhan: '' }
 }
 
-function ngayNganGon(iso: string): string {
-  const d = new Date(iso)
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+function nutChinhChiTiet(d: ChiTietViecTho): { hanhDong: HanhDongChinh; nhan: string } | null {
+  const hl = d.baoGiaHieuLuc?.trangThai ?? d.danhSachBaoGia.find((b) => b.trangThai !== 'TU_CHOI' && b.trangThai !== 'BI_THAY_THE')?.trangThai
+  const n = nutChinhCuaViec({ trangThaiHieuLuc: d.trangThaiHieuLuc, trangThaiBaoGia: hl })
+  if (n.hanhDong === 'KHONG') return null
+  if (n.hanhDong === 'XEM') return hl === 'NHAP' ? { hanhDong: 'GUI_NHAP', nhan: 'Gửi duyệt báo giá' } : null
+  return n
 }
 
 function dichTrangThaiBaoGia(tt: string): string {
@@ -1176,116 +653,10 @@ function dichPhuongThuc(pt: string): string {
   }
 }
 
-function dichTrangThaiThanhToan(tt: string): string {
-  switch (tt) {
-    case 'CHUA_CO_BAO_GIA': return 'Chưa có báo giá'
-    case 'KHONG_PHAT_SINH_TIEN': return 'Đã đối soát (0 đ)'
-    case 'CHUA_THANH_TOAN': return 'Chưa thanh toán'
-    case 'THANH_TOAN_MOT_PHAN': return 'Trả một phần'
-    case 'DA_THANH_TOAN_DU': return 'Đã trả đủ'
-    default: return tt
-  }
-}
-
-const styleNutTieuDe: CSSProperties = { background: 'none', border: 0, padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer', display: 'block' }
-
-const styleSelect: CSSProperties = {
-  height: 38,
-  padding: '0 10px',
-  borderRadius: 6,
-  border: '1px solid var(--ma-border-strong, #cbd5e1)',
-  background: 'var(--ma-bg-card)',
-  color: 'var(--ma-text-primary)',
-  fontSize: 13.5,
-}
-
-
-
-
-
-const styleDrawerOverlay: CSSProperties = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  background: 'rgba(15, 23, 42, 0.65)',
-  backdropFilter: 'blur(3px)',
-  display: 'flex',
-  justifyContent: 'flex-end',
-  zIndex: 1000,
-}
-
-function styleDrawerContent(mobile: boolean): CSSProperties {
-  return {
-    width: mobile ? '100%' : 'min(90vw, 680px)',
-    height: '100%',
-    background: 'var(--ma-bg-page)',
-    color: 'var(--ma-text-primary)',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: 'var(--ma-shadow-xl, -4px 0 24px rgba(0,0,0,0.2))',
-  }
-}
-
-const styleDetailSection: CSSProperties = {
-  background: 'var(--ma-bg-card)',
-  border: '1px solid var(--ma-border-default)',
-  borderRadius: 10,
-  padding: '14px 16px',
-}
-
-const styleSmallActionBtn: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  minHeight: 44,
-  padding: '0 12px',
-  borderRadius: 4,
-  border: '1px solid var(--ma-border-strong, #cbd5e1)',
-  background: 'var(--ma-bg-sunken)',
-  color: 'var(--ma-text-primary)',
-  fontSize: 13,
-  cursor: 'pointer',
-  textDecoration: 'none',
-}
-
-const stylePhotoBox: CSSProperties = {
-  width: 90,
-  height: 90,
-  borderRadius: 6,
-  overflow: 'hidden',
-  background: 'var(--ma-bg-sunken)',
-  border: '1px solid var(--ma-border-default)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}
-
-const stylePhotoImg: CSSProperties = {
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover',
-}
-
-const styleTextarea: CSSProperties = {
-  width: '100%',
-  padding: '8px 10px',
-  borderRadius: 6,
-  border: '1px solid var(--ma-border-strong, #cbd5e1)',
-  background: 'var(--ma-bg-card)',
-  color: 'var(--ma-text-primary)',
-  fontSize: 13,
-  fontFamily: 'inherit',
-  boxSizing: 'border-box',
-}
-
-const styleInput: CSSProperties = {
-  height: 34,
-  padding: '0 8px',
-  borderRadius: 6,
-  border: '1px solid var(--ma-border-strong, #cbd5e1)',
-  background: 'var(--ma-bg-card)',
-  color: 'var(--ma-text-primary)',
-  fontSize: 13,
-  boxSizing: 'border-box',
-}
+const styleKhung: CSSProperties = { maxWidth: 720, display: 'grid', gap: 16, alignContent: 'start' }
+const styleLuoi: CSSProperties = { display: 'grid', gap: 12 }
+const styleHang: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }
+const styleLoi: CSSProperties = { margin: 0, color: 'var(--ma-urgent)' }
+const styleAnh: CSSProperties = { width: 90, height: 90, borderRadius: 6, objectFit: 'cover', background: 'var(--ma-bg-sunken)' }
+const styleTextarea: CSSProperties = { width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 6, border: '1px solid var(--ma-line-600)', background: 'var(--ma-bg-card)', color: 'var(--ma-text-primary)', font: 'inherit' }
+const styleDrawerOverlay: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(20, 24, 29, 0.4)', display: 'grid', placeItems: 'center', zIndex: 1000 }

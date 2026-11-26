@@ -1,19 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import {
-  fetchThoCongViec,
-  fetchThoChungTu,
-  fetchThoTongQuan,
-  type ThongTinViecThoRow,
-  type ChungTuThanhToanTho,
-  type ToaNhaOption,
-} from './workerDashboardApi'
+import { fetchThoCongViec, fetchThoChungTu, type ThongTinViecThoRow, type ChungTuThanhToanTho } from './workerDashboardApi'
+import { fetchCurrentUser } from './api'
 import { dinhDangTien } from './design/core/format'
 import { Button } from './design/core/Button'
-import { StatusTag } from './design/core/StatusTag'
-import { Icon } from './design/core/Icon'
-import { FilterChip } from './design/forms/FilterChip'
+import { Tieu } from './CanTra'
+import { CSS_THO } from './ThoCongViec'
 import { Card } from './design/layout/Card'
-import { DataTable, type DataTableColumn } from './design/table/DataTable'
 import { EmptyState } from './design/feedback/EmptyState'
 import { useDialogTrap } from './design/feedback/useDialogTrap'
 
@@ -25,92 +17,39 @@ export type ThoChiPhiProps = {
 
 export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiPhiProps): React.ReactElement {
   const [danhSach, setDanhSach] = useState<ThongTinViecThoRow[]>([])
-  const [danhSachToa, setDanhSachToa] = useState<ToaNhaOption[]>([])
+  const [hoTen, setHoTen] = useState<string>()
   const [dangTai, setDangTai] = useState(true)
   const [loiTai, setLoiTai] = useState<string | null>(null)
-
-  // Filters
-  const [toaNhaId, setToaNhaId] = useState<number | undefined>(undefined)
-  const [locChip, setLocChip] = useState('TAT_CA')
-  const [tuKhoa, setTuKhoa] = useState('')
-  const [soHienThi, setSoHienThi] = useState(10)
-
-  // Voucher modal state
   const [voucherData, setVoucherData] = useState<ChungTuThanhToanTho | null>(null)
   const [dangTaiVoucher, setDangTaiVoucher] = useState(false)
   const [loiVoucher, setLoiVoucher] = useState<string | null>(null)
   const voucherRef = useRef<HTMLDivElement | null>(null)
+  useDialogTrap({ open: Boolean(voucherData), dialogRef: voucherRef, onClose: () => setVoucherData(null) })
 
-  useDialogTrap({
-    open: Boolean(voucherData),
-    dialogRef: voucherRef,
-    onClose: () => setVoucherData(null),
-  })
-
-  // Load buildings & summary from TongQuan
   useEffect(() => {
     let active = true
-    fetchThoTongQuan(token)
-      .then((data) => {
-        if (!active) return
-        setDanhSachToa(data.danhSachToa || [])
-      })
-      .catch(() => {
-        // Fallback: don't block
-      })
-    return () => {
-      active = false
-    }
+    fetchCurrentUser(token).then((u) => { if (active) setHoTen(u.hoTen) }).catch(() => {})
+    return () => { active = false }
   }, [token])
 
-  // Load all jobs
   const taiDuLieu = useCallback(async () => {
     setDangTai(true)
     setLoiTai(null)
     try {
-      const rows = await fetchThoCongViec(token, { toaNhaId })
-      setDanhSach(rows)
+      setDanhSach(await fetchThoCongViec(token, {}))
     } catch (err: unknown) {
       setLoiTai(err instanceof Error ? err.message : 'Không thể tải danh sách chi phí')
     } finally {
       setDangTai(false)
     }
-  }, [token, toaNhaId])
+  }, [token])
+  useEffect(() => { void taiDuLieu() }, [taiDuLieu])
 
-  useEffect(() => {
-    taiDuLieu()
-  }, [taiDuLieu])
-
-  // Metrics
-  const tongMetrics = useMemo(() => {
-    let tongChot = 0
-    let tongDaNhan = 0
-    let tongConNo = 0
-    let soDonBaoHanh = 0
-    let soDonDaTraDu = 0
-
-    danhSach.forEach((r) => {
-      if (r.trangThaiBaoGia === 'DA_DUYET') {
-        const val = Number(r.giaTriBaoGia || 0)
-        const paid = Number(r.daThanhToan || 0)
-        const remain = Number(r.conPhaiTra || 0)
-        tongChot += val
-        tongDaNhan += paid
-        tongConNo += remain
-        if (val === 0) soDonBaoHanh++
-        if (val > 0 && remain <= 0) soDonDaTraDu++
-      }
-    })
-
-    return { tongChot, tongDaNhan, tongConNo, soDonBaoHanh, soDonDaTraDu }
-  }, [danhSach])
-
-  const moChungTu = async (yeuCauId: number) => {
+  const moChungTu = async (id: number) => {
     setDangTaiVoucher(true)
     setLoiVoucher(null)
     try {
-      const ct = await fetchThoChungTu(token, yeuCauId)
-      setVoucherData(ct)
+      setVoucherData(await fetchThoChungTu(token, id))
     } catch (err: unknown) {
       setLoiVoucher(err instanceof Error ? err.message : 'Không thể tải chứng từ thanh toán')
     } finally {
@@ -118,231 +57,49 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
     }
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
+  const xong = useMemo(() => danhSach.filter((r) => r.trangThaiHieuLuc === 'DA_DONG'), [danhSach])
+  // Còn được nhận = phần chưa trả của các việc đã nghiệm thu xong (báo giá đã duyệt).
+  const conNhan = xong.reduce((a, r) => a + (r.trangThaiBaoGia === 'DA_DUYET' ? Number(r.conPhaiTra || 0) : 0), 0)
+  const handlePrint = () => window.print()
 
-  const timDuoc = useMemo(() => {
-    const k = tuKhoa.trim().toLowerCase()
-    return k ? danhSach.filter((r) => [r.maYeuCau, r.toaNha, r.soPhong, r.hangMuc, r.moTa].filter(Boolean).join(' ').toLowerCase().includes(k)) : danhSach
-  }, [danhSach, tuKhoa])
-  const danhSachLoc = useMemo(() => timDuoc.filter((r) => khop(r, locChip)), [timDuoc, locChip])
-
-  const cot: DataTableColumn<ThongTinViecThoRow>[] = [
-    {
-      key: 'viec',
-      label: 'Mã việc & hạng mục',
-      render: (row) => (
-        <>
-          <div style={{ fontWeight: 600 }}>{row.maYeuCau}</div>
-          <div>{row.hangMuc}</div>
-          {row.moTa ? <div className="t-meta" style={{ ...styleCat, maxWidth: 200 }} title={row.moTa}>{row.moTa}</div> : null}
-        </>
-      ),
-      sortValue: (row) => row.maYeuCau,
-      sortable: true,
-    },
-    { key: 'phong', label: 'Toà / phòng', render: (row) => <div style={{ minWidth: 120 }}><div>{row.soPhong} (T{row.tang})</div><div className="t-meta">{row.toaNha}</div></div> },
-    {
-      key: 'trangThai',
-      label: 'Trạng thái việc & báo giá',
-      render: (row) => (
-        <div style={{ display: 'grid', gap: 6, justifyItems: 'start' }}>
-          <StatusTag tone={tongTrangThai(row)}>{row.tenTrangThaiHieuLuc || row.tenTrangThai}</StatusTag>
-          {baoGiaTag(row)}
-          {tinhHang(row).daDuyet ? tienDoTag(row) : null}
-        </div>
-      ),
-    },
-    {
-      key: 'giaTri',
-      label: 'Giá trị duyệt',
-      align: 'num',
-      sortValue: (row) => tinhHang(row).giaTri,
-      sortable: true,
-      render: (row) => {
-        const h = tinhHang(row)
-        return !h.daDuyet ? <span className="t-2">—</span> : h.giaTri === 0 ? <StatusTag tone="neutral">0 đ (Bảo hành)</StatusTag> : <b>{dinhDangTien(h.giaTri)}</b>
-      },
-    },
-    {
-      key: 'daNhan',
-      label: 'Đã nhận',
-      align: 'num',
-      render: (row) => { const h = tinhHang(row); return h.daTra > 0 ? <b style={{ color: 'var(--ma-done-text)' }}>{dinhDangTien(h.daTra)}</b> : <span className="t-2">0 đ</span> },
-    },
-    {
-      key: 'conLai',
-      label: 'Còn lại',
-      align: 'num',
-      sortValue: (row) => tinhHang(row).conLai,
-      sortable: true,
-      render: (row) => {
-        const h = tinhHang(row)
-        return !h.daDuyet ? <span className="t-2">—</span> : h.conLai > 0 ? <b style={{ color: 'var(--ma-urgent)' }}>{dinhDangTien(h.conLai)}</b> : <span style={{ color: 'var(--ma-done-text)' }}>Đã hết nợ</span>
-      },
-    },
-    {
-      key: 'thaoTac',
-      label: 'Thao tác',
-      the: 'hanh-dong',
-      render: (row) => (
-        <div style={{ display: 'grid', gap: 4, justifyItems: 'start' }}>
-          {tinhHang(row).daDuyet && (
-            <Button variant="secondary" size="sm" onClick={() => moChungTu(row.id)} blocked={dangTaiVoucher} style={{ minHeight: 44 }}>
-              Xem phiếu
-            </Button>
-          )}
-          {onNavigateToTicket && (
-            <Button variant="text" size="sm" onClick={() => onNavigateToTicket(row.id)} style={{ minHeight: 44 }}>
-              Chi tiết →
-            </Button>
-          )}
-        </div>
-      ),
-    },
-  ]
-
-  const TieuDe = mobile ? 'h2' : 'h1'
   return (
-    <div style={{ maxWidth: 1360, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 16 }}>
-      <div className="spread" style={{ alignItems: 'flex-start' }}>
-        <div>
-          {/* Mobile: khung đã có h1 (tên trang) → tiêu đề màn là h2 để mỗi trang chỉ một h1. */}
-          <TieuDe style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Báo giá & thanh toán</TieuDe>
-          <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)' }}>Chi phí vật tư, công thợ & chứng từ đối soát</div>
-        </div>
-        <button type="button" className="icon-btn boxed" aria-label="Làm mới dữ liệu" title="Làm mới dữ liệu" aria-disabled={dangTai || undefined} onClick={() => { if (!dangTai) taiDuLieu() }}>
-          <Icon name="refresh" />
-        </button>
-      </div>
+    <div className="tho-cv" style={{ maxWidth: 720, display: 'grid', gap: 16, alignContent: 'start' }}>
+      <style>{CSS_THO}</style>
+      <header className="ma-dautrang">
+        <Tieu mobile={mobile} className={mobile ? 'sr-only' : 'h1'} style={{ margin: 0 }}>Tiền công</Tieu>
+        <p className="ma-dautrang-phu">{hoTen ?? ''}</p>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'minmax(0, 1fr) minmax(0, 1fr)' : 'minmax(0, 1.35fr) repeat(3, minmax(0, 1fr))', gap: mobile ? 8 : 16 }}>
-        <Card style={mobile ? { gridColumn: '1 / -1' } : undefined}>
-          <span className="t-sm t-2">Còn phải trả (công nợ)</span>
-          <div className="kpi-value" style={{ color: tongMetrics.tongConNo > 0 ? 'var(--ma-urgent)' : undefined }}>
-            {dinhDangTien(tongMetrics.tongConNo)}<span className="unit">đ</span>
-          </div>
-          <div className="kpi-desc" style={{ marginTop: 8 }}>Khoản thợ được nhận sau khi nghiệm thu</div>
-        </Card>
-        <div style={styleO}>
-          <span style={styleNhan}>Giá trị đã chốt</span>
-          <b style={styleSo}>{dinhDangTien(tongMetrics.tongChot)}</b>
-          <span style={styleMoTa}>Tính trên các phiên bản báo giá đã được duyệt</span>
-        </div>
-        <div style={styleO}>
-          <span style={styleNhan}>Tiền đã nhận</span>
-          <b style={{ ...styleSo, color: 'var(--ma-done-text)' }}>{dinhDangTien(tongMetrics.tongDaNhan)}</b>
-          <span style={styleMoTa}>Tổng giao dịch thanh toán quản lý đã xác nhận</span>
-        </div>
-        <div style={{ ...styleO, ...(mobile ? { gridColumn: '1 / -1' } : {}) }}>
-          <span style={styleNhan}>Đơn đã đối soát xong</span>
-          <b style={styleSo}>
-            {tongMetrics.soDonDaTraDu}
-            <span className="t-sm t-2" style={{ fontWeight: 400, marginLeft: 6 }}>+ {tongMetrics.soDonBaoHanh} đơn 0đ (bảo hành)</span>
-          </b>
-          <span style={styleMoTa}>Không còn công nợ phát sinh</span>
-        </div>
-      </div>
+      {dangTai && danhSach.length === 0 ? <EmptyState kind="loading" title="Đang tải tiền công" /> : null}
+      {loiTai ? <EmptyState kind="error" title="Không tải được tiền công" body={loiTai} actionLabel="Tải lại" actionSize="md" onAction={() => void taiDuLieu()} /> : null}
 
-
-      {dangTai && <EmptyState kind="loading" title="Đang tải danh sách báo giá & thanh toán" />}
-
-      {loiTai && <EmptyState kind="error" title="Không thể tải danh sách chi phí" body={loiTai} actionLabel="Thử lại" actionSize="md" onAction={taiDuLieu} />}
-
-      {!dangTai && !loiTai && danhSach.length === 0 && (
-        <EmptyState
-          title="Không tìm thấy bản ghi nào"
-          body={toaNhaId ? 'Thử đổi toà nhà để xem danh sách.' : 'Hiện tại bạn chưa có yêu cầu sửa chữa nào có hồ sơ báo giá.'}
-        />
-      )}
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-        <select
-        className="select"
-        value={toaNhaId ?? ''}
-        onChange={(e) => setToaNhaId(e.target.value ? Number(e.target.value) : undefined)}
-        aria-label="Chọn tòa nhà"
-        style={{ flex: mobile ? undefined : '0 0 220px' }}
-      >
-        <option value="">Tất cả tòa nhà</option>
-        {danhSachToa.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.ten}
-          </option>
-        ))}
-      </select>
-        {danhSach.length > 0 && !loiTai && (
-          <>
-            <label className="input-wrap" style={{ flex: mobile ? '1 1 100%' : '0 1 320px' }}>
-              <span className="sr-only">Tìm theo mã việc, tòa, phòng, nội dung</span>
-              <Icon name="search" />
-              <input className="input" type="search" placeholder="Tìm mã việc, tòa, phòng…" value={tuKhoa} onChange={(e) => { setTuKhoa(e.target.value); setSoHienThi(10) }} />
-            </label>
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2, maxWidth: '100%' }}>
-              {CHIP_THANH_TOAN.map(([key, label]) => (
-                <FilterChip key={key} active={locChip === key} count={timDuoc.filter((r) => khop(r, key)).length} onClick={() => { setLocChip(key); setSoHienThi(10) }}>
-                  {label}
-                </FilterChip>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      {!dangTai && !loiTai && danhSach.length > 0 && (
+      {!loiTai && !(dangTai && danhSach.length === 0) ? (
         <>
-          {danhSachLoc.length === 0 ? (
-            <EmptyState kind="filtered" title="Không có việc nào khớp bộ lọc" body="Đổi nhóm thanh toán hoặc xoá từ khoá để xem lại danh sách." actionLabel="Xoá bộ lọc" onAction={() => { setLocChip('TAT_CA'); setTuKhoa('') }} />
-          ) : mobile ? (
-            <>
-              {danhSachLoc.slice(0, soHienThi).map((row) => {
-                const h = tinhHang(row)
-                return (
-                  <article key={row.id} className="m-card" style={{ display: 'grid', gap: 10 }} aria-label={row.maYeuCau}>
-                    <div className="spread">
-                      <StatusTag tone={tongTrangThai(row)}>{row.tenTrangThaiHieuLuc || row.tenTrangThai}</StatusTag>
-                      <span className="t-meta">{row.maYeuCau}</span>
+          <Card style={{ display: 'grid', gap: 8 }}>
+            <span style={{ color: 'var(--ma-text-secondary)' }}>Còn được nhận</span>
+            <b style={{ font: 'var(--ma-text-figure-lg)', color: conNhan > 0 ? 'var(--ma-urgent)' : undefined }} data-con-nhan>{dinhDangTien(conNhan)} ₫</b>
+            <span>{conNhan > 0 ? 'Quản lý chưa trả hết tiền cho các việc đã nghiệm thu.' : 'Chưa có việc nào nghiệm thu xong mà chưa trả tiền.'}</span>
+          </Card>
+          {loiVoucher ? <p role="alert" style={{ margin: 0, color: 'var(--ma-urgent)' }}>{loiVoucher}</p> : null}
+          <Card title="Đã xong">
+            {xong.length === 0 ? <p style={{ margin: 0 }}>Chưa có việc nào xong.</p> : xong.map((r) => {
+              const duyet = r.trangThaiBaoGia === 'DA_DUYET'
+              return (
+                <div key={r.id} data-testid={`tien-cong-${r.id}`}>
+                  <a className="irow" href={`/viec-cua-toi?yeuCauId=${r.id}`} onClick={(e) => { if (onNavigateToTicket) { e.preventDefault(); onNavigateToTicket(r.id) } }}>
+                    <div className="body">
+                      <div className="t">{r.hangMuc} · phòng {r.soPhong.replace(/^P\.?\s*/i, '')}</div>
+                      <div className="s" style={{ whiteSpace: 'normal' }}>{r.toaNha}</div>
                     </div>
-                    <h2 className="h3" style={{ margin: 0, fontSize: 18 }}>{row.hangMuc}</h2>
-                    <div className="t-sm t-2" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Icon name="pin" size="sm" />
-                      <span style={styleCat} title={`${row.toaNha} · Phòng ${row.soPhong} · Tầng ${row.tang}`}>{row.toaNha} · Phòng {row.soPhong} · Tầng {row.tang}</span>
-                    </div>
-                    {h.daDuyet ? (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
-                        <div className="fact"><div className="k">Giá trị</div><div className="v">{h.giaTri === 0 ? '0 đ' : dinhDangTien(h.giaTri)}</div></div>
-                        <div className="fact"><div className="k">Đã nhận</div><div className="v" style={{ color: h.daTra > 0 ? 'var(--ma-done-text)' : undefined }}>{dinhDangTien(h.daTra)}</div></div>
-                        <div className="fact"><div className="k">Còn lại</div><div className="v" style={{ color: h.conLai > 0 ? 'var(--ma-urgent)' : undefined }}>{h.conLai > 0 ? dinhDangTien(h.conLai) : 'Đã hết nợ'}</div></div>
-                      </div>
-                    ) : null}
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {baoGiaTag(row)}
-                      {h.daDuyet ? tienDoTag(row) : null}
-                      {h.daDuyet && h.giaTri === 0 ? <StatusTag tone="neutral">0 đ (Bảo hành)</StatusTag> : null}
-                    </div>
-                    {(h.daDuyet || onNavigateToTicket) ? (
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        {h.daDuyet ? <Button variant="secondary" className="btn-touch" style={{ flex: 1 }} onClick={() => moChungTu(row.id)} blocked={dangTaiVoucher}>Xem phiếu</Button> : null}
-                        {onNavigateToTicket ? <Button variant="text" className="btn-touch" style={{ flex: h.daDuyet ? '0 0 auto' : 1 }} onClick={() => onNavigateToTicket(row.id)}>Chi tiết đơn →</Button> : null}
-                      </div>
-                    ) : null}
-                  </article>
-                )
-              })}
-              {danhSachLoc.length > soHienThi ? (
-                <Button variant="secondary" className="btn-touch" onClick={() => setSoHienThi((n) => n + 10)}>
-                  Xem thêm ({danhSachLoc.length - soHienThi} việc)
-                </Button>
-              ) : null}
-            </>
-          ) : (
-            <Card>
-              <DataTable rows={danhSachLoc} columns={cot} getRowId={(r) => r.id} noun="việc" pageSize={10} rowLabel={(r) => r.maYeuCau} />
-            </Card>
-          )}
+                    <b className="money">{duyet ? `${dinhDangTien(r.giaTriBaoGia ?? 0)} ₫` : '—'}</b>
+                  </a>
+                  {duyet ? <Button variant="secondary" onClick={() => void moChungTu(r.id)} blocked={dangTaiVoucher}>Xem phiếu</Button> : null}
+                </div>
+              )
+            })}
+          </Card>
         </>
-      )}
+      ) : null}
 
       {/* Voucher Viewer Dialog */}
       {voucherData && (
@@ -361,16 +118,16 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
                     padding: 20px !important;
                     margin: 0 !important;
                     box-shadow: none !important;
-                    background: #ffffff !important;
+                    background: var(--ma-bg-card) !important;
                   }
                 }
               `}</style>
               <div style={styles.voucherHeaderLeft}>
-                <span style={styles.voucherDocType}>PHIẾU CHI PHÍ & THANH TOÁN SỬA CHỮA</span>
+                <span style={styles.voucherDocType}>Phiếu chi phí và thanh toán sửa chữa</span>
                 <span style={styles.voucherDocCode}>Số: {voucherData.maChungTu}</span>
               </div>
               <div style={styles.voucherHeaderActions}>
-                <Button variant="primary" onClick={handlePrint} style={{ marginRight: 8 }}>
+                <Button variant="secondary" onClick={handlePrint} style={{ marginRight: 8 }}>
                   🖨 In phiếu
                 </Button>
                 <Button variant="secondary" onClick={() => setVoucherData(null)}>
@@ -384,7 +141,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
               {/* Header */}
               <div style={styles.voucherSheetTop}>
                 <div>
-                  <div style={styles.brandTitle}>HỆ THỐNG QUẢN LÝ CĂN HỘ CHUNG CƯ MINIAPART</div>
+                  <div style={styles.brandTitle}>Hệ thống quản lý căn hộ MiniApart</div>
                   <div style={styles.brandAddress}>Bộ phận Kỹ thuật & Bảo trì căn hộ dịch vụ</div>
                 </div>
                 <div style={styles.sheetMeta}>
@@ -396,7 +153,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
 
               <div style={styles.sheetDivider} />
 
-              <h2 style={styles.sheetTitle}>PHIẾU XÁC NHẬN CHI PHÍ & THANH TOÁN SỬA CHỮA</h2>
+              <h2 style={styles.sheetTitle}>Phiếu xác nhận chi phí và thanh toán sửa chữa</h2>
               <p style={styles.sheetSubtitle}>
                 (Dùng cho đối soát nội bộ công tác bảo trì kỹ thuật giữa Ban quản lý và Thợ thi công)
               </p>
@@ -404,7 +161,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
               {/* Information Grid */}
               <div style={styles.sheetInfoGrid}>
                 <div style={styles.sheetInfoCol}>
-                  <div style={styles.sheetSectionTitle}>1. ĐỊA ĐIỂM & SỰ CỐ</div>
+                  <div style={styles.sheetSectionTitle}>1. Địa điểm và sự cố</div>
                   <div style={styles.sheetInfoRow}>
                     <span style={styles.sheetInfoLabel}>Tòa nhà:</span>
                     <span>{voucherData.toaNha}</span>
@@ -424,7 +181,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
                 </div>
 
                 <div style={styles.sheetInfoCol}>
-                  <div style={styles.sheetSectionTitle}>2. CÁC BÊN LIÊN QUAN</div>
+                  <div style={styles.sheetSectionTitle}>2. Các bên liên quan</div>
                   <div style={styles.sheetInfoRow}>
                     <span style={styles.sheetInfoLabel}>Thợ phụ trách:</span>
                     <span><strong>{voucherData.tenTho}</strong> ({voucherData.sdtTho})</span>
@@ -447,7 +204,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
               {/* Cost Items Table */}
               <div style={{ marginTop: 20 }}>
                 <div style={styles.sheetSectionTitle}>
-                  3. CHI TIẾT BÁO GIÁ VẬT TƯ & NHÂN CÔNG ĐÃ DUYỆT (Phiên bản v{voucherData.baoGiaPhienBan})
+                  3. Chi tiết báo giá vật tư và nhân công đã duyệt (Phiên bản v{voucherData.baoGiaPhienBan})
                 </div>
                 <table style={styles.voucherItemsTable}>
                   <thead>
@@ -476,7 +233,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={6} style={{ ...styles.voucherItemTd, textAlign: 'center', color: '#64748b' }}>
+                        <td colSpan={6} style={{ ...styles.voucherItemTd, textAlign: 'center', color: 'var(--ma-text-secondary)' }}>
                           Không có danh mục chi phí hoặc đơn sửa chữa bảo hành (0 đ).
                         </td>
                       </tr>
@@ -484,10 +241,10 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
                   </tbody>
                   <tfoot>
                     <tr style={styles.voucherItemsFootRow}>
-                      <td colSpan={5} style={{ ...styles.voucherItemTd, textAlign: 'right', fontWeight: 700 }}>
-                        TỔNG GIÁ TRỊ PHÊ DUYỆT:
+                      <td colSpan={5} style={{ ...styles.voucherItemTd, textAlign: 'right', fontWeight: 600 }}>
+                        Tổng giá trị phê duyệt:
                       </td>
-                      <td style={{ ...styles.voucherItemTd, textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>
+                      <td style={{ ...styles.voucherItemTd, textAlign: 'right', fontWeight: 600, color: 'var(--ma-text-primary)' }}>
                         {dinhDangTien(voucherData.tongTienBaoGia)}
                       </td>
                     </tr>
@@ -497,7 +254,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
 
               {/* Payment History */}
               <div style={{ marginTop: 20 }}>
-                <div style={styles.sheetSectionTitle}>4. LỊCH SỬ GIAO DỊCH THANH TOÁN CHO THỢ</div>
+                <div style={styles.sheetSectionTitle}>4. Lịch sử giao dịch thanh toán cho thợ</div>
                 {voucherData.lichSuThanhToan && voucherData.lichSuThanhToan.length > 0 ? (
                   <table style={styles.voucherItemsTable}>
                     <thead>
@@ -515,7 +272,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
                           <td style={styles.voucherItemTd}>
                             {new Date(tt.xacNhanLuc).toLocaleDateString('vi-VN')} {new Date(tt.xacNhanLuc).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                           </td>
-                          <td style={{ ...styles.voucherItemTd, fontFamily: 'monospace' }}>{tt.maThanhToan}</td>
+                          <td style={{ ...styles.voucherItemTd, fontVariantNumeric: 'tabular-nums' }}>{tt.maThanhToan}</td>
                           <td style={styles.voucherItemTd}>
                             {tt.phuongThuc === 'CHUYEN_KHOAN'
                               ? 'Chuyển khoản'
@@ -524,7 +281,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
                               : 'Không thu phí'}
                           </td>
                           <td style={styles.voucherItemTd}>{tt.maThamChieu || tt.ghiChu || '—'}</td>
-                          <td style={{ ...styles.voucherItemTd, textAlign: 'right', fontWeight: 600, color: '#16a34a' }}>
+                          <td style={{ ...styles.voucherItemTd, textAlign: 'right', fontWeight: 600, color: 'var(--ma-done-text)' }}>
                             {dinhDangTien(tt.soTien)}
                           </td>
                         </tr>
@@ -548,11 +305,11 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
                 </div>
                 <div style={styles.settlementItem}>
                   <span style={styles.settlementLabel}>Đã thanh toán thực tế:</span>
-                  <span style={{ ...styles.settlementValue, color: '#16a34a' }}>{dinhDangTien(voucherData.tongDaTra)}</span>
+                  <span style={{ ...styles.settlementValue, color: 'var(--ma-done-text)' }}>{dinhDangTien(voucherData.tongDaTra)}</span>
                 </div>
                 <div style={styles.settlementItem}>
                   <span style={styles.settlementLabel}>Công nợ còn lại:</span>
-                  <span style={{ ...styles.settlementValue, color: voucherData.conLai > 0 ? '#ea580c' : '#0f172a' }}>
+                  <span style={{ ...styles.settlementValue, color: voucherData.conLai > 0 ? 'var(--ma-urgent)' : 'var(--ma-text-primary)' }}>
                     {dinhDangTien(voucherData.conLai)}
                   </span>
                 </div>
@@ -561,17 +318,17 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
               {/* Signatures */}
               <div style={styles.signaturesRow}>
                 <div style={styles.sigBlock}>
-                  <div style={styles.sigTitle}>THỢ THI CÔNG</div>
+                  <div style={styles.sigTitle}>Thợ thi công</div>
                   <div style={styles.sigNote}>(Ký, ghi rõ họ tên)</div>
                   <div style={styles.sigName}>{voucherData.tenTho}</div>
                 </div>
                 <div style={styles.sigBlock}>
-                  <div style={styles.sigTitle}>CƯ DÂN NGHIỆM THU</div>
+                  <div style={styles.sigTitle}>Cư dân nghiệm thu</div>
                   <div style={styles.sigNote}>(Ký, ghi rõ họ tên)</div>
                   <div style={styles.sigName}>{voucherData.tenNguoiBao}</div>
                 </div>
                 <div style={styles.sigBlock}>
-                  <div style={styles.sigTitle}>QUẢN LÝ PHÊ DUYỆT</div>
+                  <div style={styles.sigTitle}>Quản lý phê duyệt</div>
                   <div style={styles.sigNote}>(Ký, ghi rõ họ tên)</div>
                   <div style={styles.sigName}>{voucherData.tenQuanLy}</div>
                 </div>
@@ -584,61 +341,6 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
   )
 }
 
-const CHIP_THANH_TOAN: ReadonlyArray<readonly [string, string]> = [
-  ['TAT_CA', 'Tất cả'],
-  ['DA_TRA_DU', 'Đã nhận đủ'],
-  ['TRA_MOT_PHAN', 'Trả một phần'],
-  ['CHUA_TRA', 'Chưa thanh toán'],
-  ['BAO_HANH_0D', 'Bảo hành (0đ)'],
-  ['CHUA_BAO_GIA', 'Chưa chốt giá'],
-]
-
-function tinhHang(row: ThongTinViecThoRow) {
-  return {
-    giaTri: Number(row.giaTriBaoGia || 0),
-    daTra: Number(row.daThanhToan || 0),
-    conLai: Number(row.conPhaiTra || 0),
-    daDuyet: row.trangThaiBaoGia === 'DA_DUYET',
-  }
-}
-
-function tongTrangThai(row: ThongTinViecThoRow): 'done' | 'waiting' | 'neutral' {
-  return row.trangThaiHieuLuc === 'DA_DONG' ? 'done' : row.trangThaiHieuLuc === 'DANG_XU_LY' || row.trangThaiHieuLuc === 'CHO_XAC_NHAN' ? 'waiting' : 'neutral'
-}
-
-function baoGiaTag(row: ThongTinViecThoRow): React.ReactElement {
-  return row.trangThaiBaoGia === 'DA_DUYET' ? <StatusTag tone="done">Đã duyệt hiệu lực</StatusTag>
-    : row.trangThaiBaoGia === 'CHO_DUYET' ? <StatusTag tone="waiting">Chờ quản lý duyệt</StatusTag>
-    : row.trangThaiBaoGia === 'TU_CHOI' ? <StatusTag tone="urgent">Bị từ chối</StatusTag>
-    : row.trangThaiBaoGia === 'NHAP' ? <StatusTag tone="draft">Bản nháp</StatusTag>
-    : <span className="t-2">Chưa tạo báo giá</span>
-}
-
-function tienDoTag(row: ThongTinViecThoRow): React.ReactElement {
-  const h = tinhHang(row)
-  return !h.daDuyet ? <span className="t-2">Chưa duyệt</span>
-    : h.giaTri === 0 ? <StatusTag tone="neutral">Đối soát 0đ</StatusTag>
-    : h.conLai <= 0 ? <StatusTag tone="done">Đã thanh toán đủ</StatusTag>
-    : h.daTra > 0 ? <StatusTag tone="waiting">Đã trả 1 phần</StatusTag>
-    : <StatusTag tone="urgent">Chưa thanh toán</StatusTag>
-}
-
-function khop(row: ThongTinViecThoRow, loc: string): boolean {
-  const { giaTri, daTra, conLai, daDuyet } = tinhHang(row)
-  if (loc === 'CHUA_BAO_GIA') return !daDuyet
-  if (loc === 'BAO_HANH_0D') return daDuyet && giaTri === 0
-  if (loc === 'DA_TRA_DU') return daDuyet && giaTri > 0 && conLai <= 0
-  if (loc === 'TRA_MOT_PHAN') return daDuyet && daTra > 0 && conLai > 0
-  if (loc === 'CHUA_TRA') return daDuyet && giaTri > 0 && daTra === 0
-  return true
-}
-
-const styleO: CSSProperties = { background: 'var(--ma-bg-card)', borderRadius: 16, padding: 14, display: 'grid', gap: 2, alignContent: 'start', minWidth: 0 }
-const styleSo: CSSProperties = { display: 'block', font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.02em' }
-const styleNhan: CSSProperties = { font: '500 14px/1.3 var(--ma-font-ui)' }
-const styleMoTa: CSSProperties = { font: 'var(--ma-text-caption)', color: 'var(--ma-text-secondary)' }
-const styleCat: CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 360 }
-
 const styles: Record<string, CSSProperties> = {
   modalOverlay: {
     position: 'fixed',
@@ -646,29 +348,29 @@ const styles: Record<string, CSSProperties> = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0, 0, 0, 0.55)',
+    background: 'rgba(20, 24, 29, 0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
     padding: '20px',
-    backdropFilter: 'blur(2px)',
+    
   },
   voucherDialog: {
-    background: '#ffffff',
+    background: 'var(--ma-bg-card)',
     borderRadius: '10px',
     maxWidth: '850px',
     width: '100%',
     maxHeight: '92vh',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+    boxShadow: 'var(--ma-shadow-md)',
     overflow: 'hidden',
   },
   voucherHeaderBar: {
     padding: '14px 20px',
-    background: '#f8fafc',
-    borderBottom: '1px solid #e2e8f0',
+    background: 'var(--ma-bg-sunken)',
+    borderBottom: '1px solid var(--ma-line-200)',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -679,14 +381,14 @@ const styles: Record<string, CSSProperties> = {
   },
   voucherDocType: {
     fontSize: '0.75rem',
-    fontWeight: 700,
-    color: '#64748b',
+    fontWeight: 600,
+    color: 'var(--ma-text-secondary)',
   },
   voucherDocCode: {
     fontSize: '1.05rem',
-    fontWeight: 700,
-    color: '#0f172a',
-    fontFamily: 'monospace',
+    fontWeight: 600,
+    color: 'var(--ma-text-primary)',
+    fontVariantNumeric: 'tabular-nums',
   },
   voucherHeaderActions: {
     display: 'flex',
@@ -695,8 +397,8 @@ const styles: Record<string, CSSProperties> = {
   printableSheet: {
     padding: '32px 36px',
     overflowY: 'auto',
-    background: '#ffffff',
-    color: '#0f172a',
+    background: 'var(--ma-bg-card)',
+    color: 'var(--ma-text-primary)',
     fontSize: '0.875rem',
     lineHeight: 1.5,
   },
@@ -706,46 +408,46 @@ const styles: Record<string, CSSProperties> = {
     alignItems: 'flex-start',
   },
   brandTitle: {
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: '1rem',
-    color: '#1e3a8a',
+    color: 'var(--ma-text-primary)',
   },
   brandAddress: {
     fontSize: '0.8rem',
-    color: '#64748b',
+    color: 'var(--ma-text-secondary)',
   },
   sheetMeta: {
     textAlign: 'right',
     fontSize: '0.8rem',
-    color: '#475569',
+    color: 'var(--ma-text-secondary)',
   },
   sheetDivider: {
     height: '2px',
-    background: '#0f172a',
+    background: 'var(--ma-text-primary)',
     margin: '16px 0 20px 0',
   },
   sheetTitle: {
     textAlign: 'center',
     fontSize: '1.35rem',
-    fontWeight: 800,
-    color: '#0f172a',
+    fontWeight: 600,
+    color: 'var(--ma-text-primary)',
     margin: '0 0 4px 0',
   },
   sheetSubtitle: {
     textAlign: 'center',
     fontSize: '0.85rem',
-    color: '#64748b',
+    color: 'var(--ma-text-secondary)',
     margin: '0 0 24px 0',
-    fontStyle: 'italic',
+    
   },
   sheetInfoGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
     gap: '24px',
-    background: '#f8fafc',
+    background: 'var(--ma-bg-sunken)',
     padding: '16px 20px',
     borderRadius: '6px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--ma-line-200)',
   },
   sheetInfoCol: {
     display: 'flex',
@@ -753,9 +455,9 @@ const styles: Record<string, CSSProperties> = {
     gap: '6px',
   },
   sheetSectionTitle: {
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: '0.8rem',
-    color: '#1e3a8a',
+    color: 'var(--ma-text-primary)',
     marginBottom: '4px',
   },
   sheetInfoRow: {
@@ -764,7 +466,7 @@ const styles: Record<string, CSSProperties> = {
     fontSize: '0.85rem',
   },
   sheetInfoLabel: {
-    color: '#64748b',
+    color: 'var(--ma-text-secondary)',
     minWidth: '100px',
   },
   voucherItemsTable: {
@@ -774,40 +476,40 @@ const styles: Record<string, CSSProperties> = {
     fontSize: '0.85rem',
   },
   voucherItemsThRow: {
-    background: '#f1f5f9',
-    borderBottom: '1px solid #cbd5e1',
+    background: 'var(--ma-bg-sunken)',
+    borderBottom: '1px solid var(--ma-line-300)',
   },
   voucherItemTh: {
     padding: '8px 10px',
     fontSize: '0.75rem',
-    fontWeight: 700,
-    color: '#475569',
+    fontWeight: 600,
+    color: 'var(--ma-text-secondary)',
     textAlign: 'left',
   },
   voucherItemsTr: {
-    borderBottom: '1px solid #e2e8f0',
+    borderBottom: '1px solid var(--ma-line-200)',
   },
   voucherItemTd: {
     padding: '8px 10px',
   },
   voucherItemsFootRow: {
-    borderTop: '2px solid #cbd5e1',
-    background: '#f8fafc',
+    borderTop: '2px solid var(--ma-line-300)',
+    background: 'var(--ma-bg-sunken)',
   },
   noPaymentNotice: {
-    background: '#f8fafc',
+    background: 'var(--ma-bg-sunken)',
     padding: '12px 16px',
     borderRadius: '6px',
-    color: '#64748b',
-    fontStyle: 'italic',
+    color: 'var(--ma-text-secondary)',
+    
     fontSize: '0.85rem',
-    border: '1px dashed #cbd5e1',
+    border: '1px dashed var(--ma-line-300)',
     marginTop: '8px',
   },
   settlementBox: {
     marginTop: '20px',
-    background: '#f8fafc',
-    border: '1px solid #e2e8f0',
+    background: 'var(--ma-bg-sunken)',
+    border: '1px solid var(--ma-line-200)',
     borderRadius: '6px',
     padding: '14px 20px',
     display: 'flex',
@@ -821,12 +523,12 @@ const styles: Record<string, CSSProperties> = {
   },
   settlementLabel: {
     fontSize: '0.8rem',
-    color: '#64748b',
+    color: 'var(--ma-text-secondary)',
   },
   settlementValue: {
     fontSize: '1.15rem',
-    fontWeight: 700,
-    color: '#0f172a',
+    fontWeight: 600,
+    color: 'var(--ma-text-primary)',
   },
   signaturesRow: {
     marginTop: '36px',
@@ -838,19 +540,19 @@ const styles: Record<string, CSSProperties> = {
     flex: 1,
   },
   sigTitle: {
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: '0.85rem',
-    color: '#0f172a',
+    color: 'var(--ma-text-primary)',
   },
   sigNote: {
     fontSize: '0.75rem',
-    color: '#64748b',
+    color: 'var(--ma-text-secondary)',
     marginTop: '2px',
   },
   sigName: {
     marginTop: '56px',
     fontWeight: 600,
-    color: '#0f172a',
+    color: 'var(--ma-text-primary)',
     fontSize: '0.85rem',
   },
 }
