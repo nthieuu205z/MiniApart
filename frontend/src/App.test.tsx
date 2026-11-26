@@ -310,7 +310,7 @@ describe('App role navigation', () => {
     mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung, '/ghi-chi-so')
 
     await vi.waitFor(() => {
-      expect(mountedApp!.container.querySelector('#chu-ky-title')).not.toBeNull()
+      expect(mountedApp!.container.querySelector('h1')?.textContent).toMatch(/^Tháng/)
     })
     expect(mountedApp!.container.querySelector('#status-title')).toBeNull()
     expect(mountedApp!.container.textContent).not.toContain('BẢN KIỂM TRA KẾT NỐI')
@@ -321,9 +321,9 @@ describe('App role navigation', () => {
     mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/ghi-chi-so?toaNhaId=1')
 
     await vi.waitFor(() => {
-      expect(mountedApp!.container.querySelector('#chu-ky-title')).not.toBeNull()
+      expect(mountedApp!.container.querySelector('h1')?.textContent).toMatch(/^Tháng/)
     })
-    expect(mountedApp.container.textContent).toContain('Chu kỳ tháng')
+    expect(mountedApp.container.querySelectorAll('h1')).toHaveLength(1)
   })
 
   it('FR-RPT-01 routes CHU to the financial and operational overview screen', async () => {
