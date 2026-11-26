@@ -35,7 +35,7 @@ export function PrimaryTaskBlock({ meta, title, chips, body, primaryAction, seco
         <Glyph name="cong-to" size={12} color="var(--ma-text-secondary-on-inverse)" />
         <SysLabel tone="onInverse">{meta}</SysLabel>
       </div>
-      <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: "-0.025em", marginTop: 9 }}>{title}</div>
+      <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: "-0.025em", marginTop: 9 }}>{title}</div>
       {chips && chips.length ? (
         <div style={{ display: "flex", gap: 7, marginTop: 11 }}>
           {chips.map((c) => (

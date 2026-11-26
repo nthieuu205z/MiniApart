@@ -1,7 +1,9 @@
 /* Đo QA trong trang: cuộn ngang, vùng chạm, tên truy cập, cỡ chữ, font thật, ảnh thiếu alt. Trả JSON. */
 (() => {
   const mobile = innerWidth < 600;
-  const minHit = mobile ? 44 : 36, minText = mobile ? 13 : 12;
+  // V3: chữ nhỏ nhất 13 ở mọi khung; vùng [data-density="thoang"] (Người thuê, Thợ) chữ ≥ 16, chạm ≥ 44.
+  const thoang = !!document.querySelector('[data-density="thoang"]');
+  const minHit = mobile || thoang ? 44 : 36, minText = thoang ? 16 : 13;
   const vis = (el) => { const s = getComputedStyle(el); const r = el.getBoundingClientRect(); return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
   const label = (el) => (el.getAttribute('aria-label') || el.textContent || el.getAttribute('title') || (el.labels && el.labels[0] && el.labels[0].textContent) || el.getAttribute('placeholder') || '').trim();
   const sel = 'a[href], button, input:not([type=hidden]), select, textarea, [role=button], [tabindex]:not([tabindex="-1"])';
@@ -45,6 +47,7 @@
   for (const el of document.querySelectorAll('[data-count]')) { const f = parseFloat(getComputedStyle(el, '::after').fontSize); if (vis(el) && f < minText) tiny.add(`::after ${f}px "${el.dataset.count}"`); }
   return {
     viewport: `${innerWidth}×${innerHeight}`,
+    h1: (() => { const l = [...document.querySelectorAll('h1')]; const r = l[0] && l[0].getBoundingClientRect(); return { count: l.length, left: r ? Math.round(r.left) : null, top: r ? Math.round(r.top) : null }; })(),
     horizontalOverflow: document.documentElement.scrollWidth > innerWidth + 1 ? document.documentElement.scrollWidth - innerWidth : 0,
     controls: ctrls.length,
     belowHit: small,

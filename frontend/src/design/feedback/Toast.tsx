@@ -24,7 +24,7 @@ export function Toast({ children, undoLabel = 'Hoàn tác', onUndo, style, ...re
         justifyContent: "space-between",
         gap: 12,
         borderRadius: "var(--ma-radius)",
-        boxShadow: "var(--ma-shadow-lg)",
+        boxShadow: "none",
         ...(style || {}),
       }}
       {...rest}
@@ -36,8 +36,8 @@ export function Toast({ children, undoLabel = 'Hoàn tác', onUndo, style, ...re
           onClick={onUndo}
           style={{
             font: "inherit",
-            fontWeight: 700,
-            color: "inherit",
+            fontWeight: 600,
+            color: "var(--ma-text-link-on-inverse, #A9C7FF)",
             background: "none",
             border: 0,
             minHeight: "var(--ma-hit-mobile)",

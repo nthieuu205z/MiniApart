@@ -19,56 +19,53 @@ export type MucDieuHuong = {
 }
 
 export type NhomDieuHuong = { nhan: string; muc: MucDieuHuong[] }
-export type CauHinhDieuHuong = { nhom: NhomDieuHuong[]; chanSidebar: MucDieuHuong[]; bottomNav: boolean }
+/** thanhDuoi: đường dẫn các mục hiện ở đáy điện thoại (còn lại gom vào "Thêm" mở ngăn nav); thiếu = hiện hết. */
+export type CauHinhDieuHuong = { nhom: NhomDieuHuong[]; chanSidebar: MucDieuHuong[]; bottomNav: boolean; thanhDuoi?: string[] }
 
 const m = (duongDan: string, nhan: string, icon: IconName, extra: Partial<MucDieuHuong> = {}): MucDieuHuong => ({ duongDan, nhan, icon, activeFor: [duongDan], ...extra })
 
 const HOM_NAY = m('/hom-nay', 'Hôm nay', 'dashboard')
+const TIEN = m('/thu-tien', 'Tiền', 'wallet', { activeFor: ['/thu-tien', '/hoa-don'] })
 const THU_TIEN = m('/thu-tien', 'Thu tiền', 'wallet', { activeFor: ['/thu-tien', '/hoa-don'] })
-const CHU_KY = m('/chu-ky', 'Chu kỳ tháng', 'meter')
+const THANG = m('/chu-ky', `Tháng ${new Date().getMonth() + 1}`, 'meter', { dem: 'chuKy', nong: true })
 const NGUOI_THUE = m('/nguoi-thue', 'Người thuê', 'users', { activeFor: ['/nguoi-thue', '/cu-tru'] })
 const HOP_DONG = m('/hop-dong', 'Hợp đồng', 'contract')
-const LICH_HEN = m('/lich-hen', 'Lịch hẹn', 'calendar', { dem: 'lichHen' })
+const LICH_HEN = m('/lich-hen', 'Lịch xem phòng', 'calendar', { dem: 'lichHen' })
 const SU_CO = m('/su-co', 'Sự cố', 'wrench', { dem: 'suCo', nong: true })
 const AN_TOAN = m('/an-toan', 'An toàn PCCC', 'shield')
-const DICH_VU = m('/dich-vu', 'Dịch vụ & đơn giá', 'settings')
+const NHAT_KY = m('/nhat-ky-thao-tac', 'Nhật ký', 'history')
+const TOA = m('/toa-nha', 'Toà & phòng', 'building', { nhanNgan: 'Toà', activeFor: ['/toa-nha', '/phong'] })
 
 const CAU_HINH: Record<VaiTroDieuHuong, CauHinhDieuHuong> = {
   CHU: {
-    bottomNav: false,
-    chanSidebar: [DICH_VU],
+    bottomNav: true,
+    thanhDuoi: ['/hom-nay', '/thu-tien', '/toa-nha', '/su-co'],
+    chanSidebar: [m('/dich-vu', 'Giá dịch vụ & cài đặt', 'settings'), LICH_HEN, AN_TOAN, NHAT_KY],
     nhom: [
-      { nhan: '', muc: [HOM_NAY] },
-      { nhan: 'Thu tiền', muc: [THU_TIEN, CHU_KY] },
-      { nhan: 'Phòng & người thuê', muc: [m('/toa-nha', 'Toà & phòng', 'building', { activeFor: ['/toa-nha', '/phong'] }), NGUOI_THUE, HOP_DONG, LICH_HEN] },
-      { nhan: 'Vận hành', muc: [SU_CO, AN_TOAN] },
-      { nhan: 'Báo cáo', muc: [m('/tong-quan', 'Báo cáo', 'chart', { activeFor: ['/tong-quan', '/bao-cao', '/bao-cao/tieu-thu', '/bao-cao/chi-phi-bao-tri', '/nhat-ky-thao-tac'] })] },
+      { nhan: '', muc: [HOM_NAY, TIEN, TOA, NGUOI_THUE, HOP_DONG, SU_CO, m('/tong-quan', 'Báo cáo', 'chart', { activeFor: ['/tong-quan', '/bao-cao', '/bao-cao/tieu-thu', '/bao-cao/chi-phi-bao-tri'] })] },
     ],
   },
   QUAN_LY: {
     bottomNav: false,
-    chanSidebar: [DICH_VU],
+    chanSidebar: [AN_TOAN, m('/thong-bao', 'Báo cho cư dân', 'megaphone'), m('/dich-vu', 'Giá dịch vụ', 'settings')],
     nhom: [
-      { nhan: '', muc: [HOM_NAY] },
-      { nhan: 'Thu tiền', muc: [{ ...CHU_KY, dem: 'chuKy', nong: true }, THU_TIEN] },
-      { nhan: 'Phòng & người thuê', muc: [m('/phong', 'Phòng', 'door'), NGUOI_THUE, HOP_DONG, LICH_HEN] },
-      { nhan: 'Vận hành', muc: [SU_CO, AN_TOAN, m('/thong-bao', 'Thông báo cư dân', 'megaphone')] },
+      { nhan: '', muc: [HOM_NAY, THANG, THU_TIEN, m('/phong', 'Phòng', 'door'), NGUOI_THUE, HOP_DONG, LICH_HEN, SU_CO] },
     ],
   },
   QTHT: {
     bottomNav: false,
     chanSidebar: [],
-    nhom: [{ nhan: '', muc: [m('/tai-khoan', 'Tài khoản', 'key'), m('/toa-nha', 'Toà nhà', 'building'), m('/nhat-ky-thao-tac', 'Nhật ký thao tác', 'history')] }],
+    nhom: [{ nhan: '', muc: [m('/tai-khoan', 'Tài khoản', 'key'), m('/toa-nha', 'Toà nhà', 'building'), NHAT_KY] }],
   },
   THO: {
     bottomNav: true,
     chanSidebar: [],
-    nhom: [{ nhan: '', muc: [m('/viec-cua-toi', 'Việc', 'wrench'), m('/tho/chi-phi', 'Tiền công', 'wallet'), m('/thong-bao', 'Thông báo', 'bell')] }],
+    nhom: [{ nhan: '', muc: [m('/viec-cua-toi', 'Việc', 'wrench'), m('/tho/chi-phi', 'Tiền công', 'wallet')] }],
   },
   NGUOI_THUE: {
     bottomNav: true,
     chanSidebar: [],
-    nhom: [{ nhan: '', muc: [m('/hoa-don-cua-toi', 'Cần trả', 'receipt', { activeFor: ['/hoa-don-cua-toi', '/lich-su', '/hoa-don'] }), m('/bao-hong', 'Báo hỏng', 'wrench'), m('/hop-dong', 'Phòng của tôi', 'home', { nhanNgan: 'Phòng tôi', activeFor: ['/hop-dong', '/tieu-thu'] })] }],
+    nhom: [{ nhan: '', muc: [m('/hoa-don-cua-toi', 'Tiền nhà', 'receipt', { activeFor: ['/hoa-don-cua-toi', '/hoa-don'] }), m('/bao-hong', 'Báo hỏng', 'wrench'), m('/hop-dong', 'Phòng tôi', 'home'), m('/lich-su', 'Lịch sử', 'history', { activeFor: ['/lich-su', '/tieu-thu'] })] }],
   },
 }
 

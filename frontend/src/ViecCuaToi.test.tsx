@@ -87,7 +87,7 @@ describe('ViecCuaToi', () => {
 
     const retry = [...container.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Thử lại')
     expect(retry).not.toBeUndefined()
-    expect((retry as HTMLButtonElement).style.minHeight).toBe('44px')
+    expect((retry as HTMLButtonElement).style.minHeight).toBe('var(--ma-control-h)')
     await act(async () => retry?.click())
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })

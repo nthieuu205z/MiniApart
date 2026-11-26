@@ -1,14 +1,14 @@
 :root {
   /* Nền */
   --ma-paper-0: #FFFFFF;
-  --ma-paper-1: #F9F7F6;
+  --ma-paper-1: #F7F8FA;
   --ma-paper-2: #F8FAFC;
   --ma-paper-3: #F1F5F9;
 
   /* Tông thương hiệu cao cấp */
   --ma-brand-primary: #0F172A;
-  --ma-brand-accent: #0D9488;
-  --ma-brand-accent-hover: #0F766E;
+  --ma-brand-accent: #14181D;
+  --ma-brand-accent-hover: #2A313A;
   --ma-brand-accent-light: #F0FDFA;
   --ma-brand-blue: #2563EB;
   --ma-brand-blue-hover: #1D4ED8;
@@ -21,7 +21,7 @@
   --ma-ink-400: #94A3B8;
   --ma-ink-300: #CBD5E1;
   /* Giữ màu tiêu đề màn Ghi chỉ số trong đợt dọn CSS cũ (Ticket 08). */
-  --ma-ink-screen-title: #0F766E;
+  --ma-ink-screen-title: #14181D;
 
   /* Viền */
   --ma-line-100: #F1F5F9;

@@ -52,10 +52,12 @@ export interface NavPanelProps extends React.HTMLAttributes<HTMLElement> {
   /** Sidebar thu gọn còn icon (≥768 và <1280). */
   collapsed?: boolean
   onLogout?: () => void
+  /** Chỉ cho variant bar: có thì nút "Thêm" gọi hàm này (mở ngăn nav) thay vì mở danh sách mục dư. */
+  onThem?: () => void
 }
 
 /** Menu dọc chia ba nhóm: Hàng ngày / Tiền / Toà nhà. Thứ tự nhóm phản ánh nhịp công việc thật. */
-export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems = [], toa, user, variant, mobile = false, open = false, onClose, collapsed = false, onLogout, className, style, ...rest }: NavPanelProps): React.ReactElement | null {
+export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems = [], toa, user, variant, mobile = false, open = false, onClose, collapsed = false, onLogout, onThem, className, style, ...rest }: NavPanelProps): React.ReactElement | null {
   const kieu = variant ?? (mobile ? 'bar' : 'side')
   const bar = kieu === 'bar'
   const drawer = kieu === 'drawer'
@@ -83,11 +85,11 @@ export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems 
         minWidth: 0,
         minHeight: 'var(--ma-bottom-nav-height)',
         padding: '5px 3px',
-        fontSize: 13,
+        font: 'var(--ma-text-caption)',
         lineHeight: 1.1,
         textAlign: 'center',
         textDecoration: 'none',
-        fontWeight: item.active ? 700 : 500,
+        fontWeight: item.active ? 600 : 500,
         color: item.active ? 'var(--ma-brand-accent)' : 'var(--ma-text-secondary)',
         background: item.active ? 'var(--ma-brand-accent-light)' : 'transparent',
         boxShadow: item.active ? 'var(--ma-nav-active-inset) var(--ma-brand-accent)' : undefined,
@@ -102,7 +104,7 @@ export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems 
         fontSize: 13,
         lineHeight: 1.25,
         textDecoration: 'none',
-        fontWeight: item.active ? 700 : 500,
+        fontWeight: item.active ? 600 : 500,
         color: item.active ? 'var(--ma-brand-accent)' : 'var(--ma-text-primary)',
         background: item.active ? 'var(--ma-brand-accent-light)' : 'transparent',
         boxShadow: item.active ? 'var(--ma-nav-active-inset) var(--ma-brand-accent)' : undefined,
@@ -112,7 +114,7 @@ export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems 
       {item.icon ? <Icon name={item.icon} /> : <Glyph name={item.glyph} size={variant === 'bar' ? 16 : 15} strokeWidth={1.5} color={item.active ? 'var(--ma-brand-accent)' : 'var(--ma-text-secondary)'} />}
       <span style={variant === 'bar' ? { minWidth: 0, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } : { minWidth: 0 }}>{variant === 'bar' ? item.shortLabel ?? item.label : item.label}</span>
       {item.count ? (
-        <span style={{ marginLeft: variant === 'bar' ? 0 : 'auto', fontSize: 13, fontWeight: 700, color: item.countTone === 'waiting' ? 'var(--ma-waiting)' : 'var(--ma-urgent)' }}>
+        <span style={{ marginLeft: variant === 'bar' ? 0 : 'auto', fontSize: 13, fontWeight: 600, color: item.countTone === 'waiting' ? 'var(--ma-waiting)' : 'var(--ma-urgent)' }}>
           {item.count}
         </span>
       ) : null}
@@ -233,19 +235,20 @@ export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems 
             data-testid="mobile-nav-bar"
             style={{
               display: 'grid',
-              gridTemplateColumns: `repeat(${primaryItems.length + (overflowItems.length ? 1 : 0)}, minmax(0, 1fr))`,
+              gridTemplateColumns: `repeat(${primaryItems.length + (overflowItems.length || onThem ? 1 : 0)}, minmax(0, 1fr))`,
               width: '100%',
               minWidth: 0,
               overflow: 'hidden',
             }}
           >
             {primaryItems.map((item) => renderMobileItem(item, 'bar'))}
-            {overflowItems.length ? (
+            {overflowItems.length || onThem ? (
               <button
                 type="button"
-                aria-expanded={mobileMoreOpen}
-                aria-controls="mobile-nav-more"
-                onClick={() => setMobileMoreOpen((current) => !current)}
+                aria-expanded={onThem ? undefined : mobileMoreOpen}
+                aria-haspopup={onThem ? 'dialog' : undefined}
+                aria-controls={onThem ? undefined : 'mobile-nav-more'}
+                onClick={() => (onThem ? onThem() : setMobileMoreOpen((current) => !current))}
                 style={{
                   display: 'grid',
                   placeItems: 'center',
@@ -259,7 +262,7 @@ export function NavPanel({ product = 'MiniApart', subtitle, groups, footerItems 
                   background: 'transparent',
                   color: 'var(--ma-text-secondary)',
                   fontFamily: 'var(--ma-font-ui)',
-                  fontSize: 13,
+                  font: 'var(--ma-text-caption)',
                   lineHeight: 1.1,
                   textAlign: 'center',
                   overflow: 'hidden',

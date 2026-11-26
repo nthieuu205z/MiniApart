@@ -28,7 +28,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'QTHT',
       tenVaiTro: 'Quản trị hệ thống',
     },
-    menuLabels: ['Tài khoản', 'Toà nhà', 'Nhật ký thao tác'],
+    menuLabels: ['Tài khoản', 'Toà nhà', 'Nhật ký'],
   },
   {
     nguoiDung: {
@@ -38,7 +38,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'CHU',
       tenVaiTro: 'Chủ sở hữu',
     },
-    menuLabels: ['Hôm nay', 'Thu tiền', 'Chu kỳ tháng', 'Toà & phòng', 'Người thuê', 'Hợp đồng', 'Lịch hẹn', 'Sự cố', 'An toàn PCCC', 'Báo cáo', 'Dịch vụ & đơn giá'],
+    menuLabels: ['Hôm nay', 'Tiền', 'Toà & phòng', 'Người thuê', 'Hợp đồng', 'Sự cố', 'Báo cáo', 'Giá dịch vụ & cài đặt', 'Lịch xem phòng', 'An toàn PCCC', 'Nhật ký'],
   },
   {
     nguoiDung: {
@@ -48,7 +48,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'QUAN_LY',
       tenVaiTro: 'Quản lý toà nhà',
     },
-    menuLabels: ['Hôm nay', 'Chu kỳ tháng', 'Thu tiền', 'Phòng', 'Người thuê', 'Hợp đồng', 'Lịch hẹn', 'Sự cố', 'An toàn PCCC', 'Thông báo cư dân', 'Dịch vụ & đơn giá'],
+    menuLabels: ['Hôm nay', `Tháng ${new Date().getMonth() + 1}`, 'Thu tiền', 'Phòng', 'Người thuê', 'Hợp đồng', 'Lịch xem phòng', 'Sự cố', 'An toàn PCCC', 'Báo cho cư dân', 'Giá dịch vụ'],
   },
   {
     nguoiDung: {
@@ -58,7 +58,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'THO',
       tenVaiTro: 'Thợ sửa chữa',
     },
-    menuLabels: ['Việc', 'Tiền công', 'Thông báo'],
+    menuLabels: ['Việc', 'Tiền công'],
   },
   {
     nguoiDung: {
@@ -68,7 +68,7 @@ const MENU_BY_ROLE: Array<{
       vaiTro: 'NGUOI_THUE',
       tenVaiTro: 'Người thuê',
     },
-    menuLabels: ['Cần trả', 'Báo hỏng', 'Phòng của tôi'],
+    menuLabels: ['Tiền nhà', 'Báo hỏng', 'Phòng tôi', 'Lịch sử'],
   },
 ]
 
@@ -116,8 +116,8 @@ describe('App role navigation', () => {
     mountedApp = await mountAppAndLogin(quanLyToaNha.nguoiDung)
 
     await vi.waitFor(() => {
-      expect(mountedApp!.container.textContent).toContain('Phòng & người thuê')
-      expect(mountedApp!.container.textContent).toContain('Vận hành')
+      expect(mountedApp!.container.textContent).toContain('Hôm nay')
+      expect(mountedApp!.container.textContent).toContain('Sự cố')
       expect(mountedApp!.container.querySelector('.sb-toa')).not.toBeNull() // trước đây khớp nhầm chữ "Tất cả toà được phân công" của QuanLyDashboard cũ; hộp toà cố định đã có test ở designComponents.test.tsx
     })
 
@@ -263,7 +263,7 @@ describe('App role navigation', () => {
     expect(mountedApp.container.querySelector('[role="dialog"]')).toBeNull()
   })
 
-  it('NFR-USA-01 gives the tenant a three-slot bottom bar at 360px and no drawer button', async () => {
+  it('NFR-USA-01 gives the tenant a four-slot bottom bar at 360px and no drawer button', async () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
     const khach = MENU_BY_ROLE[4]
     mountedApp = await mountAppAndLogin(khach.nguoiDung)
@@ -272,8 +272,8 @@ describe('App role navigation', () => {
       expect(element).not.toBeNull()
       return element as HTMLElement
     })
-    expect(bar.querySelectorAll('a')).toHaveLength(3)
-    expect([...bar.querySelectorAll('a')].map((link) => link.getAttribute('aria-label') ?? link.textContent?.trim())).toEqual(['Cần trả', 'Báo hỏng', 'Phòng của tôi'])
+    expect(bar.querySelectorAll('a')).toHaveLength(4)
+    expect([...bar.querySelectorAll('a')].map((link) => link.getAttribute('aria-label') ?? link.textContent?.trim())).toEqual(['Tiền nhà', 'Báo hỏng', 'Phòng tôi', 'Lịch sử'])
     expect(mountedApp.container.querySelector('button[aria-label="Mở menu"]')).toBeNull()
     expect(mountedApp.container.querySelector('[data-testid="topbar-logout"]')).not.toBeNull()
   })

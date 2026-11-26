@@ -13,8 +13,8 @@ rm -rf "$G" && mkdir -p "$G/frontend"
 cp -r "$REPO/frontend/." "$G/frontend/" && rm -rf "$G/frontend/dist"
 T="$G/frontend/src/tokens"
 # Overlay: phần biến của assets/tokens.css; @font-face trỏ fonts/ nên chép kèm font
-cp "$REPO/docs/design/ui-redesign/assets/tokens.css" "$T/overlay-ui-redesign.css"
-mkdir -p "$T/fonts" && cp "$REPO/docs/design/ui-redesign/assets/fonts/"*.woff2 "$T/fonts/"
+cp "$REPO/docs/design/ui-redesign/v3/plans/ma-mau/frontend/src/tokens/overlay-ui-redesign.css" "$T/overlay-ui-redesign.css"
+mkdir -p "$T/fonts" && cp "$REPO/docs/design/ui-redesign/v3/prototype/fonts/"*.woff2 "$T/fonts/"
 printf "\n@import './overlay-ui-redesign.css';\n" >> "$T/index.css"
 # designTokens.test.ts chỉ nạp colors.css + typography.css (?raw) → nối overlay vào cuối typography.css (nạp sau cùng)
 printf "\n/* overlay ui-redesign (guard) */\n" >> "$T/typography.css"

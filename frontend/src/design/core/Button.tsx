@@ -3,13 +3,13 @@ import { Glyph } from './Glyph'
 import type { GlyphName } from './GlyphName'
 
 /**
- * Nút của MiniApart: góc vuông, không bóng đổ, nhãn là động từ + đối tượng.
+ * Nút của MiniApart: bo 6px, không bóng đổ, nhãn là động từ + đối tượng.
  * Nút bị chặn KHÔNG bị ẩn — vẫn hiện, kèm câu nói rõ điều kiện còn thiếu.
  * @startingPoint section="Core" subtitle="Bốn cấp nút, có trạng thái bị chặn kèm lý do" viewport="700x260"
  */
 export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'disabled'> {
   /** primary = việc chính của màn (tối đa một cái). onInverse* dùng khi nằm trên khối nền mực. */
-  variant?: 'primary' | 'secondary' | 'text' | 'onInverse' | 'onInverseGhost'
+  variant?: 'primary' | 'secondary' | 'text' | 'danger' | 'onInverse' | 'onInverseGhost'
   size?: 'md' | 'sm'
   glyph?: GlyphName
   /** Chặn thay cho disabled: nút vẫn thấy, vẫn đọc được, chỉ không bấm được. */
@@ -19,10 +19,11 @@ export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
   children?: React.ReactNode
 }
 
-const CLASS: Record<'primary' | 'secondary' | 'text', string> = {
+const CLASS: Record<'primary' | 'secondary' | 'text' | 'danger', string> = {
   primary: 'btn btn-primary',
   secondary: 'btn btn-secondary',
   text: 'btn btn-ghost',
+  danger: 'btn btn-danger',
 }
 
 // Chỉ dùng trên nền tối: giữ inline như cũ, lớp .btn lo kích thước.
@@ -46,8 +47,8 @@ export function Button({
   ...rest
 }: ButtonProps): React.ReactElement {
   const cls = [variant in CLASS ? CLASS[variant as keyof typeof CLASS] : 'btn', size === 'sm' ? 'btn-sm' : '', className].filter(Boolean).join(' ')
-  // minHeight 44 giữ vùng chạm ≥44px ở mọi cỡ màn (ViecCuaToi.test khoá); .btn tự cao 40/48.
-  const s: React.CSSProperties = { ...(size === 'md' ? { minHeight: 44 } : {}), ...(INVERSE[variant as keyof typeof INVERSE] ?? {}), ...(style || {}) }
+  // Cao theo mật độ: 36 desktop · 44 chu-m · 52 thoang (token --ma-control-h*).
+  const s: React.CSSProperties = { minHeight: size === 'sm' ? 'var(--ma-control-h-sm)' : 'var(--ma-control-h)', ...(INVERSE[variant as keyof typeof INVERSE] ?? {}), ...(style || {}) }
   const btn = (
     <button
       type="button"

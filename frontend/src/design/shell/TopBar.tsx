@@ -48,8 +48,8 @@ export function TopBar({ tieuDe, onMoMenu, menuDangMo = false, onTim, chuong, no
       {onTim ? (
         <button type="button" className="ux-search" aria-label="Tìm nhanh: người thuê, phòng, hợp đồng, hoá đơn (Ctrl K)" onClick={onTim}>
           <Icon name="search" />
-          <span className="grow">Tìm người thuê, phòng, hợp đồng, hoá đơn…</span>
-          <span className="search-kbd" aria-hidden="true">Ctrl K</span>
+          <span className="grow">Tìm phòng, người, hoá đơn…</span>
+          <span className="search-kbd" aria-hidden="true">⌘K</span>
         </button>
       ) : null}
       <div className="push row">

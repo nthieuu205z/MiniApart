@@ -30,8 +30,8 @@ try {
       if (j.full) await p.eval(`(() => { if (!document.body) return 0; const H = document.documentElement.scrollHeight; for (const e of document.querySelectorAll('body *')) { const s = getComputedStyle(e); const r = e.getBoundingClientRect(); if (s.position === 'fixed' && r.bottom >= innerHeight - 1 && r.top > innerHeight / 2) Object.assign(e.style, { position: 'absolute', top: (H - (innerHeight - r.top)) + 'px', bottom: 'auto' }); } return 1; })()`);
       if (j.png) await p.screenshot({ path: j.png, format: 'png', fullPage: !!j.full });
       if (j.svg) {
-        // @font-face trỏ ../assets/fonts để mở SVG bằng trình duyệt vẫn đúng Inter; Figma bỏ qua và dùng font đã cài
-        const faces = (readFileSync(join(HERE, '../assets/tokens.css'), 'utf8').match(/@font-face\s*\{[^}]*\}/g) || []).join('').replace(/url\('fonts\//g, "url('../assets/fonts/");
+        // @font-face trỏ ../assets/fonts để mở SVG bằng trình duyệt vẫn đúng IBM Plex Sans; Figma bỏ qua và dùng font đã cài
+        const faces = (readFileSync(join(HERE, '../v3/plans/ma-mau/frontend/src/tokens/overlay-ui-redesign.css'), 'utf8').match(/@font-face\s*\{[^}]*\}/g) || []).join('').replace(/url\('fonts\//g, "url('../v3/prototype/fonts/");
         const svg = (await p.eval(readFileSync(join(HERE, 'dom2svg.js'), 'utf8'))).replace('<defs>', `<defs><style>${faces}</style>`);
         writeFileSync(j.svg, svg);
         r.svgBytes = svg.length;

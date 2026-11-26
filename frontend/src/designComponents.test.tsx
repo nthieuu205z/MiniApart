@@ -19,6 +19,17 @@ import type { ThongTinToaNha } from './api'
 import { Card } from './design/layout/Card'
 import { ConfirmDialog } from './design/feedback/ConfirmDialog'
 import { MeterInput } from './design/forms/MeterInput'
+import { DauTrang } from './design/layout/DauTrang'
+import { KhoiSo } from './design/layout/KhoiSo'
+import { ChanDinh } from './design/layout/ChanDinh'
+import { DongViec } from './design/building/DongViec'
+import { DongNguoiNo } from './design/money/DongNguoiNo'
+import { NganNhacNo } from './design/money/NganNhacNo'
+import { ThanhBuoc } from './design/core/ThanhBuoc'
+import { HangTong } from './design/table/HangTong'
+import { DataTable } from './design/table/DataTable'
+import { NhanMinhHoa } from './design/feedback/NhanMinhHoa'
+import type { NhomNo } from './nhomNoTheoNguoi'
 import { MetaItem, TableCell, TableHeadCell } from './design/layout/Screen'
 
 declare global {
@@ -367,5 +378,86 @@ describe('Khung UX v2: ô chọn toà, tab trang, breadcrumb, sidebar', () => {
     expect(nav.querySelector('a[href="/lich-hen"] .count')?.className).not.toContain('hot')
     expect([...nav.querySelectorAll('a')].map((a) => a.textContent)).toEqual(['Sự cố2', 'Lịch hẹn3', 'Dịch vụ & đơn giá'])
     expect(nav.querySelector('.sb-name')?.nextElementSibling).toBeNull()
+  })
+
+  // ---- y0: component chung V3 ----
+  const nhom = { khoa: 'a', nguoiThueId: 1, hoTen: 'Trần Văn An', toaNhaId: 1, tenToaNha: 'Toà A', soPhong: '101', hopDongId: 1, daThu: 0, conLai: 1895000, treLauNhat: 113, coTraMotPhan: false,
+    hoaDon: [{ hoaDonId: 7, maHoaDon: 'HD7', kyId: 1, toaNhaId: 1, tenToaNha: 'Toà A', soPhong: '101', hopDongId: 1, nguoiThueId: 1, hoTen: 'Trần Văn An', ngayPhatHanh: '2026-07-01', hanThanhToan: '2026-08-05', tongTien: 1895000, daThu: 0, conLai: 1895000, soNgayQuaHan: 113 }] } as NhomNo
+
+  it('Button: nút chính cao theo token mật độ, danger là nút viền đỏ (không nền đỏ)', async () => {
+    await act(async () => root.render(<><Button>Ghi thu</Button><Button size="sm">Nhỏ</Button><Button variant="danger">Thanh lý…</Button></>))
+    const [a, b, c] = [...container.querySelectorAll('button')] as HTMLButtonElement[]
+    expect(a.style.minHeight).toBe('var(--ma-control-h)')
+    expect(b.style.minHeight).toBe('var(--ma-control-h-sm)')
+    expect(c.className).toContain('btn-danger')
+  })
+
+  it('DauTrang: đúng một h1, breadcrumb, hành động, dòng phụ', async () => {
+    await act(async () => root.render(<DauTrang tieuDe="Hôm nay" phu="Việc kế tiếp" hanhDong={<Button>Gửi</Button>} vet={[{ nhan: 'Tiền', href: '/thu-tien' }]} />))
+    expect(container.querySelectorAll('h1')).toHaveLength(1)
+    expect(container.querySelector('a[href="/thu-tien"]')?.textContent).toBe('Tiền')
+    expect(container.querySelector('.ma-dautrang-phu')?.textContent).toBe('Việc kế tiếp')
+    expect(container.querySelector('.ma-dautrang-act button')).not.toBeNull()
+  })
+
+  it('KhoiSo: tone no đỏ nhưng số 0 không đỏ; anKhiHep gắn lớp ẩn', async () => {
+    await act(async () => root.render(<KhoiSo so={[{ nhan: 'Còn nợ', giaTri: '1.895.000', donVi: '₫', tone: 'no' }, { nhan: 'Trễ', giaTri: 0, tone: 'no' }, { nhan: 'Phòng', giaTri: 27, anKhiHep: true, href: '/phong' }]} />))
+    const o = container.querySelectorAll('.ma-oso')
+    expect(o[0].className).toContain('no')
+    expect(o[1].className).not.toContain('no')
+    expect(o[2].className).toContain('an-hep')
+    expect(o[2].tagName).toBe('A')
+  })
+
+  it('DongViec: nút thường chỉ khi có nutNhan; href → link', async () => {
+    await act(async () => root.render(<><DongViec muc="no" tieuDe="A" /><DongViec tieuDe="B" nutNhan="Mở" href="/x" /></>))
+    expect(container.querySelectorAll('.ma-dongviec')).toHaveLength(2)
+    expect(container.querySelectorAll('.ma-dongviec .btn')).toHaveLength(1)
+    expect(container.querySelector('a[href="/x"]')?.textContent).toBe('Mở')
+  })
+
+  it('DongNguoiNo: gọi chỉ khi SĐT hợp lệ; mở hàng con từng tháng; nút Nhắc/Ghi thu theo prop', async () => {
+    await act(async () => root.render(<DongNguoiNo nhom={nhom} sdt="0999100001" mo onNhac={() => {}} />))
+    expect(container.querySelector('a[href="tel:0999100001"]')).not.toBeNull()
+    expect(container.textContent).toContain('Tháng 7/2026 · hạn 05/08/2026 · trễ 113 ngày · còn 1.895.000 ₫')
+    expect(container.textContent).toContain('từ tháng 7/2026')
+    expect([...container.querySelectorAll('button')].map((x) => x.textContent)).toContain('Nhắc')
+    expect([...container.querySelectorAll('button')].map((x) => x.textContent)).not.toContain('Ghi thu')
+    await act(async () => root.render(<DongNguoiNo nhom={nhom} sdt="abc" rut />))
+    expect(container.querySelector('a[href^="tel:"]')).toBeNull()
+  })
+
+  it('NganNhacNo: dialog có tin soạn sẵn, Zalo chỉ khi có số, nói thật là chưa tự gửi', async () => {
+    let dong = 0
+    await act(async () => root.render(<NganNhacNo nhom={nhom} sdt="0999100001" hanTra="30/11/2026" onDong={() => { dong += 1 }} />))
+    expect(container.querySelector('[role="dialog"]')).not.toBeNull()
+    expect((container.querySelector('textarea') as HTMLTextAreaElement).value).toContain('1.895.000 ₫')
+    expect(container.querySelector('a[href="https://zalo.me/0999100001"]')?.getAttribute('rel')).toBe('noopener')
+    expect(container.textContent).toContain('App chưa tự gửi tin. Mở Zalo rồi dán tin.')
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
+    expect(dong).toBe(1)
+    await act(async () => root.render(<NganNhacNo nhom={nhom} sdt={null} hanTra="30/11/2026" onDong={() => {}} />))
+    expect(container.querySelector('a[href^="https://zalo.me"]')).toBeNull()
+  })
+
+  it('ThanhBuoc: bước nay có aria-current=step, xong có dấu ✓, có dòng gọn cho 390', async () => {
+    await act(async () => root.render(<ThanhBuoc nhan="Tháng 11" buoc={[{ ten: 'Ghi chỉ số', trangThai: 'xong' }, { ten: 'Khoá chỉ số', trangThai: 'nay' }, { ten: 'Gửi hoá đơn', trangThai: 'cho' }]} />))
+    expect(container.querySelector('li[aria-current="step"]')?.textContent).toContain('Khoá chỉ số')
+    expect(container.querySelector('li')?.textContent).toContain('✓')
+    expect(container.querySelector('.ma-buoc-gon')?.textContent).toBe('Bước 2/3: Khoá chỉ số')
+  })
+
+  it('DataTable tongHang và HangTong: tfoot ma-tong, ô số canh phải', async () => {
+    await act(async () => root.render(<DataTable rows={[{ id: 1, ten: 'A', tien: 5 }]} getRowId={(r) => r.id} columns={[{ key: 'ten', label: 'Tên', render: (r) => r.ten }, { key: 'tien', label: 'Tiền', align: 'num', render: (r) => r.tien }]} tongHang={['Tổng', '5']} />))
+    expect(container.querySelector('tfoot tr.ma-tong')).not.toBeNull()
+    expect(container.querySelectorAll('tfoot td')[1].className).toBe('num')
+    await act(async () => root.render(<table><tfoot><HangTong o={['T', '9']} canhPhai={[1]} /></tfoot></table>))
+    expect(container.querySelector('tr.ma-tong td.num')?.textContent).toBe('9')
+  })
+
+  it('NhanMinhHoa mặc định "minh hoạ"; ChanDinh bọc nút chính', async () => {
+    await act(async () => root.render(<><NhanMinhHoa /><ChanDinh><Button>Lưu</Button></ChanDinh></>))
+    expect(container.querySelector('.ma-nhanmh')?.textContent).toBe('minh hoạ')
+    expect(container.querySelector('.ma-chandinh button')).not.toBeNull()
   })
 })

@@ -126,10 +126,11 @@ describe('App worker entry point (V2)', () => {
     expect(container.querySelector('[data-testid="topbar-unread-count"]')?.textContent).toBe('2')
 
     // Navigation links for THO
+    expect(container.querySelector('main.ma-app-shell[data-density="thoang"]')).not.toBeNull() // V3: Thợ luôn thoáng
     expect(container.querySelector('nav a[href="/tho/tong-quan"]')).toBeNull() // gộp vào Việc
     expect(container.querySelector('nav a[href="/viec-cua-toi"]')).not.toBeNull()
     expect(container.querySelector('nav a[href="/tho/chi-phi"]')).not.toBeNull()
-    expect(container.querySelector('nav a[href="/thong-bao"]')).not.toBeNull()
+    expect(container.querySelector('nav a[href="/thong-bao"]')).toBeNull() // V3: chuông ở đầu trang, không trong nav
   })
 
   it('lets a worker navigate to jobs screen /viec-cua-toi and open notifications', async () => {
@@ -179,7 +180,7 @@ describe('App worker entry point (V2)', () => {
     })
   })
 
-  it('shows a 3-tab bottom-nav at 390px (Việc · Tiền công · Thông báo), no "Thêm", logout icon kept', async () => {
+  it('shows a 2-tab bottom-nav at 390px (Việc · Tiền công), no "Thêm", logout icon kept', async () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 })
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
@@ -198,8 +199,8 @@ describe('App worker entry point (V2)', () => {
       expect(element).not.toBeNull()
       return element as HTMLElement
     })
-    expect([...bar.querySelectorAll('a')].map((link) => link.getAttribute('href'))).toEqual(['/viec-cua-toi', '/tho/chi-phi', '/thong-bao'])
-    expect([...bar.querySelectorAll('a')].map((link) => link.textContent?.trim())).toEqual(['Việc', 'Tiền công', 'Thông báo'])
+    expect([...bar.querySelectorAll('a')].map((link) => link.getAttribute('href'))).toEqual(['/viec-cua-toi', '/tho/chi-phi'])
+    expect([...bar.querySelectorAll('a')].map((link) => link.textContent?.trim())).toEqual(['Việc', 'Tiền công'])
     expect([...bar.querySelectorAll('button')].some((b) => b.textContent === 'Thêm')).toBe(false)
     expect(container.querySelector('[data-testid="topbar-logout"]')?.getAttribute('aria-label')).toBe('Đăng xuất')
   })
