@@ -52,7 +52,7 @@ async function taiHoSo(token: string, vaiTro: string, id: number, dsToa: ThongTi
     // Chủ đọc báo cáo công nợ; Quản lý chỉ có danh sách hoá đơn của toà.
     no = vaiTro === 'CHU'
       ? (await fetchCongNoBaoCao(token, t.toa.id)).congNo.filter((k) => k.hopDongId === id).map((k) => ({ id: k.hoaDonId, ma: k.maHoaDon, han: k.hanThanhToan, conLai: Number(k.conLai) }))
-      : (await fetchHoaDonQuanLy(token, t.toa.id)).filter((k) => k.hopDongId === id).map((k) => ({ id: k.hoaDonId, ma: k.maHoaDon, han: k.hanThanhToan, conLai: Number(k.conLai) }))
+      : (await fetchHoaDonQuanLy(token, t.toa.id)).filter((k) => k.trangThai !== 'NHAP' && k.trangThai !== 'DA_HUY' && Number(k.conLai) > 0 && (k.hopDongId ? k.hopDongId === id : k.soPhong === t.hd!.soPhong && k.nguoiThue === t.hd!.hoTenNguoiThue)).map((k) => ({ id: k.hoaDonId, ma: k.maHoaDon, han: k.hanThanhToan, conLai: Number(k.conLai) }))
   } catch { /* công nợ là phần phụ: hiện ghi chú thay vì chặn cả hồ sơ */ }
   return { hd: t.hd, toa: t.toa, no }
 }
@@ -129,7 +129,7 @@ export default function HoSoHopDong360({ token, vaiTro, mobile, thamSo, dieuHuon
         </>}
       />
       {thongBaoPdf ? <div role="alert" className="alert alert-danger"><Icon name="alert" />{thongBaoPdf}</div> : null}
-      {giaHan ? <p className="banner banner-warning" role="status">Hết hạn ngày <b>{dinhDangNgayIso(hd.ngayKetThuc)}</b>, còn {hd.soNgayConLai} ngày.{hanBaoDaQua ? ` Người thuê phải báo trước ${hd.soNgayBaoTruoc} ngày nếu trả phòng, hạn báo đã qua.` : ''}</p> : null}
+      {giaHan ? <p className="banner banner-warning" role="status"><span>Hết hạn ngày <b>{dinhDangNgayIso(hd.ngayKetThuc)}</b>, còn {hd.soNgayConLai} ngày.{hanBaoDaQua ? ` Người thuê phải báo trước ${hd.soNgayBaoTruoc} ngày nếu trả phòng, hạn báo đã qua.` : ''}</span></p> : null}
 
       <div className="cols">
         <div className="side" style={{ display: 'grid', gap: 16, minWidth: 0 }}>

@@ -24,6 +24,7 @@
 .hs-viec[data-muc="canh"] { border-left-color: var(--ma-waiting-border); }
 .hs-viec .ma-dongviec-cham { display: none; }
 .hs-viec .ma-dongviec-td { font-size: 17px; }
+.rooms.hs-so-do { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
 .hs-so-do .room { background: var(--ma-bg-card); border: 1px solid var(--ma-line-200); border-radius: 8px; }
 .hs-so-do .room span { color: var(--ma-text-secondary); }
 .hs-so-do .room.no { background: var(--ma-urgent-bg); border-color: var(--ma-urgent); }
@@ -36,6 +37,12 @@
 .hs-chuthich .trong::before { border: 1px dashed var(--ma-text-muted); }
 .hs-chuthich .sua::before { background: repeating-linear-gradient(135deg, var(--ma-bg-card) 0 2px, var(--ma-line-200) 2px 4px); }
 @media (max-width: 767px) {
-  .hs-so-do { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .rooms.hs-so-do { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .hs-so-do .room { padding: 8px; }
 }
+
+/* Chân dính nằm trên bottom-nav của khung (khung cố định ở đáy, z-index 20) */
+@media (max-width: 767px) {
+  .hs-khoi .ma-chandinh, .hs-toa .ma-chandinh, [data-testid="ho-so-hop-dong"] .ma-chandinh { bottom: var(--ma-bottom-nav-height); z-index: 10; }
+}
+.blk-h h2, .blk-h .link-more { white-space: nowrap; }

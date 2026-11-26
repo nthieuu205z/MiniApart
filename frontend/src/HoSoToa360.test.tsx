@@ -124,6 +124,15 @@ describe('HoSoToa360', () => {
       expect(chinh()?.textContent).toBe('Xem tiến độ'); expect(chinh()?.getAttribute('href')).toBe('/chu-ky?toaNhaId=3')
       expect(container.querySelector('.ma-khoiso')?.textContent).toContain('Tháng 10 đã thu69%')
     })
+    it('Quản lý: /api/hoa-don không có hopDongId → ghép người nợ theo phòng + họ tên, không gọi cong-no', async () => {
+      const hdQl = (id: number, phongId: number, soPhong: string, ten: string) => ({ ...HOP_DONG[0], id, phongId, soPhong, hoTenNguoiThue: ten, nguoiThueId: id + 50 })
+      const hoaDonQl = (hoaDonId: number, soPhong: string, ten: string, conLai: string) => ({ hoaDonId, kyId: 1, maHoaDon: `H${hoaDonId}`, soPhong, nguoiThue: ten, hanThanhToan: '2026-01-05', trangThai: 'QUA_HAN', tongTien: conLai, daThu: '0', conLai })
+      dat({ hopDong: [hdQl(1, 1, '101', 'An'), hdQl(2, 4, '202', 'Bình')], hoaDon: [hoaDonQl(1, '101', 'An', '300000'), hoaDonQl(2, '202', 'Bình', '700000'), hoaDonQl(3, '202', 'Bình', '100000')] })
+      await mount('QUAN_LY')
+      expect(container.querySelector('.ma-khoiso')?.textContent).toContain('1.100.000 ₫2 người')
+      expect([...container.querySelectorAll('a.irow')].slice(0, 2).map((a) => a.getAttribute('href'))).toEqual(['/nguoi-thue/52', '/nguoi-thue/51'])
+      expect(fetchMock.mock.calls.some(([u]) => String(u).startsWith('/api/bao-cao/cong-no'))).toBe(false)
+    })
     it('không còn việc: hiện câu báo và không có nút chính', async () => {
       dat({})
       await mount('CHU')

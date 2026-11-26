@@ -20,7 +20,7 @@ import type { TrangProps } from './dinhTuyen'
 import { Ngan } from './HoSoHopDong360'
 import { managementRequest } from './managementApi'
 
-type KhoanNo = { hopDongId: number; conLai: number; han: string }
+type KhoanNo = { hopDongId: number; conLai: number; han: string; khoa?: string }
 type DuLieu = {
   toa: ThongTinToaNha
   phong: ThongTinPhong[]
@@ -49,14 +49,17 @@ async function taiHoSo(token: string, vaiTro: string, id: number): Promise<DuLie
     fetchPhong(token, id),
     hoacNull(fetchHopDongQuanLy(token, id)),
     // Chủ đọc báo cáo công nợ; Quản lý chỉ có danh sách hoá đơn nợ của toà.
-    hoacNull(vaiTro === 'CHU'
+    hoacNull<KhoanNo[]>(vaiTro === 'CHU'
       ? fetchCongNoBaoCao(token, id).then((r) => r.congNo.map((k) => ({ hopDongId: k.hopDongId, conLai: Number(k.conLai), han: k.hanThanhToan })))
-      : fetchHoaDonQuanLy(token, id).then((r) => r.map((k) => ({ hopDongId: k.hopDongId, conLai: Number(k.conLai), han: k.hanThanhToan })))),
+      // JSON thật của /api/hoa-don không có hopDongId (xem nhomNoTheoNguoi.tuHoaDonQuanLy): ghép theo phòng + họ tên ở dưới.
+      : fetchHoaDonQuanLy(token, id).then((r) => r.filter((k) => k.trangThai !== 'NHAP' && k.trangThai !== 'DA_HUY' && Number(k.conLai) > 0).map((k) => ({ hopDongId: k.hopDongId ?? 0, conLai: Number(k.conLai), han: k.hanThanhToan, khoa: `${k.soPhong}|${k.nguoiThue}` })))),
     hoacNull(managementRequest<ThongTinYeuCauSuaChua[]>(token, `/api/yeu-cau-sua-chua?toaNhaId=${id}`)),
     hoacNull(fetchKyThanhToan(token, id)),
     hoacNull(fetchHoaDonQuanLy(token, id)),
     hoacNull(managementRequest<NonNullable<DuLieu['pccc']>>(token, `/api/toa-nha/${id}/pccc`)),
   ])
+  const theoPhongTen = new Map((hopDong ?? []).map((h) => [`${h.soPhong}|${h.hoTenNguoiThue}`, h.id]))
+  for (const k of no ?? []) if (!k.hopDongId && k.khoa) k.hopDongId = theoPhongTen.get(k.khoa) ?? 0
   return { toa, phong, hopDong, no, suCo, ky, hoaDon, pccc }
 }
 
@@ -172,7 +175,8 @@ export default function HoSoToa360({ token, vaiTro, mobile, thamSo, dieuHuong }:
   )
 
   const canChuY = (
-    <Card title="Cần chú ý" action={<span className="t-meta">{no ? `${nguoiNo.length} người còn nợ` : 'chưa tải được công nợ'} · {hopDong ? `${canXuLy.length} hợp đồng cần xử lý` : 'chưa tải được hợp đồng'}</span>}>
+    <Card title="Cần chú ý">
+      {!no || !hopDong ? <p className="t-sm t-2" role="status">Chưa tải được {[!no && 'công nợ', !hopDong && 'hợp đồng'].filter(Boolean).join(', ')}.</p> : null}
       <div style={{ margin: '4px -24px -8px' }}>
         {nguoiNo.slice(0, 3).map((n) => (
           <a key={n.id} className="irow" href={`/nguoi-thue/${n.id}`}>

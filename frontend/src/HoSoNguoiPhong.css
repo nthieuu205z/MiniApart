@@ -46,13 +46,13 @@ tr.nt-hang { cursor: pointer; }
 }
 
 /* Danh sách người thuê (V3) */
-.nt-phu-nut { font: inherit; font-weight: 600; color: var(--ma-text-link); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.nt-phu-nut { display: inline-flex; align-items: center; min-height: var(--ma-control-h-sm); font: inherit; font-weight: 600; color: var(--ma-text-link); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
 .nt-phu-nut:hover { text-decoration: underline; }
-.nt-ten { display: inline-flex; align-items: center; gap: 10px; font-weight: 500; }
+.nt-ten { display: inline-flex; align-items: center; gap: 10px; font-weight: 500; min-height: var(--ma-control-h-sm); }
 .nt-phu { display: block; font-size: 13px; color: var(--ma-text-secondary); }
 .nt-cho { color: var(--ma-waiting); }
 .nt-no { color: var(--ma-urgent); font-weight: 600; }
 @media (max-width: 767px) {
   .nt-ten .avatar { display: none; }
-  td[data-label="Điện thoại"], td[data-label="Thuê đến"], td[data-the="hanh-dong"] { display: none; }
+  .table.table-cards tbody td[data-label="Điện thoại"], .table.table-cards tbody td[data-label="Thuê đến"], .table.table-cards tbody td[data-the="hanh-dong"] { display: none; }
 }

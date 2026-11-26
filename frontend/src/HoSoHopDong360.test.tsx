@@ -36,11 +36,11 @@ describe('HoSoHopDong360', () => {
   })
   afterEach(() => { act(() => root.unmount()); container.remove(); vi.unstubAllGlobals() })
 
-  async function mount(id: string) {
+  async function mount(id: string, vaiTro = 'CHU') {
     await act(async () => {
       root.render(
-        <ToaDangChonProvider token="t" vaiTro="CHU" search="" taiToa={async () => [TOA]}>
-          <HoSoHopDong360 token="t" vaiTro="CHU" mobile={false} thamSo={{ id }} dieuHuong={dieuHuong} />
+        <ToaDangChonProvider token="t" vaiTro={vaiTro} search="" taiToa={async () => [TOA]}>
+          <HoSoHopDong360 token="t" vaiTro={vaiTro as 'CHU'} mobile={false} thamSo={{ id }} dieuHuong={dieuHuong} />
         </ToaDangChonProvider>,
       )
     })
@@ -80,6 +80,13 @@ describe('HoSoHopDong360', () => {
     expect(container.querySelector('.t-danger')?.textContent).toBeTruthy()
     expect(container.textContent).toContain('Nợ lớn hơn cọc 1.000.000 ₫. Cần thu thêm trước khi thanh lý.')
     expect(container.textContent).toContain('Hoàn lại người thuê0 ₫')
+  })
+
+  it('Quản lý: hoá đơn không có hopDongId → ghép theo phòng + họ tên, nợ vẫn trừ vào cọc', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => (url.startsWith('/api/hop-dong') ? json(DS) : url.startsWith('/api/hoa-don') ? json([{ hoaDonId: 5, kyId: 1, maHoaDon: 'H5', soPhong: '103', nguoiThue: 'Trần Quang Huy', hanThanhToan: '2026-07-05', trangThai: 'QUA_HAN', tongTien: '2000000', daThu: '0', conLai: '2000000' }, { hoaDonId: 6, kyId: 1, maHoaDon: 'H6', soPhong: '999', nguoiThue: 'Người khác', hanThanhToan: '2026-07-05', trangThai: 'QUA_HAN', tongTien: '9', daThu: '0', conLai: '9' }]) : json([]))))
+    await mount('3', 'QUAN_LY')
+    expect(container.textContent).toContain('Trừ nợ hoá đơn− 2.000.000 ₫')
+    expect(container.textContent).toContain('Hoàn lại người thuê4.000.000 ₫')
   })
 
   it('vòng đời 5 bước, bước hiện tại có aria-current', async () => {

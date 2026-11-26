@@ -104,7 +104,7 @@ export default function HoSoPhong360({ token, mobile, thamSo }: TrangProps) {
         <div className="side">
           <section className="card" aria-labelledby="hs-hoa-don">
             <div className="blk-h"><h2 id="hs-hoa-don">Hoá đơn</h2><span className="t-meta">{hoaDon.length} tháng gần nhất</span></div>
-            {hoaDon.length ? <BangHoaDon rows={hoaDon} hienNguoi /> : <p className="t-sm t-2">Phòng chưa có hoá đơn nào.</p>}
+            {hoaDon.length ? <BangHoaDon rows={hoaDon} /> : <p className="t-sm t-2">Phòng chưa có hoá đơn nào.</p>}
           </section>
           <KhoiSuCo rows={suCo} tieuDe="Sự cố của phòng" />
           <KhoiTaiSan token={token} phongId={id} soPhong={phong.soPhong} mobile={mobile} />

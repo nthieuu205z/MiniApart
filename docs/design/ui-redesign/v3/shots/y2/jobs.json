@@ -1,0 +1,14 @@
+[
+{"name":"12-chu-nguoi-1440","path":"/nguoi-thue","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"12-chu-nguoi-390","path":"/nguoi-thue","role":"CHU","w":390,"h":844,"full":true},
+{"name":"03-chu-nguoi-1-1440","path":"/nguoi-thue/1","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"03-chu-nguoi-1-390","path":"/nguoi-thue/1","role":"CHU","w":390,"h":844,"full":true},
+{"name":"04-chu-toa-3-1440","path":"/toa-nha/3","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"04-chu-toa-3-390","path":"/toa-nha/3","role":"CHU","w":390,"h":844,"full":true},
+{"name":"05-chu-phong-1-1440","path":"/phong/1","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"05-chu-phong-1-390","path":"/phong/1","role":"CHU","w":390,"h":844,"full":true},
+{"name":"07-chu-hop-dong-9-1440","path":"/hop-dong/9","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"07-chu-hop-dong-9-390","path":"/hop-dong/9","role":"CHU","w":390,"h":844,"full":true},
+{"name":"ql-nguoi-1-1440","path":"/nguoi-thue/1","role":"QUAN_LY","w":1440,"h":900,"full":true},
+{"name":"ql-toa-3-1440","path":"/toa-nha/3","role":"QUAN_LY","w":1440,"h":900,"full":true}
+]

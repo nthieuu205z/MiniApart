@@ -216,8 +216,8 @@ export default function HoSoNguoiThue({ token, vaiTro = 'CHU', dieuHuong = dieuH
   const muted = (t: string) => <span style={{ color: 'var(--ma-text-secondary)' }}>{t}</span>
 
   const cot: DataTableColumn<Dong>[] = [
-    { key: 'nguoi', label: 'Người thuê', sortable: true, sortValue: (r) => r.hoTen, render: (r) => <a className="nt-lien-ket nt-ten" href={`/nguoi-thue/${r.id}`}><span className={`avatar sm h${(r.id % 5) + 1}`} aria-hidden="true">{chuCaiDau(r.hoTen)}</span>{r.hoTen}</a> },
-    { key: 'phong', label: 'Phòng', sortable: true, sortValue: (r) => r.phong, render: (r) => (hopDong.loi ? '—' : r.phong ? <>Phòng {r.phong}{buildingId === null && buildings.length > 1 && r.toa ? <span className="nt-phu">{r.toa}</span> : null}</> : muted('Chưa thuê')) },
+    { key: 'nguoi', label: 'Người thuê', sortable: true, sortValue: (r) => r.hoTen, render: (r) => <a className="nt-ten" href={`/nguoi-thue/${r.id}`}><span className={`avatar sm h${(r.id % 5) + 1}`} aria-hidden="true">{chuCaiDau(r.hoTen)}</span>{r.hoTen}</a> },
+    { key: 'phong', label: 'Phòng', sortable: true, sortValue: (r) => r.phong, render: (r) => (hopDong.loi ? '—' : r.phong ? <>{r.phong}{buildingId === null && buildings.length > 1 && r.toa ? <span className="nt-phu">{r.toa}</span> : null}</> : muted('Chưa thuê')) },
     { key: 'sdt', label: 'Điện thoại', render: (r) => dinhDangSdt(r.soDienThoai) },
     { key: 'den', label: 'Thuê đến', sortable: true, sortValue: (r) => r.denNgay, render: (r) => (hopDong.loi ? '—' : r.denNgay ? <>{dinhDangNgayIso(r.denNgay)}{r.conNgay !== undefined && r.conNgay <= HAN_SAP ? <span className="nt-phu nt-cho">còn {r.conNgay} ngày</span> : null}</> : '—') },
     { key: 'no', label: 'Còn nợ', align: 'num', sortable: true, sortValue: (r) => r.no, render: (r) => (r.no === null ? '—' : r.no > 0 ? <b className="nt-no">{tongTien(r.no)}</b> : muted('Không nợ')) },
