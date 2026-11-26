@@ -1,0 +1,83 @@
+[
+{
+"name": "01-chu-hom-nay-1440",
+"path": "/hom-nay",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "01-chu-hom-nay-390",
+"path": "/hom-nay",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "02-chu-tien-1440",
+"path": "/thu-tien",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "02-chu-tien-390",
+"path": "/thu-tien",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "34-chu-tien-thu-1440",
+"path": "/thu-tien?xem=n:71",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false,
+"click": "button[aria-label^=\"Ghi thu \"]"
+},
+{
+"name": "31-chu-hom-nay-toa-1440",
+"path": "/hom-nay?toaNhaId=3",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "13-ql-hom-nay-1440",
+"path": "/hom-nay",
+"role": "QUAN_LY",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "13-ql-hom-nay-390",
+"path": "/hom-nay",
+"role": "QUAN_LY",
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "18-ql-tien-1440",
+"path": "/thu-tien",
+"role": "QUAN_LY",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "18-ql-tien-390",
+"path": "/thu-tien",
+"role": "QUAN_LY",
+"w": 390,
+"h": 844,
+"full": true
+}
+]
