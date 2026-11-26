@@ -18,7 +18,7 @@
    "noAccessibleName": [],
    "textBelowFloor": [],
    "contrast": {
-    "textNodesChecked": 227,
+    "textNodesChecked": 212,
     "minRatio": 5.03,
     "below": []
    },
@@ -61,7 +61,7 @@
    "noAccessibleName": [],
    "textBelowFloor": [],
    "contrast": {
-    "textNodesChecked": 123,
+    "textNodesChecked": 108,
     "minRatio": 5.36,
     "below": []
    },
@@ -486,12 +486,12 @@
     "top": 96
    },
    "horizontalOverflow": 0,
-   "controls": 37,
+   "controls": 40,
    "belowHit": [],
    "noAccessibleName": [],
    "textBelowFloor": [],
    "contrast": {
-    "textNodesChecked": 125,
+    "textNodesChecked": 155,
     "minRatio": 5.03,
     "below": []
    },
