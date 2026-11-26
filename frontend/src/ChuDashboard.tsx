@@ -67,6 +67,7 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
   const [congNo, setCongNo] = useState<ThongTinKhoanNoBaoCao[] | null>(null)
   const [tieuThu, setTieuThu] = useState<ThongTinDongTieuThuBaoCao[] | null>(null)
   const [hopDong, setHopDong] = useState<HopDongTheoToa[] | null>(null)
+  const [thuTheoToa, setThuTheoToa] = useState<Array<{ ten: string; daThu: number }> | null>(null)
   const [theoNgay, setTheoNgay] = useState(false)
   const [dangTai, setDangTai] = useState(true)
   const [loi, setLoi] = useState<string | null>(null)
@@ -125,6 +126,17 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
     }
   }, [token, toaNhaId, tuNgay, denNgay])
 
+  // Đã thu từng toà lấy cùng nguồn daThuHopDong với thẻ "Đã thu" (API so sánh toà chỉ có thucThu theo sổ giao dịch).
+  useEffect(() => {
+    let mounted = true
+    setThuTheoToa(null)
+    if (!toaNhaId && toaNhaList.length > 1) {
+      Promise.all(toaNhaList.map((t) => fetchDashboardChu(token, t.id, tuNgay, denNgay).then((r) => ({ ten: t.ten, daThu: Number(r.kpi.daThuHopDong) }))))
+        .then((ds) => mounted && setThuTheoToa(ds), () => undefined)
+    }
+    return () => { mounted = false }
+  }, [token, toaNhaId, toaNhaList, tuNgay, denNgay])
+
   // Ba nguồn bổ trợ tải độc lập: một nguồn lỗi chỉ làm trống khối của nó (null = chưa có số), không chặn cả màn.
   useEffect(() => {
     let mounted = true
@@ -157,10 +169,11 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
     const doLonNhom = nhomLon.soLuong === tongQuaHan ? 'tất cả' : nhomLon.soLuong * 2 > tongQuaHan ? 'phần lớn' : 'nhiều nhất'
     const noQuaHan = congNo ? nhomNoQuaHanTheoNguoiThue(congNo, theoNgay ? 'ngay' : 'tien', 5) : null
     const thang = d.taiChinhTheoThang
-    const dt = chuoiDoanhThu(thang, nhanThangNay())
+    // Một nguồn "Đã thu" cho cả màn: hoá đơn (daThuTheoHoaDon / daThuHopDong), không phải sổ giao dịch thucThu.
+    const dt = chuoiDoanhThu(thang.map((t) => ({ ...t, thucThu: t.daThuTheoHoaDon })), nhanThangNay())
     // API trả so sánh mọi toà kể cả khi đã chọn một toà: lọc lại theo bộ lọc để khối không lệch với số trên đầu trang.
     const soSanh = d.soSanhToaNha.filter((t) => !toaNhaId || t.toaNhaId === toaNhaId)
-    const toaDauTien = [...soSanh].sort((a, b) => Number(b.thucThu) - Number(a.thucThu))[0]
+    const toaDauTien = [...(toaNhaId ? [{ ten: d.tenToaNha, daThu: Number(k.daThuHopDong) }] : thuTheoToa ?? [])].sort((a, b) => b.daThu - a.daThu)[0]
     const sapHet = (hopDong ?? []).filter((h) => h.sapHetHan).sort((a, b) => a.soNgayConLai - b.soNgayConLai)
     const dien = tieuThu ? tieuThuTheoToaKyGanNhat(tieuThu) : null
     const kyNuoc = d.tieuThuDienNuoc.nuoc.filter((n) => Number(n.tong) > 0)
@@ -256,8 +269,8 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
           <div className="minis" style={{ gridTemplateColumns: '1.3fr 1.3fr 0.8fr' }}>
             <Card style={{ padding: 20 }}>
               <h2 className="mini-label">Toà thu nhiều nhất</h2>
-              <p className="mini-value" style={MINI_GIA_TRI} title={toaDauTien?.tenToaNha}>{toaDauTien ? toaDauTien.tenToaNha : '—'}</p>
-              <p className="mini-sub" style={MINI_PHU}>{toaDauTien ? `${tien(toaDauTien.thucThu)} đã thu` : 'Chưa có số liệu'}</p>
+              <p className="mini-value" style={MINI_GIA_TRI} title={toaDauTien?.ten}>{toaDauTien ? toaDauTien.ten : '—'}</p>
+              <p className="mini-sub" style={MINI_PHU}>{toaDauTien ? `${tien(toaDauTien.daThu)} đã thu` : 'Chưa có số liệu'}</p>
             </Card>
             <Card style={{ padding: 20 }}>
               <h2 className="mini-label">Hợp đồng sắp hết</h2>
