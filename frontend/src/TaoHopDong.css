@@ -5,14 +5,16 @@
 .hd-khoi { padding: 20px; display: grid; gap: 16px; }
 .hd-khoi h2 { margin: 0; font: var(--ma-text-block-title); color: var(--ma-text-primary); display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .hd-khoi h2 small { font: var(--ma-text-caption); font-weight: 400; color: var(--ma-text-secondary); }
-.hd-luoi { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.hd-luoi { display: grid; gap: 16px; align-items: start; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.hd-luoi .field { align-content: start; }
 .hd-luoi.ba { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.hd-luoi .input[type="number"] { text-align: right; }
+.hd-luoi .so-tien, .hd-dv .input { text-align: right; }
 .hd-dv { width: 100%; border-collapse: collapse; }
 .hd-dv th { text-align: left; font: var(--ma-text-caption); font-weight: 400; color: var(--ma-text-secondary); padding: 6px 8px; }
 .hd-dv td { padding: 8px; border-top: 1px solid var(--ma-line-100); min-height: var(--ma-row-h); vertical-align: middle; }
 .hd-dv .gia { text-align: right; }
-.hd-dv .input { width: 150px; text-align: right; }
+.hd-dv .input { width: 160px; }
+.hd-dv input[type="checkbox"] { accent-color: var(--ma-brand-primary); }
 .hd-dv label { display: inline-flex; align-items: center; gap: 8px; min-height: var(--ma-control-h); font-weight: 500; }
 .hd-tong { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; color: var(--ma-text-secondary); font-variant-numeric: tabular-nums; }
 .hd-tong b { color: var(--ma-text-primary); font-weight: 500; }
@@ -26,8 +28,11 @@
 @media (max-width: 767px) {
   .hd-moi { grid-template-columns: minmax(0, 1fr); }
   .hd-moi-phai { position: static; }
+  .hd-thieu-khoi { order: 1; } /* Thu khi ký sát chân dính, ngay trên nút chính */
+  .hd-thu { order: 2; }
+  .hd-moi-phai > .ma-chandinh { order: 3; }
   .hd-luoi, .hd-luoi.ba { grid-template-columns: minmax(0, 1fr); }
   .hd-khoi { padding: 16px; }
-  .hd-dv .input { width: 110px; }
+  
   .hd-dv .cach { display: none; }
 }

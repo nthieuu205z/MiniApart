@@ -166,7 +166,7 @@ const CSS_TOA = `.tn-the { display: flex; align-items: center; gap: 24px; paddin
 .tn-cham.trong { background: none; border: 1px dashed var(--ma-text-muted); }
 .tn-cham.khac { background: var(--ma-line-200); }
 .tn-mt { color: var(--ma-text-muted); flex: none; }
-@media (max-width: 767px) { .tn-the { gap: 12px; padding: 12px 16px; flex-wrap: wrap; } .tn-dt { display: none; } .tn-ten { flex-basis: 60%; } }`
+@media (max-width: 767px) { .tn-the { gap: 12px; padding: 12px 16px; } .tn-dt { display: none; } .tn-so { min-width: 0; } }`
 
 type SoDo = { thue: number; tong: number; tang: { khoa: string; cham: string[] }[] }
 const soDoToa = (phong: ThongTinPhong[], no: Set<string>): SoDo => {
@@ -178,7 +178,7 @@ const soDoToa = (phong: ThongTinPhong[], no: Set<string>): SoDo => {
     const loai = dangThue ? (no.has(`${p.toaNhaId}|${p.soPhong}`) ? 'no' : '') : p.trangThai === 'TRONG' ? 'trong' : 'khac'
     theoTang.set(p.tang, [...(theoTang.get(p.tang) ?? []), loai])
   }
-  return { thue, tong: phong.length, tang: [...theoTang].sort((a, b) => a[0] - b[0]).map(([khoa, cham]) => ({ khoa: String(khoa), cham })) }
+  return { thue, tong: phong.length, tang: [...theoTang].sort((a, b) => b[0] - a[0]).map(([khoa, cham]) => ({ khoa: String(khoa), cham })) }
 }
 
 export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) {

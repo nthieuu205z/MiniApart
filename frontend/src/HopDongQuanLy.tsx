@@ -170,7 +170,7 @@ const CSS_THE_MOBILE = `@media (min-width: 768px) { .hd-bang .table td { white-s
 .hd-bang > .tabs { padding: 0 8px; }
 .hd-cham { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: var(--ma-text-muted); }
 .hd-cham.canh { background: var(--ma-waiting-border); }
-@media (max-width: 767px) { .hd-bang td[data-label="Thời hạn"], .hd-bang td[data-label="Giá thuê"], .hd-bang td[data-label="Cọc"], .hd-bang td[data-the="hanh-dong"] { display: none } }`
+@media (max-width: 767px) { .hd-bang .table.table-cards tbody td[data-label="Thời hạn"], .hd-bang .table.table-cards tbody td[data-label="Giá thuê"], .hd-bang .table.table-cards tbody td[data-label="Cọc"], .hd-bang .table.table-cards tbody td[data-the="hanh-dong"] { display: none } .hd-bang > .tabs { padding: 0; } .hd-bang > .tabs .tab { padding: 0 8px; gap: 6px } }`
 
 function soNgayTu(ngay: string): number {
   return Math.round((new Date(`${ngay}T00:00:00`).getTime() - new Date().setHours(0, 0, 0, 0)) / 86_400_000)

@@ -71,7 +71,7 @@ describe('TaoHopDong một trang', () => {
     expect(chinh()[0].getAttribute('aria-disabled')).toBe('true')
     expect(container.querySelector('.ma-dautrang-act')?.textContent).toContain('Huỷ')
     expect(thieu()).toEqual(['Chưa chọn phòng', 'Chưa chọn người thuê', 'Chưa nhập giá thuê', 'Chưa nhập tiền cọc', 'Chưa có số CCCD'])
-    expect(container.textContent).toContain('Còn thiếu: chưa chọn phòng, chưa chọn người thuê, chưa nhập giá thuê, chưa nhập tiền cọc, chưa có số cccd.')
+    expect(container.textContent).toContain('Còn thiếu: phòng, người thuê, giá thuê, tiền cọc, số CCCD.')
     await act(async () => { chinh()[0].dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })) })
     expect(post()).toBeUndefined()
   })

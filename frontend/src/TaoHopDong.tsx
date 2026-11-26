@@ -35,7 +35,7 @@ export function tinhNgayKetThuc(batDau: string, thang: number): string {
 }
 
 const CACH_TINH: Record<string, string> = { THEO_CHI_SO: 'theo công tơ', THEO_NGUOI: 'theo số người', CO_DINH: 'cố định mỗi tháng', THEO_SO_LUONG: 'theo số lượng' }
-const NHAN_THIEU: Partial<Record<keyof FormTaoHopDong, string>> = { phongId: 'Chưa chọn phòng', nguoiThueId: 'Chưa chọn người thuê', ngayBatDau: 'Chưa nhập ngày bắt đầu', ngayKetThuc: 'Chưa có ngày kết thúc', giaThue: 'Chưa nhập giá thuê', tienCoc: 'Chưa nhập tiền cọc', soNgayBaoTruoc: 'Chưa nhập số ngày báo trước' }
+const NHAN_THIEU: Partial<Record<keyof FormTaoHopDong, [string, string]>> = { phongId: ['Chưa chọn phòng', 'phòng'], nguoiThueId: ['Chưa chọn người thuê', 'người thuê'], ngayBatDau: ['Chưa nhập ngày bắt đầu', 'ngày bắt đầu'], ngayKetThuc: ['Chưa có ngày kết thúc', 'ngày kết thúc'], giaThue: ['Chưa nhập giá thuê', 'giá thuê'], tienCoc: ['Chưa nhập tiền cọc', 'tiền cọc'], soNgayBaoTruoc: ['Chưa nhập số ngày báo trước', 'ngày báo trước'] }
 type DuLieu = { phong: ThongTinPhong[]; nguoiThue: Tenant[]; dichVu: Service[] }
 
 export default function TaoHopDong({ token, mobile, dieuHuong }: TrangProps) {
@@ -124,13 +124,14 @@ function LuongTao({ token, mobile, dieuHuong, du, tenToa }: Pick<TrangProps, 'to
   const loiForm = kiemTraFormTao(form, 5)
   const sucChua = phongChon?.sucChua
   const loiSoNguoi = !(Number(soNguoi) >= 1) || !Number.isInteger(Number(soNguoi)) ? 'Nhập số người ở từ 1.' : sucChua && Number(soNguoi) > sucChua ? `Phòng này ở tối đa ${sucChua} người.` : ''
-  const thieu = [
-    ...(Object.keys(loiForm) as (keyof FormTaoHopDong)[]).map((k) => NHAN_THIEU[k] ?? 'Chưa đủ thông tin'),
-    ...(/^\d{12}$/.test(cccd) ? [] : ['Chưa có số CCCD']),
-    ...(loiSoNguoi ? ['Số người ở chưa đúng'] : []),
+  const thieuCap: [string, string][] = [
+    ...(Object.keys(loiForm) as (keyof FormTaoHopDong)[]).map((k): [string, string] => NHAN_THIEU[k] ?? ['Chưa đủ thông tin', 'thông tin']),
+    ...(/^\d{12}$/.test(cccd) ? [] : [['Chưa có số CCCD', 'số CCCD'] as [string, string]]),
+    ...(loiSoNguoi ? [['Số người ở chưa đúng', 'số người ở'] as [string, string]] : []),
   ]
+  const thieu = thieuCap.map((t) => t[0])
   const duDieuKien = thieu.length === 0
-  const lyDoChan = busy ? 'Đang tạo hợp đồng, vui lòng chờ.' : duDieuKien ? undefined : `Còn thiếu: ${thieu.join(', ').toLowerCase()}.`
+  const lyDoChan = busy ? 'Đang tạo hợp đồng, vui lòng chờ.' : duDieuKien ? undefined : `Còn thiếu: ${thieuCap.map((t) => t[1]).join(', ')}.`
 
   const gui = async () => {
     if (!duDieuKien || busy) return
@@ -151,7 +152,7 @@ function LuongTao({ token, mobile, dieuHuong, du, tenToa }: Pick<TrangProps, 'to
 
   const tien = (n: number) => `${dinhDangTien(n)} ₫`
   const thuKhiKy = (
-    <section className="card hd-khoi" aria-labelledby="hd-thu">
+    <section className="card hd-khoi hd-thu" aria-labelledby="hd-thu">
       <h2 id="hd-thu">Thu khi ký</h2>
       <div>
         <div className="hd-tong"><span>Tiền cọc</span><b>{tien(f.tienCocSo)}</b></div>
@@ -162,7 +163,7 @@ function LuongTao({ token, mobile, dieuHuong, du, tenToa }: Pick<TrangProps, 'to
     </section>
   )
   const conThieu = (
-    <section className="card hd-khoi" aria-labelledby="hd-thieu">
+    <section className="card hd-khoi hd-thieu-khoi" aria-labelledby="hd-thieu">
       <h2 id="hd-thieu">Còn thiếu</h2>
       <ul className="hd-thieu">
         {duDieuKien
@@ -214,11 +215,11 @@ function LuongTao({ token, mobile, dieuHuong, du, tenToa }: Pick<TrangProps, 'to
                 </Select>
               </Muc>
               <Muc nhan="Ngày kết thúc" help="Tự tính."><Input type="date" value={form.ngayKetThuc} disabled readOnly /></Muc>
-              <Muc nhan="Giá thuê mỗi tháng" loi={loiForm.giaThue} help={phongChon ? 'Giá niêm yết của phòng.' : undefined}>
-                <Input type="number" min="0" step="1000" value={form.giaThue} onChange={(e) => datGia(e.target.value)} />
+              <Muc nhan="Giá thuê mỗi tháng" loi={form.giaThue !== '' ? loiForm.giaThue : undefined} help={phongChon ? 'Giá niêm yết của phòng.' : undefined}>
+                <Input className="so-tien" type="number" min="0" step="1000" value={form.giaThue} onChange={(e) => datGia(e.target.value)} />
               </Muc>
-              <Muc nhan="Tiền cọc" loi={loiForm.tienCoc} help="Mặc định 2 tháng tiền phòng.">
-                <Input type="number" min="0" step="1000" value={form.tienCoc} onChange={(e) => { setCocSuaTay(true); set('tienCoc')(e) }} />
+              <Muc nhan="Tiền cọc" loi={form.tienCoc !== '' ? loiForm.tienCoc : undefined} help="Mặc định 2 tháng tiền phòng.">
+                <Input className="so-tien" type="number" min="0" step="1000" value={form.tienCoc} onChange={(e) => { setCocSuaTay(true); set('tienCoc')(e) }} />
               </Muc>
               <Muc nhan="Báo trước khi trả phòng" loi={loiForm.soNgayBaoTruoc}>
                 <Select value={form.soNgayBaoTruoc} onChange={set('soNgayBaoTruoc')}>
@@ -245,7 +246,7 @@ function LuongTao({ token, mobile, dieuHuong, du, tenToa }: Pick<TrangProps, 'to
                       <td className="cach">{CACH_TINH[s.cachTinh] ?? 'theo bảng giá'}</td>
                       <td className="gia">
                         {s.id in applied
-                          ? <Input type="number" min="0" step="0.01" placeholder="Theo bảng giá toà" aria-label={`Giá riêng của ${s.ten}`} value={applied[s.id]} onChange={(e) => setApplied({ ...applied, [s.id]: e.target.value })} />
+                          ? <Input type="number" min="0" step="0.01" placeholder="Theo giá toà" aria-label={`Giá riêng của ${s.ten}`} value={applied[s.id]} onChange={(e) => setApplied({ ...applied, [s.id]: e.target.value })} />
                           : <span className="hd-ghichu">Không áp dụng</span>}
                       </td>
                     </tr>
