@@ -148,7 +148,8 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
 
   const noiDung = (d: DashboardData, k: DashboardData['kpi']) => {
     const phatHanh = Number(k.doanhThuPhatHanh)
-    const daThu = phatHanh > 0 ? (Number(k.thucThu) / phatHanh) * 100 : 0
+    // Đã thu cộng từ hoá đơn (daThuHopDong), cùng số với báo cáo; không dùng sổ giao dịch thucThu.
+    const daThu = phatHanh > 0 ? (Number(k.daThuHopDong) / phatHanh) * 100 : 0
     const tuoi = d.tuoiNo
     const nhomQuaHan = NHOM_TUOI.map(([ma, nhan]) => ({ nhan, soLuong: tuoi[ma].soLuong }))
     const tongQuaHan = nhomQuaHan.reduce((s, n) => s + n.soLuong, 0)
@@ -171,26 +172,26 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
     return (
       <div className="grid">
         <Card className={cot('c-4')}>
-          <h2 className="h2" style={{ ...NHAN_KPI, marginBottom: 12 }}>Thực thu</h2>
-          <p className="kpi-value" style={{ margin: 0 }}>{dinhDangTien(k.thucThu)}<span className="unit">₫</span></p>
+          <h2 className="h2" style={{ ...NHAN_KPI, marginBottom: 12 }}>Đã thu</h2>
+          <p className="kpi-value" style={{ margin: 0 }}>{dinhDangTien(k.daThuHopDong)}<span className="unit">₫</span></p>
           <p className="kpi-desc" style={MO_TA_KPI}>Đã thu <b>{dinhDangSo(Math.round(daThu * 10) / 10)}%</b> trên {tien(k.doanhThuPhatHanh)} phát hành trong kỳ.</p>
           <div className="card-foot"><a className="link-more" href={duongDan('/bao-cao')}>Báo cáo doanh thu <Icon name="arrow-right" size="sm" /></a></div>
         </Card>
         <Card className={cot('c-4')}>
-          <h2 className="h2" style={{ ...NHAN_KPI, marginBottom: 12 }}>Công nợ</h2>
+          <h2 className="h2" style={{ ...NHAN_KPI, marginBottom: 12 }}>Còn nợ</h2>
           <p className={`kpi-value${Number(k.congNoHienTai) > 0 ? ' t-danger' : ''}`} style={{ margin: 0 }}>{dinhDangTien(k.congNoHienTai)}<span className="unit">₫</span></p>
           <p className="kpi-desc" style={MO_TA_KPI}>
             <b>{k.soHoaDonQuaHan} hoá đơn</b> quá hạn
             {k.soHoaDonQuaHan > 0 && tongQuaHan > 0 ? ` · ${doLonNhom} trễ ${nhomLon.nhan}` : ''}.
           </p>
-          <div className="card-foot"><a className="link-more" href={duongDan('/cong-no')}>Xem công nợ <Icon name="arrow-right" size="sm" /></a></div>
+          <div className="card-foot"><a className="link-more" href={duongDan('/cong-no')}>Mở danh sách nợ <Icon name="arrow-right" size="sm" /></a></div>
         </Card>
         <article className={`card ${cot('c-4')}`} style={{ alignItems: 'center', textAlign: 'center' }} onClick={() => { window.location.href = duongDan('/toa-nha') }} title="Xem danh mục toà nhà & phòng">
-          <h2 className="h2" style={{ ...NHAN_KPI, marginBottom: 4 }}>Tỷ lệ lấp đầy</h2>
+          <h2 className="h2" style={{ ...NHAN_KPI, marginBottom: 4 }}>Phòng đang thuê</h2>
           <div style={{ width: '100%', maxWidth: 200 }}>
             <Gauge
               tyLe={Number(k.tyLeLapDay)}
-              nhan={`Lấp đầy ${dinhDangSo(k.tyLeLapDay)}%, ${k.soPhongDangThue} trên ${k.tongSoPhong} phòng đang thuê`}
+              nhan={`${k.soPhongDangThue}/${k.tongSoPhong} phòng đang thuê (${dinhDangSo(k.tyLeLapDay)}%)`}
               chuThich={`${k.soPhongDangThue}/${k.tongSoPhong} phòng đang thuê`}
             />
           </div>
@@ -235,16 +236,16 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
         <div className={`${cot('c-7')} stack`} style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
           <Card
             title="Doanh thu theo tháng"
-            action={<div className="legend"><span><i style={{ background: 'var(--ma-chart-1)' }} />Thực thu</span><span><i style={{ background: 'var(--ma-chart-3)' }} />Phát hành</span></div>}
+            action={<div className="legend"><span><i style={{ background: 'var(--ma-chart-1)' }} />Đã thu</span><span><i style={{ background: 'var(--ma-chart-3)' }} />Phát hành</span></div>}
           >
             {dt.dauCoSo < 0 ? <EmptyState title="Chưa có số liệu doanh thu trong kỳ này." /> : (
               <div className="chart-scroll" tabIndex={0} role="region" aria-label="Biểu đồ doanh thu, cuộn ngang trên điện thoại">
                 <BieuDoVung
                   kyCuoiDangMo={dt.kyCuoiDangMo}
-                  tieuDe="Biểu đồ vùng: thực thu và doanh thu phát hành theo tháng"
+                  tieuDe="Biểu đồ vùng: đã thu và doanh thu phát hành theo tháng"
                   nhan={thang.map((t) => t.nhan.replace(/\/20(\d\d)$/, '/$1'))}
                   chuoi={[
-                    { ten: 'Thực thu', mau: 'var(--ma-chart-1)', giaTri: dt.thucThu },
+                    { ten: 'Đã thu', mau: 'var(--ma-chart-1)', giaTri: dt.thucThu },
                     { ten: 'Phát hành', mau: 'var(--ma-chart-3)', giaTri: dt.phatHanh },
                   ]}
                 />
@@ -256,7 +257,7 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
             <Card style={{ padding: 20 }}>
               <h2 className="mini-label">Toà thu nhiều nhất</h2>
               <p className="mini-value" style={MINI_GIA_TRI} title={toaDauTien?.tenToaNha}>{toaDauTien ? toaDauTien.tenToaNha : '—'}</p>
-              <p className="mini-sub" style={MINI_PHU}>{toaDauTien ? `${tien(toaDauTien.thucThu)} thực thu` : 'Chưa có số liệu'}</p>
+              <p className="mini-sub" style={MINI_PHU}>{toaDauTien ? `${tien(toaDauTien.thucThu)} đã thu` : 'Chưa có số liệu'}</p>
             </Card>
             <Card style={{ padding: 20 }}>
               <h2 className="mini-label">Hợp đồng sắp hết</h2>
@@ -281,7 +282,7 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
             Tổng {dinhDangSo(tongDien)} {dien?.donVi ?? 'kWh'}{nuoc ? ` · nước ${dinhDangSo(nuoc.tong)} ${nuoc.donVi === 'm3' ? 'm³' : nuoc.donVi}` : ''}
           </p>
         </Card>
-        <Card className={cot('c-4')} title="Công nợ theo toà" action={<span className="t-meta">hiện tại</span>}>
+        <Card className={cot('c-4')} title="Còn nợ theo toà" action={<span className="t-meta">hiện tại</span>}>
           <ThanhXepHang
             am
             muc={[...soSanh].sort((a, b) => Number(b.congNo) - Number(a.congNo)).map((t) => ({ nhan: t.tenToaNha, giaTri: Number(t.congNo), hienThi: tien(t.congNo) }))}

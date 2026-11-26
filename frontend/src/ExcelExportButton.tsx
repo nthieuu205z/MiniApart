@@ -13,5 +13,5 @@ export default function ExcelExportButton({ token, report, filters, loading = fa
     setBusy(true); setError(null)
     void downloadFinanceFile(token, `/api/bao-cao/${report}/xuat-excel?${query}`, `bao-cao-${report}.xlsx`)
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Không thể xuất báo cáo Excel.')).finally(() => setBusy(false))
-  }}>{busy ? 'Đang xuất Excel…' : 'Xuất Excel theo bộ lọc'}</Button>{error ? <p role="alert">{error}</p> : null}</div>
+  }}>{busy ? 'Đang xuất Excel…' : 'Xuất Excel'}</Button>{error ? <p role="alert">{error}</p> : null}</div>
 }

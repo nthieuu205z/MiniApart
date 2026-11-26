@@ -73,7 +73,7 @@ export default function TieuThuBaoCao({ token, mobile = false }: Props): React.R
         if (mounted) {
           setPhong([])
           setKy([])
-          setLoiBoLoc(thongBaoLoi(reason, 'Không thể tải bộ lọc phòng và kỳ.'))
+          setLoiBoLoc(thongBaoLoi(reason, 'Không thể tải bộ lọc phòng và tháng.'))
         }
       })
       .finally(() => {
@@ -215,15 +215,15 @@ function BoLoc({
           {phong.map((item) => <option key={item.id ?? item.soPhong} value={item.id ?? ''}>Phòng {item.soPhong}</option>)}
         </Select>
       </Field>
-      <Field label="Kỳ thanh toán">
+      <Field label="Tháng">
         <Select
           aria-label="Lọc tiêu thụ theo kỳ"
           value={boLoc.kyId === null ? '' : String(boLoc.kyId)}
           disabled={boLoc.toaNhaId === null || dangTai}
           onChange={(event) => onChange({ ...boLoc, kyId: event.target.value ? Number(event.target.value) : null })}
         >
-          <option value="">Tất cả kỳ</option>
-          {ky.map((item) => <option key={item.id} value={item.id}>Kỳ {String(item.thang).padStart(2, '0')}/{item.nam}</option>)}
+          <option value="">Tất cả tháng</option>
+          {ky.map((item) => <option key={item.id} value={item.id}>Tháng {String(item.thang).padStart(2, '0')}/{item.nam}</option>)}
         </Select>
       </Field>
     </ThanhLoc>
@@ -242,13 +242,13 @@ function BieuDoTieuThuBaoCao({ points, rows }: { points: ThongTinDiemTieuThuBaoC
   }, [points])
   return (
     <section data-consumption-report-chart aria-labelledby="consumption-report-chart-title" className="grid">
-      <h2 className="sr-only" id="consumption-report-chart-title">Mức tiêu thụ theo kỳ và đơn vị</h2>
+      <h2 className="sr-only" id="consumption-report-chart-title">Mức tiêu thụ theo tháng và đơn vị</h2>
       {theoDonVi.map(([donVi, diem]) => {
         const unit = hienThiDonVi(donVi)
         const lon = diem.reduce((m, p) => (p.mucTieuThu === null ? m : Math.max(m, Number(p.mucTieuThu))), 0)
         const laDien = diem[0].laDien
         return (
-          <Card key={donVi} className={theoDonVi.length > 1 ? 'c-6' : 'c-12'} title={`${laDien ? 'Điện' : 'Nước'} theo kỳ (${unit})`}>
+          <Card key={donVi} className={theoDonVi.length > 1 ? 'c-6' : 'c-12'} title={`${laDien ? 'Điện' : 'Nước'} theo tháng (${unit})`}>
             <div className="hbars" role="list" aria-label={`Biểu đồ tiêu thụ ${laDien ? 'điện' : 'nước'}, đơn vị ${unit}`}>
               {diem.map((point, index) => {
                 const co = point.mucTieuThu !== null
@@ -280,7 +280,7 @@ function BieuDoTieuThuBaoCao({ points, rows }: { points: ThongTinDiemTieuThuBaoC
 function BangTieuThu({ rows }: { rows: ThongTinDongTieuThuBaoCao[] }): React.ReactElement {
   const thieu = (r: ThongTinDongTieuThuBaoCao) => !r.coDuLieu || r.mucTieuThu === null
   return (
-    <Card data-consumption-report-table aria-labelledby="consumption-report-table-title" title={<span id="consumption-report-table-title">Chi tiết phòng, kỳ và chỉ số</span>}>
+    <Card data-consumption-report-table aria-labelledby="consumption-report-table-title" title={<span id="consumption-report-table-title">Chi tiết phòng, tháng và chỉ số</span>}>
       <DataTable
         rows={rows}
         getRowId={(r) => `${r.kyId}-${r.phongId}-${r.dichVuId}`}
@@ -294,7 +294,7 @@ function BangTieuThu({ rows }: { rows: ThongTinDongTieuThuBaoCao[] }): React.Rea
           { key: 'thieu', label: 'Thiếu chỉ số', match: thieu },
         ]}
         columns={[
-          { key: 'ky', label: 'Kỳ / phòng', sortable: true, sortValue: (r) => r.kyId, render: (r) => <><b>{r.nhanKy}</b><div className="t-meta">Phòng {r.soPhong} · {r.tenToaNha}</div></> },
+          { key: 'ky', label: 'Tháng / phòng', sortable: true, sortValue: (r) => r.kyId, render: (r) => <><b>{r.nhanKy}</b><div className="t-meta">Phòng {r.soPhong} · {r.tenToaNha}</div></> },
           { key: 'dv', label: 'Dịch vụ', render: (r) => <><b>{r.tenDichVu}</b><div className="t-meta">{hienThiDonVi(r.donVi)}</div></> },
           {
             key: 'chiso',

@@ -33,9 +33,11 @@ export type QuanLyBaoGiaVaThanhToanProps = {
   yeuCauId: number
   /** Báo dữ liệu mới nhất lên ngăn sự cố để nó tính bước tiến độ + nút chính. */
   onDuLieu?: (baoGia: BaoGiaSuaChua[], thanhToan: ThanhToanTho[]) => void
+  /** Ngăn sự cố tự vẽ báo giá chờ duyệt (bảng + Duyệt/Từ chối ở chân thẻ); khối này chỉ giữ các bản còn lại. */
+  anChoDuyet?: boolean
 }
 
-export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBaoGiaVaThanhToanProps): React.ReactElement {
+export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu, anChoDuyet = false }: QuanLyBaoGiaVaThanhToanProps): React.ReactElement {
   const [danhSachBaoGia, setDanhSachBaoGia] = useState<BaoGiaSuaChua[]>([])
   const [danhSachThanhToan, setDanhSachThanhToan] = useState<ThanhToanTho[]>([])
   const [dangTai, setDangTai] = useState(true)
@@ -129,7 +131,7 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBao
       return
     }
     if (amount > conPhaiTra) {
-      setLoi(`Số tiền (${dinhDangTien(amount)} đ) không được vượt quá số tiền còn lại (${dinhDangTien(conPhaiTra)} đ).`)
+      setLoi(`Số tiền (${dinhDangTien(amount)} ₫) không được vượt quá số tiền còn lại (${dinhDangTien(conPhaiTra)} ₫).`)
       return
     }
 
@@ -167,9 +169,9 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBao
   if (dangTai) return <EmptyState kind="loading" title="Đang tải báo giá và thanh toán" />
 
   return (
-    <div className="card-sunken stack" data-testid="bao-gia-thanh-toan">
+    <div className="stack" style={{ borderTop: '1px solid var(--ma-line-200)', paddingTop: 'var(--ma-space-4)' }} data-testid="bao-gia-thanh-toan">
       <div className="row-wrap" style={{ justifyContent: 'space-between' }}>
-        <h3 className="h3">Báo giá và chi phí thợ</h3>
+        <h3 className="h3" style={{ margin: 0 }}>Báo giá và chi phí thợ</h3>
         {baoGiaHieuLuc && <Button variant="secondary" size="sm" onClick={handleXemChungTu}><Icon name="receipt" />Xem phiếu chi phí và thanh toán</Button>}
       </div>
 
@@ -179,16 +181,16 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBao
         <p className="t-sm" style={{ color: 'var(--ma-text-secondary)' }}>Thợ chưa gửi báo giá cho yêu cầu này.</p>
       ) : (
         <div className="stack">
-          {danhSachBaoGia.map((bg) => {
+          {danhSachBaoGia.filter((bg) => !(anChoDuyet && bg.trangThai === 'CHO_DUYET')).map((bg) => {
             const tt = TRANG_THAI_BAO_GIA[bg.trangThai as keyof typeof TRANG_THAI_BAO_GIA] ?? { tone: 'draft', nhan: 'Bản nháp' }
             return (
               <div key={bg.id} className="stack" style={{ gap: 8, paddingBottom: 12, borderBottom: '1px solid var(--ma-line-100)' }}>
                 <div className="row-wrap" style={{ justifyContent: 'space-between' }}>
                   <div className="row-wrap">
-                    <strong>Báo giá v{bg.phienBan} ({bg.maBaoGia})</strong>
+                    <span className="t-strong">Báo giá v{bg.phienBan} ({bg.maBaoGia})</span>
                     <StatusTag tone={tt.tone}>{tt.nhan}</StatusTag>
                   </div>
-                  <strong style={num}>{bg.tongTien === 0 ? '0 đ (Bảo hành)' : `${dinhDangTien(bg.tongTien)} đ`}</strong>
+                  <span className="t-strong" style={num}>{bg.tongTien === 0 ? '0 ₫ (Bảo hành)' : `${dinhDangTien(bg.tongTien)} ₫`}</span>
                 </div>
                 {bg.moTa && <p className="t-sm" style={{ color: 'var(--ma-text-secondary)' }}>{bg.moTa}</p>}
                 {bg.dongBaoGia && bg.dongBaoGia.length > 0 && (
@@ -201,7 +203,7 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBao
                             <td>{d.tenHangMuc}</td>
                             <td className="num">{d.soLuong} {d.donVi}</td>
                             <td className="num">{dinhDangTien(d.donGia)}</td>
-                            <td className="num"><strong>{dinhDangTien(d.thanhTien)}</strong></td>
+                            <td className="num"><span className="t-strong">{dinhDangTien(d.thanhTien)}</span></td>
                           </tr>
                         ))}
                       </tbody>
@@ -212,7 +214,7 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBao
                 {bg.trangThai === 'CHO_DUYET' && (
                   <div className="row-wrap">
                     <Button variant="primary" size="sm" onClick={() => handleDuyet(bg.id)} blocked={dangXuLy}><Icon name="check" />Phê duyệt báo giá</Button>
-                    <Button variant="secondary" size="sm" onClick={() => { setTuChoiBaoGiaId(bg.id); setLyDoTuChoi('') }} blocked={dangXuLy}><Icon name="x" />Từ chối, yêu cầu sửa</Button>
+                    <Button variant="danger" size="sm" onClick={() => { setTuChoiBaoGiaId(bg.id); setLyDoTuChoi('') }} blocked={dangXuLy}><Icon name="x" />Từ chối…</Button>
                   </div>
                 )}
               </div>
@@ -227,7 +229,7 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBao
             <input className="input" type="text" value={lyDoTuChoi} onChange={(e) => setLyDoTuChoi(e.target.value)} placeholder="Ví dụ: giá vật tư quá cao, cần khảo sát lại" />
           </Field>
           <div className="row-wrap">
-            <Button variant="secondary" size="sm" onClick={handleTuChoi} blocked={dangXuLy}>Xác nhận từ chối</Button>
+            <Button variant="danger" size="sm" onClick={handleTuChoi} blocked={dangXuLy}>Xác nhận từ chối</Button>
             <Button variant="text" size="sm" onClick={() => setTuChoiBaoGiaId(null)}>Không từ chối</Button>
           </div>
         </div>
@@ -237,9 +239,9 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBao
         <div className="stack" style={{ gap: 10 }}>
           <div className="row-wrap" style={{ justifyContent: 'space-between' }}>
             <div>
-              <strong>Tiến độ thanh toán cho thợ</strong>
+              <span className="t-strong">Tiến độ thanh toán cho thợ</span>
               <p className="t-sm" style={{ color: 'var(--ma-text-secondary)', marginTop: 2 }}>
-                Đã duyệt: <strong>{dinhDangTien(tongGiaTri)} đ</strong> · Đã trả: <strong style={{ color: 'var(--ma-done-text)' }}>{dinhDangTien(tongDaTra)} đ</strong> · Còn lại: <strong style={{ color: conPhaiTra > 0 ? 'var(--ma-waiting)' : 'var(--ma-done-text)' }}>{dinhDangTien(conPhaiTra)} đ</strong>
+                Đã duyệt: <span className="t-strong">{dinhDangTien(tongGiaTri)} ₫</span> · Đã trả: <span className="t-strong" style={{ color: 'var(--ma-done-text)' }}>{dinhDangTien(tongDaTra)} ₫</span> · Còn lại: <span className="t-strong" style={{ color: conPhaiTra > 0 ? 'var(--ma-waiting)' : 'var(--ma-done-text)' }}>{dinhDangTien(conPhaiTra)} ₫</span>
               </p>
             </div>
             {conPhaiTra > 0 && !hienFormThanhToan && (
@@ -258,7 +260,7 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBao
                       <td>{tt.maThanhToan}</td>
                       <td>{PHUONG_THUC[tt.phuongThuc] ?? '0đ'}</td>
                       <td>{tt.maThamChieu || '—'}</td>
-                      <td className="num"><strong style={{ color: 'var(--ma-done-text)' }}>{dinhDangTien(tt.soTien)} đ</strong></td>
+                      <td className="num"><span className="t-strong" style={{ color: 'var(--ma-done-text)' }}>{dinhDangTien(tt.soTien)} ₫</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -268,9 +270,9 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBao
 
           {hienFormThanhToan && (
             <form onSubmit={handleGhiNhanThanhToan} className="stack">
-              <strong>Ghi nhận thanh toán cho thợ (còn lại tối đa {dinhDangTien(conPhaiTra)} đ)</strong>
+              <span className="t-strong">Ghi nhận thanh toán cho thợ (còn lại tối đa {dinhDangTien(conPhaiTra)} ₫)</span>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))', gap: 12 }}>
-                <Field label="Số tiền (đ)">
+                <Field label="Số tiền (₫)">
                   <input className="input" type="number" min="1" max={conPhaiTra} step="1000" required value={soTienTra} onChange={(e) => setSoTienTra(e.target.value)} />
                 </Field>
                 <Field label="Hình thức">
@@ -306,12 +308,12 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu }: QuanLyBao
               </div>
             </div>
             <div className="t-sm stack" style={{ gap: 6 }}>
-              <div><strong>Hạng mục:</strong> {chungTu.hangMuc}</div>
-              <div><strong>Toà / Phòng:</strong> {chungTu.toaNha} - Phòng {chungTu.soPhong}</div>
-              <div><strong>Thợ phụ trách:</strong> {chungTu.tenTho} ({chungTu.sdtTho})</div>
-              <div><strong>Tổng chi phí duyệt:</strong> {dinhDangTien(chungTu.tongTienBaoGia)} đ</div>
-              <div><strong>Đã thanh toán:</strong> {dinhDangTien(chungTu.tongDaTra)} đ</div>
-              <div><strong>Còn nợ:</strong> {dinhDangTien(chungTu.conLai)} đ</div>
+              <div><span className="t-strong">Hạng mục:</span> {chungTu.hangMuc}</div>
+              <div><span className="t-strong">Toà / Phòng:</span> {chungTu.toaNha} - Phòng {chungTu.soPhong}</div>
+              <div><span className="t-strong">Thợ phụ trách:</span> {chungTu.tenTho} ({chungTu.sdtTho})</div>
+              <div><span className="t-strong">Tổng chi phí duyệt:</span> {dinhDangTien(chungTu.tongTienBaoGia)} ₫</div>
+              <div><span className="t-strong">Đã thanh toán:</span> {dinhDangTien(chungTu.tongDaTra)} ₫</div>
+              <div><span className="t-strong">Còn nợ:</span> {dinhDangTien(chungTu.conLai)} ₫</div>
             </div>
           </div>
         </div>
