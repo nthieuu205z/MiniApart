@@ -128,101 +128,51 @@ describe('ThoChiPhi Component', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders quotes and payment overview table with metrics and filter pills', async () => {
+  async function hienThi(ds: unknown[], mobile = false) {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
-      if (url.startsWith('/api/tho/tong-quan')) {
-        return new Response(JSON.stringify({ danhSachToa: [{ id: 1, ten: 'Tòa Central' }] }), { status: 200 })
-      }
-      if (url.startsWith('/api/tho/cong-viec')) {
-        return new Response(JSON.stringify(mockJobList), { status: 200 })
-      }
-      throw new Error(`Unexpected ${url}`)
+      if (url === '/api/tho/chung-tu/101') return new Response(JSON.stringify(mockVoucher), { status: 200 })
+      if (url.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(ds), { status: 200 })
+      return new Response(JSON.stringify({ hoTen: 'Lê Quốc Huy' }), { status: 200 })
     }))
-
     root = createRoot(container)
     await act(async () => {
-      root.render(<ThoChiPhi token="worker-token" />)
+      root.render(<ThoChiPhi token="worker-token" mobile={mobile} />)
     })
+  }
 
-    await vi.waitFor(() => {
-      expect(container.textContent).toContain('Báo giá & thanh toán')
-      expect(container.textContent).toContain('450.000') // Tổng giá trị đã chốt
-      expect(container.textContent).toContain('1 đơn 0đ (bảo hành)')
-      expect(container.textContent).toContain('SC-20261101-001')
-      expect(container.textContent).toContain('Đã hết nợ')
-      expect(container.textContent).toContain('0 đ (Bảo hành)')
-    })
-
-    // Filter pills exist
-    expect(container.textContent).toContain('Tất cả')
-    expect(container.textContent).toContain('Đã nhận đủ')
-    expect(container.textContent).toContain('Trả một phần')
-    expect(container.textContent).toContain('Chưa thanh toán')
-    expect(container.textContent).toContain('Bảo hành (0đ)')
+  it('hiện Tiền công, số thật của từng việc đã xong (không số cố định), không nút chính, đúng một h1', async () => {
+    await hienThi(mockJobList)
+    await vi.waitFor(() => expect(container.textContent).toContain('Bảo hành chấn lưu đèn · phòng 302'))
+    expect(container.textContent).toContain('Còn được nhận')
+    expect(container.textContent).toContain('Chưa có việc nào nghiệm thu xong mà chưa trả tiền.')
+    expect(container.querySelector('[data-testid="tien-cong-101"]')?.textContent).toContain('450.000')
+    expect(container.querySelector('[data-testid="tien-cong-102"]')?.textContent).toContain('0 ₫')
+    expect(container.textContent).not.toContain('250.000')
+    expect(container.querySelector('.btn-primary')).toBeNull()
+    expect(container.querySelectorAll('h1')).toHaveLength(1)
   })
 
-  it('opens printable voucher dialog with full cost items, payment history, and signatures', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
-      if (url.startsWith('/api/tho/tong-quan')) {
-        return new Response(JSON.stringify({ danhSachToa: [] }), { status: 200 })
-      }
-      if (url.startsWith('/api/tho/cong-viec')) {
-        return new Response(JSON.stringify(mockJobList), { status: 200 })
-      }
-      if (url === '/api/tho/chung-tu/101') {
-        return new Response(JSON.stringify(mockVoucher), { status: 200 })
-      }
-      throw new Error(`Unexpected ${url}`)
-    }))
+  it('việc không có báo giá duyệt thì ghi —; Còn được nhận cộng phần chưa trả', async () => {
+    await hienThi([{ ...mockJobList[0], giaTriBaoGia: undefined, trangThaiBaoGia: undefined, conPhaiTra: 0 }, { ...mockJobList[1], id: 103, giaTriBaoGia: 300000, daThanhToan: 100000, conPhaiTra: 200000 }])
+    await vi.waitFor(() => expect(container.querySelector('[data-testid="tien-cong-103"]')).not.toBeNull())
+    expect(container.querySelector('[data-testid="tien-cong-101"]')?.textContent).toContain('—')
+    expect(container.querySelector('[data-con-nhan]')?.textContent).toBe('200.000 ₫')
+  })
 
-    root = createRoot(container)
-    await act(async () => {
-      root.render(<ThoChiPhi token="worker-token" />)
-    })
-
+  it('mở phiếu chứng từ có hạng mục, lịch sử thanh toán và chữ ký', async () => {
+    await hienThi(mockJobList, true)
+    await vi.waitFor(() => expect(container.textContent).toContain('Vòi lavabo rò rỉ nước · phòng 201'))
+    const nut = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('Xem phiếu'))
+    expect(nut).toBeDefined()
+    await act(async () => { nut?.click() })
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('SC-20261101-001')
-    })
-
-    // Click Xem phiếu button
-    const viewVoucherBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('Xem phiếu'))
-    expect(viewVoucherBtn).toBeDefined()
-    await act(async () => {
-      viewVoucherBtn?.click()
-    })
-
-    await vi.waitFor(() => {
-      expect(container.textContent).toContain('PHIẾU XÁC NHẬN CHI PHÍ & THANH TOÁN SỬA CHỮA')
       expect(container.textContent).toContain('CT-SC-101')
       expect(container.textContent).toContain('Lê Quốc Huy')
-      expect(container.textContent).toContain('Quản lý Trần Hoàng')
-      expect(container.textContent).toContain('Nguyễn Văn An')
       expect(container.textContent).toContain('Thay dây cấp + gioăng')
       expect(container.textContent).toContain('MB-REF-99881')
-      expect(container.textContent).toContain('THỢ THI CÔNG')
-      expect(container.textContent).toContain('CƯ DÂN NGHIỆM THU')
-      expect(container.textContent).toContain('QUẢN LÝ PHÊ DUYỆT')
+      expect(container.textContent).toContain('Thợ thi công')
+      expect(container.textContent).toContain('Quản lý phê duyệt')
     })
-  })
-  it('mobile: thẻ việc có 3 ô tiền, nút Xem phiếu; chip lọc đếm đúng', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
-      if (url.startsWith('/api/tho/tong-quan')) return new Response(JSON.stringify({ danhSachToa: [] }), { status: 200 })
-      if (url.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(mockJobList), { status: 200 })
-      throw new Error(`Unexpected ${url}`)
-    }))
-    root = createRoot(container)
-    await act(async () => {
-      root.render(<ThoChiPhi token="worker-token" mobile />)
-    })
-    await vi.waitFor(() => expect(container.querySelectorAll('article.m-card').length).toBe(mockJobList.length))
-    const the = container.querySelector('article[aria-label="SC-20261101-001"]')
-    expect(the?.querySelectorAll('.fact').length).toBe(3)
-    expect(the?.textContent).toContain('Đã hết nợ')
-    expect(Array.from(the?.querySelectorAll('button') ?? []).some((b) => b.textContent?.includes('Xem phiếu'))).toBe(true)
-    const chipBaoHanh = Array.from(container.querySelectorAll('button.chip')).find((b) => b.textContent?.startsWith('Bảo hành'))
-    expect(chipBaoHanh?.querySelector('.n')?.textContent).toBe(String(mockJobList.filter((r) => r.trangThaiBaoGia === 'DA_DUYET' && Number(r.giaTriBaoGia || 0) === 0).length))
   })
 })
