@@ -9,7 +9,7 @@ const daThu = { trangThai: 'DA_THANH_TOAN', conLai: '0' }
 
 describe('tinhBuoc', () => {
   it.each([
-    ['kỳ mở thiếu công tơ', { ky: mo, soCongToThieu: 2, tongCongTo: 9, hoaDon: [] }, 1, ['dang', 'chua', 'chua', 'chua'], 'đã ghi 7/9 công tơ · thiếu 2'],
+    ['kỳ mở thiếu công tơ', { ky: mo, soCongToThieu: 2, tongCongTo: 9, hoaDon: [] }, 1, ['dang', 'chua', 'chua', 'chua'], 'đã ghi 7/9 phòng · thiếu 2'],
     ['đủ công tơ chưa chốt', { ky: mo, soCongToThieu: 0, hoaDon: [] }, 2, ['xong', 'dang', 'chua', 'chua'], 'chưa khoá'],
     ['đã chốt chưa tạo hoá đơn', { ky: chot, soCongToThieu: 0, hoaDon: [] }, 3, ['xong', 'xong', 'dang', 'chua'], '0 hoá đơn nháp'],
     ['có nháp', { ky: chot, soCongToThieu: 0, hoaDon: [nhap, nhap, phatHanh] }, 3, ['xong', 'xong', 'dang', 'chua'], '2 hoá đơn nháp · 1 đã gửi'],

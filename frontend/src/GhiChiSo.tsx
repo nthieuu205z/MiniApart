@@ -429,12 +429,12 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
     return (
       <section
         className="m-app"
-        style={{ ...styleTrang, paddingBottom: 'calc(var(--ma-bottom-nav-height) + 96px)' }}
+        style={{ ...styleTrang, minHeight: anNutChot ? 0 : '100vh', paddingBottom: anNutChot ? 0 : 'calc(var(--ma-bottom-nav-height) + 96px)' }}
         aria-labelledby="meter-title"
         data-testid="meter-screen"
         data-layout-variant="mobile"
       >
-        <header className="m-top">
+        {!anNutChot ? <header className="m-top">
           <button
             type="button"
             className="icon-btn touch"
@@ -461,10 +461,10 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
               <Icon name="filter" />
             </button>
           ) : null}
-        </header>
+        </header> : null}
 
-        <div className="m-body" data-mobile-meter-list="true">
-          <BuildingSelect buildings={danhSachToaNha} value={toaNhaId} onChange={setToaNhaId} />
+        <div className="m-body" data-mobile-meter-list="true" style={anNutChot ? { padding: 0 } : undefined}>
+          {!anNutChot ? <BuildingSelect buildings={danhSachToaNha} value={toaNhaId} onChange={setToaNhaId} /> : null}
           {hienBoLoc ? (
             <div className="m-card">
               <label style={styleNhanTruong}>
@@ -487,7 +487,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
           {dangTaiKy || dangTaiChiSo ? <p style={styleThongBao}>Đang tải dữ liệu chỉ số…</p> : null}
           {loi && loiTaiTrang ? <p className="banner banner-danger" role="alert" style={{ margin: 0 }}>{loi}</p> : null}
 
-          {duLieu ? <div aria-label="Tiến độ ghi chỉ số">
+          {duLieu && !anNutChot ? <div aria-label="Tiến độ ghi chỉ số">
             <div className="mstep" role="img" aria-label="Chu kỳ tháng, bước 1 trên 4"><span className="on" /><span /><span /><span /></div>
             <p className="t-sm t-2" style={{ margin: '8px 0 0' }}>Chu kỳ {nhanKyThang} · Bước 1/4 Ghi chỉ số · {daGhiCongTo}/{tongCongTo}</p>
           </div> : null}
@@ -502,7 +502,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
             <section className="m-card" style={{ display: 'grid', gap: 8 }}>
               <StatusTag tone="done">Đã ghi đủ</StatusTag>
               <h2 className="h3" style={{ margin: 0 }}>Đã ghi đủ {tongCongTo} công tơ</h2>
-              <p className="t-meta" style={{ margin: 0 }}>Sang bước chốt kỳ khi sẵn sàng. Muốn sửa số đã ghi, mở trang trên máy tính.</p>
+              <p className="t-meta" style={{ margin: 0 }}>Sang bước khoá chỉ số khi sẵn sàng. Muốn sửa số đã ghi, mở trang trên máy tính.</p>
             </section>
           ) : phongChon && dichVuChon ? (
             <section className="m-card" aria-labelledby="meter-room-title" style={{ display: 'grid', gap: 12 }}>
@@ -1011,7 +1011,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
                             aria-label={`Ảnh và thay công tơ phòng ${phong.soPhong}`}
                             onClick={() => setDangSua((current) => (moRong ? current.filter((k) => !phong.dichVu.some((d) => khoa(phong.id, d.id) === k)) : [...current, ...phong.dichVu.map((d) => khoa(phong.id, d.id))]))}
                           >
-                            Ảnh, thay công tơ
+                            <Icon name="camera" />
                           </Button>
                         </span>
                       </td>

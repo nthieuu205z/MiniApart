@@ -1,0 +1,10 @@
+[
+  { "name": "14-ql-thang-1-1440", "path": "/chu-ky?b=1", "role": "QUAN_LY", "w": 1440, "h": 900, "full": true },
+  { "name": "14-ql-thang-1-390", "path": "/chu-ky?b=1", "role": "QUAN_LY", "w": 390, "h": 844, "full": true },
+  { "name": "15-ql-thang-2-1440", "path": "/chu-ky?b=2", "role": "QUAN_LY", "w": 1440, "h": 900, "full": true },
+  { "name": "16-ql-thang-3-1440", "path": "/chu-ky?b=3", "role": "QUAN_LY", "w": 1440, "h": 900, "full": true },
+  { "name": "17-ql-thang-4-1440", "path": "/chu-ky?b=4", "role": "QUAN_LY", "w": 1440, "h": 900, "full": true },
+  { "name": "18-ql-hoa-don-1440", "path": "/hoa-don", "role": "QUAN_LY", "w": 1440, "h": 900, "full": true },
+  { "name": "18-ql-hoa-don-390", "path": "/hoa-don", "role": "QUAN_LY", "w": 390, "h": 844, "full": true },
+  { "name": "19-chu-thang-1440", "path": "/chu-ky", "role": "CHU", "w": 1440, "h": 900, "full": true }
+]

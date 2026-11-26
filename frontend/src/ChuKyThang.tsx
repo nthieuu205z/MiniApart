@@ -169,7 +169,7 @@ export default function ChuKyThang({ token, vaiTro, mobile, dieuHuong }: TrangPr
   })
 
   const hrefHoaDon = (h?: ThongTinHoaDonQuanLy) => `/hoa-don?toaNhaId=${toaNhaId}&kyId=${ky.id}${h ? `&hoaDonId=${h.hoaDonId}` : ''}`
-  const lyDoThieu = soThieu > 0 ? `Còn ${soThieu} công tơ chưa ghi chỉ số.` : undefined
+  const lyDoThieu = soThieu > 0 ? `Còn ${soThieu} phòng chưa ghi chỉ số.` : undefined
 
   // Nút chính của bước đang xem (bước 1: nút nằm trong GhiChiSo, vì nó giữ số đã nhập).
   const nutChinh = (): ReactNode => {
@@ -188,7 +188,7 @@ export default function ChuKyThang({ token, vaiTro, mobile, dieuHuong }: TrangPr
 
   const buoc1 = () => <section aria-labelledby="b1" style={{ display: 'grid', gap: 12 }}>
     <h2 className="sr-only" id="b1">Ghi chỉ số tháng {nhanDangXem}</h2>
-    {soThieu > 0 ? <p className="t-sm" style={{ margin: 0 }}>Còn {soThieu} công tơ chưa ghi, ở phòng {dl.thieu.slice(0, 4).map((p) => p.soPhong).join(', ')}{soThieu > 4 ? '…' : ''}. <button type="button" className="link-more brand" style={{ background: 'none', border: 0, padding: 0, font: 'inherit' }} onClick={cuonToiCongTo}>Tới ô đầu tiên chưa ghi</button></p>
+    {soThieu > 0 ? <p className="t-sm" style={{ margin: 0 }}>Còn {soThieu} phòng chưa ghi ({dl.thieu.slice(0, 4).map((p) => p.soPhong).join(', ')}{soThieu > 4 ? '…' : ''}). <button type="button" className="link-more brand" style={{ background: 'none', border: 0, padding: 0, font: 'inherit' }} onClick={cuonToiCongTo}>Tới ô đầu tiên chưa ghi</button></p>
       : <p className="t-sm" style={{ margin: 0 }}>Đã ghi đủ chỉ số. <a className="link-more brand" href="/chu-ky?b=2" onClick={diToi('/chu-ky?b=2')}>Sang bước khoá chỉ số</a></p>}
     <GhiChiSo token={token} mobile={mobile} vaiTro={vaiTro} anNutChot kyIdCoDinh={ky.id} nutChinhSlot={slotNut} />
   </section>
@@ -199,7 +199,7 @@ export default function ChuKyThang({ token, vaiTro, mobile, dieuHuong }: TrangPr
     const dichVuCoSo = dl.chiSo.phong.flatMap((p) => p.dichVu).filter((d) => d.chiSoCuoi)
     const coLui = dl.chiSo.phong.filter((p) => p.dichVu.some((d) => d.chiSoCuoi && !d.coThayCongTo && Number(d.chiSoCuoi) < Number(d.chiSoDau)))
     const dieuKien: { ok: boolean; ten: string; phu: string }[] = [
-      { ok: soThieu === 0, ten: `Đã ghi đủ ${dl.tongPhong - soThieu}/${dl.tongPhong} công tơ`, phu: soThieu === 0 ? 'Không còn phòng nào thiếu chỉ số.' : `Còn thiếu phòng ${dl.thieu.map((p) => p.soPhong).join(', ')}.` },
+      { ok: soThieu === 0, ten: `Đã ghi đủ ${dl.tongPhong - soThieu}/${dl.tongPhong} phòng`, phu: soThieu === 0 ? 'Không còn phòng nào thiếu chỉ số.' : `Còn thiếu phòng ${dl.thieu.map((p) => p.soPhong).join(', ')}.` },
       ...(dichVuCoSo.length ? [{ ok: coLui.length === 0, ten: 'Không có chỉ số nào nhỏ hơn tháng trước', phu: coLui.length === 0 ? 'Chỉ số mới luôn lớn hơn hoặc bằng chỉ số cũ.' : `Phòng ${coLui.map((p) => p.soPhong).join(', ')} có chỉ số mới nhỏ hơn số cũ.` }] : []),
     ]
     const dong = [...sanSo.keys()].filter((t) => truoc.has(t))
@@ -211,7 +211,7 @@ export default function ChuKyThang({ token, vaiTro, mobile, dieuHuong }: TrangPr
         </Card>
         {dong.length > 0 ? <Card title={`Tổng dùng tháng ${ky.thang}`}>
           <div className="table-wrap"><table className="table"><thead><tr><th scope="col">Dịch vụ</th><th scope="col" className="num">Tháng {ky.thang}</th><th scope="col" className="num">Tháng {kyTruoc!.thang}</th><th scope="col" className="num">Chênh</th></tr></thead>
-            <tbody>{dong.map((t) => { const a = sanSo.get(t)!; const c = truoc.get(t)!; const chenh = a.tong - c.tong; return <tr key={t}><td>{t}</td><td className="num t-strong">{soVn(a.tong)} {a.donVi}</td><td className="num">{soVn(c.tong)} {c.donVi}</td><td className="num">{chenh > 0 ? '+' : ''}{soVn(chenh)}</td></tr> })}</tbody></table></div>
+            <tbody>{dong.map((t) => { const a = sanSo.get(t)!; const c = truoc.get(t)!; const chenh = a.tong - c.tong; return <tr key={t}><td>{t} ({a.donVi})</td><td className="num t-strong">{soVn(a.tong)}</td><td className="num">{soVn(c.tong)}</td><td className="num">{chenh > 0 ? '+' : ''}{soVn(chenh)}</td></tr> })}</tbody></table></div>
         </Card> : null}
     </div>
   }
@@ -226,7 +226,7 @@ export default function ChuKyThang({ token, vaiTro, mobile, dieuHuong }: TrangPr
           { key: 'nguoi', label: 'Người thuê', render: (h) => h.nguoiThue },
           { key: 'tong', label: 'Tổng', align: 'num', render: (h) => tien(h.tongTien) },
           { key: 'ghiChu', label: 'Ghi chú', render: (h) => h.trangThai !== 'NHAP' ? <StatusTag tone="done">{daThuDu(h) ? 'Đã gửi, đã trả' : 'Đã gửi'}</StatusTag> : sapHetHan(h) ? <StatusTag tone="waiting">HĐ hết hạn {sapHetHan(h)}</StatusTag> : null },
-        ], ['', `Sẽ gửi ${nhap} hoá đơn`, tien(tongTien(nhapDs, 'tongTien')), ''])}
+        ], nhap > 0 ? ['', `Sẽ gửi ${nhap} hoá đơn`, tien(tongTien(nhapDs, 'tongTien')), ''] : undefined)}
       </>}
     </Card>
   }
@@ -289,9 +289,9 @@ export default function ChuKyThang({ token, vaiTro, mobile, dieuHuong }: TrangPr
     {xemTruoc ? <div className="banner banner-info" role="note"><Icon name="info" /><div>Bước này mở được sau khi các bước trước xong. Dữ liệu thật đang ở bước {buocHienTai}. <NhanMinhHoa /></div></div> : null}
     {thongBao ? <div className="banner banner-success" role="status"><Icon name="check-circle" /><div>{thongBao}</div></div> : null}
     {loiGhi ? <div className="banner banner-danger" role="alert"><Icon name="alert" /><div>{loiGhi}</div></div> : null}
-    <div className="cols" aria-busy={dangTai}>
+    <div className={b === 2 ? 'cols' : undefined} aria-busy={dangTai} style={{ display: 'grid', gap: 16, minWidth: 0 }}>
     <div style={{ minWidth: 0 }}>{thanBuoc()}</div>
-    <div className="side" style={{ display: 'grid', gap: 16 }}>
+    <div className={b === 2 ? 'side' : undefined} style={b === 2 ? { display: 'grid', gap: 16 } : { display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))' }}>
       {b === 2 ? <Card title="Khoá xong thì sao">
         <p className="t-sm" style={{ margin: 0 }}>Chỉ số tháng {ky.thang} <b>không sửa được nữa</b>. Sai thì phải lập hoá đơn điều chỉnh.</p>
         <p className="t-sm" style={{ margin: '10px 0 0' }}>Sau khi khoá, hệ thống tính sẵn hoá đơn nháp để anh/chị xem lại ở bước 3.</p>

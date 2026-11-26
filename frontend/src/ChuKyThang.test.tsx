@@ -78,7 +78,7 @@ describe('ChuKyThang', () => {
     dungMock({ trangThai: 'DANG_MO', thieu: [{ id: 5, soPhong: '101', tang: 1 }], hoaDon: [] })
     await mo('?b=2')
     expect(nut('Khoá chỉ số tháng 8').getAttribute('aria-disabled')).toBe('true')
-    expect(container.textContent).toContain('Còn 1 công tơ chưa ghi chỉ số')
+    expect(container.textContent).toContain('Còn 1 phòng chưa ghi chỉ số')
     expect(container.textContent).toContain('Còn thiếu phòng 101')
   })
 

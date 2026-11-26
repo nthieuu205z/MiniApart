@@ -28,7 +28,7 @@ export function tinhBuoc({ ky, soCongToThieu, tongCongTo, hoaDon }: Vao): KetQua
   ]
   const daGui = hoaDon.filter(daGuiHoSo)
   const tomTat = [
-    tongCongTo === undefined ? `còn ${soCongToThieu} chưa ghi` : `đã ghi ${Math.max(tongCongTo - soCongToThieu, 0)}/${tongCongTo} công tơ · thiếu ${soCongToThieu}`,
+    tongCongTo === undefined ? `còn ${soCongToThieu} chưa ghi` : `đã ghi ${Math.max(tongCongTo - soCongToThieu, 0)}/${tongCongTo} phòng · thiếu ${soCongToThieu}`,
     daChot ? 'đã khoá' : 'chưa khoá',
     `${nhap} hoá đơn nháp${daGui.length ? ` · ${daGui.length} đã gửi` : ''}`,
     `đã thu ${daGui.length - daGui.filter(conNo).length}/${daGui.length}`,
