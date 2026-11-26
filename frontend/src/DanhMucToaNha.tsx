@@ -2,7 +2,10 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   ApiError,
   capNhatToaNha,
+  fetchCongNoBaoCao,
+  fetchPhong,
   fetchToaNha,
+  type ThongTinPhong,
   taoToaNha,
   type ThongTinToaNha,
   type YeuCauToaNha,
@@ -12,8 +15,8 @@ import { EmptyState } from "./design/feedback/EmptyState";
 import { Icon } from "./design/core/Icon";
 import { Field } from "./design/forms/Field";
 import { Card } from "./design/layout/Card";
-import { DataTable, type DataTableColumn } from "./design/table/DataTable";
-import { CSS_BANG_QUAN_TRI } from "./bangQuanTriChung";
+import { DauTrang } from "./design/layout/DauTrang";
+import { dinhDangTien } from "./design/core/format";
 import { Ngan } from "./HoSoHopDong360";
 type Props = { token: string; vaiTro: string; mobile?: boolean };
 type Form = {
@@ -148,14 +151,47 @@ export function FormToaNha({ token, toa, mobile = false, onXong, onHuy }: { toke
   );
 }
 
+const CSS_TOA = `.tn-the { display: flex; align-items: center; gap: 24px; padding: 16px 20px; min-height: var(--ma-row-h); color: inherit; text-decoration: none; }
+.tn-the:hover { background: var(--ma-bg-row-selected); }
+.tn-ten { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.tn-ten b { font: var(--ma-text-block-title); color: var(--ma-text-primary); }
+.tn-ten span, .tn-so span { color: var(--ma-text-secondary); font: var(--ma-text-caption); }
+.tn-so { display: grid; gap: 2px; text-align: right; min-width: 110px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tn-so.no b { color: var(--ma-urgent); }
+.tn-so-d { font-weight: 500; }
+.tn-sodo { display: grid; gap: 3px; }
+.tn-tang { display: flex; gap: 3px; flex-wrap: wrap; max-width: 140px; }
+.tn-cham { width: 14px; height: 14px; border-radius: 3px; background: var(--ma-text-primary); }
+.tn-cham.no { background: var(--ma-urgent); }
+.tn-cham.trong { background: none; border: 1px dashed var(--ma-text-muted); }
+.tn-cham.khac { background: var(--ma-line-200); }
+.tn-mt { color: var(--ma-text-muted); flex: none; }
+@media (max-width: 767px) { .tn-the { gap: 12px; padding: 12px 16px; flex-wrap: wrap; } .tn-dt { display: none; } .tn-ten { flex-basis: 60%; } }`
+
+type SoDo = { thue: number; tong: number; tang: { khoa: string; cham: string[] }[] }
+const soDoToa = (phong: ThongTinPhong[], no: Set<string>): SoDo => {
+  const theoTang = new Map<number, string[]>()
+  let thue = 0
+  for (const p of phong.filter((p) => typeof p.soPhong === 'string').sort((a, b) => a.soPhong.localeCompare(b.soPhong, 'vi', { numeric: true }))) {
+    const dangThue = p.trangThai === 'DANG_THUE'
+    if (dangThue) thue += 1
+    const loai = dangThue ? (no.has(`${p.toaNhaId}|${p.soPhong}`) ? 'no' : '') : p.trangThai === 'TRONG' ? 'trong' : 'khac'
+    theoTang.set(p.tang, [...(theoTang.get(p.tang) ?? []), loai])
+  }
+  return { thue, tong: phong.length, tang: [...theoTang].sort((a, b) => a[0] - b[0]).map(([khoa, cham]) => ({ khoa: String(khoa), cham })) }
+}
+
 export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) {
   const [ds, setDs] = useState<ThongTinToaNha[]>([]),
     [loading, setLoading] = useState(true),
     [ngan, setNgan] = useState(false),
     [error, setError] = useState<string | null>(null),
     [notice, setNotice] = useState<string | null>(null),
-    [thu, setThu] = useState(0);
+    [thu, setThu] = useState(0),
+    [phongToa, setPhongToa] = useState<Record<number, ThongTinPhong[]>>({}),
+    [noToa, setNoToa] = useState<Map<number, { tien: number; phong: Set<string> }> | null>(null);
   const canCreate = ["CHU", "QTHT"].includes(vaiTro);
+  const laChu = vaiTro === "CHU"; // QL/QTHT: nợ không gom được theo toà ở đây → ẩn cột Còn nợ
   useEffect(() => {
     let ok = true;
     setLoading(true);
@@ -168,15 +204,34 @@ export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) 
       ok = false;
     };
   }, [token, thu]);
-  const cot: DataTableColumn<ThongTinToaNha>[] = [
-    { key: 'toa', label: 'Toà nhà', sortable: true, sortValue: (x) => x.ten, render: (x) => <div><a className="td-main bq-cat" href={`/toa-nha/${x.id}`} title={x.ten}>{x.ten}</a><div className="td-sub">{x.maToa}</div></div> },
-    { key: 'diaChi', label: 'Địa chỉ', render: (x) => <span className="bq-toa" title={x.diaChi}>{x.diaChi}</span> },
-    { key: 'soTang', label: 'Số tầng', align: 'num', sortable: true, sortValue: (x) => x.soTang, render: (x) => x.soTang },
-    { key: 'chotSo', label: 'Chốt số', align: 'num', sortable: true, sortValue: (x) => x.ngayChotSo, render: (x) => `ngày ${x.ngayChotSo}` },
-    { key: 'nguong', label: 'Ngưỡng thất thoát', align: 'num', sortable: true, sortValue: (x) => Number(x.nguongThatThoat), render: (x) => x.nguongThatThoat },
-    { key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong', render: (x) => <div className="td-acts"><a className="btn btn-ghost btn-sm" href={`/toa-nha/${x.id}`}>Mở hồ sơ<span className="sr-only"> {x.ten}</span></a></div> },
-  ];
-  const tongTang = ds.reduce((n, x) => n + x.soTang, 0);
+  // Sơ đồ chấm và nợ là phần phụ: lỗi thì thẻ vẫn hiện, chỉ thiếu phần đó.
+  useEffect(() => {
+    let ok = true;
+    ds.forEach((t) => fetchPhong(token, t.id).then((p) => ok && Array.isArray(p) && setPhongToa((m) => ({ ...m, [t.id]: p }))).catch(() => undefined));
+    return () => { ok = false; };
+  }, [token, ds]);
+  useEffect(() => {
+    if (!laChu) return undefined;
+    let ok = true;
+    fetchCongNoBaoCao(token, null)
+      .then((r) => {
+        if (!ok) return;
+        const m = new Map<number, { tien: number; phong: Set<string> }>();
+        for (const k of Array.isArray(r?.congNo) ? r.congNo : []) {
+          const con = Number(k.conLai);
+          if (!(con > 0)) continue;
+          const x = m.get(k.toaNhaId) ?? { tien: 0, phong: new Set<string>() };
+          x.tien += con;
+          x.phong.add(`${k.toaNhaId}|${k.soPhong}`);
+          m.set(k.toaNhaId, x);
+        }
+        setNoToa(m);
+      })
+      .catch(() => ok && setNoToa(null));
+    return () => { ok = false; };
+  }, [token, laChu, thu]);
+  const tongPhong = ds.reduce((n, t) => n + (phongToa[t.id]?.length ?? 0), 0);
+  const tieuDe = vaiTro === "QTHT" ? "Toà nhà" : "Toà & phòng";
   return (
     <section
       className={`building-catalog building-catalog--${mobile ? "mobile" : "desktop"}`}
@@ -185,14 +240,12 @@ export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) 
       aria-labelledby="building-management-title"
       style={{ display: "grid", gap: 16, minWidth: 0 }}
     >
-      <style>{CSS_BANG_QUAN_TRI}</style>
-      <header className="topbar">
-        <div className="title-block">
-          <h1 className="h1" id="building-management-title">Toà nhà</h1>
-          <p className="sub">{loading ? "Đang tải…" : `${ds.length} toà được xem · tổng ${tongTang} tầng`}</p>
-        </div>
-        {canCreate && <div className="topbar-actions"><Button onClick={() => { setNotice(null); setNgan(true); }}><Icon name="plus" />Khai báo toà mới</Button></div>}
-      </header>
+      <style>{CSS_TOA}</style>
+      <DauTrang
+        tieuDe={<span id="building-management-title">{tieuDe}</span>}
+        phu={loading ? "Đang tải…" : `${ds.length} toà${tongPhong ? ` · ${tongPhong} phòng` : ""}`}
+        hanhDong={canCreate ? <Button onClick={() => { setNotice(null); setNgan(true); }}><Icon name="plus" />Khai báo toà mới</Button> : undefined}
+      />
       {error && !loading && <EmptyState kind="error" title="Không tải được danh sách toà nhà" body={`${error} Dữ liệu chưa bị thay đổi.`} actionLabel="Thử lại" onAction={() => setThu((n) => n + 1)} />}
       {notice && <div role="status" className="alert alert-success"><Icon name="check-circle" />{notice}</div>}
       {loading ? (
@@ -205,18 +258,22 @@ export default function DanhMucToaNha({ token, vaiTro, mobile = false }: Props) 
           onAction={() => setNgan(true)}
         />
       ) : (
-        <Card className="bq-gon" data-mobile-building-list={mobile ? "true" : undefined}>
-          <DataTable
-            rows={ds}
-            columns={cot}
-            getRowId={(x) => x.id}
-            timTheo={(x) => `${x.ten} ${x.maToa} ${x.diaChi}`}
-            searchLabel="Tìm toà, mã, địa chỉ"
-            noun="toà nhà"
-            pageSize={10}
-            rowProps={(x) => ({ "data-building-row": String(x.id) })}
-          />
-        </Card>
+        <div style={{ display: "grid", gap: 12 }} data-mobile-building-list={mobile ? "true" : undefined}>
+          {ds.map((x) => {
+            const p = phongToa[x.id], no = noToa?.get(x.id), sd = p ? soDoToa(p, no?.phong ?? new Set()) : null;
+            return (
+              <Card key={x.id} className="bq-gon" style={{ padding: 0 }}>
+                <a className="tn-the" href={`/toa-nha/${x.id}`} data-building-row={String(x.id)} title={x.ten}>
+                  <span className="tn-ten"><b>{x.ten}</b><span>{x.diaChi} · {x.soTang} tầng</span></span>
+                  {sd && <span className="tn-sodo tn-dt" aria-hidden="true">{sd.tang.map((t) => <span key={t.khoa} className="tn-tang">{t.cham.map((c, i) => <span key={i} className={`tn-cham ${c}`} />)}</span>)}</span>}
+                  {sd && <span className="tn-so tn-dt"><span>Đang thuê</span><b className="tn-so-d">{sd.thue}/{sd.tong} phòng</b></span>}
+                  {laChu && noToa && <span className={`tn-so${no ? " no" : ""}`}><span>Còn nợ</span><b>{dinhDangTien(no?.tien ?? 0)} ₫</b></span>}
+                  <span className="tn-mt" aria-hidden="true"><Icon name="chevron-right" /></span>
+                </a>
+              </Card>
+            );
+          })}
+        </div>
       )}
       {ngan && (
         <Ngan tieuDe="Khai báo toà nhà" onDong={() => setNgan(false)}>
