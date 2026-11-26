@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Icon } from '../core/Icon'
+import { HangTong } from './HangTong'
 import { apDungBang, demTheoChip, doiSapXep, type ChieuSapXep } from './bangDuLieu'
 
 export type DataTableColumn<T> = {
@@ -33,9 +34,11 @@ export type DataTableProps<T> = {
   rowProps?: (row: T) => Record<string, string>
   /** Khoá chip bật sẵn khi mở trang. */
   defaultChip?: string
+  /** Các ô của hàng tổng → <tfoot><tr className="ma-tong">. */
+  tongHang?: ReactNode[]
 }
 
-export function DataTable<T>({ rows, columns, getRowId, chips = [], timTheo, searchLabel = 'Tìm', bulkActions, noun = 'dòng', pageSize = 10, rowLabel, rowProps, defaultChip }: DataTableProps<T>) {
+export function DataTable<T>({ rows, columns, getRowId, chips = [], timTheo, searchLabel = 'Tìm', bulkActions, noun = 'dòng', pageSize = 10, rowLabel, rowProps, defaultChip, tongHang }: DataTableProps<T>) {
   const [tuKhoa, setTuKhoa] = useState('')
   const [chip, setChip] = useState<string | null>(defaultChip ?? null)
   const [sapXep, setSapXep] = useState<{ cot: string; chieu: ChieuSapXep } | null>(null)
@@ -73,6 +76,7 @@ export function DataTable<T>({ rows, columns, getRowId, chips = [], timTheo, sea
           {columns.map((c, i) => <td key={c.key} className={c.align} data-label={c.label} data-the={c.the ?? (i === 0 ? 'tieu-de' : undefined)}>{c.render(r)}</td>)}
         </tr>
       })}</tbody>
+      {tongHang && <tfoot><HangTong o={bulkActions ? ['', ...tongHang] : tongHang} canhPhai={columns.flatMap((c, i) => (c.align === 'num' ? [i + (bulkActions ? 1 : 0)] : []))} /></tfoot>}
     </table></div>
     <div className="pager"><span>{kq.tu}–{kq.den} trong {kq.tongSauLoc} {noun}</span><span className="push" />
       <button type="button" className="pg" aria-label="Trang trước" disabled={kq.trang <= 1} onClick={() => setTrang(kq.trang - 1)}><Icon name="chevron-left" /></button>

@@ -548,3 +548,10 @@ th[aria-sort] .th-sort { color: var(--ma-text-primary); font-weight: 600; }
 @media (max-width: 767px) { .ma-chandinh { position: sticky; bottom: 0; background: var(--ma-bg-card); border-top: 1px solid var(--ma-line-200); padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); margin: 16px -16px 0; } .ma-chandinh .btn { flex: 1; } }
 [data-density="thoang"] .ma-chandinh { position: sticky; bottom: 0; background: var(--ma-bg-card); border-top: 1px solid var(--ma-line-200); padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); margin: 16px -16px 0; }
 [data-density="thoang"] .ma-chandinh .btn { flex: 1; }
+
+/* ---------- V3: khung ---------- */
+.ux-top { min-height: 56px; }
+.ux-search { height: var(--ma-control-h); border-radius: 6px; }
+.crumb, .crumbs { font-size: 13px; color: var(--ma-text-secondary); }
+.crumb a, .crumbs a { color: var(--ma-text-secondary); }
+.nav-item[aria-current="page"] { box-shadow: none; }
