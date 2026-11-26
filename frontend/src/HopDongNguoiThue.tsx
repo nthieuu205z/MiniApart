@@ -82,7 +82,7 @@ export default function HopDongNguoiThue({ token, mobile = false }: Props) {
   return (
     <section {...khung} className={mobile ? 'nt' : undefined} aria-labelledby="tenant-contract-title" style={mobile ? undefined : { display: 'grid', gap: 12, minWidth: 0 }}>
       <div className="nt-dau">
-        <Tieu mobile={mobile} id="tenant-contract-title" className="nt-h1">{mobile ? 'Phòng tôi' : 'Hợp đồng của tôi'}</Tieu>
+        <Tieu mobile={mobile} id="tenant-contract-title" className={mobile ? 'sr-only' : 'nt-h1'}>{mobile ? 'Phòng tôi' : 'Hợp đồng của tôi'}</Tieu>
         <div className="nt-phu">
           {mobile
             ? hopDongs[0] ? `Phòng ${hopDongs[0].soPhong}` : null

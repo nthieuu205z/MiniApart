@@ -61,7 +61,7 @@ export default function LichSuHoaDon({ token, mobile = false }: Props) {
     return (
       <section {...khung} className="nt" aria-labelledby="invoice-history-title">
         <header className="nt-dau">
-          <Tieu mobile id="invoice-history-title" className="nt-h1">Lịch sử</Tieu>
+          <Tieu mobile id="invoice-history-title" className="sr-only">Lịch sử</Tieu>
           <div className="nt-phu">Hoá đơn và điện nước</div>
         </header>
         <section className="nt-khoi" aria-labelledby="lich-su-hoa-don">

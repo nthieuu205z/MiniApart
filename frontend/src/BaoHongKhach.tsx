@@ -81,7 +81,7 @@ export default function BaoHongKhach({ token, mobile: mobileProp }: { token: str
   return (
     <section className="nt">
       <header className="nt-dau">
-        <Tieu mobile={mobile} className="nt-h1">Báo hỏng</Tieu>
+        <Tieu mobile={mobile} className={mobile ? 'sr-only' : 'nt-h1'}>Báo hỏng</Tieu>
         {phongDangChon ? <div className="nt-phu">Phòng {phongDangChon.soPhong}</div> : null}
       </header>
       <Feedback error={action.error ?? loiPhong} success={action.success} />
