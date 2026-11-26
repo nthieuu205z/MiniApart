@@ -6,6 +6,14 @@ import { Icon } from './design/core/Icon'
 import type { TrangProps } from './dinhTuyen'
 import { SU_KIEN_CHUA_DOC } from './ThongBao'
 
+function truocDay(iso: string): string {
+  const phut = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000))
+  if (phut < 1) return 'Vừa xong'
+  if (phut < 60) return `${phut} phút trước`
+  if (phut < 1440) return `${Math.floor(phut / 60)} giờ trước`
+  return new Date(iso).toLocaleDateString('vi-VN')
+}
+
 /** Chuông trên thanh trên: số chưa đọc + hộp 5 tin mới nhất. Số đếm lấy từ `fetchThongBao` như màn /thong-bao. */
 export default function ChuongThongBao({ token, dieuHuong }: TrangProps) {
   const [hop, setHop] = useState<ThongTinHopThongBao | null>(null)
@@ -77,11 +85,11 @@ export default function ChuongThongBao({ token, dieuHuong }: TrangProps) {
             <a key={t.maThamChieu} className="irow" href="/thong-bao" onClick={(e) => { e.preventDefault(); setMo(false); dieuHuong('/thong-bao') }}>
               {t.daDoc ? <span style={{ width: 8 }} /> : <span className="unread" aria-label="Chưa đọc" />}
               <div className="body"><div className="t">{t.tieuDe}</div><div className="s">{t.noiDung}</div></div>
-              <span className="t-meta">{new Date(t.taoLuc).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</span>
+              <span className="t-meta">{truocDay(t.taoLuc)}</span>
             </a>
           ))}
           {!loi && tin.length === 0 ? <p className="note">Không có thông báo mới.</p> : null}
-          <a className="note" href="/thong-bao" onClick={(e) => { e.preventDefault(); setMo(false); dieuHuong('/thong-bao') }}>Xem tất cả</a>
+          <a className="note" style={{ color: 'var(--ma-text-link)' }} href="/thong-bao" onClick={(e) => { e.preventDefault(); setMo(false); dieuHuong('/thong-bao') }}>Xem tất cả</a>
         </div>
       ) : null}
     </div>

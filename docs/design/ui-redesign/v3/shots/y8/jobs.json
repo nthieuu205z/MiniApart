@@ -1,0 +1,76 @@
+[
+{
+"name": "30-khung-dang-nhap-1440",
+"path": "/dang-nhap",
+"role": null,
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "30-khung-dang-nhap-390",
+"path": "/dang-nhap",
+"role": null,
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "32-chu-hom-nay-tim-1440",
+"path": "/hom-nay",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": true,
+"click": "[aria-label*='Tìm'], .search-trigger"
+},
+{
+"name": "33-ql-hom-nay-tb-1440",
+"path": "/hom-nay",
+"role": "QUAN_LY",
+"w": 1440,
+"h": 900,
+"full": true,
+"click": "[data-testid='chuong-nut']"
+},
+{
+"name": "37-khung-khong-quyen-1440",
+"path": "/tai-khoan",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "37-khung-khong-quyen-390",
+"path": "/tai-khoan",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "38-qt-tai-khoan-1440",
+"path": "/tai-khoan",
+"role": "QTHT",
+"w": 1440,
+"h": 900,
+"full": true
+},
+{
+"name": "38-qt-tai-khoan-390",
+"path": "/tai-khoan",
+"role": "QTHT",
+"w": 390,
+"h": 844,
+"full": true
+},
+{
+"name": "39-ql-thong-bao-1440",
+"path": "/thong-bao",
+"role": "QUAN_LY",
+"w": 1440,
+"h": 900,
+"full": true
+}
+]

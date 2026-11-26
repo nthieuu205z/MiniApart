@@ -108,7 +108,8 @@ describe('Quản lý tài khoản', () => {
     vi.stubGlobal('fetch', createFetchMock().fetchMock)
     await renderScreen()
     expect(container.textContent).toContain('0900 000 001')
-    expect(container.textContent).toContain('Toà A')
+    expect(container.textContent).toContain('1 tài khoản · 0 chủ nhà')
+    expect(container.querySelector('tbody td[data-label="Số toà"]')?.textContent).toBe('1')
   })
 
   it('FR-AUT-06 renders an empty account list with valid table semantics', async () => {
@@ -130,7 +131,7 @@ describe('Quản lý tài khoản', () => {
     const { fetchMock } = createFetchMock()
     vi.stubGlobal('fetch', fetchMock)
     await renderScreen()
-    await act(async () => button('Tạo tài khoản').click())
+    await act(async () => button('Thêm tài khoản').click())
     const form = container.querySelector('[data-testid="account-form"]') as HTMLFormElement
     await setInput(form.querySelector('input[name="hoTen"]')!, 'Thợ mới')
     await setInput(form.querySelector('input[name="soDienThoai"]')!, '0900000002')
@@ -149,7 +150,7 @@ describe('Quản lý tài khoản', () => {
   it('FR-AUT-06 vai trò quyết định trường tiếp theo và vẫn cho phân công toà', async () => {
     vi.stubGlobal('fetch', createFetchMock().fetchMock)
     await renderScreen()
-    await act(async () => button('Tạo tài khoản').click())
+    await act(async () => button('Thêm tài khoản').click())
     const form = container.querySelector('[data-testid="account-form"]')!
     const role = form.querySelector('select[name="vaiTro"]') as HTMLSelectElement
     role.value = 'THO'
@@ -162,13 +163,14 @@ describe('Quản lý tài khoản', () => {
     const { fetchMock } = createFetchMock()
     vi.stubGlobal('fetch', fetchMock)
     await renderScreen()
-    await moMenu('Người quản lý')
-    await act(async () => button('Khoá tài khoản… Người quản lý').click())
+    await act(async () => button('Sửa Người quản lý').click())
+    expect(button('Khoá tài khoản…').className).not.toContain('btn-primary')
+    await act(async () => button('Khoá tài khoản…').click())
     expect(container.querySelector('[role="dialog"]')).not.toBeNull()
     const confirm = button('Khoá tài khoản')
     expect(fetchMock).not.toHaveBeenCalledWith('/api/nguoi-dung/1/khoa', expect.objectContaining({ method: 'POST' }))
     await act(async () => confirm.click())
-    await vi.waitFor(() => expect(container.textContent).toContain('Bị khoá'))
+    await vi.waitFor(() => expect(container.textContent).toContain('Đã khoá'))
     expect(container.textContent).toContain('Người quản lý')
     expect(container.textContent).not.toContain('Xoá')
     expect(fetchMock).toHaveBeenCalledWith('/api/nguoi-dung/1/khoa', expect.objectContaining({ method: 'POST' }))
@@ -177,8 +179,9 @@ describe('Quản lý tài khoản', () => {
   it('FR-AUT-06 yêu cầu xác nhận khoá và giải thích lịch sử vẫn được giữ', async () => {
     vi.stubGlobal('fetch', createFetchMock().fetchMock)
     await renderScreen()
-    await moMenu('Người quản lý')
-    await act(async () => button('Khoá tài khoản… Người quản lý').click())
+    await act(async () => button('Sửa Người quản lý').click())
+    expect(button('Khoá tài khoản…').className).not.toContain('btn-primary')
+    await act(async () => button('Khoá tài khoản…').click())
     await vi.waitFor(() => expect(container.querySelector('[role="dialog"]')).not.toBeNull())
     expect(container.textContent).toContain('không đăng nhập được nữa')
     expect(container.textContent).toContain('lịch sử thao tác và bản ghi đã tạo vẫn giữ nguyên')
@@ -199,7 +202,7 @@ describe('Quản lý tài khoản', () => {
     const { fetchMock } = createFetchMock()
     vi.stubGlobal('fetch', fetchMock)
     await renderScreen()
-    await act(async () => button('Tạo tài khoản').click())
+    await act(async () => button('Thêm tài khoản').click())
     const form = container.querySelector('[data-testid="account-form"]') as HTMLFormElement
     await setInput(form.querySelector('input[name="hoTen"]')!, 'Tài khoản trùng')
     await setInput(form.querySelector('input[name="soDienThoai"]')!, '0900000001')
@@ -238,16 +241,21 @@ describe('Quản lý tài khoản', () => {
     expect(container.querySelectorAll('tbody td:last-child button').length).toBeGreaterThan(0)
   })
 
-  it('chip vai trò đếm đúng số tài khoản và lọc bảng', async () => {
+  it('nhãn vai trò theo bảng tiếng nói; chip Nhân sự / Người thuê đếm và lọc; ≤ 1 nút chính', async () => {
     const { fetchMock, accounts } = createFetchMock()
     accounts.push({ id: 5, hoTen: 'Thợ Một', soDienThoai: '0900000005', vaiTro: 'THO', tenVaiTro: 'Thợ sửa chữa', trangThai: 'HOAT_DONG', tenTrangThai: 'Hoạt động', toaNhaIds: [2] })
+    accounts.push({ id: 6, hoTen: 'Khách Một', soDienThoai: '0900000006', vaiTro: 'NGUOI_THUE', tenVaiTro: 'Người thuê', trangThai: 'BI_KHOA', tenTrangThai: 'Bị khoá', toaNhaIds: [] })
     vi.stubGlobal('fetch', fetchMock)
     await renderScreen()
 
-    const chipTho = [...container.querySelectorAll<HTMLButtonElement>('button.chip')].find((item) => item.textContent?.startsWith('Thợ'))
-    expect(chipTho?.querySelector('.n')?.textContent).toBe('1')
-    await act(async () => chipTho!.click())
+    const chips = [...container.querySelectorAll<HTMLButtonElement>('button.chip')]
+    expect(chips.map((c) => c.textContent)).toEqual(['Nhân sự2', 'Người thuê1'])
+    expect(container.querySelector('tbody')?.textContent).toContain('Thợ')
+    expect(container.querySelector('tbody')?.textContent).not.toContain('Thợ sửa chữa')
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
+    await act(async () => chips[1].click())
     expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
-    expect(container.querySelector('tbody')?.textContent).toContain('Thợ Một')
+    expect(container.querySelector('tbody')?.textContent).toContain('Khách Một')
+    expect(container.querySelector('tbody')?.textContent).toContain('Đã khoá')
   })
 })

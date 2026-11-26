@@ -5,10 +5,10 @@ import { Icon, type IconName } from './design/core/Icon'
 import { EmptyState } from './design/feedback/EmptyState'
 import { useDialogTrap } from './design/feedback/useDialogTrap'
 import { managementRequest } from './managementApi'
-import { catDanhDau, taoChiMuc, timNhanh, type MucTim, type NhomKetQua } from './chiMucTimNhanh'
+import { catDanhDau, manTimDuoc, taoChiMuc, timNhanh, type MucTim, type NhomKetQua } from './chiMucTimNhanh'
 import { useToaDangChon } from './toaDangChon'
 
-const ICON: Record<NhomKetQua, IconName> = { 'Người thuê': 'user', 'Phòng': 'door', 'Hợp đồng': 'contract', 'Hoá đơn': 'receipt' }
+const ICON: Record<NhomKetQua, IconName> = { 'Người thuê': 'user', 'Phòng': 'door', 'Hợp đồng': 'contract', 'Hoá đơn': 'receipt', 'Màn': 'dashboard' }
 const LENH = [
   { tieuDe: 'Ghi nhận thu tiền', href: '/thu-tien', icon: 'wallet' as IconName },
   { tieuDe: 'Tạo hợp đồng', href: '/hop-dong/moi', icon: 'plus' as IconName },
@@ -39,10 +39,10 @@ export default function TimNhanh({ token, vaiTro, dieuHuong, mo, datMo }: TrangP
     return () => window.removeEventListener('keydown', nhanPhim)
   }, [duocDung, datMo])
   if (!duocDung || !mo) return null
-  return <Hop token={token} dieuHuong={dieuHuong} dong={() => datMo(false)} boNho={boNho.current} />
+  return <Hop token={token} vaiTro={vaiTro} dieuHuong={dieuHuong} dong={() => datMo(false)} boNho={boNho.current} />
 }
 
-function Hop({ token, dieuHuong, dong, boNho }: { token: string; dieuHuong: (href: string) => void; dong: () => void; boNho: BoNho }) {
+function Hop({ token, vaiTro, dieuHuong, dong, boNho }: { token: string; vaiTro: string; dieuHuong: (href: string) => void; dong: () => void; boNho: BoNho }) {
   const toa = useToaDangChon()
   const dsToa = useMemo(() => toa.danhSach.filter((t) => toa.toaNhaId === null || t.id === toa.toaNhaId).map((t) => ({ id: t.id, ten: t.ten })), [toa.toaNhaId, toa.danhSach])
   const khoa = dsToa.map((t) => t.id).join(',')
@@ -77,7 +77,7 @@ function Hop({ token, dieuHuong, dong, boNho }: { token: string; dieuHuong: (hre
     else { setChiMuc(null); void tai() }
   }, [khoa, toa.dangTai, tai, boNho])
 
-  const nhom = useMemo(() => (chiMuc ? timNhanh(chiMuc, q) : []), [chiMuc, q])
+  const nhom = useMemo(() => (chiMuc ? timNhanh([...chiMuc, ...manTimDuoc(vaiTro)], q) : []), [chiMuc, q, vaiTro])
   const dsDong: Dong[] = useMemo(() => [
     ...nhom.flatMap((g) => g.muc.map((m, i) => ({ khoa: `${g.nhom}-${i}`, nhom: g.nhom, icon: ICON[g.nhom], tieuDe: m.tieuDe, phu: m.phu, href: m.href }))),
     ...LENH.map((l) => ({ khoa: `lenh-${l.href}`, nhom: 'Lệnh', icon: l.icon, tieuDe: l.tieuDe, href: l.href })),
@@ -108,15 +108,15 @@ function Hop({ token, dieuHuong, dong, boNho }: { token: string; dieuHuong: (hre
           <input
             role="combobox" aria-expanded="true" aria-controls="tim-nhanh-ds" aria-autocomplete="list" autoComplete="off"
             aria-activedescendant={dsDong[chon] ? `tn-${dsDong[chon].khoa}` : undefined}
-            aria-label="Tìm người thuê, phòng, hợp đồng, hoá đơn" placeholder="Tìm người thuê, phòng, hợp đồng, hoá đơn…"
+            aria-label="Tìm phòng, người, hoá đơn" placeholder="Tìm phòng, người, hoá đơn…"
             value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={phim}
           />
           <span className="search-kbd" aria-hidden="true">Esc</span>
         </div>
         {dangTai ? <div role="status" aria-label="Đang tải dữ liệu tìm nhanh" style={{ display: 'grid', gap: 10, padding: 16 }}><div className="skel skel-line" /><div className="skel skel-line" style={{ width: '80%' }} /><div className="skel skel-line" style={{ width: '60%' }} /></div> : null}
         {loi ? <EmptyState kind="error" title="Không tải được dữ liệu để tìm." body="Dữ liệu chưa bị thay đổi." actionLabel="Thử lại" onAction={() => void tai()} /> : null}
-        {!dangTai && !loi && !coChu ? <p className="cmdk-g">Gõ tên, số phòng, mã hợp đồng hoặc mã hoá đơn</p> : null}
-        {!dangTai && !loi && coChu && nhom.length === 0 ? <p className="cmdk-g" role="status">Không thấy “{q.trim()}” trong dữ liệu đã tải.</p> : null}
+        {!dangTai && !loi && !coChu ? <p className="cmdk-g">Gõ số phòng, tên, số điện thoại hoặc mã hoá đơn</p> : null}
+        {!dangTai && !loi && coChu && nhom.length === 0 ? <p className="cmdk-g" role="status">Không thấy “{q.trim()}”. Thử số phòng hoặc số điện thoại.</p> : null}
         <div className="cmdk-list" id="tim-nhanh-ds" role="listbox" aria-label="Kết quả tìm nhanh">
           {dsDong.map((d, i) => {
             const dauNhom = d.nhom !== nhomTruoc
@@ -124,7 +124,7 @@ function Hop({ token, dieuHuong, dong, boNho }: { token: string; dieuHuong: (hre
             const tong = nhom.find((g) => g.nhom === d.nhom)?.tong
             return (
               <div key={d.khoa} role="presentation">
-                {dauNhom ? <div className="cmdk-g" role="presentation">{d.nhom}{tong ? ` · ${tong}` : ''}</div> : null}
+                {dauNhom ? <div className="cmdk-g" role="presentation">{d.nhom === 'Lệnh' ? 'Làm nhanh' : d.nhom}{tong ? ` · ${tong}` : ''}</div> : null}
                 <div
                   id={`tn-${d.khoa}`} role="option" aria-selected={i === chon} ref={i === chon ? chonRef : undefined}
                   className={`cmdk-i${i === chon ? ' on' : ''}`} onMouseMove={() => setChon(i)} onClick={() => moMuc(d)} style={{ cursor: 'pointer' }}
@@ -140,7 +140,7 @@ function Hop({ token, dieuHuong, dong, boNho }: { token: string; dieuHuong: (hre
             )
           })}
         </div>
-        <div className="cmdk-f"><span>↑ ↓ chọn</span><span>Enter mở</span><span>Esc đóng</span><span className="push">Tìm trên dữ liệu đã tải · {dsToa.length} toà</span></div>
+        <div className="cmdk-f"><span>↑ ↓ chọn</span><span>Enter mở</span><span>Esc đóng</span><span className="push">Tìm cả phòng, số điện thoại · {dsToa.length} toà</span></div>
       </div>
     </div>
   )

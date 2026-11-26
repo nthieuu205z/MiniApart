@@ -1,0 +1,389 @@
+[
+ {
+  "name": "30-khung-dang-nhap-1440",
+  "path": "/dang-nhap",
+  "role": null,
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y8/30-khung-dang-nhap-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 545,
+    "top": 295
+   },
+   "horizontalOverflow": 0,
+   "controls": 5,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 10,
+    "minRatio": 5.36,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 900,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "30-khung-dang-nhap-390",
+  "path": "/dang-nhap",
+  "role": null,
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y8/30-khung-dang-nhap-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 41,
+    "top": 248
+   },
+   "horizontalOverflow": 0,
+   "controls": 5,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 10,
+    "minRatio": 5.36,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 844,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "32-chu-hom-nay-tim-1440",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y8/32-chu-hom-nay-tim-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 38,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 173,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(20, 24, 29)",
+   "docHeight": 1371,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "33-ql-hom-nay-tb-1440",
+  "path": "/hom-nay",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y8/33-ql-hom-nay-tb-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 31,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 124,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 900,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "37-khung-khong-quyen-1440",
+  "path": "/tai-khoan",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y8/37-khung-khong-quyen-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 651,
+    "top": 319
+   },
+   "horizontalOverflow": 0,
+   "controls": 16,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 25,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 900,
+   "khongCoQuyen": true
+  }
+ },
+ {
+  "name": "37-khung-khong-quyen-390",
+  "path": "/tai-khoan",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y8/37-khung-khong-quyen-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 32,
+    "top": 258
+   },
+   "horizontalOverflow": 0,
+   "controls": 9,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 11,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 844,
+   "khongCoQuyen": true
+  }
+ },
+ {
+  "name": "38-qt-tai-khoan-1440",
+  "path": "/tai-khoan",
+  "role": "QTHT",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y8/38-qt-tai-khoan-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 24,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 87,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 900,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "38-qt-tai-khoan-390",
+  "path": "/tai-khoan",
+  "role": "QTHT",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y8/38-qt-tai-khoan-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 18,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 73,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 2179,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "39-ql-thong-bao-1440",
+  "path": "/thong-bao",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y8/39-ql-thong-bao-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 99
+   },
+   "horizontalOverflow": 0,
+   "controls": 23,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 59,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1047,
+   "khongCoQuyen": false
+  }
+ }
+]

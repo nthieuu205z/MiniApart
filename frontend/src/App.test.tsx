@@ -211,12 +211,12 @@ describe('App role navigation', () => {
     })
 
     const loginGrid = await vi.waitFor(() => {
-      const grid = container.querySelector('main > section') as HTMLElement | null
+      const grid = container.querySelector('main > div') as HTMLElement | null
       expect(grid).not.toBeNull()
       return grid as HTMLElement
     })
 
-    expect(loginGrid.style.gridTemplateColumns).toBe('minmax(0, 1fr)')
+    expect(loginGrid.style.width).toBe('min(400px, 100%)')
   })
 
   it('NFR-USA-01 hides the manager sidebar at 360px behind a ☰ drawer that traps focus, closes on Esc and returns focus', async () => {
@@ -360,7 +360,7 @@ describe('App role navigation', () => {
 
     const quanLy = MENU_BY_ROLE[2]
     const managerApp = await mountAppAndLogin(quanLy.nguoiDung, '/bao-cao/chi-phi-bao-tri')
-    await vi.waitFor(() => expect(managerApp.container.textContent).toContain('Không có quyền'))
+    await vi.waitFor(() => expect(managerApp.container.textContent).toContain('Trang này dành cho'))
     expect(readMenuLabels(managerApp.container)).not.toContain('Chi phí bảo trì')
     await act(async () => managerApp.root.unmount())
   })
@@ -424,7 +424,7 @@ describe('App role navigation', () => {
     mountedApp = await mountAppAndLogin(chuSoHuu.nguoiDung, '/tai-khoan')
 
     await vi.waitFor(() => {
-      expect(mountedApp!.container.textContent).toContain('Không có quyền')
+      expect(mountedApp!.container.textContent).toContain('Trang này dành cho')
     })
 
     expect(readMenuLabels(mountedApp.container)).toEqual(chuSoHuu.menuLabels)
@@ -441,10 +441,10 @@ describe('App role navigation', () => {
       expect(mountedApp!.container.textContent).toContain('Chủ sở hữu mẫu')
     })
 
-    expect(mountedApp.container.textContent).toContain('tài khoản đang hoạt động')
-    expect(mountedApp.container.textContent).toContain('Hoạt động (máy chủ)')
-    expect(mountedApp.container.textContent).toContain('Tạo tài khoản')
-    expect(mountedApp.container.querySelector('button[aria-label^="Thao tác khác cho"]')).not.toBeNull() // Khoá nằm trong menu "⋯"
+    expect(mountedApp.container.textContent).toContain('chủ nhà')
+    expect(mountedApp.container.textContent).toContain('Hoạt động')
+    expect(mountedApp.container.textContent).toContain('Thêm tài khoản')
+    expect(mountedApp.container.querySelector('button[aria-label^="Thao tác khác cho"]')).toBeNull() // Khoá nằm trong form Sửa
     expect(mountedApp.container.textContent).not.toContain('Mật khẩu của người dùng khác')
   })
 
@@ -458,7 +458,7 @@ describe('App role navigation', () => {
       expect(mountedApp!.container.querySelector('[data-testid="account-management"]')).not.toBeNull()
     })
 
-    const createButton = findButton(mountedApp.container, 'Tạo tài khoản')
+    const createButton = findButton(mountedApp.container, 'Thêm tài khoản')
     await act(async () => {
       createButton.click()
     })
@@ -510,9 +510,9 @@ describe('App role navigation', () => {
       expect(mountedApp!.container.textContent).toContain('Thợ trực mới đã sửa')
     })
     await act(async () => {
-      mountedApp!.container.querySelector<HTMLButtonElement>('button[aria-label="Thao tác khác cho Thợ trực mới đã sửa"]')!.click()
+      findButton(mountedApp!.container, 'Sửa Thợ trực mới đã sửa').click()
     })
-    const lockButton = findButton(mountedApp.container, 'Khoá tài khoản… Thợ trực mới đã sửa')
+    const lockButton = findButton(mountedApp.container, 'Khoá tài khoản…')
     await act(async () => {
       lockButton.click()
       await Promise.resolve()
@@ -529,7 +529,7 @@ describe('App role navigation', () => {
     })
 
     await vi.waitFor(() => {
-      expect(mountedApp!.container.textContent).toContain('Bị khoá')
+      expect(mountedApp!.container.textContent).toContain('Đã khoá')
     })
     expect(mountedApp.container.textContent).not.toContain('Xoá')
   })
@@ -1990,7 +1990,7 @@ describe('định tuyến cũ — không đổi quyền', () => {
       it(`${vaiTro} mở được ${duongDan} (không "Không có quyền")`, async () => {
         const container = await mo(vaiTro, duongDan)
         expect(container.querySelector('nav')).not.toBeNull()
-        expect(container.textContent).not.toContain('Không có quyền')
+        expect(container.textContent).not.toContain('Trang này dành cho')
       })
     }
   }
@@ -1998,18 +1998,18 @@ describe('định tuyến cũ — không đổi quyền', () => {
   for (const [vaiTro, duongDan] of [['QUAN_LY', '/bao-cao'], ['QUAN_LY', '/cong-no'], ['QUAN_LY', '/tai-khoan'], ['NGUOI_THUE', '/thu-tien']] as const) {
     it(`${vaiTro} ở ${duongDan} → "Không có quyền"`, async () => {
       const container = await mo(vaiTro, duongDan)
-      expect(container.textContent).toContain('Không có quyền')
+      expect(container.textContent).toContain('Trang này dành cho')
     })
   }
 
   it('QTHT vẫn mở được /hoa-don như app cũ', async () => {
     const container = await mo('QTHT', '/hoa-don')
-    expect(container.textContent).not.toContain('Không có quyền')
+    expect(container.textContent).not.toContain('Trang này dành cho')
   })
 
   it('Thợ ở /thu-tien bị đưa về màn việc của thợ', async () => {
     const container = await mo('THO', '/thu-tien')
-    expect(container.textContent).not.toContain('Không có quyền')
+    expect(container.textContent).not.toContain('Trang này dành cho')
     expect(['/tho/tong-quan', '/viec-cua-toi']).toContain(window.location.pathname)
   })
 })
