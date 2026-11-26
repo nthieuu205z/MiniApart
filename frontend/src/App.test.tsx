@@ -193,7 +193,7 @@ describe('App role navigation', () => {
 
     expect(appShell.classList.contains('ma-app-shell')).toBe(true)
     expect(nav.classList.contains('ma-no-print')).toBe(true)
-    expect(appShell.querySelectorAll('.ma-no-print')).toHaveLength(3)
+    expect(appShell.querySelectorAll('.ma-no-print')).toHaveLength(2)
   })
 
   it('NFR-USA-01 stacks the login panels at 360px so the form remains within the viewport', async () => {
