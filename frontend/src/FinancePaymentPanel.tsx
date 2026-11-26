@@ -55,7 +55,7 @@ export default function FinancePaymentPanel({ token, hoaDonId, maHoaDon, conLai 
         <label className="field"><span className="label">Hình thức</span><select className="select" value={method} onChange={(event) => setMethod(event.target.value as typeof method)}><option value="TIEN_MAT">Tiền mặt</option><option value="CHUYEN_KHOAN">Chuyển khoản</option></select></label>
         <label className="check t-sm"><input type="checkbox" checked={extra} onChange={(event) => setExtra(event.target.checked)} /> Xác nhận thu thêm khi hoá đơn đã thanh toán đủ; phần thừa được lưu thành số dư.</label>
         <Button type="submit" blocked={busy || !validMoney(amount)} blockedReason={busy ? 'Đang ghi nhận giao dịch.' : 'Nhập số tiền lớn hơn 0, tối đa 2 chữ số thập phân.'}>Ghi nhận thu tiền</Button>
-      </form> : <p className="t-sm">Phát hành hoá đơn trước khi thu tiền. Hoá đơn đã huỷ chỉ có thể xem lịch sử.</p>}
+      </form> : <p className="t-sm">Gửi hoá đơn trước khi thu tiền. Hoá đơn đã huỷ chỉ có thể xem lịch sử.</p>}
       {ledger.kyId !== null && canCollect && (!personalDemoQr || validMoney(conLai)) ? <Button variant="secondary" blocked={busy} blockedReason="Đang xử lý giao dịch." onClick={() => void run(async () => {
         if (personalDemoQr) {
           setQr('/payments/viettel-money-demo-qr.png')
@@ -65,7 +65,7 @@ export default function FinancePaymentPanel({ token, hoaDonId, maHoaDon, conLai 
         setQr(link.url)
       })}>{personalDemoQr ? 'Hiện QR nhận tiền demo' : 'Tạo mã QR chuyển khoản'}</Button> : null}
       {qr ? <figure className="card-sunken" style={{ margin: 0, textAlign: 'center' }}>
-        <img src={qr} alt={personalDemoQr ? 'QR nhận tiền Viettel Money của Trần Ngọc Đức' : 'Mã QR chuyển khoản cho hoá đơn đang chọn'} style={{ maxWidth: '100%', width: personalDemoQr ? 340 : 280, height: 'auto', background: '#fff', border: '1px solid var(--ma-border-default)' }} />
+        <img src={qr} alt={personalDemoQr ? 'QR nhận tiền Viettel Money của Trần Ngọc Đức' : 'Mã QR chuyển khoản cho hoá đơn đang chọn'} style={{ maxWidth: '100%', width: personalDemoQr ? 340 : 280, height: 'auto', background: 'var(--ma-bg-card)', border: '1px solid var(--ma-border-default)' }} />
         <figcaption style={{ marginTop: 10, fontSize: 13, color: 'var(--ma-text-secondary)', lineHeight: 1.6 }}>
           {personalDemoQr ? <>
             <strong style={{ display: 'block', color: 'var(--ma-text-primary)' }}>QR nhận tiền tĩnh · dùng tạm cho demo</strong>

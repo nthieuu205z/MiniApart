@@ -101,7 +101,7 @@ export default function CongNoBaoCao({ token, mobile = false }: Props): React.Re
   return goc(<>
     <header className="topbar">
       <div className="title-block">
-        <h1 className="h1" id="debt-report-title">Công nợ</h1>
+        <h1 className="h1" id="debt-report-title">Còn nợ</h1>
         <p className="sub">{baoCao.congNo.length} khoản còn nợ · {quaHan} quá hạn · tổng {dinhDangTien(String(tong))} ₫. Nợ đọc từ sổ thanh toán lúc xem, xếp theo số ngày quá hạn từ cao xuống thấp.</p>
       </div>
       <div className="topbar-actions">

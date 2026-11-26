@@ -7,7 +7,7 @@ export type CotBieuDo = {
   giaTri: number
   /** Số in trên đầu cột. */
   hienThi: string
-  /** Đọc màn hình: kỳ + số đầy đủ. */
+  /** Đọc màn hình: tháng + số đầy đủ. */
   moTa: string
 }
 

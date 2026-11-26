@@ -104,7 +104,7 @@ export function useToaDangChon(): ToaDangChon {
 }
 
 /**
- * Cho màn chỉ xem được từng toà (Chu kỳ tháng, Ghi chỉ số, Dịch vụ, An toàn…):
+ * Cho màn chỉ xem được từng toà (Tháng tính tiền, Ghi chỉ số, Dịch vụ, An toàn…):
  * - đang chọn một toà → dùng toà đó;
  * - đang "Tất cả" (chỉ Chủ) → `toaNhaId = null` và `canChonTaiCho = true`: màn hiện ô chọn toà tại chỗ,
  *   chọn ở đó sẽ đổi luôn toà của khung (nhớ cho các màn sau).

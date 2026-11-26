@@ -54,5 +54,3 @@ a.nt-dong:hover { text-decoration: none; background: var(--ma-paper-1); }
 .nt-ma { display: inline-block; white-space: nowrap; }
 .nt-ten + .nt-tien { margin-left: auto; }
 .nt textarea.input { min-height: 96px; height: auto; }
-/* Thanh nút chính dính đáy phải nằm trên thanh điều hướng dưới, không bị che. */
-.nt .ma-chandinh, .invoice-screen .ma-chandinh { bottom: var(--ma-bottom-nav-height); }

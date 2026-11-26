@@ -4,7 +4,7 @@ import { Button } from '../core/Button'
 import { SysLabel } from '../core/SysLabel'
 
 export interface PrimaryTaskBlockProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
-  /** "Việc chặn cả kỳ · còn 2 ngày" */
+  /** "Việc chặn cả tháng · còn 2 ngày" */
   meta: string
   title: React.ReactNode
   /** Danh sách số phòng liên quan, hiện thành ô viền. */

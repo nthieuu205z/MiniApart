@@ -77,13 +77,13 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
     }
   }, [cheDoCongNo, cheDoNguoiThue, hoaDonId, kyId, soLanTaiLai, token, toaNhaId])
 
-  // Máy tính dùng chung bản "Cần trả" của điện thoại; chi tiết một kỳ (hoaDonId) trên máy tính vẫn là bảng đối chiếu đủ chỉ số.
+  // Máy tính dùng chung bản "Cần trả" của điện thoại; chi tiết một tháng (hoaDonId) trên máy tính vẫn là bảng đối chiếu đủ chỉ số.
   const manHinhNguoiThueMobile = cheDoNguoiThue && (mobile || hoaDonId === undefined)
 
   useEffect(() => {
     if (!manHinhNguoiThueMobile) return
     let mounted = true
-    // Lịch sử chỉ để vẽ khối "Kỳ trước còn nợ": lỗi thì bỏ khối, không chặn hoá đơn.
+    // Lịch sử chỉ để vẽ khối "Tháng trước còn nợ": lỗi thì bỏ khối, không chặn hoá đơn.
     setLichSuDaTai(null)
     fetchLichSuHoaDonCuaNguoiThue(token)
       .then((data) => { if (mounted && Array.isArray(data)) { setLichSu(data); setLichSuDaTai(true) } })
@@ -111,7 +111,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
   }
 
   if (manHinhNguoiThueMobile) {
-    // Không chọn kỳ → "Cần trả" gom mọi kỳ chưa trả; lịch sử lỗi → quay về màn kỳ mới nhất như cũ.
+    // Không chọn tháng → "Cần trả" gom mọi tháng chưa trả; lịch sử lỗi → quay về màn tháng mới nhất như cũ.
     if (hoaDonId === undefined && lichSuDaTai === null) return <ScreenSurface data-layout-variant={variant} aria-busy="true" aria-live="polite"><div className="skel skel-line" />Đang tải hoá đơn…</ScreenSurface>
     if (hoaDonId === undefined && lichSuDaTai) return <CanTra mobile={mobile} hoaDon={hoaDon} lichSu={lichSu} tra={new URLSearchParams(window.location.search).get('tra')} />
     return <HoaDonNguoiThueMobile mobile={mobile} token={token} hoaDon={hoaDon} lichSu={lichSu} />
@@ -121,7 +121,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
     <>
       <MetaItem label={<SysLabel>Phòng</SysLabel>}>{hoaDon.soPhong}</MetaItem>
       <MetaItem label={<SysLabel>Người thuê</SysLabel>}>{hoaDon.nguoiThue}</MetaItem>
-      <MetaItem label={<SysLabel>Kỳ thanh toán</SysLabel>}>{dinhDangNgayIso(hoaDon.ngayPhatHanh)} – {dinhDangNgayIso(hoaDon.hanThanhToan)}</MetaItem>
+      <MetaItem label={<SysLabel>Tháng tính tiền</SysLabel>}>{dinhDangNgayIso(hoaDon.ngayPhatHanh)} – {dinhDangNgayIso(hoaDon.hanThanhToan)}</MetaItem>
       <MetaItem label={<SysLabel>Trạng thái</SysLabel>}><StatusTag tone={toneHoaDon(hoaDon.trangThai)}>{hoaDon.trangThai}</StatusTag></MetaItem>
     </>
   )
@@ -395,11 +395,11 @@ function InvoiceLineDetails({ dong, showAmount = true }: { dong: ThongTinDongHoa
 
   return (
     <dl data-invoice-line-details style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '6px 12px', margin: 0, color: 'var(--ma-text-secondary)', fontSize: 13, lineHeight: 1.5 }}>
-      <div><dt>Chỉ số đầu:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 700 }}>{dong.chiSoDau ?? '—'}</dd></div>
-      <div><dt>Chỉ số cuối:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 700 }}>{dong.chiSoCuoi ?? '—'}</dd></div>
-      <div><dt>Mức tiêu thụ:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 700 }}>{dong.soLuong ?? '—'}</dd></div>
-      <div><dt>Đơn giá:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 700 }}>{donGia}</dd></div>
-      {showAmount ? <div><dt>Thành tiền:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 700 }}>{dinhDangTien(dong.thanhTien)} ₫</dd></div> : null}
+      <div><dt>Chỉ số đầu:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 600 }}>{dong.chiSoDau ?? '—'}</dd></div>
+      <div><dt>Chỉ số cuối:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 600 }}>{dong.chiSoCuoi ?? '—'}</dd></div>
+      <div><dt>Mức tiêu thụ:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 600 }}>{dong.soLuong ?? '—'}</dd></div>
+      <div><dt>Đơn giá:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 600 }}>{donGia}</dd></div>
+      {showAmount ? <div><dt>Thành tiền:</dt><dd style={{ margin: 0, color: 'var(--ma-text-primary)', fontWeight: 600 }}>{dinhDangTien(dong.thanhTien)} ₫</dd></div> : null}
     </dl>
   )
 }

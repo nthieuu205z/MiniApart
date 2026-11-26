@@ -8,6 +8,7 @@ import { StatusTag } from './design/core/StatusTag'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Field } from './design/forms/Field'
 import { Card } from './design/layout/Card'
+import { DauTrang } from './design/layout/DauTrang'
 import { DataTable, type DataTableColumn } from './design/table/DataTable'
 import type { ThongTinToaNha } from './api'
 
@@ -91,13 +92,11 @@ export function AnToanVanHanh({ token, vaiTro }: { token: string; vaiTro: string
 
   return <section style={{ display: 'grid', gap: 16, minWidth: 0 }}>
     <style>{CSS_TUAN_THU}</style>
-    <header className="topbar">
-      <div className="title-block">
-        <h1 className="h1">An toàn và phòng cháy chữa cháy</h1>
-        <p className="sub" role="status">{data ? `${data.soViecDenHan} việc đến hạn · Kỳ kiểm tra tiếp: ${data.ngayKiemTraTiep ?? 'Chưa đặt lịch'}` : 'Chọn toà nhà để xem hồ sơ an toàn.'}</p>
-      </div>
-      <div className="topbar-actions"><ChonToa buildings={building.buildings} value={building.buildingId} onChange={building.setBuildingId} /></div>
-    </header>
+    <DauTrang
+      tieuDe="An toàn PCCC"
+      phu={<span role="status">{data ? `${data.soViecDenHan} việc đến hạn · Lần kiểm tra tiếp: ${data.ngayKiemTraTiep ?? 'Chưa đặt lịch'}` : 'Chọn toà nhà để xem hồ sơ an toàn.'}</span>}
+      hanhDong={<ChonToa buildings={building.buildings} value={building.buildingId} onChange={building.setBuildingId} />}
+    />
     <Feedback error={action.error ?? building.error} success={action.success} />
     {data ? <>
       <Card title="Hồ sơ PCCC">
@@ -122,12 +121,12 @@ export function AnToanVanHanh({ token, vaiTro }: { token: string; vaiTro: string
         </form> : null}
       </Card>
 
-      <Card title="Kiểm tra an toàn định kỳ">
+      <Card title="Kiểm tra an toàn theo lịch">
         {data.kiemTra.length === 0 ? <EmptyState title="Chưa có lần kiểm tra nào." /> : <DataTable rows={data.kiemTra} columns={cotKiemTra} getRowId={(r) => r.id} noun="lần kiểm tra" />}
         {editable ? <>
           <form className="tt-form" onSubmit={(e) => { e.preventDefault(); void action.run(async () => { await managementRequest(token, `${base}/lich-kiem-tra`, 'PUT', { chuKyThang: Number(schedule.chuKyThang), ngayKiemTraTiep: schedule.ngayKiemTraTiep }); await load() }, 'Đã cập nhật lịch kiểm tra.') }}>
             <div className="tt-luoi">
-              <Field label="Chu kỳ kiểm tra (tháng)"><input className="input" required type="number" min="1" max="60" value={schedule.chuKyThang} onChange={(e) => setSchedule({ ...schedule, chuKyThang: e.target.value })} /></Field>
+              <Field label="Kiểm tra mỗi (tháng)"><input className="input" required type="number" min="1" max="60" value={schedule.chuKyThang} onChange={(e) => setSchedule({ ...schedule, chuKyThang: e.target.value })} /></Field>
               <Field label="Ngày kiểm tra tiếp"><input className="input" required type="date" value={schedule.ngayKiemTraTiep} onChange={(e) => setSchedule({ ...schedule, ngayKiemTraTiep: e.target.value })} /></Field>
             </div>
             <div><Button variant="secondary" type="submit" blocked={action.busy} blockedReason={action.busy ? 'Đang lưu, vui lòng chờ.' : undefined}>Lưu lịch kiểm tra</Button></div>
@@ -193,16 +192,14 @@ export function CuTruVanHanh({ token }: { token: string }) {
   const quaHan = rows.filter((r) => r.canhBaoQuaHan).length
   return <section style={{ display: 'grid', gap: 16, minWidth: 0 }}>
     <style>{CSS_TUAN_THU}</style>
-    <header className="topbar">
-      <div className="title-block">
-        <h1 className="h1">Khai báo cư trú</h1>
-        <p className="sub">{building.buildingId ? `${rows.length} người đang cư trú · ${quaHan} người quá hạn khai báo` : 'Chọn toà nhà để xem danh sách cư trú.'}</p>
-      </div>
-      <div className="topbar-actions">
+    <DauTrang
+      tieuDe="Người ở cùng & tạm trú"
+      phu={building.buildingId ? `${rows.length} người đang cư trú · ${quaHan} người quá hạn khai báo` : 'Chọn toà nhà để xem danh sách cư trú.'}
+      hanhDong={<>
         <ChonToa buildings={building.buildings} value={building.buildingId} onChange={building.setBuildingId} />
         <Button variant="secondary" blocked={!building.buildingId || action.busy} blockedReason={!building.buildingId ? 'Chọn toà nhà trước.' : 'Đang xử lý, vui lòng chờ.'} onClick={() => void action.run(() => downloadManagementFile(token, `${base}/xuat-danh-sach`, 'danh-sach-cu-tru.xlsx'), 'Đã tải danh sách cư trú.')}><Icon name="download" />Xuất danh sách cư trú</Button>
-      </div>
-    </header>
+      </>}
+    />
     <Feedback error={action.error ?? building.error} success={action.success} />
     {dangTai ? <EmptyState kind="loading" title="Đang tải danh sách cư trú…" />
       : !rows.length ? <EmptyState title="Không có người đang cư trú trong toà đã chọn." />
@@ -247,12 +244,7 @@ export function NhatKyVanHanh({ token }: { token: string }) {
   const nhan: Record<string, string> = { nguoiDungId: 'Mã người dùng', hanhDong: 'Loại thao tác', doiTuong: 'Đối tượng', tuNgay: 'Từ ngày', denNgay: 'Đến ngày' }
   return <section style={{ display: 'grid', gap: 16, minWidth: 0 }}>
     <style>{CSS_TUAN_THU}</style>
-    <header className="topbar">
-      <div className="title-block">
-        <h1 className="h1">Nhật ký thao tác</h1>
-        <p className="sub">{result?.total ?? 0} thao tác phù hợp</p>
-      </div>
-    </header>
+    <DauTrang tieuDe="Nhật ký" phu={`${result?.total ?? 0} thao tác phù hợp`} />
     <Feedback error={action.error} />
     <Card>
       <form className="tt-form" style={{ marginTop: 0 }} onSubmit={(e) => { e.preventDefault(); setPage(0); setVersion(version + 1) }}>

@@ -130,15 +130,9 @@ export function timTuyen(vaiTro: string, duongDanVao: string, search = ''): KetQ
   return { loai: 'khong-co-quyen', vaiTroSoHuu: [...soHuu] }
 }
 
-/** Nhóm tab: các đường dẫn cũ vẫn là trang thật, chỉ đứng chung một nhóm tab và một mục nav. */
+/** Nhóm tab: các đường dẫn cũ vẫn là trang thật, chỉ đứng chung một nhóm tab và một mục nav. Màn tự có tab trong thẻ (Thu tiền) thì không khai ở đây, tránh hai hàng tab. */
 export type MucTab = { nhan: string; href: string }
 export const NHOM_TAB: Record<string, { vaiTro: VaiTro[]; tab: MucTab[] }> = {
-  'thu-tien': { vaiTro: CHU_QL, tab: [
-    { nhan: 'Cần thu', href: '/thu-tien' },
-    { nhan: 'Hoá đơn', href: '/hoa-don' },
-    { nhan: 'Đã thu', href: '/thu-tien?tab=da-thu' },
-    { nhan: 'Tiền cọc', href: '/thu-tien?tab=coc' },
-  ] },
   'nguoi-thue': { vaiTro: CHU_QL, tab: [
     { nhan: 'Danh sách', href: '/nguoi-thue' },
     { nhan: 'Khai báo cư trú', href: '/cu-tru' },

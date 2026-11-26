@@ -2,19 +2,21 @@ import { useEffect, useId, useRef, type HTMLAttributes, type ReactElement, type 
 import { Button } from '../core/Button'
 
 export interface ConfirmDialogProps extends HTMLAttributes<HTMLDivElement> {
-  /** Câu hỏi có đối tượng cụ thể: "Chốt kỳ 08/2026 toà A?" */
+  /** Câu hỏi có đối tượng cụ thể: "Khoá chỉ số 08/2026 toà A?" */
   title: string
   /** Hậu quả kèm con số: "không sửa được chỉ số của 24 phòng". Bắt buộc. */
   consequence: ReactNode
   /** Nhãn nút xác nhận = động từ của việc đó, không phải "OK". */
   confirmLabel: string
   cancelLabel?: string
+  /** `danger` cho thao tác phá huỷ (khoá tài khoản…): nút xác nhận viền/chữ đỏ, không phải nút chính. */
+  variant?: 'primary' | 'danger'
   onConfirm?: () => void
   onCancel?: () => void
 }
 
 /** Hộp thoại xác nhận — chỉ dùng cho thao tác không đảo ngược được, và phải nêu hậu quả bằng con số. */
-export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 'Để sau', onConfirm, onCancel, style, tabIndex = -1, role = 'dialog', 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy, 'aria-modal': ariaModal = true, ...rest }: ConfirmDialogProps): ReactElement {
+export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 'Để sau', variant = 'primary', onConfirm, onCancel, style, tabIndex = -1, role = 'dialog', 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy, 'aria-modal': ariaModal = true, ...rest }: ConfirmDialogProps): ReactElement {
   const dialogRef = useRef<HTMLDivElement>(null)
   const onCancelRef = useRef(onCancel)
   const titleId = useId()
@@ -132,7 +134,7 @@ export function ConfirmDialog({ title, consequence, confirmLabel, cancelLabel = 
       <div id={titleId} style={{ fontSize: 15.5, fontWeight: 600 }}>{title}</div>
       <div style={{ fontSize: 13, color: "var(--ma-text-secondary)", marginTop: 7, lineHeight: 1.55 }}>{consequence}</div>
       <div style={{ display: "flex", gap: 9, marginTop: 14 }}>
-        <Button variant="primary" size="sm" onClick={onConfirm} style={{ minHeight: 44 }}>{confirmLabel}</Button>
+        <Button variant={variant} size="sm" onClick={onConfirm} style={{ minHeight: 44 }}>{confirmLabel}</Button>
         <Button variant="secondary" size="sm" onClick={onCancel} style={{ minHeight: 44 }}>{cancelLabel}</Button>
       </div>
     </div>

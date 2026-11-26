@@ -16,7 +16,7 @@ export interface TopBarProps extends React.HTMLAttributes<HTMLDivElement> {
   notificationHref?: string
   /** Chỉ truyền khi không có sidebar (Thợ, Khách thuê): nút Đăng xuất dạng icon. Sidebar/ngăn menu có khối người dùng riêng. */
   onLogout?: () => void
-  /** Bản cũ, chỉ GhiChiSo còn dùng: "Toà A — Nguyễn Trãi" + "Kỳ 08/2026" + nhãn trạng thái kỳ. Có `building` là dựng bản cũ. */
+  /** Bản cũ, chỉ GhiChiSo còn dùng: "Toà A — Nguyễn Trãi" + "Tháng 08/2026" + nhãn trạng thái tháng. Có `building` là dựng bản cũ. */
   building?: string
   period?: string
   periodStatus?: string

@@ -60,7 +60,7 @@ const CAU_HINH: Record<VaiTroDieuHuong, CauHinhDieuHuong> = {
   THO: {
     bottomNav: true,
     chanSidebar: [],
-    nhom: [{ nhan: '', muc: [m('/viec-cua-toi', 'Việc', 'wrench'), m('/tho/chi-phi', 'Tiền công', 'wallet')] }],
+    nhom: [{ nhan: '', muc: [m('/viec-cua-toi', 'Việc của tôi', 'wrench', { nhanNgan: 'Việc' }), m('/tho/chi-phi', 'Tiền công', 'wallet')] }],
   },
   NGUOI_THUE: {
     bottomNav: true,

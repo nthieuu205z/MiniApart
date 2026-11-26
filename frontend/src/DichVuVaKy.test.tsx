@@ -50,16 +50,16 @@ describe('DichVuVaKy', () => {
     await vi.waitFor(() => expect(container.textContent).toContain('Internet Wifi'))
   }
 
-  it('liệt kê dịch vụ (cách tính, chế độ giá, đơn vị, trạng thái) và kỳ thanh toán, chỉ đọc khi mở màn', async () => {
+  it('liệt kê dịch vụ (cách tính, chế độ giá, đơn vị, trạng thái) và tháng tính tiền, chỉ đọc khi mở màn', async () => {
     await mount()
     const text = container.textContent ?? ''
     expect(text).toContain('Điện sinh hoạt')
     expect(text).toContain('Theo chỉ số')
     expect(text).toContain('Bậc thang')
     expect(text).toContain('Ngừng sử dụng')
-    expect(text).toContain('kỳ đang mở 9/2026')
+    expect(text).toContain('Tháng đang mở: 9/2026')
     expect(text).not.toContain('Đã chốt')
-    expect(container.querySelector('a[href="/chu-ky"]')?.textContent).toContain('Chu kỳ tháng')
+    expect(container.querySelector('a[href="/chu-ky"]')?.textContent).toContain('Tháng tính tiền')
     expect(calls.every((c) => !c.method || c.method === 'GET')).toBe(true)
   })
 

@@ -118,7 +118,7 @@ export function LichSuSuaChua({ token, mobile = false }: Props): React.ReactElem
       <div className="stack">
         <div>
           <h2 className="h2" id="repair-history-title">Lịch sử sửa chữa</h2>
-          <p className="t-sm" style={{ color: 'var(--ma-text-secondary)', marginTop: 4 }}>Tra cứu theo toà, phòng hoặc hạng mục. Không phải báo cáo theo kỳ.</p>
+          <p className="t-sm" style={{ color: 'var(--ma-text-secondary)', marginTop: 4 }}>Tra cứu theo toà, phòng hoặc hạng mục. Không phải báo cáo theo tháng.</p>
         </div>
 
         <section aria-label="Bộ lọc lịch sử sửa chữa" style={styleBoLoc}>

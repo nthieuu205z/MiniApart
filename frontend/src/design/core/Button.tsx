@@ -28,11 +28,11 @@ const CLASS: Record<'primary' | 'secondary' | 'text' | 'danger', string> = {
 
 // Chỉ dùng trên nền tối: giữ inline như cũ, lớp .btn lo kích thước.
 const INVERSE: Record<'onInverse' | 'onInverseGhost', React.CSSProperties> = {
-  onInverse: { background: "#FFFFFF", color: "var(--ma-brand-primary)", borderColor: "#FFFFFF" },
-  onInverseGhost: { background: "rgba(255, 255, 255, 0.1)", color: "#FFFFFF", borderColor: "rgba(255, 255, 255, 0.2)" },
+  onInverse: { background: "var(--ma-text-on-inverse)", color: "var(--ma-brand-primary)", borderColor: "var(--ma-text-on-inverse)" },
+  onInverseGhost: { background: "rgba(255, 255, 255, 0.1)", color: "var(--ma-text-on-inverse)", borderColor: "rgba(255, 255, 255, 0.2)" },
 }
 
-/** Nút của MiniApart. Nhãn luôn là động từ + đối tượng ("Chốt kỳ 08/2026"), không bao giờ "OK". */
+/** Nút của MiniApart. Nhãn luôn là động từ + đối tượng ("Khoá chỉ số 08/2026"), không bao giờ "OK". */
 export function Button({
   variant = "primary",
   size = "md",

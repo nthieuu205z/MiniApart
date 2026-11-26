@@ -4,11 +4,11 @@ export interface MeterInputProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Ví dụ "Chỉ số mới — phòng 302". Luôn ghi rõ phòng nào. */
   label: string
   value: string | number
-  /** Chỉ số kỳ trước, hiện làm gợi ý dưới ô khi chưa gõ. */
+  /** Chỉ số tháng trước, hiện làm gợi ý dưới ô khi chưa gõ. */
   previous?: string
   /** Mức tiêu thụ tính được, ví dụ "58 kWh" — hiện ngay khi người dùng gõ. */
   consumption?: string
-  /** default = chưa gõ · filled = đã gõ hợp lệ · error = sai · locked = kỳ đã chốt */
+  /** default = chưa gõ · filled = đã gõ hợp lệ · error = sai · locked = tháng đã chốt */
   state?: 'default' | 'filled' | 'error' | 'locked'
   /** Câu lỗi phải nêu cả con số và cách sửa. */
   error?: string
@@ -59,7 +59,7 @@ export function MeterInput({
         </div>
       ) : (
         <div style={{ fontSize: 13, color: "var(--ma-text-secondary)" }}>
-          {hint || (previous ? `Kỳ trước ${previous}` : null)}
+          {hint || (previous ? `Tháng trước ${previous}` : null)}
         </div>
       )}
     </div>

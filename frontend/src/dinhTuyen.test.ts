@@ -94,10 +94,8 @@ describe('nhóm tab', () => {
     }
   })
   it('tab đang chọn theo đường dẫn + ?tab=', () => {
-    expect(tabDangChon('thu-tien', '/thu-tien', '')).toBe('/thu-tien')
-    expect(tabDangChon('thu-tien', '/thu-tien', '?tab=da-thu')).toBe('/thu-tien?tab=da-thu')
-    expect(tabDangChon('thu-tien', '/hoa-don', '?toaNhaId=3')).toBe('/hoa-don')
-    expect(tabDangChon('thu-tien', '/thu-tien', '?tab=la')).toBe('/thu-tien')
+    expect(tabDangChon('bao-cao', '/bao-cao/tieu-thu', '')).toBe('/bao-cao/tieu-thu')
+    expect(tabDangChon('bao-cao', '/bao-cao', '?tab=la')).toBe('/bao-cao')
     expect(tabDangChon('khong-co', '/thu-tien')).toBeNull()
   })
   it('nhóm tab theo vai trò', () => {
@@ -106,5 +104,6 @@ describe('nhóm tab', () => {
     expect(nhomTabCua('NGUOI_THUE', '/hop-dong')).toBe('phong-cua-toi')
     expect(nhomTabCua('QUAN_LY', '/hop-dong')).toBeNull()
     expect(nhomTabCua('QUAN_LY', '/cu-tru')).toBe('nguoi-thue')
+    expect(nhomTabCua('CHU', '/thu-tien')).toBeNull() // màn Tiền tự có tab trong thẻ
   })
 })

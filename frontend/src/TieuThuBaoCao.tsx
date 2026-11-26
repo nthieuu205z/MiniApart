@@ -217,7 +217,7 @@ function BoLoc({
       </Field>
       <Field label="Tháng">
         <Select
-          aria-label="Lọc tiêu thụ theo kỳ"
+          aria-label="Lọc tiêu thụ theo tháng"
           value={boLoc.kyId === null ? '' : String(boLoc.kyId)}
           disabled={boLoc.toaNhaId === null || dangTai}
           onChange={(event) => onChange({ ...boLoc, kyId: event.target.value ? Number(event.target.value) : null })}
@@ -230,9 +230,9 @@ function BoLoc({
   )
 }
 
-/** Thanh ngang theo kỳ, tách một khối cho mỗi đơn vị (kWh / m³) — không trộn đơn vị trên cùng thang. */
+/** Thanh ngang theo tháng, tách một khối cho mỗi đơn vị (kWh / m³) — không trộn đơn vị trên cùng thang. */
 function BieuDoTieuThuBaoCao({ points, rows }: { points: ThongTinDiemTieuThuBaoCao[]; rows: ThongTinDongTieuThuBaoCao[] }): React.ReactElement {
-  // Điểm biểu đồ không mang tên toà; kỳ thuộc đúng một toà nên tra qua dòng bảng. Nhiều toà thì ghi tên toà để các kỳ trùng nhãn không lẫn.
+  // Điểm biểu đồ không mang tên toà; tháng thuộc đúng một toà nên tra qua dòng bảng. Nhiều toà thì ghi tên toà để các tháng trùng nhãn không lẫn.
   const toaCuaKy = useMemo(() => new Map(rows.map((r) => [r.kyId, r.tenToaNha])), [rows])
   const nhieuToa = new Set(toaCuaKy.values()).size > 1
   const theoDonVi = useMemo(() => {

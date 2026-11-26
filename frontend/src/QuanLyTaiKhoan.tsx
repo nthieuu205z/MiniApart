@@ -289,6 +289,7 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
         title={`Khoá tài khoản ${nguoiDungChoKhoa.hoTen}?`}
         consequence={<>Người dùng sẽ <strong>không đăng nhập được nữa</strong>; lịch sử thao tác và bản ghi đã tạo vẫn giữ nguyên. Có thể mở khoá lại được.</>}
         confirmLabel="Khoá tài khoản"
+        variant="danger"
         cancelLabel="Để sau"
         onCancel={() => setNguoiDungChoKhoa(null)}
         onConfirm={() => { const account = nguoiDungChoKhoa; setNguoiDungChoKhoa(null); setBieuMau(null); void khoaTaiKhoan(account) }}

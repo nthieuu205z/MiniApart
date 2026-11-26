@@ -149,7 +149,7 @@ describe('ChuDashboard', () => {
     await vi.waitFor(() => expect(container.textContent).toContain('Nguyễn Văn A'))
     await vi.waitFor(() => expect(container.textContent).toContain('1.570 kWh'))
     await vi.waitFor(() => expect(container.textContent).toContain('Phòng 303 An Nhiên Residence · còn 11 ngày'))
-    expect(container.textContent).toContain('Chi phí kỳ này 750.000')
+    expect(container.textContent).toContain('Chi phí tháng này 750.000')
 
     // Đối soát công tơ tổng không còn nằm sau tab
     expect(container.textContent).toContain('Đối soát công tơ tổng')

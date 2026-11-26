@@ -52,7 +52,6 @@
 .tt-xem-truoc p { margin: 0; font-variant-numeric: tabular-nums }
 
 @media (max-width: 767px) {
-  .tt-trang .ma-chandinh { bottom: var(--ma-bottom-nav-height); }
   .tt-trang .ma-nguoino-hang { flex-wrap: nowrap; }
   .tt-trang .ma-nguoino-ten { min-width: 0; }
   .tt-nen { padding: 0 }

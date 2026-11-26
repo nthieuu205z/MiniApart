@@ -80,7 +80,7 @@ const tabActiveStyle: CSSProperties = {
   padding: '8px 16px',
   fontFamily: 'var(--ma-font-ui)',
   fontSize: 13.5,
-  fontWeight: 700,
+  fontWeight: 600,
   border: 'none',
   borderBottom: '3px solid var(--ma-brand-accent)',
   background: 'transparent',
@@ -703,7 +703,7 @@ export default function HopDongThaoTac({
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--ma-border-subtle)', paddingBottom: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>Tóm tắt Hợp đồng & Chi phí kỳ đầu</span>
+            <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: '-0.01em' }}>Tóm tắt Hợp đồng & Chi phí tháng đầu</span>
             <span style={{ fontSize: 11, background: 'var(--ma-brand-accent-light)', color: 'var(--ma-brand-accent)', padding: '3px 10px', borderRadius: 'var(--ma-radius-pill)', fontWeight: 600 }}>
               {form.ngayKetThuc ? 'ĐÃ ĐẶT HẠN' : 'CHỜ CHỌN THỜI HẠN'}
             </span>
@@ -712,7 +712,7 @@ export default function HopDongThaoTac({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 16, minWidth: 0 }}>
             <div>
               <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>PHÒNG THUÊ</div>
-              <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, marginTop: 4 }}>
                 {phongChon ? `Phòng ${phongChon.soPhong} (Tầng ${phongChon.tang})` : '— Chưa chọn phòng —'}
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--ma-text-secondary)', marginTop: 2 }}>
@@ -722,7 +722,7 @@ export default function HopDongThaoTac({
 
             <div>
               <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>NGƯỜI THUÊ</div>
-              <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, marginTop: 4 }}>
                 {nguoiThueChon ? nguoiThueChon.hoTen : '— Chưa chọn khách —'}
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--ma-text-secondary)', marginTop: 2 }}>
@@ -876,7 +876,7 @@ export default function HopDongThaoTac({
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                 <div>
-                  <span style={{ fontSize: 12, color: 'var(--ma-brand-accent)', fontWeight: 700 }}>
+                  <span style={{ fontSize: 12, color: 'var(--ma-brand-accent)', fontWeight: 600 }}>
                     HỢP ĐỒNG #{contract.id}
                   </span>
                   <h3 style={{ margin: '2px 0 0', font: 'var(--ma-text-task-name)' }}>
@@ -901,7 +901,7 @@ export default function HopDongThaoTac({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))', gap: 14, minWidth: 0 }}>
                 <div style={{ background: 'var(--ma-bg-card)', padding: '10px 14px', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
                   <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>THỜI HẠN HIỆU LỰC</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2 }}>{contract.ngayBatDau} → {contract.ngayKetThuc}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, marginTop: 2 }}>{contract.ngayBatDau} → {contract.ngayKetThuc}</div>
                 </div>
 
                 <div style={{ background: 'var(--ma-bg-card)', padding: '10px 14px', borderRadius: 'var(--ma-radius)', border: '1px solid var(--ma-border-default)' }}>
@@ -1101,7 +1101,7 @@ export default function HopDongThaoTac({
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: 11,
-                        fontWeight: 700,
+                        fontWeight: 600,
                         background: activeStep === st.id ? 'var(--ma-brand-accent)' : 'var(--ma-line-200)',
                         color: activeStep === st.id ? 'var(--ma-bg-card)' : 'var(--ma-text-secondary)',
                       }}
@@ -2328,7 +2328,7 @@ export default function HopDongThaoTac({
                         >
                           <div>
                             <strong>📋 Đối chiếu biên bản trả phòng ({bbTra.ngayThucHien}):</strong> Khấu trừ{' '}
-                            <span style={{ fontWeight: 700, color: 'var(--ma-urgent)' }}>{dinhDangTien(tienBb)} đ</span>
+                            <span style={{ fontWeight: 600, color: 'var(--ma-urgent)' }}>{dinhDangTien(tienBb)} đ</span>
                             {daKhop ? (
                               <span style={{ marginLeft: 8, color: 'var(--ma-done-text)', fontWeight: 600 }}>
                                 ✓ Đã khớp với thanh lý
@@ -2430,24 +2430,24 @@ export default function HopDongThaoTac({
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 14, minWidth: 0 }}>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>HOÁ ĐƠN CUỐI</div>
-                    <div style={{ fontSize: 16, fontWeight: 700 }}>{settlement.tongHoaDonCuoi} đ</div>
+                    <div style={{ fontSize: 16, fontWeight: 600 }}>{settlement.tongHoaDonCuoi} đ</div>
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>ĐÃ THU CỌC</div>
-                    <div style={{ fontSize: 16, fontWeight: 700 }}>{settlement.daThuCoc} đ</div>
+                    <div style={{ fontSize: 16, fontWeight: 600 }}>{settlement.daThuCoc} đ</div>
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>CÔNG NỢ CÒN LẠI</div>
-                    <div style={{ fontSize: 16, fontWeight: 700 }}>{settlement.congNo} đ</div>
+                    <div style={{ fontSize: 16, fontWeight: 600 }}>{settlement.congNo} đ</div>
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--ma-text-secondary)' }}>KHẤU TRỪ HƯ HẠI</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ma-urgent)' }}>{settlement.khauTru} đ</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ma-urgent)' }}>{settlement.khauTru} đ</div>
                   </div>
                 </div>
 
                 <div style={{ marginTop: 12, padding: '12px 16px', background: 'var(--ma-bg-card)', borderRadius: 'var(--ma-radius)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 15, fontWeight: 700 }}>Tiền cọc hoàn lại cho khách:</span>
+                  <span style={{ fontSize: 15, fontWeight: 600 }}>Tiền cọc hoàn lại cho khách:</span>
                   <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--ma-done-text)' }}>
                     {settlement.hoanCoc} đ
                   </span>
@@ -2662,7 +2662,7 @@ function ConfirmModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'grid', gap: 6 }}>
-          <h4 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--ma-text-primary)' }}>{title}</h4>
+          <h4 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--ma-text-primary)' }}>{title}</h4>
           <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>{message}</p>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
@@ -2754,7 +2754,7 @@ function PromptModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'grid', gap: 6 }}>
-          <h4 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--ma-text-primary)' }}>{title}</h4>
+          <h4 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--ma-text-primary)' }}>{title}</h4>
           <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ma-text-secondary)', lineHeight: 1.55 }}>{message}</p>
         </div>
         <div>

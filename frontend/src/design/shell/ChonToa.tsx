@@ -13,7 +13,7 @@ export function ChonToa({ collapsed = false }: { collapsed?: boolean }) {
   const nutRef = useRef<HTMLButtonElement>(null)
   const danhSachRef = useRef<HTMLUListElement>(null)
 
-  const luaChon = [{ id: null as number | null, ten: `Tất cả ${toa.danhSach.length} toà`, phu: 'Chủ sở hữu' }, ...toa.danhSach.map((t) => ({ id: t.id as number | null, ten: t.ten, phu: `${t.soTang} tầng` }))]
+  const luaChon = [{ id: null as number | null, ten: `Tất cả ${toa.danhSach.length} toà`, phu: 'Chủ nhà' }, ...toa.danhSach.map((t) => ({ id: t.id as number | null, ten: t.ten, phu: `${t.soTang} tầng` }))]
   const viTriChon = Math.max(0, luaChon.findIndex((l) => l.id === toa.toaNhaId))
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export function ChonToa({ collapsed = false }: { collapsed?: boolean }) {
   }
 
   const ten = tenToaDangChon(toa) || 'Chọn toà'
-  const phu = toa.toaNhaId === null ? 'Chủ sở hữu' : `${toa.danhSach.find((t) => t.id === toa.toaNhaId)?.soTang ?? ''} tầng`
+  const phu = toa.toaNhaId === null ? 'Chủ nhà' : `${toa.danhSach.find((t) => t.id === toa.toaNhaId)?.soTang ?? ''} tầng`
 
   function moDanhSach() {
     setChi(viTriChon)

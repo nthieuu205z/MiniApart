@@ -73,7 +73,7 @@ export default function ChuKyThang({ token, vaiTro, mobile, dieuHuong }: TrangPr
   const [nhac, setNhac] = useState<number | null>(null)
   const [slotNut, setSlotNut] = useState<HTMLElement | null>(null)
 
-  // Hai bước tải: danh sách kỳ (đổi toà / sau khi ghi) rồi dữ liệu của kỳ đang xem (đổi kỳ).
+  // Hai bước tải: danh sách tháng (đổi toà / sau khi ghi) rồi dữ liệu của tháng đang xem (đổi tháng).
   useEffect(() => {
     setDsKy(null); setDl(null); setLoi(null)
     if (toaNhaId === null) return undefined
@@ -282,7 +282,7 @@ export default function ChuKyThang({ token, vaiTro, mobile, dieuHuong }: TrangPr
   return <section aria-labelledby="chu-ky-title" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
     <DauTrang
       tieuDe={`Tháng ${nhanDangXem}`}
-      phu={`${tenToa} · kỳ ${dinhDangNgayIso(ky.ngayBatDau)} – ${dinhDangNgayIso(ky.ngayKetThuc)}`}
+      phu={`${tenToa} · tháng ${dinhDangNgayIso(ky.ngayBatDau)} – ${dinhDangNgayIso(ky.ngayKetThuc)}`}
       hanhDong={<>{chonThang}{mobile ? null : <>{nut}<span ref={setSlotNut} style={{ display: 'contents' }} /></>}</>}
     />
     <div onClick={chonBuocTuLink}><ThanhBuoc buoc={cacBuoc} nhan={`Các bước tháng ${ky.thang}`} /></div>

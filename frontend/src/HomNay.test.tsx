@@ -116,7 +116,7 @@ describe('Hôm nay · Chủ', () => {
     await vi.waitFor(() => expect(dongViec('hn-qd').length).toBeGreaterThan(0))
     const d = dongViec('hn-qd')
     expect(d).toHaveLength(4)
-    expect(d[0]).toContain('Hoá đơn tháng 11 chưa gửi'); expect(d[0]).toContain('Kỳ đóng ngày 25/11'); expect(d[0]).toContain('An Nhiên Residence còn ở bước ghi chỉ số')
+    expect(d[0]).toContain('Hoá đơn tháng 11 chưa gửi'); expect(d[0]).toContain('Hạn khoá chỉ số ngày 25/11'); expect(d[0]).toContain('An Nhiên Residence còn ở bước ghi chỉ số')
     expect(d[1]).toContain('1 sự cố khẩn chưa giao thợ'); expect(d[1]).toContain('Điều hòa phòng 403')
     expect(d[2]).toContain('2 hợp đồng hết hạn 02/12/2026'); expect(d[2]).toContain('Còn 10 ngày')
     expect(d[3]).toContain('1 hợp đồng chờ ký')
@@ -166,7 +166,7 @@ describe('Hôm nay · Quản lý', () => {
     toaNhaId: 3, tenToaNha: 'An Nhiên Residence', thoiDiemCapNhat: '2026-11-22T17:37:00+07:00',
     kpi: { khoanConPhaiThu: 50398000, soHoaDonQuaHan: 20, tienQuaHan: 50398000, soPhongDangThue: 9, soPhongTrong: 2, soPhongDangSua: 1, tongSoPhong: 12, tyLeLapDay: 75, soCongToChuaGhi: 9, soSuCoCanXuLy: 14, soCanhBaoDienNuocDangMo: 0 },
     canhBaoDienNuoc: [],
-    congToChuaGhi: { kyHienTaiId: 5, tenKyHienTai: 'Kỳ 11/2026', tongSoCongTo: 24, soCongToDaGhi: 20, soCongToChuaGhi: 9, danhSachChuaGhi: [] },
+    congToChuaGhi: { kyHienTaiId: 5, tenKyHienTai: 'Tháng 11/2026', tongSoCongTo: 24, soCongToDaGhi: 20, soCongToChuaGhi: 9, danhSachChuaGhi: [] },
     lichHenSapToi: [
       { id: 2, hoTen: 'Bùi Thảo Nguyên', soDienThoai: '0999100151', soPhong: '402 (An Nhiên Residence)', thoiGian: '2026-11-23T10:00:00Z', loai: 'XEM_PHONG', trangThai: 'DA_XAC_NHAN' },
       { id: 3, hoTen: 'Đỗ Nhật Quang', soDienThoai: '0999100152', soPhong: '402 (An Nhiên Residence)', thoiGian: '2026-11-24T11:00:00Z', loai: 'XEM_PHONG', trangThai: 'CHO_XAC_NHAN' },
@@ -185,15 +185,15 @@ describe('Hôm nay · Quản lý', () => {
     expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
     expect(container.querySelector('.btn-primary')?.getAttribute('href')).toBe('/chu-ky')
     expect(container.textContent).toContain('theo bảng chỉ số')
-    expect(container.querySelector('[role="alert"].hn-bang')).toBeNull() // 22/11 chưa tới ngày đóng kỳ 25/11
+    expect(container.querySelector('[role="alert"].hn-bang')).toBeNull() // 22/11 chưa tới ngày đóng tháng 25/11
   })
 
-  it('sau ngày đóng kỳ mà còn công tơ thiếu → băng "Tháng 11 đang trễ"', async () => {
+  it('sau ngày đóng tháng mà còn công tơ thiếu → băng "Tháng 11 đang trễ"', async () => {
     vi.setSystemTime(new Date('2026-11-27T10:00:00+07:00'))
     dungMang(duongQl)
     await ve('QUAN_LY', [TOA[0]])
     await vi.waitFor(() => expect(container.querySelector('.hn-bang')).not.toBeNull())
-    expect(container.querySelector('.hn-bang')?.textContent).toBe('Tháng 11 đang trễ: kỳ đóng ngày 25/11/2026 nhưng còn 1 công tơ chưa ghi (phòng 101), nên chưa gửi được hoá đơn.')
+    expect(container.querySelector('.hn-bang')?.textContent).toBe('Tháng 11 đang trễ: hạn khoá chỉ số ngày 25/11/2026 nhưng còn 1 công tơ chưa ghi (phòng 101), nên chưa gửi được hoá đơn.')
   })
 
   it('thanh 4 bước có link /chu-ky?b=; việc cần làm theo thứ tự (nợ, sự cố khẩn/thường, hợp đồng, chờ ký, PCCC)', async () => {

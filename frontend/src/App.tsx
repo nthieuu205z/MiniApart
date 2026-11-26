@@ -370,7 +370,7 @@ function KhungUngDung({ nguoiDung, token, viTri, ketQuaTuyen, laManHinhHep, laMa
   useEffect(() => { setMoNgan(false) }, [duongDan, coNgan])
 
   const taoMuc = (muc: MucDieuHuong): NavItem => ({
-    label: muc.nhan,
+    label: muc.dem === 'chuKy' && soDem.thangMo ? `Tháng ${soDem.thangMo}` : muc.nhan, // nhãn tĩnh = tháng hiện tại, dùng khi chưa tải tháng
     href: muc.duongDan,
     active: mucDangChon(muc, duongDan),
     glyph: 'o-vuong',
@@ -391,7 +391,7 @@ function KhungUngDung({ nguoiDung, token, viTri, ketQuaTuyen, laManHinhHep, laMa
   const kieuNav = coThanhDuoi ? 'bar' : coNgan ? 'drawer' : 'side'
 
   return (
-    <main className="ma-app-shell" data-density={matDoTheoVaiTro(vaiTro, laManHinhHep)} onClick={chanLienKetNoiBo} style={laManHinhHep ? styleKhungUngDungMobile : laManHinhThuGon ? styleKhungUngDungThuGon : styleKhungUngDungDesktop}>
+    <main className="ma-app-shell" data-bottom-nav={coThanhDuoi ? '' : undefined} data-density={matDoTheoVaiTro(vaiTro, laManHinhHep)} onClick={chanLienKetNoiBo} style={laManHinhHep ? styleKhungUngDungMobile : laManHinhThuGon ? styleKhungUngDungThuGon : styleKhungUngDungDesktop}>
       <NavPanel
         className="ma-no-print"
         variant={kieuNav}

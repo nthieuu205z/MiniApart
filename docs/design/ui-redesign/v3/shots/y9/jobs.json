@@ -1,0 +1,602 @@
+[
+ {
+  "name": "hom-nay-1440",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "hom-nay-1024",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "hom-nay-390",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "thu-tien-1440",
+  "path": "/thu-tien",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "thu-tien-1024",
+  "path": "/thu-tien",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "thu-tien-390",
+  "path": "/thu-tien",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "toa-nha-1440",
+  "path": "/toa-nha",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "toa-nha-1024",
+  "path": "/toa-nha",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "toa-nha-390",
+  "path": "/toa-nha",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "toa-nha-3-1440",
+  "path": "/toa-nha/3",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "toa-nha-3-1024",
+  "path": "/toa-nha/3",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "toa-nha-3-390",
+  "path": "/toa-nha/3",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "phong-1-1440",
+  "path": "/phong/1",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "phong-1-1024",
+  "path": "/phong/1",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "phong-1-390",
+  "path": "/phong/1",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "nguoi-thue-1440",
+  "path": "/nguoi-thue",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "nguoi-thue-1024",
+  "path": "/nguoi-thue",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "nguoi-thue-390",
+  "path": "/nguoi-thue",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "nguoi-thue-1-1440",
+  "path": "/nguoi-thue/1",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "nguoi-thue-1-1024",
+  "path": "/nguoi-thue/1",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "nguoi-thue-1-390",
+  "path": "/nguoi-thue/1",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "hop-dong-1440",
+  "path": "/hop-dong",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "hop-dong-1024",
+  "path": "/hop-dong",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "hop-dong-390",
+  "path": "/hop-dong",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "hop-dong-9-1440",
+  "path": "/hop-dong/9",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "hop-dong-9-1024",
+  "path": "/hop-dong/9",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "hop-dong-9-390",
+  "path": "/hop-dong/9",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "su-co-1440",
+  "path": "/su-co",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "su-co-1024",
+  "path": "/su-co",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "su-co-390",
+  "path": "/su-co",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "bao-cao-1440",
+  "path": "/bao-cao",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "bao-cao-1024",
+  "path": "/bao-cao",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "bao-cao-390",
+  "path": "/bao-cao",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "dich-vu-1440",
+  "path": "/dich-vu",
+  "role": "CHU",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "dich-vu-1024",
+  "path": "/dich-vu",
+  "role": "CHU",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "dich-vu-390",
+  "path": "/dich-vu",
+  "role": "CHU",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "ql-hom-nay-1440",
+  "path": "/hom-nay",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "ql-hom-nay-1024",
+  "path": "/hom-nay",
+  "role": "QUAN_LY",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "ql-hom-nay-390",
+  "path": "/hom-nay",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "ql-chu-ky-1440",
+  "path": "/chu-ky",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "ql-chu-ky-1024",
+  "path": "/chu-ky",
+  "role": "QUAN_LY",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "ql-chu-ky-390",
+  "path": "/chu-ky",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "ql-hop-dong-moi-1440",
+  "path": "/hop-dong/moi",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "ql-hop-dong-moi-1024",
+  "path": "/hop-dong/moi",
+  "role": "QUAN_LY",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "ql-hop-dong-moi-390",
+  "path": "/hop-dong/moi",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "ql-lich-hen-1440",
+  "path": "/lich-hen",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "ql-lich-hen-1024",
+  "path": "/lich-hen",
+  "role": "QUAN_LY",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "ql-lich-hen-390",
+  "path": "/lich-hen",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "ql-an-toan-1440",
+  "path": "/an-toan",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "ql-an-toan-1024",
+  "path": "/an-toan",
+  "role": "QUAN_LY",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "ql-an-toan-390",
+  "path": "/an-toan",
+  "role": "QUAN_LY",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "qtht-tai-khoan-1440",
+  "path": "/tai-khoan",
+  "role": "QTHT",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "qtht-tai-khoan-1024",
+  "path": "/tai-khoan",
+  "role": "QTHT",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "qtht-tai-khoan-390",
+  "path": "/tai-khoan",
+  "role": "QTHT",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "qtht-nhat-ky-1440",
+  "path": "/nhat-ky-thao-tac",
+  "role": "QTHT",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "qtht-nhat-ky-1024",
+  "path": "/nhat-ky-thao-tac",
+  "role": "QTHT",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "qtht-nhat-ky-390",
+  "path": "/nhat-ky-thao-tac",
+  "role": "QTHT",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "tho-viec-1440",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "tho-viec-1024",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "tho-viec-390",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "tho-chi-phi-1440",
+  "path": "/tho/chi-phi",
+  "role": "THO",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "tho-chi-phi-1024",
+  "path": "/tho/chi-phi",
+  "role": "THO",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "tho-chi-phi-390",
+  "path": "/tho/chi-phi",
+  "role": "THO",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "nt-hoa-don-1440",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "nt-hoa-don-1024",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "nt-hoa-don-390",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "nt-bao-hong-1440",
+  "path": "/bao-hong",
+  "role": "NGUOI_THUE",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "nt-bao-hong-1024",
+  "path": "/bao-hong",
+  "role": "NGUOI_THUE",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "nt-bao-hong-390",
+  "path": "/bao-hong",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "nt-hop-dong-1440",
+  "path": "/hop-dong",
+  "role": "NGUOI_THUE",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "nt-hop-dong-1024",
+  "path": "/hop-dong",
+  "role": "NGUOI_THUE",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "nt-hop-dong-390",
+  "path": "/hop-dong",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "h": 844,
+  "full": true
+ },
+ {
+  "name": "nt-lich-su-1440",
+  "path": "/lich-su",
+  "role": "NGUOI_THUE",
+  "w": 1440,
+  "h": 900,
+  "full": true
+ },
+ {
+  "name": "nt-lich-su-1024",
+  "path": "/lich-su",
+  "role": "NGUOI_THUE",
+  "w": 1024,
+  "h": 768,
+  "full": true
+ },
+ {
+  "name": "nt-lich-su-390",
+  "path": "/lich-su",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "h": 844,
+  "full": true
+ }
+]

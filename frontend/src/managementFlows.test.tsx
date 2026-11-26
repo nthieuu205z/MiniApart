@@ -7,7 +7,8 @@ import GhiChiSo from './GhiChiSo'
 import TaiKhoanTruyCap from './TaiKhoanTruyCap'
 import QuanLySuaChua from './QuanLySuaChua'
 import DichVuVaKy from './DichVuVaKy'
-import { AnToanVanHanh } from './TuanThuVanHanh'
+import { AnToanVanHanh, NhatKyVanHanh } from './TuanThuVanHanh'
+import QuanLyLichHen from './QuanLyLichHen'
 
 let container: HTMLDivElement
 let root: Root | undefined
@@ -116,5 +117,26 @@ describe('new operational screens', () => {
     await vi.waitFor(()=>expect(container.textContent).toContain('2 việc đến hạn'))
     expect(container.querySelector('form')).toBeNull()
     expect(container.textContent).not.toContain('Lưu hồ sơ PCCC')
+  })
+  it('các màn giữ (dịch vụ, lịch xem phòng, PCCC, nhật ký) có đúng 1 h1 và ≤ 1 nút chính', async () => {
+    vi.stubGlobal('fetch',vi.fn(async(input:RequestInfo|URL)=>{
+      const url=String(input)
+      if(url==='/api/toa-nha')return json([{id:3,ten:'Toà C'}])
+      if(url.startsWith('/api/lich-hen')||url.endsWith('/dich-vu')||url.endsWith('/ky-thanh-toan'))return json([])
+      return json({chuKyThang:6,ngayKiemTraTiep:null,soViecDenHan:0,hoSo:[],thietBi:[],kiemTra:[],content:[],items:[],total:0})
+    }))
+    const man:Array<[string,React.ReactElement]>=[
+      ['Giá dịch vụ & cài đặt',<DichVuVaKy token="t"/>],['Lịch xem phòng',<QuanLyLichHen token="t"/>],
+      ['An toàn PCCC',<AnToanVanHanh token="t" vaiTro="QUAN_LY"/>],['Nhật ký',<NhatKyVanHanh token="t"/>],
+    ]
+    for(const [h1,el] of man){
+      root=createRoot(container)
+      await act(async()=>root!.render(el))
+      await vi.waitFor(()=>expect(container.querySelector('h1')).not.toBeNull())
+      expect(container.querySelectorAll('h1'),h1).toHaveLength(1)
+      expect(container.querySelector('h1')?.textContent).toBe(h1)
+      expect(container.querySelectorAll('.btn-primary').length,h1).toBeLessThanOrEqual(1)
+      await act(async()=>root!.unmount()); root=undefined; container.replaceChildren()
+    }
   })
 })

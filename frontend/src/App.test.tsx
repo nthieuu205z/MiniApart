@@ -33,10 +33,10 @@ const MENU_BY_ROLE: Array<{
   {
     nguoiDung: {
       id: 2,
-      hoTen: 'Chủ sở hữu mẫu',
+      hoTen: 'Chủ nhà mẫu',
       soDienThoai: '0900000002',
       vaiTro: 'CHU',
-      tenVaiTro: 'Chủ sở hữu',
+      tenVaiTro: 'Chủ nhà',
     },
     menuLabels: ['Hôm nay', 'Tiền', 'Toà & phòng', 'Người thuê', 'Hợp đồng', 'Sự cố', 'Báo cáo', 'Giá dịch vụ & cài đặt', 'Lịch xem phòng', 'An toàn PCCC', 'Nhật ký'],
   },
@@ -123,7 +123,7 @@ describe('App role navigation', () => {
 
     expect(mountedApp.container.textContent).toContain('Quản lý toà nhà')
     expect(mountedApp.container.textContent).not.toContain('Không gian quản lý')
-    expect(mountedApp.container.textContent).not.toContain('Kỳ 09/2026')
+    expect(mountedApp.container.textContent).not.toContain('Tháng 09/2026')
     expect(mountedApp.container.querySelector('button[aria-label^="Tìm nhanh"]')).not.toBeNull()
     expect(mountedApp.container.querySelector('.crumb')).toBeNull()
   })
@@ -193,7 +193,7 @@ describe('App role navigation', () => {
 
     expect(appShell.classList.contains('ma-app-shell')).toBe(true)
     expect(nav.classList.contains('ma-no-print')).toBe(true)
-    expect(appShell.querySelectorAll('.ma-no-print')).toHaveLength(3)
+    expect(appShell.querySelectorAll('.ma-no-print')).toHaveLength(2)
   })
 
   it('NFR-USA-01 stacks the login panels at 360px so the form remains within the viewport', async () => {
@@ -438,7 +438,7 @@ describe('App role navigation', () => {
 
     await vi.waitFor(() => {
       expect(mountedApp!.container.querySelector('[data-testid="account-management"]')).not.toBeNull()
-      expect(mountedApp!.container.textContent).toContain('Chủ sở hữu mẫu')
+      expect(mountedApp!.container.textContent).toContain('Chủ nhà mẫu')
     })
 
     expect(mountedApp.container.textContent).toContain('chủ nhà')
@@ -953,10 +953,10 @@ function buildFetchMock(
     },
     {
       id: 2,
-      hoTen: 'Chủ sở hữu mẫu',
+      hoTen: 'Chủ nhà mẫu',
       soDienThoai: '0900000002',
       vaiTro: 'CHU',
-      tenVaiTro: 'Chủ sở hữu',
+      tenVaiTro: 'Chủ nhà',
       trangThai: 'HOAT_DONG',
       tenTrangThai: 'Hoạt động (máy chủ)',
       toaNhaIds: [1, 2],
@@ -992,7 +992,7 @@ function buildFetchMock(
   ]
   const roles = [
     { vaiTro: 'QTHT', tenVaiTro: 'Quản trị hệ thống' },
-    { vaiTro: 'CHU', tenVaiTro: 'Chủ sở hữu' },
+    { vaiTro: 'CHU', tenVaiTro: 'Chủ nhà' },
     { vaiTro: 'QUAN_LY', tenVaiTro: 'Quản lý toà nhà' },
     { vaiTro: 'THO', tenVaiTro: 'Thợ sửa chữa (máy chủ)' },
     { vaiTro: 'NGUOI_THUE', tenVaiTro: 'Người thuê' },
@@ -1907,7 +1907,7 @@ describe('invoice navigation', () => {
     await vi.waitFor(() => expect(mountedApp!.container.querySelector('[data-invoice-row="11"]')).not.toBeNull())
     expect(mountedApp.container.querySelector('[data-invoice-row="11"] [data-invoice-detail-link]')).toBeNull()
     expect(mountedApp.container.querySelector('[data-invoice-without-period]')?.textContent).toBe('QT-11')
-    expect(mountedApp.container.textContent).toContain('không thuộc kỳ thanh toán')
+    expect(mountedApp.container.textContent).toContain('không thuộc tháng tính tiền')
   })
 
   it('FR-INV-02 opens manager HoaDon detail only when all three identifiers are present', async () => {

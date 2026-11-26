@@ -46,7 +46,7 @@ async function taiPhong(token: string, id: number, toaUng: ThongTinToaNha[]): Pr
   return {
     phong, toa, ky: kyHienTai, chiSo, suCo, khongTai, noTheoTen,
     hopDong: hd.filter((h) => h.phongId === id).map((h) => ({ ...h, toaNhaId: toa.id, tenToa: toa.ten })).sort((a, b) => b.ngayBatDau.localeCompare(a.ngayBatDau)),
-    // 4 kỳ gần nhất của phòng (hoá đơn nhận diện theo số phòng trong toà).
+    // 4 tháng gần nhất của phòng (hoá đơn nhận diện theo số phòng trong toà).
     hoaDon: hoaDon.filter((r) => r.soPhong === phong.soPhong && r.trangThai !== 'NHAP').sort((a, b) => b.hanThanhToan.localeCompare(a.hanThanhToan)).slice(0, 4)
       .map((r) => ({ ...r, toaNhaId: toa.id, kyNhan: kyNhanCua(ky.find((k) => k.id === r.kyId)) })),
   }

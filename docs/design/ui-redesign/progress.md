@@ -108,3 +108,11 @@
 - Lô đã gộp: x0/x0b khung+lề, x1 thu tiền, x2 hôm nay, x3 hồ sơ người/phòng, x4 hồ sơ hợp đồng/toà, x5 chu kỳ, x6 sự cố, x7 tìm nhanh, x8 ghi chỉ số, x9 thợ, x10 khách, x11 tạo hợp đồng; x12 (`ui/x12-don`, chưa gộp): toà khung cho báo cáo/lịch hẹn/dashboard Chủ, lề Thợ 16px, nợ UI nhỏ, đo toàn bộ.
 - Test: 606 xanh (72 file). Ảnh: `ux-v2/shots/x12/` (168 job + 42 đường dẫn cũ; overflow/belowHit/contrast = 0).
 - Việc còn lại: Khách desktop chỉ hiện kỳ mới nhất; Thợ desktop còn bảng cũ; h1 thiếu/đôi ở Khách và QTHT `/hoa-don` trống (xem `shots/x12/BAO-CAO.md`); 7 file mồ côi chờ Chủ tịch quyết xoá; QR trả tiền phụ thuộc backend B2.
+
+## V3 — thi công (nhánh `feat/v3`, lô y0–y9)
+- Lô đã gộp vào `feat/v3` (hash gộp): y1 `408827c` · y2 `68c35df` · y3 `065b744` · y4 `6cbb14a` · y5 `d46ea24` · y6 `efff5e6` · y7 `eb0d133` · y8 `19e649f` (y0 nền gộp trước đó). y9 (`ui/y9-don`) chưa gộp, chờ controller.
+- Test: 707 (đầu y9) → 710 xanh, 76 file; `tsc -b` sạch, `npm run build` qua.
+- QA y9 (75 ảnh = 25 route × 1440/1024/390, app thật qua vite 5390): `horizontalOverflow`, `belowHit`, `textBelowFloor`, `contrast.below`, `noAccessibleName` = 0 ở cả 75; `fontFamiliesUsed` chỉ IBM Plex Sans; `h1.count` = 1. `h1.left` bằng nhau trong từng khung (288 / 136 / 16); `h1.top` lệch do khung (xem `v3/shots/y9/BAO-CAO.md`).
+- Quét sót: chữ cũ 103 → 4 dòng giữ có lý do (2 chức vụ bên A trong hợp đồng, 2 regex đọc chuỗi `Kỳ …` của máy chủ); hex cứng 27 → 0; weight 700/IN HOA 28 → 0.
+- Phụ thuộc backend còn mở: xem y10 (QR/thanh toán, thông báo, dữ liệu so sánh theo toà theo hoá đơn).
+- Chưa làm: ảnh V3 `35` (nhắc nợ) và `36` (trạng thái khung) chưa có ảnh app; chưa ghép cặp ảnh V3/app; thẻ "Hợp đồng" Chủ 390 còn lệch tên/người trong thẻ (lô y3); Thanh lý/Huỷ hoá đơn/Từ chối báo giá còn dùng nút `danger` + ngăn riêng, chưa qua `ConfirmDialog`.

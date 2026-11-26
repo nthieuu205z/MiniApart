@@ -66,7 +66,7 @@ describe('QuanLyDashboard', () => {
               mucThamChieu: 40,
               mucTang: 44,
               tyLeTang: 2.1,
-              lyDo: 'Mức tiêu thụ máy bơm kỳ này là 84.00 m3, gấp 2.1 lần trung bình 3 kỳ trước.',
+              lyDo: 'Mức tiêu thụ máy bơm tháng này là 84.00 m3, gấp 2.1 lần trung bình 3 tháng trước.',
               trangThai: alertUpdated ? 'DANG_KIEM_TRA' : 'MOI_PHAT_HIEN',
               nguoiXacNhan: alertUpdated ? 'Phạm Đức Anh' : null,
               ghiChuXuLy: alertUpdated ? 'Đang cử thợ' : null,
@@ -133,14 +133,14 @@ describe('QuanLyDashboard', () => {
     // Verify operational KPIs
     expect(container.textContent).toContain('Còn phải thu')
     expect(container.textContent).toContain('53.990.000')
-    expect(container.textContent).toContain('Công tơ kỳ 10/2026')
+    expect(container.textContent).toContain('Công tơ tháng 10/2026')
     expect(container.textContent).toContain('17/24')
     expect(container.textContent).toContain('Ghi 7 công tơ còn thiếu')
     expect(container.textContent).toContain('chốt số ngày 25/11/2026')
 
     // Verify Anomaly Alert card
     expect(container.textContent).toContain('Cảnh báo bất thường điện nước')
-    expect(container.textContent).toContain('Mức tiêu thụ máy bơm kỳ này là 84.00 m3')
+    expect(container.textContent).toContain('Mức tiêu thụ máy bơm tháng này là 84.00 m3')
     expect(container.textContent).toContain('Mới phát hiện')
 
     // Click "Xác nhận kiểm tra" to open modal dialog
