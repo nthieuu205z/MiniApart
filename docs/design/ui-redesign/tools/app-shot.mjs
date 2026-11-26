@@ -4,10 +4,15 @@
 // Đăng nhập bằng form thật (POST /api/auth/login là lệnh ghi DUY NHẤT tool này gây ra; không bấm nút nghiệp vụ nào).
 // Mật khẩu demo lấy từ biến môi trường MA_DEMO_PASSWORD (giá trị ghi ở đầu docker-compose.demo.yml); không ghi vào file.
 import { pathToFileURL, fileURLToPath } from 'node:url'
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 
-const CDP = process.env.TASTE_CDP || 'C:/Users/nthieuu05/AppData/Local/hermes/profiles/bot-nthieuu/skills/taste/taste-skill/scripts/lib/cdp.mjs'
+const CDP_UNG_VIEN = [
+  process.env.TASTE_CDP,
+  `${process.env.HOME}/.hermes/profiles/bot-nthieuu/skills/taste/taste-skill/scripts/lib/cdp.mjs`,
+  'C:/Users/nthieuu05/AppData/Local/hermes/profiles/bot-nthieuu/skills/taste/taste-skill/scripts/lib/cdp.mjs',
+].filter(Boolean)
+const CDP = CDP_UNG_VIEN.find((p) => existsSync(p)) ?? CDP_UNG_VIEN[0]
 const { Browser, sleep } = await import(pathToFileURL(CDP).href)
 const HERE = dirname(fileURLToPath(import.meta.url))
 const BASE = process.env.MA_APP_URL || 'http://localhost:5190'
