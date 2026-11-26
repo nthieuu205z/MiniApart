@@ -139,7 +139,7 @@ describe('ChuDashboard', () => {
 
     // Thẻ KPI + khối mới theo thiết kế 03
     expect(container.textContent).toContain('Đã thu')
-    expect(container.textContent).toContain('376.130.000')
+    expect(container.textContent).toContain('382.497.000')
     expect(container.textContent).toContain('Còn nợ')
     expect(container.textContent).toContain('173.450.000')
     expect(container.textContent).toContain('Phòng đang thuê')

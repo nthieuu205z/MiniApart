@@ -175,7 +175,7 @@ export default function BaoCaoTongQuan({ token, mobile = false }: Props): React.
     <div data-testid="report-overview-screen" data-layout-variant={variant} className="bc-trang">
       <DauTrang
         tieuDe="Báo cáo"
-        phu={`${baoCao.tenToaNha} · từ tháng ${Number(boLoc.tuNgay.slice(5, 7))}${boLoc.tuNgay.slice(0, 4) === boLoc.denNgay.slice(0, 4) ? '' : `/${boLoc.tuNgay.slice(0, 4)}`} đến hết ${dinhDangNgayIso(boLoc.denNgay)} · tính trên hoá đơn đã gửi`}
+        phu={`${ct && boLoc.toaNhaId === null ? `Tất cả ${ct.toa.length} toà` : baoCao.tenToaNha} · từ tháng ${Number(boLoc.tuNgay.slice(5, 7))}${boLoc.tuNgay.slice(0, 4) === boLoc.denNgay.slice(0, 4) ? '' : `/${boLoc.tuNgay.slice(0, 4)}`} đến hết ${dinhDangNgayIso(boLoc.denNgay)} · tính trên hoá đơn đã gửi`}
         hanhDong={<>
           <span className="bc-chip" role="group" aria-label="Khoảng thời gian">
             {chip.map(([ten, tu]) => <button key={ten} type="button" className="chip" aria-pressed={boLoc.tuNgay === tu} onClick={() => setBoLoc((b) => ({ ...b, tuNgay: tu }))}>{ten}</button>)}
@@ -217,7 +217,7 @@ export default function BaoCaoTongQuan({ token, mobile = false }: Props): React.
                     ))}
                   </div>
                   <div className="bc-nhan" style={{ gridTemplateColumns: `repeat(${theoThang.length}, minmax(0, 1fr))` }}>
-                    {theoThang.map((t) => <div key={t.m}><b>{nhanThang(t.m)}</b><span>{Math.round(t.daThu / 1e6)} / {Math.round(t.daGui / 1e6)} tr</span></div>)}
+                    {theoThang.map((t) => <div key={t.m}><b>{nhanThang(t.m)}</b><span>{Math.round(t.daThu / 1e6)}<span className="an-hep"> / {Math.round(t.daGui / 1e6)}</span> tr</span></div>)}
                   </div>
                   {thapVi ? <p className="t-2" style={{ margin: '12px 0 0' }}>{nhanThang(cuoi.m)} thấp vì hoá đơn {nhanThang(cuoi.m).toLowerCase()} chưa gửi (mới có {cuoi.n} hoá đơn).</p> : null}
                 </div>
@@ -251,8 +251,9 @@ export default function BaoCaoTongQuan({ token, mobile = false }: Props): React.
                     { key: 'thue', label: 'Đang thuê', align: 'num', render: (t) => `${t.thue}/${t.soPhong}` },
                     { key: 'sua', label: 'Chi sửa chữa', align: 'num', render: (t) => tien(t.chiSua) },
                   ]}
-                  tongHang={dongToa.length > 1 ? ['Cộng', tien(tong.daGui), tien(tong.daThu), `${phanTram(tong.daThu, tong.daGui)}%`, tien(tong.conNo), `${dongToa.reduce((a, t) => a + t.thue, 0)}/${dongToa.reduce((a, t) => a + t.soPhong, 0)}`, tien(chiSua)] : undefined}
+                  tongHang={dongToa.length > 1 && !mobile ? ['Cộng', tien(tong.daGui), tien(tong.daThu), `${phanTram(tong.daThu, tong.daGui)}%`, tien(tong.conNo), `${dongToa.reduce((a, t) => a + t.thue, 0)}/${dongToa.reduce((a, t) => a + t.soPhong, 0)}`, tien(chiSua)] : undefined}
                 />
+                {dongToa.length > 1 && mobile ? <p className="t-2" style={{ margin: '12px 0 0' }}>Cộng {dongToa.length} toà: đã thu {tien(tong.daThu)} · còn nợ {tien(tong.conNo)}</p> : null}
               </div>
             </Card>
           </>

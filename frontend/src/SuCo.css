@@ -33,7 +33,8 @@
   .sc-nhom { padding: 0 var(--ma-space-4); }
   .sc-ds .irow { padding: var(--ma-space-2) var(--ma-space-4); }
   .sc-ct { padding: var(--ma-space-4); }
-  .sc-ct .ma-chandinh { flex-wrap: wrap; }
+  /* ChanDinh dính đáy nhưng phải nằm trên thanh tab dưới (y0 chưa tính chiều cao thanh này). */
+  .sc-ct .ma-chandinh { flex-wrap: wrap; bottom: var(--ma-bottom-nav-height); z-index: 15; }
   .sc-ct .ma-chandinh .btn-primary { order: -1; flex-basis: 100%; }
   .sc-ct .kv { grid-template-columns: minmax(0, 1fr); gap: var(--ma-space-1); }
   .sc-ct .kv dd { margin-bottom: var(--ma-space-2); }
@@ -43,6 +44,7 @@
 .bc-trang { display: grid; gap: var(--ma-space-4); min-width: 0; }
 .bc-chip { display: inline-flex; gap: var(--ma-space-2); flex-wrap: wrap; }
 .bc-luoi { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--ma-space-4); align-items: start; }
+.bc-trang .card-head { flex-wrap: wrap; }
 .bc-chuthich { display: inline-flex; gap: var(--ma-space-4); font: var(--ma-text-body-sm); color: var(--ma-text-secondary); }
 .bc-chuthich i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 .gui { background: var(--ma-ink-300); }
@@ -61,4 +63,5 @@
 @media (max-width: 767px) {
   .bc-luoi { grid-template-columns: minmax(0, 1fr); }
   .bc-cot { height: 160px; }
+  .bc-nhan .an-hep { display: none; }
 }

@@ -93,7 +93,7 @@ describe('BaoCaoTongQuan (một trang, chỉ đọc)', () => {
     expect(container!.querySelector('.btn-primary')).toBeNull()
     expect(container!.querySelectorAll('h1')).toHaveLength(1)
     expect(container!.querySelector('h1')?.textContent).toBe('Báo cáo')
-    expect(container!.querySelector('.ma-dautrang-phu')?.textContent).toBe('Tất cả toà · từ tháng 7 đến hết 31/08/2040 · tính trên hoá đơn đã gửi')
+    expect(container!.querySelector('.ma-dautrang-phu')?.textContent).toBe('Tất cả 2 toà · từ tháng 7 đến hết 31/08/2040 · tính trên hoá đơn đã gửi')
     expect(assertar.mock.calls.filter((c) => !c[0])).toEqual([])
     expect(fetchMock).toHaveBeenCalledWith('/api/bao-cao/tong-quan?tuNgay=2040-07-01&denNgay=2040-08-31', expect.objectContaining({ headers: { Authorization: 'Bearer report-token' } }))
   })

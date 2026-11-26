@@ -148,7 +148,8 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
 
   const noiDung = (d: DashboardData, k: DashboardData['kpi']) => {
     const phatHanh = Number(k.doanhThuPhatHanh)
-    const daThu = phatHanh > 0 ? (Number(k.thucThu) / phatHanh) * 100 : 0
+    // Đã thu cộng từ hoá đơn (daThuHopDong), cùng số với báo cáo; không dùng sổ giao dịch thucThu.
+    const daThu = phatHanh > 0 ? (Number(k.daThuHopDong) / phatHanh) * 100 : 0
     const tuoi = d.tuoiNo
     const nhomQuaHan = NHOM_TUOI.map(([ma, nhan]) => ({ nhan, soLuong: tuoi[ma].soLuong }))
     const tongQuaHan = nhomQuaHan.reduce((s, n) => s + n.soLuong, 0)
@@ -172,7 +173,7 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
       <div className="grid">
         <Card className={cot('c-4')}>
           <h2 className="h2" style={{ ...NHAN_KPI, marginBottom: 12 }}>Đã thu</h2>
-          <p className="kpi-value" style={{ margin: 0 }}>{dinhDangTien(k.thucThu)}<span className="unit">₫</span></p>
+          <p className="kpi-value" style={{ margin: 0 }}>{dinhDangTien(k.daThuHopDong)}<span className="unit">₫</span></p>
           <p className="kpi-desc" style={MO_TA_KPI}>Đã thu <b>{dinhDangSo(Math.round(daThu * 10) / 10)}%</b> trên {tien(k.doanhThuPhatHanh)} phát hành trong kỳ.</p>
           <div className="card-foot"><a className="link-more" href={duongDan('/bao-cao')}>Báo cáo doanh thu <Icon name="arrow-right" size="sm" /></a></div>
         </Card>

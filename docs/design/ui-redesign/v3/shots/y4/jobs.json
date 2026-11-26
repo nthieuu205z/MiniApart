@@ -1,0 +1,12 @@
+[
+{"name":"08-chu-su-co-1440","path":"/su-co","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"09-chu-su-co-4-1440","path":"/su-co?id=1","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"09-chu-su-co-4-390","path":"/su-co?id=1","role":"CHU","w":390,"h":844,"full":true},
+{"name":"19-ql-su-co-1440","path":"/su-co","role":"QUAN_LY","w":1440,"h":900,"full":true},
+{"name":"19-ql-su-co-390","path":"/su-co","role":"QUAN_LY","w":390,"h":844,"full":true},
+{"name":"10-chu-bao-cao-1440","path":"/bao-cao","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"10-chu-bao-cao-390","path":"/bao-cao","role":"CHU","w":390,"h":844,"full":true},
+{"name":"y4-chu-tong-quan-1440","path":"/tong-quan","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"y4-chu-bao-cao-tieu-thu-1440","path":"/bao-cao/tieu-thu","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"y4-chu-bao-cao-chi-phi-1440","path":"/bao-cao/chi-phi-bao-tri","role":"CHU","w":1440,"h":900,"full":true}
+]

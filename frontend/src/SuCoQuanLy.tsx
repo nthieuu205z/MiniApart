@@ -253,7 +253,7 @@ export default function SuCoQuanLy({ token, vaiTro = 'QUAN_LY', dieuHuong = dieu
         </div>
       )}
 
-      {!chonKetThuc && !baoGiaCho && (
+      {CO_THE_CO_BAO_GIA.includes(chon.trangThai) && !baoGiaCho && (
         <form className="sc-hang" onSubmit={(e) => { e.preventDefault(); void command(chon.id, 'chi-phi', costs[chon.id] ?? { chiPhi: String(chon.chiPhi ?? 0), benChiuChiPhi: chon.benChiuChiPhi ?? 'CHU_NHA' }, 'PUT') }}>
           <Field label="Chi phí sửa chữa (đồng)"><input className="input" type="number" min="0" step="0.01" required value={costs[chon.id]?.chiPhi ?? chon.chiPhi ?? ''} onChange={(e) => setCosts({ ...costs, [chon.id]: { chiPhi: e.target.value, benChiuChiPhi: benChiu } })} /></Field>
           <Field label="Bên chịu chi phí"><select className="select" value={benChiu} onChange={(e) => setCosts({ ...costs, [chon.id]: { chiPhi: costs[chon.id]?.chiPhi ?? String(chon.chiPhi ?? ''), benChiuChiPhi: e.target.value } })}><option value="CHU_NHA">Chủ nhà</option><option value="NGUOI_THUE">Người thuê</option></select></Field>
