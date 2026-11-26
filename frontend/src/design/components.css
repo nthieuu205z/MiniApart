@@ -467,7 +467,7 @@ th[aria-sort] .th-sort { color: var(--ma-text-primary); font-weight: 600; }
 .card { border-radius: 8px; border: 1px solid var(--ma-line-200); box-shadow: none; padding: 20px; }
 .card-head .h2, .card-head h2 { font: var(--ma-text-block-title); color: var(--ma-text-primary); }
 .modal { border-radius: 8px; }
-.tag { height: auto; padding: 0; background: none !important; border-radius: 0; gap: 6px; color: var(--ma-text-primary); font-weight: 500; }
+.tag { height: auto; padding: 0; background: none; border-radius: 0; gap: 6px; color: var(--ma-text-primary); font-weight: 500; }
 .tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
 .tag > .ic-sm { display: none; }
 .tag-success { color: var(--ma-done-text); }
@@ -555,3 +555,4 @@ th[aria-sort] .th-sort { color: var(--ma-text-primary); font-weight: 600; }
 .crumb, .crumbs { font-size: 13px; color: var(--ma-text-secondary); }
 .crumb a, .crumbs a { color: var(--ma-text-secondary); }
 .nav-item[aria-current="page"] { box-shadow: none; }
+.tag[style*="background"] { padding: 2px 8px; border-radius: 6px; }

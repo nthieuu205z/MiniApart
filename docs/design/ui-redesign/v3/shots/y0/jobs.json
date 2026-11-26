@@ -1,0 +1,11 @@
+[
+{"name":"y0-chu-hom-nay-1440","path":"/hom-nay","role":"CHU","w":1440,"h":900,"full":true},
+{"name":"y0-chu-hom-nay-390","path":"/hom-nay","role":"CHU","w":390,"h":844,"full":true},
+{"name":"y0-ql-hom-nay-1440","path":"/hom-nay","role":"QUAN_LY","w":1440,"h":900,"full":true},
+{"name":"y0-ql-hom-nay-390","path":"/hom-nay","role":"QUAN_LY","w":390,"h":844,"full":true},
+{"name":"y0-tho-viec-390","path":"/viec-cua-toi","role":"THO","w":390,"h":844,"full":true},
+{"name":"y0-kh-tien-nha-390","path":"/hoa-don-cua-toi","role":"NGUOI_THUE","w":390,"h":844,"full":true},
+{"name":"y0-qtht-tai-khoan-1440","path":"/tai-khoan","role":"QTHT","w":1440,"h":900,"full":true},
+{"name":"y0-dang-nhap-1440","path":"/dang-nhap","role":null,"w":1440,"h":900,"full":true},
+{"name":"y0-dang-nhap-390","path":"/dang-nhap","role":null,"w":390,"h":844,"full":true}
+]
