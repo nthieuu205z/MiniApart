@@ -1,5 +1,2456 @@
 [
  {
+  "name": "hom-nay-1440",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/hom-nay-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 41,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 129,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1161,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "hom-nay-1024",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/hom-nay-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 41,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 112,
+    "minRatio": 5.72,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1613,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "hom-nay-390",
+  "path": "/hom-nay",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/hom-nay-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 33,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 94,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 2441,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "thu-tien-1440",
+  "path": "/thu-tien",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/thu-tien-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 93,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 241,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1098,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "thu-tien-1024",
+  "path": "/thu-tien",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/thu-tien-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 93,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 224,
+    "minRatio": 5.72,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1250,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "thu-tien-390",
+  "path": "/thu-tien",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/thu-tien-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 40,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 89,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1549,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "toa-nha-1440",
+  "path": "/toa-nha",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/toa-nha-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 19,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 63,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 900,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "toa-nha-1024",
+  "path": "/toa-nha",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/toa-nha-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 19,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 46,
+    "minRatio": 5.72,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 768,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "toa-nha-390",
+  "path": "/toa-nha",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/toa-nha-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 12,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 34,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 844,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "toa-nha-3-1440",
+  "path": "/toa-nha/3",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/toa-nha-3-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 122
+   },
+   "horizontalOverflow": 0,
+   "controls": 42,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 154,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1484,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "toa-nha-3-1024",
+  "path": "/toa-nha/3",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/toa-nha-3-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 122
+   },
+   "horizontalOverflow": 0,
+   "controls": 42,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 137,
+    "minRatio": 5.62,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 2156,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "toa-nha-3-390",
+  "path": "/toa-nha/3",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/toa-nha-3-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 112
+   },
+   "horizontalOverflow": 0,
+   "controls": 35,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 135,
+    "minRatio": 5.62,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 2838,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "phong-1-1440",
+  "path": "/phong/1",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/phong-1-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 122
+   },
+   "horizontalOverflow": 0,
+   "controls": 28,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 93,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 930,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "phong-1-1024",
+  "path": "/phong/1",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/phong-1-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 122
+   },
+   "horizontalOverflow": 0,
+   "controls": 28,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 76,
+    "minRatio": 5.72,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1238,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "phong-1-390",
+  "path": "/phong/1",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/phong-1-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 112
+   },
+   "horizontalOverflow": 0,
+   "controls": 21,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 71,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 2023,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "nguoi-thue-1440",
+  "path": "/nguoi-thue",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/nguoi-thue-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 133
+   },
+   "horizontalOverflow": 0,
+   "controls": 69,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 212,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1475,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "nguoi-thue-1024",
+  "path": "/nguoi-thue",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/nguoi-thue-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 133
+   },
+   "horizontalOverflow": 0,
+   "controls": 69,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 195,
+    "minRatio": 5.36,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1475,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "nguoi-thue-390",
+  "path": "/nguoi-thue",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/nguoi-thue-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 129
+   },
+   "horizontalOverflow": 0,
+   "controls": 43,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 106,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 3555,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "nguoi-thue-1-1440",
+  "path": "/nguoi-thue/1",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/nguoi-thue-1-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 122
+   },
+   "horizontalOverflow": 0,
+   "controls": 33,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 117,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1130,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "nguoi-thue-1-1024",
+  "path": "/nguoi-thue/1",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/nguoi-thue-1-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 122
+   },
+   "horizontalOverflow": 0,
+   "controls": 33,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 100,
+    "minRatio": 5.36,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1484,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "nguoi-thue-1-390",
+  "path": "/nguoi-thue/1",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/nguoi-thue-1-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 112
+   },
+   "horizontalOverflow": 0,
+   "controls": 25,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 91,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 2542,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "hop-dong-1440",
+  "path": "/hop-dong",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/hop-dong-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 35,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 73,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 900,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "hop-dong-1024",
+  "path": "/hop-dong",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/hop-dong-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 35,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 56,
+    "minRatio": 5.72,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 768,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "hop-dong-390",
+  "path": "/hop-dong",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/hop-dong-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 20,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 33,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 844,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "hop-dong-9-1440",
+  "path": "/hop-dong/9",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/hop-dong-9-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 122
+   },
+   "horizontalOverflow": 0,
+   "controls": 23,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 109,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1219,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "hop-dong-9-1024",
+  "path": "/hop-dong/9",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/hop-dong-9-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 122
+   },
+   "horizontalOverflow": 0,
+   "controls": 23,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 92,
+    "minRatio": 5.62,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1870,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "hop-dong-9-390",
+  "path": "/hop-dong/9",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/hop-dong-9-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 112
+   },
+   "horizontalOverflow": 0,
+   "controls": 16,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 92,
+    "minRatio": 5.62,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 2374,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "su-co-1440",
+  "path": "/su-co",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/su-co-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 27,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 88,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 900,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "su-co-1024",
+  "path": "/su-co",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/su-co-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 27,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 71,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 860,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "su-co-390",
+  "path": "/su-co",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/su-co-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 17,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 42,
+    "minRatio": 5.62,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 844,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "bao-cao-1440",
+  "path": "/bao-cao",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/bao-cao-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 133
+   },
+   "horizontalOverflow": 0,
+   "controls": 29,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 120,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1048,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "bao-cao-1024",
+  "path": "/bao-cao",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/bao-cao-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 133
+   },
+   "horizontalOverflow": 0,
+   "controls": 29,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 103,
+    "minRatio": 5.36,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1100,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "bao-cao-390",
+  "path": "/bao-cao",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/bao-cao-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 129
+   },
+   "horizontalOverflow": 0,
+   "controls": 22,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 80,
+    "minRatio": 5.36,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1976,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "dich-vu-1440",
+  "path": "/dich-vu",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/dich-vu-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 57,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 144,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1367,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "dich-vu-1024",
+  "path": "/dich-vu",
+  "role": "CHU",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/dich-vu-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 57,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 127,
+    "minRatio": 5.72,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1483,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "dich-vu-390",
+  "path": "/dich-vu",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/dich-vu-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 25,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 30,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1563,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-hom-nay-1440",
+  "path": "/hom-nay",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-hom-nay-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 30,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 98,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 900,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-hom-nay-1024",
+  "path": "/hom-nay",
+  "role": "QUAN_LY",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-hom-nay-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 30,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 81,
+    "minRatio": 5.72,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1162,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-hom-nay-390",
+  "path": "/hom-nay",
+  "role": "QUAN_LY",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-hom-nay-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 14,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 72,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1277,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-chu-ky-1440",
+  "path": "/chu-ky",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-chu-ky-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 19,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 84,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 928,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-chu-ky-1024",
+  "path": "/chu-ky",
+  "role": "QUAN_LY",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-chu-ky-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 19,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 67,
+    "minRatio": 5.72,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1349,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-chu-ky-390",
+  "path": "/chu-ky",
+  "role": "QUAN_LY",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-chu-ky-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 6,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 59,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1596,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-hop-dong-moi-1440",
+  "path": "/hop-dong/moi",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-hop-dong-moi-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 122
+   },
+   "horizontalOverflow": 0,
+   "controls": 48,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 88,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1503,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-hop-dong-moi-1024",
+  "path": "/hop-dong/moi",
+  "role": "QUAN_LY",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-hop-dong-moi-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 122
+   },
+   "horizontalOverflow": 0,
+   "controls": 48,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 71,
+    "minRatio": 5.72,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1575,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-hop-dong-moi-390",
+  "path": "/hop-dong/moi",
+  "role": "QUAN_LY",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-hop-dong-moi-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 112
+   },
+   "horizontalOverflow": 0,
+   "controls": 37,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 55,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 2892,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-lich-hen-1440",
+  "path": "/lich-hen",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-lich-hen-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 34,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 151,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1287,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-lich-hen-1024",
+  "path": "/lich-hen",
+  "role": "QUAN_LY",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-lich-hen-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 34,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 134,
+    "minRatio": 5.62,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1377,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-lich-hen-390",
+  "path": "/lich-hen",
+  "role": "QUAN_LY",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-lich-hen-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 23,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 129,
+    "minRatio": 5.62,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 2192,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-an-toan-1440",
+  "path": "/an-toan",
+  "role": "QUAN_LY",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-an-toan-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 24,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 71,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1103,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-an-toan-1024",
+  "path": "/an-toan",
+  "role": "QUAN_LY",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-an-toan-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 24,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 54,
+    "minRatio": 5.62,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1103,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "ql-an-toan-390",
+  "path": "/an-toan",
+  "role": "QUAN_LY",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/ql-an-toan-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 10,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 43,
+    "minRatio": 5.62,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1485,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "qtht-tai-khoan-1440",
+  "path": "/tai-khoan",
+  "role": "QTHT",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/qtht-tai-khoan-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 24,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 87,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 900,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "qtht-tai-khoan-1024",
+  "path": "/tai-khoan",
+  "role": "QTHT",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/qtht-tai-khoan-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 24,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 80,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 800,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "qtht-tai-khoan-390",
+  "path": "/tai-khoan",
+  "role": "QTHT",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/qtht-tai-khoan-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 10,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 49,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1571,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "qtht-nhat-ky-1440",
+  "path": "/nhat-ky-thao-tac",
+  "role": "QTHT",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/v3/shots/y9/qtht-nhat-ky-1440.png",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 288,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 20,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 233,
+    "minRatio": 5.03,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1625,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "qtht-nhat-ky-1024",
+  "path": "/nhat-ky-thao-tac",
+  "role": "QTHT",
+  "w": 1024,
+  "png": "docs/design/ui-redesign/v3/shots/y9/qtht-nhat-ky-1024.png",
+  "qa": {
+   "viewport": "1024×768",
+   "h1": {
+    "count": 1,
+    "left": 136,
+    "top": 96
+   },
+   "horizontalOverflow": 0,
+   "controls": 20,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 226,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1827,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "qtht-nhat-ky-390",
+  "path": "/nhat-ky-thao-tac",
+  "role": "QTHT",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/qtht-nhat-ky-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 14,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 220,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 7039,
+   "khongCoQuyen": false
+  }
+ },
+ {
   "name": "tho-viec-1440",
   "path": "/viec-cua-toi",
   "role": "THO",
@@ -82,6 +2533,49 @@
    "imgNoAlt": 0,
    "focusOutline": "solid 2px rgb(27, 86, 176)",
    "docHeight": 947,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "tho-viec-390",
+  "path": "/viec-cua-toi",
+  "role": "THO",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/tho-viec-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 16
+   },
+   "horizontalOverflow": 0,
+   "controls": 13,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 50,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 998,
    "khongCoQuyen": false
   }
  },
@@ -172,6 +2666,49 @@
   }
  },
  {
+  "name": "tho-chi-phi-390",
+  "path": "/tho/chi-phi",
+  "role": "THO",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/tho-chi-phi-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 16
+   },
+   "horizontalOverflow": 0,
+   "controls": 7,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 26,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 844,
+   "khongCoQuyen": false
+  }
+ },
+ {
   "name": "nt-hoa-don-1440",
   "path": "/hoa-don-cua-toi",
   "role": "NGUOI_THUE",
@@ -254,6 +2791,49 @@
    "imgNoAlt": 0,
    "focusOutline": "solid 2px rgb(27, 86, 176)",
    "docHeight": 1275,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "nt-hoa-don-390",
+  "path": "/hoa-don-cua-toi",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/nt-hoa-don-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 16
+   },
+   "horizontalOverflow": 0,
+   "controls": 14,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 86,
+    "minRatio": 6.54,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1621,
    "khongCoQuyen": false
   }
  },
@@ -344,6 +2924,49 @@
   }
  },
  {
+  "name": "nt-bao-hong-390",
+  "path": "/bao-hong",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/nt-bao-hong-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 16
+   },
+   "horizontalOverflow": 0,
+   "controls": 16,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 23,
+    "minRatio": 6.54,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 931,
+   "khongCoQuyen": false
+  }
+ },
+ {
   "name": "nt-hop-dong-1440",
   "path": "/hop-dong",
   "role": "NGUOI_THUE",
@@ -430,6 +3053,49 @@
   }
  },
  {
+  "name": "nt-hop-dong-390",
+  "path": "/hop-dong",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/nt-hop-dong-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 16
+   },
+   "horizontalOverflow": 0,
+   "controls": 9,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 33,
+    "minRatio": 6.54,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1047,
+   "khongCoQuyen": false
+  }
+ },
+ {
   "name": "nt-lich-su-1440",
   "path": "/lich-su",
   "role": "NGUOI_THUE",
@@ -512,6 +3178,49 @@
    "imgNoAlt": 0,
    "focusOutline": "solid 2px rgb(27, 86, 176)",
    "docHeight": 768,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "nt-lich-su-390",
+  "path": "/lich-su",
+  "role": "NGUOI_THUE",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y9/nt-lich-su-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 16
+   },
+   "horizontalOverflow": 0,
+   "controls": 12,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 53,
+    "minRatio": 6.54,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 1084,
    "khongCoQuyen": false
   }
  }
