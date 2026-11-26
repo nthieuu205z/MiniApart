@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ApiError, fetchHopDongQuanLy, type ThongTinHopDong } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
-import { StatusTag } from './design/core/StatusTag'
+import { DauTrang } from './design/layout/DauTrang'
 import { Icon } from './design/core/Icon'
 import { Card } from './design/layout/Card'
 import { FilterChip } from './design/forms/FilterChip'
-import { DataTable, type DataTableColumn, type DataTableChip } from './design/table/DataTable'
+import { DataTable, type DataTableColumn } from './design/table/DataTable'
 import { EmptyState } from './design/feedback/EmptyState'
 import { ScreenNotice } from './design/layout/Screen'
 import { downloadManagementFile } from './managementApi'
@@ -13,11 +13,19 @@ import { useMotToa } from './toaDangChon'
 
 type Props = { token: string; mobile?: boolean }
 
+export type TabHopDong = 'can-xu-ly' | 'hieu-luc' | 'da-thanh-ly'
 export type BoLocHopDongQuanLy = {
   toaNhaId: number | null
   sapHetHan: boolean
   hopDongId: number | null
+  loc: TabHopDong
 }
+
+const TAB: { khoa: TabHopDong; nhan: string; match: (h: ThongTinHopDong) => boolean }[] = [
+  { khoa: 'can-xu-ly', nhan: 'Cần xử lý', match: (h) => h.trangThai === 'CHO_KY' || h.trangThai === 'DA_COC' || (h.trangThai === 'HIEU_LUC' && h.sapHetHan) },
+  { khoa: 'hieu-luc', nhan: 'Đang hiệu lực', match: (h) => h.trangThai === 'HIEU_LUC' },
+  { khoa: 'da-thanh-ly', nhan: 'Đã thanh lý', match: (h) => h.trangThai === 'DA_THANH_LY' },
+]
 
 /** FR-BLD-06 keeps the manager contract worklist state in the URL for dashboard click-through. */
 export function layBoLocHopDongQuanLyTuUrl(url: string | URL): BoLocHopDongQuanLy {
@@ -26,13 +34,15 @@ export function layBoLocHopDongQuanLyTuUrl(url: string | URL): BoLocHopDongQuanL
     toaNhaId: soNguyenDuong(searchParams.get('toaNhaId')),
     sapHetHan: searchParams.get('sapHetHan') === 'true',
     hopDongId: soNguyenDuong(searchParams.get('hopDongId')),
+    // ?sapHetHan=true (link cũ từ Hôm nay) luôn mở Cần xử lý.
+    loc: TAB.find((t) => t.khoa === searchParams.get('loc') && searchParams.get('sapHetHan') !== 'true')?.khoa ?? 'can-xu-ly',
   }
 }
 
 export default function HopDongQuanLy({ token, mobile = false }: Props): React.ReactElement {
   const toa = useMotToa({ tuChonDau: true })
   const [boLoc, setBoLoc] = useState<BoLocHopDongQuanLy>(() => (
-    typeof window === 'undefined' ? { toaNhaId: null, sapHetHan: false, hopDongId: null } : layBoLocHopDongQuanLyTuUrl(window.location.href)
+    typeof window === 'undefined' ? { toaNhaId: null, sapHetHan: false, hopDongId: null, loc: 'can-xu-ly' } : layBoLocHopDongQuanLyTuUrl(window.location.href)
   ))
   // Toà do khung quyết định; chỉ khi khung chưa có (link cũ, test riêng lẻ) mới dùng ?toaNhaId= trên URL.
   const toaNhaId = toa.toaNhaId ?? boLoc.toaNhaId
@@ -47,6 +57,7 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
     query.set('toaNhaId', String(toaNhaId))
     if (boLoc.sapHetHan) query.set('sapHetHan', 'true')
     if (boLoc.hopDongId) query.set('hopDongId', String(boLoc.hopDongId))
+    query.set('loc', boLoc.loc)
     window.history.replaceState({}, '', `/hop-dong?${query.toString()}`)
   }, [boLoc, toaNhaId])
 
@@ -68,16 +79,16 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
     return () => { mounted = false }
   }, [toaNhaId, token, thu])
 
-  const hopDongsHienThi = useMemo(
-    () => boLoc.sapHetHan ? hopDongs.filter((hopDong) => hopDong.sapHetHan) : hopDongs,
-    [boLoc.sapHetHan, hopDongs],
-  )
   const variant = mobile ? 'mobile' : 'desktop'
-
-  // DataTable chưa có sắp xếp mặc định: xếp Phòng tăng dần (số tự nhiên) trước khi đưa vào.
-  const hangSapXep = useMemo(() => [...hopDongsHienThi].sort((a, b) => a.soPhong.localeCompare(b.soPhong, 'vi', { numeric: true })), [hopDongsHienThi])
+  const tabHienTai = TAB.find((t) => t.khoa === boLoc.loc) ?? TAB[0]
+  const demTab = (t: (typeof TAB)[number]) => hopDongs.filter(t.match).length
+  // Ít ngày còn lại lên đầu: việc gấp nhất nằm trên cùng.
+  const hangSapXep = useMemo(
+    () => hopDongs.filter((h) => tabHienTai.match(h) && (!boLoc.sapHetHan || h.sapHetHan)).sort((a, b) => a.soNgayConLai - b.soNgayConLai || a.soPhong.localeCompare(b.soPhong, 'vi', { numeric: true })),
+    [hopDongs, tabHienTai, boLoc.sapHetHan],
+  )
+  const hopDongsHienThi = hangSapXep
   const hieuLuc = hopDongs.filter((h) => h.trangThai === 'HIEU_LUC')
-  const tongThue = hieuLuc.reduce((t, h) => t + Number(h.giaThue), 0)
   const tongCoc = hieuLuc.reduce((t, h) => t + Number(h.tienCoc), 0)
   const [thongBaoPdf, setThongBaoPdf] = useState<string | null>(null)
   const inPdf = async (rows: ThongTinHopDong[]) => {
@@ -89,19 +100,17 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
       setThongBaoPdf(reason instanceof Error ? reason.message : 'Không thể tải PDF.')
     }
   }
-  // Chip "Đã cọc" chỉ hiện khi có hợp đồng ở trạng thái đó.
-  const chips = useMemo(() => CHIP.filter((c) => c.key !== 'DA_COC' || hopDongsHienThi.some(c.match)), [hopDongsHienThi])
-  const cot = useMemo(() => cotHopDong(), [])
+  const tenToa = toa.danhSach.find((t) => t.id === toaNhaId)?.ten ?? `Cả ${toa.danhSach.length} toà`
+  const cot = useMemo(() => cotHopDong(toa.danhSach.find((t) => t.id === toaNhaId)?.ten ?? ''), [toa.danhSach, toaNhaId])
 
   return (
     <section data-testid="manager-contract-screen" data-layout-variant={variant} aria-labelledby="manager-contract-title" style={{ display: 'grid', gap: 16, minWidth: 0 }}>
       <style>{CSS_THE_MOBILE}</style>
-      <header className="topbar">
-        <div className="title-block">
-          <h1 className="h1" id="manager-contract-title">Hợp đồng</h1>
-          <p className="sub">{hieuLuc.length} đang hiệu lực · tổng tiền thuê {dinhDangTien(tongThue)} ₫/tháng · tiền cọc đang giữ {dinhDangTien(tongCoc)} ₫</p>
-        </div>
-        <div className="topbar-actions">
+      <DauTrang
+        tieuDe={<span id="manager-contract-title">Hợp đồng</span>}
+        phu={`${tenToa} · ${hieuLuc.length} đang hiệu lực · giữ cọc ${dinhDangTien(tongCoc)} ₫`}
+        hanhDong={
+          <>
           {toa.canChonTaiCho ? (
             <>
               <label className="sr-only" htmlFor="hop-dong-toa">Toà nhà</label>
@@ -112,8 +121,9 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
             </>
           ) : null}
           <a className="btn btn-primary" href="/hop-dong/moi"><Icon name="plus" />Tạo hợp đồng</a>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {boLoc.sapHetHan ? (
         <p data-contract-filter className="row-wrap" style={{ margin: '12px 0 0' }}>
@@ -125,14 +135,22 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
       {dangTai ? <EmptyState kind="loading" title="Đang tải danh sách hợp đồng…" />
         : loi ? <EmptyState kind="error" title="Không tải được danh sách hợp đồng" body={`${loi} Dữ liệu chưa bị thay đổi.`} actionLabel="Thử lại" onAction={() => setThu((n) => n + 1)} />
           : toaNhaId === null ? <EmptyState title="Chọn một toà nhà để xem hợp đồng." />
-            : hopDongsHienThi.length === 0 ? <EmptyState title={boLoc.sapHetHan ? 'Không có hợp đồng sắp hết hạn.' : 'Chưa có hợp đồng nào trong toà nhà này.'} body={<a href="/hop-dong/moi">Tạo hợp đồng</a>} />
-              : (
-                <Card className="hd-bang" data-contract-list={variant}>
+            : (
+              <Card className="hd-bang" data-contract-list={variant}>
+                <div className="tabs" role="tablist" aria-label="Nhóm hợp đồng">
+                  {TAB.map((t) => (
+                    <button key={t.khoa} type="button" role="tab" className="tab" aria-selected={t.khoa === tabHienTai.khoa} onClick={() => setBoLoc((c) => ({ ...c, loc: t.khoa, sapHetHan: false }))}>
+                      {t.nhan}<span className="n">{demTab(t)}</span>
+                    </button>
+                  ))}
+                </div>
+                {hopDongsHienThi.length === 0 ? (
+                  <EmptyState title={tabHienTai.khoa === 'can-xu-ly' ? 'Không có hợp đồng nào cần xử lý.' : tabHienTai.khoa === 'hieu-luc' ? 'Chưa có hợp đồng đang hiệu lực.' : 'Chưa có hợp đồng nào đã thanh lý.'} body={<a href="/hop-dong/moi">Tạo hợp đồng</a>} />
+                ) : (
                   <DataTable
                     rows={hangSapXep}
                     columns={cot}
                     getRowId={(h) => h.id}
-                    chips={chips}
                     timTheo={(h) => `${h.soPhong} ${h.hoTenNguoiThue}`}
                     searchLabel="Tìm phòng, người thuê"
                     bulkActions={[{ label: 'In PDF', onClick: (rows) => void inPdf(rows) }]}
@@ -141,59 +159,43 @@ export default function HopDongQuanLy({ token, mobile = false }: Props): React.R
                     rowLabel={(h) => `phòng ${h.soPhong}`}
                     rowProps={(h) => ({ 'data-contract-row': String(h.id) })}
                   />
-                </Card>
-              )}
+                )}
+              </Card>
+            )}
     </section>
   )
 }
 
-const CSS_THE_MOBILE = `@media (min-width: 768px) { .hd-bang .table td { white-space: nowrap } }`
-
-const CHIP: DataTableChip<ThongTinHopDong>[] = [
-  { key: 'HIEU_LUC', label: 'Hiệu lực', match: (h) => h.trangThai === 'HIEU_LUC' },
-  { key: 'SAP_HET_HAN', label: 'Sắp hết hạn', match: (h) => h.sapHetHan },
-  { key: 'CHO_KY', label: 'Chờ ký', match: (h) => h.trangThai === 'CHO_KY' },
-  { key: 'DA_COC', label: 'Đã cọc', match: (h) => h.trangThai === 'DA_COC' },
-  { key: 'DA_THANH_LY', label: 'Đã thanh lý', match: (h) => h.trangThai === 'DA_THANH_LY' },
-]
-
-function chuCaiDau(ten: string): string {
-  const tu = ten.trim().split(/\s+/).filter(Boolean)
-  return tu.slice(-2).map((t) => Array.from(t)[0]).join('').toUpperCase()
-}
+const CSS_THE_MOBILE = `@media (min-width: 768px) { .hd-bang .table td { white-space: nowrap } }
+.hd-bang > .tabs { padding: 0 8px; }
+.hd-cham { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: var(--ma-text-muted); }
+.hd-cham.canh { background: var(--ma-waiting-border); }
+@media (max-width: 767px) { .hd-bang .table.table-cards tbody td[data-label="Thời hạn"], .hd-bang .table.table-cards tbody td[data-label="Giá thuê"], .hd-bang .table.table-cards tbody td[data-label="Cọc"], .hd-bang .table.table-cards tbody td[data-the="hanh-dong"] { display: none } .hd-bang > .tabs { padding: 0; } .hd-bang > .tabs .tab { padding: 0 8px; gap: 6px } }`
 
 function soNgayTu(ngay: string): number {
   return Math.round((new Date(`${ngay}T00:00:00`).getTime() - new Date().setHours(0, 0, 0, 0)) / 86_400_000)
 }
 
-function ghiChuThoiHan(h: ThongTinHopDong): string {
-  if (h.trangThai === 'DA_THANH_LY') return 'đã thanh lý'
-  const batDau = soNgayTu(h.ngayBatDau)
-  if (batDau > 0) return `bắt đầu sau ${batDau} ngày`
-  return `còn ${h.soNgayConLai} ngày`
+function tinhTrang(h: ThongTinHopDong): { nhan: string; canh: boolean } {
+  if (h.trangThai === 'CHO_KY' || h.trangThai === 'DA_COC') return { nhan: h.trangThai === 'CHO_KY' ? 'Chờ ký' : h.tenTrangThai, canh: true }
+  if (h.sapHetHan) return { nhan: `Hết hạn sau ${h.soNgayConLai} ngày`, canh: true }
+  if (h.trangThai === 'HIEU_LUC' && soNgayTu(h.ngayBatDau) > 0) return { nhan: `Bắt đầu sau ${soNgayTu(h.ngayBatDau)} ngày`, canh: false }
+  return { nhan: h.trangThai === 'HIEU_LUC' ? 'Đang hiệu lực' : h.tenTrangThai, canh: false }
 }
 
-function cotHopDong(): DataTableColumn<ThongTinHopDong>[] {
+function cotHopDong(tenToa: string): DataTableColumn<ThongTinHopDong>[] {
   return [
-    { key: 'phong', label: 'Phòng', sortable: true, sortValue: (h) => h.soPhong, render: (h) => <a className="td-main" href={`/hop-dong/${h.id}`}>{h.soPhong}<span className="sr-only"> · hợp đồng {h.id}</span></a> },
-    { key: 'nguoiThue', label: 'Người thuê', the: 'tieu-de', sortable: true, sortValue: (h) => h.hoTenNguoiThue, render: (h) => <div className="td-person"><span className={`avatar sm h${(h.id % 5) + 1}`} aria-hidden="true">{chuCaiDau(h.hoTenNguoiThue)}</span>{h.hoTenNguoiThue}</div> },
-    {
-      key: 'thoiHan', label: 'Thời hạn', sortable: true, sortValue: (h) => h.ngayKetThuc,
-      render: (h) => <>{dinhDangNgayIso(h.ngayBatDau)} – {dinhDangNgayIso(h.ngayKetThuc)}<div className="td-sub" style={h.sapHetHan ? { color: 'var(--ma-accent-warm-text)' } : undefined}>{ghiChuThoiHan(h)}</div></>,
-    },
+    { key: 'phong', label: 'Phòng', sortable: true, sortValue: (h) => h.soPhong, render: (h) => <><a className="td-main" href={`/hop-dong/${h.id}`}>{h.soPhong}<span className="sr-only"> · hợp đồng {h.id}</span></a>{tenToa ? <div className="td-sub">{tenToa}</div> : null}</> },
+    { key: 'nguoiThue', label: 'Người thuê', the: 'tieu-de', sortable: true, sortValue: (h) => h.hoTenNguoiThue, render: (h) => h.hoTenNguoiThue },
+    { key: 'thoiHan', label: 'Thời hạn', sortable: true, sortValue: (h) => h.ngayKetThuc, render: (h) => `${dinhDangNgayIso(h.ngayBatDau)} – ${dinhDangNgayIso(h.ngayKetThuc)}` },
     { key: 'giaThue', label: 'Giá thuê', align: 'num', sortable: true, sortValue: (h) => Number(h.giaThue), render: (h) => <span className="t-money">{dinhDangTien(h.giaThue)} ₫</span> },
-    { key: 'tienCoc', label: 'Tiền cọc', align: 'num', sortable: true, sortValue: (h) => Number(h.tienCoc), render: (h) => <>{dinhDangTien(h.tienCoc)} ₫</> },
-    { key: 'trangThai', label: 'Trạng thái', render: (h) => <StatusTag tone={tongTrangThai(h)}>{h.sapHetHan ? 'Sắp hết hạn' : h.tenTrangThai}</StatusTag> },
+    { key: 'tienCoc', label: 'Cọc', align: 'num', sortable: true, sortValue: (h) => Number(h.tienCoc), render: (h) => <>{dinhDangTien(h.tienCoc)} ₫</> },
+    { key: 'tinhTrang', label: 'Tình trạng', render: (h) => { const t = tinhTrang(h); return <><span className={`hd-cham${t.canh ? ' canh' : ''}`} aria-hidden="true" />{t.nhan}</> } },
     {
       key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong',
-      render: (h) => <div className="td-acts"><a className="btn btn-ghost btn-sm" href={`/hop-dong/${h.id}`}>{h.sapHetHan ? 'Gia hạn' : h.trangThai === 'CHO_KY' ? 'Ký hợp đồng' : 'Xem'}<span className="sr-only"> hợp đồng phòng {h.soPhong}</span></a></div>,
+      render: (h) => <div className="td-acts"><a className="btn btn-secondary btn-sm" href={`/hop-dong/${h.id}`}>{h.trangThai === 'CHO_KY' || h.trangThai === 'DA_COC' ? 'Ghi nhận đã ký' : h.sapHetHan ? 'Gia hạn' : 'Xem'}<span className="sr-only"> hợp đồng phòng {h.soPhong}</span></a></div>,
     },
   ]
-}
-
-function tongTrangThai(h: ThongTinHopDong): 'waiting' | 'done' | 'draft' | 'strong' | 'closed' {
-  if (h.sapHetHan) return 'waiting'
-  return ({ HIEU_LUC: 'done', CHO_KY: 'draft', DA_COC: 'strong', DA_THANH_LY: 'closed' } as const)[h.trangThai as 'HIEU_LUC'] ?? 'draft'
 }
 
 function soNguyenDuong(value: string | null): number | null {

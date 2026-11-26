@@ -67,6 +67,14 @@ describe('DanhMucPhong', () => {
     expect(container.textContent).toContain('Trống')
   })
 
+  it('phòng trống có nút thường "Tạo hợp đồng" dẫn tới /hop-dong/moi?phongId=; phòng đang thuê không có', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => jsonResponse(String(input) === '/api/toa-nha' ? [toaA] : [phong101, phong201])))
+    await renderScreen()
+    await vi.waitFor(() => expect(container.textContent).toContain('201'))
+    expect([...container.querySelectorAll('tr[data-room-row] a.btn')].map((a) => a.getAttribute('href'))).toEqual(['/hop-dong/moi?phongId=12&toaNhaId=1'])
+    expect(container.querySelector('tr[data-room-row="12"] a.btn')?.classList.contains('btn-primary')).toBe(false)
+  })
+
   it('FR-BLD-02 opens the room profile (not an inline detail) with Enter and Space from the room map', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       if (String(input) === '/api/toa-nha') return jsonResponse([toaA])

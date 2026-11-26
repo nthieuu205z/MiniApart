@@ -321,7 +321,7 @@ export default function QuanLyTaiSanPhong({
     { key: 'tinhTrang', label: 'Tình trạng', render: (ts) => <StatusTag tone="neutral">{nhanEnum(ts.tinhTrang)}</StatusTag> },
     { key: 'gia', label: 'Giá trị ước tính', align: 'num', sortable: true, sortValue: (ts) => Number(ts.giaTriUocTinh ?? 0), render: (ts) => ts.giaTriUocTinh ? <span className="t-money">{dinhDangSoTien(ts.giaTriUocTinh)} ₫</span> : '—' },
     { key: 'ghiChu', label: 'Ghi chú', render: (ts) => <span className="bq-toa" title={ts.ghiChu ?? ''}>{ts.ghiChu || '—'}</span> },
-    { key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong', render: (ts) => <div className="td-acts"><Button variant="secondary" size="sm" blocked={dangLuu} onClick={() => handleXoaTaiSan(ts.id, ts.tenTaiSan)}>Xoá<span className="sr-only"> {ts.tenTaiSan}</span></Button></div> },
+    { key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong', render: (ts) => <div className="td-acts"><Button variant="danger" size="sm" blocked={dangLuu} onClick={() => handleXoaTaiSan(ts.id, ts.tenTaiSan)}>Xoá<span className="sr-only"> {ts.tenTaiSan}</span></Button></div> },
   ]
   type ChiTietLichSu = NonNullable<BienBanBanGiao['chiTiet']>[number] & { _k: number }
   const cotChiTietBienBan = (traPhong: boolean): DataTableColumn<ChiTietLichSu>[] => [
@@ -361,8 +361,9 @@ export default function QuanLyTaiSanPhong({
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Button
             type="button"
-            variant={tab === 'DANH_MUC' ? 'primary' : 'secondary'}
+            variant="secondary"
             aria-pressed={tab === 'DANH_MUC'}
+            style={tab === 'DANH_MUC' ? { borderColor: 'var(--ma-text-primary)', fontWeight: 600 } : undefined}
             onClick={() => setTab('DANH_MUC')}
           >
             Danh mục ({danhSachTaiSan.length})
@@ -370,7 +371,9 @@ export default function QuanLyTaiSanPhong({
           {hopDongId ? (
             <Button
               type="button"
-              variant={tab === 'BIEN_BAN' ? 'primary' : 'secondary'}
+              variant="secondary"
+              aria-pressed={tab === 'BIEN_BAN'}
+              style={tab === 'BIEN_BAN' ? { borderColor: 'var(--ma-text-primary)', fontWeight: 600 } : undefined}
               onClick={() => {
                 setTab('BIEN_BAN')
                 chuanBiKiemKe('NHAN_PHONG')
@@ -677,17 +680,19 @@ export default function QuanLyTaiSanPhong({
               <div style={{ display: 'flex', gap: 6 }}>
                 <Button
                   type="button"
-                  variant={loaiBienBan === 'NHAN_PHONG' ? 'primary' : 'secondary'}
+                  variant="secondary"
+                  aria-pressed={loaiBienBan === 'NHAN_PHONG'}
                   onClick={() => chuanBiKiemKe('NHAN_PHONG')}
-                  style={{ minHeight: 32, fontSize: 13 }}
+                  style={loaiBienBan === 'NHAN_PHONG' ? { borderColor: 'var(--ma-text-primary)', fontWeight: 600 } : undefined}
                 >
                   Bàn giao Nhận phòng
                 </Button>
                 <Button
                   type="button"
-                  variant={loaiBienBan === 'TRA_PHONG' ? 'primary' : 'secondary'}
+                  variant="secondary"
+                  aria-pressed={loaiBienBan === 'TRA_PHONG'}
                   onClick={() => chuanBiKiemKe('TRA_PHONG')}
-                  style={{ minHeight: 32, fontSize: 13 }}
+                  style={loaiBienBan === 'TRA_PHONG' ? { borderColor: 'var(--ma-text-primary)', fontWeight: 600 } : undefined}
                 >
                   Kiểm kê Trả phòng
                 </Button>

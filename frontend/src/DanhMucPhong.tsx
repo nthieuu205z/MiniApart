@@ -20,6 +20,7 @@ import { EmptyState } from './design/feedback/EmptyState'
 import { Field } from './design/forms/Field'
 import { FilterChip } from './design/forms/FilterChip'
 import { Card } from './design/layout/Card'
+import { DauTrang } from './design/layout/DauTrang'
 import { DataTable, type DataTableChip, type DataTableColumn } from './design/table/DataTable'
 import QuanLyLichHen from './QuanLyLichHen'
 import { dieuHuongMacDinh } from './HoSoNguoiThue'
@@ -263,6 +264,7 @@ export default function DanhMucPhong({ token, mobile = false, dieuHuong = dieuHu
     { key: 'sucChua', label: 'Sức chứa', align: 'num', sortable: true, sortValue: (item) => item.sucChua, render: (item) => `${item.sucChua} người` },
     { key: 'gia', label: 'Giá thuê mặc định', align: 'num', sortable: true, sortValue: (item) => Number(item.giaThueMacDinh), render: (item) => <span className="t-money">{dinhDangTien(item.giaThueMacDinh)} ₫</span> },
     { key: 'trangThai', label: 'Trạng thái', render: (item) => <StatusTag tone={SAC_THAI_PHONG[item.trangThai] ?? 'neutral'}>{layThongTinTrangThai(item).nhan}</StatusTag> },
+    { key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong', render: (item) => item.trangThai === 'TRONG' ? <div className="td-acts"><a className="btn btn-secondary btn-sm" href={`/hop-dong/moi?phongId=${item.id}&toaNhaId=${item.toaNhaId}`}>Tạo hợp đồng<span className="sr-only"> phòng {item.soPhong}</span></a></div> : null },
   ]
   const chipPhong: DataTableChip<ThongTinPhong>[] = [
     { key: 'TAT_CA', label: 'Tất cả', match: () => true },
@@ -292,22 +294,20 @@ export default function DanhMucPhong({ token, mobile = false, dieuHuong = dieuHu
       style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ma-space-6)', minWidth: 0 }}
     >
       <style>{CSS_BANG_QUAN_TRI + CSS_PHONG}</style>
-      <header className="topbar">
-        <div className="title-block">
-          <h1 className="h1" id="room-management-title">Phòng</h1>
-          <p className="sub">{tabXem === 'PHONG' ? `${danhSachPhong.length} phòng${toaDangChon ? ` · ${toaDangChon.ten}` : ''} · ${demTrong} trống · ${demDangThue} đang thuê · ${demDangSua} đang sửa` : 'Lịch hẹn khách xem phòng'}</p>
-        </div>
-        {tabXem === 'PHONG' && (
-          <div className="topbar-actions">
+      <DauTrang
+        tieuDe={<span id="room-management-title">Phòng</span>}
+        phu={tabXem === 'PHONG' ? `${danhSachPhong.length} phòng${toaDangChon ? ` · ${toaDangChon.ten}` : ''} · ${demTrong} trống · ${demDangThue} đang thuê · ${demDangSua} đang sửa` : 'Lịch xem phòng của khách'}
+        hanhDong={tabXem === 'PHONG' ? (
+          <>
             <Button type="button" variant="secondary" onClick={() => setHienBieuMauHangLoat((current) => !current)}>Xem trước dãy phòng</Button>
             <Button type="button" onClick={lenFormKhaiBao}><Icon name="plus" />Khai báo phòng mới</Button>
-          </div>
-        )}
-      </header>
+          </>
+        ) : undefined}
+      />
 
       <div className="row-wrap">
         <button type="button" className="chip" aria-pressed={tabXem === 'PHONG'} onClick={() => setTabXem('PHONG')}><Icon name="door" />Sơ đồ phòng</button>
-        <button type="button" className="chip" aria-pressed={tabXem === 'LICH_HEN'} onClick={() => setTabXem('LICH_HEN')} data-testid="tab-lich-hen-xem-phong"><Icon name="calendar" />Lịch hẹn xem phòng</button>
+        <button type="button" className="chip" aria-pressed={tabXem === 'LICH_HEN'} onClick={() => setTabXem('LICH_HEN')} data-testid="tab-lich-hen-xem-phong"><Icon name="calendar" />Lịch xem phòng</button>
         {tabXem === 'PHONG' && !mobile && (
           <>
             <span className="push" style={{ flex: 1 }} />
