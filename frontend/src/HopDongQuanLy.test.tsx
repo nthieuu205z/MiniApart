@@ -51,42 +51,65 @@ describe('HopDongQuanLy bảng hợp đồng', () => {
     await act(async () => { root.render(<HopDongQuanLy token="t" />) })
     await vi.waitFor(() => expect(container.querySelector('[data-contract-row]')).not.toBeNull())
   }
-  const chip = (nhan: string) => [...container.querySelectorAll('button.chip')].find((b) => b.textContent?.startsWith(nhan)) as HTMLButtonElement | undefined
+  const tab = (nhan: string) => [...container.querySelectorAll('[role="tab"]')].find((b) => b.textContent?.startsWith(nhan)) as HTMLButtonElement | undefined
   const hang = () => [...container.querySelectorAll('[data-contract-row]')].map((e) => e.getAttribute('data-contract-row'))
 
-  it('chip hiện đúng số theo trạng thái và chỉ gọi hợp đồng (toà do khung chọn)', async () => {
+  it('mở sẵn Cần xử lý, tab kèm số đếm, chỉ gọi hợp đồng (toà do khung chọn)', async () => {
     await mount()
-    expect(chip('Hiệu lực')?.textContent).toBe('Hiệu lực3')
-    expect(chip('Sắp hết hạn')?.textContent).toBe('Sắp hết hạn1')
-    expect(chip('Chờ ký')?.textContent).toBe('Chờ ký1')
-    expect(chip('Đã thanh lý')?.textContent).toBe('Đã thanh lý1')
-    expect(chip('Đã cọc')).toBeUndefined()
-    expect(container.querySelector('.sub')?.textContent).toContain('3 đang hiệu lực')
+    expect(tab('Cần xử lý')?.getAttribute('aria-selected')).toBe('true')
+    expect(tab('Cần xử lý')?.textContent).toBe('Cần xử lý2')
+    expect(tab('Đang hiệu lực')?.textContent).toBe('Đang hiệu lực3')
+    expect(tab('Đã thanh lý')?.textContent).toBe('Đã thanh lý1')
+    expect(container.querySelector('.ma-dautrang-phu')?.textContent).toContain('3 đang hiệu lực')
     expect(fetchMock.mock.calls.map((c) => c[0])).toEqual(['/api/hop-dong?toaNhaId=1'])
   })
 
-  it('?sapHetHan=true chỉ còn hàng sắp hết hạn và hiện chữ lọc', async () => {
-    await mount('/hop-dong?toaNhaId=1&sapHetHan=true')
+  it('xếp theo số ngày còn lại tăng dần: sắp hết hạn (10 ngày) trước chờ ký (100 ngày)', async () => {
+    await mount()
+    expect(hang()).toEqual(['3', '4'])
+    expect(container.querySelector('[data-contract-row="3"]')?.textContent).toContain('Hết hạn sau 10 ngày')
+    expect(container.querySelector('[data-contract-row="4"]')?.textContent).toContain('Chờ ký')
+  })
+
+  it('bấm tab đổi nhóm và ghi ?loc= lên URL; ?loc= mở đúng tab', async () => {
+    await mount()
+    await act(async () => { tab('Đang hiệu lực')!.click() })
+    expect(hang()).toEqual(['3', '1', '2'])
+    expect(window.location.search).toContain('loc=hieu-luc')
+    await act(async () => root.unmount())
+    root = createRoot(container)
+    await mount('/hop-dong?toaNhaId=1&loc=da-thanh-ly')
+    expect(hang()).toEqual(['5'])
+  })
+
+  it('?sapHetHan=true mở Cần xử lý, chỉ còn hàng sắp hết hạn và hiện chữ lọc', async () => {
+    await mount('/hop-dong?toaNhaId=1&sapHetHan=true&loc=hieu-luc')
+    expect(tab('Cần xử lý')?.getAttribute('aria-selected')).toBe('true')
     expect(hang()).toEqual(['3'])
     expect(container.textContent).toContain('Đang lọc hợp đồng sắp hết hạn')
     expect(container.querySelector('tr [class~="btn"]')?.textContent).toContain('Gia hạn')
   })
 
-  it('tìm "dinh" ra đúng một hàng và chip đếm theo kết quả tìm', async () => {
+  it('?hopDongId= vẫn hiện link mở đúng hồ sơ', async () => {
+    await mount('/hop-dong?toaNhaId=1&hopDongId=4')
+    expect(container.querySelector('a[href="/hop-dong/4"]:not(.td-main):not(.btn)')?.textContent).toContain('#4')
+  })
+
+  it('tìm "ngo" ra đúng một hàng trong tab đang mở', async () => {
     await mount()
     const o = container.querySelector('input[type="search"]') as HTMLInputElement
     await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(o, 'dinh')
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(o, 'ngo')
       o.dispatchEvent(new Event('input', { bubbles: true }))
     })
-    expect(hang()).toEqual(['5'])
-    expect(chip('Hiệu lực')?.textContent).toBe('Hiệu lực0')
-    expect(chip('Đã thanh lý')?.textContent).toBe('Đã thanh lý1')
+    expect(hang()).toEqual(['3'])
   })
 
-  it('hàng là liên kết tới hồ sơ /hop-dong/{id}, nút Tạo hợp đồng tới /hop-dong/moi, không còn form hay chi tiết dưới bảng', async () => {
+  it('nút theo dòng dẫn tới /hop-dong/{id} (Gia hạn / Ghi nhận đã ký); Tạo hợp đồng là nút chính duy nhất', async () => {
     await mount()
     expect(container.querySelector('[data-contract-row="3"] a.td-main')?.getAttribute('href')).toBe('/hop-dong/3')
+    expect(container.querySelector('[data-contract-row="3"] a.btn')?.textContent).toContain('Gia hạn')
+    expect(container.querySelector('[data-contract-row="4"] a.btn')?.textContent).toContain('Ghi nhận đã ký')
     expect(container.querySelector('[data-contract-row="4"] a.btn')?.getAttribute('href')).toBe('/hop-dong/4')
     expect(container.querySelector('a.btn-primary')?.getAttribute('href')).toBe('/hop-dong/moi')
     expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
@@ -95,7 +118,7 @@ describe('HopDongQuanLy bảng hợp đồng', () => {
 
   it('chọn một hàng hiện thanh "Đã chọn 1 hợp đồng" với In PDF', async () => {
     await mount()
-    const o = container.querySelector('input[aria-label="Chọn phòng 101"]') as HTMLInputElement
+    const o = container.querySelector('input[aria-label="Chọn phòng 303"]') as HTMLInputElement
     await act(async () => { o.click() })
     const bar = container.querySelector('.bulkbar')
     expect(bar?.textContent).toContain('Đã chọn 1 hợp đồng')
