@@ -1,0 +1,6 @@
+[{"name":"ql-chu-ky-b1-1440","path":"/chu-ky?b=1","role":"QUAN_LY","w":1440,"h":900,"full":false},
+{"name":"ql-chu-ky-b3-1440","path":"/chu-ky?b=3","role":"QUAN_LY","w":1440,"h":900,"full":false},
+{"name":"ql-chu-ky-b4-1440","path":"/chu-ky?b=4","role":"QUAN_LY","w":1440,"h":900,"full":false},
+{"name":"ql-hop-dong-1440","path":"/hop-dong","role":"QUAN_LY","w":1440,"h":900,"full":false},
+{"name":"kh-tra-tien-390","path":"/hoa-don-cua-toi?tra=tat-ca","role":"NGUOI_THUE","w":390,"h":844,"full":true},
+{"name":"kh-can-tra-full-390","path":"/hoa-don-cua-toi","role":"NGUOI_THUE","w":390,"h":844,"full":true}]

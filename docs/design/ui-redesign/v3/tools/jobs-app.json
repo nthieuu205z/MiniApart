@@ -1,0 +1,274 @@
+[
+{
+"name": "00-dang-nhap-1440",
+"path": "/dang-nhap",
+"role": null,
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "00-dang-nhap-390",
+"path": "/dang-nhap",
+"role": null,
+"w": 390,
+"h": 844,
+"full": false
+},
+{
+"name": "chu-hom-nay-1440",
+"path": "/hom-nay",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-thu-tien-1440",
+"path": "/thu-tien",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-hoa-don-1440",
+"path": "/hoa-don",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-nguoi-thue-1440",
+"path": "/nguoi-thue",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-nguoi-thue-1-1440",
+"path": "/nguoi-thue/1",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-toa-nha-1440",
+"path": "/toa-nha",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-toa-3-1440",
+"path": "/toa-nha/3",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-phong-1-1440",
+"path": "/phong/1",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-hop-dong-1440",
+"path": "/hop-dong",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-hop-dong-1-1440",
+"path": "/hop-dong/1",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-su-co-1440",
+"path": "/su-co",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-bao-cao-1440",
+"path": "/bao-cao",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-tong-quan-1440",
+"path": "/tong-quan",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-khong-quyen-1440",
+"path": "/tai-khoan",
+"role": "CHU",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "chu-hom-nay-390",
+"path": "/hom-nay",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": false
+},
+{
+"name": "chu-thu-tien-390",
+"path": "/thu-tien",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": false
+},
+{
+"name": "chu-nguoi-thue-1-390",
+"path": "/nguoi-thue/1",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": false
+},
+{
+"name": "chu-su-co-390",
+"path": "/su-co",
+"role": "CHU",
+"w": 390,
+"h": 844,
+"full": false
+},
+{
+"name": "ql-hom-nay-1440",
+"path": "/hom-nay",
+"role": "QUAN_LY",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "ql-chu-ky-1440",
+"path": "/chu-ky",
+"role": "QUAN_LY",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "ql-thu-tien-1440",
+"path": "/thu-tien",
+"role": "QUAN_LY",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "ql-hoa-don-1440",
+"path": "/hoa-don",
+"role": "QUAN_LY",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "ql-su-co-1440",
+"path": "/su-co",
+"role": "QUAN_LY",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "ql-tao-hop-dong-1440",
+"path": "/hop-dong/moi",
+"role": "QUAN_LY",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "ql-phong-1440",
+"path": "/phong",
+"role": "QUAN_LY",
+"w": 1440,
+"h": 900,
+"full": false
+},
+{
+"name": "tho-viec-390",
+"path": "/viec-cua-toi",
+"role": "THO",
+"w": 390,
+"h": 844,
+"full": false
+},
+{
+"name": "tho-chi-phi-390",
+"path": "/tho/chi-phi",
+"role": "THO",
+"w": 390,
+"h": 844,
+"full": false
+},
+{
+"name": "kh-can-tra-390",
+"path": "/hoa-don-cua-toi",
+"role": "NGUOI_THUE",
+"w": 390,
+"h": 844,
+"full": false
+},
+{
+"name": "kh-lich-su-390",
+"path": "/lich-su",
+"role": "NGUOI_THUE",
+"w": 390,
+"h": 844,
+"full": false
+},
+{
+"name": "kh-bao-hong-390",
+"path": "/bao-hong",
+"role": "NGUOI_THUE",
+"w": 390,
+"h": 844,
+"full": false
+},
+{
+"name": "kh-hop-dong-390",
+"path": "/hop-dong",
+"role": "NGUOI_THUE",
+"w": 390,
+"h": 844,
+"full": false
+},
+{
+"name": "qt-tai-khoan-1440",
+"path": "/tai-khoan",
+"role": "QTHT",
+"w": 1440,
+"h": 900,
+"full": false
+}
+]
