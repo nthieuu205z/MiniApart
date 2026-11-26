@@ -68,7 +68,7 @@ describe('HoaDonQuanLy', () => {
     await mount()
     const tao = () => Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('Tạo hoá đơn nháp hàng loạt'))!
     expect(tao().getAttribute('aria-disabled')).toBe('true')
-    const chonKy = container.querySelector('select[aria-label="Lọc kỳ hoá đơn"]') as HTMLSelectElement
+    const chonKy = container.querySelector('select[aria-label="Lọc tháng hoá đơn"]') as HTMLSelectElement
     await vi.waitFor(() => expect(chonKy.options.length).toBe(2))
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!.call(chonKy, '8')
@@ -82,9 +82,25 @@ describe('HoaDonQuanLy', () => {
     await act(async () => { root = createRoot(container); root.render(<ToaDangChonProvider token="t" vaiTro="CHU" search="?toaNhaId=3" taiToa={taiToa}><HoaDonQuanLy token="t" /></ToaDangChonProvider>) })
     await vi.waitFor(() => expect(container.querySelectorAll('[data-invoice-row]')).toHaveLength(3))
     expect(container.querySelector('[data-invoice-building-select], #hoa-don-toa')).toBeNull()
-    expect(container.querySelector('a[href="/chu-ky"]')?.textContent).toContain('Phát hành hoá đơn kỳ mới ở Chu kỳ tháng')
+    expect(container.querySelector('a[href="/chu-ky"]')?.textContent).toContain('Tháng này')
     expect(container.querySelector('h1')?.textContent).toBe('Thu tiền')
     expect(calls.some((c) => c.url === '/api/toa-nha')).toBe(false) // không tự gọi fetchToaNha ngoài provider
+  })
+
+  it('hàng tổng cộng đủ số hoá đơn; gửi hàng loạt qua ConfirmDialog với nhãn "Gửi"', async () => {
+    await mount()
+    expect(container.querySelector('tfoot')?.textContent).toContain('Cộng 3 hoá đơn')
+    const chonKy = container.querySelector('select[aria-label="Lọc tháng hoá đơn"]') as HTMLSelectElement
+    await vi.waitFor(() => expect(chonKy.options.length).toBe(2))
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!.call(chonKy, '8')
+      chonKy.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    await act(async () => { Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('Gửi hoá đơn trong tháng'))!.click() })
+    const hop = container.querySelector('[role="dialog"]')!
+    expect(hop.textContent).toContain('Người thuê sẽ thấy hoá đơn và hoá đơn không còn sửa được.')
+    await act(async () => { Array.from(hop.querySelectorAll('button')).find((b) => b.textContent === 'Chưa, xem lại')!.click() })
+    expect(container.querySelector('[role="dialog"]')).toBeNull()
   })
 
   it('Chủ đang "Tất cả toà": tự chọn toà đầu (ô toà của khung đổi theo) rồi gọi API hoá đơn của toà đó', async () => {

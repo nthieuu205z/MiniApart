@@ -33,7 +33,7 @@ export default function InvoiceActions({ token, scope, hoaDon, vaiTro = 'QUAN_LY
     {error ? <p role="alert" className="alert alert-danger"><Icon name="alert" />{error}</p> : null}
     {notice ? <p role="status" className="alert alert-success"><Icon name="check-circle" />{notice}</p> : null}
     <div className="row-wrap">
-      {draft ? <Button blocked={busy} blockedReason="Đang cập nhật hoá đơn." onClick={() => void run(() => invoiceAction(token, scope, 'phat-hanh'), 'Đã phát hành hoá đơn và gửi thông báo trong ứng dụng.')}>Phát hành hoá đơn</Button> : null}
+      {draft ? <Button blocked={busy} blockedReason="Đang cập nhật hoá đơn." onClick={() => void run(() => invoiceAction(token, scope, 'phat-hanh'), 'Đã gửi hoá đơn và gửi thông báo trong ứng dụng.')}>Gửi hoá đơn</Button> : null}
       {!draft ? <Button variant="secondary" blocked={busy} blockedReason="Đang cập nhật hoá đơn." onClick={() => void run(() => downloadFinanceFile(token, `${invoiceUrl(scope)}/xuat-pdf`, `${hoaDon.maHoaDon}.pdf`), 'Đã tải PDF hoá đơn.')}>Tải PDF hoá đơn</Button> : null}
     </div>
     {draft ? <details><summary className="t-strong" style={{ cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' }}>Thêm khoản phát sinh hoặc giảm trừ vào bản nháp</summary>
@@ -50,7 +50,7 @@ export default function InvoiceActions({ token, scope, hoaDon, vaiTro = 'QUAN_LY
     {mayCancel ? <details><summary className="t-strong" style={{ cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' }}>Huỷ hoặc thay thế hoá đơn</summary><div className="card-sunken" style={{ display: 'grid', gap: 12, marginTop: 10 }}>
       <label className="field"><span className="label">Lý do huỷ / thay thế</span><textarea className="input" aria-label="Lý do huỷ hoá đơn" value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} required style={AREA} /></label>
       <label className="check"><input type="checkbox" checked={confirm} onChange={(event) => setConfirm(event.target.checked)} /> Tôi đã kiểm tra hoá đơn và xác nhận thao tác. Lịch sử hoá đơn được giữ lại.</label>
-      <div className="row-wrap"><Button variant="secondary" blocked={busy || !confirm || !cancelReason.trim()} blockedReason="Nhập lý do và đánh dấu xác nhận." onClick={() => void run(() => invoiceAction(token, scope, 'huy', { lyDo: cancelReason }), 'Đã huỷ hoá đơn.')}>Xác nhận huỷ hoá đơn</Button>
+      <div className="row-wrap"><Button variant="danger" blocked={busy || !confirm || !cancelReason.trim()} blockedReason="Nhập lý do và đánh dấu xác nhận." onClick={() => void run(() => invoiceAction(token, scope, 'huy', { lyDo: cancelReason }), 'Đã huỷ hoá đơn.')}>Xác nhận huỷ hoá đơn</Button>
         {vaiTro === 'CHU' ? <Button variant="secondary" blocked={busy || !confirm || !cancelReason.trim()} blockedReason="Nhập lý do và đánh dấu xác nhận." onClick={() => void run(async () => {
           const data = await financeRequest<{ hoaDonMoiId: number }>(token, `${invoiceUrl(scope)}/thay-the`, 'POST', { lyDo: cancelReason }); setReplacement(data.hoaDonMoiId)
         }, 'Đã huỷ hoá đơn cũ và tạo bản nháp thay thế.')}>Tạo hoá đơn thay thế</Button> : null}</div>
