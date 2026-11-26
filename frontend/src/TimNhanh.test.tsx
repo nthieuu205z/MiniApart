@@ -112,6 +112,17 @@ describe('TimNhanh', () => {
     expect(hop()).toBeNull()
   })
 
+  it('màn đã bỏ khỏi nav vẫn tìm được: "Lịch xem phòng" → /lich-hen, Enter mở', async () => {
+    vi.stubGlobal('fetch', fetchGia())
+    await mount()
+    await phim(window, 'k', { ctrlKey: true })
+    await vi.waitFor(() => expect(o()).not.toBeNull())
+    await go('lich xem')
+    await vi.waitFor(() => expect(options()[0]).toContain('Lịch xem phòng'))
+    await phim(o(), 'Enter')
+    expect(dieuHuong).toHaveBeenCalledWith('/lich-hen')
+  })
+
   it('Quản lý không gọi công nợ; không thấy thì vẫn có 3 Lệnh', async () => {
     const f = fetchGia()
     vi.stubGlobal('fetch', f)
@@ -119,7 +130,7 @@ describe('TimNhanh', () => {
     await phim(window, 'k', { ctrlKey: true })
     await vi.waitFor(() => expect(o()).not.toBeNull())
     await go('zzzz')
-    await vi.waitFor(() => expect(document.body.textContent).toContain('Không thấy “zzzz” trong dữ liệu đã tải.'))
+    await vi.waitFor(() => expect(document.body.textContent).toContain('Không thấy “zzzz”. Thử số phòng hoặc số điện thoại.'))
     expect(options()).toHaveLength(3)
     expect(f.mock.calls.some(([u]) => String(u).includes('/api/bao-cao/cong-no'))).toBe(false)
   })

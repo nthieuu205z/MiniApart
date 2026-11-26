@@ -1,11 +1,11 @@
 // Tìm nhanh (Ctrl/⌘+K) phía client trên dữ liệu đã tải — chưa có API tìm toàn cục (phụ thuộc backend, xem 02 §4).
 // shortcut: lọc chuỗi con trên vài trăm dòng trong bộ nhớ, đổi sang API tìm server khi dữ liệu > vài nghìn dòng.
 
-export type NhomKetQua = 'Người thuê' | 'Phòng' | 'Hợp đồng' | 'Hoá đơn'
+export type NhomKetQua = 'Người thuê' | 'Phòng' | 'Hợp đồng' | 'Hoá đơn' | 'Màn'
 export type MucTim = { nhom: NhomKetQua; tieuDe: string; phu: string; href: string }
 export type NhomTim = { nhom: NhomKetQua; tong: number; muc: MucTim[] }
 
-const THU_TU: NhomKetQua[] = ['Người thuê', 'Phòng', 'Hợp đồng', 'Hoá đơn']
+const THU_TU: NhomKetQua[] = ['Phòng', 'Người thuê', 'Hợp đồng', 'Hoá đơn', 'Màn']
 
 /** Bỏ dấu tiếng Việt + chữ thường: "Nguyễn Quang Huy" → "nguyen quang huy"; "Đ" → "d". */
 export function boDau(s: string): string {
@@ -65,4 +65,20 @@ export function taoChiMuc(nguon: {
       href: `/hoa-don?toaNhaId=${t.id}${h.kyId ? `&kyId=${h.kyId}` : ''}&hoaDonId=${h.hoaDonId}` })
   }
   return out
+}
+
+const man = (tieuDe: string, phu: string, href: string): MucTim => ({ nhom: 'Màn', tieuDe, phu, href })
+
+/** Màn đã bỏ khỏi thanh bên vẫn tìm được; đường dẫn giữ nguyên. Chỉ trả màn mà vai trò đó mở được (dinhTuyen.ts). */
+export function manTimDuoc(vaiTro: string): MucTim[] {
+  const chung = [
+    man('Lịch xem phòng', 'Khách hẹn xem phòng trống', '/lich-hen'),
+    man('An toàn PCCC', 'Phòng cháy chữa cháy, hạn kiểm định', '/an-toan'),
+    man('Giá dịch vụ & cài đặt', 'Giá điện, nước, dịch vụ', '/dich-vu'),
+    man('Thu tiền', 'Ghi nhận khoản đã thu', '/thu-tien'),
+    man('Thông báo', 'Báo cho cư dân', '/thong-bao'),
+  ]
+  return vaiTro === 'CHU'
+    ? [...chung, man('Nhật ký', 'Nhật ký thao tác', '/nhat-ky-thao-tac'), man('Tiêu thụ điện nước', 'Báo cáo tiêu thụ', '/bao-cao/tieu-thu'), man('Chi phí bảo trì', 'Báo cáo chi phí sửa chữa', '/bao-cao/chi-phi-bao-tri')]
+    : chung
 }
