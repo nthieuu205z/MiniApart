@@ -39,21 +39,25 @@ describe('QuanLySuaChua (quản lý)', () => {
   it('liệt kê mọi yêu cầu của toà với mã, phòng, hạng mục, trạng thái, chi phí', async () => {
     await act(async () => root.render(<QuanLySuaChua token="m" />))
     await vi.waitFor(() => expect(container.textContent).toContain('SC-1'))
-    for (const s of ['SC-1', '101', 'Điện', 'Đang mở', 'Đã đóng']) expect(container.textContent).toContain(s)
-    // Một danh sách: yêu cầu đã đóng nằm sau chip "Đã đóng" (chi phí hiện trong ngăn).
-    await act(async () => Array.from(container.querySelectorAll<HTMLElement>('a.chip')).find((c) => c.textContent?.startsWith('Đã đóng'))!.click())
+    for (const s of ['SC-1', '101', 'Điện', 'Đang mở', 'Đã xong']) expect(container.textContent).toContain(s)
+    // Một danh sách: yêu cầu đã đóng nằm sau chip "Đã xong" (chi phí hiện trong ngăn).
+    await act(async () => Array.from(container.querySelectorAll<HTMLElement>('a.chip')).find((c) => c.textContent?.startsWith('Đã xong'))!.click())
     for (const s of ['SC-2', '202', 'Nước', '250.000']) expect(container.textContent).toContain(s)
     expect(calls.some(([u]) => u === '/api/yeu-cau-sua-chua?toaNhaId=1')).toBe(true)
   })
 
-  it('yêu cầu mới: tiếp nhận gọi POST tiep-nhan; phân công cần chọn thợ', async () => {
+  it('yêu cầu mới: Giao thợ cần chọn thợ, rồi gọi tiep-nhan và phan-cong', async () => {
     await act(async () => root.render(<QuanLySuaChua token="m" />))
     await vi.waitFor(() => expect(container.textContent).toContain('SC-1'))
     await mo(0)
-    await vi.waitFor(() => expect(button('Tiếp nhận yêu cầu')).toBeDefined())
-    expect(button('Phân công thợ')?.getAttribute('aria-disabled')).toBe('true')
-    await act(async () => button('Tiếp nhận yêu cầu')!.click())
+    await vi.waitFor(() => expect(button('Giao thợ')).toBeDefined())
+    expect(button('Giao thợ')?.getAttribute('aria-disabled')).toBe('true')
+    await vi.waitFor(() => expect(container.querySelector('.sc-ct select option[value="4"]')).not.toBeNull())
+    const sel = container.querySelector<HTMLSelectElement>('.sc-ct select')!
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!.call(sel, '4'); sel.dispatchEvent(new Event('change', { bubbles: true })) })
+    await act(async () => button('Giao thợ')!.click())
     expect(calls.some(([u, i]) => u === '/api/yeu-cau-sua-chua/1/tiep-nhan' && i?.method === 'POST')).toBe(true)
+    expect(calls.some(([u, i]) => u === '/api/yeu-cau-sua-chua/1/phan-cong' && i?.method === 'POST')).toBe(true)
   })
 
   it('yêu cầu đã đóng không còn nút tiếp nhận / huỷ / phân công', async () => {
@@ -61,17 +65,16 @@ describe('QuanLySuaChua (quản lý)', () => {
     window.history.replaceState({}, '', '/su-co?id=2')
     await act(async () => root.render(<QuanLySuaChua token="m" />))
     await vi.waitFor(() => expect(container.textContent).toContain('SC-2'))
-    await vi.waitFor(() => expect(container.querySelector('aside.drawer')).not.toBeNull())
+    await vi.waitFor(() => expect(container.querySelector('.sc-ct')).not.toBeNull())
     expect(button('Lưu chi phí')).toBeUndefined() // ngăn đã đóng chỉ đọc
     expect(button('Huỷ yêu cầu')).toBeUndefined()
-    expect(button('Phân công thợ')).toBeUndefined()
-    expect(button('Tiếp nhận yêu cầu')).toBeUndefined()
+    expect(button('Giao thợ')).toBeUndefined()
   })
 
   it('form báo sự cố gửi multipart tới /api/yeu-cau-sua-chua', async () => {
     await act(async () => root.render(<QuanLySuaChua token="m" />))
     await vi.waitFor(() => expect(container.textContent).toContain('SC-1'))
-    await act(async () => button('Báo sự cố')?.click())
+    await act(async () => button('Ghi sự cố mới')?.click())
     const set = (el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement, v: string) => { const proto = el instanceof HTMLSelectElement ? HTMLSelectElement.prototype : el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, 'value')!.set!.call(el, v); el.dispatchEvent(new Event(el instanceof HTMLSelectElement ? 'change' : 'input', { bubbles: true })) }
     await vi.waitFor(() => expect(container.querySelector('textarea')).not.toBeNull())
     await act(async () => { set(container.querySelector('select[required]')!, '11'); set(container.querySelector('input[required]')!, 'Khoá'); set(container.querySelector('textarea')!, 'Kẹt khoá') })
