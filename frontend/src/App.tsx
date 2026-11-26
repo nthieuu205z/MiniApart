@@ -458,7 +458,7 @@ function ManTheoKhoa({ khoa, capNhatChuaDoc, ...p }: TrangProps & { khoa: KhoaTr
     case 'ho-so-toa': return <HoSoToa360 {...p} />
     case 'phong': return <DanhMucPhong token={token} mobile={mobile} />
     case 'ho-so-phong': return <HoSoPhong360 {...p} />
-    case 'nguoi-thue': return <HoSoNguoiThue token={token} />
+    case 'nguoi-thue': return <HoSoNguoiThue token={token} vaiTro={vaiTro} />
     case 'ho-so-nguoi-thue': return <HoSoNguoiThue360 {...p} />
     case 'cu-tru': return <CuTruVanHanh token={token} />
     case 'hop-dong': return <HopDongQuanLy token={token} mobile={mobile} />
