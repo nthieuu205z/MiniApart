@@ -54,20 +54,82 @@ describe('HoSoToa360', () => {
     await mount('CHU')
     const o = [...container.querySelectorAll('.rooms a.room')]
     expect(o).toHaveLength(PHONG.length)
-    expect(o.map((a) => a.getAttribute('aria-label'))).toEqual(['Phòng 101, Đang thuê', 'Phòng 102, Trống', 'Phòng 201, Đang sửa', 'Phòng 202, Đang thuê', 'Phòng 203, Đang thuê'])
-    expect(o[0].getAttribute('href')).toBe('/phong/1?toaNhaId=3')
-    expect(o[1].textContent).toContain('Trống')
+    // V3: tầng cao ở trên; ô nợ ghi "nợ …" trong aria-label (đổi vì sơ đồ giờ hiện nợ theo phòng)
+    expect(o.map((a) => a.getAttribute('aria-label'))).toEqual(['Phòng 201, Đang sửa', 'Phòng 202, Đang thuê, nợ 900.000 ₫', 'Phòng 203, Đang thuê, nợ 500.000 ₫', 'Phòng 101, Đang thuê, nợ 100.000 ₫', 'Phòng 102, Trống'])
+    expect(o[3].getAttribute('href')).toBe('/phong/1?toaNhaId=3')
+    expect(o[4].textContent).toContain('Trống')
+    expect(o[3].className).toContain('no')
+    expect(o[3].textContent).toContain('nợ 0,1 triệu')
     expect(container.textContent).toContain('Tầng 2')
   })
 
-  it('"Cần chú ý" xếp người nợ giảm dần, tối đa 3, kèm hợp đồng sắp hết/chờ ký', async () => {
+  it('"Cần chú ý" xếp người nợ giảm dần, tối đa 3, kèm hợp đồng chờ ký/sắp hết; một nút chính (Thu nợ)', async () => {
     await mount('CHU')
     const hang = [...container.querySelectorAll('a.irow')].map((a) => a.getAttribute('href'))
-    expect(hang).toEqual(['/nguoi-thue/12', '/nguoi-thue/13', '/nguoi-thue/11', '/hop-dong/2', '/hop-dong/3'])
-    expect(container.querySelector('.strip')?.textContent).toContain('1.500.000')
-    expect(container.querySelector('a.btn-primary')).toBeNull() // Chủ không có route /phong nên không có nút Khai báo phòng
+    expect(hang).toEqual(['/nguoi-thue/12', '/nguoi-thue/13', '/nguoi-thue/11', '/hop-dong/3', '/hop-dong/1', '/hop-dong/2']) // chờ ký lên trước; mock đặt mọi hợp đồng còn 10 ngày nên hợp đồng 1 cũng ≤ 30 ngày (brief V3 đổi tiêu chí từ sapHetHan sang ≤ 30 ngày)
+    expect(container.querySelector('.ma-khoiso')?.textContent).toContain('1.500.000')
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
+    expect(container.querySelector('.btn-primary')?.getAttribute('href')).toBe('/thu-tien?toaNhaId=3')
+    await act(async () => root.unmount()); root = createRoot(container)
     await mount('QUAN_LY')
-    expect(container.querySelector('a.btn-primary')?.getAttribute('href')).toBe('/phong?toaNhaId=3&moi=1')
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(1) // Khai báo phòng không còn là nút chính
+    expect([...container.querySelectorAll('a.btn-secondary')].find((a) => a.textContent === 'Khai báo phòng')?.getAttribute('href')).toBe('/phong?toaNhaId=3&moi=1')
+    expect(container.querySelector('h1')?.textContent).toBe('Phòng')
+    expect(container.querySelector('.ma-vet')).toBeNull()
+  })
+
+  describe('Việc kế tiếp', () => {
+    const KHAN = { id: 9, maYeuCau: 'SC-9', phongId: 1, soPhong: '302', hangMuc: 'Điện', mucDo: 'KHAN_CAP', tenMucDo: 'Khẩn cấp', trangThai: 'MOI_TIEP_NHAN', tenTrangThai: 'Mới', nguoiXuLyId: null, taoLuc: '2026-11-20T10:00:00Z' }
+    const dat = (o: { suCo?: unknown[]; congNo?: unknown; hopDong?: unknown[]; ky?: unknown[]; hoaDon?: unknown[] }) => fetchMock.mockImplementation(async (url: string) => {
+      if (url === '/api/toa-nha') return json([TOA])
+      if (url === '/api/toa-nha/3/phong') return json(PHONG)
+      if (url.startsWith('/api/hop-dong')) return json(o.hopDong ?? [])
+      if (url.startsWith('/api/bao-cao/cong-no')) return json(o.congNo ?? { toaNhaId: 3, tinhLuc: 'x', congNo: [] })
+      if (url.startsWith('/api/yeu-cau-sua-chua')) return json(o.suCo ?? [])
+      if (url === '/api/toa-nha/3/ky-thanh-toan') return json(o.ky ?? [])
+      if (url.startsWith('/api/hoa-don')) return json(o.hoaDon ?? [])
+      return json([])
+    })
+    const chinh = () => container.querySelector('.btn-primary')
+    const viec = () => container.querySelector('.hs-viec')!.textContent!
+
+    it('1) sự cố khẩn chưa giao thợ → Giao thợ', async () => {
+      dat({ suCo: [KHAN], congNo: CONG_NO, hopDong: HOP_DONG })
+      await mount('CHU')
+      expect(viec()).toContain('Điện phòng 302 khẩn, chưa giao thợ')
+      expect(chinh()?.textContent).toBe('Giao thợ'); expect(chinh()?.getAttribute('href')).toBe('/su-co?id=9')
+      expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
+    })
+    it('2) nợ quá hạn → Thu nợ', async () => {
+      dat({ congNo: CONG_NO, hopDong: HOP_DONG })
+      await mount('CHU')
+      expect(viec()).toMatch(/3 người nợ 1\.500\.000 ₫, cũ nhất trễ \d+ ngày/)
+      expect(chinh()?.textContent).toBe('Thu nợ')
+    })
+    it('3) hợp đồng ≤ 30 ngày → Gia hạn; chờ ký → Mở hợp đồng', async () => {
+      dat({ hopDong: [HOP_DONG[1]] })
+      await mount('CHU')
+      expect(viec()).toContain('Hợp đồng phòng P4 hết hạn sau 10 ngày')
+      expect(chinh()?.textContent).toBe('Gia hạn'); expect(chinh()?.getAttribute('href')).toBe('/hop-dong/2')
+      await act(async () => root.unmount()); root = createRoot(container)
+      dat({ hopDong: [HOP_DONG[2]] })
+      await mount('CHU')
+      expect(viec()).toContain('Hợp đồng phòng P5 chờ ký')
+      expect(chinh()?.getAttribute('href')).toBe('/hop-dong/3')
+    })
+    it('4) tháng này chưa gửi hoá đơn → Xem tiến độ; tháng trước đã thu % cộng từ hoá đơn', async () => {
+      dat({ ky: [{ id: 5, nam: 2026, thang: 11, trangThai: 'DANG_MO' }, { id: 4, nam: 2026, thang: 10, trangThai: 'DA_CHOT' }], hoaDon: [{ hoaDonId: 1, kyId: 4, trangThai: 'DA_THU', tongTien: '1000', daThu: '690', conLai: '310' }] })
+      await mount('CHU')
+      expect(viec()).toContain('Tháng 11 chưa gửi hoá đơn')
+      expect(chinh()?.textContent).toBe('Xem tiến độ'); expect(chinh()?.getAttribute('href')).toBe('/chu-ky?toaNhaId=3')
+      expect(container.querySelector('.ma-khoiso')?.textContent).toContain('Tháng 10 đã thu69%')
+    })
+    it('không còn việc: hiện câu báo và không có nút chính', async () => {
+      dat({})
+      await mount('CHU')
+      expect(viec()).toContain('Không có việc gấp ở toà này.')
+      expect(chinh()).toBeNull()
+    })
   })
 
   it('Sửa thông tin toà mở ngăn, gửi PUT đúng payload', async () => {
