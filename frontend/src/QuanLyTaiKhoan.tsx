@@ -16,13 +16,15 @@ import {
 import { Button } from './design/core/Button'
 import { StatusTag } from './design/core/StatusTag'
 import { Icon } from './design/core/Icon'
+import { DauTrang } from './design/layout/DauTrang'
 import { ConfirmDialog } from './design/feedback/ConfirmDialog'
 import { EmptyState } from './design/feedback/EmptyState'
 import { Toast } from './design/feedback/Toast'
 import { Card } from './design/layout/Card'
 import { ActionRow, CheckboxField, CheckboxGroup, FormField, FormPanel, ScreenNotice } from './design/layout/Screen'
 import { DataTable, type DataTableColumn } from './design/table/DataTable'
-import { CSS_BANG_QUAN_TRI, MenuThaoTac, MucMenu, NguoiCoAvatar, nhomSoDienThoai } from './bangQuanTriChung'
+import { CSS_BANG_QUAN_TRI } from './bangQuanTriChung'
+import { dinhDangSdt } from './tienTheoNguoi'
 
 type Props = {
   token: string
@@ -44,7 +46,7 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
   const [nguoiDungChoKhoa, setNguoiDungChoKhoa] = useState<ThongTinQuanLyNguoiDung | null>(null)
   const [loi, setLoi] = useState<string | null>(null)
   const [thongBao, setThongBao] = useState<string | null>(null)
-  const [locTrangThai, setLocTrangThai] = useState<'' | 'HOAT_DONG' | 'KHOA'>('')
+  const [lanTai, setLanTai] = useState(0)
   const [idCuaToi, setIdCuaToi] = useState<number | null>(null)
 
   useEffect(() => {
@@ -70,7 +72,7 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
     return () => {
       mounted = false
     }
-  }, [token])
+  }, [token, lanTai])
 
   // "· bạn": lấy id người đang đăng nhập; lỗi thì thôi, không chặn màn hình.
   useEffect(() => { let mounted = true; fetchCurrentUser(token).then((me) => { if (mounted) setIdCuaToi(me.id) }).catch(() => undefined); return () => { mounted = false } }, [token])
@@ -148,28 +150,19 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
     }
   }
 
-  const dangHoatDong = danhSach.filter((item) => item.trangThai === 'HOAT_DONG').length
+  const dem = (code: string) => danhSach.filter((item) => item.vaiTro === code).length
   const tenToa = (ids: number[]) => ids.map((id) => toaNha.find((building) => building.id === id)?.ten ?? `Toà #${id}`)
-  const hangHienThi = locTrangThai ? danhSach.filter((item) => (locTrangThai === 'KHOA' ? item.trangThai !== 'HOAT_DONG' : item.trangThai === 'HOAT_DONG')) : danhSach
-  const chips = [{ key: 'TAT_CA', label: 'Tất cả', match: () => true }, ...vaiTroTheoThuTu(vaiTro, danhSach).map((role) => ({ key: role.vaiTro, label: NHAN_VAI_TRO[role.vaiTro] ?? role.tenVaiTro, match: (item: ThongTinQuanLyNguoiDung) => item.vaiTro === role.vaiTro }))]
+  const chips = [
+    { key: 'NHAN_SU', label: 'Nhân sự', match: (item: ThongTinQuanLyNguoiDung) => item.vaiTro !== 'NGUOI_THUE' },
+    { key: 'NGUOI_THUE', label: 'Người thuê', match: (item: ThongTinQuanLyNguoiDung) => item.vaiTro === 'NGUOI_THUE' },
+  ]
   const cot: DataTableColumn<ThongTinQuanLyNguoiDung>[] = [
-    { key: 'nguoiDung', label: 'Người dùng', sortable: true, sortValue: (item) => item.hoTen, render: (item) => <NguoiCoAvatar id={item.id} ten={item.hoTen} phu={<>{nhomSoDienThoai(item.soDienThoai)}{item.id === idCuaToi ? ' · bạn' : ''}</>} /> },
-    { key: 'vaiTro', label: 'Vai trò', sortable: true, sortValue: (item) => item.tenVaiTro, render: (item) => <span className="bq-tag-vai">{item.tenVaiTro}</span> },
-    { key: 'toa', label: 'Toà được giao', render: (item) => {
-      const ten = tenToa(item.toaNhaIds)
-      if (ten.length > 0) return <span className="bq-toa" title={ten.join(', ')}>{ten.join(', ')}</span>
-      return <span style={{ color: 'var(--ma-text-muted)' }}>{item.vaiTro === 'QTHT' ? 'Toàn hệ thống' : item.vaiTro === 'NGUOI_THUE' ? 'Người thuê' : 'Chưa gán'}</span>
-    } },
-    { key: 'trangThai', label: 'Trạng thái', sortable: true, sortValue: (item) => item.tenTrangThai, render: (item) => <StatusTag tone={item.trangThai === 'BI_KHOA' ? 'closed' : 'done'}>{item.tenTrangThai}</StatusTag> },
-    { key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong', render: (item) => (
-      <div className="td-acts">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => batDauSua(item)}>Sửa<span className="sr-only"> {item.hoTen}</span></button>
-        <MenuThaoTac nhan={`Thao tác khác cho ${item.hoTen}`}>{(dong) => <>
-          <MucMenu icon="building" onClick={() => { dong(); batDauSua(item) }}>Đổi toà được giao</MucMenu>
-          {item.trangThai === 'HOAT_DONG' ? <MucMenu icon="lock" nguyHiem onClick={() => { dong(); setNguoiDungChoKhoa(item) }}>Khoá tài khoản…<span className="sr-only"> {item.hoTen}</span></MucMenu> : null}
-        </>}</MenuThaoTac>
-      </div>
-    ) },
+    { key: 'hoTen', label: 'Họ tên', sortable: true, sortValue: (item) => item.hoTen, render: (item) => <span className="bq-cat" title={item.hoTen} style={{ fontWeight: 600 }}>{item.hoTen}{item.id === idCuaToi ? ' · bạn' : ''}</span> },
+    { key: 'dienThoai', label: 'Điện thoại', render: (item) => dinhDangSdt(item.soDienThoai) },
+    { key: 'vaiTro', label: 'Vai trò', sortable: true, sortValue: (item) => nhanVaiTro(item), render: (item) => nhanVaiTro(item) },
+    { key: 'soToa', label: 'Số toà', align: 'num', render: (item) => <span title={tenToa(item.toaNhaIds).join(', ')}>{item.toaNhaIds.length || '—'}</span> },
+    { key: 'trangThai', label: 'Tình trạng', sortable: true, sortValue: (item) => item.trangThai, render: (item) => <StatusTag tone={item.trangThai === 'HOAT_DONG' ? 'done' : 'closed'}>{item.trangThai === 'HOAT_DONG' ? 'Hoạt động' : 'Đã khoá'}</StatusTag> },
+    { key: 'thaoTac', label: 'Thao tác', align: 'num', the: 'hanh-dong', render: (item) => <Button variant="secondary" size="sm" onClick={() => batDauSua(item)}>Sửa<span className="sr-only"> {item.hoTen}</span></Button> },
   ]
 
   return (
@@ -181,39 +174,29 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
       style={{ display: 'grid', gap: 16, minWidth: 0 }}
     >
       <style>{CSS_BANG_QUAN_TRI}</style>
-      <header className="topbar">
-        <div className="title-block">
-          <h1 className="h1" id="account-management-title">Tài khoản</h1>
-          <p className="sub">{dangHoatDong} tài khoản đang hoạt động · tài khoản đã phát sinh dữ liệu chỉ khoá, không xoá</p>
-        </div>
-        <div className="topbar-actions"><Button onClick={batDauTao}><Icon name="plus" />Tạo tài khoản</Button></div>
-      </header>
+      <DauTrang
+        tieuDe={<span id="account-management-title">Tài khoản</span>}
+        phu={`${danhSach.length} tài khoản · ${dem('CHU')} chủ nhà · ${dem('QUAN_LY')} quản lý · ${dem('THO')} thợ · ${dem('NGUOI_THUE')} người thuê`}
+        hanhDong={<Button onClick={batDauTao}><Icon name="plus" />Thêm tài khoản</Button>}
+      />
 
-      {loi ? <div role="alert"><ScreenNotice tone="urgent">{loi}</ScreenNotice></div> : null}
+      {loi ? <div role="alert"><ScreenNotice tone="urgent">{loi}</ScreenNotice>{danhSach.length === 0 ? <Button variant="secondary" onClick={() => setLanTai((n) => n + 1)}>Tải lại</Button> : null}</div> : null}
       {thongBao ? <Toast>{thongBao}</Toast> : null}
 
       {dangTai ? (
-        <EmptyState title="Đang tải danh sách tài khoản…" />
+        <div role="status" aria-label="Đang tải danh sách tài khoản" style={{ display: 'grid', gap: 10 }}><div className="skel skel-line" /><div className="skel skel-line" style={{ width: '80%' }} /><div className="skel skel-line" style={{ width: '60%' }} /></div>
       ) : danhSach.length === 0 ? (
-        <EmptyState title="Chưa có tài khoản nào." />
+        loi ? null : <EmptyState title="Chưa có tài khoản nào." actionLabel="Thêm tài khoản" onAction={batDauTao} />
       ) : (
         <Card className="bq-the-loc" data-account-list={mobile ? 'mobile' : 'desktop'}>
-          <label className="bq-toolbar-phai bq-loc-phai">
-            <span className="sr-only">Lọc theo trạng thái</span>
-            <select className="select" style={{ width: 152 }} value={locTrangThai} onChange={(event) => setLocTrangThai(event.target.value as '' | 'HOAT_DONG' | 'KHOA')}>
-              <option value="">Mọi trạng thái</option>
-              <option value="HOAT_DONG">Hoạt động</option>
-              <option value="KHOA">Đã khoá</option>
-            </select>
-          </label>
           <DataTable
-            rows={hangHienThi}
+            rows={danhSach}
             columns={cot}
             getRowId={(item) => item.id}
             chips={chips}
-            defaultChip="TAT_CA"
+            defaultChip="NHAN_SU"
             timTheo={(item) => `${item.hoTen} ${item.soDienThoai}`}
-            searchLabel="Tìm tên, SĐT"
+            searchLabel="Tìm tên hoặc số điện thoại"
             noun="tài khoản"
             pageSize={8}
             rowLabel={(item) => item.hoTen}
@@ -294,6 +277,7 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
               {dangLuu ? 'Đang lưu…' : bieuMau.id === null ? 'Tạo tài khoản' : 'Lưu thay đổi'}
             </Button>
             <Button type="button" variant="secondary" onClick={huyBieuMau} blocked={dangLuu}>Huỷ</Button>
+            {bieuMau.id !== null && danhSach.find((item) => item.id === bieuMau.id)?.trangThai === 'HOAT_DONG' ? <Button type="button" variant="danger" onClick={() => setNguoiDungChoKhoa(danhSach.find((item) => item.id === bieuMau.id) ?? null)} blocked={dangLuu}>Khoá tài khoản…</Button> : null}
           </ActionRow>
         </FormPanel>
       ) : null}
@@ -303,22 +287,14 @@ export default function QuanLyTaiKhoan({ token, mobile = false }: Props) {
         confirmLabel="Khoá tài khoản"
         cancelLabel="Để sau"
         onCancel={() => setNguoiDungChoKhoa(null)}
-        onConfirm={() => { const account = nguoiDungChoKhoa; setNguoiDungChoKhoa(null); void khoaTaiKhoan(account) }}
+        onConfirm={() => { const account = nguoiDungChoKhoa; setNguoiDungChoKhoa(null); setBieuMau(null); void khoaTaiKhoan(account) }}
       /> : null}
     </section>
   )
 }
 
-const NHAN_VAI_TRO: Record<string, string> = { NGUOI_THUE: 'Người thuê', QUAN_LY: 'Quản lý', CHU: 'Chủ sở hữu', THO: 'Thợ', QTHT: 'Quản trị' }
-const THU_TU_VAI_TRO = ['NGUOI_THUE', 'QUAN_LY', 'CHU', 'THO', 'QTHT']
-
-/** Chip theo vai trò máy chủ trả về, xếp theo thứ tự thiết kế; vai trò lạ xếp cuối. */
-function vaiTroTheoThuTu(vaiTro: ThongTinVaiTro[], danhSach: ThongTinQuanLyNguoiDung[]): ThongTinVaiTro[] {
-  const co = new Map(vaiTro.map((role) => [role.vaiTro, role]))
-  for (const item of danhSach) if (!co.has(item.vaiTro)) co.set(item.vaiTro, { vaiTro: item.vaiTro, tenVaiTro: item.tenVaiTro })
-  const rank = (code: string) => { const i = THU_TU_VAI_TRO.indexOf(code); return i < 0 ? 99 : i }
-  return [...co.values()].sort((a, b) => rank(a.vaiTro) - rank(b.vaiTro))
-}
+const NHAN_VAI_TRO: Record<string, string> = { CHU: 'Chủ nhà', QUAN_LY: 'Quản lý toà', THO: 'Thợ', NGUOI_THUE: 'Người thuê', QTHT: 'Quản trị hệ thống' }
+const nhanVaiTro = (item: ThongTinQuanLyNguoiDung) => NHAN_VAI_TRO[item.vaiTro] ?? item.tenVaiTro
 
 function thongBaoLoi(reason: unknown, fallback: string) {
   return reason instanceof ApiError || reason instanceof Error ? reason.message : fallback
