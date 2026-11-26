@@ -1,25 +1,26 @@
+/* @font-face của IBM Plex Sans nằm ở overlay-ui-redesign.css (9 file: 400/500/600 × latin, latin-ext, vietnamese). */
 :root {
-  --ma-font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --ma-font-mono: var(--ma-font-ui); /* không còn chữ mono: giữ tên token cho CSS cũ, trỏ về Inter */
+  --ma-font-ui: "IBM Plex Sans", system-ui, sans-serif;
+  --ma-font-mono: var(--ma-font-ui); /* không còn chữ mono: giữ tên token cho CSS cũ */
 
-  /* Cấp chữ — px, khớp đúng màn #42 đã chốt */
-  --ma-text-screen-title: 700 24px/1.15 var(--ma-font-ui);
-  --ma-text-block-title: 700 17px/1.25 var(--ma-font-ui);
-  --ma-text-task-name: 600 15.5px/1.35 var(--ma-font-ui);
-  --ma-text-body: 400 14.5px/1.5 var(--ma-font-ui);
-  --ma-text-caption: 400 12.5px/1.5 var(--ma-font-ui);
-  --ma-text-figure: 600 19px/1.1 var(--ma-font-mono);
-  --ma-text-figure-sm: 600 16px/1.15 var(--ma-font-mono);
-  --ma-text-room-no: 600 15px/1.1 var(--ma-font-mono);
-  --ma-text-syslabel: 700 10.5px/1.3 var(--ma-font-mono);
+  /* Cấp chữ thật nằm ở overlay-ui-redesign.css (thang V3 + 3 mật độ); đây chỉ là giá trị dự phòng cùng thang */
+  --ma-text-screen-title: 600 22px/1.3 var(--ma-font-ui);
+  --ma-text-block-title: 600 17px/1.4 var(--ma-font-ui);
+  --ma-text-task-name: 500 15px/22px var(--ma-font-ui);
+  --ma-text-body: 400 15px/22px var(--ma-font-ui);
+  --ma-text-caption: 400 13px/18px var(--ma-font-ui);
+  --ma-text-figure: 600 22px/1.3 var(--ma-font-ui);
+  --ma-text-figure-sm: 600 15px/22px var(--ma-font-ui);
+  --ma-text-room-no: 600 15px/1.2 var(--ma-font-ui);
+  --ma-text-syslabel: 500 13px/18px var(--ma-font-ui);
 
-  --ma-tracking-title: -0.03em;
-  --ma-tracking-block: -0.02em;
-  --ma-tracking-figure: -0.02em;
-  --ma-tracking-syslabel: 0.11em;
-  --ma-tracking-navgroup: 0.14em;
+  --ma-tracking-title: -0.01em;
+  --ma-tracking-block: 0;
+  --ma-tracking-figure: -0.01em;
+  --ma-tracking-syslabel: 0;
+  --ma-tracking-navgroup: 0;
 
-  /* Sàn cỡ chữ — không được nhỏ hơn */
-  --ma-text-min-desktop: 11px;
+  /* Sàn cỡ chữ V3: 13px mọi khung */
+  --ma-text-min-desktop: 13px;
   --ma-text-min-mobile: 13px;
 }

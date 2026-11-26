@@ -70,7 +70,7 @@ export function MeterImage({ src, alt, imageId, onRefresh }: {
     background: 'var(--ma-bg-card)',
     color: 'var(--ma-text-primary)',
     font: 'inherit',
-    fontWeight: 700,
+    fontWeight: 600,
     cursor: dangXinLai ? 'wait' : 'pointer',
   }
 
@@ -98,7 +98,7 @@ export function MeterImage({ src, alt, imageId, onRefresh }: {
         href={imageSrc}
         target="_blank"
         rel="noreferrer"
-        style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, color: 'var(--ma-text-primary)', fontSize: 13, fontWeight: 700, textUnderlineOffset: 3 }}
+        style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, color: 'var(--ma-text-primary)', fontSize: 13, fontWeight: 600, textUnderlineOffset: 3 }}
       >
         Mở ảnh công tơ bản đầy đủ
       </a>

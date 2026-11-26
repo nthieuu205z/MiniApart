@@ -11,9 +11,9 @@ export interface FilterChipProps extends Omit<React.HTMLAttributes<HTMLElement>,
 }
 
 const ACTIVE: React.CSSProperties = {
-  background: 'var(--ma-brand-accent-light)',
+  background: 'var(--ma-paper-3)',
   borderColor: 'var(--ma-brand-primary)',
-  color: 'var(--ma-brand-primary-hover)',
+  color: 'var(--ma-text-primary)',
 }
 
 /** Chip lọc. Bộ lọc đang bật phải hiện thành chip để trạng thái rỗng-do-lọc giải thích được. */
