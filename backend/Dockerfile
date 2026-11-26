@@ -1,4 +1,4 @@
-FROM eclipse-temurin:24-jdk-jammy AS build
+FROM eclipse-temurin:24-jdk-noble AS build
 
 WORKDIR /workspace
 
@@ -9,7 +9,7 @@ RUN chmod +x gradlew
 COPY src ./src
 RUN ./gradlew bootJar --no-daemon
 
-FROM eclipse-temurin:24-jre-jammy
+FROM eclipse-temurin:24-jre-noble
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
