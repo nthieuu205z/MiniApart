@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ThoCongViec, buocViecTho } from './ThoCongViec'
+import { Tieu } from './CanTra'
 
 const mockJobList = [
   {
@@ -136,15 +137,18 @@ const mockDetail = {
   trangThaiThanhToan: 'CHUA_THANH_TOAN' as const,
 }
 
+const loaiBo = (u: RequestInfo | URL) => (typeof u === 'string' ? u : u instanceof URL ? u.pathname : u.url)
+
 describe('ThoCongViec Component', () => {
   let container: HTMLDivElement
   let root: Root
+  const goi: Array<{ url: string; method: string; body?: string }> = []
 
   beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     container = document.createElement('div')
     document.body.appendChild(container)
-    window.history.replaceState({}, '', '/viec-cua-toi')
+    goi.length = 0
   })
 
   afterEach(async () => {
@@ -153,114 +157,77 @@ describe('ThoCongViec Component', () => {
     vi.restoreAllMocks()
   })
 
-  it('máy tính: thẻ việc dạng lưới có hạng mục, toà, phòng, tag, chip lọc và đúng một h1', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
-      if (url.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(mockJobList), { status: 200 })
-      throw new Error(`Unexpected ${url}`)
+  async function hienThi(ds: unknown[], url = '/viec-cua-toi', { mobile = true, detail = mockDetail, loiBaoXong = false }: { mobile?: boolean; detail?: object; loiBaoXong?: boolean } = {}) {
+    window.history.replaceState({}, '', url)
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const u = loaiBo(input)
+      goi.push({ url: u, method: init?.method ?? 'GET', body: init?.body as string | undefined })
+      if (u === '/api/tho/cong-viec/101/bao-xong') return loiBaoXong ? new Response(JSON.stringify({ message: 'Máy chủ từ chối' }), { status: 400 }) : new Response(null, { status: 204 })
+      if (u === '/api/tho/cong-viec/101/bao-gia') return new Response(JSON.stringify({ id: 77 }), { status: 200 })
+      if (u === '/api/tho/cong-viec/101/bao-gia/77/gui-duyet') return new Response(JSON.stringify({ id: 77 }), { status: 200 })
+      if (u === '/api/tho/cong-viec/101') return new Response(JSON.stringify(detail), { status: 200 })
+      if (u.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(ds), { status: 200 })
+      if (u.includes('/api/auth/me') || u.includes('/me')) return new Response(JSON.stringify({ hoTen: 'Lê Quốc Huy' }), { status: 200 })
+      throw new Error(`Unexpected ${u}`)
     }))
-
     root = createRoot(container)
     await act(async () => {
-      root.render(<ThoCongViec token="worker-token" />)
+      root.render(<ThoCongViec token="worker-token" mobile={mobile} />)
     })
+  }
 
-    await vi.waitFor(() => {
-      expect(container.textContent).toContain('Việc của tôi')
-      expect(container.textContent).toContain('Vòi lavabo rò rỉ nước')
-      expect(container.textContent).toContain('Phòng 201')
-      expect(container.textContent).toContain('Tòa Central')
-      expect(container.textContent).toContain('Nguyễn Văn An')
-      expect(container.textContent).toContain('Gấp')
+  async function nhap(el: HTMLInputElement | HTMLTextAreaElement, value: string) {
+    const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(proto, 'value')!.set!.call(el, value)
+      el.dispatchEvent(new Event('input', { bubbles: true }))
     })
+  }
+
+  const nutChinh = () => container.querySelectorAll<HTMLElement>('.btn-primary')
+  const nutTheoNhan = (nhan: string) => Array.from(container.querySelectorAll<HTMLElement>('button')).find((b) => b.textContent?.includes(nhan))
+
+  it('máy tính: khối Làm trước có hạng mục, toà, phòng; chỉ một h1 và hai tab', async () => {
+    await hienThi(mockJobList, '/viec-cua-toi', { mobile: false })
+    await vi.waitFor(() => expect(container.textContent).toContain('Vòi lavabo rò rỉ nước · phòng 201'))
+    expect(container.textContent).toContain('Làm trước')
+    expect(container.textContent).toContain('Tòa Central, tầng 2')
     expect(container.querySelectorAll('h1')).toHaveLength(1)
     expect(container.querySelector('table')).toBeNull()
-    expect(container.querySelector('nav[aria-label="Lọc việc"]')).not.toBeNull()
-  })
-
-  it('máy tính: mở drawer chi tiết với deep link khi bấm tiêu đề thẻ việc', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
-      if (url === '/api/tho/cong-viec/101') return new Response(JSON.stringify(mockDetail), { status: 200 })
-      if (url.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(mockJobList), { status: 200 })
-      throw new Error(`Unexpected ${url}`)
-    }))
-
-    root = createRoot(container)
-    await act(async () => {
-      root.render(<ThoCongViec token="worker-token" />)
-    })
-
-    await vi.waitFor(() => {
-      expect(container.textContent).toContain('Vòi lavabo rò rỉ nước')
-    })
-
-    const viewBtn = Array.from(container.querySelectorAll<HTMLButtonElement>('article button')).find((b) => b.textContent?.includes('Vòi lavabo rò rỉ nước'))
-    expect(viewBtn).toBeDefined()
-    await act(async () => {
-      viewBtn?.click()
-    })
-
-    await vi.waitFor(() => {
-      expect(window.location.search).toContain('yeuCauId=101')
-      expect(container.textContent).toContain('Chi tiết sự cố: SC-20261101-001')
-      expect(container.textContent).toContain('123 Cầu Giấy, Hà Nội')
-      expect(container.textContent).toContain('Quản lý Trần Hoàng')
-      expect(container.textContent).toContain('Đã kiểm tra hỏng gioăng cao su')
-      expect(container.textContent).toContain('Thay dây cấp + gioăng cao su')
-    })
+    expect(Array.from(container.querySelectorAll('nav[aria-label="Lọc việc"] a')).map((a) => a.textContent)).toEqual(['Đang làm 1', 'Đã xong 1'])
   })
 
   it('hiện trạng thái rỗng khi không có việc nào', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => {
-      return new Response(JSON.stringify([]), { status: 200 })
-    }))
-
-    root = createRoot(container)
-    await act(async () => {
-      root.render(<ThoCongViec token="worker-token" />)
-    })
-
-    await vi.waitFor(() => {
-      expect(container.textContent).toContain('Không tìm thấy công việc nào')
-    })
+    await hienThi([])
+    await vi.waitFor(() => expect(container.textContent).toContain('Chưa có việc nào được giao'))
+    expect(container.textContent).toContain('Khi quản lý giao việc, bạn sẽ nhận thông báo.')
+    expect(nutChinh()).toHaveLength(0)
   })
 
-  it('mobile: mỗi thẻ có đúng 1 nút chính theo trạng thái và số điện thoại bấm được', async () => {
-    const dong = (id: number, trangThaiHieuLuc: string, extra: object) => ({
-      ...mockJobList[0],
-      id,
-      maYeuCau: `SC-${id}`,
-      trangThai: trangThaiHieuLuc,
-      trangThaiHieuLuc,
-      tenTrangThaiHieuLuc: trangThaiHieuLuc,
-      ...extra,
-    })
-    const ds = [
-      dong(1, 'DA_PHAN_CONG', { giaTriBaoGia: undefined, trangThaiBaoGia: undefined }),
-      dong(2, 'DANG_XU_LY', { giaTriBaoGia: undefined, trangThaiBaoGia: undefined }),
-      dong(3, 'DANG_XU_LY', { trangThaiBaoGia: 'DA_DUYET' }),
+  it('mỗi trạng thái có ≤ 1 .btn-primary với nhãn đúng', async () => {
+    const dong = (trangThaiHieuLuc: string, extra: object = {}) => [{ ...mockJobList[0], trangThai: trangThaiHieuLuc, trangThaiHieuLuc, giaTriBaoGia: undefined, trangThaiBaoGia: undefined, ...extra }]
+    const ca: Array<[unknown[], string[]]> = [
+      [dong('DA_PHAN_CONG'), ['Bắt đầu khảo sát']],
+      [dong('DANG_XU_LY'), ['Gửi báo giá']],
+      [dong('DANG_XU_LY', { trangThaiBaoGia: 'DA_DUYET' }), ['Báo đã sửa xong']],
+      [dong('CHO_XAC_NHAN'), []],
     ]
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
-      if (url.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(ds), { status: 200 })
-      throw new Error(`Unexpected ${url}`)
-    }))
+    for (const [ds, nhan] of ca) {
+      await hienThi(ds)
+      await vi.waitFor(() => expect(container.textContent).toContain('Làm trước'))
+      expect(Array.from(nutChinh()).map((n) => n.textContent)).toEqual(nhan)
+      expect(container.querySelector('a[href="tel:0987654321"]')).not.toBeNull()
+      await act(async () => root.unmount())
+    }
+  })
 
-    root = createRoot(container)
-    await act(async () => {
-      root.render(<ThoCongViec token="worker-token" mobile />)
-    })
-
-    await vi.waitFor(() => expect(container.querySelectorAll('article').length).toBe(3))
-    const nhanNut = ds.map((d) => {
-      const nut = container.querySelectorAll(`[data-testid="worker-task-row-${d.id}"] .btn`)
-      expect(nut.length).toBe(1)
-      return nut[0].textContent
-    })
-    expect(nhanNut).toEqual(['Bắt đầu khảo sát', 'Gửi báo giá', 'Báo đã sửa xong'])
-    const tel = container.querySelector('a[href^="tel:"]')
-    expect(tel?.getAttribute('href')).toBe('tel:0987654321')
+  it('Việc khác liệt kê phần còn lại, tab Đã xong liệt kê việc đã xong', async () => {
+    await hienThi([...mockJobList, { ...mockJobList[0], id: 103, hangMuc: 'Khoá cửa', soPhong: 'P.103', mucDo: 'THUONG' }])
+    await vi.waitFor(() => expect(container.textContent).toContain('Việc khác (1 việc)'))
+    expect(container.querySelector('[data-testid="worker-task-row-103"]')?.textContent).toContain('Tòa Central · đang làm')
+    await act(async () => { (container.querySelectorAll('.seg-links a')[1] as HTMLAnchorElement).click() })
+    expect(container.querySelector('[data-testid="worker-task-row-102"]')).not.toBeNull()
+    expect(nutChinh()).toHaveLength(0)
   })
 
   it('buocViecTho: 5 ca trạng thái → bước', () => {
@@ -272,37 +239,65 @@ describe('ThoCongViec Component', () => {
     expect(b('CHO_XAC_NHAN')).toEqual({ so: 4, nhan: 'Bước 4/4 · Nhận tiền' })
   })
 
-  async function renderMobile(ds: unknown[], url = '/viec-cua-toi') {
-    window.history.replaceState({}, '', url)
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const u = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
-      if (u === '/api/tho/cong-viec/101') return new Response(JSON.stringify(mockDetail), { status: 200 })
-      if (u.startsWith('/api/tho/cong-viec')) return new Response(JSON.stringify(ds), { status: 200 })
-      throw new Error(`Unexpected ${u}`)
-    }))
-    root = createRoot(container)
-    await act(async () => {
-      root.render(<ThoCongViec token="worker-token" mobile />)
-    })
-  }
-
-  it('mobile: lọc ?loc=xong, mặc định Gấp, đếm trên seg, chỉ 1 btn-primary, chấm bước', async () => {
-    await renderMobile(mockJobList, '/viec-cua-toi?loc=xong')
-    await vi.waitFor(() => expect(container.querySelectorAll('article').length).toBe(1))
-    expect(Array.from(container.querySelectorAll('.seg-links a')).map((t) => t.textContent)).toEqual(['Gấp (1)', 'Đang làm (1)', 'Xong (1)'])
-    expect(container.querySelector('[data-testid="worker-task-row-102"]')).not.toBeNull()
-    expect(container.querySelector('.btn-primary')).toBeNull()
-    expect(container.querySelector('[data-testid="worker-task-row-102"]')?.textContent).toContain('Chờ quản lý thanh toán')
-    await act(async () => {
-      ;(container.querySelectorAll('.seg-links a')[0] as HTMLAnchorElement).click()
-    })
-    expect(window.location.search).toBe('?loc=gap')
-    expect(container.querySelectorAll('.btn-primary').length).toBe(1)
-    expect(container.querySelector('.dots')?.getAttribute('aria-label')).toBe('Bước 3/4 · Sửa')
+  it('chi tiết (?yeuCauId): liên hệ, Đã làm gì, ẩn nút ảnh và nút trả việc, một nút chính', async () => {
+    await hienThi(mockJobList, '/viec-cua-toi?yeuCauId=101')
+    await vi.waitFor(() => expect(container.textContent).toContain('Quản lý Trần Hoàng'))
+    expect(container.textContent).toContain('SC-20261101-001')
+    expect(container.textContent).toContain('Đã làm gì')
+    expect(container.textContent).toContain('0987 654 321')
+    expect(container.textContent).not.toContain('Chụp ảnh hiện trạng')
+    expect(container.textContent).not.toContain('Tôi không nhận được việc này')
+    expect(Array.from(nutChinh()).map((n) => n.textContent)).toEqual(['Báo đã sửa xong'])
   })
 
-  it('mobile: yeuCauId trên URL mở drawer chi tiết như cũ', async () => {
-    await renderMobile(mockJobList, '/viec-cua-toi?yeuCauId=101')
-    await vi.waitFor(() => expect(container.textContent).toContain('Chi tiết sự cố: SC-20261101-001'))
+  it('báo đã sửa xong: bắt buộc nhập Đã làm gì rồi gọi /bao-xong với ketQuaSuaChua', async () => {
+    await hienThi(mockJobList, '/viec-cua-toi?yeuCauId=101')
+    await vi.waitFor(() => expect(nutTheoNhan('Báo đã sửa xong')).toBeDefined())
+    await act(async () => { nutTheoNhan('Báo đã sửa xong')?.click() })
+    const gui = nutTheoNhan('Gửi báo xong')!
+    expect(gui.getAttribute('aria-disabled')).toBe('true')
+    await act(async () => { gui.click() })
+    expect(goi.some((c) => c.url.endsWith('/bao-xong'))).toBe(false)
+    await nhap(container.querySelector('textarea[placeholder^="Ví dụ: thay công tắc"]')!, 'Thay công tắc, đã thử điện')
+    expect(nutTheoNhan('Gửi báo xong')?.getAttribute('aria-disabled')).toBeNull()
+    await act(async () => { nutTheoNhan('Gửi báo xong')?.click() })
+    await vi.waitFor(() => expect(container.textContent).toContain('Đã báo xong. Chờ quản lý nghiệm thu.'))
+    const c = goi.find((x) => x.url === '/api/tho/cong-viec/101/bao-xong')!
+    expect(c.method).toBe('POST')
+    expect(JSON.parse(c.body!)).toEqual({ ketQuaSuaChua: 'Thay công tắc, đã thử điện' })
+  })
+
+  it('báo xong lỗi: báo trong khối và giữ chữ đã nhập', async () => {
+    await hienThi(mockJobList, '/viec-cua-toi?yeuCauId=101', { loiBaoXong: true })
+    await vi.waitFor(() => expect(nutTheoNhan('Báo đã sửa xong')).toBeDefined())
+    await act(async () => { nutTheoNhan('Báo đã sửa xong')?.click() })
+    await nhap(container.querySelector('textarea[placeholder^="Ví dụ: thay công tắc"]')!, 'Đã thay gioăng')
+    await act(async () => { nutTheoNhan('Gửi báo xong')?.click() })
+    await vi.waitFor(() => expect(container.querySelector('[role="alert"]')?.textContent).toContain('Máy chủ từ chối'))
+    expect((container.querySelector('textarea[placeholder^="Ví dụ: thay công tắc"]') as HTMLTextAreaElement).value).toBe('Đã thay gioăng')
+  })
+
+  it('báo giá: không có dòng hợp lệ thì nút gửi aria-disabled; gửi thì gọi bao-gia rồi gui-duyet', async () => {
+    await hienThi(mockJobList, '/viec-cua-toi?yeuCauId=101&baoGia=1')
+    await vi.waitFor(() => expect(container.textContent).toContain('Dòng 1: vật tư hoặc công'))
+    const gui = () => container.querySelector<HTMLElement>('.btn-primary')!
+    expect(gui().getAttribute('aria-disabled')).toBe('true')
+    expect(container.textContent).toContain('Thêm ít nhất một dòng có đơn giá.')
+    const o = container.querySelectorAll<HTMLInputElement>('input')
+    await nhap(o[0], 'Bóng LED âm trần 9W')
+    await nhap(o[1], '2')
+    await nhap(o[2], '0')
+    expect(gui().getAttribute('aria-disabled')).toBe('true')
+    await nhap(o[2], '85000')
+    expect(gui().getAttribute('aria-disabled')).toBeNull()
+    expect(gui().textContent).toBe('Gửi báo giá 170.000 ₫')
+    await act(async () => { gui().click() })
+    await vi.waitFor(() => expect(goi.some((c) => c.url.endsWith('/gui-duyet'))).toBe(true))
+    const ghi = goi.filter((c) => c.method === 'POST').map((c) => c.url)
+    expect(ghi).toEqual(['/api/tho/cong-viec/101/bao-gia', '/api/tho/cong-viec/101/bao-gia/77/gui-duyet'])
+  })
+
+  it('Tieu vẫn import được từ CanTra', () => {
+    expect(typeof Tieu).toBe('function')
   })
 })
