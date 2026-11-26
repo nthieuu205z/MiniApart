@@ -346,13 +346,15 @@ describe('Khung UX v2: ô chọn toà, tab trang, breadcrumb, sidebar', () => {
   })
 
   it('TabTrang: link thật, tab đang ở là aria-current, không có role="tab"; trang ngoài nhóm không có tab', async () => {
-    await act(async () => root.render(<TabTrang vaiTro="CHU" duongDan="/thu-tien" search="?tab=da-thu" />))
+    await act(async () => root.render(<TabTrang vaiTro="CHU" duongDan="/bao-cao/tieu-thu" search="" />))
     const links = [...container.querySelectorAll('a.tab')]
-    expect(links.map((a) => a.textContent)).toEqual(['Cần thu', 'Hoá đơn', 'Đã thu', 'Tiền cọc'])
-    expect(links.map((a) => a.getAttribute('aria-current'))).toEqual([null, null, 'page', null])
+    expect(links.map((a) => a.textContent)).toEqual(['Tổng quan', 'Doanh thu & lấp đầy', 'Tiêu thụ điện nước', 'Chi phí bảo trì', 'Nhật ký thao tác'])
+    expect(links.map((a) => a.getAttribute('aria-current'))).toEqual([null, null, 'page', null, null])
     expect(container.querySelector('[role="tab"]')).toBeNull()
     await act(async () => root.render(<TabTrang vaiTro="CHU" duongDan="/hop-dong" search="" />))
     expect(container.querySelector('nav')).toBeNull()
+    await act(async () => root.render(<TabTrang vaiTro="CHU" duongDan="/thu-tien" search="" />))
+    expect(container.querySelector('nav')).toBeNull() // Thu tiền tự có tab trong thẻ
     await act(async () => root.render(<TabTrang vaiTro="QTHT" duongDan="/nhat-ky-thao-tac" search="" />))
     expect(container.querySelector('nav')).toBeNull()
   })

@@ -391,7 +391,7 @@ function KhungUngDung({ nguoiDung, token, viTri, ketQuaTuyen, laManHinhHep, laMa
   const kieuNav = coThanhDuoi ? 'bar' : coNgan ? 'drawer' : 'side'
 
   return (
-    <main className="ma-app-shell" data-density={matDoTheoVaiTro(vaiTro, laManHinhHep)} onClick={chanLienKetNoiBo} style={laManHinhHep ? styleKhungUngDungMobile : laManHinhThuGon ? styleKhungUngDungThuGon : styleKhungUngDungDesktop}>
+    <main className="ma-app-shell" data-bottom-nav={coThanhDuoi ? '' : undefined} data-density={matDoTheoVaiTro(vaiTro, laManHinhHep)} onClick={chanLienKetNoiBo} style={laManHinhHep ? styleKhungUngDungMobile : laManHinhThuGon ? styleKhungUngDungThuGon : styleKhungUngDungDesktop}>
       <NavPanel
         className="ma-no-print"
         variant={kieuNav}

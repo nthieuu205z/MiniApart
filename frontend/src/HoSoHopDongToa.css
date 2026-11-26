@@ -41,8 +41,4 @@
   .hs-so-do .room { padding: 8px; }
 }
 
-/* Chân dính nằm trên bottom-nav của khung (khung cố định ở đáy, z-index 20) */
-@media (max-width: 767px) {
-  .hs-khoi .ma-chandinh, .hs-toa .ma-chandinh, [data-testid="ho-so-hop-dong"] .ma-chandinh { bottom: var(--ma-bottom-nav-height); z-index: 10; }
-}
 .blk-h h2, .blk-h .link-more { white-space: nowrap; }

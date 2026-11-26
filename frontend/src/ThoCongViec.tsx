@@ -41,7 +41,6 @@ export const CSS_THO = `
 .tho-cv .irow .t { font: var(--ma-text-task-name); }
 .tho-cv .irow .money { font: var(--ma-text-figure-sm); }
 .tho-cv .ma-buoc li, .tho-cv .ma-dongviec-mt { font: var(--ma-text-body-sm); }
-@media (max-width: 767px) { .tho-cv .ma-chandinh { bottom: var(--ma-bottom-nav-height); } }
 @media (min-width: 768px) { .tho-cv .ma-chandinh { position: static; margin: 0; padding: 0; border: 0; background: none; } .tho-cv .ma-chandinh .btn { flex: none; } }
 .tho-cv .ma-dautrang .btn-ghost { padding-left: 0; }
 `
