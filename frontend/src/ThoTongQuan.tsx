@@ -198,7 +198,7 @@ export function ThoTongQuan({ token, mobile = false, onNavigate }: ThoTongQuanPr
             <div {...bam('/tho/chi-phi')} style={styleDong} data-testid="kpi-gia-tri-da-chot">
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 500 }}>Giá trị đã chốt</div>
-                <div className="t-meta">Báo giá có hiệu lực trong kỳ</div>
+                <div className="t-meta">Báo giá có hiệu lực trong tháng</div>
               </div>
               <b style={styleTien}>{dinhDangTien(kpi.giaTriDaChot)} đ</b>
             </div>
@@ -212,7 +212,7 @@ export function ThoTongQuan({ token, mobile = false, onNavigate }: ThoTongQuanPr
             <div {...bam('/tho/chi-phi')} style={styleDong} data-testid="kpi-con-phai-tra">
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 500 }}>Còn phải trả</div>
-                <div className="t-meta">Công nợ đủ điều kiện thanh toán</div>
+                <div className="t-meta">Còn nợ đủ điều kiện thanh toán</div>
               </div>
               <b style={{ ...styleTien, color: kpi.conPhaiTra > 0 ? 'var(--ma-urgent)' : 'var(--ma-text-primary)' }}>{dinhDangTien(kpi.conPhaiTra)} đ</b>
             </div>
@@ -255,7 +255,7 @@ export function ThoTongQuan({ token, mobile = false, onNavigate }: ThoTongQuanPr
 
         <Card title="Cơ cấu trạng thái công việc" data-testid="chart-status-distribution">
           {tongBieuDoTrangThai === 0 ? (
-            <p className="t-sm t-2">Không có công việc nào trong kỳ này.</p>
+            <p className="t-sm t-2">Không có công việc nào trong tháng này.</p>
           ) : (
             <div style={{ display: 'grid', gap: 14 }}>
               <div style={{ height: 16, display: 'flex', borderRadius: 8, overflow: 'hidden', background: 'var(--ma-chart-track)' }} aria-label="Biểu đồ thanh phân bố trạng thái">

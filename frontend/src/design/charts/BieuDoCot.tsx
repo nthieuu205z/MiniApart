@@ -91,7 +91,7 @@ export function BieuDoCot({ nhan, chuoi, tieuDe, thuocTinhNhom, moTaNhom, dinhDa
       <div className="sr-only"> {/* bọc div: bảng đặt trực tiếp sr-only vẫn tràn ra ngoài */}
         <table>
           <caption>{tieuDe}</caption>
-          <thead><tr><th>Kỳ</th>{chuoi.map((c) => <th key={c.ten}>{c.ten}</th>)}</tr></thead>
+          <thead><tr><th>Tháng</th>{chuoi.map((c) => <th key={c.ten}>{c.ten}</th>)}</tr></thead>
           <tbody>
             {nhan.map((ten, i) => (
               <tr key={ten}><th>{ten}</th>{chuoi.map((c) => <td key={c.ten}>{c.giaTri[i] === null || c.giaTri[i] === undefined ? 'Chưa ghi nhận' : dinhDang(c.giaTri[i]!)}</td>)}</tr>

@@ -358,7 +358,7 @@ export default function KhamPhaPhong({ onChuyenDangNhap, manHinhHep = false }: P
         <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div className="logo" aria-hidden="true">M</div>
-            <span style={{ font: 'var(--ma-text-body)', fontWeight: 700 }}>MiniApart</span>
+            <span style={{ font: 'var(--ma-text-body)', fontWeight: 600 }}>MiniApart</span>
           </div>
           <Button variant="secondary" onClick={onChuyenDangNhap} data-testid="btn-chuyen-dang-nhap">
             Đăng nhập
@@ -652,7 +652,7 @@ function ChiTietPhongModal({
               <span style={{ fontSize: 12, color: 'var(--ma-text-secondary)' }}>
                 Tiền thuê cố định hằng tháng
               </span>
-              <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--ma-ink-900)' }}>
+              <div style={{ fontSize: 26, fontWeight: 600, color: 'var(--ma-ink-900)' }}>
                 {dinhDangTien(phong.giaThueMacDinh)}
                 <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--ma-text-secondary)' }}> / tháng</span>
               </div>
@@ -687,7 +687,7 @@ function ChiTietPhongModal({
                         <strong>{dv.tenDichVu}</strong>
                       </td>
                       <td style={styleTd}>{dv.loaiThu === 'DONG_HO' ? 'Theo chỉ số công tơ' : dv.loaiThu === 'CO_DINH' ? 'Phí cố định/tháng' : dv.loaiThu}</td>
-                      <td style={{ ...styleTd, fontWeight: 700 }}>
+                      <td style={{ ...styleTd, fontWeight: 600 }}>
                         {dv.cheDoGia === 'BAC_THANG'
                           ? 'Theo biểu giá bậc thang'
                           : dv.donGia != null
@@ -1068,7 +1068,7 @@ const styleHopGiaChinh: CSSProperties = {
 const styleTieuDePhu: CSSProperties = {
   margin: '0 0 var(--ma-space-2)',
   fontSize: 12,
-  fontWeight: 700,
+  fontWeight: 600,
   color: 'var(--ma-ink-900)',
 }
 
@@ -1084,7 +1084,7 @@ const styleTh: CSSProperties = {
   borderBottom: '2px solid var(--ma-border-default)',
   fontSize: 11,
   color: 'var(--ma-text-secondary)',
-  fontWeight: 700,
+  fontWeight: 600,
 }
 
 const styleTd: CSSProperties = {

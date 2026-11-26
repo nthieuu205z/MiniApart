@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, type HTMLAttributes, type ReactElement, type 
 import { Button } from '../core/Button'
 
 export interface ConfirmDialogProps extends HTMLAttributes<HTMLDivElement> {
-  /** Câu hỏi có đối tượng cụ thể: "Chốt kỳ 08/2026 toà A?" */
+  /** Câu hỏi có đối tượng cụ thể: "Khoá chỉ số 08/2026 toà A?" */
   title: string
   /** Hậu quả kèm con số: "không sửa được chỉ số của 24 phòng". Bắt buộc. */
   consequence: ReactNode

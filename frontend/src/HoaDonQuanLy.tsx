@@ -78,7 +78,7 @@ export default function HoaDonQuanLy({ token, mobile = false }: Props): React.Re
     fetchKyThanhToan(token, boLoc.toaNhaId).then((data) => {
       if (!active) return
       setKy(data); setKyId(null)
-    }).catch((cause: unknown) => { if (active) setLoiKy(cause instanceof Error ? cause.message : 'Không thể tải kỳ thanh toán.') })
+    }).catch((cause: unknown) => { if (active) setLoiKy(cause instanceof Error ? cause.message : 'Không thể tải tháng tính tiền.') })
     return () => { active = false }
   }, [token, boLoc.toaNhaId])
 
@@ -247,7 +247,7 @@ function cotHoaDon(toaNhaId: number | null): DataTableColumn<ThongTinHoaDonQuanL
         const href = duongDan(h)
         return <>
           {href ? <a data-invoice-detail-link href={href} className="td-main" style={{ color: 'var(--ma-brand-accent)', textDecoration: 'none' }}>{h.maHoaDon}</a> : <strong className="td-main" data-invoice-without-period>{h.maHoaDon}</strong>}
-          {href ? null : <div className="td-sub">Hoá đơn quyết toán không thuộc kỳ thanh toán.</div>}
+          {href ? null : <div className="td-sub">Hoá đơn quyết toán không thuộc tháng tính tiền.</div>}
         </>
       },
     },

@@ -94,7 +94,7 @@ export function AnToanVanHanh({ token, vaiTro }: { token: string; vaiTro: string
     <header className="topbar">
       <div className="title-block">
         <h1 className="h1">An toàn và phòng cháy chữa cháy</h1>
-        <p className="sub" role="status">{data ? `${data.soViecDenHan} việc đến hạn · Kỳ kiểm tra tiếp: ${data.ngayKiemTraTiep ?? 'Chưa đặt lịch'}` : 'Chọn toà nhà để xem hồ sơ an toàn.'}</p>
+        <p className="sub" role="status">{data ? `${data.soViecDenHan} việc đến hạn · Lần kiểm tra tiếp: ${data.ngayKiemTraTiep ?? 'Chưa đặt lịch'}` : 'Chọn toà nhà để xem hồ sơ an toàn.'}</p>
       </div>
       <div className="topbar-actions"><ChonToa buildings={building.buildings} value={building.buildingId} onChange={building.setBuildingId} /></div>
     </header>
@@ -122,12 +122,12 @@ export function AnToanVanHanh({ token, vaiTro }: { token: string; vaiTro: string
         </form> : null}
       </Card>
 
-      <Card title="Kiểm tra an toàn định kỳ">
+      <Card title="Kiểm tra an toàn theo lịch">
         {data.kiemTra.length === 0 ? <EmptyState title="Chưa có lần kiểm tra nào." /> : <DataTable rows={data.kiemTra} columns={cotKiemTra} getRowId={(r) => r.id} noun="lần kiểm tra" />}
         {editable ? <>
           <form className="tt-form" onSubmit={(e) => { e.preventDefault(); void action.run(async () => { await managementRequest(token, `${base}/lich-kiem-tra`, 'PUT', { chuKyThang: Number(schedule.chuKyThang), ngayKiemTraTiep: schedule.ngayKiemTraTiep }); await load() }, 'Đã cập nhật lịch kiểm tra.') }}>
             <div className="tt-luoi">
-              <Field label="Chu kỳ kiểm tra (tháng)"><input className="input" required type="number" min="1" max="60" value={schedule.chuKyThang} onChange={(e) => setSchedule({ ...schedule, chuKyThang: e.target.value })} /></Field>
+              <Field label="Kiểm tra mỗi (tháng)"><input className="input" required type="number" min="1" max="60" value={schedule.chuKyThang} onChange={(e) => setSchedule({ ...schedule, chuKyThang: e.target.value })} /></Field>
               <Field label="Ngày kiểm tra tiếp"><input className="input" required type="date" value={schedule.ngayKiemTraTiep} onChange={(e) => setSchedule({ ...schedule, ngayKiemTraTiep: e.target.value })} /></Field>
             </div>
             <div><Button variant="secondary" type="submit" blocked={action.busy} blockedReason={action.busy ? 'Đang lưu, vui lòng chờ.' : undefined}>Lưu lịch kiểm tra</Button></div>

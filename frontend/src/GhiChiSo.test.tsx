@@ -199,7 +199,7 @@ describe('GhiChiSo mobile screen', () => {
           coThayCongTo: false,
           canhBaoTieuThuBatThuong: {
             coCanhBao: true,
-            thongBaoCanhBao: 'Mức tiêu thụ kỳ này là 24.00, trung bình ba kỳ trước là 12.00, gấp 2.00 lần.',
+            thongBaoCanhBao: 'Mức tiêu thụ tháng này là 24.00, trung bình ba tháng trước là 12.00, gấp 2.00 lần.',
             mucTieuThuKyNay: '24.00',
             trungBinhBaKyTruoc: '12.00',
             gapTrungBinh: '2.00',
@@ -238,7 +238,7 @@ describe('GhiChiSo mobile screen', () => {
       setInputValue(input, '160.00')
     })
 
-    expect(container.textContent).toContain('Mức tiêu thụ kỳ này là 24.00, trung bình ba kỳ trước là 12.00, gấp 2.00 lần.')
+    expect(container.textContent).toContain('Mức tiêu thụ tháng này là 24.00, trung bình ba tháng trước là 12.00, gấp 2.00 lần.')
     expect(container.querySelector('[role="alert"]')?.textContent).toContain('24.00')
     expect(fetchMock).not.toHaveBeenCalledWith(
       '/api/toa-nha/1/ky-thanh-toan/8/chi-so',
@@ -390,7 +390,7 @@ describe('GhiChiSo mobile screen', () => {
     await vi.waitFor(() => expect(container.textContent).toContain('Phòng còn thiếu'))
   })
 
-  it('anNutChot ẩn nút Chốt kỳ nhưng vẫn tải dữ liệu kỳ', async () => {
+  it('anNutChot ẩn nút Khoá chỉ số nhưng vẫn tải dữ liệu tháng', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input)
       if (url === '/api/toa-nha') return jsonResponse([{ id: 1, ten: 'Toà A' }])
@@ -645,7 +645,7 @@ describe('GhiChiSo mobile screen', () => {
     const input = await vi.waitFor(() => container.querySelector('input[name="chiSoCuoi-11-21"]') as HTMLInputElement)
 
     await act(async () => setInputValue(input, '121.60'))
-    expect(container.textContent).toContain('TB 3 kỳ 12 kWh')
+    expect(container.textContent).toContain('TB 3 tháng 12 kWh')
     expect(container.querySelector('[role="alert"]')).toBeNull()
 
     await act(async () => setInputValue(input, '125'))
@@ -680,7 +680,7 @@ describe('GhiChiSo mobile screen', () => {
     await vi.waitFor(() => expect(container.querySelector('button[data-save-key="11-22"]')?.textContent).toContain('Lưu, sang 201 · Điện'))
     await vi.waitFor(() => expect(document.activeElement).toBe(container.querySelector('input[name="chiSoCuoi-11-22"]')))
   })
-  describe('x8 bước 1 Chu kỳ tháng', () => {
+  describe('x8 bước 1 Tháng tính tiền', () => {
     const duLieuHaiPhong = {
       tongPhong: 2,
       daGhi: 1,
@@ -739,13 +739,13 @@ describe('GhiChiSo mobile screen', () => {
       expect(bodies[1][1]).toEqual({ phongId: 12, dichVuId: 22, chiSoCuoi: '50', coThayCongTo: false })
     })
 
-    it('desktop: anNutChot không render khối chốt kỳ', async () => {
+    it('desktop: anNutChot không render khối khoá chỉ số', async () => {
       vi.stubGlobal('fetch', taoFetch())
       root = createRoot(container)
       await act(async () => root.render(<GhiChiSo token="meter-token" anNutChot />))
       await vi.waitFor(() => expect(container.querySelector('#cong-to-12-21')).not.toBeNull())
       expect(container.querySelector('[data-close-period]')).toBeNull()
-      expect(container.textContent).not.toContain('Chốt kỳ')
+      expect(container.textContent).not.toContain('Khoá chỉ số')
     })
 
     it('mobile: một công tơ mỗi màn; "Lưu, sang" gọi API một lần rồi chuyển công tơ kế', async () => {

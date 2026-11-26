@@ -107,7 +107,7 @@ export function QuanLyDashboard({ token, mobile = false }: Props): React.ReactEl
     }
   }, [token, toaNhaId, soLanTaiLai])
 
-  // Ngày chốt số của kỳ đang mở: chỉ để hiện trên tiêu đề, lỗi thì bỏ qua phần "chốt số ngày".
+  // Ngày chốt số của tháng đang mở: chỉ để hiện trên tiêu đề, lỗi thì bỏ qua phần "chốt số ngày".
   const dashToaNhaId = dashboard?.toaNhaId
   const kyHienTaiId = dashboard?.congToChuaGhi.kyHienTaiId
   useEffect(() => {
@@ -230,11 +230,11 @@ export function QuanLyDashboard({ token, mobile = false }: Props): React.ReactEl
   const cong = dashboard?.congToChuaGhi
   const tenToa = toaNhaList.find((t) => t.id === (toaNhaId ?? dashboard?.toaNhaId))?.ten ?? dashboard?.tenToaNha ?? ''
   const conNgay = ngayChot ? Math.ceil((new Date(`${ngayChot}T23:59:59`).getTime() - Date.now()) / 86_400_000) : null
-  // Máy chủ trả "Kỳ 11/2026 - <tên toà>": chỉ lấy phần kỳ cho tiêu đề.
+  // Máy chủ trả "Tháng 11/2026 - <tên toà>": chỉ lấy phần tháng cho tiêu đề.
   const tenKy = (cong?.tenKyHienTai ?? '').split(' - ')[0]
   const tieuDePhu = [
     tenToa,
-    tenKy ? `${tenKy.replace(/^Kỳ/, 'kỳ')} đang mở` : null,
+    tenKy ? `${tenKy.replace(/^Kỳ/, 'tháng')} đang mở` : null,
     ngayChot ? `chốt số ngày ${dinhDangNgayIso(ngayChot)}${conNgay !== null && conNgay >= 0 ? ` (còn ${conNgay} ngày)` : ''}` : null,
   ].filter(Boolean).join(' · ')
   const soChuaGhi = cong?.soCongToChuaGhi ?? 0
@@ -412,14 +412,14 @@ export function QuanLyDashboard({ token, mobile = false }: Props): React.ReactEl
 
             <Card
               aria-labelledby="unrecorded-meters-title"
-              title={<span id="unrecorded-meters-title">Công tơ {tenKy.replace(/^Kỳ/, 'kỳ')}</span>}
+              title={<span id="unrecorded-meters-title">Công tơ {tenKy.replace(/^Kỳ/, 'tháng')}</span>}
               action={<span className="t-strong">{cong.soCongToDaGhi}/{cong.tongSoCongTo}</span>}
             >
               <div className="progress" role="progressbar" aria-valuenow={cong.soCongToDaGhi} aria-valuemin={0} aria-valuemax={cong.tongSoCongTo} aria-label={`Đã ghi ${cong.soCongToDaGhi} trên ${cong.tongSoCongTo} công tơ`}>
                 <span style={{ width: `${phanTram(cong.soCongToDaGhi, cong.tongSoCongTo)}%` }} />
               </div>
               {congTo.length === 0 ? (
-                <p className="t-sm t-2" style={{ marginTop: 14 }}>Đã ghi đủ chỉ số trong kỳ đang mở.</p>
+                <p className="t-sm t-2" style={{ marginTop: 14 }}>Đã ghi đủ chỉ số trong tháng đang mở.</p>
               ) : (
                 <>
                   <p className="t-sm t-2" style={{ margin: '14px 0 10px' }}>Còn thiếu</p>
@@ -480,7 +480,7 @@ export function QuanLyDashboard({ token, mobile = false }: Props): React.ReactEl
               {canhBaoDangChon.tenToaNha} — {canhBaoDangChon.tenDiemDo || (canhBaoDangChon.soPhong ? `Phòng ${canhBaoDangChon.soPhong}` : 'Khu vực chung')}
             </p>
 
-            <div style={{ padding: '8px 12px', background: 'var(--ma-bg-sunken, #f8fafc)', borderRadius: 6, marginBottom: 14, fontSize: 13 }}>
+            <div style={{ padding: '8px 12px', background: 'var(--ma-bg-sunken)', borderRadius: 6, marginBottom: 14, fontSize: 13 }}>
               {canhBaoDangChon.lyDo}
             </div>
 
@@ -539,7 +539,7 @@ export function QuanLyDashboard({ token, mobile = false }: Props): React.ReactEl
               Ghi chỉ số điểm đo chung
             </h3>
             <p style={{ margin: '0 0 12px', fontSize: 14, color: 'var(--ma-text-secondary)' }}>
-              {diemDoGhiSo.tenToaNha} — <strong>{diemDoGhiSo.tenViTri}</strong> ({diemDoGhiSo.tenDichVu}) · Kỳ đang mở
+              {diemDoGhiSo.tenToaNha} — <strong>{diemDoGhiSo.tenViTri}</strong> ({diemDoGhiSo.tenDichVu}) · Tháng đang mở
             </p>
 
             {loiGhiSo ? (
@@ -558,7 +558,7 @@ export function QuanLyDashboard({ token, mobile = false }: Props): React.ReactEl
                   step="any"
                   value={chiSoDauInput}
                   onChange={(e) => setChiSoDauInput(e.target.value)}
-                  placeholder={diemDoGhiSo.chiSoCuoiKyTruoc != null ? String(diemDoGhiSo.chiSoCuoiKyTruoc) : 'Bắt buộc kỳ đầu'}
+                  placeholder={diemDoGhiSo.chiSoCuoiKyTruoc != null ? String(diemDoGhiSo.chiSoCuoiKyTruoc) : 'Bắt buộc tháng đầu'}
                   style={styleInput}
                 />
               </label>
@@ -583,11 +583,11 @@ export function QuanLyDashboard({ token, mobile = false }: Props): React.ReactEl
                 checked={coThayCongTo}
                 onChange={(e) => setCoThayCongTo(e.target.checked)}
               />
-              <span style={{ fontSize: 13, fontWeight: 600 }}>Có thay công tơ trong kỳ này</span>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>Có thay công tơ trong tháng này</span>
             </label>
 
             {coThayCongTo ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14, padding: 12, background: 'var(--ma-bg-sunken, #f8fafc)', borderRadius: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14, padding: 12, background: 'var(--ma-bg-sunken)', borderRadius: 6 }}>
                 <label style={{ display: 'grid', gap: 6 }}>
                   <span style={{ fontSize: 12, fontWeight: 600 }}>Chỉ số cuối công tơ cũ</span>
                   <input
@@ -645,7 +645,7 @@ const styleInput: React.CSSProperties = {
   padding: '6px 10px',
   border: '1px solid var(--ma-border-default)',
   borderRadius: 4,
-  background: 'var(--ma-bg-surface, #ffffff)',
+  background: 'var(--ma-bg-card)',
   color: 'inherit',
   font: 'inherit',
   fontSize: 14,
@@ -670,7 +670,7 @@ const styleModalBackdrop: React.CSSProperties = {
 }
 
 const styleModalBox: React.CSSProperties = {
-  background: 'var(--ma-bg-card, #ffffff)',
+  background: 'var(--ma-bg-card)',
   padding: 24,
   borderRadius: 8,
   width: '100%',

@@ -303,7 +303,7 @@ describe('ThuTien', () => {
 
   it('Xuất Excel xuất danh sách đang lọc (CSV có BOM) bằng <a download>', async () => {
     const ds = nhomNo(tuCongNo(CONG_NO as never))
-    expect(taoCsv([ds[0]])).toBe('\uFEFF"Họ tên","Toà","Phòng","Số kỳ","Trễ lâu nhất (ngày)","Còn nợ"\r\n"Nguyễn Quang Huy","An Nhiên","201","3","140","5685000"')
+    expect(taoCsv([ds[0]])).toBe('\uFEFF"Họ tên","Toà","Phòng","Số tháng","Trễ lâu nhất (ngày)","Còn nợ"\r\n"Nguyễn Quang Huy","An Nhiên","201","3","140","5685000"')
     const tao = vi.fn(() => 'blob:x'); const thu = vi.fn()
     const goc = { c: URL.createObjectURL, r: URL.revokeObjectURL }
     URL.createObjectURL = tao; URL.revokeObjectURL = thu

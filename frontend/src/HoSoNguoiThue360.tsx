@@ -68,7 +68,7 @@ export function trangThaiHoaDon(r: Pick<ThongTinHoaDonQuanLy, 'trangThai' | 'daT
   return r.trangThai === 'QUA_HAN' ? <StatusTag tone="urgent">Quá hạn</StatusTag> : <StatusTag tone="neutral">Chưa trả</StatusTag>
 }
 
-/** Hoá đơn của người/phòng: mỗi kỳ một dòng, kỳ là liên kết mở hoá đơn. */
+/** Hoá đơn của người/phòng: mỗi tháng một dòng, tháng là liên kết mở hoá đơn. */
 export function BangHoaDon({ rows, hienNguoi = false }: { rows: HoaDonHoSo[]; hienNguoi?: boolean }) {
   return (
     <div className="table-wrap table-wrap-cards"><table className="table table-cards">
@@ -126,7 +126,7 @@ export function dungHoatDong({ suCo, thanhToan, no, hopDong }: { suCo: ThongTinY
   if (sc) ds.push({ ngay: sc.taoLuc, cham: 'warn', noiDung: <>Báo sự cố <b>{sc.hangMuc}</b></> })
   if (thanhToan?.ngayThu) ds.push({ ngay: thanhToan.ngayThu, cham: 'ok', noiDung: `Thu ${tien(thanhToan.soTien)}${thanhToan.hinhThuc === 'CHUYEN_KHOAN' ? ' chuyển khoản' : ''} · biên lai ${thanhToan.maBienLai}` })
   const treNhat = [...no].sort((a, b) => b.hanThanhToan.localeCompare(a.hanThanhToan))[0]
-  if (treNhat) ds.push({ ngay: treNhat.hanThanhToan, cham: 'red', noiDung: `Hoá đơn kỳ ${treNhat.kyNhan} quá hạn` })
+  if (treNhat) ds.push({ ngay: treNhat.hanThanhToan, cham: 'red', noiDung: `Hoá đơn tháng ${treNhat.kyNhan} quá hạn` })
   if (hopDong) ds.push({ ngay: hopDong.ngayBatDau, cham: '', noiDung: `Bắt đầu hợp đồng #${hopDong.id}, phòng ${hopDong.soPhong}` })
   return ds
 }

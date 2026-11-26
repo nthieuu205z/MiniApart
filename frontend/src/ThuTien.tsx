@@ -49,7 +49,7 @@ const gioVn = () => new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', mi
 /** CSV (UTF-8 có BOM để Excel đọc đúng tiếng Việt) từ các nhóm nợ. */
 export function taoCsv(ds: NhomNo[]): string {
   const o = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
-  const hang = [['Họ tên', 'Toà', 'Phòng', 'Số kỳ', 'Trễ lâu nhất (ngày)', 'Còn nợ'], ...ds.map((g) => [g.hoTen, g.tenToaNha, g.soPhong, g.hoaDon.length, g.treLauNhat, g.conLai])]
+  const hang = [['Họ tên', 'Toà', 'Phòng', 'Số tháng', 'Trễ lâu nhất (ngày)', 'Còn nợ'], ...ds.map((g) => [g.hoTen, g.tenToaNha, g.soPhong, g.hoaDon.length, g.treLauNhat, g.conLai])]
   return `\uFEFF${hang.map((h) => h.map(o).join(',')).join('\r\n')}`
 }
 
@@ -470,15 +470,15 @@ function ContractFinance({ token, toaNhaId, contract, periods, onChanged }: { to
         setSettlement(result.quyetToan); setNotice('Đã thanh lý hợp đồng và ghi giao dịch quyết toán.'); setReload((value) => value + 1); onChanged()
       })
     }}>
-      <p className="t-sm" style={{ margin: 0 }}>Kỳ đang mở: {openPeriod ? `${openPeriod.thang}/${openPeriod.nam}` : 'Chưa có kỳ đang mở'}. <a href={`/ghi-chi-so?toaNhaId=${toaNhaId}`}>Mở màn ghi chỉ số để bổ sung ảnh công tơ nếu có yêu cầu.</a></p>
-      {meters.map((meter) => <label key={meter.id} className="field"><span className="label">{meter.tenDichVu} — chỉ số cuối (đầu kỳ {meter.chiSoDau})</span><input className="input" aria-label={`Chỉ số cuối ${meter.tenDichVu}`} value={readings[meter.id] ?? ''} onChange={(event) => setReadings((current) => ({ ...current, [meter.id]: event.target.value }))} inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" required /></label>)}
+      <p className="t-sm" style={{ margin: 0 }}>Tháng đang mở: {openPeriod ? `${openPeriod.thang}/${openPeriod.nam}` : 'Chưa có tháng đang mở'}. <a href={`/ghi-chi-so?toaNhaId=${toaNhaId}`}>Mở màn ghi chỉ số để bổ sung ảnh công tơ nếu có yêu cầu.</a></p>
+      {meters.map((meter) => <label key={meter.id} className="field"><span className="label">{meter.tenDichVu} — chỉ số cuối (đầu tháng {meter.chiSoDau})</span><input className="input" aria-label={`Chỉ số cuối ${meter.tenDichVu}`} value={readings[meter.id] ?? ''} onChange={(event) => setReadings((current) => ({ ...current, [meter.id]: event.target.value }))} inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" required /></label>)}
       <label className="check"><input type="checkbox" checked={acknowledge} onChange={(event) => setAcknowledge(event.target.checked)} /> Đã kiểm tra và xác nhận các mức tiêu thụ bất thường (nếu có).</label>
       <label className="field"><span className="label">Khấu trừ hư hỏng (đồng)</span><input className="input" aria-label="Khấu trừ hư hỏng" value={damage} onChange={(event) => setDamage(event.target.value)} required inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" /></label>
       <label className="field"><span className="label">Lý do khấu trừ / ghi chú quyết toán</span><textarea className="input" style={{ height: 'auto', minHeight: 88, padding: '10px 14px' }} value={settlementReason} onChange={(event) => setSettlementReason(event.target.value)} required={damage !== '0'} /></label>
       <label className="check"><input type="checkbox" checked={confirm} onChange={(event) => setConfirm(event.target.checked)} /> Tôi xác nhận chỉ số cuối, tiền cọc và công nợ để kết thúc hợp đồng.</label>
-      <Button type="submit" variant="secondary" blocked={busy || !confirm || !openPeriod} blockedReason="Cần kỳ đang mở và xác nhận dữ liệu trước khi quyết toán.">Xác nhận trả phòng và quyết toán</Button>
+      <Button type="submit" variant="secondary" blocked={busy || !confirm || !openPeriod} blockedReason="Cần tháng đang mở và xác nhận dữ liệu trước khi quyết toán.">Xác nhận trả phòng và quyết toán</Button>
     </form></details> : <p className="t-sm" style={{ margin: 0 }}>Hợp đồng đã thanh lý.</p>}
-    {settlement ? <div className="card-sunken" style={lap} role="status"><h3 className="h3">Kết quả quyết toán</h3><span>Đã thu cọc: {dinhDangTien(settlement.daThuCoc)} đ</span><span>Công nợ: {dinhDangTien(settlement.congNo)} đ · Khấu trừ: {dinhDangTien(settlement.khauTru)} đ</span><strong>Hoàn cọc: {dinhDangTien(settlement.hoanCoc)} đ</strong>
+    {settlement ? <div className="card-sunken" style={lap} role="status"><h3 className="h3">Kết quả quyết toán</h3><span>Đã thu cọc: {dinhDangTien(settlement.daThuCoc)} đ</span><span>Còn nợ: {dinhDangTien(settlement.congNo)} đ · Khấu trừ: {dinhDangTien(settlement.khauTru)} đ</span><strong>Hoàn cọc: {dinhDangTien(settlement.hoanCoc)} đ</strong>
       {settlement.hoaDonQuyetToanId !== null ? <FinancePaymentPanel token={token} hoaDonId={settlement.hoaDonQuyetToanId} trangThai="DA_PHAT_HANH" /> : null}
     </div> : null}
   </section>

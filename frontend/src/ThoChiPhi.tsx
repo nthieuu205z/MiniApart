@@ -308,7 +308,7 @@ export function ThoChiPhi({ token, mobile = false, onNavigateToTicket }: ThoChiP
                   <span style={{ ...styles.settlementValue, color: 'var(--ma-done-text)' }}>{dinhDangTien(voucherData.tongDaTra)}</span>
                 </div>
                 <div style={styles.settlementItem}>
-                  <span style={styles.settlementLabel}>Công nợ còn lại:</span>
+                  <span style={styles.settlementLabel}>Còn nợ:</span>
                   <span style={{ ...styles.settlementValue, color: voucherData.conLai > 0 ? 'var(--ma-urgent)' : 'var(--ma-text-primary)' }}>
                     {dinhDangTien(voucherData.conLai)}
                   </span>

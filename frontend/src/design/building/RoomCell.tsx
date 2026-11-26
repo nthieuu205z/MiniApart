@@ -56,8 +56,8 @@ export function RoomCell({ room, state = 'recorded', label, taskCount, multiSumm
         {...rest}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span className="room-tile__number" style={{ fontSize: 15, fontWeight: 700 }}>{room}</span>
-          <span style={{ fontSize: 10, fontWeight: 700, background: "var(--ma-urgent)", padding: "1px 5px" }}>
+          <span className="room-tile__number" style={{ fontSize: 15, fontWeight: 600 }}>{room}</span>
+          <span style={{ fontSize: 10, fontWeight: 600, background: "var(--ma-urgent)", padding: "1px 5px" }}>
             {taskCount}
           </span>
         </div>

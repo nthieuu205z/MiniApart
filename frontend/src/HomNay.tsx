@@ -69,7 +69,7 @@ const taiHoaDon = async (token: string, ds: ThongTinToaNha[]): Promise<HoaDonToa
   (await Promise.all(ds.map(async (x) => (await fetchHoaDonQuanLy(token, x.id, '')).map((h) => ({ ...h, toaNhaId: x.id }) as HoaDonToa)))).flat()
 
 type KyToa = { toa: ThongTinToaNha; ky: ThongTinKyThanhToan | null; thieu: { id: number; soPhong: string }[] }
-/** Cùng cách chọn kỳ với ChuKyThang: kỳ mới nhất chưa khoá, không có thì kỳ mới nhất. */
+/** Cùng cách chọn tháng với ChuKyThang: tháng mới nhất chưa khoá, không có thì tháng mới nhất. */
 const kyDangXem = (dsKy: ThongTinKyThanhToan[]) => {
   const xep = [...dsKy].sort((a, b) => b.nam * 100 + b.thang - (a.nam * 100 + a.thang))
   return xep.find((k) => k.trangThai !== 'DA_CHOT') ?? xep[0] ?? null
@@ -162,7 +162,7 @@ function HomNayChu({ token }: Pick<TrangProps, 'token'>) {
 
   const viec: ReactNode[] = []
   if (chuaGui.length) viec.push(<DongViec key="gui" muc="no" tieuDe={`Hoá đơn tháng ${Number(iso.slice(5, 7))} chưa gửi`}
-    moTa={`Kỳ đóng ngày ${hai(chuaGui[0].toa.ngayChotSo)}/${iso.slice(5, 7)}. ${chuaGui.length > 1 && chuaGui.every((c) => c.buoc === chuaGui[0].buoc) ? `${chuaGui.length} toà còn ở bước ${chuaGui[0].buoc}` : chuaGui.map((c) => `${c.toa.ten} còn ở bước ${c.buoc}`).join('; ')}.`} nutNhan="Xem tiến độ" href={`/chu-ky?toaNhaId=${chuaGui[0].toa.id}`} />)
+    moTa={`Hạn khoá chỉ số ngày ${hai(chuaGui[0].toa.ngayChotSo)}/${iso.slice(5, 7)}. ${chuaGui.length > 1 && chuaGui.every((c) => c.buoc === chuaGui[0].buoc) ? `${chuaGui.length} toà còn ở bước ${chuaGui[0].buoc}` : chuaGui.map((c) => `${c.toa.ten} còn ở bước ${c.buoc}`).join('; ')}.`} nutNhan="Xem tiến độ" href={`/chu-ky?toaNhaId=${chuaGui[0].toa.id}`} />)
   if (khan.length) viec.push(<DongViec key="khan" muc="no" tieuDe={`${khan.length} sự cố khẩn chưa giao thợ`} moTa={khan.map((s) => `${s.hangMuc} phòng ${s.soPhong}`).join(' · ')} nutNhan="Giao thợ" href={`/su-co?id=${khan[0].id}`} />)
   if (het.length) viec.push(<DongViec key="het" muc="canh" tieuDe={`${het.length} hợp đồng hết hạn ${dinhDangNgayIso(het[0].ngayKetThuc)}`}
     moTa={`Còn ${ngayCach(iso, het[0].ngayKetThuc)} ngày · ${het.map((h) => `${h.hoTenNguoiThue} (${h.soPhong})`).join(', ')}`} nutNhan="Gia hạn" href={`/hop-dong/${het[0].id}`} />)
@@ -264,7 +264,7 @@ function HomNayQuanLy({ token }: Pick<TrangProps, 'token'>) {
     <>
       <DauTrang tieuDe="Hôm nay" phu={`${thu}, ${dinhDangNgayIso(iso)} · ${tenToaDangChon(t) || 'chưa có toà'}`}
         hanhDong={<><a className="btn btn-secondary hn-an-hep" href="/thong-bao">Thông báo</a><a className="btn btn-primary" href="/chu-ky">{nutChinh}</a></>} />
-      {treHan && kt?.ky && toaObj ? <div className="hn-bang" role="alert"><b>Tháng {kt.ky.thang} đang trễ:</b> kỳ đóng ngày {hai(toaObj.ngayChotSo)}/{hai(kt.ky.thang)}/{kt.ky.nam} nhưng còn {thieu} công tơ chưa ghi (phòng {kt.thieu.slice(0, 3).map((p) => p.soPhong).join(', ')}{thieu > 3 ? '…' : ''}), nên chưa gửi được hoá đơn.</div> : null}
+      {treHan && kt?.ky && toaObj ? <div className="hn-bang" role="alert"><b>Tháng {kt.ky.thang} đang trễ:</b> hạn khoá chỉ số ngày {hai(toaObj.ngayChotSo)}/{hai(kt.ky.thang)}/{kt.ky.nam} nhưng còn {thieu} công tơ chưa ghi (phòng {kt.thieu.slice(0, 3).map((p) => p.soPhong).join(', ')}{thieu > 3 ? '…' : ''}), nên chưa gửi được hoá đơn.</div> : null}
       <section className="card hn-khoi" aria-labelledby="hn-buoc">
         <div className="blk-h"><h2 id="hn-buoc">Tiến độ tháng {thangKy}</h2><span className="meta">theo bảng chỉ số</span></div>
         {kyN.dangTai && !kyN.du ? <div className="hn-skel" aria-busy="true"><div className="skel skel-line" /></div>

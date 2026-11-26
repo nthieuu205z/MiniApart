@@ -187,7 +187,7 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
         <Card className={cot('c-4')}>
           <h2 className="h2" style={{ ...NHAN_KPI, marginBottom: 12 }}>Đã thu</h2>
           <p className="kpi-value" style={{ margin: 0 }}>{dinhDangTien(k.daThuHopDong)}<span className="unit">₫</span></p>
-          <p className="kpi-desc" style={MO_TA_KPI}>Đã thu <b>{dinhDangSo(Math.round(daThu * 10) / 10)}%</b> trên {tien(k.doanhThuPhatHanh)} phát hành trong kỳ.</p>
+          <p className="kpi-desc" style={MO_TA_KPI}>Đã thu <b>{dinhDangSo(Math.round(daThu * 10) / 10)}%</b> trên {tien(k.doanhThuPhatHanh)} hoá đơn đã gửi trong tháng.</p>
           <div className="card-foot"><a className="link-more" href={duongDan('/bao-cao')}>Báo cáo doanh thu <Icon name="arrow-right" size="sm" /></a></div>
         </Card>
         <Card className={cot('c-4')}>
@@ -249,9 +249,9 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
         <div className={`${cot('c-7')} stack`} style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
           <Card
             title="Doanh thu theo tháng"
-            action={<div className="legend"><span><i style={{ background: 'var(--ma-chart-1)' }} />Đã thu</span><span><i style={{ background: 'var(--ma-chart-3)' }} />Phát hành</span></div>}
+            action={<div className="legend"><span><i style={{ background: 'var(--ma-chart-1)' }} />Đã thu</span><span><i style={{ background: 'var(--ma-chart-3)' }} />Đã gửi</span></div>}
           >
-            {dt.dauCoSo < 0 ? <EmptyState title="Chưa có số liệu doanh thu trong kỳ này." /> : (
+            {dt.dauCoSo < 0 ? <EmptyState title="Chưa có số liệu doanh thu trong tháng này." /> : (
               <div className="chart-scroll" tabIndex={0} role="region" aria-label="Biểu đồ doanh thu, cuộn ngang trên điện thoại">
                 <BieuDoVung
                   kyCuoiDangMo={dt.kyCuoiDangMo}
@@ -259,12 +259,12 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
                   nhan={thang.map((t) => t.nhan.replace(/\/20(\d\d)$/, '/$1'))}
                   chuoi={[
                     { ten: 'Đã thu', mau: 'var(--ma-chart-1)', giaTri: dt.thucThu },
-                    { ten: 'Phát hành', mau: 'var(--ma-chart-3)', giaTri: dt.phatHanh },
+                    { ten: 'Đã gửi', mau: 'var(--ma-chart-3)', giaTri: dt.phatHanh },
                   ]}
                 />
               </div>
             )}
-            {dt.thangChuaCoSo ? <p className="t-meta">Chưa có số kỳ {dt.thangChuaCoSo}.</p> : null}
+            {dt.thangChuaCoSo ? <p className="t-meta">Chưa có số tháng {dt.thangChuaCoSo}.</p> : null}
           </Card>
           <div className="minis" style={{ gridTemplateColumns: '1.3fr 1.3fr 0.8fr' }}>
             <Card style={{ padding: 20 }}>
@@ -282,13 +282,13 @@ export function ChuDashboard({ token, mobile = false }: Props): React.ReactEleme
             <Card style={{ padding: 20 }}>
               <h2 className="mini-label">Sự cố đang mở</h2>
               <p className="mini-value" style={{ ...MINI_GIA_TRI, color: k.soSuCoDangMo > 0 ? 'var(--ma-waiting)' : MINI_GIA_TRI.color }}>{k.soSuCoDangMo} việc</p>
-              <p className="mini-sub" style={MINI_PHU}>Chi phí kỳ này {tien(k.chiPhiBaoTri)}</p>
+              <p className="mini-sub" style={MINI_PHU}>Chi phí tháng này {tien(k.chiPhiBaoTri)}</p>
             </Card>
           </div>
         </div>
 
-        <Card className={cot('c-4')} title="Tiêu thụ điện theo toà" action={dien?.nhanKy ? <span className="t-meta">kỳ {dien.nhanKy}</span> : undefined}>
-          {dien === null ? <p className="t-2">Chưa tải được số điện.</p> : dien.toa.length === 0 ? <p className="t-2">Chưa có kỳ nào có số điện.</p> : (
+        <Card className={cot('c-4')} title="Tiêu thụ điện theo toà" action={dien?.nhanKy ? <span className="t-meta">tháng {dien.nhanKy}</span> : undefined}>
+          {dien === null ? <p className="t-2">Chưa tải được số điện.</p> : dien.toa.length === 0 ? <p className="t-2">Chưa có tháng nào có số điện.</p> : (
             <ThanhXepHang muc={dien.toa.map((t) => ({ nhan: t.tenToaNha, giaTri: t.tong, hienThi: `${dinhDangSo(t.tong)} ${dien.donVi ?? 'kWh'}` }))} />
           )}
           <p className="t-meta" style={{ margin: 'auto 0 0', paddingTop: 12 }}>

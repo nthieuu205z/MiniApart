@@ -94,7 +94,7 @@ export default function DichVuVaKy({ token }: { token: string }) {
     <header className="topbar">
       <div className="title-block">
         <h1 className="h1" id="dich-vu-title">Dịch vụ & đơn giá</h1>
-        <p className="sub">{soDangDung}/{services.length} dịch vụ đang sử dụng · {kyMo ? `kỳ đang mở ${kyMo.thang}/${kyMo.nam}` : 'chưa có kỳ đang mở'} · bảng giá mới được thêm theo ngày hiệu lực, lịch sử giá giữ nguyên</p>
+        <p className="sub">{soDangDung}/{services.length} dịch vụ đang sử dụng · {kyMo ? `tháng đang mở ${kyMo.thang}/${kyMo.nam}` : 'chưa có tháng đang mở'} · bảng giá mới được thêm theo ngày hiệu lực, lịch sử giá giữ nguyên</p>
       </div>
       <div className="topbar-actions">
         <label className="sr-only" htmlFor="dich-vu-toa">Toà nhà</label>
@@ -105,12 +105,12 @@ export default function DichVuVaKy({ token }: { token: string }) {
       </div>
     </header>
     <Feedback error={action.error ?? building.error} success={action.success} />
-    <Card title="Mở kỳ thanh toán mới" action={<a className="link-more brand" href="/chu-ky">Kỳ thanh toán và chốt sổ nằm ở Chu kỳ tháng →</a>}>
+    <Card title="Mở tháng tính tiền mới" action={<a className="link-more brand" href="/chu-ky">Ghi chỉ số, khoá chỉ số và gửi hoá đơn nằm ở Tháng tính tiền →</a>}>
       <div className="row-wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
         <span className="push" />
-        <form onSubmit={(e) => { e.preventDefault(); if (building.buildingId) void action.run(async () => { const [nam, thang] = month.split('-').map(Number); await managementRequest(token, `/api/toa-nha/${building.buildingId}/ky-thanh-toan`, 'POST', { nam, thang }); await load() }, 'Đã mở kỳ thanh toán.') }} className="row-wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
+        <form onSubmit={(e) => { e.preventDefault(); if (building.buildingId) void action.run(async () => { const [nam, thang] = month.split('-').map(Number); await managementRequest(token, `/api/toa-nha/${building.buildingId}/ky-thanh-toan`, 'POST', { nam, thang }); await load() }, 'Đã mở tháng tính tiền.') }} className="row-wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
           <Field title="Tháng cần mở"><input style={fieldStyle} type="month" required value={month} onChange={(e) => setMonth(e.target.value)} /></Field>
-          <Button type="submit" variant="secondary" blocked={action.busy || !building.buildingId}>Mở kỳ thanh toán</Button>
+          <Button type="submit" variant="secondary" blocked={action.busy || !building.buildingId}>Mở tháng tính tiền</Button>
         </form>
       </div>
     </Card>

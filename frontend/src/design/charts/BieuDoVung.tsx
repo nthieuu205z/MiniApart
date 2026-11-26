@@ -8,7 +8,7 @@ export type ChuoiVung = { ten: string; mau: string; giaTri: ReadonlyArray<number
 
 const KHUNG: KhungVe = { rong: 608, cao: 212, trai: 52, phai: 24, tren: 12, duoi: 24 }
 
-/** Biểu đồ vùng hai chuỗi (chuỗi đầu tô vùng). `kyCuoiDangMo` vẽ đoạn cuối nét đứt vì kỳ chưa chốt. Kèm bảng số ẩn cho đọc màn hình. */
+/** Biểu đồ vùng hai chuỗi (chuỗi đầu tô vùng). `kyCuoiDangMo` vẽ đoạn cuối nét đứt vì tháng chưa chốt. Kèm bảng số ẩn cho đọc màn hình. */
 export function BieuDoVung({ nhan, chuoi, tieuDe, kyCuoiDangMo = false }: { nhan: readonly string[]; chuoi: readonly ChuoiVung[]; tieuDe: string; kyCuoiDangMo?: boolean }): React.ReactElement {
   const lon = Math.max(0, ...chuoi.flatMap((c) => c.giaTri.map((v) => v ?? 0)))
   const moc = mocTruc(lon / 1e6).map((m) => m * 1e6) // trục tính bằng triệu đồng
@@ -52,7 +52,7 @@ export function BieuDoVung({ nhan, chuoi, tieuDe, kyCuoiDangMo = false }: { nhan
       <table>
         <caption>{tieuDe}</caption>
         <thead>
-          <tr><th>Kỳ</th>{chuoi.map((c) => <th key={c.ten}>{c.ten}</th>)}</tr>
+          <tr><th>Tháng</th>{chuoi.map((c) => <th key={c.ten}>{c.ten}</th>)}</tr>
         </thead>
         <tbody>
           {nhan.map((n, i) => (

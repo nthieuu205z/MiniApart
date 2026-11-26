@@ -28,9 +28,9 @@ type Props = {
   token: string
   mobile?: boolean
   vaiTro?: string
-  /** Ẩn nút chốt kỳ (Chu kỳ tháng có bước chốt riêng). Mặc định giữ nút như cũ. */
+  /** Ẩn nút khoá chỉ số (Tháng tính tiền có bước chốt riêng). Mặc định giữ nút như cũ. */
   anNutChot?: boolean
-  /** Chu kỳ tháng: kỳ đang xem (thay cho kỳ đầu danh sách) và chỗ ở đầu trang để đặt nút chính "Lưu chỉ số". */
+  /** Tháng tính tiền: tháng đang xem (thay cho tháng đầu danh sách) và chỗ ở đầu trang để đặt nút chính "Lưu chỉ số". */
   kyIdCoDinh?: number
   nutChinhSlot?: HTMLElement | null
 }
@@ -142,7 +142,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
       })
       .catch((reason: unknown) => {
         if (!mounted) return
-        setLoi(chuanHoaLoi(reason, 'Không thể tải danh sách kỳ thanh toán.'))
+        setLoi(chuanHoaLoi(reason, 'Không thể tải danh sách tháng tính tiền.'))
       })
       .finally(() => {
         if (mounted) setDangTaiKy(false)
@@ -239,7 +239,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
 
   async function luuChiSo(phongId: number, dichVuId: number, xacNhanCanhBao = false, chuyenFocus = true): Promise<boolean> {
     if (toaNhaId === null || kyId === null) return false
-    if (kyDaChot && (vaiTro !== 'CHU' || !lyDoSua.trim())) { setLoi('Chủ sở hữu cần nhập lý do để sửa chỉ số kỳ đã chốt.'); return false }
+    if (kyDaChot && (vaiTro !== 'CHU' || !lyDoSua.trim())) { setLoi('Chủ nhà cần nhập lý do để sửa chỉ số tháng đã chốt.'); return false }
     const key = khoa(phongId, dichVuId)
     const giaTri = pendingValues[key]?.trim()
     if (!giaTri) return false
@@ -324,7 +324,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
       setDanhSachKy(danhSachKyMoi)
       setKyId(danhSachKyMoi.find((item) => item.trangThai === 'DANG_MO')?.id ?? danhSachKyMoi[0]?.id ?? null)
     } catch (reason: unknown) {
-      setLoi(chuanHoaLoi(reason, 'Không thể chốt kỳ thanh toán.'))
+      setLoi(chuanHoaLoi(reason, 'Không thể khoá chỉ số thanh toán.'))
     } finally {
       setDangChotKy(false)
     }
@@ -357,7 +357,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
   const kyDaChot = kyDangChon?.trangThai === 'DA_CHOT'
   const chiSoBiKhoa = kyDaChot && vaiTro !== 'CHU'
   const nhanToaNha = toaNhaDangChon?.ten ?? 'Chưa chọn toà'
-  const nhanKy = kyDangChon ? `Kỳ ${kyDangChon.thang}/${kyDangChon.nam}` : 'Chưa chọn kỳ'
+  const nhanKy = kyDangChon ? `Tháng ${kyDangChon.thang}/${kyDangChon.nam}` : 'Chưa chọn tháng'
   const tienDo = `${duLieu?.daGhi ?? 0} / ${duLieu?.tongPhong ?? 0}`
   const trangThaiKy = kyDangChon && !kyDaChot ? 'Đang mở' : undefined
   const styleTrang = {
@@ -410,9 +410,9 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
     const luuBiChan = !dichVuChon || chiSoBiKhoa || (kyDaChot && !lyDoSua.trim()) || dangLuu === key || !giaTri
       || (coThayCongTo && (!chiSoThayCongTo.chiSoCuoiCongToCu || !chiSoThayCongTo.chiSoDauCongToMoi)) || Boolean(thongBaoChiSo) || Boolean(canhBaoTieuThu)
     const lyDoChanLuu = chiSoBiKhoa
-      ? 'Kỳ này đã chốt, không thể sửa chỉ số.'
+      ? 'Tháng này đã chốt, không thể sửa chỉ số.'
       : kyDaChot && !lyDoSua.trim()
-        ? 'Nhập lý do sửa kỳ đã chốt trước khi lưu.'
+        ? 'Nhập lý do sửa tháng đã chốt trước khi lưu.'
         : canhBaoTieuThu
           ? 'Cần xem lại và xác nhận cảnh báo trước khi lưu.'
           : undefined
@@ -454,7 +454,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
             <button
               type="button"
               className="icon-btn touch"
-              aria-label="Chọn kỳ"
+              aria-label="Chọn tháng"
               aria-expanded={hienBoLoc}
               onClick={() => setHienBoLoc((current) => !current)}
             >
@@ -468,7 +468,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
           {hienBoLoc ? (
             <div className="m-card">
               <label style={styleNhanTruong}>
-                <span>Kỳ thanh toán</span>
+                <span>Tháng tính tiền</span>
                 <select
                   value={kyId ?? ''}
                   onChange={(event) => {
@@ -488,15 +488,15 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
           {loi && loiTaiTrang ? <p className="banner banner-danger" role="alert" style={{ margin: 0 }}>{loi}</p> : null}
 
           {duLieu && !anNutChot ? <div aria-label="Tiến độ ghi chỉ số">
-            <div className="mstep" role="img" aria-label="Chu kỳ tháng, bước 1 trên 4"><span className="on" /><span /><span /><span /></div>
-            <p className="t-sm t-2" style={{ margin: '8px 0 0' }}>Chu kỳ {nhanKyThang} · Bước 1/4 Ghi chỉ số · {daGhiCongTo}/{tongCongTo}</p>
+            <div className="mstep" role="img" aria-label="Tháng tính tiền, bước 1 trên 4"><span className="on" /><span /><span /><span /></div>
+            <p className="t-sm t-2" style={{ margin: '8px 0 0' }}>Tháng {nhanKyThang} · Bước 1/4 Ghi chỉ số · {daGhiCongTo}/{tongCongTo}</p>
           </div> : null}
 
           {!duLieu ? null : phongs.length === 0 ? (
             <EmptyState
               kind="first"
               title="Không có phòng đủ điều kiện để ghi."
-              body="Toà này hiện chưa có phòng có dữ liệu công tơ trong kỳ đã chọn."
+              body="Toà này hiện chưa có phòng có dữ liệu công tơ trong tháng đã chọn."
             />
           ) : xongHet ? (
             <section className="m-card" style={{ display: 'grid', gap: 8 }}>
@@ -509,7 +509,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
               <div className="spread" style={{ alignItems: 'flex-start' }}>
                 <div style={{ minWidth: 0 }}>
                   <h2 className="h3" id="meter-room-title" style={{ fontSize: 18, margin: 0 }}>Phòng {phongChon.soPhong} · {dichVuChon.tenDichVu}</h2>
-                  <p className="t-meta" style={{ margin: 0 }}>Tầng {phongChon.tang} · kỳ trước {gonSo(dichVuChon.chiSoDau)} {donVi}</p>
+                  <p className="t-meta" style={{ margin: 0 }}>Tầng {phongChon.tang} · tháng trước {gonSo(dichVuChon.chiSoDau)} {donVi}</p>
                 </div>
                 <StatusTag tone={dichVuChon.chiSoCuoi ? 'done' : 'waiting'}>{dichVuChon.chiSoCuoi ? 'Đã ghi' : 'Chưa ghi'}</StatusTag>
               </div>
@@ -551,7 +551,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
                 <div className="t-2 t-sm" style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                   <span>Tiêu thụ</span>
                   <b className={canhBaoTieuThu ? 't-warm' : undefined} style={{ font: '600 28px/1 var(--ma-font-ui)', letterSpacing: '-0.02em', color: canhBaoTieuThu ? undefined : 'var(--ma-text-primary)' }}>{gonSo(mucTieuThu)}</b>
-                  <span>{donVi}{dichVuChon.thongTinCanhBaoTieuThu ? ` · TB 3 kỳ ${gonSo(dichVuChon.thongTinCanhBaoTieuThu.trungBinhBaKyTruoc)} ${donVi}` : ''}</span>
+                  <span>{donVi}{dichVuChon.thongTinCanhBaoTieuThu ? ` · TB 3 tháng ${gonSo(dichVuChon.thongTinCanhBaoTieuThu.trungBinhBaKyTruoc)} ${donVi}` : ''}</span>
                 </div>
               ) : null}
 
@@ -564,7 +564,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
                       variant="secondary"
                       data-confirm-warning-key={key}
                       blocked={dangLuu === key || chiSoBiKhoa}
-                      blockedReason={chiSoBiKhoa ? 'Kỳ này đã chốt, không thể xác nhận lại chỉ số.' : undefined}
+                      blockedReason={chiSoBiKhoa ? 'Tháng này đã chốt, không thể xác nhận lại chỉ số.' : undefined}
                       style={{ justifySelf: 'start' }}
                       onClick={() => void luuChiSo(phongChon.id, dichVuChon.id, true)}
                     >
@@ -657,7 +657,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
                     <span className="tile"><Icon name={c.dichVu.donVi === 'kWh' ? 'bolt' : 'droplet'} /></span>
                     <span style={{ minWidth: 0 }}>
                       <span style={{ display: 'block', font: '500 15px/1.35 var(--ma-font-ui)' }}>Phòng {c.phong.soPhong} · {c.dichVu.tenDichVu}</span>
-                      <span className="s">Tầng {c.phong.tang} · kỳ trước {gonSo(c.dichVu.chiSoDau)} {c.dichVu.donVi}</span>
+                      <span className="s">Tầng {c.phong.tang} · tháng trước {gonSo(c.dichVu.chiSoDau)} {c.dichVu.donVi}</span>
                     </span>
                   </button>
                 ))}
@@ -668,15 +668,15 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
           {kyDangChon && !anNutChot ? (
             <section className="m-card" aria-labelledby="meter-close-title" style={{ display: 'grid', gap: 'var(--ma-space-4)' }}>
               <div className="spread">
-                <h2 className="h3" id="meter-close-title" style={{ margin: 0 }}>Chốt kỳ</h2>
+                <h2 className="h3" id="meter-close-title" style={{ margin: 0 }}>Khoá chỉ số</h2>
                 <Button
                   variant="secondary"
                   data-close-period
                   blocked={dangChotKy || kyDaChot}
-                  blockedReason={kyDaChot ? 'Kỳ này đã chốt, không thể ghi thêm chỉ số.' : undefined}
+                  blockedReason={kyDaChot ? 'Tháng này đã chốt, không thể ghi thêm chỉ số.' : undefined}
                   onClick={() => void chotKyDangChon()}
                 >
-                  {dangChotKy ? 'Đang chốt…' : 'Chốt kỳ'}
+                  {dangChotKy ? 'Đang chốt…' : 'Khoá chỉ số'}
                 </Button>
               </div>
               {dangTaiPhongChuaGhiChiSo ? (
@@ -703,7 +703,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
             </section>
           ) : null}
 
-          {kyDaChot && vaiTro === 'CHU' ? <Field title="Lý do sửa chỉ số kỳ đã chốt (bắt buộc)"><textarea style={fieldStyle} value={lyDoSua} onChange={(event) => setLyDoSua(event.target.value)} /><span>Thay đổi được ghi nhật ký. Hoá đơn đã phát hành giữ nguyên số liệu.</span></Field> : null}
+          {kyDaChot && vaiTro === 'CHU' ? <Field title="Lý do sửa chỉ số tháng đã chốt (bắt buộc)"><textarea style={fieldStyle} value={lyDoSua} onChange={(event) => setLyDoSua(event.target.value)} /><span>Thay đổi được ghi nhật ký. Hoá đơn đã phát hành giữ nguyên số liệu.</span></Field> : null}
         </div>
 
         {phongChon && dichVuChon && !xongHet ? (
@@ -763,9 +763,9 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
     const thieuThayCongTo = coThayCongTo && (!chiSoThayCongTo.chiSoCuoiCongToCu || !chiSoThayCongTo.chiSoDauCongToMoi)
     const luuBiChan = chiSoBiKhoa || (kyDaChot && !lyDoSua.trim()) || dangLuu !== null || !giaTri || thieuThayCongTo || Boolean(thongBaoChiSo) || Boolean(canhBaoTieuThu)
     const lyDoChanLuu = chiSoBiKhoa
-      ? 'Kỳ này đã chốt, không thể sửa chỉ số.'
+      ? 'Tháng này đã chốt, không thể sửa chỉ số.'
       : kyDaChot && !lyDoSua.trim()
-        ? 'Nhập lý do sửa kỳ đã chốt trước khi lưu.'
+        ? 'Nhập lý do sửa tháng đã chốt trước khi lưu.'
         : thongBaoChiSo || (giaTri && thieuThayCongTo ? 'Cần đủ hai chỉ số của công tơ cũ và mới.' : canhBaoTieuThu ? 'Cần xem lại và xác nhận cảnh báo trước khi lưu.' : undefined)
     return { key, giaTri, coThayCongTo, chiSoThayCongTo, thongBaoChiSo, mucTieuThu, canhBaoTieuThu, luuBiChan, lyDoChanLuu }
   }
@@ -784,7 +784,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
       <div className="ghi-cong-to" key={key}>
         <div className="ghi-ten">
           <strong>{dichVu.tenDichVu} · phòng {phong.soPhong}</strong>
-          <span className="t-meta">Tầng {phong.tang} · kỳ trước {gonSo(dichVu.chiSoDau)} {dichVu.donVi}</span>
+          <span className="t-meta">Tầng {phong.tang} · tháng trước {gonSo(dichVu.chiSoDau)} {dichVu.donVi}</span>
         </div>
         <div className="ghi-hanh-dong">
           <label className="btn btn-secondary ghi-anh">
@@ -872,7 +872,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
                 variant="secondary"
                 data-confirm-warning-key={key}
                 blocked={dangLuu === key || chiSoBiKhoa}
-                blockedReason={chiSoBiKhoa ? 'Kỳ này đã chốt, không thể xác nhận lại chỉ số.' : undefined}
+                blockedReason={chiSoBiKhoa ? 'Tháng này đã chốt, không thể xác nhận lại chỉ số.' : undefined}
                 style={{ justifySelf: 'start' }}
                 onClick={() => void luuChiSo(phong.id, dichVu.id, true)}
               >
@@ -939,7 +939,7 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
             <BuildingSelect buildings={danhSachToaNha} value={toaNhaId} onChange={setToaNhaId} />
             {danhSachKy.length > 1 ? (
               <label style={styleNhanTruong}>
-                <span>Kỳ thanh toán</span>
+                <span>Tháng tính tiền</span>
                 <select value={kyId ?? ''} onChange={(event) => setKyId(Number(event.target.value))} disabled={dangTaiChiSo} style={styleSelect}>
                   {danhSachKy.map((ky) => <option key={ky.id} value={ky.id}>{ky.thang}/{ky.nam}</option>)}
                 </select>
@@ -951,10 +951,10 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
 
       {dangTaiKy || dangTaiChiSo ? <p style={styleThongBao}>Đang tải dữ liệu chỉ số…</p> : null}
       {loi ? <p className="banner banner-danger" role="alert" style={{ margin: 0 }}>{loi}</p> : null}
-      {kyDaChot && vaiTro === 'CHU' ? <Field title="Lý do sửa chỉ số kỳ đã chốt (bắt buộc)"><textarea style={fieldStyle} value={lyDoSua} onChange={(event) => setLyDoSua(event.target.value)} /><span>Thay đổi được ghi nhật ký. Hoá đơn đã phát hành giữ nguyên số liệu.</span></Field> : null}
+      {kyDaChot && vaiTro === 'CHU' ? <Field title="Lý do sửa chỉ số tháng đã chốt (bắt buộc)"><textarea style={fieldStyle} value={lyDoSua} onChange={(event) => setLyDoSua(event.target.value)} /><span>Thay đổi được ghi nhật ký. Hoá đơn đã phát hành giữ nguyên số liệu.</span></Field> : null}
 
       {!duLieu ? null : phongs.length === 0 ? (
-        <EmptyState kind="first" title="Không có phòng đủ điều kiện để ghi." body="Toà này hiện chưa có phòng có dữ liệu công tơ trong kỳ đã chọn." />
+        <EmptyState kind="first" title="Không có phòng đủ điều kiện để ghi." body="Toà này hiện chưa có phòng có dữ liệu công tơ trong tháng đã chọn." />
       ) : (
         <section className="ghi-nhom" aria-labelledby="meter-title">
           <div className="spread ghi-nhom-dau">
@@ -1035,15 +1035,15 @@ export default function GhiChiSo({ token, mobile = false, vaiTro, anNutChot = fa
       {kyDangChon && !anNutChot ? (
         <section aria-labelledby="meter-close-title" className="ghi-nhom">
           <div className="spread">
-            <h3 id="meter-close-title" className="h3" style={{ margin: 0 }}>Chốt kỳ</h3>
+            <h3 id="meter-close-title" className="h3" style={{ margin: 0 }}>Khoá chỉ số</h3>
             <Button
               variant="secondary"
               data-close-period
               blocked={dangChotKy || kyDaChot}
-              blockedReason={kyDaChot ? 'Kỳ này đã chốt, không thể ghi thêm chỉ số.' : undefined}
+              blockedReason={kyDaChot ? 'Tháng này đã chốt, không thể ghi thêm chỉ số.' : undefined}
               onClick={() => void chotKyDangChon()}
             >
-              {dangChotKy ? 'Đang chốt…' : 'Chốt kỳ'}
+              {dangChotKy ? 'Đang chốt…' : 'Khoá chỉ số'}
             </Button>
           </div>
           {dangTaiPhongChuaGhiChiSo ? (
@@ -1165,7 +1165,7 @@ function taoCanhBaoTieuThu(
   const gapTrungBinh = (mucTieuThuKyNay / trungBinhBaKyTruoc).toFixed(2)
   return {
     gapLan: gapTrungBinh,
-    thongBao: `Mức tiêu thụ kỳ này là ${mucTieuThu}, trung bình ba kỳ trước là ${thongTinCanhBao.trungBinhBaKyTruoc}, gấp ${gapTrungBinh} lần.`,
+    thongBao: `Mức tiêu thụ tháng này là ${mucTieuThu}, trung bình ba tháng trước là ${thongTinCanhBao.trungBinhBaKyTruoc}, gấp ${gapTrungBinh} lần.`,
   }
 }
 
