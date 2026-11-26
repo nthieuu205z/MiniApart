@@ -115,7 +115,9 @@ describe('HopDongNguoiThue', () => {
     })
 
     expect(container.querySelector('[data-layout-variant="mobile"]')).not.toBeNull()
-    expect(container.querySelector('[data-contract-status="far"]')?.textContent).toContain('Hợp đồng còn hiệu lực')
+    expect(container.querySelector('[data-contract-status="far"]')?.textContent).toBe('Còn 114 ngày. Muốn trả phòng, báo trước 30 ngày.')
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(0)
+    expect(container.textContent).toContain('Phòng tôi')
     expect(container.querySelector('[data-contract-status="warning"]')?.textContent).toContain('Hợp đồng còn 12 ngày (hết hạn 10/09/2026)')
     expect(container.querySelector('[data-contract-status="expired"]')?.textContent).toContain('Hợp đồng đã hết hạn ngày 01/09/2026')
     expect(container.querySelector('[data-contract-status="settled"]')?.textContent).toContain('Đã thanh lý — chỉ xem lại thông tin hợp đồng.')

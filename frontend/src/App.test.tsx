@@ -1687,7 +1687,7 @@ describe('invoice navigation', () => {
       expect(elements).toHaveLength(3)
       return elements
     })
-    expect(rows[0].textContent).toContain('08/2026')
+    expect(rows[0].textContent).toContain('Tháng 8/2026')
     expect(rows[0].textContent).toContain('Phòng 101')
     expect(rows[0].textContent).toContain('3.889.500')
     expect(rows[1].textContent).toContain('Đã thanh toán')
@@ -1714,7 +1714,7 @@ describe('invoice navigation', () => {
     mountedApp = await mountAppAndLogin(nguoiThue, '/lich-su', fetchMock)
 
     await vi.waitFor(() => expect(mountedApp!.container.querySelector('[data-history-empty]')).not.toBeNull())
-    expect(mountedApp.container.textContent).toContain('Chưa có kỳ hoá đơn nào')
+    expect(mountedApp.container.textContent).toContain('Chưa có hoá đơn nào')
     expect(mountedApp.container.querySelector('[role="alert"]')).toBeNull()
   })
 
@@ -1801,7 +1801,7 @@ describe('invoice navigation', () => {
     const electricityBar = mountedApp.container.querySelector('[data-consumption-bar="electricity-8"]') as HTMLButtonElement
     expect(electricityBar).not.toBeNull()
     await act(async () => electricityBar.click())
-    expect(mountedApp.container.textContent).toContain('Kỳ 08/2026 · Phòng 101: 25 kWh')
+    expect(mountedApp.container.textContent).toContain('Tháng 8/2026 · Phòng 101: 25 kWh')
   })
 
   it('FR-POR-05 shows a clear first-use empty state when no meter history exists', async () => {

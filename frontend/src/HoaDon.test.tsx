@@ -178,7 +178,7 @@ describe('HoaDon detail and print view', () => {
     // Không chọn kỳ → màn "Cần trả" gom mọi kỳ chưa trả đủ (kỳ 10 và 9 = 3.790.000), kỳ đã trả không vào danh sách.
     await vi.waitFor(() => expect(container.querySelector('[data-can-tra-tong]')).not.toBeNull())
     expect(container.querySelector('[data-can-tra-tong]')?.textContent).toContain('3.790.000')
-    expect(container.textContent).toContain('2 kỳ quá hạn')
+    expect(container.textContent).toContain('2 tháng chưa trả đủ')
     expect(container.querySelector('[data-ky-hoa-don="9"]')).not.toBeNull()
     expect(container.querySelector('[data-ky-hoa-don="8"]')).toBeNull()
     expect(container.textContent).toContain('288 → 384 · 96 × 3.800 ₫')
@@ -200,7 +200,7 @@ describe('HoaDon detail and print view', () => {
 
     await vi.waitFor(() => expect(container.querySelector('[data-invoice-due]')?.textContent).toContain('1.000'))
     expect(container.textContent).toContain('Chưa đến hạn')
-    expect(container.textContent).toContain('Không có kỳ nào còn nợ.')
+    expect(container.textContent).toContain('Không có tháng nào còn nợ.')
   })
 
   it('FR-POR-02 renders labeled readings, consumption, unit price and amount for every invoice line', async () => {

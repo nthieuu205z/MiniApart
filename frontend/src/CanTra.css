@@ -1,11 +1,58 @@
-/* Bản máy tính của "Cần trả": cùng cấu trúc với điện thoại, rộng tối đa 960px, danh sách kỳ bên trái, khung tổng bên phải. */
-.can-tra-ds { display: grid; gap: 12px; align-content: start; min-width: 0; }
+/* V3 Người thuê (mật độ thoáng): chỉ token, không cỡ chữ cứng. Dùng chung cho CanTra, BaoHongKhach, HopDongNguoiThue, LichSuHoaDon. */
+.nt { display: grid; gap: var(--ma-space-4, 16px); max-width: 640px; width: 100%; min-width: 0; }
+.nt-dau { display: grid; gap: 4px; }
+.nt-h1 { margin: 0; font: var(--ma-text-screen-title); }
+.nt-phu { margin: 0; font: var(--ma-text-body-sm); color: var(--ma-text-secondary); }
+.nt-than { display: grid; gap: var(--ma-space-4, 16px); min-width: 0; }
+.nt-khoi { background: var(--ma-bg-card); border: 1px solid var(--ma-line-200); border-radius: 12px; padding: 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.nt-h2 { margin: 0; font: var(--ma-text-block-title); }
+.nt-nhan { margin: 0; font: var(--ma-text-body-sm); color: var(--ma-text-secondary); font-weight: 400; }
+.nt-so { font: var(--ma-text-hero); font-variant-numeric: tabular-nums; color: var(--ma-text-primary); }
+.nt-no { color: var(--ma-urgent); }
+.nt-tre { color: var(--ma-urgent); }
+.nt-dong { display: flex; align-items: center; gap: 12px; min-height: var(--ma-row-h); padding: 8px 0; color: var(--ma-text-primary); font: var(--ma-text-body); }
+.nt-dong + .nt-dong { border-top: 1px solid var(--ma-line-100); }
+a.nt-dong:hover { text-decoration: none; background: var(--ma-paper-1); }
+.nt-dong-trai { flex: 1; min-width: 0; display: grid; }
+.nt-ten { font: var(--ma-text-task-name); overflow-wrap: anywhere; }
+.nt-tien { font: var(--ma-text-figure-sm); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nt-cong .nt-ten, .nt-cong .nt-tien { font-weight: 600; }
+.nt-cong { flex: 1; justify-content: space-between; }
+.nt-noidung { font: var(--ma-text-task-name); overflow-wrap: anywhere; }
+.nt-quay { justify-self: start; min-height: var(--ma-control-h); margin-left: -8px; }
+.nt-ghi { display: grid; gap: 8px; }
+/* Máy tính (không thoáng điện thoại): danh sách tháng bên trái, khung tổng bên phải. */
 .can-tra-rong { max-width: 960px; }
 .can-tra-rong.can-tra-tra { max-width: 560px; }
-.can-tra-rong.m-app { min-height: 0; padding-bottom: 0; }
+.can-tra-ds { display: grid; gap: var(--ma-space-4, 16px); align-content: start; min-width: 0; }
 @media (min-width: 768px) {
-  .can-tra-rong:not(.can-tra-tra) .m-body { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px) !important; align-items: start; gap: 16px 24px; }
-  .can-tra-rong:not(.can-tra-tra) .payhero { grid-column: 2; grid-row: 1; position: sticky; top: 16px; }
+  .can-tra-rong:not(.can-tra-tra) .nt-than { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); align-items: start; gap: 16px 24px; }
+  .can-tra-rong:not(.can-tra-tra) .nt-hero { grid-column: 2; grid-row: 1; position: sticky; top: 16px; }
   .can-tra-rong:not(.can-tra-tra) .can-tra-ds { grid-column: 1; grid-row: 1; }
-  .can-tra-rong .m-list .irow:hover { background: var(--ma-paper-1); }
 }
+
+/* Báo hỏng */
+.nt .label { font: var(--ma-text-body-sm); font-weight: 500; }
+.nt .input, .nt .select { font: var(--ma-text-body); min-height: var(--ma-control-h); }
+.nt .btn { font: var(--ma-text-task-name); }
+.nt-luoi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.nt-o { min-height: 64px; display: grid; justify-items: center; align-content: center; gap: 4px; padding: 6px; border-radius: 10px; border: 1px solid var(--ma-line-300); background: var(--ma-bg-card); color: var(--ma-text-primary); font: var(--ma-text-body-sm); font-weight: 500; cursor: pointer; }
+.nt-o[aria-pressed="true"] { background: var(--ma-brand-primary); border-color: var(--ma-brand-primary); color: var(--ma-text-on-inverse); }
+.nt-khan { display: flex; align-items: flex-start; gap: 12px; min-height: 52px; font: var(--ma-text-body); cursor: pointer; }
+.nt-khan input { width: 24px; height: 24px; margin: 14px 0 0; flex: none; }
+.nt-khan > span { padding: 12px 0; }
+.nt-spread { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nt-su-co { display: grid; gap: 6px; align-items: start; }
+
+/* Lịch sử */
+.nt-nut { width: 100%; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.nt-bang { width: 100%; border-collapse: collapse; font: var(--ma-text-body); }
+.nt-bang th, .nt-bang td { padding: 12px 0; min-height: var(--ma-row-h); border-top: 1px solid var(--ma-line-100); font-weight: 400; text-align: left; font-variant-numeric: tabular-nums; }
+.nt-bang thead th { border-top: 0; font: var(--ma-text-body-sm); color: var(--ma-text-secondary); }
+.nt-bang .num { text-align: right; }
+.nt .ma-nhanmh { font: var(--ma-text-badge); }
+.nt-ma { display: inline-block; white-space: nowrap; }
+.nt-ten + .nt-tien { margin-left: auto; }
+.nt textarea.input { min-height: 96px; height: auto; }
+/* Thanh nút chính dính đáy phải nằm trên thanh điều hướng dưới, không bị che. */
+.nt .ma-chandinh, .invoice-screen .ma-chandinh { bottom: var(--ma-bottom-nav-height); }

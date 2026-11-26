@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ApiError, fetchHopDongCuaNguoiThue, fetchHoSoHopDong, type ThongTinHopDong, type HopDongHoSoDto } from './api'
+import { ApiError, fetchHopDongCuaNguoiThue, type ThongTinHopDong } from './api'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { StatusTag } from './design/core/StatusTag'
 import { Button } from './design/core/Button'
@@ -9,6 +9,7 @@ import { Card } from './design/layout/Card'
 import { DataTable } from './design/table/DataTable'
 import { downloadManagementFile } from './managementApi'
 import { Tieu } from './CanTra'
+import './CanTra.css'
 
 type Props = {
   token: string
@@ -79,11 +80,13 @@ export default function HopDongNguoiThue({ token, mobile = false }: Props) {
   }
 
   return (
-    <section {...khung} aria-labelledby="tenant-contract-title" style={{ display: 'grid', gap: 12, minWidth: 0 }}>
-      <div>
-        <Tieu mobile={mobile} id="tenant-contract-title" className={mobile ? 'sr-only' : undefined} style={{ margin: 0, font: '600 24px/1.2 var(--ma-font-ui)', letterSpacing: '-0.01em' }}>Hợp đồng của tôi</Tieu>
-        <div style={{ font: 'var(--ma-text-caption)', color: 'var(--ma-text-muted)', marginTop: 2 }}>
-          Thông tin chỉ đọc của các hợp đồng thuộc hồ sơ người thuê này. Cảnh báo hết hạn được tính theo ngày hiện tại.
+    <section {...khung} className={mobile ? 'nt' : undefined} aria-labelledby="tenant-contract-title" style={mobile ? undefined : { display: 'grid', gap: 12, minWidth: 0 }}>
+      <div className="nt-dau">
+        <Tieu mobile={mobile} id="tenant-contract-title" className="nt-h1">{mobile ? 'Phòng tôi' : 'Hợp đồng của tôi'}</Tieu>
+        <div className="nt-phu">
+          {mobile
+            ? hopDongs[0] ? `Phòng ${hopDongs[0].soPhong}` : null
+            : 'Thông tin chỉ đọc của các hợp đồng thuộc hồ sơ người thuê này. Cảnh báo hết hạn được tính theo ngày hiện tại.'}
         </div>
       </div>
 
@@ -96,7 +99,7 @@ export default function HopDongNguoiThue({ token, mobile = false }: Props) {
           />
         </Card>
       ) : mobile ? (
-        <div data-contract-list="mobile" style={{ display: 'grid', gap: 12 }}>
+        <div data-contract-list="mobile" className="nt-than">
           {hopDongs.map((hopDong) => <HopDongCard key={hopDong.id} hopDong={hopDong} token={token} />)}
         </div>
       ) : (
@@ -120,54 +123,30 @@ function useTaiPdf(token: string) {
 }
 
 function HopDongCard({ hopDong, token }: { hopDong: ThongTinHopDong; token: string }) {
-  const trangThai = xacDinhTrangThai(hopDong)
+  const trangThai = xacDinhTrangThai(hopDong, true)
   const { dangTai, tai } = useTaiPdf(token)
-  const [hoSo, setHoSo] = useState<HopDongHoSoDto | null>(null)
-
-  useEffect(() => {
-    fetchHoSoHopDong(token, hopDong.id)
-      .then(setHoSo)
-      .catch(() => {})
-  }, [hopDong.id, token])
 
   return (
-    <Card data-contract-card={hopDong.id} style={{ gap: 14 }}>
-      <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <h2 className="h2" style={{ margin: 0 }}>Phòng {hopDong.soPhong}</h2>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-          <TheTaiLieu hoSo={hoSo} />
-          <StatusTag tone={trangThai.tone}>{trangThai.nhan}</StatusTag>
-        </div>
-      </header>
+    <div className="nt-than" data-contract-card={hopDong.id}>
+      <section className="nt-khoi">
+        <h2 className="nt-nhan">Hợp đồng thuê đến</h2>
+        <div className="nt-so">{dinhDangNgayIso(hopDong.ngayKetThuc)}</div>
+        <ThongBaoTrangThai trangThai={trangThai} mobile />
+        <div className="nt-dong"><span className="nt-ten">Bắt đầu thuê</span><span className="nt-tien">{dinhDangNgayIso(hopDong.ngayBatDau)}</span></div>
+        <div className="nt-dong"><span className="nt-ten">Tiền phòng</span><span className="nt-tien">{dinhDangTien(hopDong.giaThue)} ₫ / tháng</span></div>
+        <div className="nt-dong"><span className="nt-ten">Tiền cọc thoả thuận</span><span className="nt-tien">{dinhDangTien(hopDong.tienCoc)} ₫</span></div>
+      </section>
 
-      <ThongBaoTrangThai trangThai={trangThai} />
-
-      <div className="facts">
-        <div className="fact"><div className="k">Bắt đầu</div><div className="v">{dinhDangNgayIso(hopDong.ngayBatDau)}</div></div>
-        <div className="fact"><div className="k">Kết thúc</div><div className="v">{dinhDangNgayIso(hopDong.ngayKetThuc)}</div></div>
-        <div className="fact"><div className="k">Giá thuê</div><div className="v">{dinhDangTien(hopDong.giaThue)} ₫</div></div>
-        <div className="fact"><div className="k">Tiền cọc thoả thuận</div><div className="v">{dinhDangTien(hopDong.tienCoc)} ₫</div></div>
-      </div>
-
-      <div>
-        <h3 className="h3" style={{ margin: '0 0 4px' }}>Dịch vụ áp dụng</h3>
+      <section className="nt-khoi" aria-labelledby={`dv-${hopDong.id}`}>
+        <h2 className="nt-h2" id={`dv-${hopDong.id}`}>Giá dịch vụ</h2>
         <DanhSachDichVu hopDong={hopDong} />
-      </div>
+      </section>
 
-      <Button className="btn-touch btn-block" blocked={dangTai === hopDong.id} onClick={() => tai(hopDong.id)}>
-        <Icon name="download" /> Tải hợp đồng PDF
+      <Button variant="secondary" className="btn-block" blocked={dangTai === hopDong.id} onClick={() => tai(hopDong.id)}>
+        <Icon name="download" /> Tải hợp đồng (PDF)
       </Button>
-    </Card>
+    </div>
   )
-}
-
-function TheTaiLieu({ hoSo }: { hoSo: HopDongHoSoDto | null }) {
-  if (!hoSo?.trangThaiTaiLieu) return <StatusTag tone="neutral">Hồ sơ lịch sử</StatusTag>
-  return hoSo.trangThaiTaiLieu === 'DA_GHI_NHAN_KY'
-    ? <StatusTag tone="done">Đã ký giấy</StatusTag>
-    : hoSo.trangThaiTaiLieu === 'DA_CHOT'
-      ? <StatusTag tone="waiting">Đã chốt</StatusTag>
-      : <StatusTag tone="urgent">Bản dự thảo</StatusTag>
 }
 
 function HopDongTable({ hopDongs, token }: { hopDongs: ThongTinHopDong[]; token: string }) {
@@ -218,23 +197,24 @@ function HopDongTable({ hopDongs, token }: { hopDongs: ThongTinHopDong[]; token:
 
 function DanhSachDichVu({ hopDong }: { hopDong: ThongTinHopDong }) {
   if (hopDong.dichVuApDung.length === 0) {
-    return <p className="t-sm t-2" style={{ margin: '4px 0 0' }}>Không có dịch vụ áp dụng riêng.</p>
+    return <p className="nt-phu">Không có dịch vụ áp dụng riêng.</p>
   }
 
   return (
-    <div style={{ display: 'grid' }}>
+    <div>
       {hopDong.dichVuApDung.map((dichVu) => (
-        <div key={dichVu.dichVuId} className="t-sm" style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--ma-line-100)' }}>
-          <span>{dichVu.tenDichVu}</span>
-          <b style={{ whiteSpace: 'nowrap' }}>{dinhDangTien(dichVu.donGiaApDung)} ₫</b>
+        <div key={dichVu.dichVuId} className="nt-dong">
+          <span className="nt-ten">{dichVu.tenDichVu}</span>
+          <span className="nt-tien">{dinhDangTien(dichVu.donGiaApDung)} ₫</span>
         </div>
       ))}
     </div>
   )
 }
 
-function ThongBaoTrangThai({ trangThai, compact = false }: { trangThai: TrangThaiHienThi; compact?: boolean }) {
+function ThongBaoTrangThai({ trangThai, compact = false, mobile = false }: { trangThai: TrangThaiHienThi; compact?: boolean; mobile?: boolean }) {
   const b = BANNER[trangThai.key]
+  if (mobile && trangThai.key === 'far') return <p className="nt-phu" data-contract-status="far">{trangThai.thongBao}</p>
   return (
     <div
       data-contract-status={trangThai.key}
@@ -248,7 +228,7 @@ function ThongBaoTrangThai({ trangThai, compact = false }: { trangThai: TrangTha
   )
 }
 
-function xacDinhTrangThai(hopDong: ThongTinHopDong): TrangThaiHienThi {
+function xacDinhTrangThai(hopDong: ThongTinHopDong, mobile = false): TrangThaiHienThi {
   if (hopDong.trangThai === 'DA_THANH_LY') {
     return {
       key: 'settled',
@@ -279,7 +259,7 @@ function xacDinhTrangThai(hopDong: ThongTinHopDong): TrangThaiHienThi {
   return {
     key: 'far',
     nhan: 'Còn hiệu lực',
-    thongBao: `Hợp đồng còn hiệu lực đến ${dinhDangNgayIso(hopDong.ngayKetThuc)}.`,
+    thongBao: mobile ? `Còn ${hopDong.soNgayConLai} ngày. Muốn trả phòng, báo trước ${hopDong.soNgayBaoTruoc} ngày.` : `Hợp đồng còn hiệu lực đến ${dinhDangNgayIso(hopDong.ngayKetThuc)}.`,
     tone: 'neutral',
   }
 }
