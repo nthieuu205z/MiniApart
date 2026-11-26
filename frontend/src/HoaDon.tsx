@@ -12,6 +12,7 @@ import InvoiceActions from './InvoiceActions'
 import FinancePaymentPanel from './FinancePaymentPanel'
 import { KyTruocConNo } from './LichSuHoaDon'
 import CanTra, { Tieu } from './CanTra'
+import { ChanDinh } from './design/layout/ChanDinh'
 
 type Props = { token: string; toaNhaId?: number; kyId?: number; hoaDonId?: number; mobile?: boolean; cheDoNguoiThue?: boolean; cheDoCongNo?: boolean; vaiTro?: string }
 
@@ -197,8 +198,8 @@ const NHAN_TRANG_THAI: Record<string, [string, 'urgent' | 'done' | 'strong' | 'w
 function HoaDonNguoiThueMobile({ mobile, token, hoaDon, lichSu }: { mobile: boolean; token: string; hoaDon: ThongTinHoaDonChiTiet; lichSu: ThongTinHoaDonLichSu[] }) {
   const trongLichSu = lichSu.find((muc) => muc.hoaDonId === hoaDon.hoaDonId)
   const ky = trongLichSu?.thang != null && trongLichSu.nam != null
-    ? `${String(trongLichSu.thang).padStart(2, '0')}/${trongLichSu.nam}`
-    : hoaDon.ngayPhatHanh.slice(5, 7) + '/' + hoaDon.ngayPhatHanh.slice(0, 4)
+    ? `${trongLichSu.thang}/${trongLichSu.nam}`
+    : `${Number(hoaDon.ngayPhatHanh.slice(5, 7))}/${hoaDon.ngayPhatHanh.slice(0, 4)}`
   const daTraHet = Number(hoaDon.conLai) <= 0
   const [nhan, tone] = daTraHet ? NHAN_TRANG_THAI.DA_THANH_TOAN : NHAN_TRANG_THAI[hoaDon.trangThai] ?? ['Chưa đến hạn', 'strong']
   const tiLeDaTra = Number(hoaDon.tongTien) > 0 ? Math.min(100, Math.max(0, (Number(hoaDon.daThu) / Number(hoaDon.tongTien)) * 100)) : 0
@@ -220,7 +221,7 @@ function HoaDonNguoiThueMobile({ mobile, token, hoaDon, lichSu }: { mobile: bool
       <div className="m-body" style={{ padding: 0, gridTemplateColumns: 'minmax(0, 1fr)' }}>
         <section className="m-card" aria-labelledby="invoice-period" data-invoice-total>
           <div className="spread">
-            <Tieu mobile={mobile} className="h3" id="invoice-period" style={{ margin: 0 }}>Kỳ {ky}</Tieu>
+            <Tieu mobile={mobile} className="h3" id="invoice-period" style={{ margin: 0 }}>Tháng {ky}</Tieu>
             <StatusTag tone={tone}>{nhan}</StatusTag>
           </div>
           <p className="t-sm t-2" style={{ margin: '12px 0 0' }}>Còn phải trả</p>
@@ -248,12 +249,13 @@ function HoaDonNguoiThueMobile({ mobile, token, hoaDon, lichSu }: { mobile: bool
             {hoaDon.cacDong.map((dong, index) => <DongTienMobile key={`${dong.tenKhoan}-${index}`} token={token} dong={dong} tach={index > 0} />)}
           </div>
           <div className="spread" style={{ alignItems: 'baseline', paddingTop: 14, borderTop: '1px solid var(--ma-line-200)', marginTop: 4 }}>
-            <span className="t-strong">Tổng kỳ này</span>
+            <span className="t-strong">Cộng tháng {ky.split('/')[0]}</span>
             <span style={{ font: '600 20px/1 var(--ma-font-ui)' }}>{dinhDangTien(hoaDon.tongTien)} ₫</span>
           </div>
         </section>
 
         <KyTruocConNo lichSu={lichSu} hienTaiId={hoaDon.hoaDonId} />
+        {!daTraHet ? <ChanDinh><a className="btn btn-primary btn-touch btn-block" data-tra-hoa-don href={`/hoa-don-cua-toi?tra=${hoaDon.hoaDonId}`}>Trả {dinhDangTien(hoaDon.conLai)} ₫</a></ChanDinh> : null}
       </div>
     </div>
   )
