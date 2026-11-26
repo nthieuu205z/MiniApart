@@ -370,7 +370,7 @@ function KhungUngDung({ nguoiDung, token, viTri, ketQuaTuyen, laManHinhHep, laMa
   useEffect(() => { setMoNgan(false) }, [duongDan, coNgan])
 
   const taoMuc = (muc: MucDieuHuong): NavItem => ({
-    label: muc.nhan,
+    label: muc.dem === 'chuKy' && soDem.thangMo ? `Tháng ${soDem.thangMo}` : muc.nhan, // nhãn tĩnh = tháng hiện tại, dùng khi chưa tải kỳ
     href: muc.duongDan,
     active: mucDangChon(muc, duongDan),
     glyph: 'o-vuong',

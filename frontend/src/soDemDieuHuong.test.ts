@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { taiSoDemDieuHuong } from './soDemDieuHuong'
+import { taiSoDemDieuHuong, thangDangMo } from './soDemDieuHuong'
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
@@ -11,6 +11,16 @@ function gia(ham: (url: string) => Response) {
 }
 
 afterEach(() => vi.unstubAllGlobals())
+
+describe('thangDangMo', () => {
+  it('lấy kỳ mới nhất chưa khoá, không theo tháng hiện tại; hết kỳ mở thì lấy kỳ mới nhất', () => {
+    const k = (thang: number, nam: number, trangThai: string) => ({ thang, nam, trangThai })
+    expect(thangDangMo([k(10, 2026, 'DA_CHOT'), k(11, 2026, 'DANG_MO'), k(12, 2025, 'DA_CHOT')])).toBe(11)
+    expect(thangDangMo([k(12, 2025, 'DA_CHOT'), k(1, 2026, 'DA_CHOT')])).toBe(1)
+    expect(thangDangMo([])).toBeUndefined()
+    expect(thangDangMo(undefined)).toBeUndefined()
+  })
+})
 
 describe('taiSoDemDieuHuong', () => {
   it('Chủ: đếm sự cố mới tiếp nhận và lịch hẹn chờ xác nhận, kèm toà đang chọn', async () => {
