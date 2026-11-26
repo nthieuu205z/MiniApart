@@ -32,3 +32,12 @@
   .ghi-cong-to { grid-template-columns: minmax(0, 1fr); }
   .ghi-hanh-dong { padding-top: 0; }
 }
+
+/* Bảng ghi chỉ số (desktop): một hàng mỗi phòng, ô nhập nằm ngay trong hàng. */
+.ghi-bang td, .ghi-bang th { white-space: nowrap; }
+.ghi-o-so { width: 7.5rem; height: var(--ma-control-h); padding: 0 var(--ma-space-3); text-align: right; font: inherit; font-variant-numeric: tabular-nums; color: var(--ma-text-primary); background: var(--ma-bg-card); border: 1px solid var(--ma-border-strong); border-radius: var(--ma-radius); }
+.ghi-o-so::placeholder { color: var(--ma-text-muted); }
+.ghi-o-so.thieu, .ghi-o-so[aria-invalid="true"] { border-color: var(--ma-urgent); background: var(--ma-urgent-bg); }
+.ghi-o-so:focus-visible { outline: 2px solid var(--ma-focus-ring); outline-offset: 2px; }
+.ghi-bang td[colspan] { white-space: normal; background: var(--ma-paper-1); }
+.ghi-bang tfoot td:first-child { max-width: 0; overflow: visible; }

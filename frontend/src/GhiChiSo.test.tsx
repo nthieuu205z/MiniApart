@@ -66,8 +66,8 @@ describe('GhiChiSo mobile screen', () => {
 
     await vi.waitFor(() => expect(container.textContent).toContain('101'))
     expect(container.textContent).toContain('201')
-    expect(container.textContent).toContain('0 / 2 phòng')
-    expect((container.querySelector('input[name="chiSoCuoi-11-21"]') as HTMLInputElement).inputMode).toBe('decimal')
+    expect(container.textContent).toContain('đã ghi 0/2 công tơ')
+    expect((container.querySelector('input[name="chiSoCuoi-11-21"]') as HTMLInputElement).inputMode).toBe('numeric')
     expect((container.querySelector('input[name="chiSoCuoi-11-21"]') as HTMLInputElement).type).toBe('number')
   })
 
@@ -111,7 +111,7 @@ describe('GhiChiSo mobile screen', () => {
       setInputValue(firstInput, '1252.75')
     })
 
-    expect(container.textContent).toContain('Mức tiêu thụ: 12.75 kWh')
+    expect(container.querySelector('[data-dung="11-21"]')?.textContent).toBe('12,75')
 
     await act(async () => {
       firstInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
@@ -122,7 +122,7 @@ describe('GhiChiSo mobile screen', () => {
       expect.objectContaining({ method: 'POST' }),
     ))
     await vi.waitFor(() => expect(document.activeElement).toBe(container.querySelector('input[name="chiSoCuoi-12-21"]')))
-    expect(container.textContent).toContain('1 / 2 phòng')
+    expect(container.textContent).toContain('đã ghi 1/2 công tơ')
   })
 
   it('FR-MTR-02 keeps room progress incomplete until every metered service in that room is saved', async () => {
@@ -171,7 +171,7 @@ describe('GhiChiSo mobile screen', () => {
       '/api/toa-nha/1/ky-thanh-toan/8/chi-so',
       expect.objectContaining({ method: 'POST' }),
     ))
-    expect(container.textContent).toContain('0 / 1 phòng')
+    expect(container.textContent).toContain('đã ghi 1/2 công tơ')
 
     await act(async () => {
       setInputValue(nuocInput, '51.25')
@@ -181,7 +181,7 @@ describe('GhiChiSo mobile screen', () => {
       nuocInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     })
 
-    await vi.waitFor(() => expect(container.textContent).toContain('1 / 1 phòng'))
+    await vi.waitFor(() => expect(container.textContent).toContain('đã ghi 2/2 công tơ'))
   })
 
   it('FR-MTR-04 presents exact anomalous-consumption details and saves only after confirmation', async () => {
@@ -319,7 +319,7 @@ describe('GhiChiSo mobile screen', () => {
       '/api/toa-nha/1/ky-thanh-toan/8/chi-so',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ phongId: 11, dichVuId: 21, chiSoCuoi: '160.00', coThayCongTo: false }),
+        body: JSON.stringify({ phongId: 11, dichVuId: 21, chiSoCuoi: '160', coThayCongTo: false }),
       }),
     ))
   })
@@ -339,6 +339,7 @@ describe('GhiChiSo mobile screen', () => {
     }))
 
     await renderScreen()
+    await moSua()
 
     const photoInput = await vi.waitFor(() => container.querySelector('input[name="anhCongTo-11-21"]') as HTMLInputElement)
     expect(photoInput.type).toBe('file')
@@ -399,7 +400,7 @@ describe('GhiChiSo mobile screen', () => {
     }))
     root = createRoot(container)
     await act(async () => root.render(<GhiChiSo token="meter-token" anNutChot />))
-    await vi.waitFor(() => expect(container.textContent).toContain('Kỳ 8/2026'))
+    await vi.waitFor(() => expect(container.textContent).toContain('Không có phòng đủ điều kiện'))
     expect(container.querySelector('button[data-close-period]')).toBeNull()
   })
 
@@ -451,6 +452,7 @@ describe('GhiChiSo mobile screen', () => {
 
     await renderScreen()
     const input = await vi.waitFor(() => container.querySelector('input[name="chiSoCuoi-11-21"]') as HTMLInputElement)
+    await moSua()
     const replacementCheckbox = await vi.waitFor(() => container.querySelector('input[name="coThayCongTo-11-21"]') as HTMLInputElement)
     const saveButton = await vi.waitFor(() => container.querySelector('button[data-save-key="11-21"]') as HTMLButtonElement)
 
@@ -521,6 +523,7 @@ describe('GhiChiSo mobile screen', () => {
     expect(container.querySelector('input[name="chiSoCuoiCongToCu-11-21"]')).toBeNull()
     expect(container.querySelector('input[name="chiSoDauCongToMoi-11-21"]')).toBeNull()
 
+    await moSua()
     const checkbox = await vi.waitFor(() => container.querySelector('input[name="coThayCongTo-11-21"]') as HTMLInputElement)
     await act(async () => checkbox.click())
 
@@ -536,7 +539,7 @@ describe('GhiChiSo mobile screen', () => {
       setInputValue(chiSoDauCongToMoi, '0.00')
     })
 
-    expect(container.textContent).toContain('Mức tiêu thụ: 50.75 kWh')
+    expect(container.querySelector('[data-dung="11-21"]')?.textContent).toBe('50,75')
     await act(async () => (container.querySelector('button[data-save-key="11-21"]') as HTMLButtonElement).click())
 
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
@@ -583,8 +586,8 @@ describe('GhiChiSo mobile screen', () => {
       const observer = new MutationObserver(() => {
         const input = container.querySelector('input[name="chiSoCuoi-11-21"]')
         const saveButton = container.querySelector('button[data-save-key="11-21"]')
-        // Công tơ đã ghi nằm trong bảng gọn: phải bấm "Sửa" mới có ô nhập.
-        if (!input) container.querySelector<HTMLButtonElement>('button[aria-label^="Sửa"]')?.click()
+        // Nút Lưu từng công tơ nằm trong hàng phụ: phải mở "Ảnh, thay công tơ" mới có.
+        if (!saveButton) container.querySelector<HTMLButtonElement>('button[aria-label^="Ảnh và thay công tơ"]')?.click()
         if (!(input instanceof HTMLInputElement) || !(saveButton instanceof HTMLButtonElement)) return
         if (input.value !== '1239.99') {
           setInputValue(input, '1239.99')
@@ -696,18 +699,28 @@ describe('GhiChiSo mobile screen', () => {
         return jsonResponse(duLieuHaiPhong)
       })
 
-    it('desktop: công tơ chưa ghi hiện trước, phòng đã ghi nằm trong bảng gọn, chỉ một nút chính', async () => {
+    it('desktop: một bảng, phòng thiếu đứng đầu, ô nhập nằm trong hàng, chỉ một nút chính', async () => {
       vi.stubGlobal('fetch', taoFetch())
       await renderScreen()
       await vi.waitFor(() => expect(container.querySelector('#cong-to-12-21')).not.toBeNull())
-      const chua = container.querySelector('#cong-to-12-21') as HTMLElement
       const bang = container.querySelector('table') as HTMLTableElement
-      expect(chua.compareDocumentPosition(bang) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-      expect(bang.textContent).toContain('101')
-      expect(bang.querySelector('input')).toBeNull()
+      expect(bang.querySelector('#cong-to-12-21')).not.toBeNull()
+      expect(bang.querySelector('#cong-to-12-21')?.tagName).toBe('INPUT')
+      const phong = [...bang.querySelectorAll('tbody th[scope="row"]')].map((t) => t.textContent)
+      expect(phong).toEqual(['201', '101'])
+      expect(bang.textContent).toContain('Thiếu 2 công tơ')
+      expect(bang.querySelector('tfoot')?.textContent).toContain('Cộng 1 phòng đã ghi')
       expect(container.querySelector('#cong-to-12-22')).not.toBeNull()
       expect(container.querySelectorAll('.btn-primary').length).toBe(1)
-      expect(container.textContent).toContain('Chưa ghi (2)')
+      expect(container.textContent).toContain('đã ghi 1/3 công tơ')
+    })
+
+    it('desktop: Enter chuyển focus sang ô cùng cột của phòng dưới', async () => {
+      vi.stubGlobal('fetch', taoFetch())
+      await renderScreen()
+      const dien = await vi.waitFor(() => container.querySelector('#cong-to-12-21') as HTMLInputElement)
+      await act(async () => dien.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+      expect(document.activeElement).toBe(container.querySelector('#cong-to-11-21'))
     })
 
     it('desktop: "Lưu k chỉ số" gửi từng ô đã nhập đúng URL và payload cũ', async () => {
@@ -766,8 +779,9 @@ describe('GhiChiSo mobile screen', () => {
 
 })
 
+// Mở hàng phụ (ảnh, thay công tơ, Lưu từng công tơ) của hàng đầu tiên.
 async function moSua() {
-  const nut = await vi.waitFor(() => container.querySelector('button[aria-label^="Sửa"]') as HTMLButtonElement)
+  const nut = await vi.waitFor(() => container.querySelector('button[aria-label^="Ảnh và thay công tơ"]') as HTMLButtonElement)
   await act(async () => nut.click())
 }
 
