@@ -44,7 +44,7 @@ export default function BaoHongKhach({ token, mobile: mobileProp }: { token: str
   async function load() {
     setRows(await managementRequest(token, '/api/cong/yeu-cau-sua-chua?'))
   }
-  useEffect(() => { void action.run(load, 'Đã tải yêu cầu sửa chữa.').finally(() => setDaTai(true)) }, [token])
+  useEffect(() => { void action.run(load, '').finally(() => setDaTai(true)) }, [token])
   useEffect(() => {
     let active = true
     fetchHopDongCuaNguoiThue(token)

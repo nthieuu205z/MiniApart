@@ -50,3 +50,9 @@ a.nt-dong:hover { text-decoration: none; background: var(--ma-paper-1); }
 .nt-bang th, .nt-bang td { padding: 12px 0; min-height: var(--ma-row-h); border-top: 1px solid var(--ma-line-100); font-weight: 400; text-align: left; font-variant-numeric: tabular-nums; }
 .nt-bang thead th { border-top: 0; font: var(--ma-text-body-sm); color: var(--ma-text-secondary); }
 .nt-bang .num { text-align: right; }
+.nt .ma-nhanmh { font: var(--ma-text-badge); }
+.nt-ma { display: inline-block; white-space: nowrap; }
+.nt-ten + .nt-tien { margin-left: auto; }
+.nt textarea.input { min-height: 96px; height: auto; }
+/* Thanh nút chính dính đáy phải nằm trên thanh điều hướng dưới, không bị che. */
+.nt .ma-chandinh, .invoice-screen .ma-chandinh { bottom: var(--ma-bottom-nav-height); }

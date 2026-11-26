@@ -143,7 +143,7 @@ function TraTien({ ds }: { ds: ThongTinHoaDonLichSu[] }) {
         <div className="nt-so nt-no" data-tra-so-tien>{dinhDangTien(tongTien(ds))} ₫</div>
         <p className="nt-phu">{nhanPhamVi(ds)}</p>
         <div className="nt-nhan">Nội dung chuyển khoản</div>
-        <div className="nt-noidung" data-noi-dung-ck>{noiDung}</div>
+        <div className="nt-noidung" data-noi-dung-ck>{ds.map((h, i) => <span key={h.hoaDonId} className="nt-ma">{i > 0 ? ' ' : ''}{h.maHoaDon}</span>)}</div>
         <Button variant="secondary" className="btn-block" data-chep-noi-dung onClick={chep}>Chép</Button>
         <p className="nt-phu" role="status" data-da-chep>{daChep}</p>
       </section>
