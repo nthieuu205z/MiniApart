@@ -220,4 +220,15 @@ describe('Hôm nay · Quản lý', () => {
     await act(async () => { [...khoi('hn-lq').querySelectorAll('button')].find((b) => b.textContent === 'Xác nhận')!.click() })
     expect(goi.find((g) => g.method === 'PATCH')?.url).toBe('/api/lich-hen/3/trang-thai')
   })
+
+  it('QL: thông báo "Người thuê báo đã chuyển" chưa đọc hiện ở Việc cần làm kèm nút Ghi thu; hoá đơn đã thu đủ thì ẩn', async () => {
+    const tb = (id: string, noiDung: string, daDoc = false) => ({ maThamChieu: id, tieuDe: 'Người thuê báo đã chuyển', noiDung, daDoc })
+    dungMang({ '/api/thong-bao': { thongBao: [tb('a', 'Phòng 101 báo đã chuyển khoản cho hoá đơn HD-CHUA-TRA. Kiểm tra ngân hàng rồi ghi thu.'), tb('b', 'Phòng 9 đã đọc rồi', true), tb('d', 'Phòng 101 báo đã chuyển khoản cho hoá đơn HD-22. Kiểm tra'), { maThamChieu: 'c', tieuDe: 'Hoá đơn mới', noiDung: 'khác', daDoc: false }], soChuaDoc: 2 } })
+    await ve('QUAN_LY', [TOA[0]])
+    await vi.waitFor(() => expect(khoi('hn-vc').textContent).toContain('Người thuê báo đã chuyển'))
+    const dong = [...khoi('hn-vc').querySelectorAll('.ma-dongviec')].filter((d) => d.textContent!.includes('Người thuê báo đã chuyển'))
+    expect(dong).toHaveLength(1)
+    expect(dong[0].textContent).toContain('HD-CHUA-TRA')
+    expect(dong[0].querySelector('a')?.getAttribute('href')).toBe('/thu-tien')
+  })
 })
