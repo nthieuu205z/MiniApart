@@ -54,3 +54,8 @@ a.nt-dong:hover { text-decoration: none; background: var(--ma-paper-1); }
 .nt-ma { display: inline-block; white-space: nowrap; }
 .nt-ten + .nt-tien { margin-left: auto; }
 .nt textarea.input { min-height: 96px; height: auto; }
+
+/* Trả tiền: QR và nút "Tôi đã chuyển khoản" dính đáy. */
+.nt-qr { justify-self: center; width: 220px; height: 220px; max-width: 100%; background: #fff; border-radius: 8px; }
+.nt-day { position: sticky; bottom: 0; display: grid; gap: 8px; padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--ma-bg-page, var(--ma-bg-card)); }
+.nt-trangthai { margin: 0; padding: 14px 16px; border-radius: 12px; background: var(--ma-paper-1); font: var(--ma-text-task-name); text-align: center; }

@@ -30,3 +30,15 @@ export type Tenant = { id: number; hoTen: string; ngaySinh: string; soDienThoai:
 export type Service = { id: number; toaNhaId: number; ten: string; cachTinh: string; cheDoGia: string; donVi: string; laDien: boolean; dangSuDung: boolean }
 export type Occupant = { id: number; nguoiThueId: number; hoTen: string; quanHe: string; tuNgay: string; denNgay: string | null }
 export type Worker = { id: number; hoTen: string; soDienThoai: string }
+
+/** GET /api/cong/thanh-toan: chuyển khoản của toà người thuê đang ở (không có cấu hình Bên A). */
+export type ThongTinThanhToanCong = { toaNhaId: number; tenToaNha: string; maNganHang: string; tenNganHang: string | null; soTaiKhoan: string; chuTaiKhoan: string | null; noiDungMau: string }
+export const fetchThanhToanCong = (token: string) => managementRequest<ThongTinThanhToanCong>(token, '/api/cong/thanh-toan')
+export const baoDaChuyenKhoan = (token: string, hoaDonId: number) =>
+  managementRequest<{ hoaDonId: number; baoLuc: string; daBaoTruoc: boolean }>(token, `/api/cong/hoa-don/${hoaDonId}/bao-da-chuyen`, 'POST')
+
+export type KenhLienHe = 'GOI' | 'ZALO' | 'GAP'
+export type GhiChuLienHe = { id: number; kenh: KenhLienHe; noiDung: string; nguoiTao: string; taoLuc: string }
+export const fetchGhiChuLienHe = (token: string, nguoiThueId: number) => managementRequest<GhiChuLienHe[]>(token, `/api/nguoi-thue/${nguoiThueId}/ghi-chu`)
+export const themGhiChuLienHe = (token: string, nguoiThueId: number, noiDung: string, kenh: KenhLienHe) =>
+  managementRequest<GhiChuLienHe>(token, `/api/nguoi-thue/${nguoiThueId}/ghi-chu`, 'POST', { noiDung, kenh })
