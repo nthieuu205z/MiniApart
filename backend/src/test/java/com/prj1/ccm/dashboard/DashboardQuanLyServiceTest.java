@@ -79,8 +79,21 @@ class DashboardQuanLyServiceTest {
         public FakeKyRepoForQL() { super(null); }
         @Override
         public List<com.prj1.ccm.toanha.KyThanhToan> findByToaNhaId(Long toaNhaId) {
-            return List.of();
+            return List.of(new com.prj1.ccm.toanha.KyThanhToan(9L, 1L, 2026, 10, LocalDate.of(2026, 9, 26),
+                    LocalDate.of(2026, 10, 25), com.prj1.ccm.toanha.TrangThaiKy.DANG_MO));
         }
+    }
+
+    private final com.prj1.ccm.toanha.ToaNha toaNha = org.mockito.Mockito.mock(com.prj1.ccm.toanha.ToaNha.class);
+    private final com.prj1.ccm.toanha.PhanQuyenToaService phanQuyen = org.mockito.Mockito.mock(com.prj1.ccm.toanha.PhanQuyenToaService.class);
+    private final com.prj1.ccm.toanha.KyThanhToanService kyService = org.mockito.Mockito.mock(com.prj1.ccm.toanha.KyThanhToanService.class);
+
+    {
+        org.mockito.Mockito.when(toaNha.id()).thenReturn(1L);
+        org.mockito.Mockito.when(phanQuyen.danhSachToaNhaNguoiDungDuocXem(org.mockito.ArgumentMatchers.any())).thenReturn(List.of(toaNha));
+        // Cùng nguồn với /ky-thanh-toan/:ky/thieu-chi-so: 5 phòng, không phụ thuộc số điểm đo thô (7) của repository.
+        org.mockito.Mockito.when(kyService.danhSachPhongChuaGhiChiSo(org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.eq(9L), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(java.util.Collections.nCopies(5, new com.prj1.ccm.toanha.ThongTinPhongChuaGhiChiSo(1L, "101", 1)));
     }
 
     private final FakeQuanLyRepository repository = new FakeQuanLyRepository();
@@ -95,7 +108,8 @@ class DashboardQuanLyServiceTest {
             canhBaoRepository,
             doiSoatService,
             kyRepository,
-            null,
+            kyService,
+            phanQuyen,
             clock
     );
 
@@ -117,7 +131,7 @@ class DashboardQuanLyServiceTest {
         assertThat(result.kpi().khoanConPhaiThu()).isEqualByComparingTo("15000000.00");
         assertThat(result.kpi().soHoaDonQuaHan()).isEqualTo(1);
         assertThat(result.kpi().tienQuaHan()).isEqualByComparingTo("5000000.00");
-        assertThat(result.kpi().soCongToChuaGhi()).isEqualTo(7);
+        assertThat(result.kpi().soCongToChuaGhi()).isEqualTo(5);
         assertThat(result.kpi().soCanhBaoDienNuocDangMo()).isEqualTo(1);
         assertThat(result.kpi().soSuCoCanXuLy()).isEqualTo(2);
     }
