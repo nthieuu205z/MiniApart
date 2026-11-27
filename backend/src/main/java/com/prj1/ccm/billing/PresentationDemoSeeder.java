@@ -106,10 +106,11 @@ public class PresentationDemoSeeder implements CommandLineRunner {
         for (int b=0; b<6; b++) {
             NguoiDung manager = account(managers[b], "099900002"+b, VaiTro.QUAN_LY, null, hash);
             Long building = id("INSERT INTO TOA_NHA(ma_toa,ten,dia_chi,so_tang,ngay_chot_so,so_ngay_han_tt,tk_ngan_hang,nguong_that_thoat,ma_ngan_hang) VALUES (?,?,?,?,25,7,?,150000,'970422') RETURNING id",
-                    "DEMO-P"+(b+1),names[b],addresses[b],4+b%3,"00000000000000"+b);
+                    "DEMO-P"+(b+1),names[b],addresses[b],4+b%3,"036881220"+b); // số minh hoạ MB (BIN 970422), không phải tài khoản thật
             grant(manager,building); grant(owners[b%2],building); grant(workers[b%2],building);
-            jdbc.update("INSERT INTO CAU_HINH_BEN_A_TOA_NHA(toa_nha_id,ten_chu_the,ma_so_dinh_danh,dia_chi_lien_he,so_dien_thoai,ho_ten_nguoi_ky) VALUES (?,?,?,?,?,?)",
-                    building,owners[b%2].hoTen(),"DEMO-OWNER-"+b,addresses[b],owners[b%2].soDienThoai(),owners[b%2].hoTen());
+            jdbc.update("INSERT INTO CAU_HINH_BEN_A_TOA_NHA(toa_nha_id,ten_chu_the,ma_so_dinh_danh,dia_chi_lien_he,so_dien_thoai,ho_ten_nguoi_ky,so_tai_khoan,ten_ngan_hang,chu_tai_khoan) VALUES (?,?,?,?,?,?,?,?,?)",
+                    building,owners[b%2].hoTen(),"DEMO-OWNER-"+b,addresses[b],owners[b%2].soDienThoai(),owners[b%2].hoTen(),
+                    "036881220"+b,"MB Bank (Ngân hàng TMCP Quân Đội)",new String[]{"NGUYEN HOANG PHUC","TRAN NGOC MAI"}[b%2]);
             jdbc.update("INSERT INTO MAU_HOP_DONG(toa_nha_id,ten_mau,phien_ban,trang_thai,noi_dung_dieu_khoan,nguoi_tao_id) VALUES (?, ?,1,'PUBLISHED',?,?)",
                     building,"Mẫu thuê phòng — "+names[b],MauHopDongChuan.NOI_DUNG_DIEU_KHOAN_CHUAN,manager.id());
             List<ServicePrice> services = services(building,b,ref);
