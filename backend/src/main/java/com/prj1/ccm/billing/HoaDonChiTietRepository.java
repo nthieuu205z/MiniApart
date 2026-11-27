@@ -124,7 +124,8 @@ class HoaDonChiTietRepository {
                                ) AS da_thu,
                                hd.trang_thai, hop_dong.trang_thai AS hop_dong_trang_thai,
                                p.toa_nha_id, toa.ma_toa, toa.ten AS ten_toa_nha,
-                               p.so_phong, ky.nam, ky.thang, ky.ngay_bat_dau, ky.ngay_ket_thuc
+                               p.so_phong, ky.nam, ky.thang, ky.ngay_bat_dau, ky.ngay_ket_thuc,
+                               (SELECT b.bao_luc FROM BAO_DA_CHUYEN b WHERE b.hoa_don_id = hd.id) AS bao_da_chuyen_luc
                         FROM HOA_DON hd
                         JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
                         JOIN PHONG p ON p.id = hop_dong.phong_id
@@ -153,7 +154,8 @@ class HoaDonChiTietRepository {
                         resultSet.getObject("ngay_phat_hanh", LocalDate.class),
                         resultSet.getObject("han_thanh_toan", LocalDate.class),
                         resultSet.getBigDecimal("tong_tien"),
-                        resultSet.getBigDecimal("da_thu")
+                        resultSet.getBigDecimal("da_thu"),
+                        resultSet.getObject("bao_da_chuyen_luc", java.time.OffsetDateTime.class)
                 ),
                 nguoiThueId
         );
@@ -353,7 +355,8 @@ record HoaDonLichSuDuLieu(
         LocalDate ngayPhatHanh,
         LocalDate hanThanhToan,
         BigDecimal tongTien,
-        BigDecimal daThu
+        BigDecimal daThu,
+        java.time.OffsetDateTime baoDaChuyenLuc
 ) {
 }
 

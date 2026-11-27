@@ -30,6 +30,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -80,6 +81,9 @@ class CongNguoiThueAuthorizationIntegrationTest {
     @BeforeEach
     void resetDatabase() {
         mutableClock.dat(PORTAL_NOW);
+        xoaNeuBangTonTai("BAO_DA_CHUYEN");
+        xoaNeuBangTonTai("GHI_CHU_LIEN_HE");
+        jdbcTemplate.update("DELETE FROM THONG_BAO WHERE doi_tuong_loai = 'HOA_DON'");
         xoaNeuBangTonTai("THANH_TOAN");
         xoaNeuBangTonTai("SO_DU_KHA_DUNG");
         xoaNeuBangTonTai("KHOAN_PHAT_SINH");
@@ -425,6 +429,139 @@ class CongNguoiThueAuthorizationIntegrationTest {
         mockMvc.perform(get("/api/cong/hoa-don-moi-nhat")
                         .header("Authorization", "Bearer " + tenantToken))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // ---- y10 ----
+
+    @Test
+    void y10_thanhToanTraBankCuaToaHopDongDangHieuLucVaKhongLoBenA() throws Exception {
+        String tenant = login(5L, "0900000006");
+        mockMvc.perform(get("/api/cong/thanh-toan").header("Authorization", "Bearer " + tenant))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toaNhaId").value(1))
+                .andExpect(jsonPath("$.maNganHang").value("970405"))
+                .andExpect(jsonPath("$.soTaiKhoan").value("000000000101"))
+                .andExpect(jsonPath("$.noiDungMau", containsString("101")))
+                .andExpect(jsonPath("$.maSoDinhDanh").doesNotExist())
+                .andExpect(jsonPath("$.soDienThoai").doesNotExist());
+
+        jdbcTemplate.update("UPDATE HOP_DONG SET trang_thai = 'DA_THANH_LY' WHERE id = ?", ownContractId);
+        mockMvc.perform(get("/api/cong/thanh-toan").header("Authorization", "Bearer " + tenant))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/cong/thanh-toan").header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void y10_baoDaChuyenIdempotentTaoMotThongBaoChoQlVaHienTrangThaiChoNguoiThue() throws Exception {
+        jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (3, 1)");
+        String tenant = login(5L, "0900000006");
+        String url = "/api/cong/hoa-don/" + latestInvoiceId + "/bao-da-chuyen";
+
+        mockMvc.perform(post(url).header("Authorization", "Bearer " + tenant))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.daBaoTruoc").value(false));
+        mockMvc.perform(post(url).header("Authorization", "Bearer " + tenant))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.daBaoTruoc").value(true));
+
+        Integer soThongBao = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM THONG_BAO WHERE nguoi_nhan_id = 3 AND tieu_de = 'Người thuê báo đã chuyển' AND doi_tuong_id = ?",
+                Integer.class, latestInvoiceId);
+        org.assertj.core.api.Assertions.assertThat(soThongBao).isEqualTo(1);
+
+        mockMvc.perform(get("/api/cong/hoa-don").header("Authorization", "Bearer " + tenant))
+                .andExpect(jsonPath("$[?(@.hoaDonId == %d)].baoDaChuyenLuc".formatted(latestInvoiceId)).value(hasItem(org.hamcrest.Matchers.notNullValue())))
+                .andExpect(jsonPath("$[?(@.hoaDonId == %d)].baoDaChuyenLuc".formatted(settlementInvoiceId)).value(hasItem(nullValue())));
+        mockMvc.perform(get("/api/thong-bao").header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.thongBao[0].tieuDe").value("Người thuê báo đã chuyển"));
+    }
+
+    @Test
+    void y10_baoDaChuyenChiChoNguoiThueCuaHoaDonVaChoHoaDonConNo() throws Exception {
+        String tenant = login(5L, "0900000006");
+        mockMvc.perform(post("/api/cong/hoa-don/" + otherInvoiceId + "/bao-da-chuyen").header("Authorization", "Bearer " + tenant))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/cong/hoa-don/" + latestInvoiceId + "/bao-da-chuyen").header("Authorization", "Bearer " + login(3L, "0900000003")))
+                .andExpect(status().isForbidden());
+        jdbcTemplate.update("UPDATE HOA_DON SET da_thu = tong_tien WHERE id = ?", latestInvoiceId);
+        mockMvc.perform(post("/api/cong/hoa-don/" + latestInvoiceId + "/bao-da-chuyen").header("Authorization", "Bearer " + tenant))
+                .andExpect(status().isConflict());
+        org.assertj.core.api.Assertions.assertThat(
+                jdbcTemplate.queryForObject("SELECT COUNT(*) FROM BAO_DA_CHUYEN", Integer.class)).isZero();
+    }
+
+    @Test
+    void y10_ghiChuLienHeChoChuVaQuanLyDungPhamViToa() throws Exception {
+        String url = "/api/nguoi-thue/" + ownTenantId + "/ghi-chu";
+        String body = "{\"noiDung\":\"  Hẹn trả thứ Sáu  \",\"kenh\":\"ZALO\"}";
+        String ql = login(3L, "0900000003");
+
+        mockMvc.perform(get(url).header("Authorization", "Bearer " + ql)).andExpect(status().isForbidden());
+
+        jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (3, 1), (2, 1)");
+        mockMvc.perform(post(url).header("Authorization", "Bearer " + ql).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.noiDung").value("Hẹn trả thứ Sáu"))
+                .andExpect(jsonPath("$.kenh").value("ZALO"));
+        mockMvc.perform(post(url).header("Authorization", "Bearer " + ql).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"noiDung\":\"x\",\"kenh\":\"EMAIL\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post(url).header("Authorization", "Bearer " + ql).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"noiDung\":\"   \",\"kenh\":\"GOI\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get(url).header("Authorization", "Bearer " + login(2L, "0900000002")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].nguoiTao").value("Quản lý Toà A"));
+        mockMvc.perform(get(url).header("Authorization", "Bearer " + login(5L, "0900000006"))).andExpect(status().isForbidden());
+
+        jdbcTemplate.update("DELETE FROM PHAN_QUYEN_TOA WHERE nguoi_dung_id = 3");
+        mockMvc.perform(get(url).header("Authorization", "Bearer " + ql)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void y10_thucThuDashboardChuKhopTongDaThuHoaDonTrongKhoang() throws Exception {
+        jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (2, 1)");
+        // da_thu đặt thẳng trên cột (như seed demo, không có dòng THANH_TOAN) và một hoá đơn có dòng THANH_TOAN.
+        jdbcTemplate.update("UPDATE HOA_DON SET da_thu = 1000000.00 WHERE id = ?", latestInvoiceId);
+        jdbcTemplate.update("UPDATE HOA_DON SET da_thu = 500000.00 WHERE ma_hoa_don = 'PORTAL-A-202607'");
+        jdbcTemplate.update(
+                "INSERT INTO THANH_TOAN (hoa_don_id, so_tien, loai, hinh_thuc, ngay_thu, nguoi_thu_id) VALUES (?, 250000.00, 'THU', 'TIEN_MAT', DATE '2026-09-01', 3)",
+                otherInvoiceId);
+        jdbcTemplate.update("UPDATE HOA_DON SET da_thu = 250000.00 WHERE id = ?", otherInvoiceId);
+        java.math.BigDecimal tong = jdbcTemplate.queryForObject(
+                "SELECT SUM(da_thu) FROM HOA_DON WHERE ngay_phat_hanh BETWEEN DATE '2026-08-01' AND DATE '2026-09-30' AND trang_thai NOT IN ('NHAP','DA_HUY')",
+                java.math.BigDecimal.class);
+
+        mockMvc.perform(get("/api/dashboard/chu").param("tuNgay", "2026-08-01").param("denNgay", "2026-09-30")
+                        .header("Authorization", "Bearer " + login(2L, "0900000002")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.kpi.thucThu").value(tong.doubleValue()))
+                .andExpect(jsonPath("$.kpi.daThuHopDong").value(tong.doubleValue()))
+                .andExpect(jsonPath("$.soSanhToaNha[0].thucThu").value(tong.doubleValue()));
+    }
+
+    @Test
+    void y10_congToChuaGhiCuaDashboardQlBangSoPhongTrongThieuChiSo() throws Exception {
+        jdbcTemplate.update("INSERT INTO PHAN_QUYEN_TOA(nguoi_dung_id, toa_nha_id) VALUES (3, 1)");
+        Long kyMoId = jdbcTemplate.queryForObject("SELECT id FROM KY_THANH_TOAN WHERE nam = 2026 AND thang = 9", Long.class);
+        jdbcTemplate.update("UPDATE KY_THANH_TOAN SET trang_thai = 'DANG_MO' WHERE id = ?", kyMoId);
+        Long nuocId = jdbcTemplate.queryForObject(
+                "INSERT INTO DICH_VU (toa_nha_id, ten, cach_tinh, che_do_gia, don_vi, la_dien, dang_su_dung) VALUES (1, 'Nước y10', 'THEO_CHI_SO', 'CO_DINH', 'm3', FALSE, TRUE) RETURNING id",
+                Long.class);
+        jdbcTemplate.update("INSERT INTO HOP_DONG_DICH_VU(hop_dong_id, dich_vu_id, don_gia_ap_dung) VALUES (?, ?, 18000.00), (?, ?, 18000.00)",
+                ownContractId, nuocId, otherContractId, nuocId);
+        String ql = login(3L, "0900000003");
+
+        int thieu = com.jayway.jsonpath.JsonPath.<java.util.List<Object>>read(
+                mockMvc.perform(get("/api/toa-nha/1/ky-thanh-toan/" + kyMoId + "/thieu-chi-so").header("Authorization", "Bearer " + ql))
+                        .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(), "$").size();
+        org.assertj.core.api.Assertions.assertThat(thieu).isEqualTo(2);
+
+        mockMvc.perform(get("/api/dashboard/quan-ly").param("toaNhaId", "1").header("Authorization", "Bearer " + ql))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.kpi.soCongToChuaGhi").value(thieu))
+                .andExpect(jsonPath("$.congToChuaGhi.soCongToChuaGhi").value(thieu));
     }
 
     private void assert403OnPortalEndpoints(String token) throws Exception {
