@@ -113,7 +113,7 @@ export default function HoaDon({ token, toaNhaId, kyId, hoaDonId, mobile = false
   if (manHinhNguoiThueMobile) {
     // Không chọn tháng → "Cần trả" gom mọi tháng chưa trả; lịch sử lỗi → quay về màn tháng mới nhất như cũ.
     if (hoaDonId === undefined && lichSuDaTai === null) return <ScreenSurface data-layout-variant={variant} aria-busy="true" aria-live="polite"><div className="skel skel-line" />Đang tải hoá đơn…</ScreenSurface>
-    if (hoaDonId === undefined && lichSuDaTai) return <CanTra mobile={mobile} hoaDon={hoaDon} lichSu={lichSu} tra={new URLSearchParams(window.location.search).get('tra')} />
+    if (hoaDonId === undefined && lichSuDaTai) return <CanTra token={token} mobile={mobile} hoaDon={hoaDon} lichSu={lichSu} tra={new URLSearchParams(window.location.search).get('tra')} />
     return <HoaDonNguoiThueMobile mobile={mobile} token={token} hoaDon={hoaDon} lichSu={lichSu} />
   }
 

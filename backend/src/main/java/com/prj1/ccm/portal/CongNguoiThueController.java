@@ -11,6 +11,7 @@ import com.prj1.ccm.nguoidung.NguoiDung;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,8 +23,11 @@ import java.util.List;
 public class CongNguoiThueController {
     private final HoaDonChiTietService hoaDonChiTietService;
     private final HopDongService hopDongService;
+    private final CongThanhToanService congThanhToanService;
 
-    public CongNguoiThueController(HoaDonChiTietService hoaDonChiTietService, HopDongService hopDongService) {
+    public CongNguoiThueController(HoaDonChiTietService hoaDonChiTietService, HopDongService hopDongService,
+                                   CongThanhToanService congThanhToanService) {
+        this.congThanhToanService = congThanhToanService;
         this.hoaDonChiTietService = hoaDonChiTietService;
         this.hopDongService = hopDongService;
     }
@@ -106,6 +110,18 @@ public class CongNguoiThueController {
     @GetMapping("/hop-dong/{hopDongId}")
     public ThongTinHopDong chiTietHopDong(@PathVariable Long hopDongId, HttpServletRequest request) {
         return hopDongService.chiTietCuaNguoiThue(hopDongId, nguoiDungHienTai(request));
+    }
+
+    /** Thông tin chuyển khoản của toà người thuê đang ở (không lộ cấu hình Bên A). */
+    @GetMapping("/thanh-toan")
+    public ThongTinThanhToanCong thanhToan(HttpServletRequest request) {
+        return congThanhToanService.thongTin(nguoiDungHienTai(request));
+    }
+
+    /** Người thuê báo đã chuyển khoản cho hoá đơn của mình; lặp lại không tạo thông báo mới. */
+    @PostMapping("/hoa-don/{hoaDonId}/bao-da-chuyen")
+    public ThongTinBaoDaChuyen baoDaChuyen(@PathVariable Long hoaDonId, HttpServletRequest request) {
+        return congThanhToanService.baoDaChuyen(hoaDonId, nguoiDungHienTai(request));
     }
 
     private NguoiDung nguoiDungHienTai(HttpServletRequest request) {

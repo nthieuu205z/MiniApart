@@ -439,6 +439,8 @@ export type ThongTinHoaDonLichSu = {
   tongTien: string
   daThu: string
   conLai: string
+  /** Người thuê đã báo chuyển khoản (ISO), null nếu chưa. */
+  baoDaChuyenLuc?: string | null
 }
 
 export type ThongTinTieuThu = {

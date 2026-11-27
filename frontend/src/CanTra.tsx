@@ -1,14 +1,16 @@
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import QRCode from 'qrcode'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import './CanTra.css'
 import type { ThongTinHoaDonChiTiet, ThongTinHoaDonLichSu } from './api'
 import { Button } from './design/core/Button'
 import { dinhDangNgayIso, dinhDangTien } from './design/core/format'
 import { Icon } from './design/core/Icon'
-import { NhanMinhHoa } from './design/feedback/NhanMinhHoa'
+import { baoDaChuyenKhoan, fetchThanhToanCong, type ThongTinThanhToanCong } from './managementApi'
+import { taoChuoiVietQr } from './vietQr'
 import { nhanThang } from './tienTheoNguoi'
 import { EmptyState } from './design/feedback/EmptyState'
 
-type Props = { mobile?: boolean; hoaDon: ThongTinHoaDonChiTiet; lichSu: ThongTinHoaDonLichSu[]; tra: string | null }
+type Props = { token?: string; mobile?: boolean; hoaDon: ThongTinHoaDonChiTiet; lichSu: ThongTinHoaDonLichSu[]; tra: string | null }
 
 /** Tiêu đề trang: điện thoại đã có h1 ở thanh trên của khung nên chỉ h2; máy tính không có thanh đó nên là h1. */
 export function Tieu({ mobile, children, ...rest }: { mobile?: boolean; children: ReactNode; className?: string; id?: string; style?: CSSProperties }) {
@@ -31,7 +33,7 @@ function nhanPhamVi(ds: ThongTinHoaDonLichSu[]) {
   return `${ds.length} tháng, từ ${kyCua(coKy[0])} đến ${kyCua(coKy[coKy.length - 1])}`
 }
 
-export default function CanTra({ mobile = false, hoaDon, lichSu, tra }: Props) {
+export default function CanTra({ token, mobile = false, hoaDon, lichSu, tra }: Props) {
   const chuaTra = lichSu.filter((h) => Number(h.conLai) > 0 && !h.trangThai.includes('HUY'))
   const dangTra = tra === 'tat-ca' ? chuaTra : chuaTra.filter((h) => String(h.hoaDonId) === tra)
   const moi = lichSu[0]
@@ -46,7 +48,7 @@ export default function CanTra({ mobile = false, hoaDon, lichSu, tra }: Props) {
         <div className="nt-phu">{dangTraTien ? (dangTra.length > 1 ? `${dangTra.length} tháng còn nợ` : nhanPhamVi(dangTra)) : toa}</div>
       </header>
       <div className="nt-than">
-        {dangTraTien ? <TraTien ds={dangTra} /> : <TongQuan hoaDon={hoaDon} chuaTra={chuaTra} moi={moi} />}
+        {dangTraTien ? <TraTien token={token} ds={dangTra} /> : <TongQuan hoaDon={hoaDon} chuaTra={chuaTra} moi={moi} />}
       </div>
     </div>
   )
@@ -128,30 +130,81 @@ function TongQuan({ hoaDon, chuaTra, moi }: { hoaDon: ThongTinHoaDonChiTiet; chu
   )
 }
 
-function TraTien({ ds }: { ds: ThongTinHoaDonLichSu[] }) {
+const KHONG_CHEP = 'Không chép được, hãy chọn nội dung rồi chép thủ công.'
+
+function TraTien({ token, ds }: { token?: string; ds: ThongTinHoaDonLichSu[] }) {
   const [daChep, setDaChep] = useState<string | null>(null)
+  const [tt, setTt] = useState<ThongTinThanhToanCong | null | 'loi'>(null)
+  const [qr, setQr] = useState<string | null>(null)
+  const [daBao, setDaBao] = useState<Set<number>>(() => new Set(ds.filter((h) => h.baoDaChuyenLuc).map((h) => h.hoaDonId)))
+  const [dangBao, setDangBao] = useState(false)
+  const [loiBao, setLoiBao] = useState<string | null>(null)
   const noiDung = ds.map((h) => h.maHoaDon).join(' ')
-  const chep = () => {
-    const ghi = navigator.clipboard?.writeText(noiDung)
-    if (!ghi) return setDaChep('Không chép được, hãy chọn nội dung rồi chép thủ công.')
-    ghi.then(() => setDaChep('Đã chép nội dung chuyển khoản.'), () => setDaChep('Không chép được, hãy chọn nội dung rồi chép thủ công.'))
+  const soTien = tongTien(ds)
+  const chep = (chu: string, nhan: string) => {
+    const ghi = navigator.clipboard?.writeText(chu)
+    if (!ghi) return setDaChep(KHONG_CHEP)
+    ghi.then(() => setDaChep(`Đã chép ${nhan}.`), () => setDaChep(KHONG_CHEP))
   }
+
+  useEffect(() => {
+    if (!token) return
+    let song = true
+    fetchThanhToanCong(token).then((d) => song && setTt(d), () => song && setTt('loi'))
+    return () => { song = false }
+  }, [token])
+
+  const co = tt && tt !== 'loi' ? tt : null
+  useEffect(() => {
+    if (!co) return
+    let song = true
+    const chuoi = taoChuoiVietQr({ maNganHang: co.maNganHang, soTaiKhoan: co.soTaiKhoan, soTien: Number(soTien), noiDung })
+    QRCode.toString(chuoi, { type: 'svg', margin: 1 }).then((svg) => song && setQr(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`), () => song && setQr(null))
+    return () => { song = false }
+  }, [co, soTien, noiDung])
+
+  const daBaoHet = ds.every((h) => daBao.has(h.hoaDonId))
+  const bao = async () => {
+    if (!token) return
+    setDangBao(true); setLoiBao(null)
+    try {
+      for (const h of ds) if (!daBao.has(h.hoaDonId)) await baoDaChuyenKhoan(token, h.hoaDonId)
+      setDaBao(new Set(ds.map((h) => h.hoaDonId)))
+    } catch (e) { setLoiBao(e instanceof Error ? e.message : 'Chưa báo được. Thử lại hoặc gọi quản lý.') } finally { setDangBao(false) }
+  }
+
   return (
     <>
       <section className="nt-khoi nt-hero" data-tra-tien>
         <div className="nt-nhan">Số tiền</div>
-        <div className="nt-so nt-no" data-tra-so-tien>{dinhDangTien(tongTien(ds))} ₫</div>
+        <div className="nt-so nt-no" data-tra-so-tien>{dinhDangTien(soTien)} ₫</div>
         <p className="nt-phu">{nhanPhamVi(ds)}</p>
-        <div className="nt-nhan">Nội dung chuyển khoản</div>
-        <div className="nt-noidung" data-noi-dung-ck>{ds.map((h, i) => <span key={h.hoaDonId} className="nt-ma">{i > 0 ? ' ' : ''}{h.maHoaDon}</span>)}</div>
-        <Button variant="secondary" className="btn-block" data-chep-noi-dung onClick={chep}>Chép</Button>
+      </section>
+      <section className="nt-khoi" aria-labelledby="can-tra-ck" data-tra-chuyen-khoan>
+        <h2 className="nt-h2" id="can-tra-ck">Chuyển khoản tới</h2>
+        {co ? (
+          <>
+            <div className="nt-dong">
+              <span className="nt-dong-trai"><span className="nt-phu">{co.tenNganHang ?? `Ngân hàng (mã ${co.maNganHang})`}{co.chuTaiKhoan ? ` · ${co.chuTaiKhoan}` : ''}</span><span className="nt-ten" data-so-tai-khoan>{co.soTaiKhoan}</span></span>
+              <Button variant="secondary" data-chep-so-tai-khoan onClick={() => chep(co.soTaiKhoan, 'số tài khoản')}>Chép</Button>
+            </div>
+            {qr ? <img className="nt-qr" data-qr src={qr} alt={`Mã QR chuyển khoản ${dinhDangTien(soTien)} ₫`} width={220} height={220} /> : null}
+          </>
+        ) : tt === 'loi' ? <p className="nt-phu" data-tra-khong-co-tk>Chưa lấy được số tài khoản trong app. Hỏi quản lý số tài khoản của toà.</p>
+          : <p className="nt-phu" aria-busy="true">Đang tải số tài khoản…</p>}
+        <div className="nt-dong">
+          <span className="nt-dong-trai"><span className="nt-phu">Nội dung chuyển khoản</span><span className="nt-noidung" data-noi-dung-ck>{ds.map((h, i) => <span key={h.hoaDonId} className="nt-ma">{i > 0 ? ' ' : ''}{h.maHoaDon}</span>)}</span></span>
+          <Button variant="secondary" data-chep-noi-dung onClick={() => chep(noiDung, 'nội dung chuyển khoản')}>Chép</Button>
+        </div>
         <p className="nt-phu" role="status" data-da-chep>{daChep}</p>
       </section>
-      <section className="nt-khoi" data-tra-can-backend>
-        <NhanMinhHoa>cần backend</NhanMinhHoa>
-        <p className="nt-phu">Chưa hiện được số tài khoản trong app. Hỏi quản lý số tài khoản của toà.</p>
-        <p className="nt-phu">Chuyển xong, gọi hoặc nhắn quản lý để xác nhận. Khoản nợ sẽ tự trừ khi quản lý ghi thu.</p>
-      </section>
+      {token ? (
+        <div className="nt-day" data-bao-chuyen>
+          {daBaoHet ? <p className="nt-trangthai" role="status" data-da-bao>Đã báo chuyển, chờ quản lý xác nhận.</p>
+            : <Button variant="primary" className="btn-touch btn-block" data-toi-da-chuyen blocked={dangBao} blockedReason="Đang gửi báo chuyển…" onClick={() => void bao()}>Tôi đã chuyển khoản</Button>}
+          {loiBao ? <p className="nt-phu nt-tre" role="alert">{loiBao}</p> : null}
+        </div>
+      ) : null}
     </>
   )
 }

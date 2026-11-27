@@ -233,6 +233,10 @@ function HomNayQuanLy({ token }: Pick<TrangProps, 'token'>) {
   const hopDong = useNguon<ThongTinHopDong[]>(khoa, () => (toa === null ? Promise.resolve([]) : fetchHopDongQuanLy(token, toa)))
   const suCo = useNguon<ThongTinYeuCauSuaChua[]>(khoa, () => managementRequest<ThongTinYeuCauSuaChua[]>(token, '/api/yeu-cau-sua-chua'))
   const viecVh = useNguon<ThongTinBangViecVanHanh | null>(khoa, async () => { try { return toa === null ? null : await fetchBangViecVanHanh(token, toa) } catch { return null } })
+  // Thông báo "Người thuê báo đã chuyển" chưa đọc; lỗi thì bỏ dòng, không chặn màn.
+  const baoChuyen = useNguon<{ maThamChieu: string; noiDung: string }[]>(khoa, async () => {
+    try { return (await managementRequest<{ thongBao: { maThamChieu: string; tieuDe: string; noiDung: string; daDoc: boolean }[] }>(token, '/api/thong-bao')).thongBao.filter((n) => n.tieuDe === 'Người thuê báo đã chuyển' && !n.daDoc) } catch { return [] }
+  })
   const [loiLich, setLoiLich] = useState<string | null>(null)
 
   const kt = kyN.du?.[0]
@@ -251,12 +255,15 @@ function HomNayQuanLy({ token }: Pick<TrangProps, 'token'>) {
 
   const nutChinh = thieu > 0 ? `Ghi ${thieu} công tơ còn thiếu` : buoc ? ['Ghi chỉ số', 'Khoá chỉ số', 'Gửi hoá đơn', 'Ghi thu tiền'][buoc.buocHienTai - 1] : 'Mở tháng này'
   const viec: ReactNode[] = []
+  // Bỏ dòng khi hoá đơn trong nội dung đã được ghi thu đủ.
+  ;(baoChuyen.du ?? []).filter((n) => !(hoaDon.du ?? []).some((h) => n.noiDung.includes(h.maHoaDon) && Number(h.conLai) <= 0))
+    .forEach((n) => viec.push(<DongViec key={n.maThamChieu} muc="canh" tieuDe="Người thuê báo đã chuyển" moTa={n.noiDung} nutNhan="Ghi thu" href="/thu-tien" />))
   if (nguoi.length) viec.push(<DongViec key="no" muc="no" tieuDe={`${nguoi.length} người nợ quá hạn, ${tien(tongNo)}`} moTa={`Nhiều nhất: ${nguoi[0].hoTen}, phòng ${nguoi[0].soPhong}, ${tien(nguoi[0].conLai)}`} nutNhan="Thu tiền" href="/thu-tien" />)
   sc.slice(0, 6).forEach((s) => { const khanCap = s.mucDo === 'KHAN_CAP'; viec.push(<DongViec key={`sc${s.id}`} muc={khanCap ? 'no' : 'canh'} tieuDe={`${s.hangMuc} phòng ${s.soPhong}${khanCap ? ' (khẩn)' : ''}`} moTa={s.tenTrangThai} nutNhan="Giao thợ" href={`/su-co?id=${s.id}`} />) })
   het.forEach((h) => viec.push(<DongViec key={`hd${h.id}`} muc="canh" tieuDe={`Hợp đồng phòng ${h.soPhong} hết hạn ${dinhDangNgayIso(h.ngayKetThuc)}`} moTa={`Còn ${ngayCach(iso, h.ngayKetThuc)} ngày · ${h.hoTenNguoiThue}`} nutNhan="Gia hạn" href={`/hop-dong/${h.id}`} />))
   if (choKy.length) viec.push(<DongViec key="ky" tieuDe={`${choKy.length} hợp đồng chờ ký`} moTa={choKy.map((h) => `${h.hoTenNguoiThue} · phòng ${h.soPhong}`).join(', ')} nutNhan="Mở" href="/hop-dong" />)
   if (pccc) viec.push(<DongViec key="pccc" muc="canh" tieuDe="Bình chữa cháy quá hạn kiểm định" moTa={pccc.tenTrangThai} nutNhan="Xem" href="/an-toan" />)
-  const nguonViec = gop([hoaDon, suCo, hopDong])
+  const nguonViec = gop([hoaDon, suCo, hopDong, baoChuyen])
 
   const xacNhan = async (id: number) => { setLoiLich(null); try { await capNhatTrangThaiLichHen(token, id, 'DA_XAC_NHAN'); dash.thuLai() } catch (e) { setLoiLich(e instanceof Error ? e.message : 'Không xác nhận được.') } }
 

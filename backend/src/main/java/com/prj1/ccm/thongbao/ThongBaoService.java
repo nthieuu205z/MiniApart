@@ -29,6 +29,7 @@ public class ThongBaoService {
     private static final String THONG_BAO_YEU_CAU_MOI = "Yêu cầu sửa chữa mới";
     private static final String THONG_BAO_PHAN_CONG = "Việc sửa chữa mới được phân công";
     private static final String THONG_BAO_HOA_DON = "Hoá đơn mới";
+    public static final String TIEU_DE_BAO_DA_CHUYEN = "Người thuê báo đã chuyển";
     private static final String LOI_TIEU_DE_TRONG = "Tiêu đề thông báo không được để trống";
     private static final String LOI_NOI_DUNG_TRONG = "Nội dung thông báo không được để trống";
     private static final String LOI_PHAM_VI = "Chỉ được chọn một phạm vi: toàn toà, tầng hoặc phòng";
@@ -227,6 +228,15 @@ public class ThongBaoService {
                 null,
                 clock.instant()
         ));
+    }
+
+    /** Người thuê báo đã chuyển khoản: mỗi QL của toà nhận một thông báo gắn hoá đơn. */
+    @Transactional
+    public void taoKhiNguoiThueBaoDaChuyen(Long hoaDonId, Long toaNhaId, String noiDung) {
+        for (Long quanLyId : thongBaoRepository.findNguoiQuanLyIdTheoToa(toaNhaId)) {
+            thongBaoRepository.insert(new ThongBao(null, null, quanLyId, LoaiDoiTuongThongBao.HOA_DON, hoaDonId,
+                    TIEU_DE_BAO_DA_CHUYEN, noiDung, false, null, clock.instant()));
+        }
     }
 
     private ThongTinHopThongBao hopThongBao(List<ThongBao> danhSach) {

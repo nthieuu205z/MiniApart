@@ -89,69 +89,13 @@ public class DashboardChuRepository {
                     mapTheoThang.put(thang, new TaiChinhThangRecord(
                             thang,
                             phatHanh == null ? BigDecimal.ZERO : phatHanh.setScale(2, RoundingMode.HALF_UP),
-                            BigDecimal.ZERO.setScale(2),
+                            // thucThu cùng nguồn daThuTheoHoaDon (Σ đã thu của hoá đơn phát hành trong tháng)
+                            daThuHd == null ? BigDecimal.ZERO : daThuHd.setScale(2, RoundingMode.HALF_UP),
                             daThuHd == null ? BigDecimal.ZERO : daThuHd.setScale(2, RoundingMode.HALF_UP),
                             congNo == null ? BigDecimal.ZERO : congNo.setScale(2, RoundingMode.HALF_UP)
                     ));
                 },
                 thamSoPhatHanh.toArray()
-        );
-
-        // 2. Lấy dòng tiền thực thu (theo ngày thu thực tế tt.ngay_thu, tính cả khoản đối ứng giảm trừ)
-        StringBuilder sqlThucThu = new StringBuilder(
-                """
-                SELECT DATE_TRUNC('month', tt.ngay_thu)::DATE AS thang,
-                       SUM(
-                           CASE
-                               WHEN tt.loai = 'THU' THEN tt.so_tien
-                               WHEN tt.loai = 'DOI_UNG' THEN -tt.so_tien
-                               ELSE 0
-                           END
-                       ) AS thuc_thu
-                FROM THANH_TOAN tt
-                JOIN HOA_DON hd ON hd.id = tt.hoa_don_id
-                JOIN HOP_DONG hop_dong ON hop_dong.id = hd.hop_dong_id
-                JOIN PHONG p ON p.id = hop_dong.phong_id
-                WHERE EXISTS (
-                    SELECT 1 FROM PHAN_QUYEN_TOA pqt
-                    WHERE pqt.toa_nha_id = p.toa_nha_id AND pqt.nguoi_dung_id = ?
-                )
-                  AND tt.loai IN ('THU', 'DOI_UNG')
-                  AND tt.ngay_thu BETWEEN ? AND ?
-                """
-        );
-        List<Object> thamSoThucThu = new ArrayList<>(List.of(nguoiDungId, Date.valueOf(tuNgay), Date.valueOf(denNgay)));
-        if (toaNhaId != null) {
-            sqlThucThu.append(" AND p.toa_nha_id = ?");
-            thamSoThucThu.add(toaNhaId);
-        }
-        sqlThucThu.append(" GROUP BY thang ORDER BY thang");
-
-        jdbcTemplate.query(
-                sqlThucThu.toString(),
-                rs -> {
-                    LocalDate thang = rs.getDate("thang").toLocalDate();
-                    BigDecimal thucThu = rs.getBigDecimal("thuc_thu");
-                    TaiChinhThangRecord hienCo = mapTheoThang.get(thang);
-                    if (hienCo != null) {
-                        mapTheoThang.put(thang, new TaiChinhThangRecord(
-                                thang,
-                                hienCo.doanhThuPhatHanh(),
-                                thucThu == null ? BigDecimal.ZERO : thucThu.setScale(2, RoundingMode.HALF_UP),
-                                hienCo.daThuTheoHoaDon(),
-                                hienCo.congNo()
-                        ));
-                    } else {
-                        mapTheoThang.put(thang, new TaiChinhThangRecord(
-                                thang,
-                                BigDecimal.ZERO.setScale(2),
-                                thucThu == null ? BigDecimal.ZERO : thucThu.setScale(2, RoundingMode.HALF_UP),
-                                BigDecimal.ZERO.setScale(2),
-                                BigDecimal.ZERO.setScale(2)
-                        ));
-                    }
-                },
-                thamSoThucThu.toArray()
         );
 
         // Duyệt liên tục theo các tháng trong khoảng
@@ -542,22 +486,19 @@ public class DashboardChuRepository {
                              AND hd.ngay_phat_hanh BETWEEN ? AND ?
                              AND hd.trang_thai NOT IN ('NHAP', 'DA_HUY')
                        ), 0.00) AS doanh_thu_phat_hanh,
-                       -- Thực thu dòng tiền trong kỳ (tính cả đối ứng giảm trừ)
+                       -- Đã thu = Σ đã thu của hoá đơn phát hành trong kỳ (cùng nguồn daThuTheoHoaDon)
                        COALESCE((
-                           SELECT SUM(
-                               CASE
-                                   WHEN tt.loai = 'THU' THEN tt.so_tien
-                                   WHEN tt.loai = 'DOI_UNG' THEN -tt.so_tien
-                                   ELSE 0
-                               END
-                           )
-                           FROM THANH_TOAN tt
-                           JOIN HOA_DON hd ON hd.id = tt.hoa_don_id
+                           SELECT SUM(GREATEST(LEAST(COALESCE(
+                               (SELECT SUM(CASE WHEN tt.loai = 'THU' THEN tt.so_tien WHEN tt.loai = 'DOI_UNG' THEN -tt.so_tien ELSE 0 END)
+                                FROM THANH_TOAN tt WHERE tt.hoa_don_id = hd.id AND tt.loai IN ('THU', 'DOI_UNG')),
+                               hd.da_thu, 0.00
+                           ), hd.tong_tien), 0.00))
+                           FROM HOA_DON hd
                            JOIN HOP_DONG h ON h.id = hd.hop_dong_id
                            JOIN PHONG p ON p.id = h.phong_id
                            WHERE p.toa_nha_id = tn.id
-                             AND tt.loai IN ('THU', 'DOI_UNG')
-                             AND tt.ngay_thu BETWEEN ? AND ?
+                             AND hd.ngay_phat_hanh BETWEEN ? AND ?
+                             AND hd.trang_thai NOT IN ('NHAP', 'DA_HUY')
                        ), 0.00) AS thuc_thu,
                        -- Công nợ hiện tại
                        COALESCE((

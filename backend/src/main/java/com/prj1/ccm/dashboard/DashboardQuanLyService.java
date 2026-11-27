@@ -4,6 +4,8 @@ import com.prj1.ccm.nguoidung.NguoiDung;
 import com.prj1.ccm.nguoidung.VaiTro;
 import com.prj1.ccm.toanha.KyThanhToan;
 import com.prj1.ccm.toanha.KyThanhToanRepository;
+import com.prj1.ccm.toanha.KyThanhToanService;
+import com.prj1.ccm.toanha.TrangThaiKy;
 import com.prj1.ccm.toanha.PhanQuyenToaService;
 import com.prj1.ccm.toanha.ToaNha;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,7 @@ public class DashboardQuanLyService {
     private final CanhBaoTieuThuRepository canhBaoRepository;
     private final DoiSoatDienNuocService doiSoatDienNuocService;
     private final KyThanhToanRepository kyThanhToanRepository;
+    private final KyThanhToanService kyThanhToanService;
     private final PhanQuyenToaService phanQuyenToaService;
     private final Clock clock;
 
@@ -36,6 +39,7 @@ public class DashboardQuanLyService {
             CanhBaoTieuThuRepository canhBaoRepository,
             DoiSoatDienNuocService doiSoatDienNuocService,
             KyThanhToanRepository kyThanhToanRepository,
+            KyThanhToanService kyThanhToanService,
             PhanQuyenToaService phanQuyenToaService,
             Clock clock
     ) {
@@ -44,6 +48,7 @@ public class DashboardQuanLyService {
         this.canhBaoRepository = canhBaoRepository;
         this.doiSoatDienNuocService = doiSoatDienNuocService;
         this.kyThanhToanRepository = kyThanhToanRepository;
+        this.kyThanhToanService = kyThanhToanService;
         this.phanQuyenToaService = phanQuyenToaService;
         this.clock = clock;
     }
@@ -103,12 +108,14 @@ public class DashboardQuanLyService {
 
         // 3. Công tơ chưa ghi
         var congToChuaGhiData = repository.layCongToChuaGhi(nguoiDung.id(), toaNhaId);
+        // Một nguồn với /ky-thanh-toan/:ky/thieu-chi-so: số phòng còn thiếu chỉ số ở các kỳ đang mở.
+        int soChuaGhi = demPhongThieuChiSo(toaNhaId, nguoiDung);
         CongToChuaGhiSummaryDto congToChuaGhi = new CongToChuaGhiSummaryDto(
                 congToChuaGhiData.kyHienTaiId(),
                 congToChuaGhiData.tenKyHienTai(),
-                congToChuaGhiData.tongSoCongTo(),
+                congToChuaGhiData.soCongToDaGhi() + soChuaGhi,
                 congToChuaGhiData.soCongToDaGhi(),
-                congToChuaGhiData.soCongToChuaGhi(),
+                soChuaGhi,
                 congToChuaGhiData.danhSachChuaGhi().stream()
                         .map(d -> new DiemDoChuaGhiDto(
                                 d.viTriId(),
@@ -178,7 +185,7 @@ public class DashboardQuanLyService {
                 coCauPhong.dangSua(),
                 coCauPhong.tongSo(),
                 coCauPhong.tyLeDangThue(),
-                congToChuaGhiData.soCongToChuaGhi(),
+                soChuaGhi,
                 soSuCoCanXuLy,
                 soCanhBaoDangMo
         );
@@ -195,6 +202,21 @@ public class DashboardQuanLyService {
                 dienNuocDungChung,
                 lichHenList
         );
+    }
+
+    private int demPhongThieuChiSo(Long toaNhaId, NguoiDung nguoiDung) {
+        List<ToaNha> toaNhaList = toaNhaId == null
+                ? phanQuyenToaService.danhSachToaNhaNguoiDungDuocXem(nguoiDung)
+                : List.of(phanQuyenToaService.layToaNhaNeuNhanVienDuocXem(nguoiDung, toaNhaId));
+        int tong = 0;
+        for (ToaNha toaNha : toaNhaList) {
+            for (KyThanhToan ky : kyThanhToanRepository.findByToaNhaId(toaNha.id())) {
+                if (ky.trangThai() == TrangThaiKy.DANG_MO) {
+                    tong += kyThanhToanService.danhSachPhongChuaGhiChiSo(toaNha.id(), ky.id(), nguoiDung).size();
+                }
+            }
+        }
+        return tong;
     }
 
     private DashboardChuService.DienNuocDungChungTongQuanDto layDienNuocDungChung(Long toaNhaId) {

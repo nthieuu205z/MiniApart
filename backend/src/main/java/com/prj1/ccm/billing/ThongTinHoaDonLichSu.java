@@ -27,7 +27,8 @@ public record ThongTinHoaDonLichSu(
         String hopDongTrangThai,
         String tongTien,
         String daThu,
-        String conLai
+        String conLai,
+        String baoDaChuyenLuc
 ) {
     static ThongTinHoaDonLichSu tu(HoaDonLichSuDuLieu hoaDon, TrangThaiHoaDon trangThaiHieuLuc) {
         BigDecimal conLai = hoaDon.tongTien().subtract(hoaDon.daThu()).max(BigDecimal.ZERO).setScale(2, RoundingMode.UNNECESSARY);
@@ -51,7 +52,8 @@ public record ThongTinHoaDonLichSu(
                 hoaDon.hopDongTrangThai(),
                 hoaDon.tongTien().toPlainString(),
                 hoaDon.daThu().toPlainString(),
-                conLai.toPlainString()
+                conLai.toPlainString(),
+                hoaDon.baoDaChuyenLuc() == null ? null : hoaDon.baoDaChuyenLuc().toInstant().toString()
         );
     }
 

@@ -61,24 +61,55 @@ describe('CanTra (khách thuê)', () => {
     expect(container.querySelector('[data-xem-lich-su]')?.getAttribute('href')).toBe('/lich-su')
   })
 
-  it('trả tất cả: nội dung chuyển khoản là các mã hoá đơn, chép được, không có nút "Tôi đã chuyển khoản" hay số tài khoản giả', async () => {
+  const TT = { toaNhaId: 3, tenToaNha: 'An Nhiên Residence', maNganHang: '970405', tenNganHang: null, soTaiKhoan: '000000000101', chuTaiKhoan: null, noiDungMau: 'Phong 101 AN' }
+  const gia = (kq: Record<string, unknown>) => vi.fn(async (url: string, init?: RequestInit) => {
+    const key = `${init?.method ?? 'GET'} ${url}`
+    const r = kq[key]
+    if (r === undefined) return new Response('{}', { status: 404 })
+    return new Response(JSON.stringify(r), { status: 200, headers: { 'Content-Type': 'application/json' } })
+  })
+  const veTra = async (tra: string, f: ReturnType<typeof gia>, ls = bonKy) => {
+    vi.stubGlobal('fetch', f)
+    root = createRoot(container)
+    await act(async () => root.render(<CanTra token="t" hoaDon={hoaDon} lichSu={ls} tra={tra} />))
+    await act(async () => { await new Promise((r) => setTimeout(r, 30)) })
+  }
+
+  it('trả tất cả: số tài khoản thật từ backend + QR + nội dung chép được + nút chính "Tôi đã chuyển khoản", không còn nhãn "cần backend"', async () => {
     const ghi = vi.fn(async () => undefined)
     vi.stubGlobal('navigator', { clipboard: { writeText: ghi } })
-    await ve(bonKy, 'tat-ca')
-    expect(container.querySelector('[data-so-tien], [data-tra-so-tien]')?.textContent).toBe('7.580.000 ₫')
+    await veTra('tat-ca', gia({ 'GET /api/cong/thanh-toan': TT }))
+    expect(container.querySelector('[data-tra-so-tien]')?.textContent).toBe('7.580.000 ₫')
     expect(container.querySelector('[data-noi-dung-ck]')?.textContent).toBe('DEMO-10 DEMO-9 DEMO-8 DEMO-7')
     expect(container.textContent).toContain('4 tháng, từ 7/2026 đến 10/2026')
-    expect(container.textContent).not.toContain('Tôi đã chuyển khoản')
-    expect(container.textContent).not.toMatch(/0{9,}/)
-    // Người thuê bị 403 ở /ben-a: không QR, không số tài khoản, không dòng "Mã QR chưa có"; có nhãn cần backend + nút Chép, không nút chính.
-    expect(container.querySelector('[data-qr-chua-co], [data-so-tai-khoan], img, svg')).toBeNull()
-    expect(container.textContent).not.toContain('Mã QR chưa có')
-    expect(container.querySelector('.ma-nhanmh')?.textContent).toBe('cần backend')
-    expect(container.querySelector('[data-chep-noi-dung]')?.textContent).toBe('Chép')
-    expect(container.querySelectorAll('.btn-primary')).toHaveLength(0)
+    expect(container.querySelector('[data-so-tai-khoan]')?.textContent).toBe('000000000101')
+    expect(container.textContent).toContain('Ngân hàng (mã 970405)')
+    expect(container.querySelector('img[data-qr]')?.getAttribute('src')).toMatch(/^data:image\/svg\+xml/)
+    expect(container.querySelector('.ma-nhanmh')).toBeNull()
+    expect(container.querySelectorAll('.btn-primary')).toHaveLength(1)
+    expect(container.querySelector('[data-toi-da-chuyen]')?.textContent).toBe('Tôi đã chuyển khoản')
     await act(async () => (container.querySelector('[data-chep-noi-dung]') as HTMLButtonElement).click())
     expect(ghi).toHaveBeenCalledWith('DEMO-10 DEMO-9 DEMO-8 DEMO-7')
     expect(container.querySelector('[data-da-chep]')?.textContent).toContain('Đã chép')
+    await act(async () => (container.querySelector('[data-chep-so-tai-khoan]') as HTMLButtonElement).click())
+    expect(ghi).toHaveBeenCalledWith('000000000101')
+  })
+
+  it('"Tôi đã chuyển khoản": POST từng hoá đơn rồi hiện "Đã báo chuyển, chờ quản lý xác nhận"; hoá đơn đã báo từ trước thì không POST lại', async () => {
+    const f = gia({ 'GET /api/cong/thanh-toan': TT, 'POST /api/cong/hoa-don/31/bao-da-chuyen': { hoaDonId: 31, baoLuc: 'x', daBaoTruoc: false }, 'POST /api/cong/hoa-don/21/bao-da-chuyen': { hoaDonId: 21, baoLuc: 'x', daBaoTruoc: false } })
+    await veTra('tat-ca', f, [bonKy[0], bonKy[1], { ...bonKy[2], baoDaChuyenLuc: '2026-10-26T01:00:00Z' }, { ...bonKy[3], baoDaChuyenLuc: '2026-10-26T01:00:00Z' }])
+    await act(async () => (container.querySelector('[data-toi-da-chuyen]') as HTMLButtonElement).click())
+    await act(async () => { await new Promise((r) => setTimeout(r, 10)) })
+    expect(f.mock.calls.filter(([, i]) => i?.method === 'POST').map(([u]) => u)).toEqual(['/api/cong/hoa-don/31/bao-da-chuyen', '/api/cong/hoa-don/21/bao-da-chuyen'])
+    expect(container.querySelector('[data-da-bao]')?.textContent).toBe('Đã báo chuyển, chờ quản lý xác nhận.')
+    expect(container.querySelector('[data-toi-da-chuyen]')).toBeNull()
+  })
+
+  it('đã báo hết từ trước → mở lên là thấy trạng thái chờ xác nhận; không lấy được tài khoản → nói thật, không số giả', async () => {
+    await veTra('31', gia({}), [{ ...bonKy[0], baoDaChuyenLuc: '2026-10-26T01:00:00Z' }])
+    expect(container.querySelector('[data-da-bao]')).not.toBeNull()
+    expect(container.querySelector('[data-tra-khong-co-tk]')?.textContent).toContain('Hỏi quản lý')
+    expect(container.querySelector('[data-so-tai-khoan], img')).toBeNull()
   })
 
   it('trả một kỳ: số tiền và nội dung chỉ của kỳ đó', async () => {

@@ -35,6 +35,7 @@ function mayChu(extra: (url: string, init?: RequestInit) => Response | undefined
     if (e) return e
     if (url === '/api/toa-nha') return json([toa])
     if (url === '/api/nguoi-thue/1') return json(huy)
+    if (url === '/api/nguoi-thue/1/ghi-chu') return init?.method === 'POST' ? json({ id: 9, kenh: 'ZALO', noiDung: JSON.parse(String(init.body)).noiDung, nguoiTao: 'Quản lý', taoLuc: '2026-10-26T01:00:00Z' }) : json([{ id: 5, kenh: 'GOI', noiDung: 'Hẹn trả thứ Sáu', nguoiTao: 'Chủ', taoLuc: '2026-10-25T01:00:00Z' }])
     if (url.startsWith('/api/hop-dong?')) return json([hopDong({}), hopDong({ id: 9, phongId: 10, soPhong: '401', nguoiThueId: 15, hoTenNguoiThue: 'Người khác' })])
     if (url.startsWith('/api/hoa-don?')) return json([hoaDon(1, 1), hoaDon(2, 2), hoaDon(3, 1, { soPhong: '102', nguoiThue: 'Người khác' })])
     if (url === '/api/toa-nha/3/ky-thanh-toan') return json(ky)
@@ -72,9 +73,23 @@ describe('Hồ sơ người thuê 360°', () => {
     expect(container.querySelector('tfoot.ma-tong, tfoot .ma-tong')?.textContent).toContain('3.790.000 ₫')
     expect(container.textContent).not.toContain('Điện nước')
     expect(container.textContent).toContain('Ghi chú liên hệ')
-    expect(container.querySelector('.ma-nhanmh')?.textContent).toBe('cần backend')
-    expect(container.querySelector('textarea, [contenteditable]')).toBeNull()
+    await vi.waitFor(() => expect(container.querySelector('[data-ghi-chu-dong]')?.textContent).toContain('Hẹn trả thứ Sáu'))
+    expect(container.querySelector('.ma-nhanmh')).toBeNull()
     chuaGoiCongNo()
+  })
+
+  it('ghi chú liên hệ: lưu POST đúng nội dung + kênh, dòng mới lên đầu', async () => {
+    await render(hoSoNguoi(), mayChu())
+    await vi.waitFor(() => expect(container.querySelector('[data-ghi-chu-dong]')).not.toBeNull())
+    const o = container.querySelector('[data-ghi-chu] textarea') as HTMLTextAreaElement
+    const chon = container.querySelector('[data-ghi-chu] select') as HTMLSelectElement
+    const dat = (el: HTMLElement, proto: object, v: string, ev: string) => { Object.getOwnPropertyDescriptor(proto, 'value')!.set!.call(el, v); el.dispatchEvent(new Event(ev, { bubbles: true })) }
+    await act(async () => { dat(o, HTMLTextAreaElement.prototype, 'Đã nhắc Zalo', 'input'); dat(chon, HTMLSelectElement.prototype, 'ZALO', 'change') })
+    await act(async () => (container.querySelector('[data-ghi-chu] form button') as HTMLButtonElement).click())
+    await vi.waitFor(() => expect(container.querySelectorAll('[data-ghi-chu-dong]')).toHaveLength(2))
+    expect(container.querySelector('[data-ghi-chu-dong]')?.textContent).toContain('Đã nhắc Zalo')
+    const post = goi.find(([u, i]) => u === '/api/nguoi-thue/1/ghi-chu' && i?.method === 'POST')!
+    expect(JSON.parse(String(post[1]!.body))).toEqual({ noiDung: 'Đã nhắc Zalo', kenh: 'ZALO' })
   })
 
   it('tab là liên kết đổi query ?tab=, tab đang chọn có aria-current', async () => {
