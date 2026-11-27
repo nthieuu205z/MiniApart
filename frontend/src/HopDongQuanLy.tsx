@@ -170,7 +170,24 @@ const CSS_THE_MOBILE = `@media (min-width: 768px) { .hd-bang .table td { white-s
 .hd-bang > .tabs { padding: 0 8px; }
 .hd-cham { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: var(--ma-text-muted); }
 .hd-cham.canh { background: var(--ma-waiting-border); }
-@media (max-width: 767px) { .hd-bang .table.table-cards tbody td[data-label="Thời hạn"], .hd-bang .table.table-cards tbody td[data-label="Giá thuê"], .hd-bang .table.table-cards tbody td[data-label="Cọc"], .hd-bang .table.table-cards tbody td[data-the="hanh-dong"] { display: none } .hd-bang > .tabs { padding: 0; } .hd-bang > .tabs .tab { padding: 0 8px; gap: 6px } }`
+@media (max-width: 767px) {
+  .hd-bang > .tabs { padding: 0; } .hd-bang > .tabs .tab { padding: 0 8px; gap: 6px }
+  /* Thẻ một bố cục: ô chọn | dòng 1 Phòng · Toà, dòng 2 người thuê, dòng 3 giá + hạn, dòng 4 tình trạng. */
+  .hd-bang .table.table-cards tbody tr { display: grid; grid-template-columns: 32px auto minmax(0, 1fr); align-items: start; gap: 4px 12px }
+  .hd-bang .table.table-cards tbody td { flex: none; grid-column: 2 / -1; min-width: 0; overflow-wrap: anywhere }
+  .hd-bang .table.table-cards tbody td:not([data-the])::before { content: none }
+  .hd-bang .table.table-cards tbody td[data-label="Người thuê"] { grid-row: 2 }
+  .hd-bang .table.table-cards tbody td:first-child { grid-column: 1; grid-row: 1 / span 4; align-self: center }
+  .hd-bang .table.table-cards tbody td[data-label="Phòng"] { grid-row: 1; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap }
+  .hd-bang .table.table-cards tbody td[data-label="Phòng"] .td-main { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; margin: -12px 0 -12px -8px; padding-left: 8px }
+  .hd-bang .table.table-cards tbody td[data-label="Phòng"] .td-sub::before { content: "· " }
+  .hd-bang .table.table-cards tbody td[data-label="Phòng"] .td-sub { margin: 0 }
+  .hd-bang .table.table-cards tbody td[data-label="Giá thuê"] { grid-row: 3; grid-column: 2; text-align: left }
+  .hd-bang .table.table-cards tbody td[data-label="Thời hạn"] { grid-row: 3; grid-column: 3; color: var(--ma-text-secondary) }
+  .hd-bang .table.table-cards tbody td[data-label="Cọc"], .hd-bang .table.table-cards tbody td[data-the="hanh-dong"] { display: none }
+  .hd-bang .table.table-cards tbody td[data-label="Tình trạng"] { grid-row: 4 }
+  .hd-bang .table.table-cards tbody td[data-label="Tình trạng"]::before { content: "Tình trạng: "; color: var(--ma-text-secondary) }
+}`
 
 function soNgayTu(ngay: string): number {
   return Math.round((new Date(`${ngay}T00:00:00`).getTime() - new Date().setHours(0, 0, 0, 0)) / 86_400_000)
