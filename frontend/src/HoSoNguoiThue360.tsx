@@ -8,17 +8,17 @@ import { EmptyState } from './design/feedback/EmptyState'
 import { Card } from './design/layout/Card'
 import { Breadcrumb } from './design/shell/Breadcrumb'
 import { Button } from './design/core/Button'
+import { Field, Select } from './design/forms/Field'
 import type { TrangProps } from './dinhTuyen'
 import { getLedger, type LedgerEntry } from './financeApi'
 import { NganFormNguoiThue } from './HoSoNguoiThue'
-import { managementRequest, type Tenant } from './managementApi'
+import { fetchGhiChuLienHe, managementRequest, themGhiChuLienHe, type GhiChuLienHe, type KenhLienHe, type Tenant } from './managementApi'
 import { today, useBuildings } from './ManagementShared'
 import { nhomNo, tuHoaDonQuanLy, type DongNo } from './nhomNoTheoNguoi'
 import { DauTrang } from './design/layout/DauTrang'
 import { KhoiSo } from './design/layout/KhoiSo'
 import { ChanDinh } from './design/layout/ChanDinh'
 import { HangTong } from './design/table/HangTong'
-import { NhanMinhHoa } from './design/feedback/NhanMinhHoa'
 import { NganNhacNo } from './design/money/NganNhacNo'
 import { dinhDangSdt, nhanThang } from './tienTheoNguoi'
 import './HoSoNguoiPhong.css'
@@ -114,7 +114,6 @@ export function KhoiHoatDong({ muc }: { muc: HoatDong[] }) {
       {ds.length === 0 ? <p className="t-sm t-2">Chưa có hoạt động nào.</p> : <ul className="tl" style={{ listStyle: 'none', padding: 0 }}>
         {ds.map((m, i) => <li key={i}><span className={`dot ${m.cham}`} /><span>{m.noiDung}</span><span className="when">{dinhDangNgayIso(m.ngay.slice(0, 10))}</span></li>)}
       </ul>}
-      <p className="t-meta" style={{ marginTop: 8 }}>Ghi chú cuộc gọi/nhắn tin: cần API mới.</p>
     </section>
   )
 }
@@ -163,6 +162,42 @@ async function taiHoSo(token: string, id: number, toa: ThongTinToaNha[], homNay:
     })(),
   ])
   return { nguoi, hopDong, hoaDon, no, suCo, thanhToan, khongTai }
+}
+
+const KENH: Record<KenhLienHe, string> = { GOI: 'Gọi', ZALO: 'Zalo', GAP: 'Gặp' }
+
+/** Ghi chú liên hệ (gọi/Zalo/gặp), mới nhất trước; lưu ở backend để người sau biết đã hẹn gì. */
+export function KhoiGhiChu({ token, nguoiThueId }: { token: string; nguoiThueId: number }) {
+  const [ds, setDs] = useState<GhiChuLienHe[] | null>(null)
+  const [loi, setLoi] = useState<string | null>(null)
+  const [noiDung, setNoiDung] = useState('')
+  const [kenh, setKenh] = useState<KenhLienHe>('GOI')
+  const [dangLuu, setDangLuu] = useState(false)
+  useEffect(() => {
+    let song = true
+    fetchGhiChuLienHe(token, nguoiThueId).then((d) => { if (song) setDs(d) }, () => { if (song) setLoi('Chưa tải được ghi chú liên hệ.') })
+    return () => { song = false }
+  }, [token, nguoiThueId])
+  const luu = async () => {
+    if (!noiDung.trim()) return
+    setDangLuu(true); setLoi(null)
+    try { const moi = await themGhiChuLienHe(token, nguoiThueId, noiDung.trim(), kenh); setDs((c) => [moi, ...(c ?? [])]); setNoiDung('') }
+    catch (e) { setLoi(e instanceof Error ? e.message : 'Chưa lưu được ghi chú.') } finally { setDangLuu(false) }
+  }
+  return (
+    <section className="card" aria-labelledby="hs-ghi-chu" data-ghi-chu>
+      <div className="blk-h"><h2 id="hs-ghi-chu">Ghi chú liên hệ</h2></div>
+      <form className="hs-ghi-chu-form" onSubmit={(e) => { e.preventDefault(); void luu() }}>
+        <Field label="Nội dung"><textarea className="input" rows={2} maxLength={1000} value={noiDung} onChange={(e) => setNoiDung(e.target.value)} placeholder="Ví dụ: hẹn trả thứ Sáu" /></Field>
+        <Field label="Kênh"><Select value={kenh} onChange={(e) => setKenh(e.target.value as KenhLienHe)}>{(Object.keys(KENH) as KenhLienHe[]).map((k) => <option key={k} value={k}>{KENH[k]}</option>)}</Select></Field>
+        <Button type="submit" variant="secondary" blocked={dangLuu || !noiDung.trim()} blockedReason={dangLuu ? 'Đang lưu…' : 'Nhập nội dung ghi chú'}>Lưu ghi chú</Button>
+      </form>
+      {loi ? <p className="error-text" role="alert">{loi}</p> : null}
+      {ds === null ? (loi ? null : <p className="t-sm t-2" aria-busy="true">Đang tải…</p>)
+        : ds.length === 0 ? <p className="t-sm t-2">Chưa có ghi chú nào.</p>
+          : <ul className="tl" style={{ listStyle: 'none', padding: 0 }}>{ds.map((g) => <li key={g.id} data-ghi-chu-dong><span className="dot" /><span><b>{KENH[g.kenh]}</b> · {g.noiDung}<br /><span className="t-meta">{g.nguoiTao}</span></span><span className="when">{new Date(g.taoLuc).toLocaleDateString('vi-VN')}</span></li>)}</ul>}
+    </section>
+  )
 }
 
 function MenuThem({ nhan, muc }: { nhan: string; muc: Array<{ nhan: string; href?: string; chay?: () => void }> }) {
@@ -284,12 +319,7 @@ export default function HoSoNguoiThue360({ token, mobile, thamSo }: TrangProps) 
       </dl>
     </section>
   )
-  const ghiChu = (
-    <section className="card" aria-labelledby="hs-ghi-chu">
-      <div className="blk-h"><h2 id="hs-ghi-chu">Ghi chú liên hệ</h2><NhanMinhHoa>cần backend</NhanMinhHoa></div>
-      <p className="t-sm t-2" style={{ marginTop: 8 }}>Chưa lưu được ghi chú. Sau mỗi lần gọi hay nhắc, ghi một dòng để người sau biết đã hẹn gì.</p>
-    </section>
-  )
+  const ghiChu = <KhoiGhiChu token={token} nguoiThueId={id} />
   const giayTo = (
     <section className="card" aria-labelledby="hs-giay-to">
       <div className="blk-h"><h2 id="hs-giay-to">Giấy tờ & cư trú</h2></div>
