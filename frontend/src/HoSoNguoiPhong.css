@@ -56,3 +56,7 @@ tr.nt-hang { cursor: pointer; }
   .nt-ten .avatar { display: none; }
   .table.table-cards tbody td[data-label="Điện thoại"], .table.table-cards tbody td[data-label="Thuê đến"], .table.table-cards tbody td[data-the="hanh-dong"] { display: none; }
 }
+
+/* y10: form ghi chú liên hệ */
+.hs-ghi-chu-form { display: grid; gap: 12px; margin: 8px 0 12px; justify-items: start; }
+.hs-ghi-chu-form .field { width: 100%; }
