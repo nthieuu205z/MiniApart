@@ -1,0 +1,45 @@
+[
+ {
+  "name": "hd-390",
+  "path": "/hop-dong",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/v3/shots/y11/after/hd-390.png",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 16,
+    "top": 84
+   },
+   "horizontalOverflow": 0,
+   "controls": 20,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 39,
+    "minRatio": 5.85,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "IBM Plex Sans"
+   ],
+   "fontsLoaded": [
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600",
+    "IBM Plex Sans 400",
+    "IBM Plex Sans 500",
+    "IBM Plex Sans 600"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(27, 86, 176)",
+   "docHeight": 844,
+   "khongCoQuyen": false
+  }
+ }
+]
