@@ -1,0 +1,41 @@
+# Chạy demo trên VPS công khai (Google Cloud): dùng kèm docker-compose.demo.yml
+#   docker compose --env-file .env.server -f docker-compose.demo.yml -f docker-compose.server.yml up -d --build
+# .env.server (không commit) cần: JWT_SECRET, ANH_LINK_SECRET, DB_PASSWORD, DEMO_PASSWORD, SITE_ADDRESS
+# Không ghim reference-date: seeder lấy ngày lúc nạp lần đầu, nên khởi động lại không còn lỗi "thời gian hẹn".
+services:
+  postgres:
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?}
+    command: ["postgres", "-c", "shared_buffers=64MB", "-c", "max_connections=30"]
+  backend:
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?}
+      SPRING_FLYWAY_PASSWORD: ${DB_PASSWORD:?}
+      SPRING_PROFILES_ACTIVE: presentation-demo
+      APP_ACTIVATION_DELIVERY_LOCAL_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: "-Xmx640m -XX:+UseSerialGC"
+      SPRING_APPLICATION_JSON: >-
+        {"app":{"presentation-demo":{"enabled":true,"expected-database":"miniapart_demo_prj1","password":"${DEMO_PASSWORD:?}"}}}
+  frontend:
+    restart: unless-stopped
+    ports: !reset []
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      frontend:
+        condition: service_healthy
+volumes:
+  caddy_data:
+  caddy_config:

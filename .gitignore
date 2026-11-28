@@ -46,3 +46,4 @@ Fontend Design/
 # Graphify output (generated)
 graphify-out/
 frontend/graphify-out/
+.env.server
