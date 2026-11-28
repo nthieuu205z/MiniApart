@@ -1,0 +1,460 @@
+[
+ {
+  "name": "01-trang-chu-1440",
+  "path": "/",
+  "role": null,
+  "w": 1440,
+  "png": "docs/design/ui-redesign/landing/shots/app/01-trang-chu-1440.jpg",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 36,
+    "top": 550
+   },
+   "horizontalOverflow": 0,
+   "controls": 33,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12px \"₫\"",
+    "12.8px \"₫\""
+   ],
+   "contrast": {
+    "textNodesChecked": 145,
+    "minRatio": 1.06,
+    "below": [
+     "1.06 \"MiniApart\" rgb(255, 255, 255) / rgb(250,248,244)",
+     "1.06 \"Tìm phòng\" rgb(255, 255, 255) / rgb(250,248,244)",
+     "1.06 \"Vì sao MiniApart\" rgb(255, 255, 255) / rgb(250,248,244)",
+     "1.06 \"Cổng cư dân\" rgb(255, 255, 255) / rgb(250,248,244)"
+    ]
+   },
+   "fontFamiliesUsed": [
+    "Be Vietnam Pro"
+   ],
+   "fontsLoaded": [
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 500",
+    "Be Vietnam Pro 500"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(255, 255, 255)",
+   "docHeight": 5629,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "01-trang-chu-390",
+  "path": "/",
+  "role": null,
+  "w": 390,
+  "png": "docs/design/ui-redesign/landing/shots/app/01-trang-chu-390.jpg",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 20,
+    "top": 390
+   },
+   "horizontalOverflow": 0,
+   "controls": 31,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12.8px \"₫\""
+   ],
+   "contrast": {
+    "textNodesChecked": 143,
+    "minRatio": 1.06,
+    "below": [
+     "1.06 \"MiniApart\" rgb(255, 255, 255) / rgb(250,248,244)",
+     "1.06 \"Menu\" rgb(255, 255, 255) / rgb(250,248,244)"
+    ]
+   },
+   "fontFamiliesUsed": [
+    "Be Vietnam Pro"
+   ],
+   "fontsLoaded": [
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 500",
+    "Be Vietnam Pro 500"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(255, 255, 255)",
+   "docHeight": 6417,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "02-tim-phong-1440",
+  "path": "/tim-phong",
+  "role": null,
+  "w": 1440,
+  "png": "docs/design/ui-redesign/landing/shots/app/02-tim-phong-1440.jpg",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 36,
+    "top": 143
+   },
+   "horizontalOverflow": 0,
+   "controls": 41,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12px \"₫\""
+   ],
+   "contrast": {
+    "textNodesChecked": 295,
+    "minRatio": 6.47,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Be Vietnam Pro"
+   ],
+   "fontsLoaded": [
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 500",
+    "Be Vietnam Pro 500"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(255, 255, 255)",
+   "docHeight": 3147,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "02-tim-phong-390",
+  "path": "/tim-phong",
+  "role": null,
+  "w": 390,
+  "png": "docs/design/ui-redesign/landing/shots/app/02-tim-phong-390.jpg",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 20,
+    "top": 100
+   },
+   "horizontalOverflow": 0,
+   "controls": 39,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12.8px \"₫\""
+   ],
+   "contrast": {
+    "textNodesChecked": 293,
+    "minRatio": 6.47,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Be Vietnam Pro"
+   ],
+   "fontsLoaded": [
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 500",
+    "Be Vietnam Pro 500"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(255, 255, 255)",
+   "docHeight": 7286,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "04-dang-nhap-1440",
+  "path": "/dang-nhap",
+  "role": null,
+  "w": 1440,
+  "png": "docs/design/ui-redesign/landing/shots/app/04-dang-nhap-1440.jpg",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 150,
+    "top": 178
+   },
+   "horizontalOverflow": 0,
+   "controls": 25,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 42,
+    "minRatio": 6.59,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Be Vietnam Pro"
+   ],
+   "fontsLoaded": [
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 500",
+    "Be Vietnam Pro 500"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(255, 255, 255)",
+   "docHeight": 1405,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "04-dang-nhap-390",
+  "path": "/dang-nhap",
+  "role": null,
+  "w": 390,
+  "png": "docs/design/ui-redesign/landing/shots/app/04-dang-nhap-390.jpg",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 20,
+    "top": 104
+   },
+   "horizontalOverflow": 0,
+   "controls": 23,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [],
+   "contrast": {
+    "textNodesChecked": 40,
+    "minRatio": 6.59,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Be Vietnam Pro"
+   ],
+   "fontsLoaded": [
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 500",
+    "Be Vietnam Pro 500"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(255, 255, 255)",
+   "docHeight": 2131,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "03-chi-tiet-phong-1440",
+  "path": "/phong-trong/10",
+  "role": null,
+  "w": 1440,
+  "png": "docs/design/ui-redesign/landing/shots/app/03-chi-tiet-phong-1440.jpg",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 964,
+    "top": 236
+   },
+   "horizontalOverflow": 0,
+   "controls": 31,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12px \"₫\""
+   ],
+   "contrast": {
+    "textNodesChecked": 177,
+    "minRatio": 6.11,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Be Vietnam Pro"
+   ],
+   "fontsLoaded": [
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 500",
+    "Be Vietnam Pro 500"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(255, 255, 255)",
+   "docHeight": 4422,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "03-chi-tiet-phong-390",
+  "path": "/phong-trong/10",
+  "role": null,
+  "w": 390,
+  "png": "docs/design/ui-redesign/landing/shots/app/03-chi-tiet-phong-390.jpg",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 20,
+    "top": 540
+   },
+   "horizontalOverflow": 0,
+   "controls": 29,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12.8px \"₫\""
+   ],
+   "contrast": {
+    "textNodesChecked": 175,
+    "minRatio": 6.11,
+    "below": []
+   },
+   "fontFamiliesUsed": [
+    "Be Vietnam Pro"
+   ],
+   "fontsLoaded": [
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 500",
+    "Be Vietnam Pro 500"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(255, 255, 255)",
+   "docHeight": 5554,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "05-menu-390",
+  "path": "/",
+  "role": null,
+  "w": 390,
+  "png": "docs/design/ui-redesign/landing/shots/app/05-menu-390.jpg",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 20,
+    "top": 390
+   },
+   "horizontalOverflow": 0,
+   "controls": 37,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12.8px \"₫\""
+   ],
+   "contrast": {
+    "textNodesChecked": 150,
+    "minRatio": 1.06,
+    "below": [
+     "1.06 \"MiniApart\" rgb(255, 255, 255) / rgb(250,248,244)",
+     "1.06 \"Menu\" rgb(255, 255, 255) / rgb(250,248,244)"
+    ]
+   },
+   "fontFamiliesUsed": [
+    "Be Vietnam Pro"
+   ],
+   "fontsLoaded": [
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 500",
+    "Be Vietnam Pro 500"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "none 3px rgb(255, 255, 255)",
+   "docHeight": 6417,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "06-trang-chu-da-dang-nhap-chu-1440",
+  "path": "/",
+  "role": "CHU",
+  "w": 1440,
+  "png": "docs/design/ui-redesign/landing/shots/app/06-trang-chu-da-dang-nhap-chu-1440.jpg",
+  "qa": {
+   "viewport": "1440×900",
+   "h1": {
+    "count": 1,
+    "left": 36,
+    "top": 550
+   },
+   "horizontalOverflow": 0,
+   "controls": 33,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12px \"HP\"",
+    "12px \"₫\"",
+    "12.8px \"₫\""
+   ],
+   "contrast": {
+    "textNodesChecked": 146,
+    "minRatio": 1.06,
+    "below": [
+     "1.06 \"MiniApart\" rgb(255, 255, 255) / rgb(250,248,244)",
+     "1.06 \"Tìm phòng\" rgb(255, 255, 255) / rgb(250,248,244)",
+     "1.06 \"Vì sao MiniApart\" rgb(255, 255, 255) / rgb(250,248,244)",
+     "1.06 \"Vào trang của tôi\" rgb(255, 255, 255) / rgb(250,248,244)"
+    ]
+   },
+   "fontFamiliesUsed": [
+    "Be Vietnam Pro"
+   ],
+   "fontsLoaded": [
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 500",
+    "Be Vietnam Pro 500"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(255, 255, 255)",
+   "docHeight": 5629,
+   "khongCoQuyen": false
+  }
+ },
+ {
+  "name": "06-trang-chu-da-dang-nhap-chu-390",
+  "path": "/",
+  "role": "CHU",
+  "w": 390,
+  "png": "docs/design/ui-redesign/landing/shots/app/06-trang-chu-da-dang-nhap-chu-390.jpg",
+  "qa": {
+   "viewport": "390×844",
+   "h1": {
+    "count": 1,
+    "left": 20,
+    "top": 390
+   },
+   "horizontalOverflow": 0,
+   "controls": 31,
+   "belowHit": [],
+   "noAccessibleName": [],
+   "textBelowFloor": [
+    "12.8px \"₫\""
+   ],
+   "contrast": {
+    "textNodesChecked": 143,
+    "minRatio": 1.06,
+    "below": [
+     "1.06 \"MiniApart\" rgb(255, 255, 255) / rgb(250,248,244)",
+     "1.06 \"Menu\" rgb(255, 255, 255) / rgb(250,248,244)"
+    ]
+   },
+   "fontFamiliesUsed": [
+    "Be Vietnam Pro"
+   ],
+   "fontsLoaded": [
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 400",
+    "Be Vietnam Pro 500",
+    "Be Vietnam Pro 500"
+   ],
+   "imgNoAlt": 0,
+   "focusOutline": "solid 2px rgb(255, 255, 255)",
+   "docHeight": 6417,
+   "khongCoQuyen": false
+  }
+ }
+]

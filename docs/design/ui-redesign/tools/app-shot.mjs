@@ -45,12 +45,16 @@ try {
       const ok = (await p.eval(fill('input[autocomplete="username"]', SDT[j.role]))) && (await p.eval(fill('input[autocomplete="current-password"]', process.env.MA_DEMO_PASSWORD)))
       if (!ok) throw new Error(`${j.name}: không thấy ô đăng nhập`)
       await p.eval(`document.querySelector('form button[type="submit"]').click()`)
-      for (let i = 0; i < 40 && !(await p.eval(`!!document.querySelector('nav[data-navigation-layout], nav[aria-label]')`)); i++) await sleep(250)
+      for (let i = 0; i < 40 && !(await p.eval(`location.pathname !== '/dang-nhap'`)); i++) await sleep(250)
     }
     vaiTroHienTai = vaiTro
     await p.goto(`${BASE}${j.path}`, { settleMs: 1500 })
     await p.eval('document.fonts.ready.then(() => 1)')
     if (j.click) { await p.eval(`document.querySelector(${JSON.stringify(j.click)}).click()`); await sleep(400) } // job.click: bấm 1 nút (vd ☰) trước khi chụp
+    if (j.full) { // ảnh cả trang: cuộn qua từng màn để các khối "hiện dần khi cuộn tới" kịp hiện, rồi về đầu trang
+      await p.eval(`(async () => { document.documentElement.style.scrollBehavior = 'auto'; for (let y = 0; y < document.body.scrollHeight; y += innerHeight * 0.6) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 120)) } scrollTo(0, 0); return 1 })()`)
+      await sleep(900)
+    }
     const qa = await p.eval(readFileSync(join(HERE, 'qa-probe.js'), 'utf8'))
     qa.khongCoQuyen = await p.eval(`!!document.querySelector('#khong-co-quyen')`) // quét đường dẫn: có rơi vào trang Không có quyền không
     const png = join(outDir, `${j.name}.png`)
