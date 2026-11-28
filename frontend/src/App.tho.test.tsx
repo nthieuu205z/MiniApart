@@ -78,7 +78,8 @@ describe('App worker entry point (V2)', () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     container = document.createElement('div')
     document.body.appendChild(container)
-    window.history.replaceState({}, '', '/')
+    // '/' giờ là trang chủ công khai (người đã đăng nhập vẫn xem được, không bị chuyển); vào app của thợ bằng đường dẫn cũ /tho/tong-quan
+    window.history.replaceState({}, '', '/tho/tong-quan')
     clearStoredToken()
   })
 

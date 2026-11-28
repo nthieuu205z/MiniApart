@@ -21,7 +21,7 @@ afterEach(() => {
 
 describe('Màn đăng nhập', () => {
   it('lỗi server hiện ngay dưới ô mật khẩu, nối bằng aria-describedby', async () => {
-    window.history.replaceState({}, '', '/')
+    window.history.replaceState({}, '', '/dang-nhap')
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url
       if (url === '/api/auth/login') return json(401, { thongBao: 'Mật khẩu chưa đúng.' })
