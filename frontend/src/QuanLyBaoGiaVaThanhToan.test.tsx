@@ -73,6 +73,8 @@ describe('QuanLyBaoGiaVaThanhToan', () => {
     expect(t).toContain(dinhDangTien(400000))
     await act(async () => button('Ghi nhận trả thợ')!.click())
     expect(container.querySelector<HTMLInputElement>('input[type="number"]')!.value).toBe('400000')
+    // step=1000 + min=1 từng chặn số tròn nghìn như 50.030.000 (trình duyệt đòi 50.029.001)
+    expect(container.querySelector<HTMLInputElement>('input[type="number"]')!.step).toBe('1')
     expect(button('Lưu giao dịch thanh toán')).toBeDefined()
   })
 

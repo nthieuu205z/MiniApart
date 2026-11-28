@@ -273,7 +273,7 @@ export function QuanLyBaoGiaVaThanhToan({ token, yeuCauId, onDuLieu, anChoDuyet 
               <span className="t-strong">Ghi nhận thanh toán cho thợ (còn lại tối đa {dinhDangTien(conPhaiTra)} ₫)</span>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))', gap: 12 }}>
                 <Field label="Số tiền (₫)">
-                  <input className="input" type="number" min="1" max={conPhaiTra} step="1000" required value={soTienTra} onChange={(e) => setSoTienTra(e.target.value)} />
+                  <input className="input" type="number" min="1" max={conPhaiTra} step="1" required value={soTienTra} onChange={(e) => setSoTienTra(e.target.value)} />
                 </Field>
                 <Field label="Hình thức">
                   <select className="select" value={phuongThuc} onChange={(e) => setPhuongThuc(e.target.value as PhuongThucThanhToanTho)}>

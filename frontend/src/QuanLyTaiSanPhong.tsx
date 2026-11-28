@@ -555,7 +555,7 @@ export default function QuanLyTaiSanPhong({
                 <input
                   type="number"
                   min="0"
-                  step="1000"
+                  step="1"
                   className="input"
                   value={bieuMauTaiSan.giaTriUocTinh}
                   onChange={(e) =>
@@ -779,7 +779,7 @@ export default function QuanLyTaiSanPhong({
                             <input
                               type="number"
                               min="0"
-                              step="1000"
+                              step="1"
                               className="input" style={{ minWidth: 110, textAlign: 'right' }}
                               value={ct.tienKhauTru}
                               onChange={(e) => {

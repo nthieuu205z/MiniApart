@@ -226,7 +226,7 @@ export function ThoCongViec({ token, mobile = false, initialTicketId }: ThoCongV
                 <Input type="number" inputMode="decimal" min={0} step="any" value={l.soLuong} style={{ textAlign: 'right' }} onChange={(e) => setDong((c) => c.map((x, k) => (k === i ? { ...x, soLuong: e.target.value } : x)))} />
               </Field>
               <Field label="Đơn giá (₫)">
-                <Input type="number" inputMode="numeric" min={0} step={1000} value={l.donGia} style={{ textAlign: 'right' }} onChange={(e) => setDong((c) => c.map((x, k) => (k === i ? { ...x, donGia: e.target.value } : x)))} />
+                <Input type="number" inputMode="numeric" min={0} step={1} value={l.donGia} style={{ textAlign: 'right' }} onChange={(e) => setDong((c) => c.map((x, k) => (k === i ? { ...x, donGia: e.target.value } : x)))} />
               </Field>
             </div>
             <div className="spread">
