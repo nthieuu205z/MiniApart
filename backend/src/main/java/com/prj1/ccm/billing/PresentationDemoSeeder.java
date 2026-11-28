@@ -122,7 +122,7 @@ public class PresentationDemoSeeder implements CommandLineRunner {
                 Long room = id("INSERT INTO PHONG(toa_nha_id,so_phong,tang,dien_tich,suc_chua,gia_thue_mac_dinh,loai_phong,trang_thai,mo_ta,tien_ich,ngung_cho_thue,anh_dai_dien) VALUES (?,?,?,?,?,?,?,'TRONG',?,?,?,?) RETURNING id",
                         building,number,(r-1)/3+1,20+r%4*5,3,rent,
                         new String[]{"Studio ban công","Phòng có gác","Studio nội thất","Phòng cơ bản"}[r%4],
-                        "Không gian "+(20+r%4*5)+" m², "+(r%2==0?"cửa sổ thoáng và khu bếp riêng":"ánh sáng tự nhiên, yên tĩnh")+". Dữ liệu mô phỏng phục vụ báo cáo.",
+                        "Không gian "+(20+r%4*5)+" m², "+(r%2==0?"cửa sổ thoáng và khu bếp riêng":"ánh sáng tự nhiên, yên tĩnh")+".",
                         String.join(", ",PresentationRoomEquipment.amenities(b,r)),r==12,
                         anhDaiDien);
                 for (var equipment:PresentationRoomEquipment.inventory(b,r)) assets.themTaiSan(room,new YeuCauKhaiBaoTaiSan(
