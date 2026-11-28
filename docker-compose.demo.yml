@@ -42,7 +42,7 @@ services:
       # Ghim ngày seed: không ghim thì sang ngày mới seeder báo "another reference date" và backend không lên.
       # Muốn dữ liệu tươi theo ngày: down -v, đổi ngày này, up lại.
       SPRING_APPLICATION_JSON: >-
-        {"app":{"presentation-demo":{"enabled":true,"expected-database":"miniapart_demo_prj1","reference-date":"2026-11-27","password":"DemoOnly2026!"}}}
+        {"app":{"presentation-demo":{"enabled":true,"expected-database":"miniapart_demo_prj1","reference-date":"2026-11-28","password":"DemoOnly2026!"}}}
     volumes:
       - demo_attachments:/var/lib/miniapart/private-attachments
     depends_on:
