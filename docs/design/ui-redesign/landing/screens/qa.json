@@ -1,0 +1,653 @@
+[
+ {
+  "man": "01-trang-chu",
+  "khung": 1440,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "15px a ×3",
+   "15px a.dau-cong ×1",
+   "14px span.ht-nhan ×1",
+   "15px span.ht-ten ×1",
+   "15px span.ht-gia ×2",
+   "12px span.d ×1",
+   "13.6px span.d ×12",
+   "15px span.hd-phu ×6",
+   "15px figcaption ×1",
+   "12.8px span.d ×2",
+   "15px span.nb-phu ×1",
+   "15px span ×1",
+   "14px span.qr ×1",
+   "14px p.chu-thich ×1",
+   "15px a.nut ×2",
+   "14px p.khung ×1",
+   "14px span ×1"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader",
+   "IBM Plex Sans"
+  ],
+  "tuongPhan": {
+   "min": 4.75,
+   "soChu": 149,
+   "duoi45": []
+  },
+  "lhMin": 1.06,
+  "tieuDeNhieuDong": [
+   "H2 3 dòng \"Mỗi phòng  đều ghi sẵn tiền th\""
+  ],
+  "anhThieuAlt": 0,
+  "anhHong": [],
+  "chuTrenAnh": [
+   ".hero h1 7.26",
+   ".hero-phu 12.16",
+   ".dau.trong .logo 13.06",
+   ".dau.trong .dau-nav a 10.75",
+   ".dau.trong .dau-nav a 6.29",
+   ".dau.trong .dau-nav a 5.94",
+   ".dau.trong .dau-cong 6.83"
+  ]
+ },
+ {
+  "man": "01-trang-chu",
+  "khung": 1024,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "15px a ×3",
+   "15px a.dau-cong ×1",
+   "14px span.ht-nhan ×1",
+   "15px span.ht-ten ×1",
+   "15px span.ht-gia ×2",
+   "12px span.d ×1",
+   "13.6px span.d ×12",
+   "15px span.hd-phu ×6",
+   "15px figcaption ×1",
+   "12.8px span.d ×2",
+   "15px span.nb-phu ×1",
+   "15px span ×1",
+   "14px span.qr ×1",
+   "14px p.chu-thich ×1",
+   "15px a.nut ×2",
+   "14px p.khung ×1",
+   "14px span ×1"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader",
+   "IBM Plex Sans"
+  ],
+  "tuongPhan": {
+   "min": 4.75,
+   "soChu": 149,
+   "duoi45": []
+  },
+  "lhMin": 1.06,
+  "tieuDeNhieuDong": [
+   "H2 3 dòng \"Mỗi phòng  đều ghi sẵn tiền th\""
+  ],
+  "anhThieuAlt": 0,
+  "anhHong": [],
+  "chuTrenAnh": [
+   ".hero h1 7.24",
+   ".hero-phu 12.06",
+   ".dau.trong .logo 10.92",
+   ".dau.trong .dau-nav a 11.21",
+   ".dau.trong .dau-nav a 11.53",
+   ".dau.trong .dau-nav a 7.34",
+   ".dau.trong .dau-cong 6.21"
+  ]
+ },
+ {
+  "man": "01-trang-chu",
+  "khung": 390,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "12.8px span.d ×3",
+   "13.6px span.d ×12"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader",
+   "IBM Plex Sans"
+  ],
+  "tuongPhan": {
+   "min": 4.75,
+   "soChu": 149,
+   "duoi45": []
+  },
+  "lhMin": 1.06,
+  "tieuDeNhieuDong": [
+   "H2 4 dòng \"Mỗi phòng  đều ghi sẵn tiền th\""
+  ],
+  "anhThieuAlt": 0,
+  "anhHong": [],
+  "chuTrenAnh": [
+   ".hero h1 8.25",
+   ".hero-phu 9.78",
+   ".dau.trong .logo 10.04",
+   ".dau.trong .dau-menu 10.4"
+  ]
+ },
+ {
+  "man": "01-trang-chu-man-dau",
+  "khung": 1440,
+  "loiConsole": []
+ },
+ {
+  "man": "01-trang-chu-man-dau",
+  "khung": 390,
+  "loiConsole": []
+ },
+ {
+  "man": "01-trang-chu-cuon",
+  "khung": 1440,
+  "loiConsole": []
+ },
+ {
+  "man": "02-tim-phong",
+  "khung": 1440,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "15px a ×3",
+   "15px a.dau-cong ×1",
+   "13.6px span.d ×1",
+   "15px span ×5",
+   "15px button.chip ×6",
+   "15px b ×6",
+   "15px span.phong-gia ×12",
+   "15px span.phong-phu ×46",
+   "12px span.d ×22",
+   "15px a.nut ×2",
+   "14px p.khung ×1",
+   "14px span ×1"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader"
+  ],
+  "tuongPhan": {
+   "min": 6.47,
+   "soChu": 165,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": []
+ },
+ {
+  "man": "02-tim-phong",
+  "khung": 1024,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "15px a ×3",
+   "15px a.dau-cong ×1",
+   "13.6px span.d ×1",
+   "15px span ×5",
+   "15px button.chip ×6",
+   "15px b ×6",
+   "15px span.phong-gia ×12",
+   "15px span.phong-phu ×46",
+   "12px span.d ×22",
+   "15px a.nut ×2",
+   "14px p.khung ×1",
+   "14px span ×1"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader"
+  ],
+  "tuongPhan": {
+   "min": 6.47,
+   "soChu": 165,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": []
+ },
+ {
+  "man": "02-tim-phong",
+  "khung": 390,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "13.6px span.d ×1",
+   "12.8px span.d ×22"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader"
+  ],
+  "tuongPhan": {
+   "min": 6.47,
+   "soChu": 162,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": []
+ },
+ {
+  "man": "02-tim-phong-khong-khop",
+  "khung": 1440,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "15px a ×3",
+   "15px a.dau-cong ×1",
+   "13.6px span.d ×1",
+   "15px span ×4",
+   "15px button.chip ×6",
+   "15px b ×6",
+   "15px a.nut ×2",
+   "14px p.khung ×1",
+   "14px span ×1"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader"
+  ],
+  "tuongPhan": {
+   "min": 6.47,
+   "soChu": 44,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": []
+ },
+ {
+  "man": "02-tim-phong-khong-khop",
+  "khung": 390,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "13.6px span.d ×1"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader"
+  ],
+  "tuongPhan": {
+   "min": 6.47,
+   "soChu": 41,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": []
+ },
+ {
+  "man": "02-tim-phong-ca-phong-dang-thue",
+  "khung": 1440,
+  "loiConsole": []
+ },
+ {
+  "man": "02-tim-phong-dang-tai",
+  "khung": 390,
+  "loiConsole": []
+ },
+ {
+  "man": "02-tim-phong-loi",
+  "khung": 390,
+  "loiConsole": []
+ },
+ {
+  "man": "03-chi-tiet-phong",
+  "khung": 1440,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "15px a ×3",
+   "15px a.dau-cong ×1",
+   "15px p.ct-toa ×1",
+   "15px p.tt ×1",
+   "15px span ×9",
+   "14px small ×1",
+   "15px summary ×1",
+   "14px p.dl-chu ×1",
+   "15px caption ×1",
+   "15px th ×5",
+   "13.6px span.d ×17",
+   "15px i ×4",
+   "14px p.chu-thich ×1",
+   "15px span.phong-gia ×1",
+   "15px span.phong-phu ×4",
+   "12px span.d ×2",
+   "15px a.nut ×2",
+   "14px p.khung ×1",
+   "14px span ×1"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader"
+  ],
+  "tuongPhan": {
+   "min": 6.11,
+   "soChu": 152,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": []
+ },
+ {
+  "man": "03-chi-tiet-phong",
+  "khung": 1024,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "15px a ×3",
+   "15px a.dau-cong ×1",
+   "15px p.ct-toa ×1",
+   "15px p.tt ×1",
+   "15px span ×9",
+   "14px small ×1",
+   "15px summary ×1",
+   "14px p.dl-chu ×1",
+   "15px caption ×1",
+   "15px th ×5",
+   "13.6px span.d ×17",
+   "15px i ×4",
+   "14px p.chu-thich ×1",
+   "15px span.phong-gia ×1",
+   "15px span.phong-phu ×4",
+   "12px span.d ×2",
+   "15px a.nut ×2",
+   "14px p.khung ×1",
+   "14px span ×1"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader"
+  ],
+  "tuongPhan": {
+   "min": 6.11,
+   "soChu": 152,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": []
+ },
+ {
+  "man": "03-chi-tiet-phong",
+  "khung": 390,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "13.6px span.d ×17",
+   "12.8px span.d ×2"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader"
+  ],
+  "tuongPhan": {
+   "min": 6.11,
+   "soChu": 149,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": []
+ },
+ {
+  "man": "03-chi-tiet-phong-da-gui",
+  "khung": 1440,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "15px a ×3",
+   "15px a.dau-cong ×1",
+   "15px p.ct-toa ×1",
+   "15px p.tt ×1",
+   "14px p.ghi-chu-pt ×1",
+   "15px caption ×1",
+   "15px th ×5",
+   "13.6px span.d ×17",
+   "15px span ×4",
+   "15px i ×4",
+   "14px p.chu-thich ×1",
+   "15px span.phong-gia ×1",
+   "15px span.phong-phu ×4",
+   "12px span.d ×2",
+   "15px a.nut ×2",
+   "14px p.khung ×1",
+   "14px span ×1"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader"
+  ],
+  "tuongPhan": {
+   "min": 6.11,
+   "soChu": 152,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": []
+ },
+ {
+  "man": "03-chi-tiet-phong-da-gui",
+  "khung": 390,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "13.6px span.d ×17",
+   "12.8px span.d ×2"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader"
+  ],
+  "tuongPhan": {
+   "min": 6.11,
+   "soChu": 149,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": []
+ },
+ {
+  "man": "03-chi-tiet-phong-loi-form",
+  "khung": 390,
+  "loiConsole": []
+ },
+ {
+  "man": "03-chi-tiet-phong-dang-thue",
+  "khung": 1440,
+  "loiConsole": []
+ },
+ {
+  "man": "03-chi-tiet-phong-bac-thang",
+  "khung": 390,
+  "loiConsole": []
+ },
+ {
+  "man": "04-dang-nhap",
+  "khung": 1440,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "15px a ×3",
+   "15px a.dau-cong ×1",
+   "15px span ×2",
+   "15px a.nut ×2",
+   "14px p.khung ×1",
+   "14px span ×1"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader",
+   "IBM Plex Sans"
+  ],
+  "tuongPhan": {
+   "min": 6.59,
+   "soChu": 39,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": [],
+  "chuTrenAnh": [
+   ".dn-vai h2 12.46",
+   ".dn-vai li 5.13",
+   ".dn-vai li 5.36",
+   ".dn-vai li 5.62"
+  ]
+ },
+ {
+  "man": "04-dang-nhap",
+  "khung": 1024,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "15px a ×3",
+   "15px a.dau-cong ×1",
+   "15px span ×2",
+   "15px a.nut ×2",
+   "14px p.khung ×1",
+   "14px span ×1"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader",
+   "IBM Plex Sans"
+  ],
+  "tuongPhan": {
+   "min": 6.59,
+   "soChu": 39,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": [],
+  "chuTrenAnh": [
+   ".dn-vai h2 11.29",
+   ".dn-vai li 4.75",
+   ".dn-vai li 5.22",
+   ".dn-vai li 5.62"
+  ]
+ },
+ {
+  "man": "04-dang-nhap",
+  "khung": 390,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader",
+   "IBM Plex Sans"
+  ],
+  "tuongPhan": {
+   "min": 6.59,
+   "soChu": 36,
+   "duoi45": []
+  },
+  "lhMin": 1.1,
+  "tieuDeNhieuDong": [],
+  "anhThieuAlt": 0,
+  "anhHong": [],
+  "chuTrenAnh": [
+   ".dn-vai h2 13.29"
+  ]
+ },
+ {
+  "man": "05-menu",
+  "khung": 390,
+  "loiConsole": [],
+  "cuonNgang": 0,
+  "tran": [],
+  "h1": 1,
+  "vungChamNho": [],
+  "chuDuoi16": [
+   "12.8px span.d ×3",
+   "13.6px span.d ×12"
+  ],
+  "fonts": [
+   "Be Vietnam Pro",
+   "Newsreader",
+   "IBM Plex Sans"
+  ],
+  "tuongPhan": {
+   "min": 4.75,
+   "soChu": 157,
+   "duoi45": []
+  },
+  "lhMin": 1.06,
+  "tieuDeNhieuDong": [
+   "H2 4 dòng \"Mỗi phòng  đều ghi sẵn tiền th\""
+  ],
+  "anhThieuAlt": 0,
+  "anhHong": []
+ }
+]

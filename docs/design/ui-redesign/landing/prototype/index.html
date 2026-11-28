@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MiniApart — Chỗ ở tử tế, giá rõ ràng</title>
+<meta name="description" content="Bản xem trước thiết kế phần công khai MiniApart: trang chủ, tìm phòng, chi tiết phòng, đăng nhập.">
+<link rel="preload" href="fonts/be-vietnam-pro-latin-500.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+<a class="bo-qua" href="#man">Tới nội dung chính</a>
+
+<header class="dau" id="dau">
+  <a class="logo" href="#/" aria-label="MiniApart, về trang chủ">MiniApart</a>
+  <nav class="dau-nav" aria-label="Điều hướng chính">
+    <a href="#/tim-phong" data-nav="tim-phong">Tìm phòng</a>
+    <a href="#/vi-sao" data-nav="vi-sao">Vì sao MiniApart</a>
+    <a href="#/chu-nha" data-nav="chu-nha">Dành cho chủ nhà</a>
+  </nav>
+  <a class="dau-cong" href="#/dang-nhap" data-nav="dang-nhap">Cổng cư dân</a>
+  <button class="dau-menu" type="button" id="mo-menu" aria-expanded="false" aria-controls="thuc-don">Menu</button>
+</header>
+
+<div class="thuc-don" id="thuc-don" role="dialog" aria-modal="true" aria-label="Menu" hidden>
+  <div class="td-dau">
+    <a class="logo" href="#/">MiniApart</a>
+    <button class="dau-menu" type="button" id="dong-menu">Đóng</button>
+  </div>
+  <nav class="td-nav" aria-label="Điều hướng chính trên điện thoại">
+    <a href="#/tim-phong">Tìm phòng</a>
+    <a href="#/vi-sao">Vì sao MiniApart</a>
+    <a href="#/chu-nha">Dành cho chủ nhà</a>
+  </nav>
+  <div class="td-chan">
+    <a class="td-cong" href="#/dang-nhap">Cổng cư dân <span>Người đang thuê, chủ nhà, quản lý, thợ</span></a>
+    <a class="nut nut-muc" href="#/tim-phong">Tìm phòng</a>
+  </div>
+</div>
+
+<main id="man" tabindex="-1">
+  <noscript><p style="padding:120px 20px">Bản xem trước này cần JavaScript để chuyển giữa các màn.</p></noscript>
+</main>
+
+<footer class="chan" id="chan"></footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
