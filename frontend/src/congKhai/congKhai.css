@@ -1,0 +1,340 @@
+/* MiniApart — phần công khai (Landing, Tìm phòng, Chi tiết phòng, Cổng cư dân). Mọi luật nằm dưới .cong, không đụng app V3.
+   Một họ chữ duy nhất: Be Vietnam Pro 400/500 (OFL 1.1, tự chứa, subset latin + vietnamese). Nguồn thiết kế: docs/design/ui-redesign/landing. */
+@font-face { font-family: "Be Vietnam Pro"; font-style: normal; font-weight: 400; font-display: swap; src: url(./fonts/be-vietnam-pro-vietnamese-400.woff2) format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Be Vietnam Pro"; font-style: normal; font-weight: 400; font-display: swap; src: url(./fonts/be-vietnam-pro-latin-400.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Be Vietnam Pro"; font-style: normal; font-weight: 500; font-display: swap; src: url(./fonts/be-vietnam-pro-vietnamese-500.woff2) format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Be Vietnam Pro"; font-style: normal; font-weight: 500; font-display: swap; src: url(./fonts/be-vietnam-pro-latin-500.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+.cong {
+  --giay: #faf8f4;        
+  --giay-2: #f1ede5;      
+  --mat: #ffffff;
+  --muc: #14181d;         
+  --phu: #47505a;         
+  --vien-o: #868f99;      
+  --ke: rgba(20, 24, 29, .16);
+  --rung: #17352b;        
+  --rung-ke: rgba(255, 255, 255, .24);
+  --rung-phu: rgba(255, 255, 255, .8);
+  --xong: #1f6b43; --canh: #8a4b00; --no: #b3261e; --lk: #1b56b0; 
+  --f: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --le: clamp(20px, 2.5vw, 36px);
+  --dau: 64px;
+  --em: cubic-bezier(.22, .8, .2, 1);
+}
+.cong *, .cong *::before, .cong *::after {box-sizing: border-box;}
+.cong {margin: 0; background: var(--giay); color: var(--muc); font: 400 17px/1.55 var(--f); -webkit-font-smoothing: antialiased;}
+body.cong-khoa {overflow: hidden;}
+.cong img {display: block; max-width: 100%; height: auto;}
+.cong h1, .cong h2, .cong h3, .cong h4, .cong p, .cong ul, .cong ol, .cong figure, .cong dl, .cong dd {margin: 0;}
+.cong ul, .cong ol {padding: 0; list-style: none;}
+.cong a {color: inherit;}
+.cong [hidden] {display: none !important;}
+.cong :focus-visible {outline: 2px solid currentColor; outline-offset: 3px;}
+.cong #man:focus {outline: none;}
+.cong #man {min-height: 60vh;}
+.cong .khung {max-width: 1760px; margin-inline: auto; padding-inline: var(--le);}
+.cong .luoi {display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px;}
+.cong .dai {padding-block: clamp(80px, 10.5vw, 168px);}
+.cong .dai + .dai {padding-top: 0;}
+.cong #vi-sao, .cong #toa-nha {scroll-margin-top: var(--dau);}
+.cong h1, .cong h2, .cong h3, .cong h4 {font-weight: 500; letter-spacing: -.02em; line-height: 1.1; text-wrap: balance;}
+.cong .tc1 {font-size: clamp(2.75rem, 6.1vw, 5.5rem); line-height: 1.06;}
+.cong .tc2 {font-size: clamp(2.125rem, 4.45vw, 4rem);}
+.cong .tc3 {font-size: clamp(1.75rem, 3.3vw, 3rem);}
+.cong .tc4 {font-size: clamp(1.25rem, 1.7vw, 1.5rem); line-height: 1.25; letter-spacing: -.01em;}
+.cong p {text-wrap: pretty;}
+.cong .d {font-size: .8em;}
+.cong .chu-thich {font-size: 14px; line-height: 1.5; color: var(--phu); margin-top: 14px;}
+.cong .nut {display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 22px; border: 1px solid transparent; border-radius: 6px; font: 500 16px/1.2 var(--f); text-decoration: none; text-align: center; cursor: pointer; transition: transform .16s var(--em), background-color .2s, border-color .2s;}
+.cong .nut:active {transform: scale(.98);}
+.cong .nut-muc {background: var(--muc); color: #fff;}
+.cong .nut-trang {background: #fff; color: var(--muc);}
+.cong .nut-vien {border-color: var(--vien-o); color: var(--muc); background: transparent;}
+.cong .nut-vien-sang {border-color: rgba(255, 255, 255, .6); color: #fff;}
+.cong .nut-lon {min-height: 54px; padding-inline: 28px;}
+.cong .nut-nho {min-height: 44px; padding-inline: 14px; font-size: 15px;}
+.cong .nut-day {width: 100%;}
+.cong .lk {display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: 500 16px/1.3 var(--f); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; cursor: pointer;}
+.cong .mt {width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform .25s var(--em);}
+.cong .bo-qua {position: fixed; left: 12px; top: -80px; z-index: 100; padding: 12px 16px; border-radius: 6px; background: var(--muc); color: #fff;}
+.cong .bo-qua:focus {top: 12px;}
+.cong .dau {position: fixed; inset: 0 0 auto 0; z-index: 50; height: var(--dau); display: flex; align-items: center; padding-inline: max(var(--le), calc(50% - 880px + var(--le))); background: var(--giay); color: var(--muc); border-bottom: 1px solid var(--ke); transition: background-color .3s, color .3s, border-color .3s;}
+.cong .dau.trong {background: transparent; color: #fff; border-color: transparent;}
+.cong .logo-cong {font-weight: 500; font-size: 21px; letter-spacing: -.03em; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; margin-right: auto;}
+.cong .dau-nav {display: flex; gap: clamp(28px, 6.5vw, 110px); margin-right: clamp(40px, 9vw, 150px);}
+.cong .dau-nav a, .cong .dau-cong {display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 500; text-decoration: none; white-space: nowrap;}
+.cong .dau a[aria-current] {text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px;}
+.cong .dau-menu {display: none; align-items: center; justify-content: flex-end; min-width: 44px; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: 500 16px var(--f); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; cursor: pointer;}
+.cong .thuc-don {position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; padding: 0 var(--le) calc(24px + env(safe-area-inset-bottom)); background: var(--giay); overflow: auto; animation: mo-menu .25s var(--em);}
+@keyframes mo-menu { from { opacity: 0; transform: translateY(-8px); } }
+.cong .td-dau {flex: none; height: var(--dau); display: flex; align-items: center; justify-content: space-between;}
+.cong .td-dau .dau-menu {display: inline-flex;}
+.cong .td-nav {display: grid; margin-top: 20px;}
+.cong .td-nav a {padding: 20px 0; border-bottom: 1px solid var(--ke); font-size: 34px; font-weight: 500; letter-spacing: -.02em; line-height: 1.15; text-decoration: none;}
+.cong .td-chan {margin-top: auto; padding-top: 40px; display: grid; gap: 20px;}
+.cong .td-cong {display: grid; gap: 2px; font-weight: 500; text-decoration: none;}
+.cong .td-cong span {font-weight: 400; font-size: 16px; color: var(--phu);}
+.cong .hero {position: relative; height: clamp(600px, 100svh, 960px); overflow: hidden; background: #1a1d1b; color: #fff;}
+.cong .hero-anh {position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 58%; animation: hero-vao 1.8s var(--em) both;}
+@keyframes hero-vao { from { transform: scale(1.06); } }
+.cong .hero::after {content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(10, 12, 11, .8), rgba(10, 12, 11, 0) 26%), linear-gradient(to top, rgba(10, 12, 11, .82), rgba(10, 12, 11, .66) 42%, rgba(10, 12, 11, .04) 76%);}
+.cong .hero-trong {position: relative; z-index: 1; height: 100%; display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; padding-bottom: clamp(28px, 4vw, 56px);}
+.cong .hero-phu {margin-top: 24px; max-width: 31em; font-size: clamp(17px, 1.3vw, 19px); line-height: 1.5;}
+.cong .hero-phai {flex: none; width: 328px; display: grid; gap: 12px;}
+.cong .hero-the {display: grid; grid-template-columns: 1fr 80px; gap: 14px; align-items: center; padding: 16px; background: rgba(16, 19, 18, .9); text-decoration: none;}
+.cong .hero-the img {width: 80px; height: 80px; object-fit: cover;}
+.cong .ht-chu {display: grid; gap: 3px; font-size: 15px; line-height: 1.35;}
+.cong .ht-nhan {font-size: 14px; color: var(--rung-phu);}
+.cong .ht-ten {font-weight: 500;}
+.cong .loi {max-width: 19.5em; margin-inline: auto; text-align: center; line-height: 1.16; text-wrap: balance;}
+.cong .chen {display: inline-block; width: 1.32em; height: .8em; object-fit: cover; vertical-align: -.07em; margin-inline: .06em;}
+.cong .vs {margin-top: clamp(56px, 7.5vw, 120px); row-gap: 56px;}
+.cong .vs-gia {grid-column: 1 / 6;}
+.cong .vs-buoc {grid-column: 7 / 13;}
+.cong .hang-gia {margin-top: 20px;}
+.cong .hang-gia li {display: flex; justify-content: space-between; gap: 16px; padding: 15px 0; border-top: 1px solid var(--ke);}
+.cong .hang-gia li:last-child {border-bottom: 1px solid var(--ke);}
+.cong .hang-gia li span:last-child {font-weight: 500; white-space: nowrap;}
+.cong .vs-gia .lk {margin-top: 16px;}
+.cong .buoc {margin-top: 20px; counter-reset: b;}
+.cong .buoc li {counter-increment: b; display: grid; grid-template-columns: 56px 1fr; padding: 20px 0; border-top: 1px solid var(--ke);}
+.cong .buoc li:last-child {border-bottom: 1px solid var(--ke);}
+.cong .buoc li::before {content: counter(b); grid-row: 1 / 3; font: 500 30px/1 var(--f); padding-top: 2px;}
+.cong .buoc h4 {font-size: 19px; letter-spacing: -.01em; line-height: 1.3;}
+.cong .buoc p {color: var(--phu); margin-top: 4px;}
+.cong .toa {row-gap: 40px; align-items: start;}
+.cong .toa-trai {grid-column: 1 / 7;}
+.cong .toa-anh {grid-column: 8 / 13;}
+.cong .toa-anh img {width: 100%; aspect-ratio: 4 / 5; object-fit: cover; background: var(--giay-2);}
+.cong .toa-anh figcaption {margin-top: 12px; font-size: 15px; color: var(--phu);}
+.cong .hang-ds {margin-top: clamp(32px, 4vw, 56px); border-top: 1px solid var(--ke);}
+.cong .hang-ds a {display: grid; grid-template-columns: 1fr auto 20px; align-items: center; column-gap: 20px; min-height: 72px; padding: 12px 0; border-bottom: 1px solid var(--ke); text-decoration: none;}
+.cong .toa-phu {margin: 32px 0 24px; max-width: 26em; color: var(--phu);}
+.cong .so {background: var(--rung); color: #fff; padding-top: clamp(88px, 11vw, 176px);}
+.cong .so h2 {text-align: center;}
+.cong .so-cot {display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: clamp(48px, 6vw, 96px); border-top: 1px solid var(--rung-ke);}
+.cong .so-cot li {padding: clamp(48px, 6.5vw, 104px) 24px; text-align: center;}
+.cong .so-cot li + li {border-left: 1px solid var(--rung-ke);}
+.cong .so-cot strong {display: block; font-weight: 400; font-size: clamp(56px, 6.4vw, 92px); line-height: 1; letter-spacing: -.035em;}
+.cong .so-cot small {font-size: .34em; font-weight: 500; letter-spacing: -.01em;}
+.cong .so-cot li > span {display: block; max-width: 17em; margin: 16px auto 0; font-size: 16px; color: var(--rung-phu);}
+.cong .noi-bat {position: relative; display: grid; place-items: center; min-height: clamp(720px, 62vw, 900px); padding: clamp(48px, 7vw, 96px) var(--le); overflow: hidden; background: #24211d;}
+.cong .nb-nen img {position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .7s var(--em);}
+.cong .nb-nen img.hien {opacity: 1;}
+.cong .nb-the {position: relative; width: min(100%, 432px); padding: clamp(24px, 3vw, 40px) clamp(20px, 3vw, 40px) 16px; background: var(--mat); text-align: center;}
+.cong .nb-phong {display: grid; gap: 4px; margin-top: 24px; text-decoration: none;}
+.cong .nb-phong img {width: 100%; aspect-ratio: 4 / 3; object-fit: cover; margin-bottom: 14px; background: var(--giay-2);}
+.cong .nb-ten {font-size: 20px; font-weight: 500; letter-spacing: -.01em; line-height: 1.3;}
+.cong .nb-phu {font-size: 15px; color: var(--phu);}
+.cong .nb-gia {color: var(--phu); margin: 6px 0 14px;}
+.cong .nb-gia b {font-size: 22px; font-weight: 500; color: var(--muc); letter-spacing: -.01em;}
+.cong .nb-dk {display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 8px; font-size: 15px;}
+.cong .nb-dk button {width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: none; color: inherit; cursor: pointer; border-radius: 6px;}
+.cong .nb-dk #nb-truoc .mt {transform: rotate(180deg);}
+.cong .ket {display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2.5fr) minmax(0, 1fr); height: clamp(480px, 46vw, 680px);}
+.cong .ket-anh {width: 100%; height: 100%; min-height: 0; object-fit: cover;}
+.cong .ket-giua {display: grid; place-content: center; justify-items: center; gap: 24px; padding: 48px 24px; text-align: center;}
+.cong .ket-giua p {max-width: 24em; color: var(--phu);}
+.cong .chan {background: var(--rung); color: #fff;}
+.cong .chan-luoi {display: grid; grid-template-columns: 1.7fr 1fr 1fr 1fr; gap: 48px 24px; padding-block: clamp(56px, 6vw, 88px) 56px;}
+.cong .chan-ve p {margin: 8px 0 24px; max-width: 22em; color: var(--rung-phu); font-size: 16px;}
+.cong .chan-dn {display: flex; flex-wrap: wrap; gap: 10px;}
+.cong .chan h2 {font-size: 16px; letter-spacing: 0; margin-bottom: 4px; line-height: 1.5;}
+.cong .chan nav a {display: inline-flex; align-items: center; min-height: 44px; font-size: 16px; color: var(--rung-phu); text-decoration: none;}
+.cong .chan-day {display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; padding-block: 20px 28px; border-top: 1px solid var(--rung-ke); font-size: 14px; color: var(--rung-phu);}
+.cong .trang {padding-top: calc(var(--dau) + clamp(36px, 5.5vw, 80px)); padding-bottom: clamp(72px, 9vw, 128px);}
+.cong .le {margin: 16px 0 28px; max-width: 34em; color: var(--phu);}
+.cong .o {display: grid; gap: 6px; align-content: start; font-size: 15px;}
+.cong .o > span {font-weight: 500;}
+.cong .o input, .cong .o select, .cong .o textarea {width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid var(--vien-o); border-radius: 6px; background: var(--mat); color: var(--muc); font: 400 16px/1.4 var(--f);}
+.cong .o textarea {padding-block: 12px; resize: vertical;}
+.cong .o select {appearance: none; -webkit-appearance: none; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314181d' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 20px;}
+.cong .o small {font-size: 14px; line-height: 1.4; color: var(--phu);}
+.cong .o .loi-o {color: var(--no);}
+.cong .loi-o:empty {display: none;}
+.cong .o [aria-invalid="true"] {border-color: var(--no); box-shadow: inset 0 0 0 1px var(--no);}
+.cong ::placeholder {color: #5c6670; opacity: 1;}
+.cong .tp-dau {display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 16px 32px;}
+.cong .tp-dau p {max-width: 25em; color: var(--phu);}
+.cong .loc {display: grid; grid-template-columns: 1.3fr 1fr 1fr 1.3fr; gap: 16px; margin-top: clamp(28px, 3.5vw, 48px); padding-block: 24px; border-block: 1px solid var(--ke);}
+.cong .chip-hang {grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px;}
+.cong .loc-chip {display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1px solid var(--vien-o); border-radius: 999px; background: transparent; color: var(--muc); font: 400 15px var(--f); cursor: pointer; transition: background-color .2s;}
+.cong .loc-chip b {font-weight: 400; color: var(--phu);}
+.cong .loc-chip[aria-pressed="true"] {border-color: var(--muc); box-shadow: inset 0 0 0 1px var(--muc); background: #e9e4da; font-weight: 500;}
+.cong .loc-chip:disabled {opacity: .45; cursor: not-allowed;}
+.cong .kq-dau {display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 32px 0 24px;}
+.cong .kq-dau h2 span {margin-left: 12px; font: 400 15px/1.4 var(--f); letter-spacing: 0; color: var(--phu);}
+.cong .luoi-phong {display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px 24px;}
+.cong .phong {display: grid; gap: 3px; align-content: start; text-decoration: none;}
+.cong .phong-anh {position: relative; display: block; overflow: hidden; aspect-ratio: 4 / 3; margin-bottom: 12px; background: var(--giay-2);}
+.cong .phong-anh img {width: 100%; height: 100%; object-fit: cover; transition: transform .7s var(--em);}
+.cong .phong.het img {filter: grayscale(.7); opacity: .72;}
+.cong .nhan {position: absolute; left: 12px; top: 12px; padding: 4px 10px; border-radius: 4px; background: var(--mat); font-size: 14px;}
+.cong .phong-gia {font-size: 15px; color: var(--phu);}
+.cong .phong-gia b {font-size: 22px; font-weight: 500; letter-spacing: -.01em; color: var(--muc);}
+.cong .phong-ten {font-size: 18px; font-weight: 500; letter-spacing: -.01em; line-height: 1.35;}
+.cong .phong-phu {font-size: 15px; color: var(--phu);}
+.cong .them {display: grid; place-items: center; margin-top: 48px;}
+.cong .trong-kq {display: flex; flex-wrap: wrap; gap: 12px; padding: 40px 0 24px;}
+.cong .trong-kq p {flex-basis: 100%; max-width: 34em; margin-bottom: 8px;}
+.cong .xuong i {display: block; aspect-ratio: 4 / 3; background: var(--giay-2);}
+.cong .xuong b {display: block; height: 16px; width: 62%; margin-top: 14px; background: var(--giay-2);}
+.cong .xuong b:first-of-type {width: 38%; height: 22px;}
+.cong .xuong b:last-of-type {width: 80%;}
+.cong .lui {margin-bottom: 20px;}
+.cong .lui .mt {transform: rotate(180deg);}
+.cong .ct-luoi {display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; row-gap: clamp(40px, 5vw, 72px); align-items: start;}
+.cong .ct-anh, .cong .ct-than {grid-column: 1 / 8;}
+.cong .ct-anh img {width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--giay-2);}
+.cong .ct-ben {grid-column: 9 / 13; grid-row: 1 / 3;}
+.cong .ct-toa {font-size: 15px; color: var(--phu);}
+.cong .ct-ben h1 {margin: 6px 0 8px;}
+.cong .ct-mo {color: var(--phu);}
+.cong .ct-gia {margin-top: 20px; color: var(--phu);}
+.cong .ct-gia b {font-size: clamp(30px, 2.8vw, 40px); font-weight: 500; letter-spacing: -.02em; line-height: 1.1; color: var(--muc);}
+.cong .tt-cong {display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 15px; font-weight: 500;}
+.cong .tt-cong::before {content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: currentColor;}
+.cong .tt-xong {color: var(--xong);}
+.cong .tt-canh {color: var(--canh);}
+.cong .dl {display: grid; gap: 16px; margin-top: 28px; padding-top: 28px; border-top: 1px solid var(--ke);}
+.cong .dl:focus {outline: none;}
+.cong .them-o summary {display: flex; align-items: center; min-height: 44px; font-size: 15px; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; cursor: pointer; list-style: none;}
+.cong .them-o summary::-webkit-details-marker {display: none;}
+.cong .them-o[open] {display: grid; gap: 16px;}
+.cong .dl-chu {font-size: 14px; color: var(--phu); text-align: center;}
+.cong .da-gui dl div {display: grid; grid-template-columns: 108px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--ke);}
+.cong .da-gui dl div:first-child {border-top: 1px solid var(--ke);}
+.cong .da-gui dt {color: var(--phu);}
+.cong .da-gui dd {font-weight: 500;}
+.cong .ct-than > section + section {margin-top: clamp(48px, 5.5vw, 80px);}
+.cong .bang-gia {width: 100%; margin-top: 24px; border-collapse: collapse;}
+.cong .bang-gia caption {text-align: left; font-size: 15px; color: var(--phu); padding-bottom: 4px;}
+.cong .bang-gia .nhom th {padding: 28px 0 10px; text-align: left; font-size: 15px; font-weight: 400; color: var(--phu);}
+.cong .bang-gia tr:not(.nhom) th {padding: 14px 16px 14px 0; border-top: 1px solid var(--ke); text-align: left; font-weight: 400;}
+.cong .bang-gia td {padding: 14px 0; border-top: 1px solid var(--ke); text-align: right; font-weight: 500; white-space: nowrap;}
+.cong .ut {padding: clamp(20px, 3vw, 36px); background: var(--giay-2);}
+.cong .ut-o {display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 20px;}
+.cong .ut-tong {margin: 28px 0 12px; color: var(--phu);}
+.cong .ut-tong b {font-size: clamp(28px, 2.6vw, 36px); font-weight: 500; letter-spacing: -.02em; line-height: 1.1; color: var(--muc);}
+.cong .ut-kq li {display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid var(--ke);}
+.cong .ut-kq li i {font-style: normal; font-size: 15px; color: var(--phu); margin-left: 6px;}
+.cong .ut-kq li span:last-child {white-space: nowrap;}
+.cong .ut-kq .tt-cong {margin-top: 12px; align-items: baseline;}
+.cong .tien-ich {columns: 2; column-gap: 24px; margin-top: 16px;}
+.cong .tien-ich li {padding: 12px 0; border-top: 1px solid var(--ke); break-inside: avoid;}
+.cong .ct-mota {margin-top: 12px; max-width: 38em;}
+.cong .ct-khac {margin-top: clamp(72px, 9vw, 128px);}
+.cong .ct-khac h2 {margin-bottom: 32px;}
+.cong .day {display: none;}
+.cong .dn {display: grid; grid-template-columns: 1fr 1fr; min-height: 100svh; padding-top: var(--dau);}
+.cong .dn-trai {display: grid; place-items: center; padding: clamp(40px, 6vw, 88px) var(--le);}
+.cong .dn-hop {width: min(100%, 420px);}
+.cong .dn-mo {margin-top: 16px; color: var(--phu);}
+.cong .dn-form {display: grid; gap: 16px; margin-top: 32px;}
+.cong .dn-form .nut {font-weight: 500; min-height: 52px;}
+.cong .dn-phu {display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 16px; font-size: 16px;}
+.cong .dn-phu a, .cong .dn-chan a {display: inline-flex; align-items: center; min-height: 44px; color: var(--lk);}
+.cong .dn-chan {margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--ke); color: var(--phu); font-size: 16px;}
+.cong .dn-phai {position: relative; min-height: 560px; background: #24211d; color: #fff;}
+.cong .dn-phai img {position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;}
+.cong .dn-phai::after {content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(10, 12, 11, .9), rgba(10, 12, 11, .8) 44%, rgba(10, 12, 11, 0) 70%);}
+.cong .dn-vai {position: absolute; inset: auto 0 0 0; z-index: 1; padding: clamp(24px, 3.4vw, 48px);}
+.cong .dn-vai ul {margin-top: 16px;}
+.cong .dn-vai li {display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 16px; padding: 14px 0; border-top: 1px solid rgba(255, 255, 255, .3);}
+.cong .dn-vai b {font-weight: 500;}
+@media (hover: hover) and (pointer: fine) {
+.cong .nut-muc:hover {background: #2a3038;}
+.cong .nut-trang:hover {background: #ece8df;}
+.cong .nut-vien:hover {border-color: var(--muc); background: rgba(20, 24, 29, .04);}
+.cong .lk:hover .mt, .cong .hang-ds a:hover .mt, .cong .hero-the:hover .ht-ten {transform: translateX(4px);}
+.cong .lui:hover .mt {transform: rotate(180deg) translateX(4px);}
+.cong .phong:hover .phong-anh img, .cong .nb-phong:hover img {transform: scale(1.03);}
+.cong .dau-nav a:hover, .cong .dau-cong:hover, .cong .chan nav a:hover {text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px;}
+.cong .chan nav a:hover {color: #fff;}
+.cong .loc-chip:not(:disabled):hover {background: rgba(20, 24, 29, .05);}
+.cong .nb-dk button:hover {background: var(--giay-2);}
+}
+.cong .ht-ten, .cong .nb-phong img {transition: transform .5s var(--em);}
+.cong .day {transition: transform .3s var(--em), visibility .3s;}
+.cong [data-hien] {opacity: 0; transform: translateY(24px); transition: opacity .8s var(--em), transform .8s var(--em); transition-delay: calc(var(--i, 0) * 90ms);}
+.cong [data-hien].hien {opacity: 1; transform: none;}
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.cong) { scroll-behavior: smooth; }
+}
+@media (prefers-reduced-motion: reduce) {
+.cong *, .cong *::before, .cong *::after {animation: none !important; transition: none !important;}
+.cong [data-hien] {opacity: 1; transform: none;}
+}
+@media (max-width: 1199px) {
+.cong .luoi-phong {grid-template-columns: repeat(2, minmax(0, 1fr));}
+.cong .ct-ben {grid-column: 8 / 13;}
+.cong .loc {grid-template-columns: 1fr 1fr;}
+.cong .ut-o {grid-template-columns: repeat(2, minmax(0, 1fr));}
+.cong .chan-luoi {grid-template-columns: 1.4fr 1fr 1fr 1fr;}
+}
+@media (min-width: 900px) {
+.cong .ct-ben {position: sticky; top: min(calc(var(--dau) + 24px), calc(100svh - var(--cao, 0px) - 24px));}
+}
+@media (max-width: 899px) {
+.cong .dau-nav, .cong .dau-cong {display: none;}
+.cong .dau-menu {display: inline-flex;}
+.cong .hero::after {background: linear-gradient(to bottom, rgba(10, 12, 11, .72), rgba(10, 12, 11, 0) 22%), linear-gradient(to top, rgba(10, 12, 11, .86), rgba(10, 12, 11, .7) 62%, rgba(10, 12, 11, .06) 90%);}
+.cong .hero-trong {flex-direction: column; align-items: stretch; justify-content: flex-end; gap: 24px;}
+.cong .hero-phu {margin-top: 16px;}
+.cong .hero-phai {width: 100%;}
+.cong .ht-chu {font-size: 16px;}
+.cong .vs-gia, .cong .vs-buoc, .cong .toa-trai, .cong .toa-anh {grid-column: 1 / -1;}
+.cong .toa-anh {order: -1;}
+.cong .toa-anh img {aspect-ratio: 4 / 3;}
+.cong .hang-ds a {grid-template-columns: 1fr 20px; row-gap: 2px;}
+.cong .hang-ds .mt {grid-column: 2; grid-row: 1 / 3;}
+.cong .so-cot {grid-template-columns: 1fr;}
+.cong .so-cot li + li {border-left: 0; border-top: 1px solid var(--rung-ke);}
+.cong .so-cot li {padding-block: 44px;}
+.cong .noi-bat {min-height: 0;}
+.cong .ket {grid-template-columns: 1fr; height: auto;}
+.cong .ket-anh {aspect-ratio: 3 / 2; height: auto;}
+.cong .ket-anh:last-child {display: none;}
+.cong .ket-giua {padding: 64px var(--le) 88px;}
+.cong .chan-luoi {grid-template-columns: 1fr 1fr;}
+.cong .chan-ve {grid-column: 1 / -1;}
+.cong .luoi-phong {grid-template-columns: 1fr; gap: 40px;}
+.cong .chip-hang {flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(var(--le) * -1); padding-inline: var(--le); scrollbar-width: none;}
+.cong .chip-hang::-webkit-scrollbar {display: none;}
+.cong .loc-chip {flex: none;}
+.cong .ut-kq li i {display: block; margin-left: 0;}
+.cong .phong-phu, .cong .phong-gia, .cong .nb-phu, .cong .toa-anh figcaption, .cong .ct-toa, .cong .o, .cong .o small, .cong .loc-chip, .cong .tt-cong, .cong .them-o summary, .cong .dl-chu, .cong .kq-dau h2 span, .cong .bang-gia caption, .cong .bang-gia .nhom th, .cong .ut-kq li i, .cong .chu-thich, .cong .nhan, .cong .nut-nho, .cong .ht-nhan, .cong .chan-day, .cong .nb-dk {font-size: 16px;}
+.cong .kq-dau {flex-wrap: wrap;}
+.cong .kq-dau h2 span {display: block; margin: 4px 0 0;}
+.cong .ct-anh, .cong .ct-than, .cong .ct-ben {grid-column: 1 / -1; grid-row: auto;}
+.cong .ct-anh {margin-inline: calc(var(--le) * -1);}
+.cong .ct-luoi {row-gap: 28px;}
+.cong .ct-than {margin-top: 28px;}
+.cong .tien-ich {columns: 1;}
+.cong .ut {margin-inline: calc(var(--le) * -1); padding-inline: var(--le);}
+.cong .day {position: fixed; inset: auto 0 0 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px var(--le) calc(10px + env(safe-area-inset-bottom)); background: var(--giay); border-top: 1px solid var(--ke);}
+.cong .day.an {transform: translateY(110%); visibility: hidden;}
+.cong .day b {font-size: 19px; font-weight: 500;}
+.cong[data-man="phong"] .chan {padding-bottom: 72px;}
+.cong .dn {grid-template-columns: 1fr; min-height: 0;}
+.cong .dn-trai {place-items: start; padding-block: 40px 48px;}
+.cong .dn-phai {min-height: 0; background: var(--rung);}
+.cong .dn-phai img, .cong .dn-phai::after {display: none;}
+.cong .dn-vai {position: static; padding: 40px var(--le) 48px;}
+.cong .dn-vai li {grid-template-columns: 1fr; gap: 2px;}
+}
+@media (max-width: 479px) {
+.cong .loc {grid-template-columns: 1fr 1fr;}
+.cong .loc .o:first-child, .cong .loc .o:nth-child(4) {grid-column: 1 / -1;}
+.cong .chan-dn .nut {flex: 1 1 100%;}
+}
+
+/* ---------- thêm cho bản cài thật ---------- */
+.cong { min-height: 100vh; }
+.cong .av { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: 10px; border-radius: 50%; background: var(--muc); color: #fff; font-size: 12px; font-weight: 500; letter-spacing: 0; }
+.cong .dau.trong .av { background: #fff; color: #1a1d1b; }
+.cong .dau-cong { gap: 0; }
+.cong .dn-form .nut:disabled { opacity: .6; cursor: not-allowed; }
+.cong .dn-xem { color: var(--phu); }
+.cong .tt-no { color: var(--no); }

@@ -196,27 +196,18 @@ describe('App role navigation', () => {
     expect(appShell.querySelectorAll('.ma-no-print')).toHaveLength(2)
   })
 
-  it('NFR-USA-01 stacks the login panels at 360px so the form remains within the viewport', async () => {
+  // Đổi theo thiết kế mới: màn đăng nhập là khung Cổng cư dân (CSS lớp, không còn style inline width: min(400px,100%)).
+  // Hợp đồng "xếp một cột ở 360px" nay nằm trong CSS; kiểm ở App.congKhai.test.tsx ("khung đăng nhập: 360px xếp một cột").
+  it('NFR-USA-01 login screen at /dang-nhap renders its form inside the single-column portal frame', async () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
-    const fetchMock = buildFetchMock(MENU_BY_ROLE[2].nguoiDung)
-    vi.stubGlobal('fetch', fetchMock)
-
+    window.history.replaceState({}, '', '/dang-nhap')
+    vi.stubGlobal('fetch', buildFetchMock(MENU_BY_ROLE[2].nguoiDung))
     const container = document.createElement('div')
     document.body.appendChild(container)
     const root = createRoot(container)
     mountedApp = { container, root }
-
-    await act(async () => {
-      root.render(<App />)
-    })
-
-    const loginGrid = await vi.waitFor(() => {
-      const grid = container.querySelector('main > div') as HTMLElement | null
-      expect(grid).not.toBeNull()
-      return grid as HTMLElement
-    })
-
-    expect(loginGrid.style.width).toBe('min(400px, 100%)')
+    await act(async () => { root.render(<App />) })
+    await vi.waitFor(() => expect(container.querySelector('.dn-hop form')).not.toBeNull())
   })
 
   it('NFR-USA-01 hides the manager sidebar at 360px behind a ☰ drawer that traps focus, closes on Esc and returns focus', async () => {
@@ -863,7 +854,7 @@ describe('App role navigation', () => {
   })
 })
 async function mountAppAndLogin(nguoiDung: ThongTinNguoiDung, path = '/', fetchMock = buildFetchMock(nguoiDung)) {
-  window.history.replaceState({}, '', '/')
+  window.history.replaceState({}, '', '/dang-nhap') // đăng nhập nằm ở /dang-nhap; '/' giờ là trang chủ công khai
   vi.stubGlobal('fetch', fetchMock)
 
   const container = document.createElement('div')

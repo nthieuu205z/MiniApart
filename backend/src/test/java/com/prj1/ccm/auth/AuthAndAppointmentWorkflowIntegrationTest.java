@@ -138,6 +138,19 @@ class AuthAndAppointmentWorkflowIntegrationTest {
         mvc.perform(get("/api/public/phong/"+room)).andExpect(status().isOk()).andExpect(jsonPath("$.trangThai").value("TRONG"));
     }
 
+    @Test void publicPortalHidesRoomsStoppedFromRenting() throws Exception {
+        Long before = jdbc.queryForObject("SELECT COUNT(*) FROM PHONG WHERE toa_nha_id=1 AND trang_thai='TRONG' AND ngung_cho_thue=FALSE", Long.class);
+        Long room = jdbc.queryForObject("INSERT INTO PHONG(toa_nha_id,so_phong,tang,dien_tich,suc_chua,gia_thue_mac_dinh,loai_phong,trang_thai,ngung_cho_thue) VALUES (1,'NGUNG-TEST',1,20,2,3000000,'Studio','TRONG',TRUE) RETURNING id", Long.class);
+        mvc.perform(get("/api/public/phong/" + room)).andExpect(status().isNotFound());
+        mvc.perform(get("/api/public/phong").param("chiPhongTrong", "false").param("toaNhaId", "1"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[?(@.id==" + room + ")]").isEmpty());
+        mvc.perform(get("/api/public/toa-nha")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id==1)].soPhongTrong").value(org.hamcrest.Matchers.contains(before.intValue())));
+        jdbc.update("UPDATE PHONG SET ngung_cho_thue=FALSE WHERE id=?", room);
+        mvc.perform(get("/api/public/phong/" + room)).andExpect(status().isOk());
+        mvc.perform(get("/api/public/toa-nha")).andExpect(jsonPath("$[?(@.id==1)].soPhongTrong").value(org.hamcrest.Matchers.contains(before.intValue() + 1)));
+    }
+
     private String create(String phone, String role) {
         jdbc.update("INSERT INTO NGUOI_DUNG(ho_ten,so_dien_thoai,mat_khau_hash,vai_tro,trang_thai) VALUES (?,?,?,?,'HOAT_DONG')", role, phone, hasher.hash("mat-khau-cu-123"), role);
         NguoiDung user = users.findBySoDienThoai(phone).orElseThrow();

@@ -12,7 +12,6 @@ import {
 import { clearStoredToken, readStoredToken, storeToken } from './authSession'
 import DanhMucToaNha from './DanhMucToaNha'
 import DanhMucPhong from './DanhMucPhong'
-import KhamPhaPhong from './KhamPhaPhong'
 import QuanLyLichHen from './QuanLyLichHen'
 import GhiChiSo from './GhiChiSo'
 import HoaDon from './HoaDon'
@@ -54,8 +53,13 @@ import { Icon } from './design/core/Icon'
 import { layCauHinhDieuHuong, mucDangChon, timMucTheoDuongDan, type MucDieuHuong } from './roleNavigation'
 import { TRANG_DAU, laVaiTro, timTuyen, type KetQuaTuyen, type KhoaTrang, type TrangProps, type VaiTro } from './dinhTuyen'
 import { useSoDemDieuHuong } from './soDemDieuHuong'
-import ManDangNhap from './ManDangNhap'
 import { matDoTheoVaiTro } from './matDo'
+import CongKhaiKhung from './congKhai/CongKhaiKhung'
+import TrangChu from './congKhai/TrangChu'
+import TimPhong from './congKhai/TimPhong'
+import ChiTietPhong from './congKhai/ChiTietPhong'
+import CongCuDan from './congKhai/CongCuDan'
+import { layTuyenCongKhai } from './congKhai/tuyen'
 import ChuongThongBao from './ChuongThongBao'
 import HomNay from './HomNay'
 import ChuKyThang from './ChuKyThang'
@@ -129,15 +133,6 @@ function App() {
   const duongDanHienTai = viTri.duongDan
   const [laManHinhHep, setLaManHinhHep] = useState(() => kiemTraManHinhHep())
   const [laManHinhThuGon, setLaManHinhThuGon] = useState(() => kiemTraManHinhThuGon())
-  const [cheDoKhach, setCheDoKhach] = useState<'KHAM_PHA' | 'DANG_NHAP'>(() => {
-    if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
-      return typeof window !== 'undefined' && window.location.pathname === '/kham-pha' ? 'KHAM_PHA' : 'DANG_NHAP'
-    }
-    if (typeof window !== 'undefined' && window.location.pathname === '/dang-nhap') {
-      return 'DANG_NHAP'
-    }
-    return 'KHAM_PHA'
-  })
   const [form, setForm] = useState<DangNhapRequest>({
     soDienThoai: '',
     matKhau: '',
@@ -241,11 +236,23 @@ function App() {
   }, [duongDanHienTai, nguoiDung?.vaiTro, token])
 
   // Bảng định tuyến quyết định; đường dẫn cũ đã gộp thì thay thế (không thêm mục lịch sử) rồi đọc lại.
-  const ketQuaTuyen = nguoiDung ? timTuyen(nguoiDung.vaiTro, viTri.duongDan, viTri.search) : null
+  // Trang công khai (/, /tim-phong, /phong-trong/:id) ai cũng xem được, kể cả người đã đăng nhập: không chuyển hướng họ đi.
+  const tuyenCongKhai = layTuyenCongKhai(duongDanHienTai)
+  const laCongKhaiMo = tuyenCongKhai !== null && tuyenCongKhai.loai !== 'dang-nhap'
+  const ketQuaTuyen = nguoiDung && !tuyenCongKhai ? timTuyen(nguoiDung.vaiTro, viTri.duongDan, viTri.search) : null
   const toiChuyen = ketQuaTuyen?.loai === 'chuyen' ? ketQuaTuyen.toi : null
   useEffect(() => {
     if (toiChuyen) thayTheDuongDan(toiChuyen)
   }, [toiChuyen])
+
+  // Đường dẫn cũ /kham-pha → /tim-phong (giữ query); đã đăng nhập mà vào /dang-nhap → trang đầu theo vai;
+  // chưa có phiên mà vào trang của app → /dang-nhap (chờ kiểm tra phiên xong để không đá nhầm người đã đăng nhập).
+  const trangDauTheoVai = nguoiDung && laVaiTro(nguoiDung.vaiTro) ? TRANG_DAU[nguoiDung.vaiTro] : null
+  useEffect(() => {
+    if (duongDanHienTai === '/kham-pha') thayTheDuongDan(`/tim-phong${viTri.search}`)
+    else if (nguoiDung && duongDanHienTai === '/dang-nhap') thayTheDuongDan(trangDauTheoVai ?? '/')
+    else if (!nguoiDung && !dangTaiPhien && !tuyenCongKhai && duongDanHienTai !== '/kham-pha') thayTheDuongDan('/dang-nhap')
+  }, [duongDanHienTai, viTri.search, nguoiDung, dangTaiPhien, tuyenCongKhai, trangDauTheoVai])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -273,13 +280,7 @@ function App() {
       storeToken(response.token)
       setToken(response.token)
       setNguoiDung(response.nguoiDung)
-      if (response.nguoiDung.vaiTro === 'THO') {
-        thayTheDuongDan('/tho/tong-quan')
-      } else if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
-        dieuHuongToi('/')
-      } else {
-        dieuHuongToi(laVaiTro(response.nguoiDung.vaiTro) ? TRANG_DAU[response.nguoiDung.vaiTro] : '/')
-      }
+      thayTheDuongDan(laVaiTro(response.nguoiDung.vaiTro) ? TRANG_DAU[response.nguoiDung.vaiTro] : '/')
       setForm({ soDienThoai: '', matKhau: '' })
     } catch (reason) {
       setAuthError(reason instanceof Error ? reason.message : 'Đăng nhập không thành công.')
@@ -298,23 +299,19 @@ function App() {
   }
 
 
-  if (!nguoiDung) {
-    if (moTroGiupTaiKhoan) return <TaiKhoanTruyCap onLogin={() => { setMoTroGiupTaiKhoan(false); setCheDoKhach('DANG_NHAP') }} />
-    if (cheDoKhach === 'KHAM_PHA') {
-      return (
-        <div data-density={matDoTheoVaiTro('', laManHinhHep)} style={{ display: 'contents' }}>
-          <KhamPhaPhong
-            onChuyenDangNhap={() => setCheDoKhach('DANG_NHAP')}
-            manHinhHep={laManHinhHep}
-          />
-        </div>
-      )
-    }
+  if (!nguoiDung && moTroGiupTaiKhoan) return <TaiKhoanTruyCap onLogin={() => { setMoTroGiupTaiKhoan(false); thayTheDuongDan('/dang-nhap') }} />
 
+  if (tuyenCongKhai && (laCongKhaiMo || !nguoiDung)) {
     return (
-      <ManDangNhap form={form} setForm={setForm} onSubmit={handleSubmit} dangDangNhap={dangDangNhap} dangTaiPhien={dangTaiPhien} authError={authError} healthError={healthError} laManHinhHep={laManHinhHep} onKhamPha={() => setCheDoKhach('KHAM_PHA')} onTroGiup={() => setMoTroGiupTaiKhoan(true)} />
+      <CongKhaiKhung nguoiDung={nguoiDung} trangDau={trangDauTheoVai} duongDan={duongDanHienTai} search={viTri.search} onClick={chanLienKetNoiBo}>
+        {tuyenCongKhai.loai === 'trang-chu' ? <TrangChu />
+          : tuyenCongKhai.loai === 'tim-phong' ? <TimPhong key={viTri.search} search={viTri.search} />
+          : tuyenCongKhai.loai === 'phong' ? <ChiTietPhong id={tuyenCongKhai.id} />
+          : <CongCuDan form={form} setForm={setForm} onSubmit={handleSubmit} dangDangNhap={dangDangNhap} dangTaiPhien={dangTaiPhien} authError={authError} healthError={healthError} onTroGiup={() => setMoTroGiupTaiKhoan(true)} />}
+      </CongKhaiKhung>
     )
   }
+  if (!nguoiDung) return null
 
   if (!ketQuaTuyen || ketQuaTuyen.loai === 'chuyen') return null
 

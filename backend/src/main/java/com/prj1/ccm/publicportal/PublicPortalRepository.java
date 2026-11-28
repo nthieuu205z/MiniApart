@@ -24,7 +24,7 @@ public class PublicPortalRepository {
     public List<PublicToaNhaDto> layDanhSachToaNha() {
         String sql = """
                 SELECT t.id, t.ma_toa, t.ten, t.dia_chi, t.so_tang,
-                       COUNT(p.id) FILTER (WHERE p.trang_thai = 'TRONG') AS so_phong_trong
+                       COUNT(p.id) FILTER (WHERE p.trang_thai = 'TRONG' AND p.ngung_cho_thue = FALSE) AS so_phong_trong
                 FROM TOA_NHA t
                 LEFT JOIN PHONG p ON p.toa_nha_id = t.id
                 GROUP BY t.id, t.ma_toa, t.ten, t.dia_chi, t.so_tang
@@ -52,7 +52,7 @@ public class PublicPortalRepository {
                        p.loai_phong, p.trang_thai, p.tien_ich, p.mo_ta, p.anh_dai_dien
                 FROM PHONG p
                 JOIN TOA_NHA t ON p.toa_nha_id = t.id
-                WHERE 1=1
+                WHERE p.ngung_cho_thue = FALSE
                 """);
         List<Object> params = new ArrayList<>();
 
@@ -146,7 +146,7 @@ public class PublicPortalRepository {
                        p.loai_phong, p.trang_thai, p.tien_ich, p.mo_ta, p.anh_dai_dien
                 FROM PHONG p
                 JOIN TOA_NHA t ON p.toa_nha_id = t.id
-                WHERE p.id = ?
+                WHERE p.id = ? AND p.ngung_cho_thue = FALSE
                 """;
         List<PublicPhongDto> ketQua = jdbcTemplate.query(sql, (rs, rowNum) -> {
             String trangThai = rs.getString("trang_thai");
